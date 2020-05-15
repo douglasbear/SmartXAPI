@@ -1,5 +1,7 @@
 using AutoMapper;
 using SmartxAPI.Dtos;
+using SmartxAPI.Dtos.SP;
+using SmartxAPI.Dtos.User;
 using SmartxAPI.Models;
 
 namespace SmartxAPI.Profiles
@@ -13,6 +15,12 @@ namespace SmartxAPI.Profiles
             CreateMap<CustomerCreateDto, InvCustomer>();
             CreateMap<CustomerUpdateDto, InvCustomer>();
             CreateMap<InvCustomer, CustomerUpdateDto>();
+
+            CreateMap<SecUser, UserReadDto>();
+            CreateMap<UserCreateDto, SecUser>();
+            CreateMap<UserUpdateDto, SecUser>();
+            CreateMap<SecUser, UserUpdateDto>();
+            CreateMap<SP_LOGIN, AuthenticateDto>();
         }
 
     }

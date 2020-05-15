@@ -5,11 +5,11 @@ using SmartxAPI.Dtos;
 using SmartxAPI.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
-
+using Microsoft.AspNetCore.Authorization;
 
 namespace SmartxAPI.Controllers
 {
-
+    [Authorize]
     [Route("api/customer")]
     [ApiController]
     public class CustomerController : ControllerBase

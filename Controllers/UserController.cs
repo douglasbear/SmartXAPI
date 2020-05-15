@@ -2,9 +2,13 @@ using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
 using SmartxAPI.Dtos;
+using SmartxAPI.Dtos.User;
 using SmartxAPI.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
+using System.IdentityModel.Tokens.Jwt;
+using Microsoft.IdentityModel.Tokens;
+using SmartxAPI.Profiles;
 
 
 namespace SmartxAPI.Controllers
@@ -16,6 +20,7 @@ namespace SmartxAPI.Controllers
     {
         private readonly IUserRepo _repository;
         private readonly IMapper _mapper;
+        private readonly AppSettings _appSettings;
 
         public UserController(IUserRepo repository, IMapper mapper)
         {
@@ -30,6 +35,20 @@ namespace SmartxAPI.Controllers
             var UserItems = _repository.GetAllUsers();
 
             return Ok(_mapper.Map<IEnumerable<UserReadDto>>(UserItems));
+        }
+
+
+        [HttpPost("authenticate")]
+        public ActionResult Authenticate([FromBody]AuthenticateDto model)
+        {
+            var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
+
+            if (user == null)
+                return BadRequest(new { message = "Username or password is incorrect" });
+
+
+            // return basic user info and authentication token
+            return Ok(user);
         }
 
         //GET api/User/{id}
@@ -56,6 +75,8 @@ namespace SmartxAPI.Controllers
 
             return CreatedAtRoute(nameof(GetUserById), new {Id = UserReadDto.NUserId}, UserReadDto);      
         }
+
+
 
         //PUT api/User/{id}
         [HttpPut("{id}")]

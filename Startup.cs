@@ -15,6 +15,10 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
+using SmartxAPI.Profiles;
+using System.Text;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.IdentityModel.Tokens;
 
 namespace SmartxAPI
 {
@@ -38,9 +42,32 @@ namespace SmartxAPI
                 s.SerializerSettings.ContractResolver = new CamelCasePropertyNamesContractResolver();
             });
             
+            var appSettingsSection = Configuration.GetSection("AppSettings");
+            services.Configure<AppSettings>(appSettingsSection);
+
+            //JWT Auth
+            var appSettings=appSettingsSection.Get<AppSettings>();
+            var key = Encoding.ASCII.GetBytes(appSettings.Secret);
+            services.AddAuthentication(au=>{
+                au.DefaultAuthenticateScheme=JwtBearerDefaults.AuthenticationScheme;
+                au.DefaultChallengeScheme=JwtBearerDefaults.AuthenticationScheme;
+            }).AddJwtBearer(jwt=>{
+                jwt.RequireHttpsMetadata=false;
+                jwt.SaveToken=true;
+                jwt.TokenValidationParameters = new TokenValidationParameters
+                {
+                    ValidateIssuerSigningKey =true,
+                    IssuerSigningKey=new SymmetricSecurityKey(key),
+                    ValidateIssuer=false,
+                    ValidateAudience=false
+
+                };
+            });
+
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
             services.AddScoped<ICustomerRepo, CustomerRepo>();
+            services.AddScoped<IUserRepo,UserRepo>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
