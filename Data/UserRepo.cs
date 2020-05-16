@@ -11,15 +11,16 @@ using System.IdentityModel.Tokens.Jwt;
 using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
+using Newtonsoft.Json;
 
 namespace SmartxAPI.Data
 {
-    public class UserRepo : IUserRepo
+    public class Sec_UserRepo : ISec_UserRepo
     {
         private readonly SmartxContext _context;
         private readonly AppSettings _appSettings;
 
-        public UserRepo(SmartxContext context,IOptions<AppSettings> appSettings)
+        public Sec_UserRepo(SmartxContext context,IOptions<AppSettings> appSettings)
         {
             _context = context;
             _appSettings=appSettings.Value;
@@ -72,20 +73,12 @@ namespace SmartxAPI.Data
             
             if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
-                
-
-                var dynamicParameters = new DynamicParameters();
-                
-                dynamicParameters.Add("@X_CompanyName", companyname);
-                dynamicParameters.Add("@X_FnYearDescr", "");
-                dynamicParameters.Add("@X_LoginName", username);
-                dynamicParameters.Add("@X_Pwd", password);
-
+            try{
                 var user = _context.SP_LOGIN.FromSqlRaw("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
                 .ToList()
                 .FirstOrDefault();
 
-
+                
                 //If User Found
                 var tokenHandler=new JwtSecurityTokenHandler(); 
                 var key=Encoding.ASCII.GetBytes(_appSettings.Secret);
@@ -100,14 +93,26 @@ namespace SmartxAPI.Data
                 };
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 user.Token = tokenHandler.WriteToken(token);
-        return user;
+                user.status = 1;
+                user.data = "Data";
+                return user;
+            }
+            catch (Exception ex)
+            {
+                var user=new SP_LOGIN();
+                user.status=0;
+                user.Token="";
+                user.data=ex.Message;
+                return user;
+
+            }
                 
         }
 
     
     }
 
-    public interface IUserRepo
+    public interface ISec_UserRepo
     {
         bool SaveChanges();
         IEnumerable<SecUser> GetAllUsers();

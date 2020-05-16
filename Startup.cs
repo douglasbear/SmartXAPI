@@ -66,8 +66,9 @@ namespace SmartxAPI
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddScoped<ICustomerRepo, CustomerRepo>();
-            services.AddScoped<IUserRepo,UserRepo>();
+            services.AddScoped<IInv_CustomerRepo, Inv_CustomerRepo>();
+            services.AddScoped<ISec_UserRepo,Sec_UserRepo>();
+            services.AddScoped<IAcc_CompanyRepo,Acc_CompanyRepo>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

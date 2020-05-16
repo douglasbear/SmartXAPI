@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
 using SmartxAPI.Dtos;
-using SmartxAPI.Dtos.User;
+using SmartxAPI.Dtos.Custom;
 using SmartxAPI.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -14,15 +14,14 @@ using SmartxAPI.Profiles;
 namespace SmartxAPI.Controllers
 {
 
-    [Route("api/user")]
+    [Route("user")]
     [ApiController]
     public class UserController : ControllerBase
     {
-        private readonly IUserRepo _repository;
+        private readonly ISec_UserRepo _repository;
         private readonly IMapper _mapper;
-        private readonly AppSettings _appSettings;
 
-        public UserController(IUserRepo repository, IMapper mapper)
+        public UserController(ISec_UserRepo repository, IMapper mapper)
         {
             _repository = repository;
             _mapper = mapper;
@@ -38,8 +37,8 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpPost("authenticate")]
-        public ActionResult Authenticate([FromBody]AuthenticateDto model)
+        [HttpPost("login")]
+        public ActionResult Authenticate([FromBody]Sec_AuthenticateDto model)
         {
             var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
 

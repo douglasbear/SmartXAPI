@@ -39,6 +39,9 @@ namespace SmartxAPI.Dtos.SP
 		public string X_UserFullName { get; set; }
 		[NotMapped]
 		public string Token {get;set;}
-
+		[NotMapped]
+		public int status {get;set;}
+		[NotMapped]
+		public string data {get;set;}
     }
 }
