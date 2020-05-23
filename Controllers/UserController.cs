@@ -9,7 +9,7 @@ using Microsoft.AspNetCore.Mvc;
 using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using SmartxAPI.Profiles;
-
+using System;
 
 namespace SmartxAPI.Controllers
 {
@@ -19,6 +19,7 @@ namespace SmartxAPI.Controllers
     public class UserController : ControllerBase
     {
         private readonly ISec_UserRepo _repository;
+
         private readonly IMapper _mapper;
 
         public UserController(ISec_UserRepo repository, IMapper mapper)
@@ -40,14 +41,17 @@ namespace SmartxAPI.Controllers
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody]Sec_AuthenticateDto model)
         {
-            var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
+            try{
+                    var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
 
-            if (user == null)
-                return BadRequest(new { message = "Username or password is incorrect" });
+                    if (user == null){ return BadRequest(new { message = "Username or password is incorrect" }); }
 
-
-            // return basic user info and authentication token
-            return Ok(user);
+                    return Ok(user);
+                }
+                catch (Exception ex)
+                {
+                    return StatusCode(403,ex.Message);
+                }
         }
 
         //GET api/User/{id}

@@ -69,6 +69,10 @@ namespace SmartxAPI
             services.AddScoped<IInv_CustomerRepo, Inv_CustomerRepo>();
             services.AddScoped<ISec_UserRepo,Sec_UserRepo>();
             services.AddScoped<IAcc_CompanyRepo,Acc_CompanyRepo>();
+            services.AddScoped<IMenuRepo,MenuRepo>();
+            services.AddScoped<IAcc_SalesQuotationRepo,Acc_SalesQuotationRepo>();
+
+            services.AddScoped<IInvCustomerProjectsRepo,Inv_CustomerProjectsRepo>();
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.

@@ -11,7 +11,8 @@ namespace SmartxAPI.Profiles
         public SmartxAPIProfile()
         {
             //Source -> Target
-            CreateMap<InvCustomer, CustomerReadDto>();
+            CreateMap<AccCompany, Acc_CompanyReadDto>();
+            
             CreateMap<CustomerCreateDto, InvCustomer>();
             CreateMap<CustomerUpdateDto, InvCustomer>();
             CreateMap<InvCustomer, CustomerUpdateDto>();

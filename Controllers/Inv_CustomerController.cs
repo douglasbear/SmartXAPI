@@ -7,6 +7,8 @@ using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -26,36 +28,41 @@ namespace SmartxAPI.Controllers
        
         //GET api/Customer
         [HttpGet]
-        public ActionResult <IEnumerable<CustomerReadDto>> GetAllCommmands()
+        public ActionResult <IEnumerable<VwInvCustomerDisp>> GetAllCommmands()
         {
             var CustomerItems = _repository.GetAllCustomers();
 
-            return Ok(_mapper.Map<IEnumerable<CustomerReadDto>>(CustomerItems));
+            return Ok(_mapper.Map<IEnumerable<VwInvCustomerDisp>>(CustomerItems));
         }
 
-        //GET api/Customer/{id}
-        [HttpGet("{id}", Name="GetCustomerById")]
-        public ActionResult <CustomerReadDto> GetCustomerById(int id)
+        //GET api/customer/list?....
+        [HttpGet("list")]
+        public ActionResult <VwInvCustomerDisp> GetCustomerList(int? nCompanyId,int nFnYearId,int nBranchId)
         {
-            var CustomerItem = _repository.GetCustomerById(id);
-            if(CustomerItem != null)
-            {
-                return Ok(_mapper.Map<CustomerReadDto>(CustomerItem));
+            try{
+                    var CustomerList = _repository.GetCustomerList( nCompanyId, nFnYearId, nBranchId);
+                     if(!CustomerList.Any())
+                    {
+                       return NotFound("No Results Found");
+                    }else{
+                        return Ok(CustomerList);
+                    }
+            }catch(Exception e){
+                return BadRequest(e);
             }
-            return NotFound();
         }
 
-        //POST api/Customer
+       /* //POST api/Customer
         [HttpPost]
-        public ActionResult <CustomerReadDto> CreateCustomer(CustomerCreateDto CustomerCreateDto)
+        public ActionResult <VwInvCustomerDisp> CreateCustomer(CustomerCreateDto CustomerCreateDto)
         {
             var CustomerModel = _mapper.Map<InvCustomer>(CustomerCreateDto);
             _repository.CreateCustomer(CustomerModel);
             _repository.SaveChanges();
 
-            var CustomerReadDto = _mapper.Map<CustomerReadDto>(CustomerModel);
+            var VwInvCustomerDisp = _mapper.Map<VwInvCustomerDisp>(CustomerModel);
 
-            return CreatedAtRoute(nameof(GetCustomerById), new {Id = CustomerReadDto.NCustomerId}, CustomerReadDto);      
+            return CreatedAtRoute(nameof(GetCustomerById), new {Id = VwInvCustomerDisp.NCustomerId}, VwInvCustomerDisp);      
         }
 
         //PUT api/Customer/{id}
@@ -76,7 +83,7 @@ namespace SmartxAPI.Controllers
             return NoContent();
         }
 
-        //PATCH api/Customer/{id}
+         //PATCH api/Customer/{id}
         [HttpPatch("{id}")]
         public ActionResult PartialCustomerUpdate(int id, JsonPatchDocument<CustomerUpdateDto> patchDoc)
         {
@@ -101,7 +108,7 @@ namespace SmartxAPI.Controllers
             _repository.SaveChanges();
 
             return NoContent();
-        }
+        } 
 
         //DELETE api/Customer/{id}
         [HttpDelete("{id}")]
@@ -117,7 +124,7 @@ namespace SmartxAPI.Controllers
 
             return NoContent();
         }
-
+*/
         
         
     }

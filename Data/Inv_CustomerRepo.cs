@@ -38,9 +38,11 @@ namespace SmartxAPI.Data
             return _context.InvCustomer.ToList();
         }
 
-        public InvCustomer GetCustomerById(int id)
+        public IEnumerable<VwInvCustomerDisp> GetCustomerList(int? nCompanyId,int nFnYearId,int nBranchId)
         {
-            return _context.InvCustomer.FirstOrDefault(p => p.NCustomerId == id);
+            return _context.VwInvCustomerDisp
+            .Where(p => p.NCompanyId == nCompanyId && p.NFnYearId==nFnYearId && p.NBranchId==nBranchId)
+            .ToList();
         }
 
         public bool SaveChanges()
@@ -60,7 +62,7 @@ namespace SmartxAPI.Data
     {
         bool SaveChanges();
         IEnumerable<InvCustomer> GetAllCustomers();
-        InvCustomer GetCustomerById(int id);
+        IEnumerable<VwInvCustomerDisp> GetCustomerList(int? nCompanyId,int nFnYearId,int nBranchId);
         void CreateCustomer(InvCustomer cust);
         void UpdateCustomer(InvCustomer cust);
         void DeleteCustomer(InvCustomer cust);

@@ -2,11 +2,14 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using SmartxAPI.Models;
 
 namespace SmartxAPI.Dtos.SP
 {
     public partial class SP_LOGIN
     {
+		[NotMapped]
+		public string Token {get;set;}
 		[Key]
         public int N_UserID { get; set; }
 		public string X_UserName { get; set; }
@@ -37,11 +40,10 @@ namespace SmartxAPI.Dtos.SP
         public bool B_AllBranchesData { get; set; }
 		public int N_TaxType { get; set; }
 		public string X_UserFullName { get; set; }
-		[NotMapped]
-		public string Token {get;set;}
+		
 		[NotMapped]
 		public int status {get;set;}
 		[NotMapped]
-		public string data {get;set;}
+		public IEnumerable<VwUserMenus> menu {get;set;}
     }
 }

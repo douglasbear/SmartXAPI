@@ -15,7 +15,10 @@ namespace SmartxAPI.Data
         }
         public IEnumerable<AccCompany> GetAllCompanys()
         {
-            return _context.AccCompany.ToList();
+            //return _context.AccCompany.ToList();
+            return _context.AccCompany
+            .Where(c=>!(bool)c.BInactive)
+            .ToList();
         }
 
     }

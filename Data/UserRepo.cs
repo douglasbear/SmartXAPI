@@ -73,7 +73,7 @@ namespace SmartxAPI.Data
             
             if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
-            try{
+
                 var user = _context.SP_LOGIN.FromSqlRaw("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
                 .ToList()
                 .FirstOrDefault();
@@ -86,6 +86,7 @@ namespace SmartxAPI.Data
                     Subject=new System.Security.Claims.ClaimsIdentity(new Claim[]{
                         new Claim(ClaimTypes.Name,user.X_UserName),
                         new Claim(ClaimTypes.Role,user.X_UserCategory),
+                        new Claim(ClaimTypes.UserData,user.X_CompanyName),
                         new Claim(ClaimTypes.Version,"V0.1"),
                     }),
                     Expires=DateTime.UtcNow.AddDays(2),
@@ -93,19 +94,15 @@ namespace SmartxAPI.Data
                 };
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 user.Token = tokenHandler.WriteToken(token);
-                user.status = 1;
-                user.data = "Data";
-                return user;
-            }
-            catch (Exception ex)
-            {
-                var user=new SP_LOGIN();
-                user.status=0;
-                user.Token="";
-                user.data=ex.Message;
-                return user;
 
-            }
+                /* To Read Menu From DataBase */
+                user.menu =_context.VwUserMenus
+                .Where(VwUserMenus => VwUserMenus.NUserCategoryId==user.N_UserCategoryID && VwUserMenus.NCompanyId==user.N_CompanyID)
+                .ToList();
+
+                /**/
+
+                return user;
                 
         }
 
