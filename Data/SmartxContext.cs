@@ -3,6 +3,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata;
 using SmartxAPI.Models;
 using SmartxAPI.Dtos.SP;
+using Microsoft.Extensions.Configuration;
+
 namespace SmartxAPI.Data
 {
     public partial class SmartxContext : DbContext
@@ -10,8 +12,8 @@ namespace SmartxAPI.Data
         public SmartxContext()
         {
         }
-
-        public SmartxContext(DbContextOptions<SmartxContext> options)
+        private readonly IConfiguration _config;
+        public SmartxContext(DbContextOptions<SmartxContext> options,IConfiguration config)
             : base(options)
         {
         }
@@ -1982,7 +1984,7 @@ namespace SmartxAPI.Data
             if (!optionsBuilder.IsConfigured)
             {
 #warning To protect potentially sensitive information in your connection string, you should move it out of source code. See http://go.microsoft.com/fwlink/?LinkId=723263 for guidance on storing connection strings.
-                optionsBuilder.UseSqlServer("Server=192.168.100.18;Database=Live_Sx20_Keir_RKS; User ID=sa; Password=b4u; Trusted_Connection=false;");
+                optionsBuilder.UseSqlServer(_config.GetConnectionString("SmartxConnection"));
             }
         }
 

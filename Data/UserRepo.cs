@@ -12,6 +12,8 @@ using System.Text;
 using Microsoft.IdentityModel.Tokens;
 using System.Security.Claims;
 using Newtonsoft.Json;
+using SmartxAPI.Dtos.Login;
+using AutoMapper;
 
 namespace SmartxAPI.Data
 {
@@ -19,11 +21,13 @@ namespace SmartxAPI.Data
     {
         private readonly SmartxContext _context;
         private readonly AppSettings _appSettings;
+        private readonly IMapper _mapper;
 
-        public Sec_UserRepo(SmartxContext context,IOptions<AppSettings> appSettings)
+        public Sec_UserRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper)
         {
             _context = context;
             _appSettings=appSettings.Value;
+            _mapper=mapper;
         }
 
         
@@ -68,13 +72,13 @@ namespace SmartxAPI.Data
             //Nothing
         }
 
-         public SP_LOGIN Authenticate(string companyname,string username, string password)
+         public LoginResponseDto Authenticate(string companyname,string username, string password)
         {
             
             if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
 
-                var user = _context.SP_LOGIN.FromSqlRaw("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
+                var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
                 .ToList()
                 .FirstOrDefault();
 
@@ -84,26 +88,35 @@ namespace SmartxAPI.Data
                 var key=Encoding.ASCII.GetBytes(_appSettings.Secret);
                 var tokenDescriptor = new SecurityTokenDescriptor{
                     Subject=new System.Security.Claims.ClaimsIdentity(new Claim[]{
-                        new Claim(ClaimTypes.Name,user.X_UserName),
-                        new Claim(ClaimTypes.Role,user.X_UserCategory),
-                        new Claim(ClaimTypes.UserData,user.X_CompanyName),
+                        new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
+                        new Claim(ClaimTypes.Name,loginRes.X_UserName),
+                        new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
+                        new Claim(ClaimTypes.UserData,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Version,"V0.1"),
                     }),
                     Expires=DateTime.UtcNow.AddDays(2),
                     SigningCredentials=new SigningCredentials(new SymmetricSecurityKey(key),SecurityAlgorithms.HmacSha256Signature)
                 };
                 var token = tokenHandler.CreateToken(tokenDescriptor);
-                user.Token = tokenHandler.WriteToken(token);
-
-                /* To Read Menu From DataBase */
-                user.menu =_context.VwUserMenus
-                .Where(VwUserMenus => VwUserMenus.NUserCategoryId==user.N_UserCategoryID && VwUserMenus.NCompanyId==user.N_CompanyID)
+                loginRes.Token= tokenHandler.WriteToken(token);
+                var MenuList =_context.VwUserMenus
+                .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID)
                 .ToList();
+                var Menu = _mapper.Map<IEnumerable<MenuDto>>(MenuList);
+            //   var ResMenuList = new MenuDto();
+            // foreach(var ParentMenu in Menu.Where(y=>y.NParentMenuId==0 )){
+            //     var ChildMenuDto = new List<ChildMenuDto>();
+            //     foreach(var ChildMenu in Menu.Where(y=>y.NParentMenuId==ParentMenu.NMenuId )){
+            //         ChildMenuDto.
+            //     }
 
-                /**/
+            // }
 
-                return user;
+
                 
+                loginRes.MenuList = Menu;
+                var m2=_mapper.Map<LoginResponseDto>(loginRes);
+                return(m2);
         }
 
     
@@ -113,7 +126,7 @@ namespace SmartxAPI.Data
     {
         bool SaveChanges();
         IEnumerable<SecUser> GetAllUsers();
-        SP_LOGIN Authenticate(string companyname,string username, string password);
+        LoginResponseDto Authenticate(string companyname,string username, string password);
         SecUser GetUserById(int id);
         void CreateUser(SecUser cust);
         void UpdateUser(SecUser cust);

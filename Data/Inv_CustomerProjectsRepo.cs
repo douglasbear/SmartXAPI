@@ -13,10 +13,11 @@ namespace SmartxAPI.Data
         {
             _context = context;
         }
-        public IEnumerable<VwInvCustomerProjects> GetAllProjects()
+        public IEnumerable<VwInvCustomerProjects> GetAllProjects(int? nCompanyID,int? nFnYearID)
         {
             //return _context.AccCompany.ToList();
             return _context.VwInvCustomerProjects
+             .Where(V => V.NCompanyId==nCompanyID && V.NFnYearId==nFnYearID)
             .ToList();
         }
 
@@ -24,6 +25,6 @@ namespace SmartxAPI.Data
 
     public interface IInvCustomerProjectsRepo
     {
-        IEnumerable<VwInvCustomerProjects> GetAllProjects();
+        IEnumerable<VwInvCustomerProjects> GetAllProjects(int? nCompanyID,int? nFnYearID);
     }
 }

@@ -2,7 +2,7 @@ using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
 using SmartxAPI.Dtos;
-using SmartxAPI.Dtos.Custom;
+using SmartxAPI.Dtos.Login;
 using SmartxAPI.Models;
 using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
@@ -41,17 +41,17 @@ namespace SmartxAPI.Controllers
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody]Sec_AuthenticateDto model)
         {
-            try{
+            //try{
                     var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
 
                     if (user == null){ return BadRequest(new { message = "Username or password is incorrect" }); }
 
                     return Ok(user);
-                }
-                catch (Exception ex)
-                {
-                    return StatusCode(403,ex.Message);
-                }
+                //}
+                //catch (Exception ex)
+                //{
+                  //  return StatusCode(403,ex.Message);
+                //}
         }
 
         //GET api/User/{id}

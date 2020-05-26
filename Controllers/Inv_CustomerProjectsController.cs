@@ -5,11 +5,14 @@ using SmartxAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System;
+using System.Linq;
+
 
 
 namespace SmartxAPI.Controllers
 {
-    //[Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
     [Route("projects")]
     [ApiController]
     public class InvCustomerProjectsController : ControllerBase
@@ -22,12 +25,26 @@ namespace SmartxAPI.Controllers
         }
        
         //GET api/Projects/list
-        [HttpGet("list")]
-        public ActionResult <IEnumerable<VwInvCustomerProjects>> GetAllProjects ()
+        [HttpGet("list") ]
+        public ActionResult <IEnumerable<VwInvCustomerProjects>> GetAllProjects (int? nCompanyID,int? nFnYearID)
         {
-            var Menu = _repository.GetAllProjects();
+            try
+             {
 
-            return Ok(Menu);
+             var CustomerProjectsList = _repository.GetAllProjects(nCompanyID,nFnYearID);
+
+            //return Ok(CustomerProjectsList);
+             if(!CustomerProjectsList.Any())
+                     {
+                        return NotFound("No Results Found");
+                     }else{
+                         return Ok(CustomerProjectsList);
+                     }
+             }
+             catch(Exception e){
+                return BadRequest(e);
+            }
+            
         }
 
        

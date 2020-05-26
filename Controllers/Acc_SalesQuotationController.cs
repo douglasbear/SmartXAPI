@@ -21,7 +21,6 @@ namespace SmartxAPI.Controllers
         private readonly IAcc_SalesQuotationRepo _repository;
         private readonly IMapper _mapper;
 
-        private readonly JWTManager _jwtManager;
 
         public Acc_SalesQuotationController(IAcc_SalesQuotationRepo repository, IMapper mapper)
         {
@@ -29,15 +28,10 @@ namespace SmartxAPI.Controllers
             _mapper = mapper;
         }
        
-        
-
 
         [HttpGet("list")]
         public ActionResult <VwInvSalesQuotationNoSearch> GetSalesQuotationList(int? nCompanyId,int nFnYearId)
         {
-
-            //var identity = HttpContext.User.Identity as ClaimsIdentity;
-            //string CompanyID = _jwtManager.GetClaim(identity.ToString(), "j");
             try{
                     var QuotationList = _repository.GetSalesQuotationList(nCompanyId,nFnYearId);
                     if(!QuotationList.Any())
@@ -50,6 +44,19 @@ namespace SmartxAPI.Controllers
                 return BadRequest(e);
             }
         }
+
+
+       /*  [HttpPost]
+        public ActionResult <VwInvCustomerDisp> CreateCustomer(CustomerCreateDto CustomerCreateDto)
+        {
+            var CustomerModel = _mapper.Map<InvCustomer>(CustomerCreateDto);
+            _repository.CreateCustomer(CustomerModel);
+            _repository.SaveChanges();
+
+            var VwInvCustomerDisp = _mapper.Map<VwInvCustomerDisp>(CustomerModel);
+
+            return CreatedAtRoute(nameof(GetCustomerById), new {Id = VwInvCustomerDisp.NCustomerId}, VwInvCustomerDisp);      
+        } */
 
         
 
