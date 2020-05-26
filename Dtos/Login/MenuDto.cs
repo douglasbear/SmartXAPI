@@ -1,3 +1,5 @@
+using System.Collections.Generic;
+
 namespace SmartxAPI.Dtos.Login
 {
     public class MenuDto
@@ -18,6 +20,6 @@ namespace SmartxAPI.Dtos.Login
         public string XFormNameWithTag { get; set; }
         public bool? NIsStartup { get; set; }
         public bool? BShow { get; set; }
-        public ChildMenuDto ChildMenu {get; set;}
+        public List<ChildMenuDto> ChildMenu {get; set;}
     }
 }

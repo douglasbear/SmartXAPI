@@ -42,6 +42,6 @@ namespace SmartxAPI.Dtos.SP
 		[NotMapped]
 		public string Token{get;set;}
 		[NotMapped]
-		public IEnumerable<MenuDto> MenuList{get;set;}
+		public List<MenuDto> MenuList{get;set;}
     }
 }

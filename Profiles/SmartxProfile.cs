@@ -25,6 +25,10 @@ namespace SmartxAPI.Profiles
 
             CreateMap<VwUserMenus, MenuDto>();
 
+            CreateMap<MenuDto, ChildMenuDto>();
+            CreateMap<ChildMenuDto, MenuDto>();
+
+
 
             CreateMap<SP_LOGIN, UserDto>();
             CreateMap<SP_LOGIN, FnYearDto>();

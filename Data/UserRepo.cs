@@ -72,7 +72,48 @@ namespace SmartxAPI.Data
             //Nothing
         }
 
-         public LoginResponseDto Authenticate(string companyname,string username, string password)
+        //  public LoginResponseDto Authenticate(string companyname,string username, string password)
+        // {
+            
+        //     if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
+        //         return null;
+
+        //         var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
+        //         .ToList()
+        //         .FirstOrDefault();
+
+                
+        //         //If User Found
+        //         var tokenHandler=new JwtSecurityTokenHandler(); 
+        //         var key=Encoding.ASCII.GetBytes(_appSettings.Secret);
+        //         var tokenDescriptor = new SecurityTokenDescriptor{
+        //             Subject=new System.Security.Claims.ClaimsIdentity(new Claim[]{
+        //                 new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
+        //                 new Claim(ClaimTypes.Name,loginRes.X_UserName),
+        //                 new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
+        //                 new Claim(ClaimTypes.UserData,loginRes.X_CompanyName),
+        //                 new Claim(ClaimTypes.Version,"V0.1"),
+        //             }),
+        //             Expires=DateTime.UtcNow.AddDays(2),
+        //             SigningCredentials=new SigningCredentials(new SymmetricSecurityKey(key),SecurityAlgorithms.HmacSha256Signature)
+        //         };
+        //         var token = tokenHandler.CreateToken(tokenDescriptor);
+        //         loginRes.Token= tokenHandler.WriteToken(token);
+        //         var MenuList =_context.VwUserMenus
+        //         .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID)
+        //         .ToList();
+        //         var Menu = _mapper.Map<IEnumerable<MenuDto>>(MenuList);
+
+                
+        //         loginRes.MenuList = Menu;
+        //         var m2=_mapper.Map<LoginResponseDto>(loginRes);
+        //         return(m2);
+        // }
+
+
+
+
+  public LoginResponseDto Authenticate(string companyname,string username, string password)
         {
             
             if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
@@ -102,21 +143,20 @@ namespace SmartxAPI.Data
                 var MenuList =_context.VwUserMenus
                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID)
                 .ToList();
-                var Menu = _mapper.Map<IEnumerable<MenuDto>>(MenuList);
-            //   var ResMenuList = new MenuDto();
-            // foreach(var ParentMenu in Menu.Where(y=>y.NParentMenuId==0 )){
-            //     var ChildMenuDto = new List<ChildMenuDto>();
-            //     foreach(var ChildMenu in Menu.Where(y=>y.NParentMenuId==ParentMenu.NMenuId )){
-            //         ChildMenuDto.
-            //     }
-
-            // }
-
-
-                
-                loginRes.MenuList = Menu;
-                var m2=_mapper.Map<LoginResponseDto>(loginRes);
-                return(m2);
+                var Menu = _mapper.Map<List<MenuDto>>(MenuList);
+            
+            List<MenuDto> PMList = new List<MenuDto>();
+            foreach(var ParentMenu in Menu.Where(y=>y.NParentMenuId==0 )){
+                List<ChildMenuDto> CMList = new List<ChildMenuDto>();
+                foreach(var ChildMenu in Menu.Where(y=>y.NParentMenuId==ParentMenu.NMenuId )){
+                    CMList.Add(_mapper.Map<ChildMenuDto>(ChildMenu));
+                }
+                ParentMenu.ChildMenu=CMList;
+                PMList.Add(_mapper.Map<MenuDto>(ParentMenu));
+            }
+                loginRes.MenuList = PMList;
+                var LoginResponse=_mapper.Map<LoginResponseDto>(loginRes);
+                return(LoginResponse);
         }
 
     
