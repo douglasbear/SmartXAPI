@@ -1,17 +1,13 @@
-using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
-using SmartxAPI.Dtos;
 using SmartxAPI.Models;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using SmartxAPI.Profiles;
+using SmartxAPI.GeneralFunctions;
 using System;
 using System.Linq;
 using System.Data;
-using SmartxAPI.Dtos.Login;
 using Microsoft.Extensions.Configuration;
 using System.Data.SqlClient;
 
@@ -27,13 +23,13 @@ namespace SmartxAPI.Controllers
         private readonly IInv_SalesQuotationRepo _repository;
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
-
-
-        public Inv_SalesQuotationController(IInv_SalesQuotationRepo repository, IMapper mapper,IConfiguration config)
+        private readonly IDataAccessLayer _dataAccess;
+        public Inv_SalesQuotationController(IInv_SalesQuotationRepo repository, IMapper mapper,IConfiguration config,IDataAccessLayer dataaccess)
         {
             _repository = repository;
             _mapper = mapper;
             _config = config;
+            _dataAccess=dataaccess;
         }
        
 
@@ -57,74 +53,18 @@ namespace SmartxAPI.Controllers
        //POST salesquotation/User
        [HttpPost("new")]
         public ActionResult Authenticate([FromBody]DataSet ds)
-        {
-             SqlConnection _Con = new SqlConnection( _config.GetConnectionString("SmartxConnection"));
-                    _Con.Open(); 
-                    SqlTransaction transaction;
-                    transaction = _Con.BeginTransaction("SampleTransaction"); 
+        { 
             try{
-                    //string tk = model.Tables["token"].Rows[0]["token"].ToString();
-                   
-
-        // Start a local transaction.
-        
-                        DataTable table;
-                        table = ds.Tables["table"];
-
-                    string Res="";
-                    string FieldList="";
-                    string FieldValues="";
-                    for (int i = 0; i < table.Columns.Count; i++)
-                    {
-                       if(i==0){
-                           FieldList = table.Columns[i].ColumnName.ToString();
-                       }else{
-                        FieldList = FieldList +","+ table.Columns[i].ColumnName.ToString();
-                       }
-                    }
-                    for (int j = 0 ;j < table.Rows.Count;j++)
-                    {
-                        for (int k = 0; k < table.Columns.Count; k++)
-                        {
-                            var value= table.Rows[j][k].ToString();
-                            if(value==""){value="''";}
-                            if(k==0){
-                                FieldValues = value ;
-                            }else{
-                            FieldValues = FieldValues +"|"+value ;
-                            }
-                        }
-                            SqlDataReader rdr  = null;
-                            SqlCommand cmds  = new SqlCommand("SAVE_DATA", _Con);
-
-                                cmds.CommandType = CommandType.StoredProcedure;
-
-                                cmds.Parameters.Add(new SqlParameter("@X_TableName", "Inv_SalesQuotation"));
-                                cmds.Parameters.Add(new SqlParameter("@X_IDFieldName", "N_QuotationId"));
-                                cmds.Parameters.Add(new SqlParameter("@N_IDFieldValue", "0"));
-                                cmds.Parameters.Add(new SqlParameter("@X_FieldList", FieldList));
-                                cmds.Parameters.Add(new SqlParameter("@X_FieldValue", FieldValues));
-
-                                rdr = cmds.ExecuteReader();
-                                transaction.Commit();
-
-
-                                while (rdr.Read())
-                                {
-                                    Res=rdr.ToString();
-                                }
-
-                        FieldValues="";
-                    }
-                    _Con.Close();
-                                        return Ok(Res);
-
-                    //return Ok(model);
+                    DataTable table;
+                    table = ds.Tables["table"];
+                    _dataAccess.StartTransaction();
+                    int res=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,table);                    
+                    return Ok(res);
                 }
                 catch (Exception ex)
                 {
-                    transaction.Rollback();
-                   return StatusCode(403,ex);
+                    
+                    return StatusCode(403,ex);
                 }
         }
 

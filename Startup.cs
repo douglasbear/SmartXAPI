@@ -19,6 +19,7 @@ using SmartxAPI.Profiles;
 using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
+using SmartxAPI.GeneralFunctions;
 
 namespace SmartxAPI
 {
@@ -75,6 +76,7 @@ namespace SmartxAPI
             services.AddScoped<IInvProductsListRepo,Inv_ProductsListRepo>();
             services.AddScoped<IAccTaxCategoryRepo,Acc_TaxCategoryRepo>();
             services.AddScoped<ICommenServiceRepo,CommenServiceRepo>();
+            services.AddScoped<IDataAccessLayer,DataAccessLayer>();
             
         }
 
