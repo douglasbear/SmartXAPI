@@ -72,47 +72,6 @@ namespace SmartxAPI.Data
             //Nothing
         }
 
-        //  public LoginResponseDto Authenticate(string companyname,string username, string password)
-        // {
-            
-        //     if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
-        //         return null;
-
-        //         var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
-        //         .ToList()
-        //         .FirstOrDefault();
-
-                
-        //         //If User Found
-        //         var tokenHandler=new JwtSecurityTokenHandler(); 
-        //         var key=Encoding.ASCII.GetBytes(_appSettings.Secret);
-        //         var tokenDescriptor = new SecurityTokenDescriptor{
-        //             Subject=new System.Security.Claims.ClaimsIdentity(new Claim[]{
-        //                 new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
-        //                 new Claim(ClaimTypes.Name,loginRes.X_UserName),
-        //                 new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
-        //                 new Claim(ClaimTypes.UserData,loginRes.X_CompanyName),
-        //                 new Claim(ClaimTypes.Version,"V0.1"),
-        //             }),
-        //             Expires=DateTime.UtcNow.AddDays(2),
-        //             SigningCredentials=new SigningCredentials(new SymmetricSecurityKey(key),SecurityAlgorithms.HmacSha256Signature)
-        //         };
-        //         var token = tokenHandler.CreateToken(tokenDescriptor);
-        //         loginRes.Token= tokenHandler.WriteToken(token);
-        //         var MenuList =_context.VwUserMenus
-        //         .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID)
-        //         .ToList();
-        //         var Menu = _mapper.Map<IEnumerable<MenuDto>>(MenuList);
-
-                
-        //         loginRes.MenuList = Menu;
-        //         var m2=_mapper.Map<LoginResponseDto>(loginRes);
-        //         return(m2);
-        // }
-
-
-
-
   public LoginResponseDto Authenticate(string companyname,string username, string password)
         {
             
@@ -132,7 +91,9 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
                         new Claim(ClaimTypes.Name,loginRes.X_UserName),
                         new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
-                        new Claim(ClaimTypes.UserData,loginRes.X_CompanyName),
+                        new Claim(ClaimTypes.GroupSid,loginRes.N_UserCategoryID.ToString()),
+                        new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
+                        new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
                     }),
                     Expires=DateTime.UtcNow.AddDays(2),
@@ -140,6 +101,7 @@ namespace SmartxAPI.Data
                 };
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 loginRes.Token= tokenHandler.WriteToken(token);
+                loginRes.Expiry = DateTime.UtcNow.AddDays(2);
                 var MenuList =_context.VwUserMenus
                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID)
                 .ToList();

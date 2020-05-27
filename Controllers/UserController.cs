@@ -10,6 +10,8 @@ using System.IdentityModel.Tokens.Jwt;
 using Microsoft.IdentityModel.Tokens;
 using SmartxAPI.Profiles;
 using System;
+using System.Security.Claims;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -41,18 +43,19 @@ namespace SmartxAPI.Controllers
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody]Sec_AuthenticateDto model)
         {
-            //try{
+            try{
                     var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
 
                     if (user == null){ return BadRequest(new { message = "Username or password is incorrect" }); }
 
                     return Ok(user);
-                //}
-                //catch (Exception ex)
-                //{
-                  //  return StatusCode(403,ex.Message);
-                //}
+                }
+                catch (Exception ex)
+                {
+                   return StatusCode(403,ex.Message);
+                }
         }
+
 
         //GET api/User/{id}
         [HttpGet("{id}", Name="GetUserById")]

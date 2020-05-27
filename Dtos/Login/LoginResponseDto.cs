@@ -8,7 +8,7 @@ namespace SmartxAPI.Dtos.Login
 {
     public class LoginResponseDto
     {
-		public string Token { get; set; }
+		public TokenDto Token { get; set; }
 		public UserDto UserData { get; set; }
 		public CompanyDto CompanyData {get; set;}
 		public FnYearDto FnYearData {get; set;}

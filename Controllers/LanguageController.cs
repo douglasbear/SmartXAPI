@@ -1,17 +1,12 @@
 using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
-using SmartxAPI.Dtos;
 using SmartxAPI.Models;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
-using SmartxAPI.Profiles;
 using System;
 using System.Linq;
-using SmartxAPI.Dtos.Language;
-using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
@@ -29,7 +24,6 @@ namespace SmartxAPI.Controllers
             _repository = repository;
             _mapper = mapper;
         }
-       
 
         [HttpGet("list")]
         public ActionResult <LanLanguage> GetLanguageList()
