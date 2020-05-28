@@ -77,6 +77,7 @@ namespace SmartxAPI
             services.AddScoped<IAccTaxCategoryRepo,Acc_TaxCategoryRepo>();
             services.AddScoped<ICommenServiceRepo,CommenServiceRepo>();
             services.AddScoped<IDataAccessLayer,DataAccessLayer>();
+            services.AddScoped<IApiFunctions,ApiFunctions>();
             
         }
 
