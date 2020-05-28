@@ -30,6 +30,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             string FieldList="";
             string FieldValues="";
+            int Result =0;
             for (int i = 0; i < DataTable.Columns.Count; i++)
             {
                 if(i==0){
@@ -56,23 +57,19 @@ namespace SmartxAPI.GeneralFunctions
                         Command.Transaction=_transaction;
                         Command.CommandType = CommandType.StoredProcedure;
 
-                        Command.Parameters.Add(new SqlParameter("@X_TableName", "Inv_SalesQuotation"));
-                        Command.Parameters.Add(new SqlParameter("@X_IDFieldName", "N_QuotationId"));
-                        Command.Parameters.Add(new SqlParameter("@N_IDFieldValue", "0"));
+                        Command.Parameters.Add(new SqlParameter("@X_TableName", TableName));
+                        Command.Parameters.Add(new SqlParameter("@X_IDFieldName", IDFieldName));
+                        Command.Parameters.Add(new SqlParameter("@N_IDFieldValue", IDFieldValue));
                         Command.Parameters.Add(new SqlParameter("@X_FieldList", FieldList));
                         Command.Parameters.Add(new SqlParameter("@X_FieldValue", FieldValues));
 
-                        DataReader = Command.ExecuteReader();
-
-                        while (DataReader.Read())
-                        {
-                            DataReader.ToString();
-                        }
+                       
+                        Result = (int)Command.ExecuteScalar();
 
                 FieldValues="";
             }       
             
-            return 0;
+            return Result;
         }
     
 }

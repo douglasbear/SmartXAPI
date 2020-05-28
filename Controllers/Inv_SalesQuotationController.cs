@@ -24,11 +24,12 @@ namespace SmartxAPI.Controllers
         private readonly IMapper _mapper;
         private readonly IConfiguration _config;
         private readonly IDataAccessLayer _dataAccess;
-        public Inv_SalesQuotationController(IInv_SalesQuotationRepo repository, IMapper mapper,IConfiguration config,IDataAccessLayer dataaccess)
+
+        
+        public Inv_SalesQuotationController(IInv_SalesQuotationRepo repository, IMapper mapper,IDataAccessLayer dataaccess)
         {
             _repository = repository;
             _mapper = mapper;
-            _config = config;
             _dataAccess=dataaccess;
         }
        
@@ -55,15 +56,26 @@ namespace SmartxAPI.Controllers
         public ActionResult Authenticate([FromBody]DataSet ds)
         { 
             try{
-                    DataTable table;
-                    table = ds.Tables["table"];
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
                     _dataAccess.StartTransaction();
-                    int res=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,table);                    
-                    return Ok(res);
+                    int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
+                    if(N_QuotationId<=0){
+                        _dataAccess.Rollback();
+                        }
+                    for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                        {
+                            DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
+                        }
+                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
+                    _dataAccess.Commit();
+                    return Ok("DataSaved");
                 }
                 catch (Exception ex)
                 {
-                    
+                    _dataAccess.Rollback();
                     return StatusCode(403,ex);
                 }
         }
@@ -75,53 +87,16 @@ namespace SmartxAPI.Controllers
              
             SqlConnection _Con = new SqlConnection( _config.GetConnectionString("SmartxConnection"));  
             try{
-                string sql = "select top (1) SELECT  N_CompanyId, N_FnYearId,0, X_QuotationNo, D_QuotationDate, D_EntryDate, N_CustomerId, N_BillAmt, N_DiscountAmt, N_FreightAmt, N_CashReceived, x_Notes, N_UserID, N_Processed, N_LocationID, N_BranchId, N_SalesmanID, N_ProjectID, N_SalesID, X_CustomerName, N_CRMID, B_Revised, X_ActualQuotationNo, X_RfqRefNo, N_FreightAmtF, N_ValidDays, D_QuotationExpiry, D_RfqRefDate, X_TandC, X_RequestedBy, N_TaxAmt, X_Subject, N_OthTaxAmt, N_OthTaxCategoryID, N_OthTaxPercentage, D_DelDate, X_Location FROM            Inv_SalesQuotation from Inv_SalesQuotation";
-    _Con.Open();
-    SqlDataAdapter da = new SqlDataAdapter();
-    SqlCommand cmd = _Con.CreateCommand();
-    cmd.CommandText = sql;
-    da.SelectCommand = cmd;
-    DataSet ds = new DataSet();
-    DataTable table;
-table = ds.Tables["table"];
-
-string Res="";
-string FieldList="";
-string FieldValues="";
-for (int i = 0; i < table.Columns.Count; i++)
-{
-    FieldList = FieldList +","+ table.Columns[i].ColumnName.ToString();
-}
-for (int j = 0 ;j < table.Rows.Count;j++)
-{
-    for (int k = 0; k < table.Columns.Count; k++)
-    {
-        var value= table.Rows[j][k].ToString();
-        if(value==""){value="''";}
-        FieldValues = FieldValues +"|"+value ;
-    }
-        SqlDataReader rdr  = null;
-    	SqlCommand cmds  = new SqlCommand("SAVE_DATA", _Con);
-
-			cmds.CommandType = CommandType.StoredProcedure;
-
-			cmds.Parameters.Add(new SqlParameter("@X_TableName", "Inv_SalesQuotation"));
-            cmds.Parameters.Add(new SqlParameter("@X_IDFieldName", "N_QuotationId"));
-            cmds.Parameters.Add(new SqlParameter("@N_IDFieldValue", "0"));
-            cmds.Parameters.Add(new SqlParameter("@X_FieldList", FieldList));
-            cmds.Parameters.Add(new SqlParameter("@X_FieldValue", FieldValues));
-
-			rdr = cmds.ExecuteReader();
-
-			while (rdr.Read())
-			{
-				Res=rdr.ToString();
-			}
-
-    FieldValues="";
-}
-_Con.Close();
-                    return Ok(Res);
+                string sql = "select top (1) * from Inv_SalesQuotationDetails";
+                _Con.Open();
+                SqlDataAdapter da = new SqlDataAdapter();
+                SqlCommand cmd = _Con.CreateCommand();
+                cmd.CommandText = sql;
+                da.SelectCommand = cmd;
+                DataSet ds = new DataSet();
+                da.Fill(ds);
+                _Con.Close();
+                return Ok(ds);
             }catch(Exception e){
                 return BadRequest(e);
             }
