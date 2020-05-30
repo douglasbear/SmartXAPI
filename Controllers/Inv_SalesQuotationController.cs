@@ -1,16 +1,10 @@
-using AutoMapper;
-using SmartxAPI.Data;
-using SmartxAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using SmartxAPI.GeneralFunctions;
 using System;
-using System.Linq;
 using System.Data;
-using Microsoft.Extensions.Configuration;
-using System.Data.SqlClient;
-
+using System.Collections;
 
 namespace SmartxAPI.Controllers
 
@@ -20,46 +14,57 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_SalesQuotationController : ControllerBase
     {
-        private readonly IInv_SalesQuotationRepo _repository;
-        private readonly IMapper _mapper;
-        private readonly IConfiguration _config;
         private readonly IDataAccessLayer _dataAccess;
+        private readonly IApiFunctions _api;
 
         
-        public Inv_SalesQuotationController(IInv_SalesQuotationRepo repository, IMapper mapper,IDataAccessLayer dataaccess)
+        public Inv_SalesQuotationController(IDataAccessLayer dataaccess,IApiFunctions api)
         {
-            _repository = repository;
-            _mapper = mapper;
             _dataAccess=dataaccess;
+            _api=api;
         }
        
 
         [HttpGet("list")]
-        public ActionResult <VwInvSalesQuotationNoSearch> GetSalesQuotationList(int? nCompanyId,int nFnYearId)
+        public ActionResult GetSalesQuotationList(int? nCompanyId,int nFnYearId)
         {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="vw_InvSalesQuotationNo_Search";
+            string X_Fields = "*";
+            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
+            string X_OrderBy="";
+            Params.Add("@p1",nCompanyId);
+            Params.Add("@p2",nFnYearId);
+
             try{
-                    var QuotationList = _repository.GetSalesQuotationList(nCompanyId,nFnYearId);
-                    if(!QuotationList.Any())
+                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                if(dt.Rows.Count==0)
                     {
-                       return NotFound("No Results Found");
+                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
                     }else{
-                        return Ok(QuotationList);
-                    }
+                        return Ok(dt);
+                    }   
             }catch(Exception e){
-                return BadRequest(e);
+                return StatusCode(404,_api.Response(404,e.Message));
             }
         }
 
-
-       //POST salesquotation/User
-       [HttpPost("new")]
-        public ActionResult Authenticate([FromBody]DataSet ds)
+       //Save....
+       [HttpPost("Save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
         { 
             try{
                     DataTable MasterTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+
+                    // Auto Gen
+                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+
+
                     _dataAccess.StartTransaction();
                     int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
                     if(N_QuotationId<=0){
@@ -79,32 +84,19 @@ namespace SmartxAPI.Controllers
                     return StatusCode(403,ex);
                 }
         }
-
-
-        [HttpGet("get")]
-        public ActionResult GetData()
+        //Delete....
+         [HttpDelete()]
+        public ActionResult DeleteData(int N_QuotationID)
         {
-             
-            SqlConnection _Con = new SqlConnection( _config.GetConnectionString("SmartxConnection"));  
-            try{
-                string sql = "select top (1) * from Inv_SalesQuotationDetails";
-                _Con.Open();
-                SqlDataAdapter da = new SqlDataAdapter();
-                SqlCommand cmd = _Con.CreateCommand();
-                cmd.CommandText = sql;
-                da.SelectCommand = cmd;
-                DataSet ds = new DataSet();
-                da.Fill(ds);
-                _Con.Close();
-                return Ok(ds);
-            }catch(Exception e){
-                return BadRequest(e);
-            }
+            int Results=0;
+            try
+            {Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
+            return Ok();}
+            catch (Exception ex)
+            {return Ok();}
+            
+
         }
-
-   
-        
-
         
     }
 }

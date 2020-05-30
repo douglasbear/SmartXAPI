@@ -7,6 +7,7 @@ using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
 using System.Linq;
+using SmartxAPI.GeneralFunctions;
 
 namespace SmartxAPI.Controllers
 {
@@ -17,12 +18,14 @@ namespace SmartxAPI.Controllers
     {
         private readonly ILanguageRepo _repository;
         private readonly IMapper _mapper;
+        private readonly IApiFunctions _api;
 
 
-        public LanguageController(ILanguageRepo repository, IMapper mapper)
+        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api)
         {
             _repository = repository;
             _mapper = mapper;
+            _api=api;
         }
 
         [HttpGet("list")]
@@ -32,12 +35,12 @@ namespace SmartxAPI.Controllers
                     var LanguageList = _repository.GetLanguageList();
                     if(!LanguageList.Any())
                     {
-                       return NotFound("No Results Found");
+                       return StatusCode(200,_api.Response(200,"No Results Found"));
                     }else{
                         return Ok(LanguageList);
                     }
             }catch(Exception e){
-                return BadRequest(e);
+                return StatusCode(404,_api.Response(404,e.Message));
             }
         }
 
@@ -48,12 +51,12 @@ namespace SmartxAPI.Controllers
                     var LanguageList = _repository.GetControllsListAsync();
                     if(!LanguageList.Any())
                     {
-                       return NotFound("No Results Found");
+                       return StatusCode(200,_api.Response(200,"No Results Found"));
                     }else{
                         return Ok(LanguageList);
                     }
             }catch(Exception e){
-                return BadRequest(e);
+                return StatusCode(404,_api.Response(404,e.Message));
             }
         }
 

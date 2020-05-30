@@ -67,14 +67,8 @@ namespace SmartxAPI
 
             services.AddAutoMapper(AppDomain.CurrentDomain.GetAssemblies());
 
-            services.AddScoped<IInv_CustomerRepo, Inv_CustomerRepo>();
             services.AddScoped<ISec_UserRepo,Sec_UserRepo>();
-            services.AddScoped<IAcc_CompanyRepo,Acc_CompanyRepo>();
-            services.AddScoped<IInv_SalesQuotationRepo,Inv_SalesQuotationRepo>();
-            services.AddScoped<IInvCustomerProjectsRepo,Inv_CustomerProjectsRepo>();
             services.AddScoped<ILanguageRepo,LanguageRepo>();
-            services.AddScoped<IInvProductsListRepo,Inv_ProductsListRepo>();
-            services.AddScoped<IAccTaxCategoryRepo,Acc_TaxCategoryRepo>();
             services.AddScoped<ICommenServiceRepo,CommenServiceRepo>();
             services.AddScoped<IDataAccessLayer,DataAccessLayer>();
             services.AddScoped<IApiFunctions,ApiFunctions>();

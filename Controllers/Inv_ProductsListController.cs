@@ -1,48 +1,56 @@
 using System.Collections.Generic;
-using AutoMapper;
-using SmartxAPI.Data;
 using SmartxAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
-using System.Linq;
-
-
+using SmartxAPI.GeneralFunctions;
+using System.Data;
+using System.Collections;
 
 namespace SmartxAPI.Controllers
 {
-   // [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
     [Route("products")]
     [ApiController]
     public class InvProductsListController : ControllerBase
     {
-        private readonly IInvProductsListRepo _repository;
+        private readonly IDataAccessLayer _dataAccess;
+        private readonly IApiFunctions _api;
 
-        public InvProductsListController(IInvProductsListRepo repository, IMapper mapper)
+        public InvProductsListController(IDataAccessLayer data,IApiFunctions api)
         {
-            _repository = repository;
+            _dataAccess = data;
+            _api=api;
         }
        
         //GET api/Projects/list
         [HttpGet("list") ]
         public ActionResult <IEnumerable<VwInvItemSearch>> GetAllItems (int? nCompanyID)
         {
-            try
-             {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="Vw_InvItem_Search";
+            string X_Fields = "*";
+            string X_Crieteria = "N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4";
+            string X_OrderBy="[Item Code]";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",0);
+            Params.Add("@p3","001");
+            Params.Add("@p4",1);
 
-             var ProductsList = _repository.GetAllItems(nCompanyID);
-
-            //return Ok(CustomerProjectsList);
-             if(!ProductsList.Any())
-                     {
-                        return NotFound("No Results Found");
-                     }else{
-                         return Ok(ProductsList);
-                     }
-             }
-             catch(Exception e){
-                return BadRequest(e);
+            try{
+                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                if(dt.Rows.Count==0)
+                    {
+                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                    }else{
+                        return Ok(dt);
+                    }
+                
+            }catch(Exception e){
+                return StatusCode(404,_api.Response(404,e.Message));
             }
             
         }

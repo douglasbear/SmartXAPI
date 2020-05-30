@@ -1,0 +1,62 @@
+{
+  "openapi": "3.0.0",
+  "info": {
+    "title": "SmartxAPI",
+    "version": "1.0",
+    "contact": {
+      "name": "Olivo Tech"
+    },
+    "description": "Samrtx API for Smartx ERP Application"
+  },
+  "servers": [
+    {
+      "url": "http://localhost:3000",
+      "description": "LocalHost"
+    },
+    {
+      "url": "http://192.169.227.51:5100",
+      "description": "Live"
+    }
+  ],
+  "paths": {
+    "/user/login": {
+      "post": {
+        "summary": "User Login",
+        "tags": [],
+        "responses": {},
+        "operationId": "post-user-login",
+        "description": "User Login",
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "type": "object"
+              },
+              "examples": {
+                "Login Body": {
+                  "value": {
+                    "companyName": "KEIR INTERNATIONAL COMPANY",
+                    "username": "Admin",
+                    "password": "admin"
+                  }
+                }
+              }
+            }
+          },
+          "description": "Login Credentials"
+        }
+      },
+      "parameters": []
+    }
+  },
+  "components": {
+    "schemas": {},
+    "securitySchemes": {
+      "API Key - 1": {
+        "name": "API Key",
+        "type": "apiKey",
+        "in": "query"
+      }
+    }
+  }
+}

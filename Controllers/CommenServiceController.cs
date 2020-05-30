@@ -1,15 +1,11 @@
-using System.Collections.Generic;
-using AutoMapper;
 using SmartxAPI.Data;
-using SmartxAPI.Dtos;
-using SmartxAPI.Models;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
 using System.Linq;
 using System.Security.Claims;
+using SmartxAPI.GeneralFunctions;
 
 namespace SmartxAPI.Controllers
 {
@@ -19,13 +15,13 @@ namespace SmartxAPI.Controllers
     public class CommenServiceController : ControllerBase
     {
         private readonly ICommenServiceRepo _repository;
-        private readonly IMapper _mapper;
+        private readonly IApiFunctions _api;
 
 
-        public CommenServiceController(ICommenServiceRepo repository, IMapper mapper)
+        public CommenServiceController(ICommenServiceRepo repository,IApiFunctions api)
         {
             _repository = repository;
-            _mapper = mapper;
+            _api = api;
         }
        
 
@@ -40,13 +36,13 @@ namespace SmartxAPI.Controllers
                 
                 var user = _repository.Authenticate(companyid,companyname,username,userid,reqType);
 
-                if (user == null){ return BadRequest(new { message = "Unauthorized Access" }); }
+                if (user == null){ return StatusCode(403,_api.Response(403,"Unauthorized Access" )); }
 
                     return Ok(user);
                 }
                 catch (Exception ex)
                 {
-                   return StatusCode(403,ex);
+                   return StatusCode(404,_api.Response(404,ex.Message ));
                 }  
         }
 

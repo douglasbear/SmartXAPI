@@ -4,6 +4,10 @@ using SmartxAPI.Data;
 using SmartxAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using SmartxAPI.Dtos;
+using SmartxAPI.GeneralFunctions;
+using System.Data;
+using System.Collections;
+using System;
 
 namespace SmartxAPI.Controllers
 {
@@ -11,23 +15,40 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Acc_CompanyController : ControllerBase
     {
-        private readonly IAcc_CompanyRepo _repository;
+        private readonly IDataAccessLayer _dataAccess; 
+        private readonly IApiFunctions _api;
 
-        private readonly IMapper _mapper;
-
-        public Acc_CompanyController(IAcc_CompanyRepo repository, IMapper mapper)
+        public Acc_CompanyController(IDataAccessLayer data,IApiFunctions api)
         {
-            _repository = repository;
-            _mapper=mapper;
+            _dataAccess=data;
+            _api=api;
         }
        
         //GET api/Company/list
         [HttpGet("list")]
-        public ActionResult <IEnumerable<Acc_CompanyReadDto>> GetAllCompanys()
+        public ActionResult GetAllCompanys()
         {
-            var Companys = _repository.GetAllCompanys();
-            return Ok(_mapper.Map<IEnumerable<Acc_CompanyReadDto>>(Companys));
-          //  return Ok(Companys);
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="Acc_Company";
+            string X_Fields = "N_CompanyId,X_CompanyName,X_CompanyCode";
+            string X_Crieteria = "B_Inactive =@p1";
+            string X_OrderBy="X_CompanyName";
+            Params.Add("@p1",0);
+            try{
+                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                    if(dt.Rows.Count==0)
+                        {
+                            return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                        }else{
+                            return Ok(dt);
+                        }
+                
+            }catch(Exception e){
+                return StatusCode(404,_api.Response(404,e.Message));
+            }
+          
         }
 
        

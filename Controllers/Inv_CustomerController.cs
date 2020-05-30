@@ -1,14 +1,12 @@
-using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
-using SmartxAPI.Dtos;
-using SmartxAPI.Models;
-using Microsoft.AspNetCore.JsonPatch;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
-using System.Linq;
+using SmartxAPI.GeneralFunctions;
+using System.Data;
+using System.Collections;
 
 namespace SmartxAPI.Controllers
 {
@@ -17,115 +15,75 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_CustomerController : ControllerBase
     {
-        private readonly IInv_CustomerRepo _repository;
-        private readonly IMapper _mapper;
+        private readonly IApiFunctions _api;
+        private readonly IDataAccessLayer _dataAccess;
 
-        public Inv_CustomerController(IInv_CustomerRepo repository, IMapper mapper)
+
+        public Inv_CustomerController(IApiFunctions api,IDataAccessLayer dataAccess)
         {
-            _repository = repository;
-            _mapper = mapper;
+            _api=api;
+            _dataAccess = dataAccess;
         }
        
-        //GET api/Customer
-        [HttpGet]
-        public ActionResult <IEnumerable<VwInvCustomerDisp>> GetAllCommmands()
-        {
-            var CustomerItems = _repository.GetAllCustomers();
-
-            return Ok(_mapper.Map<IEnumerable<VwInvCustomerDisp>>(CustomerItems));
-        }
 
         //GET api/customer/list?....
         [HttpGet("list")]
-        public ActionResult <VwInvCustomerDisp> GetCustomerList(int? nCompanyId,int nFnYearId,int nBranchId)
+        public ActionResult GetCustomerList(int? nCompanyId,int nFnYearId,int nBranchId,bool bAllBranchesData)
         {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="vw_InvCustomer_Disp";
+            string X_Fields = "[Customer Code],[Customer Name],[Contact Person],Address,N_CompanyID,N_CustomerId,B_Inactive,N_FnYearID,N_BranchID";
+            string X_Crieteria = "";
+            string X_OrderBy="[Customer Name],[Customer Code]";
+            Params.Add("@p1",0);
+            Params.Add("@p2",nCompanyId);
+            Params.Add("@p3",nFnYearId);
+
+            if (bAllBranchesData == true)
+                {X_Crieteria = "B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3";}
+                else
+                {X_Crieteria = "B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3  and (N_BranchID=@p4 or N_BranchID=@p5)"; 
+                Params.Add("@p4",0);
+                Params.Add("@p5",nBranchId);}
+
             try{
-                    var CustomerList = _repository.GetCustomerList( nCompanyId, nFnYearId, nBranchId);
-                     if(!CustomerList.Any())
+                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                     if(dt.Rows.Count==0)
                     {
-                       return NotFound("No Results Found");
+                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
                     }else{
-                        return Ok(CustomerList);
+                        return Ok(dt);
                     }
+                }catch(Exception e){
+                    return StatusCode(404,_api.Response(404,e.Message));
+                }
+        }
+
+[HttpGet("paymentmethod")]
+        public ActionResult GetPayMethod()
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="Inv_CustomerType";
+            string X_Fields = "*";
+            string X_Crieteria = "";
+            string X_OrderBy="X_TypeName";
+
+            try{
+                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                if(dt.Rows.Count==0)
+                    {
+                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                    }else{
+                        return Ok(dt);
+                    }
+                
             }catch(Exception e){
-                return BadRequest(e);
+                return StatusCode(404,_api.Response(404,e.Message));
             }
         }
-
-       /* //POST api/Customer
-        [HttpPost]
-        public ActionResult <VwInvCustomerDisp> CreateCustomer(CustomerCreateDto CustomerCreateDto)
-        {
-            var CustomerModel = _mapper.Map<InvCustomer>(CustomerCreateDto);
-            _repository.CreateCustomer(CustomerModel);
-            _repository.SaveChanges();
-
-            var VwInvCustomerDisp = _mapper.Map<VwInvCustomerDisp>(CustomerModel);
-
-            return CreatedAtRoute(nameof(GetCustomerById), new {Id = VwInvCustomerDisp.NCustomerId}, VwInvCustomerDisp);      
-        }
-
-        //PUT api/Customer/{id}
-        [HttpPut("{id}")]
-        public ActionResult UpdateCustomer(int id, CustomerUpdateDto CustomerUpdateDto)
-        {
-            var CustomerModelFromRepo = _repository.GetCustomerById(id);
-            if(CustomerModelFromRepo == null)
-            {
-                return NotFound();
-            }
-            _mapper.Map(CustomerUpdateDto, CustomerModelFromRepo);
-
-            _repository.UpdateCustomer(CustomerModelFromRepo);
-
-            _repository.SaveChanges();
-
-            return NoContent();
-        }
-
-         //PATCH api/Customer/{id}
-        [HttpPatch("{id}")]
-        public ActionResult PartialCustomerUpdate(int id, JsonPatchDocument<CustomerUpdateDto> patchDoc)
-        {
-            var CustomerModelFromRepo = _repository.GetCustomerById(id);
-            if(CustomerModelFromRepo == null)
-            {
-                return NotFound();
-            }
-
-            var CustomerToPatch = _mapper.Map<CustomerUpdateDto>(CustomerModelFromRepo);
-            patchDoc.ApplyTo(CustomerToPatch, ModelState);
-
-            if(!TryValidateModel(CustomerToPatch))
-            {
-                return ValidationProblem(ModelState);
-            }
-
-            _mapper.Map(CustomerToPatch, CustomerModelFromRepo);
-
-            _repository.UpdateCustomer(CustomerModelFromRepo);
-
-            _repository.SaveChanges();
-
-            return NoContent();
-        } 
-
-        //DELETE api/Customer/{id}
-        [HttpDelete("{id}")]
-        public ActionResult DeleteCustomer(int id)
-        {
-            var CustomerModelFromRepo = _repository.GetCustomerById(id);
-            if(CustomerModelFromRepo == null)
-            {
-                return NotFound();
-            }
-            _repository.DeleteCustomer(CustomerModelFromRepo);
-            _repository.SaveChanges();
-
-            return NoContent();
-        }
-*/
-        
-        
     }
 }
