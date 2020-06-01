@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
             SortedList Params=new SortedList();
             
             string X_Table="vw_AccMastLedger";
-            string X_Fields = "[Account Code],Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type";
+            string X_Fields = "[Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type";
             string X_Crieteria ="";
             string X_OrderBy="[Account Code]";
             
@@ -50,6 +50,8 @@ namespace SmartxAPI.Controllers
 
             try{
                 dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                foreach(DataColumn c in dt.Columns)
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));

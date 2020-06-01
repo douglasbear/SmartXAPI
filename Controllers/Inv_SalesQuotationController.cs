@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             SortedList Params=new SortedList();
             
             string X_Table="vw_InvSalesQuotationNo_Search";
-            string X_Fields = "*";
+            string X_Fields = "N_QuotationId as NQuotationId,[Quotation No] as QuotationNo,[Quotation Date] as QuotationDate,N_CompanyId as NCompanyId,N_CustomerId as NCustomerId,[Customer Code] as CustomerCode,N_FnYearID as NFnYearId,D_QuotationDate as DQuotationDate,N_BranchId as NBranchId,B_YearEndProcess as BYearEndProcess,X_CustomerName as XCustomerName,X_BranchName as XBranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt as NDiscountAmt,N_Processed as NProcessed,N_OthTaxAmt as NOthTaxAmt,N_BillAmt as NBillAmt,N_ProjectID as NProjectId,X_ProjectName as XProjectName";
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
             string X_OrderBy="";
             Params.Add("@p1",nCompanyId);
@@ -46,6 +46,58 @@ namespace SmartxAPI.Controllers
                     }else{
                         return Ok(dt);
                     }   
+            }catch(Exception e){
+                return StatusCode(404,_api.Response(404,e.Message));
+            }
+        }
+        [HttpGet("listDetails")]
+        public ActionResult GetSalesQuotationList(int? nCompanyId,int nQuotationId,int nFnYearId)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            
+            string X_Table="vw_InvSalesQuotationNo_Search";
+            string X_Fields = "*";   
+            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
+            string X_OrderBy="";
+            Params.Add("@p1",nCompanyId);
+            Params.Add("@p2",nFnYearId);
+            Params.Add("@p3",nQuotationId);
+
+            try{
+                DataTable Quotation = new DataTable();
+                
+                Quotation=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                foreach(DataColumn c in Quotation.Columns)
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt.Tables.Add(Quotation);
+                Quotation.TableName="Master";
+                
+                //Quotation Details
+
+            string  X_Table1="vw_InvQuotationDetails";
+            string X_Fields1 = "*";
+            string X_Crieteria1 = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
+            string X_OrderBy1="";
+            DataTable QuotationDetails = new DataTable();
+            QuotationDetails=_dataAccess.Select(X_Table1,X_Fields1,X_Crieteria1,Params,X_OrderBy1);
+            foreach(DataColumn c in QuotationDetails.Columns)
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
+            dt.Tables.Add(QuotationDetails);
+            QuotationDetails.TableName="Details";
+
+            
+
+
+
+return Ok(dt);
+
+                // if(dt.Tables["Master"].Rows.Count==0)
+                //     {
+                //         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                //     }else{
+                //         return Ok(dt.Tables[0]);
+                //     }   
             }catch(Exception e){
                 return StatusCode(404,_api.Response(404,e.Message));
             }

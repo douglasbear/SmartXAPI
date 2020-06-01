@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             SortedList Params=new SortedList();
             
             string X_Table="Acc_Company";
-            string X_Fields = "N_CompanyId,X_CompanyName,X_CompanyCode";
+            string X_Fields = "N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode";
             string X_Crieteria = "B_Inactive =@p1";
             string X_OrderBy="X_CompanyName";
             Params.Add("@p1",0);

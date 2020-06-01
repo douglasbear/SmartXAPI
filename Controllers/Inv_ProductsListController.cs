@@ -42,6 +42,8 @@ namespace SmartxAPI.Controllers
 
             try{
                 dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                foreach(DataColumn c in dt.Columns)
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));

@@ -121,7 +121,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             SqlDataAdapter da = new SqlDataAdapter();
             SqlCommand Command;
-            DataSet ds = new DataSet();
+            DataTable ds = new DataTable();
 
             if(FieldName==""){FieldName="*";}
 
@@ -143,7 +143,7 @@ namespace SmartxAPI.GeneralFunctions
             da.SelectCommand = Command;
             da.Fill(ds);
 
-            return ds.Tables[0];
+            return ds;
         }
         public Object ExecuteProcedure(string ProcedureName,string Params)
             {
