@@ -79,7 +79,7 @@ namespace SmartxAPI.GeneralFunctions
             Command.Parameters.Add(new SqlParameter("@N_IDFieldValue", IDFieldValue));
             Command.Parameters.Add(new SqlParameter("@X_Critieria", X_Critieria));
    
-            Result = (int)Command.ExecuteScalar();
+            Result = (int)Command.ExecuteNonQuery();
             return Result;
         }
         public int UpdateData(string TableName,string UpdateFiels,string X_Critieria,SortedList Params)

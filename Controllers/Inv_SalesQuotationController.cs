@@ -140,12 +140,32 @@ return Ok(dt);
          [HttpDelete()]
         public ActionResult DeleteData(int N_QuotationID)
         {
-            int Results=0;
+             int Results=0;
             try
-            {Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
-            return Ok();}
+            {
+                _dataAccess.StartTransaction();
+                Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
+                if(Results<=0){
+                        _dataAccess.Rollback();
+                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
+                        }
+                        else{
+                _dataAccess.DeleteData("Inv_SalesQuotationDetails","n_quotationID",N_QuotationID,"");
+                }
+                
+                if(Results>0){
+                    _dataAccess.Commit();
+                    return StatusCode(200,_api.Response(200 ,"Sales quotation deleted" ));
+                }else{
+                    _dataAccess.Rollback();
+                    return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
+                }
+                
+                }
             catch (Exception ex)
-            {return Ok();}
+                {
+                    return StatusCode(404,_api.Response(404,ex.Message));
+                }
             
 
         }

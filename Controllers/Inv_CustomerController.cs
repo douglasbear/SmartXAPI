@@ -61,6 +61,60 @@ namespace SmartxAPI.Controllers
                 }
         }
 
+
+[HttpGet("all")]
+        public ActionResult GetCustomer(int? nCompanyId,int nFnYearId)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="Inv_Customer";
+            string X_Fields = "*";          
+            string X_Crieteria = "";
+            string X_OrderBy="";
+
+            try{
+                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                     if(dt.Rows.Count==0)
+                    {
+                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
+                    }else{
+                        return Ok(dt);
+                    }
+                }catch(Exception e){
+                    return StatusCode(404,_api.Response(404,e.Message));
+                }
+        }
+        
+       //Save....
+       [HttpPost("Save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try{
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+
+                    // Auto Gen
+                    //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+
+
+                    _dataAccess.StartTransaction();
+                    int N_QuotationId=_dataAccess.SaveData("Inv_Customer","N_CustomerID",0,MasterTable);                    
+                    if(N_QuotationId<=0){
+                        _dataAccess.Rollback();
+                        return StatusCode(404,_api.Response(404 ,"Unable to save" ));
+                        }else{
+                    _dataAccess.Commit();
+                    return StatusCode(200,_api.Response(200 ,"Customer Saved" ));
+                        }
+                }
+                catch (Exception ex)
+                {
+                    _dataAccess.Rollback();
+                    return StatusCode(403,ex);
+                }
+        }
+
 [HttpGet("paymentmethod")]
         public ActionResult GetPayMethod()
         {
