@@ -161,6 +161,7 @@ namespace SmartxAPI.GeneralFunctions
         public string GetAutoNumber(string TableName,String Coloumn,SortedList Params)
             {   
                 string Result="0";
+                string AutoNumber="";
                 while(true){
                     SqlCommand Command  = new SqlCommand("SP_AutoNumberGenerate", _conn);
                     Command.Transaction=_transaction;
@@ -171,7 +172,7 @@ namespace SmartxAPI.GeneralFunctions
                     Command.Parameters.Add(new SqlParameter("@N_FormID", Params["N_FormID"]));
                     Command.Parameters.Add(new SqlParameter("@N_BranchID", Params["N_BranchID"]));
                     
-                    string AutoNumber = (string)Command.ExecuteScalar();
+                    AutoNumber = (string)Command.ExecuteScalar();
 
                     DataTable ResultTable=new DataTable();
                     string X_Crieteria = Coloumn+" = @p1 and N_CompanyID=@p2";
@@ -183,9 +184,11 @@ namespace SmartxAPI.GeneralFunctions
                             break;
                     }else{
                         Result=ResultTable.Rows[0][0].ToString();
+                        if(Result==null)
+                        break;
                     }
                 }
-                return Result;
+                return AutoNumber;
             }
 
 

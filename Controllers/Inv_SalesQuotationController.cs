@@ -112,10 +112,19 @@ return Ok(dt);
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-
+                    SortedList Params = new SortedList();
                     // Auto Gen
+                    string QuotationNo="";
                     var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
-
+                    if(values=="@Auto"){
+                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID",80);
+                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
+                        QuotationNo =  _dataAccess.GetAutoNumber("Inv_SalesQuotation","x_QuotationNo", Params);
+                        if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
+                        MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
+                    }
 
                     _dataAccess.StartTransaction();
                     int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
@@ -128,7 +137,7 @@ return Ok(dt);
                         }
                     int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
                     _dataAccess.Commit();
-                    return Ok("DataSaved");
+                    return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
                 }
                 catch (Exception ex)
                 {
