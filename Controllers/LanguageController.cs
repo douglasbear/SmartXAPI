@@ -11,7 +11,7 @@ using SmartxAPI.GeneralFunctions;
 
 namespace SmartxAPI.Controllers
 {
-    [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    //[Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
     [Route("language")]
     [ApiController]
     public class LanguageController : ControllerBase
