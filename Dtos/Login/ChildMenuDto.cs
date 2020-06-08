@@ -18,5 +18,7 @@ namespace SmartxAPI.Dtos.Login
         public string XFormNameWithTag { get; set; }
         public bool? NIsStartup { get; set; }
         public bool? BShow { get; set; }
+        public bool? BShowOnline { get; set; }
+        public string XRouteName { get; set; }
     }
 }

@@ -20,6 +20,8 @@ namespace SmartxAPI.Dtos.Login
         public string XFormNameWithTag { get; set; }
         public bool? NIsStartup { get; set; }
         public bool? BShow { get; set; }
+        public string XRouteName { get; set; }
+        public bool? BShowOnline { get; set; }
         public List<ChildMenuDto> ChildMenu {get; set;}
     }
 }
