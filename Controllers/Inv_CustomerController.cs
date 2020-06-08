@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
                 catch (Exception ex)
                 {
                     _dataAccess.Rollback();
-                    return StatusCode(403,ex);
+                    return StatusCode(403,"Error");
                 }
         }
 
