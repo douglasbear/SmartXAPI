@@ -53,5 +53,10 @@ namespace SmartxAPI.Models
         public bool? NIsStartup { get; set; }
         [Column("B_Show")]
         public bool? BShow { get; set; }
+        [Column("B_ShowOnline")]
+        public bool? BShowOnline { get; set; }
+        [Column("X_RouteName")]
+        [StringLength(150)]
+        public string XRouteName { get; set; }
     }
 }

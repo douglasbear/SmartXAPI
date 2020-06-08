@@ -103,7 +103,7 @@ namespace SmartxAPI.Data
                 loginRes.Token= tokenHandler.WriteToken(token);
                 loginRes.Expiry = DateTime.UtcNow.AddDays(2);
                 var MenuList =_context.VwUserMenus
-                .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID)
+                .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID && VwUserMenus.BShowOnline==true)
                 .ToList();
                 var Menu = _mapper.Map<List<MenuDto>>(MenuList);
             
