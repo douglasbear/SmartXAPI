@@ -3,6 +3,7 @@ using SmartxAPI.Dtos;
 using SmartxAPI.Dtos.SP;
 using SmartxAPI.Dtos.Login;
 using SmartxAPI.Models;
+using System.Data;
 
 namespace SmartxAPI.Profiles
 {
@@ -23,7 +24,8 @@ namespace SmartxAPI.Profiles
             .ForMember(dest => dest.UserData, opt => opt.MapFrom(src =>src))
             .ForMember(dest => dest.FnYearData, opt => opt.MapFrom(src =>src))
             .ForMember(dest => dest.CompanyData, opt => opt.MapFrom(src =>src))
-            .ForMember(dest => dest.Token, opt => opt.MapFrom(src =>src));           
+            .ForMember(dest => dest.Token, opt => opt.MapFrom(src =>src)); 
+        
         }
 
     }
