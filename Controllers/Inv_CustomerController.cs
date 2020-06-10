@@ -17,6 +17,7 @@ namespace SmartxAPI.Controllers
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer _dataAccess;
+        
 
 
         public Inv_CustomerController(IApiFunctions api,IDataAccessLayer dataAccess)
@@ -57,7 +58,7 @@ namespace SmartxAPI.Controllers
                         return Ok(dt);
                     }
                 }catch(Exception e){
-                    return StatusCode(404,_api.Response(404,e.Message));
+                    return StatusCode(403,_api.ErrorResponse(e));
                 }
         }
 
@@ -82,7 +83,7 @@ namespace SmartxAPI.Controllers
                         return Ok(dt);
                     }
                 }catch(Exception e){
-                    return StatusCode(404,_api.Response(404,e.Message));
+                    return StatusCode(403,_api.ErrorResponse(e));
                 }
         }
         
@@ -93,12 +94,24 @@ namespace SmartxAPI.Controllers
             try{
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
-
+                    _dataAccess.StartTransaction();
                     // Auto Gen
                     //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    SortedList Params = new SortedList();
+                    // Auto Gen
+                    string CustomerCode="";
+                    var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    if(values=="@Auto"){
+                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID",51);
+                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
+                        CustomerCode =  _dataAccess.GetAutoNumber("Inv_Customer","X_CustomerCode", Params);
+                        if(CustomerCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Customer Code" ));}
+                        MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
+                    }
 
 
-                    _dataAccess.StartTransaction();
                     int N_QuotationId=_dataAccess.SaveData("Inv_Customer","N_CustomerID",0,MasterTable);                    
                     if(N_QuotationId<=0){
                         _dataAccess.Rollback();
@@ -111,7 +124,7 @@ namespace SmartxAPI.Controllers
                 catch (Exception ex)
                 {
                     _dataAccess.Rollback();
-                    return StatusCode(403,ex);
+                    return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }
 
@@ -138,7 +151,7 @@ namespace SmartxAPI.Controllers
                     }
                 
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
     }

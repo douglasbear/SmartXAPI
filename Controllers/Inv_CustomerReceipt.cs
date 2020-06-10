@@ -10,15 +10,15 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("salesinvoice")]
+    [Route("salesreceipt")]
     [ApiController]
-    public class Inv_SalesInvoice : ControllerBase
+    public class Inv_CustomerReceipt : ControllerBase
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
 
         
-        public Inv_SalesInvoice(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_CustomerReceipt(IDataAccessLayer dataaccess,IApiFunctions api)
         {
             _dataAccess=dataaccess;
             _api=api;
@@ -26,12 +26,12 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("list")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nFnYearId)
+        public ActionResult GetSalesReceipt(int? nCompanyId,int nFnYearId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_InvSalesInvoiceNo_Search";
+            string X_Table= "vw_InvReceipt_Search";
             string X_Fields = "*";
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
             string X_OrderBy="";

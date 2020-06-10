@@ -47,7 +47,7 @@ namespace SmartxAPI.Controllers
                         return Ok(dt);
                     }   
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
         [HttpGet("listDetails")]
@@ -99,7 +99,7 @@ return Ok(dt);
                 //         return Ok(dt.Tables[0]);
                 //     }   
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
 
@@ -113,6 +113,7 @@ return Ok(dt);
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
+                    _dataAccess.StartTransaction();
                     // Auto Gen
                     string QuotationNo="";
                     var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
@@ -126,7 +127,7 @@ return Ok(dt);
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
                     }
 
-                    _dataAccess.StartTransaction();
+                    
                     int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
                     if(N_QuotationId<=0){
                         _dataAccess.Rollback();
@@ -142,7 +143,7 @@ return Ok(dt);
                 catch (Exception ex)
                 {
                     _dataAccess.Rollback();
-                    return StatusCode(403,ex);
+                    return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }
         //Delete....
@@ -173,7 +174,7 @@ return Ok(dt);
                 }
             catch (Exception ex)
                 {
-                    return StatusCode(404,_api.Response(404,ex.Message));
+                    return StatusCode(403,_api.ErrorResponse(ex));
                 }
             
 

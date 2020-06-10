@@ -67,6 +67,8 @@ namespace SmartxAPI.GeneralFunctions
             return Result;
         }
 
+
+        
         public int DeleteData(string TableName,string IDFieldName,int IDFieldValue,string X_Critieria)
         {
             int Result =0;
@@ -99,23 +101,7 @@ namespace SmartxAPI.GeneralFunctions
             Result = (int)Command.ExecuteScalar();
             return Result;
         }
-        public DataSet GetData(string TableName,string FieldName,string X_Critieria,string X_OrderBy)
-        {
-            SqlDataAdapter da = new SqlDataAdapter();
-            SqlCommand Command;
-            DataSet ds = new DataSet();
-            if(FieldName==""){FieldName="*";}
-            if(X_OrderBy!=""){X_OrderBy=" order by "+X_OrderBy;}
-            if(X_Critieria!=""){X_Critieria=" where "+X_Critieria;}
-            string Sql = "Select "+FieldName+" from "+TableName +" "+ X_Critieria+" "+X_OrderBy;
-            Sql = ValidateSql(Sql);
-            Command  = new SqlCommand(Sql, _conn);
-            
-            da.SelectCommand = Command;
-            da.Fill(ds);
-
-            return ds;
-        }
+        
 
         public DataTable Select(string TableName,string FieldName,string X_Critieria,SortedList Params,string X_OrderBy)
         {
@@ -139,8 +125,13 @@ namespace SmartxAPI.GeneralFunctions
                     Command.Parameters.Add(new SqlParameter(key.ToString(),Params[key].ToString()));
                 }
             }
+
+            if(_transaction!=null){
+                Command.Transaction=_transaction;
+            }
             
             da.SelectCommand = Command;
+           
             da.Fill(ds);
 
             return ds;

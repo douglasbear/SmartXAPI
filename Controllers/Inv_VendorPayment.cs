@@ -10,15 +10,15 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("salesinvoice")]
+    [Route("vendorpayment")]
     [ApiController]
-    public class Inv_SalesInvoice : ControllerBase
+    public class Inv_VendorPayment : ControllerBase
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
 
         
-        public Inv_SalesInvoice(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_VendorPayment(IDataAccessLayer dataaccess,IApiFunctions api)
         {
             _dataAccess=dataaccess;
             _api=api;
@@ -26,22 +26,24 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("list")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nFnYearId)
+        public ActionResult GetVendorPayment(int? nCompanyId,int nFnYearId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_InvSalesInvoiceNo_Search";
+            string X_Table= "vw_InvPayment_Search";
             string X_Fields = "*";
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="";
+            string X_OrderBy="D_Date DESC,[Memo]";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
             try{
                 dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach (DataColumn c in dt.Columns)
+                foreach (DataColumn c in dt.Columns){
                     c.ColumnName = String.Join("", c.ColumnName.Split());
+                    c.ColumnName =  c.ColumnName.Replace("_","");
+                }
                 if (dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
