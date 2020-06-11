@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
                         return Ok(LanguageList);
                     }
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
 
@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                         return Ok(LanguageList);
                     }
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
 

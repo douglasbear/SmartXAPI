@@ -10,15 +10,15 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("salesreturn")]
+    [Route("purchaseinvoice")]
     [ApiController]
-    public class Inv_SalesReturn : ControllerBase
+    public class Inv_PurchaseInvoice : ControllerBase
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
 
         
-        public Inv_SalesReturn(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_PurchaseInvoice(IDataAccessLayer dataaccess,IApiFunctions api)
         {
             _dataAccess=dataaccess;
             _api=api;
@@ -26,13 +26,13 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("list")]
-        public ActionResult GetSalesReturn(int? nCompanyId,int nFnYearId)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId,int nFnYearId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_InvDebitNo_Search";
-            string X_Fields = "*";
+            string X_Table= "vw_InvPurchaseInvoiceNo_Search";
+            string X_Fields = "N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt";
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
             string X_OrderBy="";
             Params.Add("@p1",nCompanyId);
@@ -49,22 +49,21 @@ namespace SmartxAPI.Controllers
                         return Ok(dt);
                     }   
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return StatusCode(404,_api.Response(404,e.Message));
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nQuotationId,int nFnYearId)
+        public ActionResult GetSalesQuotationList(int? nCompanyId,int nFnYearId)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvSalesQuotationNo_Search";
+            string X_Table="vw_InvPurchaseInvoiceNo_Search";
             string X_Fields = "*";   
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
             string X_OrderBy="";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",nQuotationId);
 
             try{
                 DataTable Quotation = new DataTable();
@@ -101,7 +100,7 @@ return Ok(dt);
                 //         return Ok(dt.Tables[0]);
                 //     }   
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return StatusCode(404,_api.Response(404,e.Message));
             }
         }
 
@@ -175,7 +174,7 @@ return Ok(dt);
                 }
             catch (Exception ex)
                 {
-                    return StatusCode(403,_api.ErrorResponse(ex));
+                    return StatusCode(404,_api.Response(404,ex.Message));
                 }
             
 

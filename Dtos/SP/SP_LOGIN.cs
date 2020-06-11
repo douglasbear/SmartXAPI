@@ -42,6 +42,8 @@ namespace SmartxAPI.Dtos.SP
 		[NotMapped]
 		public string Token{get;set;}
 		[NotMapped]
+		public string RefreshToken { get; set; }
+		[NotMapped]
 		public DateTime Expiry {get;set;}
 		[NotMapped]
 		public List<MenuDto> MenuList{get;set;}

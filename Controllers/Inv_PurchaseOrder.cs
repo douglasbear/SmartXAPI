@@ -5,20 +5,21 @@ using SmartxAPI.GeneralFunctions;
 using System;
 using System.Data;
 using System.Collections;
+using System.Data.SqlClient;
 
 namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("salesreturn")]
+    [Route("purchaseorder")]
     [ApiController]
-    public class Inv_SalesReturn : ControllerBase
+    public class Inv_PurchaseOrderController : ControllerBase
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
 
         
-        public Inv_SalesReturn(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_PurchaseOrderController(IDataAccessLayer dataaccess,IApiFunctions api)
         {
             _dataAccess=dataaccess;
             _api=api;
@@ -26,30 +27,30 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("list")]
-        public ActionResult GetSalesReturn(int? nCompanyId,int nFnYearId)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId,int nFnYearId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_InvDebitNo_Search";
+            string X_Table="vw_InvPurchaseOrderNo_Search";
             string X_Fields = "*";
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="";
+            string X_OrderBy="D_POrderDate DESC,[Order No]";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
             try{
                 dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach (DataColumn c in dt.Columns)
+                foreach(DataColumn c in dt.Columns)
                     c.ColumnName = String.Join("", c.ColumnName.Split());
-                if (dt.Rows.Count==0)
+                if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
                     }else{
                         return Ok(dt);
                     }   
-            }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+            }catch(SqlException e){
+                return StatusCode(404,_api.Response(404,e.StackTrace));
             }
         }
         [HttpGet("listDetails")]
@@ -114,22 +115,13 @@ return Ok(dt);
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    SortedList Params = new SortedList();
+
                     // Auto Gen
-                    string QuotationNo="";
                     var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
-                    if(values=="@Auto"){
-                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
-                        Params.Add("N_FormID",80);
-                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  _dataAccess.GetAutoNumber("Inv_SalesQuotation","x_QuotationNo", Params);
-                        if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
-                        MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
-                    }
+
 
                     _dataAccess.StartTransaction();
-                    int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
+                    int N_QuotationId=_dataAccess.SaveData("Inv_PurchaseOrder","N_QuotationId",0,MasterTable);                    
                     if(N_QuotationId<=0){
                         _dataAccess.Rollback();
                         }
@@ -137,9 +129,9 @@ return Ok(dt);
                         {
                             DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
                         }
-                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
+                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_PurchaseOrderDetails","n_QuotationDetailsID",0,DetailTable);                    
                     _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
+                    return Ok("DataSaved");
                 }
                 catch (Exception ex)
                 {
@@ -155,13 +147,13 @@ return Ok(dt);
             try
             {
                 _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
+                Results=_dataAccess.DeleteData("Inv_PurchaseOrder","n_quotationID",N_QuotationID,"");
                 if(Results<=0){
                         _dataAccess.Rollback();
                         return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
                         }
                         else{
-                _dataAccess.DeleteData("Inv_SalesQuotationDetails","n_quotationID",N_QuotationID,"");
+                Results=_dataAccess.DeleteData("Inv_PurchaseOrderDetails","n_quotationID",N_QuotationID,"");
                 }
                 
                 if(Results>0){

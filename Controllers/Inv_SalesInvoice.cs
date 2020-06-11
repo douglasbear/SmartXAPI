@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
                         return Ok(dt);
                     }   
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
         [HttpGet("listDetails")]
@@ -101,7 +101,7 @@ return Ok(dt);
                 //         return Ok(dt.Tables[0]);
                 //     }   
             }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+                return StatusCode(403,_api.ErrorResponse(e));
             }
         }
 
@@ -175,7 +175,7 @@ return Ok(dt);
                 }
             catch (Exception ex)
                 {
-                    return StatusCode(404,_api.Response(404,ex.Message));
+                    return StatusCode(403,_api.ErrorResponse(ex));
                 }
             
 
