@@ -14,6 +14,7 @@ using System.Security.Claims;
 using Newtonsoft.Json;
 using SmartxAPI.Dtos.Login;
 using AutoMapper;
+using System.Security.Cryptography;
 
 namespace SmartxAPI.Data
 {
@@ -67,6 +68,13 @@ switch (reqtype.ToLower())
                 var token = tokenHandler.CreateToken(tokenDescriptor);
                 loginRes.Token= tokenHandler.WriteToken(token);
                 loginRes.Expiry = DateTime.UtcNow.AddDays(2);
+
+                loginRes.RefreshToken = generateRefreshToken();
+                var user = _context.SecUser.SingleOrDefault(u => u.NUserId== loginRes.N_UserID);
+                user.XToken=loginRes.RefreshToken;
+                _context.Update(user);
+                _context.SaveChanges();
+
                 var MenuList =_context.VwUserMenus
                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID && VwUserMenus.BShowOnline==true)
                 .ToList();
@@ -110,7 +118,7 @@ switch (reqtype.ToLower())
                 RPMList.Add(_mapper.Map<MenuDto>(ParentMenu));
             }
             return (RPMList);
-          case "token":
+          case "refreshtoken":
           var rtokenHandler=new JwtSecurityTokenHandler(); 
                 var rkey=Encoding.ASCII.GetBytes(_appSettings.Secret);
                 var rtokenDescriptor = new SecurityTokenDescriptor{
@@ -137,6 +145,16 @@ switch (reqtype.ToLower())
                 
                 //If User Found
                 
+        }
+
+        private string generateRefreshToken()
+        {
+            using(var rngCryptoServiceProvider = new RNGCryptoServiceProvider())
+            {
+                var randomBytes = new byte[64];
+                rngCryptoServiceProvider.GetBytes(randomBytes);
+                return Convert.ToBase64String(randomBytes);
+            }
         }
 
     

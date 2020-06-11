@@ -23,7 +23,12 @@ namespace SmartxAPI.Controllers
         public ActionResult Authenticate([FromBody]Sec_AuthenticateDto model)
         {
             try{
-                    var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password);
+                string ipAddress="";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress= Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress= HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password,ipAddress);
 
                     if (user == null){ return StatusCode(403,_api.Response(403,"Username or password is incorrect" )); }
 
@@ -33,6 +38,6 @@ namespace SmartxAPI.Controllers
                 {
                    return StatusCode(403,_api.ErrorResponse(ex));
                 }  
-        }        
+        }       
     }
 }

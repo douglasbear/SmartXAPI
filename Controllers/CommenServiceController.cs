@@ -46,6 +46,28 @@ namespace SmartxAPI.Controllers
                 }  
         }
 
+        [AllowAnonymous]
+        [HttpGet("refreshtoken")]
+        public ActionResult RefreshToken(string token)
+        {
+            try{
+                int userid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
+                int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
+                string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
+                string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
+                
+                var user = _repository.Authenticate(companyid,companyname,username,userid,"RefreshToken");
+
+                if (user == null){ return StatusCode(403,_api.Response(403,"Unauthorized Access" )); }
+
+                    return Ok(user);
+                }
+                catch (Exception ex)
+                {
+                   return StatusCode(403,_api.ErrorResponse(ex));
+                }  
+        }
+
        
     }
 }

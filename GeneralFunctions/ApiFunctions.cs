@@ -4,13 +4,13 @@ using System.Data;
 using System.Data.SqlClient;
 using System.Linq;
 using AutoMapper;
+using Microsoft.AspNetCore.Hosting;
 
 namespace SmartxAPI.GeneralFunctions
 {
     public class ApiFunctions:IApiFunctions
     {
         private readonly IMapper _mapper;
-
          public ApiFunctions(IMapper mapper)
         {
             _mapper=mapper;
@@ -29,7 +29,7 @@ namespace SmartxAPI.GeneralFunctions
                     break;
                     case "Error co": Msg = ex.Message.Substring(0,42); 
                     break;
-                    default :Msg = "Invalid Request";// + ex.Message; 
+                    default : Msg = "Invalid Request";// + ex.Message; 
                     break;
                 }
 
