@@ -141,6 +141,8 @@ namespace SmartxAPI.GeneralFunctions
 
             return ds;
         }
+
+        
         public Object ExecuteProcedure(string ProcedureName,string Params)
             {
             SqlDataAdapter da = new SqlDataAdapter();
@@ -158,6 +160,8 @@ namespace SmartxAPI.GeneralFunctions
             {   
                 string Result="0";
                 string AutoNumber="";
+                string BranchId ="0";
+                if(Params.Contains("N_BranchID")){BranchId=Params["N_BranchID"].ToString();}
                 while(true){
                     SqlCommand Command  = new SqlCommand("SP_AutoNumberGenerate", _conn);
                     Command.Transaction=_transaction;
@@ -166,7 +170,7 @@ namespace SmartxAPI.GeneralFunctions
                     Command.Parameters.Add(new SqlParameter("@N_CompanyID", Params["N_CompanyID"]));
                     Command.Parameters.Add(new SqlParameter("@N_YearID", Params["N_YearID"]));
                     Command.Parameters.Add(new SqlParameter("@N_FormID", Params["N_FormID"]));
-                    Command.Parameters.Add(new SqlParameter("@N_BranchID", Params["N_BranchID"]));
+                    Command.Parameters.Add(new SqlParameter("@N_BranchID", BranchId));
                     
                     AutoNumber = (string)Command.ExecuteScalar();
 
@@ -187,7 +191,21 @@ namespace SmartxAPI.GeneralFunctions
                 return AutoNumber;
             }
 
-
+        public object ExecuteScalar(string sqlCommandText)
+        {
+            try
+            {
+                SqlCommand command = new SqlCommand();
+                command.CommandType = CommandType.Text;
+                command.CommandText = sqlCommandText;
+                command.Transaction = _transaction;
+                return command.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
         public string ValidateString(string InputString){
             string OutputString=InputString.Replace("'","''");
             OutputString = OutputString.Replace("|","'|'");
@@ -240,6 +258,7 @@ namespace SmartxAPI.GeneralFunctions
         public Object ExecuteProcedure(string ProcedureName,string Params);
         public string GetAutoNumber(string TableName,String Coloumn,SortedList Params);
         public void GerateReport();
+        public object ExecuteScalar(string sqlCommandText);
     }
     
 }
