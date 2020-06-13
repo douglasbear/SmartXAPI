@@ -112,13 +112,13 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    int N_QuotationId=_dataAccess.SaveData("Inv_Customer","N_CustomerID",0,MasterTable);                    
-                    if(N_QuotationId<=0){
+                    int N_CustomerID=_dataAccess.SaveData("Inv_Customer","N_CustomerID",0,MasterTable);                    
+                    if(N_CustomerID<=0){
                         _dataAccess.Rollback();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
                     _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Customer Saved" ));
+                    return  GetCustomerDetails(N_CustomerID, int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), int.Parse(MasterTable.Rows[0]["n_FnYearId"].ToString()));
                         }
                 }
                 catch (Exception ex)
@@ -152,6 +152,40 @@ namespace SmartxAPI.Controllers
                 
             }catch(Exception e){
                 return StatusCode(403,_api.ErrorResponse(e));
+            }
+        }
+        [HttpGet("getdetails")]
+        public ActionResult GetCustomerDetails(int nCustomerID,int nCompanyID,int nFnyearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string X_Table = "Inv_Customer";
+            string X_Fields = "*";
+            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_CustomerID=@p3";
+            string X_OrderBy = "";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnyearID);
+            Params.Add("@p3", nCustomerID);
+
+            try
+            {
+                dt = _dataAccess.Select(X_Table, X_Fields, X_Crieteria, Params, X_OrderBy);
+                foreach (DataColumn c in dt.Columns)
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                if (dt.Rows.Count == 0)
+                {
+                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                }
+                else
+                {
+                    return Ok(dt);
+                }
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.ErrorResponse(e));
             }
         }
     }

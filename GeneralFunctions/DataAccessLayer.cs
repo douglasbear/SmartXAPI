@@ -3,6 +3,11 @@ using System.Collections;
 using System.Data;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using CrystalDecisions.CrystalReports.Engine;
+using CrystalDecisions.Shared;
+using CrystalDecisions.ReportSource;
+using CrystalDecisions.CrystalReports;
+using CrystalDecisions.Windows.Forms;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -193,6 +198,33 @@ namespace SmartxAPI.GeneralFunctions
             string OutputString=InputString.Replace("'","''");
             return OutputString;
         }
+
+        public void GerateReport()
+        {
+            ReportDocument rptDoc = new ReportDocument();
+            rptDoc.Load(@"F:\SalesRegisterInvoiceWise.rpt");
+            rptDoc.SetDatabaseLogon("sa", "b4u");
+
+            try
+            {
+                ExportOptions CrExportOptions;
+                DiskFileDestinationOptions CrDiskFileDestinationOptions = new DiskFileDestinationOptions();
+                PdfRtfWordFormatOptions CrFormatTypeOptions = new PdfRtfWordFormatOptions();
+                CrDiskFileDestinationOptions.DiskFileName = "F:\\Sales.pdf";
+                CrExportOptions = rptDoc.ExportOptions;
+                {
+                    CrExportOptions.ExportDestinationType = ExportDestinationType.DiskFile;
+                    CrExportOptions.ExportFormatType = ExportFormatType.PortableDocFormat;
+                    CrExportOptions.DestinationOptions = CrDiskFileDestinationOptions;
+                    CrExportOptions.FormatOptions = CrFormatTypeOptions;
+                }
+                rptDoc.Export();
+            }
+            catch (Exception ex)
+            {
+                
+            }
+        }
     
 }
 
@@ -207,6 +239,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable Select(string TableName,string FieldName,string X_Critieria,SortedList Params,string X_OrderBy);
         public Object ExecuteProcedure(string ProcedureName,string Params);
         public string GetAutoNumber(string TableName,String Coloumn,SortedList Params);
+        public void GerateReport();
     }
     
 }

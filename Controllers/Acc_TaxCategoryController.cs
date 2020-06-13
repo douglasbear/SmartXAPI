@@ -25,9 +25,18 @@ namespace SmartxAPI.Controllers
             _dataAccess = data;
             _api=api;
         }
-       
-        //GET api/Projects/list
-        [HttpGet("list") ]
+
+        [HttpGet("report")]
+        public ActionResult genrateReport()
+        {
+            _dataAccess.GerateReport();
+
+            return Ok();
+
+        }
+
+            //GET api/Projects/list
+            [HttpGet("list") ]
         public ActionResult GetAllTaxTypes (int? nCompanyID)
         {
             DataTable dt=new DataTable();

@@ -38,6 +38,9 @@
           "System.Data.SqlClient": "4.8.1",
           "System.IdentityModel.Tokens.Jwt": "6.5.1",
           "System.Text.Json": "4.7.2",
+          "CrystalDecisions.CrystalReports.Engine": "12.0.2000.0",
+          "CrystalDecisions.Shared": "12.0.2000.0",
+          "CrystalDecisions.Windows.Forms": "12.0.2000.0",
           "Microsoft.AspNetCore.Antiforgery": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Abstractions": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Cookies": "3.1.0.0",
@@ -1534,6 +1537,39 @@
           "System.Threading": "4.3.0",
           "System.Xml.ReaderWriter": "4.3.0",
           "System.Xml.XmlDocument": "4.3.0"
+        }
+      },
+      "CrystalDecisions.CrystalReports.Engine/12.0.2000.0": {
+        "runtime": {
+          "CrystalDecisions.CrystalReports.Engine.dll": {
+            "assemblyVersion": "12.0.2000.0",
+            "fileVersion": "12.0.2000.549"
+          }
+        },
+        "compile": {
+          "CrystalDecisions.CrystalReports.Engine.dll": {}
+        }
+      },
+      "CrystalDecisions.Shared/12.0.2000.0": {
+        "runtime": {
+          "CrystalDecisions.Shared.dll": {
+            "assemblyVersion": "12.0.2000.0",
+            "fileVersion": "12.0.2000.549"
+          }
+        },
+        "compile": {
+          "CrystalDecisions.Shared.dll": {}
+        }
+      },
+      "CrystalDecisions.Windows.Forms/12.0.2000.0": {
+        "runtime": {
+          "CrystalDecisions.Windows.Forms.dll": {
+            "assemblyVersion": "12.0.2000.0",
+            "fileVersion": "12.0.2000.549"
+          }
+        },
+        "compile": {
+          "CrystalDecisions.Windows.Forms.dll": {}
         }
       },
       "Microsoft.AspNetCore.Antiforgery/3.1.0.0": {
@@ -3928,6 +3964,21 @@
       "sha512": "sha512-MYoTCP7EZ98RrANESW05J5ZwskKDoN0AuZ06ZflnowE50LTpbR5yRg3tHckTVm5j/m47stuGgCrCHWePyHS70Q==",
       "path": "system.xml.xmlserializer/4.3.0",
       "hashPath": "system.xml.xmlserializer.4.3.0.nupkg.sha512"
+    },
+    "CrystalDecisions.CrystalReports.Engine/12.0.2000.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CrystalDecisions.Shared/12.0.2000.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
+    },
+    "CrystalDecisions.Windows.Forms/12.0.2000.0": {
+      "type": "reference",
+      "serviceable": false,
+      "sha512": ""
     },
     "Microsoft.AspNetCore.Antiforgery/3.1.0.0": {
       "type": "referenceassembly",
