@@ -25,6 +25,10 @@
       "SmartxAPI/1.0.0": {
         "dependencies": {
           "AutoMapper.Extensions.Microsoft.DependencyInjection": "7.0.0",
+          "CrystalDecisions.CrystalReports.Engine": "1.0.0",
+          "CrystalDecisions.ReportSource": "1.0.0",
+          "CrystalDecisions.Shared": "1.0.0",
+          "CrystalDecisions.Windows.Forms": "1.0.0",
           "Dapper": "2.0.35",
           "Microsoft.AspNet.WebApi.Cors": "5.2.7",
           "Microsoft.AspNetCore.Authentication.JwtBearer": "3.1.4",
@@ -335,6 +339,50 @@
         },
         "compile": {
           "lib/netstandard2.0/AutoMapper.Extensions.Microsoft.DependencyInjection.dll": {}
+        }
+      },
+      "CrystalDecisions.CrystalReports.Engine/1.0.0": {
+        "runtime": {
+          "lib/CrystalDecisions.CrystalReports.Engine.dll": {
+            "assemblyVersion": "13.0.2000.0",
+            "fileVersion": "13.0.0.99"
+          }
+        },
+        "compile": {
+          "lib/CrystalDecisions.CrystalReports.Engine.dll": {}
+        }
+      },
+      "CrystalDecisions.ReportSource/1.0.0": {
+        "runtime": {
+          "lib/CrystalDecisions.ReportSource.dll": {
+            "assemblyVersion": "13.0.2000.0",
+            "fileVersion": "13.0.0.99"
+          }
+        },
+        "compile": {
+          "lib/CrystalDecisions.ReportSource.dll": {}
+        }
+      },
+      "CrystalDecisions.Shared/1.0.0": {
+        "runtime": {
+          "lib/CrystalDecisions.Shared.dll": {
+            "assemblyVersion": "13.0.2000.0",
+            "fileVersion": "13.0.0.99"
+          }
+        },
+        "compile": {
+          "lib/CrystalDecisions.Shared.dll": {}
+        }
+      },
+      "CrystalDecisions.Windows.Forms/1.0.0": {
+        "runtime": {
+          "lib/CrystalDecisions.Windows.Forms.dll": {
+            "assemblyVersion": "13.0.2000.0",
+            "fileVersion": "13.0.0.99"
+          }
+        },
+        "compile": {
+          "lib/CrystalDecisions.Windows.Forms.dll": {}
         }
       },
       "Dapper/2.0.35": {
@@ -3123,6 +3171,34 @@
       "sha512": "sha512-szI4yeRIM7GWe9JyekW0dKYehPB0t6M+I55fPeCebN6PhS7zQZa0eG3bgOnOx+eP3caSNoE7KEJs2rk7MLsh8w==",
       "path": "automapper.extensions.microsoft.dependencyinjection/7.0.0",
       "hashPath": "automapper.extensions.microsoft.dependencyinjection.7.0.0.nupkg.sha512"
+    },
+    "CrystalDecisions.CrystalReports.Engine/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-qr+XgfiEvAWXModuJy4IamWlkarFNL6c2ueA9PcZkLUkoz17L0rptDNzLzJkFaSP8hh+nAwfD2t3wvRLdbjFQw==",
+      "path": "crystaldecisions.crystalreports.engine/1.0.0",
+      "hashPath": "crystaldecisions.crystalreports.engine.1.0.0.nupkg.sha512"
+    },
+    "CrystalDecisions.ReportSource/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-YO0Ap65qeD1WO66Bcu9ZCb2cN4Zuq/sii8+0/jX6jTEzaO1tPbizDtSSJC0tp+nOnQqeGJNM+4sN5K+tTWDGJQ==",
+      "path": "crystaldecisions.reportsource/1.0.0",
+      "hashPath": "crystaldecisions.reportsource.1.0.0.nupkg.sha512"
+    },
+    "CrystalDecisions.Shared/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-M3T2xrJ/oTrPUu3j0ODVhP981QTPdoHSly47IfrIWy7UUROpfF1p8jRTYzBoy2toQ2B5PKtnnkpAimp2mtnrdg==",
+      "path": "crystaldecisions.shared/1.0.0",
+      "hashPath": "crystaldecisions.shared.1.0.0.nupkg.sha512"
+    },
+    "CrystalDecisions.Windows.Forms/1.0.0": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-Ot7NKSvtCpQYtJcIqrTADfqMQlRimmLA5tAiL/gHvyblDXl3S2xK97QphpI42lJ6BAWOvD2giV7HIJLJjnCDoA==",
+      "path": "crystaldecisions.windows.forms/1.0.0",
+      "hashPath": "crystaldecisions.windows.forms.1.0.0.nupkg.sha512"
     },
     "Dapper/2.0.35": {
       "type": "package",
