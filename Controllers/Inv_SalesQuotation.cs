@@ -12,13 +12,13 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
     [Route("salesquotation")]
     [ApiController]
-    public class Inv_SalesQuotationController : ControllerBase
+    public class Inv_SalesQuotation : ControllerBase
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
 
         
-        public Inv_SalesQuotationController(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_SalesQuotation(IDataAccessLayer dataaccess,IApiFunctions api)
         {
             _dataAccess=dataaccess;
             _api=api;
@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nQuotationId,int nFnYearId)
+        public ActionResult GetSalesQuotationDetails(int? nCompanyId,int nQuotationId,int nFnYearId)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
@@ -117,11 +117,12 @@ return Ok(dt);
                     // Auto Gen
                     string QuotationNo="";
                     var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
                     if(values=="@Auto"){
-                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_CompanyID",Master["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
-                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
+                        Params.Add("N_BranchID",Master["n_BranchId"].ToString());
                         QuotationNo =  _dataAccess.GetAutoNumber("Inv_SalesQuotation","x_QuotationNo", Params);
                         if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
@@ -131,14 +132,20 @@ return Ok(dt);
                     int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
                     if(N_QuotationId<=0){
                         _dataAccess.Rollback();
+                        return StatusCode(409,_api.Response(409 ,"Unable to save Quotation" ));
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
                             DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
                         }
                     int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
-                    _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
+                    if(N_QuotationDetailId<=0){
+                        _dataAccess.Rollback();
+                        return StatusCode(409,_api.Response(409 ,"Unable to save Quotation" ));
+                    }else{
+                        _dataAccess.Commit();
+                    }
+                    return  GetSalesQuotationDetails(int.Parse(Master["n_CompanyId"].ToString()),N_QuotationId,int.Parse(Master["n_FnYearId"].ToString()));
                 }
                 catch (Exception ex)
                 {

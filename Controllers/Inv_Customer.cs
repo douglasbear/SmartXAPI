@@ -78,7 +78,9 @@ namespace SmartxAPI.Controllers
                     {
                        return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
                     }else{
-                        return Ok(dt);
+                    _dataAccess.GerateReport();
+                    return Ok(dt);
+
                     }
                 }catch(Exception e){
                     return StatusCode(403,_api.ErrorResponse(e));
