@@ -36,10 +36,6 @@ namespace SmartxAPI.Data
               var LanMultiLingual = _context.VwLanMultilingual
              .OrderBy(d=>d.NFormId)
              .ToList(); 
-        //      var sql="select * from Vw_LanMultilingual;";
-        //    using(var con = new SqlConnection(_config.GetConnectionString("SmartxConnection"))){
-        //        con.Open();
-        //        var LanMultiLingual = await con.QueryAsync<VwLanMultilingual>(sql);
            
 Dictionary<string,Dictionary<string,Dictionary<string,string>>> outputObj = new Dictionary<string,Dictionary<string,Dictionary<string,string>>>();
             foreach(int formID in LanMultiLingual.Select(x=>x.NFormId).Distinct()){

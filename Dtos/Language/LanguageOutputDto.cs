@@ -7,6 +7,6 @@ namespace SmartxAPI.Dtos.Language
     {
         //public int ScreenID { get; set; }
         //public IEnumerable<Controlls> Controlls { get; set; }
-        public Dictionary<string, Controlls> ScreenID { get; set; }
+        public Dictionary<string, Controlls> Controls { get; set; }
     }
 }

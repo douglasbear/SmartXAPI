@@ -8,6 +8,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
 using System.Linq;
 using SmartxAPI.GeneralFunctions;
+using System.Data;
+using System.Collections;
+using SmartxAPI.Dtos.Language;
 
 namespace SmartxAPI.Controllers
 {
@@ -19,13 +22,15 @@ namespace SmartxAPI.Controllers
         private readonly ILanguageRepo _repository;
         private readonly IMapper _mapper;
         private readonly IApiFunctions _api;
+        private readonly IDataAccessLayer _dataAccess;
 
 
-        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api)
+        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api, IDataAccessLayer dataAccess)
         {
             _repository = repository;
             _mapper = mapper;
             _api=api;
+            _dataAccess = dataAccess;
         }
 
         [HttpGet("list")]
@@ -44,7 +49,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("ml-dataset")]
+        [HttpGet("ml-datasetold")]
         public ActionResult GetControllsList()
         {
             try{
@@ -59,22 +64,42 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403,_api.ErrorResponse(e));
             }
         }
+        
 
-
-       /*  [HttpPost]
-        public ActionResult <VwInvCustomerDisp> CreateCustomer(CustomerCreateDto CustomerCreateDto)
+        [HttpGet("ml-dataset")]
+        public ActionResult GetControllsListnew()
         {
-            var CustomerModel = _mapper.Map<InvCustomer>(CustomerCreateDto);
-            _repository.CreateCustomer(CustomerModel);
-            _repository.SaveChanges();
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string X_Table="vw_WebLanMultilingual";
+            string X_Fields = "*";
+            string X_Crieteria = "";
+            string X_OrderBy="";
 
-            var VwInvCustomerDisp = _mapper.Map<VwInvCustomerDisp>(CustomerModel);
+            try{
+                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                
+                Dictionary<string,Dictionary<string,Dictionary<string,string>>> MlData = new Dictionary<string,Dictionary<string,Dictionary<string,string>>>();
+                foreach(string ScreenName in dt.AsEnumerable().Select(row => row.Field<string>("X_WFormName")).Distinct()){
+                    
+                    Dictionary<string,Dictionary<string,string>> Controlls = new Dictionary<string,Dictionary<string,string>>();
+                    foreach(string CntrlName in dt.AsEnumerable().Where(row => row.Field<string>("X_WFormName")==ScreenName).Select(row => row.Field<string>("X_WControlName")).Distinct()){
+                        
+                        Dictionary<string,string> Lang = new Dictionary<string,string>();
+                        foreach(var ControllStringItem in dt.AsEnumerable().Where(row => row.Field<string>("X_WFormName")==ScreenName && row.Field<string>("X_WControlName")==CntrlName)){
+                            Lang.Add(ControllStringItem["LanguageId"].ToString(),ControllStringItem["Text"].ToString());
+                        }
+                        Controlls.Add(CntrlName,Lang);
+                    }
+                    MlData.Add(ScreenName,Controlls);
+                }
+            return Ok(MlData);
 
-            return CreatedAtRoute(nameof(GetCustomerById), new {Id = VwInvCustomerDisp.NCustomerId}, VwInvCustomerDisp);      
-        } */
-
-        
-
-        
+                
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
+        }
     }
 }

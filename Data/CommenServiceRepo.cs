@@ -75,6 +75,7 @@ switch (reqtype.ToLower())
                 _context.Update(user);
                 _context.SaveChanges();
 
+                loginRes.I_CompanyLogo = Convert.ToBase64String(loginRes.I_Logo);
                 var MenuList =_context.VwUserMenus
                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID && VwUserMenus.BShowOnline==true)
                 .ToList();

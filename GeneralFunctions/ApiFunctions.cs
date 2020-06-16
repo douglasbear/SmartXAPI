@@ -39,31 +39,14 @@ namespace SmartxAPI.GeneralFunctions
            
         }
 
-        public List < T > ValidateTable < T > (DataTable DataTable){
-            
-            for (int i = 0; i < DataTable.Columns.Count; i++)
-            {
-                    DataTable.Columns[i].ColumnName = DataTable.Columns[i].ColumnName.ToString().Replace("_", "");
-            }
-
-        //var columnNames = DataTable.Columns.Cast < DataColumn > ().Select(c => c.ColumnName.ToString()).ToList();  
-        var properties = typeof(T).GetProperties();  
-        return DataTable.AsEnumerable().Select(row => {  
-            var objT = Activator.CreateInstance < T > ();  
-            foreach(var pro in properties) {  
-                //if (columnNames.Contains(pro.Name)) {  
-                    try {  
-                        pro.SetValue(objT, row[pro.Name]);  
-                    } catch (Exception ex) {
-                        String msg =ex.Message;
-                    }  
-                //}  
-            }  
-            return objT;  
-        }).ToList();      
-
-
-
+        public DataTable Format (DataTable dt){
+            foreach(DataColumn c in dt.Columns){
+                    c.ColumnName = Char.ToLowerInvariant(c.ColumnName[0]) + c.ColumnName.Substring(1);
+                    c.ColumnName = c.ColumnName.Replace("_", string.Empty);
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                    //c.ColumnName = c.ColumnName.ToT
+                    }
+            return dt;
         }
 
 
@@ -72,6 +55,6 @@ public interface IApiFunctions
     {
         public object Response(int Code,string Response);
         public object ErrorResponse(Exception ex);
-        public List < T > ValidateTable < T > (DataTable DataTable);
+        public DataTable Format (DataTable dt);
     }    
 }
