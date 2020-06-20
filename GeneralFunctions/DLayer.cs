@@ -788,7 +788,7 @@ namespace SmartxAPI.GeneralFunctions
 
         #endregion
 
-        public int ExecuteNonQueryPro(string sqlCommandText, ArrayList paramList)
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList)
         {
             try
             {
@@ -798,11 +798,14 @@ namespace SmartxAPI.GeneralFunctions
                 commandStatement.CommandText = sqlCommandText;
                 
                 if(commandStatement.Parameters.Count>0){ClearParameters();}
-                
-                foreach (SqlParameter p in paramList)
-                {
-                    commandStatement.Parameters.Add(p);
+
+                if(paramList.Count>0){
+                ICollection Keys = paramList.Keys;
+                foreach (string key in Keys) {
+                        commandStatement.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
+                    }
                 }
+
 
                 commandStatement.Transaction = TransactionScope;
                 return this.commandStatement.ExecuteNonQuery();
@@ -899,6 +902,19 @@ namespace SmartxAPI.GeneralFunctions
             return OutputString;
         }
 
+        public int DeleteData(string TableName,string IDFieldName,int IDFieldValue,string X_Critieria)
+        {
+            int Result =0;
+                SortedList paramList = new SortedList();
+                paramList.Add("X_TableName", TableName);
+                paramList.Add("X_IDFieldName", IDFieldName);
+                paramList.Add("N_IDFieldValue", IDFieldValue);
+                paramList.Add("X_Critieria", X_Critieria);
+                Result =(int) ExecuteNonQueryPro("DELETE_DATA", paramList);
+            return Result;
+        }
+
+
     }
 
      public interface IDLayer
@@ -913,6 +929,7 @@ namespace SmartxAPI.GeneralFunctions
         public void setTransaction();
         public void commit();
         public void rollBack();
+        public int DeleteData(string TableName,string IDFieldName,int IDFieldValue,string X_Critieria);
     }
  
 }

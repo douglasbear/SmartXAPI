@@ -123,7 +123,7 @@ return Ok(dt);
        [HttpPost("Save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
-           try{
+          
                     DataTable MasterTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
@@ -132,7 +132,7 @@ return Ok(dt);
                     // Auto Gen
                     string InvoiceNo="";
                     DataRow masterRow=MasterTable.Rows[0];
-                    var values = masterRow["x_ReceiptNo"].ToString();
+                    var values = masterRow["x_InvoiceNo"].ToString();
                     
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",masterRow["n_CompanyId"].ToString());
@@ -141,19 +141,19 @@ return Ok(dt);
                         Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
                         InvoiceNo =  _dataAccess.GetAutoNumber("Inv_Purchase","x_InvoiceNo", Params);
                         if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Invoice Number" ));}
-                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                        MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
-
+            try{
                     dLayer.setTransaction();
-                    int N_InvoiceId=dLayer.SaveData("Inv_Purchase","N_SalesId",0,MasterTable);                    
+                    int N_InvoiceId=dLayer.SaveData("Inv_Purchase","N_PurchaseID",0,MasterTable);                    
                     if(N_InvoiceId<=0){
                         dLayer.rollBack();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
-                            DetailTable.Rows[j]["N_SalesId"]=N_InvoiceId;
+                            DetailTable.Rows[j]["N_PurchaseID"]=N_InvoiceId;
                         }
-                    int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesDetails","n_SalesDetailsID",0,DetailTable);                    
+                    int N_InvoiceDetailId=dLayer.SaveData("Inv_PurchaseDetails","n_PurchaseDetailsID",0,DetailTable);                    
                     dLayer.commit();
                     return GetPurchaseInvoiceDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()),N_InvoiceId,true,0);
                 }
@@ -165,26 +165,26 @@ return Ok(dt);
         }
         //Delete....
          [HttpDelete()]
-        public ActionResult DeleteData(int N_PurchaseInvoiceID)
+        public ActionResult DeleteData(int nPurchaseID)
         {
              int Results=0;
             try
             {
-                _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesPurchaseInvoice","n_PurchaseInvoiceID",N_PurchaseInvoiceID,"");
+                dLayer.setTransaction();
+                Results=dLayer.DeleteData("Inv_Purchase","n_PurchaseID",nPurchaseID,"");
                 if(Results<=0){
-                        _dataAccess.Rollback();
-                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales PurchaseInvoice" ));
+                        dLayer.rollBack();
+                        return StatusCode(409,_api.Response(409 ,"Unable to Delete PurchaseInvoice" ));
                         }
                         else{
-                _dataAccess.DeleteData("Inv_SalesPurchaseInvoiceDetails","n_PurchaseInvoiceID",N_PurchaseInvoiceID,"");
+                Results = dLayer.DeleteData("Inv_PurchaseDetails","n_PurchaseID",nPurchaseID,"");
                 }
                 
                 if(Results>0){
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Sales PurchaseInvoice deleted" ));
                 }else{
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(409,_api.Response(409 ,"Unable to delete sales PurchaseInvoice" ));
                 }
                 
@@ -195,6 +195,31 @@ return Ok(dt);
                 }
             
 
+        }
+         [HttpGet("dummy")]
+        public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        {
+            try{
+            string  sqlCommandText="select * from Inv_Purchase where N_PurchaseId=@p1";
+            SortedList mParamList = new SortedList() { {"@p1",Id} };
+            DataTable masterTable =dLayer.ExecuteDataTable(sqlCommandText,mParamList);
+            masterTable=_api.Format(masterTable,"master");
+
+            string  sqlCommandText2="select * from Inv_PurchaseDetails where N_PurchaseId=@p1";
+            SortedList dParamList = new SortedList() { {"@p1",Id} };
+            DataTable detailTable =dLayer.ExecuteDataTable(sqlCommandText2,dParamList);
+            detailTable=_api.Format(detailTable,"details");
+
+            if(detailTable.Rows.Count==0){return Ok(new {});}
+            DataSet dataSet=new DataSet();
+            dataSet.Tables.Add(masterTable);
+            dataSet.Tables.Add(detailTable);
+            
+            return Ok(dataSet);
+            
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
         }
         
     }
