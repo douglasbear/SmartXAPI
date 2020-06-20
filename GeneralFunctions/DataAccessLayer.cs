@@ -141,7 +141,24 @@ namespace SmartxAPI.GeneralFunctions
 
             return ds;
         }
+        public DataTable ExecuteProcDataTable(string sqlCommandText, SortedList paramList)
+        {
+            DataTable resultTable = new DataTable();
+            SqlDataAdapter dataAdapter = new SqlDataAdapter();
+            int recordsReturned;
 
+            dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, _conn);
+            dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
+            dataAdapter.SelectCommand.CommandText = sqlCommandText;
+            
+            foreach (SqlParameter p in paramList)
+            {
+                dataAdapter.SelectCommand.Parameters.Add(p);
+            }
+            resultTable = new DataTable();
+            recordsReturned = dataAdapter.Fill(resultTable);
+            return resultTable;
+        }
         
         public Object ExecuteProcedure(string ProcedureName,string Params)
             {
@@ -261,6 +278,7 @@ namespace SmartxAPI.GeneralFunctions
         public string GetAutoNumber(string TableName,String Coloumn,SortedList Params);
         public void GerateReport();
         public object ExecuteScalar(string sqlCommandText);
+        public DataTable ExecuteProcDataTable(string sqlCommandText, SortedList paramList);
     }
     
 }
