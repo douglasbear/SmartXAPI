@@ -16,12 +16,13 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
-
+        private readonly IDLayer dLayer;
         
-        public Inv_PurchaseInvoice(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_PurchaseInvoice(IDataAccessLayer dataaccess,IApiFunctions api,IDLayer dl)
         {
             _dataAccess=dataaccess;
             _api=api;
+            dLayer=dl;
         }
        
 
@@ -52,40 +53,54 @@ namespace SmartxAPI.Controllers
                 return StatusCode(404,_api.Response(404,e.Message));
             }
         }
-        [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nFnYearId)
+        [HttpGet("details")]
+        public ActionResult GetPurchaseInvoiceDetails(int? nCompanyId,int nFnYearId,int nPurchaseId,bool showAllBranch,int nBranchId)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvPurchaseInvoiceNo_Search";
+            string X_Table="vw_Inv_PurchaseDisp";
             string X_Fields = "*";   
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
+            string X_Crieteria = "";
             string X_OrderBy="";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
+            Params.Add("@p3",nPurchaseId);
+            Params.Add("@p4","PURCHASE");
+            if (showAllBranch == true ){
+            X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID=@p3 and X_TransType=@p4";
+            }
+            else{
+            Params.Add("@p5",nBranchId);
+            X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID=@p3 and X_TransType=@p4 and  N_BranchId=@p5";
+            }
+            
+
 
             try{
-                DataTable Quotation = new DataTable();
+                DataTable PurchaseInvoice = new DataTable();
                 
-                Quotation=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in Quotation.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
-                dt.Tables.Add(Quotation);
-                Quotation.TableName="Master";
-                
-                //Quotation Details
+                PurchaseInvoice=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
 
-            string  X_Table1="vw_InvQuotationDetails";
-            string X_Fields1 = "*";
-            string X_Crieteria1 = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy1="";
-            DataTable QuotationDetails = new DataTable();
-            QuotationDetails=_dataAccess.Select(X_Table1,X_Fields1,X_Crieteria1,Params,X_OrderBy1);
-            foreach(DataColumn c in QuotationDetails.Columns)
+                if(PurchaseInvoice.Rows.Count==0){return Ok(new {});}
+
+                foreach(DataColumn c in PurchaseInvoice.Columns)
                     c.ColumnName = String.Join("", c.ColumnName.Split());
-            dt.Tables.Add(QuotationDetails);
-            QuotationDetails.TableName="Details";
+                dt.Tables.Add(PurchaseInvoice);
+                PurchaseInvoice.TableName="Master";
+                
+                //PurchaseInvoice Details
+
+            string  X_Table1="vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID";
+            string X_Fields1 = "vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice";
+            string X_Crieteria1 = "vw_InvPurchaseDetails.N_CompanyID=@p1 and vw_InvPurchaseDetails.N_PurchaseID=@p3";
+            string X_OrderBy1="";
+            DataTable PurchaseInvoiceDetails = new DataTable();
+            PurchaseInvoiceDetails=_dataAccess.Select(X_Table1,X_Fields1,X_Crieteria1,Params,X_OrderBy1);
+            foreach(DataColumn c in PurchaseInvoiceDetails.Columns)
+                    c.ColumnName = String.Join("", c.ColumnName.Split());
+            dt.Tables.Add(PurchaseInvoiceDetails);
+            PurchaseInvoiceDetails.TableName="Details";
 
             
 
@@ -108,67 +123,69 @@ return Ok(dt);
        [HttpPost("Save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
-            try{
+           try{
                     DataTable MasterTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string QuotationNo="";
-                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    string InvoiceNo="";
+                    DataRow masterRow=MasterTable.Rows[0];
+                    var values = masterRow["x_ReceiptNo"].ToString();
+                    
                     if(values=="@Auto"){
-                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_CompanyID",masterRow["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
-                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  _dataAccess.GetAutoNumber("Inv_SalesQuotation","x_QuotationNo", Params);
-                        if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
-                        MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
+                        Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
+                        InvoiceNo =  _dataAccess.GetAutoNumber("Inv_Purchase","x_InvoiceNo", Params);
+                        if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Invoice Number" ));}
+                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
 
-                    _dataAccess.StartTransaction();
-                    int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
-                    if(N_QuotationId<=0){
-                        _dataAccess.Rollback();
+                    dLayer.setTransaction();
+                    int N_InvoiceId=dLayer.SaveData("Inv_Purchase","N_SalesId",0,MasterTable);                    
+                    if(N_InvoiceId<=0){
+                        dLayer.rollBack();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
-                            DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
+                            DetailTable.Rows[j]["N_SalesId"]=N_InvoiceId;
                         }
-                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
-                    _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
+                    int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesDetails","n_SalesDetailsID",0,DetailTable);                    
+                    dLayer.commit();
+                    return GetSalesInvoiceDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()),int.Parse(masterRow["n_BranchId"].ToString()),InvoiceNo);
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,ex);
                 }
         }
         //Delete....
          [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID)
+        public ActionResult DeleteData(int N_PurchaseInvoiceID)
         {
              int Results=0;
             try
             {
                 _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
+                Results=_dataAccess.DeleteData("Inv_SalesPurchaseInvoice","n_PurchaseInvoiceID",N_PurchaseInvoiceID,"");
                 if(Results<=0){
                         _dataAccess.Rollback();
-                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
+                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales PurchaseInvoice" ));
                         }
                         else{
-                _dataAccess.DeleteData("Inv_SalesQuotationDetails","n_quotationID",N_QuotationID,"");
+                _dataAccess.DeleteData("Inv_SalesPurchaseInvoiceDetails","n_PurchaseInvoiceID",N_PurchaseInvoiceID,"");
                 }
                 
                 if(Results>0){
                     _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales quotation deleted" ));
+                    return StatusCode(200,_api.Response(200 ,"Sales PurchaseInvoice deleted" ));
                 }else{
                     _dataAccess.Rollback();
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
+                    return StatusCode(409,_api.Response(409 ,"Unable to delete sales PurchaseInvoice" ));
                 }
                 
                 }

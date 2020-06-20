@@ -39,12 +39,15 @@ namespace SmartxAPI.GeneralFunctions
            
         }
 
-        public DataTable Format (DataTable dt){
+        public DataTable Format (DataTable dt,string tableName){
             foreach(DataColumn c in dt.Columns){
                     c.ColumnName = Char.ToLowerInvariant(c.ColumnName[0]) + c.ColumnName.Substring(1);
-                    c.ColumnName = c.ColumnName.Replace("_", string.Empty);
+                    //c.ColumnName = c.ColumnName.Replace("_", string.Empty);
                     c.ColumnName = String.Join("", c.ColumnName.Split());
                     //c.ColumnName = c.ColumnName.ToT
+                    }
+                    if(tableName!=""){
+                        dt.TableName= tableName;
                     }
             return dt;
         }
@@ -55,6 +58,6 @@ public interface IApiFunctions
     {
         public object Response(int Code,string Response);
         public object ErrorResponse(Exception ex);
-        public DataTable Format (DataTable dt);
+        public DataTable Format (DataTable table,string tableName);
     }    
 }
