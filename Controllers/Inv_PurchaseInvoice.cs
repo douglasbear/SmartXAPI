@@ -155,7 +155,7 @@ return Ok(dt);
                         }
                     int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesDetails","n_SalesDetailsID",0,DetailTable);                    
                     dLayer.commit();
-                    return GetSalesInvoiceDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()),int.Parse(masterRow["n_BranchId"].ToString()),InvoiceNo);
+                    return GetPurchaseInvoiceDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()),N_InvoiceId,true,0);
                 }
                 catch (Exception ex)
                 {
