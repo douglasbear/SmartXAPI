@@ -16,12 +16,14 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
+        private readonly IDLayer dLayer;
 
         
-        public Inv_PurchaseReturn(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_PurchaseReturn(IDataAccessLayer dataaccess,IApiFunctions api,IDLayer dl)
         {
             _dataAccess=dataaccess;
             _api=api;
+            dLayer=dl;
         }
        
 
@@ -109,7 +111,7 @@ return Ok(dt);
        [HttpPost("Save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
-            try{
+            
                     DataTable MasterTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
@@ -117,33 +119,33 @@ return Ok(dt);
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string QuotationNo="";
-                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  _dataAccess.GetAutoNumber("Inv_SalesQuotation","x_QuotationNo", Params);
+                        QuotationNo =  _dataAccess.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params);
                         if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
-                        MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
+                        MasterTable.Rows[0]["X_CreditNoteNo"] = QuotationNo;
                     }
-
-                    _dataAccess.StartTransaction();
-                    int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
-                    if(N_QuotationId<=0){
-                        _dataAccess.Rollback();
+                try{
+                    dLayer.setTransaction();
+                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",0,MasterTable);                    
+                    if(N_CreditNoteID<=0){
+                        dLayer.rollBack();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
-                            DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
+                            DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
                         }
-                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
-                    _dataAccess.Commit();
+                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",0,DetailTable);                    
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,ex);
                 }
         }
@@ -179,6 +181,31 @@ return Ok(dt);
                 }
             
 
+        }
+        [HttpGet("dummy")]
+        public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        {
+            try{
+            string  sqlCommandText="select * from Inv_PurchaseReturnMaster where N_CreditNoteID=@p1";
+            SortedList mParamList = new SortedList() { {"@p1",Id} };
+            DataTable masterTable =dLayer.ExecuteDataTable(sqlCommandText,mParamList);
+            masterTable=_api.Format(masterTable,"master");
+
+            string  sqlCommandText2="select * from Inv_PurchaseReturnDetails where N_CreditNoteID=@p1";
+            SortedList dParamList = new SortedList() { {"@p1",Id} };
+            DataTable detailTable =dLayer.ExecuteDataTable(sqlCommandText2,dParamList);
+            detailTable=_api.Format(detailTable,"details");
+
+            if(detailTable.Rows.Count==0){return Ok(new {});}
+            DataSet dataSet=new DataSet();
+            dataSet.Tables.Add(masterTable);
+            dataSet.Tables.Add(detailTable);
+            
+            return Ok(dataSet);
+            
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
         }
         
     }

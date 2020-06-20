@@ -16,12 +16,14 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
+        private readonly IDLayer dLayer;
 
         
-        public Acc_PaymentVoucher(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Acc_PaymentVoucher(IDataAccessLayer dataaccess,IApiFunctions api,IDLayer dl)
         {
             _dataAccess=dataaccess;
             _api=api;
+            dLayer=dl;
         }
        
 
@@ -53,8 +55,8 @@ namespace SmartxAPI.Controllers
                 return StatusCode(404,_api.Response(404,e.Message));
             }
         }
-        [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nFnYearId)
+        [HttpGet("details")]
+        public ActionResult GetVoucherDetails(int? nCompanyId,int nFnYearId)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
@@ -109,6 +111,7 @@ return Ok(dt);
        [HttpPost("Save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
+          
             try{
                     DataTable MasterTable;
                     DataTable DetailTable;
@@ -116,34 +119,36 @@ return Ok(dt);
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string QuotationNo="";
-                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    string InvoiceNo="";
+                    DataRow masterRow=MasterTable.Rows[0];
+                    var values = masterRow["x_VoucherNo"].ToString();
+                    
                     if(values=="@Auto"){
-                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_CompanyID",masterRow["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
-                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  _dataAccess.GetAutoNumber("Inv_SalesQuotation","x_QuotationNo", Params);
-                        if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
-                        MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
+                        Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
+                        InvoiceNo =  _dataAccess.GetAutoNumber("Acc_VoucherMaster","x_VoucherNo", Params);
+                        if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Invoice Number" ));}
+                        MasterTable.Rows[0]["x_VoucherNo"] = InvoiceNo;
                     }
 
-                    _dataAccess.StartTransaction();
-                    int N_QuotationId=_dataAccess.SaveData("Inv_SalesQuotation","N_QuotationId",0,MasterTable);                    
-                    if(N_QuotationId<=0){
-                        _dataAccess.Rollback();
+                    dLayer.setTransaction();
+                    int N_InvoiceId=dLayer.SaveData("Acc_VoucherMaster","N_VoucherId",0,MasterTable);                    
+                    if(N_InvoiceId<=0){
+                        dLayer.rollBack();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
-                            DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
+                            DetailTable.Rows[j]["N_VoucherId"]=N_InvoiceId;
                         }
-                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesQuotationDetails","n_QuotationDetailsID",0,DetailTable);                    
-                    _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
+                    int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesDetails","n_SalesDetailsID",0,DetailTable);                    
+                    dLayer.commit();
+                    return GetVoucherDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()));
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,ex);
                 }
         }
