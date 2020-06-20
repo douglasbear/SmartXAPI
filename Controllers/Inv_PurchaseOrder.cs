@@ -54,18 +54,18 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId,int nQuotationId,int nFnYearId)
+        public ActionResult GetPurchaseOrderDetails(int? nCompanyId,int nPOrderId,int nFnYearId)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvSalesQuotationNo_Search";
+            string X_Table="vw_InvPurchaseOrderNo_Search";
             string X_Fields = "*";   
             string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
             string X_OrderBy="";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",nQuotationId);
+            Params.Add("@p3",nPOrderId);
 
             try{
                 DataTable Quotation = new DataTable();

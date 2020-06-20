@@ -31,26 +31,26 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetItemCategory(int? nCompanyId)
         {
-            DataTable dt=new DataTable();
+           DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvItemCategory";
-            string X_Fields = "Code,X_Category,X_CategoryName";
-            string X_Crieteria = "";
-            string X_OrderBy="N_CategoryID";
+            string X_Table="Inv_ItemCategory";
+            string X_Fields = "X_CategoryCode,X_Category";
+            string X_Crieteria = "N_CompanyID=@p1";
+            string X_OrderBy="X_CategoryCode";
             Params.Add("@p1",nCompanyId);
-            X_Crieteria = "N_CompanyID=@p1";
+
             try{
-                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                     if(dt.Rows.Count==0)
+                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                if(dt.Rows.Count==0)
                     {
-                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
+                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
                     }else{
                         return Ok(dt);
-                    }
-                }catch(Exception e){
-                    return StatusCode(403,_api.ErrorResponse(e));
-                }
+                    }   
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
         }
 
 
@@ -91,14 +91,14 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string CategoryCode="";
-                    var values = MasterTable.Rows[0]["X_ItemCategory"].ToString();
+                    var values = MasterTable.Rows[0]["X_CategoryCode"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["N_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
+                       // Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID",73);
                         CategoryCode =  _dataAccess.GetAutoNumber("Inv_ItemCategory","X_CategoryCode", Params);
-                        if(CategoryCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate product Code" ));}
-                        MasterTable.Rows[0]["X_ItemCategory"] = CategoryCode;
+                        if(CategoryCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Category Code" ));}
+                        MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
 
 

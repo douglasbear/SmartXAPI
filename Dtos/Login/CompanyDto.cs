@@ -13,7 +13,7 @@ namespace SmartxAPI.Dtos.Login
 		public string X_BranchName { get; set; }
         public string X_LocationName { get; set; }
 		public string N_LocationID { get; set; }
-		public byte[] I_Logo { get; set; }
+		public string I_CompanyLogo { get; set; }
         public int N_TaxType { get; set; }
     }
 }

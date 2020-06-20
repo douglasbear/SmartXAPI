@@ -71,6 +71,7 @@ namespace SmartxAPI
             services.AddScoped<ILanguageRepo,LanguageRepo>();
             services.AddScoped<ICommenServiceRepo,CommenServiceRepo>();
             services.AddScoped<IDataAccessLayer,DataAccessLayer>();
+            services.AddScoped<IDLayer,DLayer>();
             services.AddScoped<IApiFunctions,ApiFunctions>();
             
         }
