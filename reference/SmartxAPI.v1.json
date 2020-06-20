@@ -10,10 +10,6 @@
   },
   "servers": [
     {
-      "url": "http://localhost:3000",
-      "description": "LocalHost"
-    },
-    {
       "url": "http://192.169.227.51:5100",
       "description": "Live"
     }
@@ -21,29 +17,47 @@
   "paths": {
     "/user/login": {
       "post": {
-        "summary": "User Login",
+        "summary": "login",
         "tags": [],
         "responses": {},
-        "operationId": "post-user-login",
-        "description": "User Login",
+        "operationId": "post-login",
+        "description": "",
+        "parameters": [],
         "requestBody": {
           "content": {
             "application/json": {
               "schema": {
-                "type": "object"
+                "type": "object",
+                "properties": {
+                  "companyName": {
+                    "type": "string"
+                  },
+                  "username": {
+                    "type": "string"
+                  },
+                  "password": {
+                    "type": "string"
+                  }
+                }
               },
               "examples": {
                 "Login Body": {
                   "value": {
-                    "companyName": "KEIR INTERNATIONAL COMPANY",
+                    "companyName": "SHAREEF ABDULLA AL DAHAN GEN CON EST",
                     "username": "Admin",
                     "password": "admin"
                   }
                 }
               }
+            },
+            "application/xml": {
+              "schema": {
+                "type": "object",
+                "properties": {}
+              }
             }
           },
-          "description": "Login Credentials"
+          "description": ""
         }
       },
       "parameters": []
