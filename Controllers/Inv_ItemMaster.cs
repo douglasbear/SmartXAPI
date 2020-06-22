@@ -15,12 +15,12 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_ItemMaster : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
 
-        public Inv_ItemMaster(IDataAccessLayer data,IApiFunctions api)
+        public Inv_ItemMaster(IDataAccessLayer dl,IApiFunctions api)
         {
-            _dataAccess = data;
+            dLayer = dl;
             _api=api;
         }
        
@@ -31,19 +31,15 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Vw_InvItem_Search";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4";
-            string X_OrderBy="[Item Code]";
+            string sqlComandText="select * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 order by [Item Code]";
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2",0);
             Params.Add("@p3","001");
             Params.Add("@p4",1);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlComandText,Params);
+                dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -64,9 +60,7 @@ namespace SmartxAPI.Controllers
             try{
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
-                    _dataAccess.StartTransaction();
-                    // Auto Gen
-                    //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    dLayer.setTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string ItemCode="";
@@ -75,24 +69,24 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID",53);
-                        ItemCode =  _dataAccess.GetAutoNumber("Inv_Vendor","X_ItemCode", Params);
+                        ItemCode =  dLayer.GetAutoNumber("Inv_ItemMaster","X_ItemCode", Params);
                         if(ItemCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate product Code" ));}
                         MasterTable.Rows[0]["X_ItemCode"] = ItemCode;
                     }
 
 
-                    int N_ItemID=_dataAccess.SaveData("Inv_ItemMaster","N_ItemID",0,MasterTable);                    
+                    int N_ItemID=dLayer.SaveData("Inv_ItemMaster","N_ItemID",0,MasterTable);                    
                     if(N_ItemID<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Product Saved" ));
                         }
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }

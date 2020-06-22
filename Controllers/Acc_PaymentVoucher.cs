@@ -14,14 +14,12 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Acc_PaymentVoucher : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
-        private readonly IDLayer dLayer;
+        private readonly IDataAccessLayer dLayer;
 
         
-        public Acc_PaymentVoucher(IDataAccessLayer dataaccess,IApiFunctions api,IDLayer dl)
+        public Acc_PaymentVoucher(IApiFunctions api,IDataAccessLayer dl)
         {
-            _dataAccess=dataaccess;
             _api=api;
             dLayer=dl;
         }
@@ -33,18 +31,14 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_AccVoucher_Disp";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
-            string X_OrderBy="";
+            string sqlCommandText= "select * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
             Params.Add("@p3",voucherType);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach (DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if (dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -56,52 +50,30 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetVoucherDetails(int? nCompanyId,int nFnYearId)
+        public ActionResult GetVoucherDetails(int? nCompanyId,int nFnYearId,int nVoucherId)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvPurchaseInvoiceNo_Search";
-            string X_Fields = "*";   
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy="";
+            string sqlCommandText="select * from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_VoucherID=@p3";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
+            Params.Add("@p3",nVoucherId);
 
             try{
-                DataTable Quotation = new DataTable();
+                DataTable Voucher = new DataTable();
                 
-                Quotation=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in Quotation.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
-                dt.Tables.Add(Quotation);
-                Quotation.TableName="Master";
+                Voucher=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                Voucher=_api.Format(Voucher,"Master");
+                dt.Tables.Add(Voucher);
                 
-                //Quotation Details
+            string  sqlCommandText2="select * from vw_InvVoucherDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_VoucherID=@p3";
+            DataTable VoucherDetails = new DataTable();
+            VoucherDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params);
+            VoucherDetails=_api.Format(VoucherDetails,"Details");
+            dt.Tables.Add(VoucherDetails);
+            return Ok(dt);
 
-            string  X_Table1="vw_InvQuotationDetails";
-            string X_Fields1 = "*";
-            string X_Crieteria1 = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy1="";
-            DataTable QuotationDetails = new DataTable();
-            QuotationDetails=_dataAccess.Select(X_Table1,X_Fields1,X_Crieteria1,Params,X_OrderBy1);
-            foreach(DataColumn c in QuotationDetails.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
-            dt.Tables.Add(QuotationDetails);
-            QuotationDetails.TableName="Details";
-
-            
-
-
-
-return Ok(dt);
-
-                // if(dt.Tables["Master"].Rows.Count==0)
-                //     {
-                //         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
-                //     }else{
-                //         return Ok(dt.Tables[0]);
-                //     }   
             }catch(Exception e){
                 return StatusCode(404,_api.Response(404,e.Message));
             }
@@ -128,7 +100,7 @@ return Ok(dt);
                         Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
-                        InvoiceNo =  _dataAccess.GetAutoNumber("Acc_VoucherMaster","x_VoucherNo", Params);
+                        InvoiceNo =  dLayer.GetAutoNumber("Acc_VoucherMaster","x_VoucherNo", Params);
                         if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Invoice Number" ));}
                         MasterTable.Rows[0]["x_VoucherNo"] = InvoiceNo;
                     }
@@ -144,7 +116,7 @@ return Ok(dt);
                         }
                     int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesDetails","n_SalesDetailsID",0,DetailTable);                    
                     dLayer.commit();
-                    return GetVoucherDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()));
+                    return GetVoucherDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()),N_InvoiceId);
                 }
                 catch (Exception ex)
                 {
@@ -154,26 +126,26 @@ return Ok(dt);
         }
         //Delete....
          [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID)
+        public ActionResult DeleteData(int N_VoucherID)
         {
              int Results=0;
             try
             {
-                _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
+                dLayer.setTransaction();
+                Results=dLayer.DeleteData("Inv_SalesVoucher","n_quotationID",N_VoucherID,"");
                 if(Results<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
                         }
                         else{
-                _dataAccess.DeleteData("Inv_SalesQuotationDetails","n_quotationID",N_QuotationID,"");
+                dLayer.DeleteData("Inv_SalesVoucherDetails","n_quotationID",N_VoucherID,"");
                 }
                 
                 if(Results>0){
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Sales quotation deleted" ));
                 }else{
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
                 }
                 

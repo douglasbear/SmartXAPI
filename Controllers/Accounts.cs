@@ -15,12 +15,12 @@ namespace SmartxAPI.Controllers
     public class Accounts : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
-        public Accounts(IApiFunctions api,IDataAccessLayer dataaccess)
+        public Accounts(IApiFunctions api,IDataAccessLayer dl)
         {
             _api = api;
-            _dataAccess=dataaccess;
+            dLayer=dl;
         }
 
         [HttpGet("glaccount/list")]
@@ -31,27 +31,21 @@ namespace SmartxAPI.Controllers
                 
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
-            
-            string X_Table="vw_AccMastLedger";
-            string X_Fields = "[Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type";
-            string X_Crieteria ="";
-            string X_OrderBy="[Account Code]";
-            
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
             Params.Add("@p3","A");
             Params.Add("@p4","L");
-            
-            if (nPaymentMethodId == 2){X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and (X_Type =@p3 or X_Type =@p4)";}
-            else{X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and (X_Type =@p3 or X_Type =@p4) and (N_CashBahavID=@p5 or N_CashBahavID=@p6)";
+            string X_Crieteria="";
+             if (nPaymentMethodId == 2){X_Crieteria = "where N_CompanyID=@p1 and N_FnYearID=@p2 and (X_Type =@p3 or X_Type =@p4)";}
+            else{X_Crieteria = "where N_CompanyID=@p1 and N_FnYearID=@p2 and (X_Type =@p3 or X_Type =@p4) and (N_CashBahavID=@p5 or N_CashBahavID=@p6)";
                 Params.Add("@p5",4);
                 Params.Add("@p6",5);
                 }
+            string sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger "+X_Crieteria+" order by [Account Code]";
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));

@@ -14,14 +14,12 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_SalesReturn : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
         private readonly IApiFunctions _api;
-        private readonly IDLayer dLayer;
+        private readonly IDataAccessLayer dLayer;
 
         
-        public Inv_SalesReturn(IDataAccessLayer dataaccess,IApiFunctions api,IDLayer dl)
+        public Inv_SalesReturn(IApiFunctions api,IDataAccessLayer dl)
         {
-            _dataAccess=dataaccess;
             _api=api;
             dLayer=dl;
         }
@@ -33,17 +31,13 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_InvDebitNo_Search";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="";
+            string sqlCommandText= "select * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach (DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if (dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -60,10 +54,7 @@ namespace SmartxAPI.Controllers
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvSalesQuotationNo_Search";
-            string X_Fields = "*";   
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy="";
+            string sqlCommandText="select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
             Params.Add("@p3",nSalesReturnId);
@@ -71,24 +62,18 @@ namespace SmartxAPI.Controllers
             try{
                 DataTable Quotation = new DataTable();
                 
-                Quotation=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in Quotation.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                Quotation=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                Quotation=_api.Format(Quotation,"Master");
                 dt.Tables.Add(Quotation);
-                Quotation.TableName="Master";
                 
                 //Quotation Details
 
-            string  X_Table1="vw_InvQuotationDetails";
-            string X_Fields1 = "*";
-            string X_Crieteria1 = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy1="";
+            string  sqlCommandText2="select * from vw_InvQuotationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
+
             DataTable QuotationDetails = new DataTable();
-            QuotationDetails=_dataAccess.Select(X_Table1,X_Fields1,X_Crieteria1,Params,X_OrderBy1);
-            foreach(DataColumn c in QuotationDetails.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+            QuotationDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params);
+            QuotationDetails=_api.Format(QuotationDetails,"Details");
             dt.Tables.Add(QuotationDetails);
-            QuotationDetails.TableName="Details";
 
             
 
@@ -128,7 +113,7 @@ return Ok(dt);
                         Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
-                        InvoiceNo =  _dataAccess.GetAutoNumber("Inv_SalesReturnMaster","X_DebitNoteNo", Params);
+                        InvoiceNo =  dLayer.GetAutoNumber("Inv_SalesReturnMaster","X_DebitNoteNo", Params);
                         if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate sales return" ));}
                         MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
                     }
@@ -153,38 +138,7 @@ return Ok(dt);
                 }
         }
         //Delete....
-         [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID)
-        {
-             int Results=0;
-            try
-            {
-                _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesQuotation","n_quotationID",N_QuotationID,"");
-                if(Results<=0){
-                        _dataAccess.Rollback();
-                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
-                        }
-                        else{
-                _dataAccess.DeleteData("Inv_SalesQuotationDetails","n_quotationID",N_QuotationID,"");
-                }
-                
-                if(Results>0){
-                    _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales quotation deleted" ));
-                }else{
-                    _dataAccess.Rollback();
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
-                }
-                
-                }
-            catch (Exception ex)
-                {
-                    return StatusCode(403,_api.ErrorResponse(ex));
-                }
-            
-
-        }
+         
         
     }
 }

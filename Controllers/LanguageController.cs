@@ -22,15 +22,15 @@ namespace SmartxAPI.Controllers
         private readonly ILanguageRepo _repository;
         private readonly IMapper _mapper;
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
 
 
-        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api, IDataAccessLayer dataAccess)
+        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api, IDataAccessLayer dl)
         {
             _repository = repository;
             _mapper = mapper;
             _api=api;
-            _dataAccess = dataAccess;
+            dLayer = dl;
         }
 
         [HttpGet("list")]
@@ -72,13 +72,10 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_WebLanMultilingual";
-            string X_Fields = "*";
-            string X_Crieteria = "";
-            string X_OrderBy="";
+            string sqlCommandText="select * from vw_WebLanMultilingual";
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                 
                 Dictionary<string,Dictionary<string,Dictionary<string,string>>> MlData = new Dictionary<string,Dictionary<string,Dictionary<string,string>>>();
                 foreach(string ScreenName in dt.AsEnumerable().Select(row => row.Field<string>("X_WFormName")).Distinct()){
