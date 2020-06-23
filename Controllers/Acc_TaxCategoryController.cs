@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select * from Acc_TaxCategory where N_CompanyID=@p1";
+            string sqlCommandText="select * from vw_TaxCategory_Disp where N_CompanyID=@p1";
             Params.Add("@p1",nCompanyID);
                 
             try{
