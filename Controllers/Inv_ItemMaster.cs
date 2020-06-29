@@ -91,6 +91,34 @@ namespace SmartxAPI.Controllers
                 }
         }
 
+
+           
+        //GET api/Projects/list
+        [HttpGet("class") ]
+        public ActionResult GetItemClass ()
+        {
+            DataTable dt=new DataTable();
+            
+            string sqlComandText="select * from Inv_ItemClass order by N_Order ASC";
+            try{
+                dt=dLayer.ExecuteDataTable(sqlComandText);
+                dt=_api.Format(dt);
+                if(dt.Rows.Count==0)
+                    {
+                        return Ok(new {});
+                    }else{
+                        return Ok(dt);
+                    }
+                
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
+            
+        }
+
+
        
     }
+
+    
 }
