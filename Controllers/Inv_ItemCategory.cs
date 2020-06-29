@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
            DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select X_CategoryCode,X_Category from Inv_ItemCategory where N_CompanyID=@p1 order by X_CategoryCode";
+            string sqlCommandText="select Code,Category,CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 order by CategoryCode";
             Params.Add("@p1",nCompanyId);
 
             try{
