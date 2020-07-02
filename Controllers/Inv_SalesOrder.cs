@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select [X_FileNo],[Order No],[Order Date],[Customer],X_PurchaseOrderNo,X_xOrderNo,N_Amount,TransType,x_Notes,N_CompanyID,N_CustomerID,N_SalesOrderId,N_FnYearID,D_OrderDate,N_BranchID,B_YearEndProcess,N_ApproveLevel,N_ProcStatus,N_Type from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by D_OrderDate DESC,[Order No]";
+            string sqlCommandText="select * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by D_OrderDate DESC,[Order No]";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
