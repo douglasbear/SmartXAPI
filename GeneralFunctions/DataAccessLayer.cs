@@ -3,6 +3,7 @@ using System.Data.SqlClient;
 using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
+using System.Threading.Tasks;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -28,8 +29,7 @@ namespace SmartxAPI.GeneralFunctions
 
         //Database variable declarations...
         private SqlCommand commandStatement;			//SQL Statement
-        public SqlConnection databaseConnection;		//SQL Connection
-        private SqlDataAdapter dataAdapter;				//Data Adapter
+        public SqlConnection databaseConnection;		//SQL Connection		//Data Adapter
         private static DataTable resultTable;			//Data table to store result
         private static DataSet resultSet;
         public SqlTransaction databaseTransaction;		//Transaction
@@ -46,7 +46,6 @@ namespace SmartxAPI.GeneralFunctions
             this.databaseConnection = new SqlConnection();
             this.commandStatement = new SqlCommand();
             this.commandStatement.Connection = this.databaseConnection;
-            this.dataAdapter = new SqlDataAdapter();
             this.config =conf;
         }
         #endregion
@@ -336,6 +335,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 OpenConnection();
                 int recordsReturned;
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
                 resultTable = new DataTable();
                 recordsReturned = dataAdapter.Fill(resultTable);
@@ -351,24 +351,25 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public DataTable ExecuteDataTable(string sqlCommandText,SortedList paramList)
+        public  DataTable ExecuteDataTable(string sqlCommandText,SortedList paramList)
         {
             try
             {
                 OpenConnection();
                 int recordsReturned;
                 SqlCommand Command =new SqlCommand(sqlCommandText, databaseConnection);
-                if(commandStatement.Parameters.Count>0){ClearParameters();}
+                if(Command.Parameters.Count>0){ClearParameters();}
                 if(paramList.Count>0){
                 ICollection Keys = paramList.Keys;
                 foreach (string key in Keys) {
                         Command.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
                     }
                 }
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = Command;
-                resultTable = new DataTable();
-                recordsReturned = dataAdapter.Fill(resultTable);
-                return resultTable;
+                DataTable resTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resTable);
+                return resTable;
             }
             catch (Exception ex)
             {
@@ -379,12 +380,50 @@ namespace SmartxAPI.GeneralFunctions
                 CloseConnection();
             }
         }
+
+        // public  async Task<DataTable> ExecuteDataTableAsync(string sqlCommandText,SortedList paramList)
+        // {
+            
+        //         try
+        //         {
+        //             await Task.Run(() => 
+        //             {
+        //                 OpenConnection();
+        //                 int recordsReturned;
+        //                 SqlCommand Command =new SqlCommand(sqlCommandText, databaseConnection);
+        //                 if(commandStatement.Parameters.Count>0){ClearParameters();}
+        //                 if(paramList.Count>0){
+        //                 ICollection Keys = paramList.Keys;
+        //                 foreach (string key in Keys) {
+        //                         Command.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
+        //                     }
+        //                 }
+        //                 dataAdapter.SelectCommand = Command;
+        //                 resultTable = new DataTable();
+        //                 recordsReturned = dataAdapter.Fill(resultTable);
+        //                 return resultTable;
+        //             });
+        //             DataTable dataTable=new DataTable();
+        //             return dataTable;
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             throw ex;
+        //         }
+        //         finally
+        //         {
+        //             CloseConnection();
+        //         }
+        // }
+
+        
         public DataSet FillDataSet(string sqlCommandText)
         {
             try
             {
                 OpenConnection();
                 int recordsReturned;
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
                 resultSet = new DataSet();
                 recordsReturned = dataAdapter.Fill(resultTable);
@@ -405,6 +444,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 OpenConnection();
                 int recordsReturned;
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
                 if (dataTableName.Trim().Length > 0)
                 {
@@ -436,6 +476,7 @@ namespace SmartxAPI.GeneralFunctions
                 commandStatement.CommandType = sqlCommandType;
                 commandStatement.CommandText = sqlCommandText;
                 commandStatement.Connection = databaseConnection;
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = commandStatement;
                 commandStatement.Transaction = databaseTransaction;
 
@@ -465,6 +506,7 @@ namespace SmartxAPI.GeneralFunctions
                 commandStatement.CommandType = sqlCommandType;
                 commandStatement.CommandText = sqlCommandText;
                 commandStatement.Connection = databaseConnection;
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = commandStatement;
                 commandStatement.Transaction = databaseTransaction;
 
@@ -828,7 +870,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 OpenConnection();
                 int recordsReturned;
-
+                SqlDataAdapter dataAdapter =new SqlDataAdapter();
                 dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
                 dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
                 dataAdapter.SelectCommand.CommandText = sqlCommandText;
@@ -952,6 +994,7 @@ namespace SmartxAPI.GeneralFunctions
     {
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText,SortedList paramList);
+        //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText);
         public object ExecuteScalar(string sqlCommandText);
         public object ExecuteScalar(string sqlCommandText,SortedList paramList);

@@ -6,6 +6,8 @@ using System.Collections;
 using System;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Threading.Tasks;
+
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
@@ -56,14 +58,15 @@ namespace SmartxAPI.Controllers
             string sqlCommandText="select * from Acc_BranchMaster where N_CompanyId=@p1";
             Params.Add("@p1",nCompanyId);
             try{
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                    //await Task.Run(() => { 
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params); 
+                        //});
                     if(dt.Rows.Count==0)
                         {
                             return StatusCode(200,_api.Response(200 ,"No Results Found" ));
                         }else{
                             return Ok(dt);
                         }
-                
             }catch(Exception e){
                 return StatusCode(404,_api.ErrorResponse(e));
             }

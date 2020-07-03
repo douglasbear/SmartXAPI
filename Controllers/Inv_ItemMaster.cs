@@ -7,6 +7,7 @@ using System;
 using SmartxAPI.GeneralFunctions;
 using System.Data;
 using System.Collections;
+using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
@@ -38,15 +39,18 @@ namespace SmartxAPI.Controllers
             Params.Add("@p4",1);
 
             try{
-                dt=dLayer.ExecuteDataTable(sqlComandText,Params);
-                dt=_api.Format(dt);
-                if(dt.Rows.Count==0)
-                    {
-                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
-                    }else{
-                        return Ok(dt);
-                    }
-                
+                //await Task.Run(() => { 
+                    dt=dLayer.ExecuteDataTable(sqlComandText,Params); 
+                    dt=_api.Format(dt);
+                  //  });
+                    
+                    if(dt.Rows.Count==0)
+                        {
+                            return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                        }else{
+                            return Ok(dt);
+                        }
+
             }catch(Exception e){
                 return StatusCode(403,_api.ErrorResponse(e));
             }
