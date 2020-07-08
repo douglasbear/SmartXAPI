@@ -15,12 +15,12 @@ namespace SmartxAPI.Controllers
     public class Inv_SalesEnquiry : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
-        public Inv_SalesEnquiry(IApiFunctions api,IDataAccessLayer dataaccess)
+        public Inv_SalesEnquiry(IApiFunctions api,IDataAccessLayer dl)
         {
             _api = api;
-            _dataAccess=dataaccess;
+            dLayer=dl;
         }
 
         [HttpGet("list")]
@@ -28,25 +28,21 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
-            
-            string X_Table="vw_crmmaster";
-            string X_Fields = "X_CRMCode,[Enquiry Date],X_ClientName,N_CompanyID,N_CRMID,N_SalesmanID,N_FnYearID,D_Date,N_BranchID,N_StatusID,B_Processed";
-            string X_Crieteria = "";
-            string X_OrderBy="D_Date DESC,X_CRMCode";
             Params.Add("@p1",0);
             Params.Add("@p2",nCompanyId);
             Params.Add("@p3",nFnYearId);
-
+            string X_Crieteria;    
             if (bAllBranchesData == true)
-                {X_Crieteria = "B_Processed=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3";}
+                {X_Crieteria = " where B_Processed=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3";}
                 else
-                {X_Crieteria = "B_Processed=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3 and N_BranchID=@p4"; 
+                {X_Crieteria = " where B_Processed=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3 and N_BranchID=@p4"; 
                 Params.Add("@p4",nBranchId);}
-
+        
+            string sqlCommandText="select X_CRMCode,[Enquiry Date],X_ClientName,N_CompanyID,N_CRMID,N_SalesmanID,N_FnYearID,D_Date,N_BranchID,N_StatusID,B_Processed from vw_crmmaster "+X_Crieteria+" order by D_Date DESC,X_CRMCode";
+            
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));

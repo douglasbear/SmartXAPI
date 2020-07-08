@@ -15,6 +15,7 @@ using Newtonsoft.Json;
 using SmartxAPI.Dtos.Login;
 using AutoMapper;
 using System.Security.Cryptography;
+using SmartxAPI.GeneralFunctions;
 
 namespace SmartxAPI.Data
 {
@@ -23,12 +24,16 @@ namespace SmartxAPI.Data
         private readonly SmartxContext _context;
         private readonly AppSettings _appSettings;
         private readonly IMapper _mapper;
+        private readonly IApiFunctions _api;
+        private readonly IDataAccessLayer dLayer;
 
-        public CommenServiceRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper)
+        public CommenServiceRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper,IApiFunctions api,IDataAccessLayer dl)
         {
             _context = context;
             _appSettings=appSettings.Value;
             _mapper=mapper;
+            _api=api;
+            dLayer=dl;
         }
 
 
@@ -47,10 +52,19 @@ namespace SmartxAPI.Data
                 .ToList()
                 .FirstOrDefault();
 
+                if(loginRes.N_BranchID==null||loginRes.N_BranchID==""){
+                loginRes.X_BranchName = dLayer.ExecuteScalar("Select X_BranchName From Acc_BranchMaster Where N_CompanyID=" + loginRes.N_CompanyID + " and B_DefaultBranch=1").ToString();
+                loginRes.N_BranchID = dLayer.ExecuteScalar("Select N_BranchID From Acc_BranchMaster Where N_CompanyID=" + loginRes.N_CompanyID + " and B_DefaultBranch=1").ToString();
+                loginRes.B_AllBranchesData = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster Where N_CompanyID=" +loginRes.N_CompanyID + " and B_DefaultBranch=1").ToString());
+                }
+                loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=" + loginRes.N_CompanyID + " and N_TypeID=2 and B_IsDefault=1  and N_BranchID=" + loginRes.N_BranchID).ToString();
+                loginRes.N_LocationID = dLayer.ExecuteScalar("Select N_LocationID From Inv_Location Where N_CompanyID=" + loginRes.N_CompanyID + " and B_IsDefault=1 and N_BranchID=" + loginRes.N_BranchID).ToString();
+               
+
 switch (reqtype.ToLower())
       {
           case "all":
-                    var tokenHandler=new JwtSecurityTokenHandler(); 
+                var tokenHandler=new JwtSecurityTokenHandler(); 
                 var key=Encoding.ASCII.GetBytes(_appSettings.Secret);
                 var tokenDescriptor = new SecurityTokenDescriptor{
                     Subject=new System.Security.Claims.ClaimsIdentity(new Claim[]{
@@ -72,8 +86,8 @@ switch (reqtype.ToLower())
                 loginRes.RefreshToken = generateRefreshToken();
                 var user = _context.SecUser.SingleOrDefault(u => u.NUserId== loginRes.N_UserID);
                 user.XToken=loginRes.RefreshToken;
-                _context.Update(user);
-                _context.SaveChanges();
+                
+                object abc = dLayer.ExecuteScalar("Update Sec_User set X_Token='"+loginRes.RefreshToken+"' where N_UserID="+loginRes.N_UserID+" and N_CompanyID=" + loginRes.N_CompanyID );
 
                 loginRes.I_CompanyLogo = Convert.ToBase64String(loginRes.I_Logo);
                 var MenuList =_context.VwUserMenus

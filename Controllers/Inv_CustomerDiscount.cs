@@ -15,12 +15,12 @@ namespace SmartxAPI.Controllers
     public class Inv_CustomerDiscount : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
-        public Inv_CustomerDiscount(IApiFunctions api,IDataAccessLayer dataaccess)
+        public Inv_CustomerDiscount(IApiFunctions api,IDataAccessLayer dl)
         {
             _api = api;
-            _dataAccess=dataaccess;
+            dLayer=dl;
         }
 
         [HttpGet("list")]
@@ -30,14 +30,11 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Inv_DiscountSettings";
-            string X_Fields = "X_DiscCode,X_DiscDescription,N_CompanyID,N_DiscID,N_FnYearID";
-            string X_Crieteria = "N_CompanyID=@p1";
-            string X_OrderBy="N_DiscID";
+            string sqlCommandText="select X_DiscCode,X_DiscDescription,N_CompanyID,N_DiscID,N_FnYearID from Inv_DiscountSettings where N_CompanyID=@p1 order by N_DiscID";
             Params.Add("@p1",nCompanyId);
                 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));

@@ -17,39 +17,29 @@ namespace SmartxAPI.Controllers
     public class AccTaxCategoryController : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
 
-        public AccTaxCategoryController(IDataAccessLayer data,IApiFunctions api)
+        public AccTaxCategoryController(IDataAccessLayer dl,IApiFunctions api)
         {
-            _dataAccess = data;
+            dLayer = dl;
             _api=api;
         }
 
-        [HttpGet("report")]
-        public ActionResult genrateReport()
-        {
-            _dataAccess.GerateReport();
+       
 
-            return Ok();
-
-        }
-
-            //GET api/Projects/list
-            [HttpGet("list") ]
+        //GET api/Projects/list
+        [HttpGet("list") ]
         public ActionResult GetAllTaxTypes (int? nCompanyID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Acc_TaxCategory";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1";
-            string X_OrderBy="";
+            string sqlCommandText="select * from vw_TaxCategory_Disp where N_CompanyID=@p1";
             Params.Add("@p1",nCompanyID);
                 
             try{
-                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                     if(dt.Rows.Count==0)
                         {
                             return StatusCode(200,_api.Response(200 ,"No Results Found" ));

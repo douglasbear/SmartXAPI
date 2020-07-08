@@ -14,14 +14,12 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_SalesInvoice : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
-        private readonly IDLayer dLayer;
-        public Inv_SalesInvoice(IDataAccessLayer dataaccess,IApiFunctions api,IDLayer dl)
+        public Inv_SalesInvoice(IApiFunctions api,IDataAccessLayer dl)
         {
-            _dataAccess=dataaccess;
-            _api=api;
             dLayer=dl;
+            _api=api;
         }
        
 
@@ -31,17 +29,13 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table= "vw_InvSalesInvoiceNo_Search";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="";
+            string sqlCommandText= "select * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach (DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if (dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -109,7 +103,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
-                        InvoiceNo =  _dataAccess.GetAutoNumber("Inv_Sales","x_ReceiptNo", Params);
+                        InvoiceNo =  dLayer.GetAutoNumber("Inv_Sales","x_ReceiptNo", Params);
                         if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Invoice Number" ));}
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
@@ -140,21 +134,21 @@ namespace SmartxAPI.Controllers
              int Results=0;
             try
             {
-                _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesInvoice","n_InvoiceID",N_InvoiceID,"");
+                dLayer.setTransaction();
+                Results=dLayer.DeleteData("Inv_SalesInvoice","n_InvoiceID",N_InvoiceID,"");
                 if(Results<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(409,_api.Response(409 ,"Unable to delete sales Invoice" ));
                         }
                         else{
-                _dataAccess.DeleteData("Inv_SalesInvoiceDetails","n_InvoiceID",N_InvoiceID,"");
+                dLayer.DeleteData("Inv_SalesInvoiceDetails","n_InvoiceID",N_InvoiceID,"");
                 }
                 
                 if(Results>0){
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Sales Invoice deleted" ));
                 }else{
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(409,_api.Response(409 ,"Unable to delete sales Invoice" ));
                 }
                 

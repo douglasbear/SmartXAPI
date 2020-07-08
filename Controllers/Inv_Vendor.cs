@@ -16,14 +16,14 @@ namespace SmartxAPI.Controllers
     public class Inv_Vendor : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
 
 
-        public Inv_Vendor(IApiFunctions api,IDataAccessLayer dataAccess)
+        public Inv_Vendor(IApiFunctions api,IDataAccessLayer dl)
         {
             _api=api;
-            _dataAccess = dataAccess;
+            dLayer = dl;
         }
        
 
@@ -33,17 +33,12 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
-            
-            string X_Table="vw_InvVendor_Disp";
-            string X_Fields = "[Vendor Code] as vendorCode,[Vendor Name] as vendorName,Address,N_CompanyID,N_VendorID,B_Inactive,N_FnYearID";
-            string X_Crieteria = "";
-            string X_OrderBy="[Vendor Name],[Vendor Code]";
+            string sqlCommandText="select [Vendor Code] as vendorCode,[Vendor Name] as vendorName,Address,N_CompanyID,N_VendorID,B_Inactive,N_FnYearID from vw_InvVendor_Disp where B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3 order by [Vendor Name],[Vendor Code]";
             Params.Add("@p1",0);
             Params.Add("@p2",nCompanyId);
             Params.Add("@p3",nFnYearId);
-            X_Crieteria = "B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3";
             try{
-                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                      if(dt.Rows.Count==0)
                     {
                        return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
@@ -60,15 +55,11 @@ namespace SmartxAPI.Controllers
         public ActionResult GetVendor(int? nCompanyId,int nFnYearId)
         {
             DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
             
-            string X_Table="Inv_Vendor";
-            string X_Fields = "*";          
-            string X_Crieteria = "";
-            string X_OrderBy="";
+            string sqlCommandText="select * from Inv_Vendor";
 
             try{
-                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText);
                      if(dt.Rows.Count==0)
                     {
                        return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
@@ -87,7 +78,7 @@ namespace SmartxAPI.Controllers
             try{
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
-                    _dataAccess.StartTransaction();
+                    dLayer.setTransaction();
                     // Auto Gen
                     //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
                     SortedList Params = new SortedList();
@@ -98,24 +89,24 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID",52);
-                        VendorCode =  _dataAccess.GetAutoNumber("Inv_Vendor","X_VendorCode", Params);
+                        VendorCode =  dLayer.GetAutoNumber("Inv_Vendor","X_VendorCode", Params);
                         if(VendorCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Vendor Code" ));}
                         MasterTable.Rows[0]["X_VendorCode"] = VendorCode;
                     }
 
 
-                    int N_VendorId=_dataAccess.SaveData("Inv_Vendor","N_VendorID",0,MasterTable);                    
+                    int N_VendorId=dLayer.SaveData("Inv_Vendor","N_VendorID",0,MasterTable);                    
                     if(N_VendorId<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Vendor Saved" ));
                         }
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }
@@ -126,7 +117,7 @@ namespace SmartxAPI.Controllers
              int Results=0;
             try
             {
-                Results=_dataAccess.DeleteData("Inv_Vendor","N_VendorID",nVendorID,"");
+                Results=dLayer.DeleteData("Inv_Vendor","N_VendorID",nVendorID,"");
                 if(Results>0){
                     return StatusCode(200,_api.Response(200 ,"vendor deleted" ));
                 }else{
