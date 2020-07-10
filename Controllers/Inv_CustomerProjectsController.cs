@@ -18,12 +18,12 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class InvCustomerProjectsController : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
 
-        public InvCustomerProjectsController(IDataAccessLayer data,IApiFunctions api)
+        public InvCustomerProjectsController(IDataAccessLayer dl,IApiFunctions api)
         {
-            _dataAccess = data;
+            dLayer = dl;
             _api=api;
         }
        
@@ -34,17 +34,13 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Vw_InvCustomerProjects";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="X_ProjectCode";
+            string sqlCommandText="select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 rder by X_ProjectCode";
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2",nFnYearID);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));

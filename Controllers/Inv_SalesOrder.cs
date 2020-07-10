@@ -14,13 +14,13 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_SalesOrderController : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
 
         
-        public Inv_SalesOrderController(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_SalesOrderController(IDataAccessLayer dl,IApiFunctions api)
         {
-            _dataAccess=dataaccess;
+            dLayer=dl;
             _api=api;
         }
        
@@ -31,17 +31,13 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvSalesOrderNo_Search";
-            string X_Fields = "[X_FileNo],[Order No],[Order Date],[Customer],X_PurchaseOrderNo,X_xOrderNo,N_Amount,TransType,x_Notes,N_CompanyID,N_CustomerID,N_SalesOrderId,N_FnYearID,D_OrderDate,N_BranchID,B_YearEndProcess,N_ApproveLevel,N_ProcStatus,N_Type";
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="D_OrderDate DESC,[Order No]";
+            string sqlCommandText="select * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by D_OrderDate DESC,[Order No]";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -67,22 +63,19 @@ namespace SmartxAPI.Controllers
                 ParamList.Add("N_BranchId",0);
                 ParamList.Add("N_FnYearID",nFnYearId.ToString());
                 
-                MasterTable=_dataAccess.ExecuteProcDataTable("SP_InvSalesOrder_Disp",ParamList);
-                foreach(DataColumn c in MasterTable.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                MasterTable=dLayer.ExecuteDataTablePro("SP_InvSalesOrder_Disp",ParamList);
+                MasterTable=_api.Format(MasterTable,"Master");
                 dt.Tables.Add(MasterTable);
-                MasterTable.TableName="Master";
                 
                 //Sales Order Details
                 DataTable DetailsTable = new DataTable();
-                ParamList.Add("N_CompanyID",nCompanyId.ToString());
-                ParamList.Add("N_SalesID",MasterTable.Rows[0]["N_SalesOrderId"].ToString());
+                SortedList ParamList1=new SortedList();
+                ParamList1.Add("N_CompanyID",nCompanyId.ToString());
+                ParamList1.Add("N_SalesID",MasterTable.Rows[0]["N_SalesOrderId"].ToString());
                 
-                MasterTable=_dataAccess.ExecuteProcDataTable("SP_InvSalesOrderDtls_Disp",ParamList);
-                foreach(DataColumn c in DetailsTable.Columns)
-                        c.ColumnName = String.Join("", c.ColumnName.Split());
+                DetailsTable=dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtls_Disp",ParamList1);
+                DetailsTable=_api.Format(DetailsTable,"Details");
                 dt.Tables.Add(DetailsTable);
-                DetailsTable.TableName="Details";
                 return Ok(dt);
             
             }catch(Exception e){
@@ -100,7 +93,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
-                    _dataAccess.StartTransaction();
+                    dLayer.setTransaction();
                     // Auto Gen
                     string xOrderNo="";
                     var values = MasterTable.Rows[0]["X_OrderNo"].ToString();
@@ -110,33 +103,33 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID",Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID",81);
                         Params.Add("N_BranchID",Master["n_BranchId"].ToString());
-                        xOrderNo =  _dataAccess.GetAutoNumber("Inv_SalesOrder","X_OrderNo", Params);
+                        xOrderNo =  dLayer.GetAutoNumber("Inv_SalesOrder","X_OrderNo", Params);
                         if(xOrderNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Sales Order Number" ));}
                         MasterTable.Rows[0]["X_OrderNo"] = xOrderNo;
                     }
 
                     
-                    int nSalesOrderID=_dataAccess.SaveData("Inv_SalesOrder","N_SalesOrderID",0,MasterTable);                    
+                    int nSalesOrderID=dLayer.SaveData("Inv_SalesOrder","N_SalesOrderID",0,MasterTable);                    
                     if(nSalesOrderID<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(409,_api.Response(409 ,"Unable to save sales order" ));
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
                             DetailTable.Rows[j]["N_SalesOrderID"]=nSalesOrderID;
                         }
-                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_SalesOrderDetails","N_SalesOrderDetails",0,DetailTable);                    
+                    int N_QuotationDetailId=dLayer.SaveData("Inv_SalesOrderDetails","N_SalesOrderDetails",0,DetailTable);                    
                     if(N_QuotationDetailId<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(409,_api.Response(409 ,"Unable to save sales order" ));
                     }else{
-                        _dataAccess.Commit();
+                        dLayer.commit();
                     }
                     return  GetSalesOrderDetails(int.Parse(Master["n_CompanyId"].ToString()),MasterTable.Rows[0]["X_OrderNo"].ToString(),int.Parse(Master["n_FnYearId"].ToString()));
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }
@@ -147,21 +140,21 @@ namespace SmartxAPI.Controllers
              int Results=0;
             try
             {
-                _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_SalesOrder","N_SalesOrderID",nSalesOrderID,"");
+                dLayer.setTransaction();
+                Results=dLayer.DeleteData("Inv_SalesOrder","N_SalesOrderID",nSalesOrderID,"");
                 if(Results<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(409,_api.Response(409 ,"Unable to delete sales order" ));
                         }
                         else{
-                Results=_dataAccess.DeleteData("Inv_SalesOrderDetails","N_SalesOrderID",nSalesOrderID,"");
+                Results=dLayer.DeleteData("Inv_SalesOrderDetails","N_SalesOrderID",nSalesOrderID,"");
                 }
                 
                 if(Results>0){
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Sales order deleted" ));
                 }else{
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(409,_api.Response(409 ,"Unable to delete sales order" ));
                 }
                 

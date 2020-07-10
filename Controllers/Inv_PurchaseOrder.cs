@@ -15,14 +15,16 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Inv_PurchaseOrderController : ControllerBase
     {
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
+        private readonly IMyFunctions myFunctions;
 
         
-        public Inv_PurchaseOrderController(IDataAccessLayer dataaccess,IApiFunctions api)
+        public Inv_PurchaseOrderController(IDataAccessLayer dl,IApiFunctions api,IMyFunctions myFun)
         {
-            _dataAccess=dataaccess;
+            dLayer=dl;
             _api=api;
+            myFunctions=myFun;
         }
        
 
@@ -32,17 +34,13 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_InvPurchaseOrderNo_Search";
-            string X_Fields = "*";
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2";
-            string X_OrderBy="D_POrderDate DESC,[Order No]";
+            string sqlCommandText="select * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by D_POrderDate DESC,[Order No]";
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in dt.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -54,53 +52,90 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetPurchaseOrderDetails(int? nCompanyId,int nPOrderId,int nFnYearId)
+        public ActionResult GetPurchaseOrderDetails(int nCompanyId,string xPOrderId,int nFnYearId,string nLocationID,string xPRSNo,bool bAllBranchData,int nBranchID)
         {
+            bool B_PRSVisible=false;
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            DataTable DataTable = new DataTable();
+
+            string Mastersql="";
             
-            string X_Table="vw_InvPurchaseOrderNo_Search";
-            string X_Fields = "*";   
-            string X_Crieteria = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy="";
+            if (bAllBranchData == true){
+                Mastersql="SELECT Inv_PurchaseOrder.*, Inv_Location.X_LocationName,Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName FROM Inv_PurchaseOrder INNER JOIN Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND  Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.N_FnYearID=@p2 and Inv_PurchaseOrder.X_POrderNo=@p3";
+            }
+            else
+            {
+                Mastersql="SELECT Inv_PurchaseOrder.*, Inv_Location.X_LocationName,Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName FROM Inv_PurchaseOrder INNER JOIN Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND  Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.X_POrderNo=@p3 and Inv_PurchaseOrder.N_BranchID=@nBranchID and Inv_PurchaseOrder.N_FnYearID=@p2";
+                Params.Add("@nBranchID",nBranchID);
+            }
+            
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",nPOrderId);
+            Params.Add("@p3",xPOrderId);
 
             try{
-                DataTable Quotation = new DataTable();
-                
-                Quotation=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
-                foreach(DataColumn c in Quotation.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
-                dt.Tables.Add(Quotation);
-                Quotation.TableName="Master";
-                
-                //Quotation Details
 
-            string  X_Table1="vw_InvQuotationDetails";
-            string X_Fields1 = "*";
-            string X_Crieteria1 = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            string X_OrderBy1="";
-            DataTable QuotationDetails = new DataTable();
-            QuotationDetails=_dataAccess.Select(X_Table1,X_Fields1,X_Crieteria1,Params,X_OrderBy1);
-            foreach(DataColumn c in QuotationDetails.Columns)
-                    c.ColumnName = String.Join("", c.ColumnName.Split());
-            dt.Tables.Add(QuotationDetails);
-            QuotationDetails.TableName="Details";
-
+                MasterTable=dLayer.ExecuteDataTable(Mastersql,Params);
+                MasterTable = _api.Format(MasterTable,"Master");
+                dt.Tables.Add(MasterTable);
+             
+                //PurchaseOrder Details
+            int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
             
+            string DetailSql="";
+            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId,556, "Administrator",dLayer);
+            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId,1049, "Administrator",dLayer);
+            if (MaterailRequestVisible || PurchaseRequestVisible){
+                B_PRSVisible = true;
+                DataColumn prsCol = new DataColumn("B_PRSVisible", typeof(System.Boolean));
+                prsCol.DefaultValue=B_PRSVisible;
+                DataTable.Columns.Add(prsCol);
+            }
+             if (B_PRSVisible)
+                if (xPRSNo!= "")
+                {
+                    DetailSql="Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetailsForPRS.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetailsForPRS.N_ItemID,vw_InvPurchaseOrderDetailsForPRS.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetailsForPRS.N_ItemID,vw_InvPurchaseOrderDetailsForPRS.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetailsForPRS Where N_CompanyID=@p1 and (X_PRSNo In (Select X_PRSNo from vw_InvPurchaseOrderDetailsForPRS Where N_POrderID = @p5)  or X_PRSNo In (Select 0 from vw_InvPurchaseOrderDetailsForPRS Where N_POrderID = @p5)) and  (N_POrderID =@p5 OR N_POrderID IS Null)";
+                    Params.Add("@p4",nLocationID);
+                    Params.Add("@p5",N_POrderID);
+                }
+                else
+                {
+                    if (bAllBranchData == true){
+                        DetailSql="Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
+                        Params.Add("@p4",nLocationID);
+                        Params.Add("@p5",N_POrderID);
+                    }
+                    else{
+                        DetailSql="Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=nPOrderID and N_BranchID=@nBranchID";
+                        Params.Add("@p4",nLocationID);
+                        Params.Add("@p5",N_POrderID);
+                        }
+                }
+            else
+            {
+
+                if (bAllBranchData == true){
+                    DetailSql="Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
+                    Params.Add("@p4",nLocationID);
+                    Params.Add("@p5",N_POrderID);
+                }
+                else{
+                    DetailSql="Select *,dbo.SP_GenGetStock(vw_InvPurchaseOrderDetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseOrderDetails.N_ItemID,vw_InvPurchaseOrderDetails.N_CompanyID) As N_UnitSPrice from vw_InvPurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5 and N_BranchID=@nBranchID";
+                    Params.Add("@p4",nLocationID);
+                    Params.Add("@p5",N_POrderID);
+                    }
+            }
+            //DetailSql="Select * from Inv_PurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
+                    
 
 
-
-return Ok(dt);
-
-                // if(dt.Tables["Master"].Rows.Count==0)
-                //     {
-                //         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
-                //     }else{
-                //         return Ok(dt.Tables[0]);
-                //     }   
+            DetailTable=dLayer.ExecuteDataTable(DetailSql,Params);
+            DetailTable=_api.Format(DetailTable,"Details");
+            dt.Tables.Add(DetailTable);
+            return Ok(dt);
             }catch(Exception e){
                 return StatusCode(403,_api.ErrorResponse(e));
             }
@@ -115,53 +150,63 @@ return Ok(dt);
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-
+                    SortedList Params = new SortedList();
+                    dLayer.setTransaction();
                     // Auto Gen
-                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    string PorderNo="";
+                    var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
+                    if(values=="@Auto"){
+                        Params.Add("N_CompanyID",Master["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",Master["n_FnYearId"].ToString());
+                        Params.Add("N_FormID",80);
+                        Params.Add("N_BranchID",Master["n_BranchId"].ToString());
+                        PorderNo =  dLayer.GetAutoNumber("Inv_PurchaseOrder","x_POrderNo", Params);
+                        if(PorderNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
+                        MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
+                    }
 
-
-                    _dataAccess.StartTransaction();
-                    int N_QuotationId=_dataAccess.SaveData("Inv_PurchaseOrder","N_QuotationId",0,MasterTable);                    
-                    if(N_QuotationId<=0){
-                        _dataAccess.Rollback();
+                    int N_PurchaseOrderId=dLayer.SaveData("Inv_PurchaseOrder","n_POrderID",0,MasterTable);                    
+                    if(N_PurchaseOrderId<=0){
+                        dLayer.rollBack();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
-                            DetailTable.Rows[j]["n_QuotationID"]=N_QuotationId;
+                            DetailTable.Rows[j]["n_POrderID"]=N_PurchaseOrderId;
                         }
-                    int N_QuotationDetailId=_dataAccess.SaveData("Inv_PurchaseOrderDetails","n_QuotationDetailsID",0,DetailTable);                    
-                    _dataAccess.Commit();
+                    int N_PurchaseOrderDetailId=dLayer.SaveData("Inv_PurchaseOrderDetails","n_POrderDetailsID",0,DetailTable);                    
+                    dLayer.commit();
                     return Ok("DataSaved");
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,ex);
                 }
         }
         //Delete....
          [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID)
+        public ActionResult DeleteData(int N_PurchaseOrderID)
         {
              int Results=0;
             try
             {
-                _dataAccess.StartTransaction();
-                Results=_dataAccess.DeleteData("Inv_PurchaseOrder","n_quotationID",N_QuotationID,"");
+                dLayer.setTransaction();
+                Results=dLayer.DeleteData("Inv_PurchaseOrder","n_PurchaseOrderID",N_PurchaseOrderID,"");
                 if(Results<=0){
-                        _dataAccess.Rollback();
-                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
+                        dLayer.rollBack();
+                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales PurchaseOrder" ));
                         }
                         else{
-                Results=_dataAccess.DeleteData("Inv_PurchaseOrderDetails","n_quotationID",N_QuotationID,"");
+                Results=dLayer.DeleteData("Inv_PurchaseOrderDetails","n_PurchaseOrderID",N_PurchaseOrderID,"");
                 }
                 
                 if(Results>0){
-                    _dataAccess.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales quotation deleted" ));
+                    dLayer.commit();
+                    return StatusCode(200,_api.Response(200 ,"Sales PurchaseOrder deleted" ));
                 }else{
-                    _dataAccess.Rollback();
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
+                    dLayer.rollBack();
+                    return StatusCode(409,_api.Response(409 ,"Unable to delete sales PurchaseOrder" ));
                 }
                 
                 }

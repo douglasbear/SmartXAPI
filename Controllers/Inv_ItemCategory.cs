@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,14 +14,14 @@ namespace SmartxAPI.Controllers
     public class Inv_ItemCategory : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
 
 
-        public Inv_ItemCategory(IApiFunctions api,IDataAccessLayer dataAccess)
+        public Inv_ItemCategory(IApiFunctions api,IDataAccessLayer dl)
         {
             _api=api;
-            _dataAccess = dataAccess;
+            dLayer = dl;
         }
        
 
@@ -34,14 +32,11 @@ namespace SmartxAPI.Controllers
            DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Inv_ItemCategory";
-            string X_Fields = "X_CategoryCode,X_Category";
-            string X_Crieteria = "N_CompanyID=@p1";
-            string X_OrderBy="X_CategoryCode";
+            string sqlCommandText="select Code,Category,CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 order by CategoryCode";
             Params.Add("@p1",nCompanyId);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -60,13 +55,10 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Inv_ItemCategory";
-            string X_Fields = "*";          
-            string X_Crieteria = "";
-            string X_OrderBy="";
+            string sqlCommandText="select * from Inv_ItemCategory";
 
             try{
-                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                      if(dt.Rows.Count==0)
                     {
                        return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
@@ -85,7 +77,7 @@ namespace SmartxAPI.Controllers
             try{
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
-                    _dataAccess.StartTransaction();
+                    dLayer.setTransaction();
                     // Auto Gen
                     //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
                     SortedList Params = new SortedList();
@@ -96,24 +88,24 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["N_CompanyId"].ToString());
                        // Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID",73);
-                        CategoryCode =  _dataAccess.GetAutoNumber("Inv_ItemCategory","X_CategoryCode", Params);
+                        CategoryCode =  dLayer.GetAutoNumber("Inv_ItemCategory","X_CategoryCode", Params);
                         if(CategoryCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Category Code" ));}
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
 
 
-                    int N_CategoryID=_dataAccess.SaveData("Inv_ItemCategory","N_CategoryID",0,MasterTable);                    
+                    int N_CategoryID=dLayer.SaveData("Inv_ItemCategory","N_CategoryID",0,MasterTable);                    
                     if(N_CategoryID<=0){
-                        _dataAccess.Rollback();
+                        dLayer.rollBack();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
-                    _dataAccess.Commit();
+                    dLayer.commit();
                     return StatusCode(200,_api.Response(200 ,"Product category Saved" ));
                         }
                 }
                 catch (Exception ex)
                 {
-                    _dataAccess.Rollback();
+                    dLayer.rollBack();
                     return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }
@@ -124,7 +116,7 @@ namespace SmartxAPI.Controllers
              int Results=0;
             try
             {
-                Results=_dataAccess.DeleteData("Inv_ItemCategory","N_CategoryID",nCategoryID,"");
+                Results=dLayer.DeleteData("Inv_ItemCategory","N_CategoryID",nCategoryID,"");
                 if(Results>0){
                     return StatusCode(200,_api.Response(200 ,"Product category deleted" ));
                 }else{

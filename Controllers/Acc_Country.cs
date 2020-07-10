@@ -15,12 +15,12 @@ namespace SmartxAPI.Controllers
     public class Acc_Country : ControllerBase
     {
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
         
-        public Acc_Country(IApiFunctions api,IDataAccessLayer dataaccess)
+        public Acc_Country(IApiFunctions api,IDataAccessLayer dl)
         {
             _api = api;
-            _dataAccess=dataaccess;
+            dLayer=dl;
         }
 
         [HttpGet("list")]
@@ -29,14 +29,11 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="Acc_Country";
-            string X_Fields = "X_CountryCode,X_CountryName,N_CompanyID,N_CountryID,B_TaxImplement";
-            string X_Crieteria = "N_CompanyID=@p1";
-            string X_OrderBy="N_CountryID";   
+            string sqlCommandText="select X_CountryCode,X_CountryName,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1 order by N_CountryID";
             Params.Add("@p1",nCompanyId);
                 
             try{
-                    dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                     if(dt.Rows.Count==0)
                         {
                             return StatusCode(200,_api.Response(200 ,"No Results Found" ));

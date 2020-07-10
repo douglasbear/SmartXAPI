@@ -22,15 +22,15 @@ namespace SmartxAPI.Controllers
         private readonly ILanguageRepo _repository;
         private readonly IMapper _mapper;
         private readonly IApiFunctions _api;
-        private readonly IDataAccessLayer _dataAccess;
+        private readonly IDataAccessLayer dLayer;
 
 
-        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api, IDataAccessLayer dataAccess)
+        public LanguageController(ILanguageRepo repository, IMapper mapper,IApiFunctions api, IDataAccessLayer dl)
         {
             _repository = repository;
             _mapper = mapper;
             _api=api;
-            _dataAccess = dataAccess;
+            dLayer = dl;
         }
 
         [HttpGet("list")]
@@ -67,32 +67,25 @@ namespace SmartxAPI.Controllers
         
 
         [HttpGet("ml-dataset")]
-        public ActionResult GetControllsListnew()
+        public ActionResult GetControllsListnew(int nLangId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string X_Table="vw_WebLanMultilingual";
-            string X_Fields = "*";
-            string X_Crieteria = "";
-            string X_OrderBy="";
+            string sqlCommandText="select * from vw_WebLanMultilingual where LanguageId=@p1";
+            Params.Add("@p1",nLangId);
 
             try{
-                dt=_dataAccess.Select(X_Table,X_Fields,X_Crieteria,Params,X_OrderBy);
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                 
-                Dictionary<string,Dictionary<string,Dictionary<string,string>>> MlData = new Dictionary<string,Dictionary<string,Dictionary<string,string>>>();
+                Dictionary<string,Dictionary<string,string>> MlData = new Dictionary<string,Dictionary<string,string>>();
                 foreach(string ScreenName in dt.AsEnumerable().Select(row => row.Field<string>("X_WFormName")).Distinct()){
                     
-                    Dictionary<string,Dictionary<string,string>> Controlls = new Dictionary<string,Dictionary<string,string>>();
-                    foreach(string CntrlName in dt.AsEnumerable().Where(row => row.Field<string>("X_WFormName")==ScreenName).Select(row => row.Field<string>("X_WControlName")).Distinct()){
-                        
-                        Dictionary<string,string> Lang = new Dictionary<string,string>();
-                        foreach(var ControllStringItem in dt.AsEnumerable().Where(row => row.Field<string>("X_WFormName")==ScreenName && row.Field<string>("X_WControlName")==CntrlName)){
-                            Lang.Add(ControllStringItem["LanguageId"].ToString(),ControllStringItem["Text"].ToString());
+                    Dictionary<string,string> Controll = new Dictionary<string,string>();
+                    foreach(var ControllsArray in dt.AsEnumerable().Where(row => row.Field<string>("X_WFormName")==ScreenName) ){
+                            Controll.Add(ControllsArray["X_WControlName"].ToString(),ControllsArray["Text"].ToString());
                         }
-                        Controlls.Add(CntrlName,Lang);
-                    }
-                    MlData.Add(ScreenName,Controlls);
+                    MlData.Add(ScreenName,Controll);
                 }
             return Ok(MlData);
 
