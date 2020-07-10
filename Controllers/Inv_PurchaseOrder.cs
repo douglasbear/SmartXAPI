@@ -64,11 +64,11 @@ namespace SmartxAPI.Controllers
             string Mastersql="";
             
             if (bAllBranchData == true){
-                Mastersql="SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate, Inv_PurchaseOrder.N_InvoiceAmtF AS N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmtF AS N_DiscountAmt, Inv_PurchaseOrder.N_CashPaidF AS N_CashPaid, Inv_PurchaseOrder.N_FreightAmtF AS N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_Location.X_LocationName, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.N_ProcStatus, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_POType, Gen_Defaults.X_TypeName,Inv_PurchaseOrder.N_ApprovalLevelID,Inv_PurchaseOrder.N_SOId, isnull(Inv_PurchaseOrder.N_ProjectID,0) as N_ProjectID  FROM Inv_PurchaseOrder LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID  Where Inv_PurchaseOrder.N_CompanyID=@p1 and N_FnYearID=@p2 and Inv_PurchaseOrder.X_POrderNo=@p3";
+                Mastersql="SELECT Inv_PurchaseOrder.*, Inv_Location.X_LocationName,Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName FROM Inv_PurchaseOrder INNER JOIN Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND  Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.N_FnYearID=@p2 and Inv_PurchaseOrder.X_POrderNo=@p3";
             }
             else
             {
-                Mastersql="SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID,Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate,  Inv_PurchaseOrder.N_InvoiceAmtF AS N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmtF AS N_DiscountAmt, Inv_PurchaseOrder.N_CashPaidF AS N_CashPaid, Inv_PurchaseOrder.N_FreightAmtF AS N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_Location.X_LocationName, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.N_ProcStatus, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_POType, Gen_Defaults.X_TypeName,Inv_PurchaseOrder.N_ApprovalLevelID,Inv_PurchaseOrder.N_SOId,isnull(Inv_PurchaseOrder.N_ProjectID,0) as N_ProjectID FROM Inv_PurchaseOrder LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.X_POrderNo=@p3 and Inv_PurchaseOrder.N_BranchID=@nBranchID and N_FnYearID=@p2";
+                Mastersql="SELECT Inv_PurchaseOrder.*, Inv_Location.X_LocationName,Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName FROM Inv_PurchaseOrder INNER JOIN Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND  Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.X_POrderNo=@p3 and Inv_PurchaseOrder.N_BranchID=@nBranchID and Inv_PurchaseOrder.N_FnYearID=@p2";
                 Params.Add("@nBranchID",nBranchID);
             }
             
@@ -128,7 +128,8 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p5",N_POrderID);
                     }
             }
-
+            //DetailSql="Select * from Inv_PurchaseOrderDetails Where N_CompanyID=@p1 and N_POrderID=@p5";
+                    
 
 
             DetailTable=dLayer.ExecuteDataTable(DetailSql,Params);
@@ -149,21 +150,31 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-
-                    // Auto Gen
-                    var values = MasterTable.Rows[0]["x_PurchaseOrderNo"].ToString();
-
-
+                    SortedList Params = new SortedList();
                     dLayer.setTransaction();
-                    int N_PurchaseOrderId=dLayer.SaveData("Inv_PurchaseOrder","N_PurchaseOrderId",0,MasterTable);                    
+                    // Auto Gen
+                    string PorderNo="";
+                    var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
+                    if(values=="@Auto"){
+                        Params.Add("N_CompanyID",Master["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",Master["n_FnYearId"].ToString());
+                        Params.Add("N_FormID",80);
+                        Params.Add("N_BranchID",Master["n_BranchId"].ToString());
+                        PorderNo =  dLayer.GetAutoNumber("Inv_PurchaseOrder","x_POrderNo", Params);
+                        if(PorderNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
+                        MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
+                    }
+
+                    int N_PurchaseOrderId=dLayer.SaveData("Inv_PurchaseOrder","n_POrderID",0,MasterTable);                    
                     if(N_PurchaseOrderId<=0){
                         dLayer.rollBack();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
-                            DetailTable.Rows[j]["n_PurchaseOrderID"]=N_PurchaseOrderId;
+                            DetailTable.Rows[j]["n_POrderID"]=N_PurchaseOrderId;
                         }
-                    int N_PurchaseOrderDetailId=dLayer.SaveData("Inv_PurchaseOrderDetails","n_PurchaseOrderDetailsID",0,DetailTable);                    
+                    int N_PurchaseOrderDetailId=dLayer.SaveData("Inv_PurchaseOrderDetails","n_POrderDetailsID",0,DetailTable);                    
                     dLayer.commit();
                     return Ok("DataSaved");
                 }
