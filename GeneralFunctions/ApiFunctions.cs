@@ -29,7 +29,7 @@ namespace SmartxAPI.GeneralFunctions
                     break;
                     case "Error co": Msg = ex.Message.Substring(0,42); 
                     break;
-                    default : Msg = "invalid request parameters or server error occurred";// + ex.Message; 
+                    default : Msg = "invalid request parameters or server error occurred" + ex.Message; 
                     break;
                 }
 

@@ -103,11 +103,11 @@ namespace SmartxAPI.GeneralFunctions
             try
             {
                 OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = CommandType.Text;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return this.commandStatement.ExecuteNonQuery();
+                SqlCommand sqlCommand=new SqlCommand(sqlCommandText,databaseConnection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = databaseTransaction;
+                return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -164,10 +164,10 @@ namespace SmartxAPI.GeneralFunctions
             try
             {
                 OpenConnection();
-                commandStatement.CommandType = CommandType.Text;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return this.commandStatement.ExecuteScalar();
+                SqlCommand sqlCommand =new SqlCommand(sqlCommandText, databaseConnection);
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = databaseTransaction;
+                return sqlCommand.ExecuteScalar();
             }
             catch (Exception ex)
             {
@@ -184,16 +184,16 @@ namespace SmartxAPI.GeneralFunctions
             try
             {
                 OpenConnection();
-                commandStatement.CommandType = CommandType.Text;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = TransactionScope;
+                SqlCommand sqlCommand =new SqlCommand(sqlCommandText, databaseConnection);
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = TransactionScope;
                 if(paramList.Count>0){
                 ICollection Keys = paramList.Keys;
                 foreach (string key in Keys) {
-                        commandStatement.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
                     }
                 }
-                return this.commandStatement.ExecuteScalar();
+                return sqlCommand.ExecuteScalar();
             }
             catch (Exception ex)
             {
@@ -259,24 +259,22 @@ namespace SmartxAPI.GeneralFunctions
             {
 
                 OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = CommandType.StoredProcedure;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = TransactionScope;
+                SqlCommand sqlCommand=new SqlCommand(sqlCommandText,databaseConnection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+                sqlCommand.Transaction = TransactionScope;
                 
-                
-                if(commandStatement.Parameters.Count>0){ClearParameters();}
 
                 if(paramList.Count>0){
                 ICollection Keys = paramList.Keys;
                 foreach (string key in Keys) {
-                        commandStatement.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
                     }
                 }
 
 
 
-                return this.commandStatement.ExecuteScalar();
+                return sqlCommand.ExecuteScalar();
             }
             catch (Exception ex)
             {
@@ -358,7 +356,7 @@ namespace SmartxAPI.GeneralFunctions
                 OpenConnection();
                 int recordsReturned;
                 SqlCommand Command =new SqlCommand(sqlCommandText, databaseConnection);
-                if(Command.Parameters.Count>0){ClearParameters();}
+                //if(Command.Parameters.Count>0){ClearParameters();}
                 if(paramList.Count>0){
                 ICollection Keys = paramList.Keys;
                 foreach (string key in Keys) {
@@ -366,6 +364,7 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
                 SqlDataAdapter dataAdapter =new SqlDataAdapter();
+                string CmdText = Command.CommandText;
                 dataAdapter.SelectCommand = Command;
                 DataTable resTable = new DataTable();
                 recordsReturned = dataAdapter.Fill(resTable);
@@ -835,22 +834,20 @@ namespace SmartxAPI.GeneralFunctions
             try
             {
                 OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = CommandType.StoredProcedure;
-                commandStatement.CommandText = sqlCommandText;
-                
-                if(commandStatement.Parameters.Count>0){ClearParameters();}
+                SqlCommand sqlCommand=new SqlCommand(sqlCommandText,databaseConnection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
 
                 if(paramList.Count>0){
                 ICollection Keys = paramList.Keys;
                 foreach (string key in Keys) {
-                        commandStatement.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(),paramList[key].ToString()));
                     }
                 }
 
 
-                commandStatement.Transaction = TransactionScope;
-                return this.commandStatement.ExecuteNonQuery();
+                sqlCommand.Transaction = TransactionScope;
+                return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
@@ -875,7 +872,6 @@ namespace SmartxAPI.GeneralFunctions
                 dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
                 dataAdapter.SelectCommand.CommandText = sqlCommandText;
                 
-                if(commandStatement.Parameters.Count>0){ClearParameters();}
 
                 if(paramList.Count>0){
                 ICollection Keys = paramList.Keys;

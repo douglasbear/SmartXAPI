@@ -76,6 +76,24 @@ namespace SmartxAPI.Controllers
                     return StatusCode(403,_api.ErrorResponse(ex));
                 }
         }
-        
+
+
+        [HttpGet("itemwiselist")]
+        public ActionResult GetItemWiseUnitList(int? nCompanyId,string baseUnit,int itemId)
+        {
+            try{
+                SortedList mParamsList = new SortedList()
+                    {
+                        {"N_CompanyID",nCompanyId},    
+                        {"X_ItemUnit",baseUnit},
+                        {"N_ItemID",itemId}
+                    };
+                DataTable masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit",mParamsList);
+                if(masterTable.Rows.Count==0){return Ok(new {});}
+                return Ok(masterTable);
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
+        }
     }
 }
