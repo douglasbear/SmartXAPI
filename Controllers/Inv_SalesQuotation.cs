@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
                 dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
                 if(dt.Rows.Count==0)
                     {
-                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                        return Ok(new {});
                     }else{
                         return Ok(dt);
                     }   
