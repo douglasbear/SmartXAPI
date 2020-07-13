@@ -9,18 +9,18 @@ using System.Collections;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("taxcategory")]
+    [Route("salesman")]
     [ApiController]
     
     
     
-    public class AccTaxCategoryController : ControllerBase
+    public class Inv_Salseman : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         
 
-        public AccTaxCategoryController(IDataAccessLayer dl,IApiFunctions api)
+        public Inv_Salseman(IDataAccessLayer dl,IApiFunctions api)
         {
             dLayer = dl;
             _api=api;
@@ -29,13 +29,14 @@ namespace SmartxAPI.Controllers
        
         //List
         [HttpGet("list") ]
-        public ActionResult GetAllTaxTypes (int? nCompanyID)
+        public ActionResult GetAllSalesExecutives (int? nCompanyID,int? nFnyearID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select * from vw_TaxCategory_Disp where N_CompanyID=@p1";
+            string sqlCommandText="select * from vw_InvSalesman_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
             Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",nFnyearID);
                 
             try{
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
@@ -53,14 +54,15 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("listdetails") ]
-        public ActionResult GetAllTaxTypesDetails (int? nCompanyID,int? N_PkeyID)
+        public ActionResult GetAllSalesExecutivesDetails (int? nCompanyID,int? nFnyearID,int? n_SalesmanID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select * from vw_TaxCategory_Disp where N_CompanyID=@p1 and N_PkeyID=@p2";
+            string sqlCommandText="select * from vw_InvSalesman_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
             Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",N_PkeyID);
+            Params.Add("@p2",nFnyearID);
+            Params.Add("@p3",n_SalesmanID);
                 
             try{
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
@@ -87,27 +89,25 @@ namespace SmartxAPI.Controllers
                     dLayer.setTransaction();
                     // Auto Gen
                     SortedList Params = new SortedList();
-                    string CategoryCode="";
-                    var values = MasterTable.Rows[0]["X_PkeyCode"].ToString();
+                    string ExecutiveCode="";
+                    var values = MasterTable.Rows[0]["X_SalesmanCode"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
-                        Params.Add("N_FormID",852);
+                        Params.Add("N_FormID",290);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        CategoryCode =  dLayer.GetAutoNumber("Acc_TaxCategory","X_PkeyCode", Params);
-                        if(CategoryCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Customer Code" ));}
-                        MasterTable.Rows[0]["X_PkeyCode"] = CategoryCode;
+                        ExecutiveCode =  dLayer.GetAutoNumber("inv_salesman","X_SalesmanCode", Params);
+                        if(ExecutiveCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Sales Executive Code" ));}
+                        MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
                     
                     }
-                    MasterTable.Columns.Remove("n_FnYearId");
-                    MasterTable.Columns.Remove("n_BranchId");
-                    int N_TaxCategoryID=dLayer.SaveData("Acc_TaxCategory","N_PkeyID",0,MasterTable);                    
-                    if(N_TaxCategoryID<=0){
+                    int N_SalesmanID=dLayer.SaveData("inv_salesman","N_SalesmanID",0,MasterTable);                    
+                    if(N_SalesmanID<=0){
                         dLayer.rollBack();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
                     dLayer.commit();
-                    return  GetAllTaxTypesDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_TaxCategoryID);
+                    return  GetAllSalesExecutivesDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),int.Parse(MasterTable.Rows[0]["n_FnYearId"].ToString()),N_SalesmanID);
                         }
                 }
                 catch (Exception ex)
@@ -118,16 +118,16 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCategoryID)
+        public ActionResult DeleteData(int nSalesmanID)
         {
              int Results=0;
             try
             {
-                Results=dLayer.DeleteData("Acc_TaxCategory","N_PkeyID",nCategoryID,"");
+                Results=dLayer.DeleteData("inv_salesman","N_SalesmanID",nSalesmanID,"");
                 if(Results>0){
-                    return StatusCode(200,_api.Response(200 ,"Tax category deleted" ));
+                    return StatusCode(200,_api.Response(200 ,"Sales Executive deleted" ));
                 }else{
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete Tax category" ));
+                    return StatusCode(409,_api.Response(409 ,"Unable to delete Sales Executive" ));
                 }
                 
             }
