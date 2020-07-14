@@ -955,7 +955,6 @@ namespace SmartxAPI.GeneralFunctions
 
         public string GetAutoNumber(string TableName,String Coloumn,SortedList Params)
             {   
-                string Result="0";
                 string AutoNumber="";
                 string BranchId ="0";
                 if(Params.Contains("N_BranchID")){BranchId=Params["N_BranchID"].ToString();}
