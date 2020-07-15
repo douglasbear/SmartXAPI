@@ -13,12 +13,12 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
     [Route("company")]
     [ApiController]
-    public class Acc_CompanyController : ControllerBase
+    public class Acc_Company : ControllerBase
     { 
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
 
-        public Acc_CompanyController(IApiFunctions api,IDataAccessLayer dl)
+        public Acc_Company(IApiFunctions api,IDataAccessLayer dl)
         {
             _api=api;
             dLayer=dl;
@@ -72,6 +72,30 @@ namespace SmartxAPI.Controllers
             }
           
         }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nCompanyID)
+        {
+             int Results=0;
+            try
+            {
+                Results=dLayer.DeleteData("Acc_Company","N_CompanyID",nCompanyID,"");
+                if(Results>0){
+                    return StatusCode(200,_api.Response(200 ,"Company Deleted" ));
+                }else{
+                    return StatusCode(409,_api.Response(409 ,"Unable to Delete Company" ));
+                }
+                
+            }
+            catch (Exception ex)
+                {
+                    return StatusCode(403,_api.ErrorResponse(ex));
+                }
+        }
+
+
+
+        
         [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
