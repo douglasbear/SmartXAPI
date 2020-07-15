@@ -14,10 +14,13 @@ namespace SmartxAPI.Controllers
         private readonly ISec_UserRepo _repository;
         private readonly IApiFunctions _api;
 
-        public UserController(ISec_UserRepo repository,IApiFunctions api)
+        private readonly IMyFunctions myFunctions;
+
+        public UserController(ISec_UserRepo repository,IApiFunctions api,IMyFunctions myFun)
         {
             _repository = repository;
             _api = api;
+            myFunctions=myFun;
         }
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody]Sec_AuthenticateDto model)
@@ -28,7 +31,9 @@ namespace SmartxAPI.Controllers
                         ipAddress= Request.Headers["X-Forwarded-For"];
                     else
                         ipAddress= HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                    var user = _repository.Authenticate(model.CompanyName,model.Username, model.Password,ipAddress);
+                        //var password = myFunctions.EncryptString(model.Password);
+                        var password = model.Password;
+                    var user = _repository.Authenticate(model.CompanyName,model.Username, password ,ipAddress);
 
                     if (user == null){ return StatusCode(403,_api.Response(403,"Username or password is incorrect" )); }
 

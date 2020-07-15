@@ -48,6 +48,29 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("listdetails")]
+        public ActionResult GetItemCategoryDetails(int? nCompanyId,int? n_CategoryId)
+        {
+           DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string sqlCommandText="select Code,Category,CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 and code=@p2 order by CategoryCode";
+            Params.Add("@p1",nCompanyId);
+            Params.Add("@p2",n_CategoryId);
+
+            try{
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                if(dt.Rows.Count==0)
+                    {
+                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                    }else{
+                        return Ok(dt);
+                    }   
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
+        }
+
 
 [HttpGet("all")]
         public ActionResult GetAllItemCategory(int? nCompanyId)
@@ -86,21 +109,21 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_CategoryCode"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["N_CompanyId"].ToString());
-                       // Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
+                        Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID",73);
                         CategoryCode =  dLayer.GetAutoNumber("Inv_ItemCategory","X_CategoryCode", Params);
                         if(CategoryCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Category Code" ));}
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
 
-
+                    MasterTable.Columns.Remove("n_FnYearId");
                     int N_CategoryID=dLayer.SaveData("Inv_ItemCategory","N_CategoryID",0,MasterTable);                    
                     if(N_CategoryID<=0){
                         dLayer.rollBack();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
                     dLayer.commit();
-                    return StatusCode(200,_api.Response(200 ,"Product category Saved" ));
+                   return  GetItemCategoryDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_CategoryID);
                         }
                 }
                 catch (Exception ex)

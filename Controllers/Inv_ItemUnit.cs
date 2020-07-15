@@ -47,6 +47,30 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403,_api.ErrorResponse(e));
             }
         }
+
+         [HttpGet("listdetails")]
+        public ActionResult GetItemUnitListDetails(int? nCompanyId,int? nItemUnitID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string sqlCommandText="select Code,[Unit Code],Description from vw_InvItemUnit_Disp where N_CompanyID=@p1 and code=@p2 order by ItemCode,[Unit Code]";
+            Params.Add("@p1",nCompanyId);
+            Params.Add("@p2",nItemUnitID);
+
+            try{
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                dt=_api.Format(dt);
+                if(dt.Rows.Count==0)
+                    {
+                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                    }else{
+                        return Ok(dt);
+                    }   
+            }catch(Exception e){
+                return StatusCode(403,_api.ErrorResponse(e));
+            }
+        }
         
        //Save....
        [HttpPost("Save")]
@@ -66,8 +90,8 @@ namespace SmartxAPI.Controllers
                    else{
                         dLayer.commit();
                     }
-                    // return  GetSalesQuotationDetails(int.Parse(Master["n_CompanyId"].ToString()),N_QuotationId,int.Parse(Master["n_FnYearId"].ToString()));
-                return Ok();
+                 return  GetItemUnitListDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_ItemUnitID);
+                
                 }
 
                 catch (Exception ex)
@@ -94,6 +118,28 @@ namespace SmartxAPI.Controllers
             }catch(Exception e){
                 return StatusCode(403,_api.ErrorResponse(e));
             }
+        }
+
+         [HttpDelete("delete")]
+        public ActionResult DeleteData(int nItemUnitID)
+        {
+             int Results=0;
+            try
+            {
+                Results=dLayer.DeleteData("Inv_ItemUnit","N_ItemUnitID",nItemUnitID,"");
+                if(Results>0){
+                    return StatusCode(200,_api.Response(200 ,"Product Unit deleted" ));
+                }else{
+                    return StatusCode(409,_api.Response(409 ,"Unable to delete product Unit" ));
+                }
+                
+            }
+            catch (Exception ex)
+                {
+                    return StatusCode(403,_api.ErrorResponse(ex));
+                }
+            
+
         }
     }
 }

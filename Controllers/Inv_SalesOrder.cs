@@ -48,7 +48,7 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403,_api.ErrorResponse(e));
             }
         }
-        [HttpGet("details")]
+        [HttpGet("listDetails")]
     public ActionResult GetSalesOrderDetails(int? nCompanyId,string xOrderNo,int nFnYearId)
         {
             DataSet dt=new DataSet();
@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailsTable = new DataTable();
                 SortedList ParamList1=new SortedList();
                 ParamList1.Add("N_CompanyID",nCompanyId.ToString());
-                ParamList1.Add("N_SalesID",MasterTable.Rows[0]["N_SalesOrderId"].ToString());
+                ParamList1.Add("N_SalesOrderID",MasterTable.Rows[0]["N_SalesOrderId"].ToString());
                 
                 DetailsTable=dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtls_Disp",ParamList1);
                 DetailsTable=_api.Format(DetailsTable,"Details");

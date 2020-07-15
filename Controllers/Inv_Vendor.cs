@@ -17,28 +17,43 @@ namespace SmartxAPI.Controllers
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
-        
+        private readonly IMyFunctions myFunctions;
 
 
-        public Inv_Vendor(IApiFunctions api,IDataAccessLayer dl)
+        public Inv_Vendor(IApiFunctions api,IDataAccessLayer dl,IMyFunctions myFun)
         {
             _api=api;
             dLayer = dl;
+            myFunctions = myFun;
         }
        
 
         //GET api/customer/list?....
         [HttpGet("list")]
-        public ActionResult GetVendorList(int? nCompanyId,int nFnYearId,int nBranchId,bool bAllBranchesData)
+        public ActionResult GetVendorList(int? nCompanyId,int nFnYearId,bool bAllBranchesData,string vendorId,string qry)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
-            string sqlCommandText="select [Vendor Code] as vendorCode,[Vendor Name] as vendorName,Address,N_CompanyID,N_VendorID,B_Inactive,N_FnYearID from vw_InvVendor_Disp where B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3 order by [Vendor Name],[Vendor Code]";
+            string criteria="";
+            if (vendorId!=""&&vendorId!=null)
+            {
+                criteria = " and N_VendorID =@vendorId ";
+                Params.Add("@vendorId",vendorId);
+            }
+
+            string qryCriteria="";
+            if (qry!=""&&qry!=null)
+            {
+                qryCriteria = " and ([Vendor Code] like @qry or [Vendor Name] like @qry ) ";
+                Params.Add("@qry","%"+qry+"%");
+            }
+            string sqlCommandText="select * from vw_InvVendor_Disp where B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3 "+criteria+" "+qryCriteria+" order by [Vendor Name],[Vendor Code]";
             Params.Add("@p1",0);
             Params.Add("@p2",nCompanyId);
             Params.Add("@p3",nFnYearId);
             try{
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                    dt=_api.Format(dt);
                      if(dt.Rows.Count==0)
                     {
                        return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
@@ -83,11 +98,12 @@ namespace SmartxAPI.Controllers
                     //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
                     SortedList Params = new SortedList();
                     // Auto Gen
+                    DataRow MasterRow = MasterTable.Rows[0];
                     string VendorCode="";
-                    var values = MasterTable.Rows[0]["X_VendorCode"].ToString();
+                    var values = MasterRow["X_VendorCode"].ToString();
                     if(values=="@Auto"){
-                        Params.Add("N_CompanyID",MasterTable.Rows[0]["N_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["N_FnYearId"].ToString());
+                        Params.Add("N_CompanyID",MasterRow["N_CompanyId"].ToString());
+                        Params.Add("N_YearID",MasterRow["N_FnYearId"].ToString());
                         Params.Add("N_FormID",52);
                         VendorCode =  dLayer.GetAutoNumber("Inv_Vendor","X_VendorCode", Params);
                         if(VendorCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Vendor Code" ));}
@@ -101,7 +117,7 @@ namespace SmartxAPI.Controllers
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
                     dLayer.commit();
-                    return StatusCode(200,_api.Response(200 ,"Vendor Saved" ));
+                    return GetVendorList(myFunctions.getIntVAL(MasterRow["N_CompanyId"].ToString()),myFunctions.getIntVAL(MasterRow["N_FnYearId"].ToString()),true,N_VendorId.ToString(),"");
                         }
                 }
                 catch (Exception ex)
