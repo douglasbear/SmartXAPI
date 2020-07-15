@@ -10,12 +10,14 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    
     [Route("salesorder")]
     [ApiController]
     public class Inv_SalesOrderController : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
+        private readonly IMyFunctions myFunctions;
 
         
         public Inv_SalesOrderController(IDataAccessLayer dl,IApiFunctions api)
@@ -49,37 +51,51 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-    public ActionResult GetSalesOrderDetails(int? nCompanyId,string xOrderNo,int nFnYearId)
+    public ActionResult GetSalesOrderDetails(int? nCompanyId,string xOrderNo,int nFnYearId,int nLocationID,bool bAllBranchData,int nBranchID)
         {
+            bool B_PRSVisible=false;
             DataSet dt=new DataSet();
-            SortedList ParamList=new SortedList();
+            SortedList Params=new SortedList();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            DataTable DataTable = new DataTable();
 
-            try{
-                //Sales Order Master
-                DataTable MasterTable = new DataTable();
-                ParamList.Add("N_CompanyID",nCompanyId.ToString());
-                ParamList.Add("X_OrderNo",xOrderNo);
-                ParamList.Add("N_Type",1);
-                ParamList.Add("N_BranchId",0);
-                ParamList.Add("N_FnYearID",nFnYearId.ToString());
-                
-                MasterTable=dLayer.ExecuteDataTablePro("SP_InvSalesOrder_Disp",ParamList);
-                MasterTable=_api.Format(MasterTable,"Master");
-                dt.Tables.Add(MasterTable);
-                
-                //Sales Order Details
-                DataTable DetailsTable = new DataTable();
-                SortedList ParamList1=new SortedList();
-                ParamList1.Add("N_CompanyID",nCompanyId.ToString());
-                ParamList1.Add("N_SalesOrderID",MasterTable.Rows[0]["N_SalesOrderId"].ToString());
-                
-                DetailsTable=dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtls_Disp",ParamList1);
-                DetailsTable=_api.Format(DetailsTable,"Details");
-                dt.Tables.Add(DetailsTable);
-                return Ok(dt);
+            string Mastersql="";
             
+            if (bAllBranchData == true){
+                Mastersql="SP_InvSalesOrder_Disp @P1,@P3,1,0,@P2";
+            }
+            else
+            {
+                Mastersql="SP_InvSalesOrder_Disp @P1,@P3,1,@P4,@P2";
+                Params.Add("@P4",nBranchID);
+            }
+
+            Params.Add("@p1",nCompanyId);
+            Params.Add("@p2",nFnYearId);
+            Params.Add("@p3",xOrderNo);
+            try
+            {
+
+                MasterTable=dLayer.ExecuteDataTable(Mastersql,Params);
+                MasterTable = _api.Format(MasterTable,"Master");
+                dt.Tables.Add(MasterTable);
+            
+            //SalesOrder Details
+            string N_SOrderID = MasterTable.Rows[0]["n_SalesOrderId"].ToString();
+            
+            
+            string DetailSql="";
+            DetailSql="SP_InvSalesOrderDtls_Disp @p1,@p5,@p2,1,@p4";
+            Params.Add("@p4",nLocationID);
+            Params.Add("@p5",N_SOrderID);
+
+            DetailTable=dLayer.ExecuteDataTable(DetailSql,Params);
+            DetailTable=_api.Format(DetailTable,"Details");
+            dt.Tables.Add(DetailTable);
+            return Ok(dt);
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return Ok(MasterTable);
             }
         }
 
@@ -125,7 +141,8 @@ namespace SmartxAPI.Controllers
                     }else{
                         dLayer.commit();
                     }
-                    return  GetSalesOrderDetails(int.Parse(Master["n_CompanyId"].ToString()),MasterTable.Rows[0]["X_OrderNo"].ToString(),int.Parse(Master["n_FnYearId"].ToString()));
+                    
+                    return  GetSalesOrderDetails(int.Parse(Master["n_CompanyId"].ToString()),MasterTable.Rows[0]["X_OrderNo"].ToString(),int.Parse(Master["n_FnYearId"].ToString()),int.Parse(Master["N_LocationID"].ToString()),true,1);
                 }
                 catch (Exception ex)
                 {
