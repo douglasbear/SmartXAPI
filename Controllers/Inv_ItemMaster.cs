@@ -27,7 +27,7 @@ namespace SmartxAPI.Controllers
        
         //GET api/Projects/list
         [HttpGet("list") ]
-        public ActionResult <IEnumerable<VwInvItemSearch>> GetAllItems (int? nCompanyID)
+        public ActionResult GetAllItems (int? nCompanyID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
