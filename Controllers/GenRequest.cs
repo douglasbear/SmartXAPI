@@ -33,7 +33,11 @@ namespace SmartxAPI.Controllers
         {
             int id=0;
             switch(type){
+                case "LocationType": id=1;
+                break;
                 case "PartnerType": id=25;
+                break;
+                case "ProductType": id=36;
                 break;
                 default: return Ok("Invalid Type");
             }

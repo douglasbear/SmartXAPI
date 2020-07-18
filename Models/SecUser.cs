@@ -41,8 +41,5 @@ namespace SmartxAPI.Models
         public int? NLoginFlag { get; set; }
         [Column("X_Token")]
         public string XToken { get; set; }
-        [ForeignKey(nameof(NCompanyId))]
-        [InverseProperty(nameof(AccCompany.SecUser))]
-        public virtual AccCompany NCompany { get; set; }
     }
 }
