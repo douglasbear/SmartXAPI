@@ -19,7 +19,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
-        private readonly string conString;
+        private readonly string connectionString;
 
 
         public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -27,7 +27,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
-            conString = conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
 
         }
 
@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                using (SqlConnection connection = new SqlConnection(conString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                using (SqlConnection connection = new SqlConnection(conString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
 
-                using (SqlConnection connection = new SqlConnection(conString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;

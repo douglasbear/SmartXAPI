@@ -404,6 +404,23 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
+        public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection)
+        {
+            try
+            {
+                int recordsReturned;
+                SqlDataAdapter dataAdapter = new SqlDataAdapter();
+                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, connection);
+                DataTable resultTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resultTable);
+                return resultTable;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList)
         {
             try
@@ -912,7 +929,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList,SqlConnection connection,SqlTransaction transaction)
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
@@ -1072,6 +1089,18 @@ namespace SmartxAPI.GeneralFunctions
             return Result;
         }
 
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection, SqlTransaction transaction)
+        {
+            int Result = 0;
+            SortedList paramList = new SortedList();
+            paramList.Add("X_TableName", TableName);
+            paramList.Add("X_IDFieldName", IDFieldName);
+            paramList.Add("N_IDFieldValue", IDFieldValue);
+            paramList.Add("X_Critieria", X_Critieria);
+            Result = (int)ExecuteNonQueryPro("DELETE_DATA", paramList, connection, transaction);
+            return Result;
+        }
+
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params)
         {
@@ -1143,6 +1172,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
         //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText);
+        public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
         public object ExecuteScalar(string sqlCommandText);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
@@ -1154,9 +1184,10 @@ namespace SmartxAPI.GeneralFunctions
         public void commit();
         public void rollBack();
         public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria);
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection, SqlTransaction transaction);
         public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList);
-        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList,SqlConnection connection,SqlTransaction transaction);
-        
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
+
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params);
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
     }
