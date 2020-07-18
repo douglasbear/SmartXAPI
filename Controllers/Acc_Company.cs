@@ -49,29 +49,6 @@ namespace SmartxAPI.Controllers
           
         }
 
-       [HttpGet("branchlist")]
-        public ActionResult GetAllBranches(int? nCompanyId)
-        {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            
-            string sqlCommandText="select * from Acc_BranchMaster where N_CompanyId=@p1";
-            Params.Add("@p1",nCompanyId);
-            try{
-                    //await Task.Run(() => { 
-                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params); 
-                        //});
-                    if(dt.Rows.Count==0)
-                        {
-                            return StatusCode(200,_api.Response(200 ,"No Results Found" ));
-                        }else{
-                            return Ok(dt);
-                        }
-            }catch(Exception e){
-                return StatusCode(404,_api.ErrorResponse(e));
-            }
-          
-        }
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID)
