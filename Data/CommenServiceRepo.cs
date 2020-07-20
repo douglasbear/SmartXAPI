@@ -26,14 +26,16 @@ namespace SmartxAPI.Data
         private readonly IMapper _mapper;
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
+        private readonly IMyFunctions myFunctions;
 
-        public CommenServiceRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper,IApiFunctions api,IDataAccessLayer dl)
+        public CommenServiceRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper,IApiFunctions api,IDataAccessLayer dl,IMyFunctions fun)
         {
             _context = context;
             _appSettings=appSettings.Value;
             _mapper=mapper;
             _api=api;
             dLayer=dl;
+            myFunctions=fun;
         }
 
 
@@ -59,7 +61,10 @@ namespace SmartxAPI.Data
                 }
                 loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=" + loginRes.N_CompanyID + " and N_TypeID=2 and B_IsDefault=1  and N_BranchID=" + loginRes.N_BranchID).ToString();
                 loginRes.N_LocationID = dLayer.ExecuteScalar("Select N_LocationID From Inv_Location Where N_CompanyID=" + loginRes.N_CompanyID + " and B_IsDefault=1 and N_BranchID=" + loginRes.N_BranchID).ToString();
-               
+
+            loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=" + loginRes.N_CompanyID + " and B_Default=1").ToString());
+            loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=" + loginRes.N_CompanyID + " and N_CurrencyID=" + loginRes.N_CompanyID).ToString();
+            
 
 switch (reqtype.ToLower())
       {
