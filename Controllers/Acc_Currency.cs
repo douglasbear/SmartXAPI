@@ -13,9 +13,9 @@ using Microsoft.Data.SqlClient;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("usercategory")]
+    [Route("currency")]
     [ApiController]
-    public class Frm_Usercategory : ControllerBase
+    public class Acc_Currency : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         
-        public Frm_Usercategory(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Acc_Currency(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _api=api;
             dLayer = dl;
@@ -31,12 +31,12 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
          [HttpGet("list")]
-        public ActionResult GetCategoryList(int? nCompanyId)
+        public ActionResult GetCurrencyList(int? nCompanyId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select * from vw_UserRole_Disp where N_CompanyID=@p1 order by Category DESC";
+            string sqlCommandText="select * from Acc_CurrencyMaster where N_CompanyID=@p1 order by X_CurrencyCode";
             Params.Add("@p1",nCompanyId);
 
             try{
@@ -58,14 +58,14 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("listdetails")]
-        public ActionResult GetCategoryDetails(int? nCompanyId,int? nCategoryId)
+        public ActionResult GetCurrencyDetails(int? nCompanyId,int? nCurrencyId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
-            string sqlCommandText="select * from Sec_UserCategory where N_CompanyID=@p1 and N_UserCategoryID=@p2 order by N_UserCategoryID DESC";
+            string sqlCommandText="select * from Acc_CurrencyMaster where N_CompanyID=@p1 and N_CurrencyID=@p2 order by X_CurrencyCode";
             Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nCategoryId);
+            Params.Add("@p2",nCurrencyId);
 
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -96,28 +96,28 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string X_UserCategoryCode="";
-                    var values = MasterTable.Rows[0]["X_UserCategoryCode"].ToString();
+                    string X_CurrencyCode="";
+                    var values = MasterTable.Rows[0]["X_CurrencyCode"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
-                        Params.Add("N_FormID",40);
+                        Params.Add("N_FormID",612);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        X_UserCategoryCode =  dLayer.GetAutoNumber("sec_usercategory","X_UserCategoryCode", Params,connection,transaction);
-                        if(X_UserCategoryCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Category Code" ));}
-                        MasterTable.Rows[0]["X_UserCategoryCode"] = X_UserCategoryCode;
+                        X_CurrencyCode =  dLayer.GetAutoNumber("Acc_CurrencyMaster","X_CurrencyCode", Params,connection,transaction);
+                        if(X_CurrencyCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Category Code" ));}
+                        MasterTable.Rows[0]["X_CurrencyCode"] = X_CurrencyCode;
                     }
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
 
-                    int N_UserCategoryID=dLayer.SaveData("sec_usercategory","N_UserCategoryID",0,MasterTable,connection,transaction);                    
-                    if(N_UserCategoryID<=0){
+                    int N_CurrencyID=dLayer.SaveData("Acc_CurrencyMaster","N_CurrencyID",0,MasterTable,connection,transaction);                    
+                    if(N_CurrencyID<=0){
                         transaction.Rollback();
                         return StatusCode(404,_api.Response(404 ,"Unable to save" ));
                         }else{
                     transaction.Commit();
-                    return  GetCategoryDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_UserCategoryID);
+                    return  GetCurrencyDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_CurrencyID);
                         }
                 }
                 }
@@ -129,16 +129,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nUsercategoryId)
+        public ActionResult DeleteData(int nCurrencyId)
         {
              int Results=0;
             try
             {
-                Results=dLayer.DeleteData("sec_usercategory","N_UserCategoryID",nUsercategoryId,"");
+                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"");
                 if(Results>0){
-                    return StatusCode(200,_api.Response(200 ,"Category deleted" ));
+                    return StatusCode(200,_api.Response(200 ,"Currency deleted" ));
                 }else{
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete Category" ));
+                    return StatusCode(409,_api.Response(409 ,"Unable to delete Currency" ));
                 }
                 
             }
