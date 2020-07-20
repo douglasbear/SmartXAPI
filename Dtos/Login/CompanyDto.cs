@@ -9,6 +9,7 @@ namespace SmartxAPI.Dtos.Login
 		public int N_CompanyID { get; set; }
         public string X_Country { get; set; }
         public int N_CurrencyID { get; set; }
+        public string X_CurrencyName {get;set;}
         public string N_BranchID { get; set; }
 		public string X_BranchName { get; set; }
         public string X_LocationName { get; set; }
