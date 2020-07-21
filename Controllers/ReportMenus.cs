@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
 
-            string sqlCommandText="select * from vw_Menus where N_ParentMenuID=@p1 and N_LanguageId=@p2 and N_MenuID=60";
+            string sqlCommandText="select * from vw_Menus where N_ParentMenuID=@p1 and N_LanguageId=@p2";
             Params.Add("@p1",nMenuId);
             Params.Add("@p2",nLangId);
 
@@ -56,12 +56,21 @@ namespace SmartxAPI.Controllers
                      DataTable ChildMenus = new DataTable();  
                      DataTable Filter = new DataTable();  
                      string N_MenuID =dt.Rows[i]["N_MenuID"].ToString();
+                     try{
                      DataRow[] dr = dt1.Select("N_MenuID = " + N_MenuID +" and x_FieldType='RadioButton'"); 
                      DataRow[] dr1 = dt1.Select("N_MenuID = " + N_MenuID +" and x_FieldType<>'RadioButton'"); 
-                     ChildMenus = dr.CopyToDataTable();
-                     Filter = dr1.CopyToDataTable();
-                     dt.Rows[i]["ChildMenus"]=ChildMenus;
-                     dt.Rows[i]["Filter"]=Filter;
+                     if(dr!=null)
+                     {ChildMenus = dr.CopyToDataTable();
+                     dt.Rows[i]["ChildMenus"]=ChildMenus;}
+                     if(dr1!=null){Filter = dr1.CopyToDataTable();
+                     dt.Rows[i]["Filter"]=Filter;}
+                     }
+                     catch
+                     {
+                     
+                     }
+                     
+                     
                     
                      
                      }
