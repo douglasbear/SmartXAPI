@@ -49,6 +49,8 @@ namespace SmartxAPI.Dtos.SP
 		public List<MenuDto> MenuList{get;set;}
 		[NotMapped]
 		public string I_CompanyLogo { get; set; }
+		[NotMapped]
+		public string X_CurrencyName {get;set;}
 		
     }
 }

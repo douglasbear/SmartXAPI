@@ -19,7 +19,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
-        private readonly string conString;
+        private readonly string connectionString;
 
 
         public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -27,7 +27,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
-            conString = conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
 
         }
 
@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                using (SqlConnection connection = new SqlConnection(conString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                using (SqlConnection connection = new SqlConnection(conString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
 
-                using (SqlConnection connection = new SqlConnection(conString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
@@ -193,7 +193,8 @@ namespace SmartxAPI.Controllers
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
-
+                    int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+                    
                     if (Master["n_POTypeID"].ToString() == null || myFunctions.getIntVAL(Master["n_POTypeID"].ToString()) == 0)
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
 
@@ -233,7 +234,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+
                         if (N_POrderID > 0)
                         {
                             MasterTable.Columns.Remove("n_POrderID");
@@ -296,7 +297,7 @@ namespace SmartxAPI.Controllers
                     // else
                     //     X_Currency = X_CurrencyCode;
 
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", 0, MasterTable, connection, transaction);
+                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", N_POrderID , MasterTable, connection, transaction);
                     if (N_PurchaseOrderId <= 0)
                     {
                         transaction.Rollback();
