@@ -64,6 +64,7 @@ namespace SmartxAPI.Controllers
                      dt.Rows[i]["ChildMenus"]=ChildMenus;}
                      if(dr1!=null){Filter = dr1.CopyToDataTable();
                      dt.Rows[i]["Filter"]=Filter;}
+                     
                      }
                      catch
                      {
