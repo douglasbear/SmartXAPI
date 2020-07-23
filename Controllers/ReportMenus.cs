@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -125,12 +126,14 @@ namespace SmartxAPI.Controllers
                         SortedList ListSqlParams = new SortedList();
                         string fields = QueryString["X_FieldList"].ToString();
                         string table = QueryString["X_TableName"].ToString();
-                        string Criteria = QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal").Replace("'BVal'", "@BVal").Replace("'FVal'", "@FVal");
+                        string Criteria = QueryString["X_Criteria"].ToString();
+                        if(Criteria!="")
+                        Criteria = " Where "+QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal").Replace("'BVal'", "@BVal").Replace("'FVal'", "@FVal");
                         ListSqlParams.Add("@BVal", bval);
                         ListSqlParams.Add("@CVal", cval);
                         ListSqlParams.Add("@FVal", fval);
-                        string ListSql = "select " + fields + " from " + table + " where " + Criteria;
-
+                        string ListSql = "select " + fields + " from " + table + Criteria;
+                        
                         outTable = dLayer.ExecuteDataTable(ListSql, ListSqlParams, connection);
                     }
 
@@ -141,20 +144,13 @@ namespace SmartxAPI.Controllers
                     return StatusCode(200, _api.Response(200, "No Results Found"));
                 }
                 else {
-                    DataTable result=new DataTable();
-                    result.Columns.Add(nMenuId.ToString(), typeof(DataTable));
-                    DataTable compTable = new DataTable();  
-                    compTable.Columns.Add(nCompId.ToString(), typeof(DataTable));
+                    //Dictionary<string,Dictionary<string,DataTable>> Menu = new Dictionary<string,Dictionary<string,DataTable>>();
+                    outTable = _api.Format(outTable);
+                    Dictionary<string,DataTable> Component = new Dictionary<string,DataTable>();
+                    Component.Add(nCompId.ToString(),outTable); 
+                    //Menu.Add(nMenuId.ToString(),Component);
 
-                    DataRow dRow1 = compTable.NewRow();
-                    compTable.Rows.InsertAt(dRow1, 0);
-                    compTable.Rows[0][nCompId.ToString()] = outTable;
-                    
-                    DataRow dRow2 = result.NewRow();
-                    result.Rows.InsertAt(dRow2, 0);
-                    result.Rows[0][nMenuId.ToString()]=compTable;
-
-                     return Ok(result); 
+                     return Ok(Component); 
                      }
             }
             catch (Exception e)
