@@ -40,6 +40,7 @@ namespace SmartxAPI.Controllers
                 
             try{
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                    dt=_api.Format(dt);
                     if(dt.Rows.Count==0)
                         {
                             return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -66,6 +67,7 @@ namespace SmartxAPI.Controllers
                 
             try{
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                    dt=_api.Format(dt);
                     if(dt.Rows.Count==0)
                         {
                             return StatusCode(200,_api.Response(200 ,"No Results Found" ));
