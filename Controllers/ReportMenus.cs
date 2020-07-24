@@ -10,10 +10,13 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.IO;
+using System.Net;
 
 namespace SmartxAPI.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("report")]
     [ApiController]
     public class ReportMenus : ControllerBase
@@ -80,8 +83,6 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-
-
                 }
 
                 if (dt.Rows.Count == 0)
@@ -154,5 +155,20 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.ErrorResponse(e));
             }
         }
+
+         [HttpGet("getreport")]
+        public ActionResult GetReport(string reportName, string critiria)
+        {
+            var client = new HttpClient();
+            var path = client.GetAsync ("https://localhost:44315/api/report?reportname="+reportName +" &critiria=" + critiria);
+            path.Wait ();
+            string ReportPath=path.ToString();
+            ReportPath="D:\\"+ reportName + ".pdf";
+            Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
+            if(fileStream==null){return StatusCode(403,"Report Generation Error");}
+            return File(fileStream, "application/octet-stream",reportName+".pdf");
+        }
+        
+
     }
 }
