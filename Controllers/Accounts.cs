@@ -26,6 +26,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("glaccount/list")]
         public ActionResult GetGLAccountList(int? nCompanyId,int? nFnYearId,string xType)
         {
+            string sqlCommandText="";
             if(nCompanyId==null){return StatusCode(404,_api.Response(404,"Company ID Required"));}                       
             if(nFnYearId==null){return StatusCode(404,_api.Response(404,"FnYear ID Required"));}                       
                 
@@ -34,7 +35,11 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
             Params.Add("@p3",xType);
-            string sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3  order by [Account Code]";
+
+            if(xType!="All")
+                sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+            else
+                sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
 
             try{
                 dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
