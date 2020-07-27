@@ -329,7 +329,7 @@ namespace SmartxAPI.Controllers
                 if (Results <= 0)
                 {
                     dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales PurchaseOrder"));
+                    return StatusCode(409, _api.Response(409, "Unable to delete Purchase Order"));
                 }
                 else
                 {
@@ -339,12 +339,12 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {
                     dLayer.commit();
-                    return StatusCode(200, _api.Response(200, "Sales PurchaseOrder deleted"));
+                    return StatusCode(200, _api.Response(200, "Purchase Order deleted"));
                 }
                 else
                 {
                     dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales PurchaseOrder"));
+                    return StatusCode(409, _api.Response(409, "Unable to delete Purchase Order"));
                 }
 
             }
