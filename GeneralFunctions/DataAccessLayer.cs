@@ -997,6 +997,40 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList,SqlConnection connection)
+        {
+            try
+            {
+                int recordsReturned;
+                SqlDataAdapter dataAdapter = new SqlDataAdapter();
+                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, connection);
+                dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
+                dataAdapter.SelectCommand.CommandText = sqlCommandText;
+
+
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        dataAdapter.SelectCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+
+
+
+                DataTable resultTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resultTable);
+                return resultTable;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
 
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable)
         {
@@ -1168,6 +1202,7 @@ namespace SmartxAPI.GeneralFunctions
     public interface IDataAccessLayer
     {
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList);
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList,SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
         //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);

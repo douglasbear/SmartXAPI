@@ -5,6 +5,8 @@ using System;
 using SmartxAPI.GeneralFunctions;
 using System.Data;
 using System.Collections;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.Controllers
 {
@@ -18,14 +20,16 @@ namespace SmartxAPI.Controllers
 
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
+        private readonly string connectionString;
 
 
-        public UserController(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl)
+        public UserController(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
             _repository = repository;
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody] Sec_AuthenticateDto model)
@@ -58,25 +62,17 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string criteria = "";
-            // if (userid != "" && userid != null)
-            // {
-            //     criteria = " and N_UserID =@userid ";
-            //     Params.Add("@userid", userid);
-            // }
-
-            // string qryCriteria = "";
-            // if (qry != "" && qry != null)
-            // {
-            //     Params.Add("@qry", "%" + qry + "%");
-            //     qryCriteria = " and ([X_userID] like @qry or [X_UserName] like @qry ) ";
-
-            // }
+            
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);
             Params.Add("N_UserId", userid);
             try
             {
-                dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
+                }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                     return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" });
