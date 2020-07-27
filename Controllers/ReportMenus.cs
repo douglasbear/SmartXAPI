@@ -125,11 +125,11 @@ namespace SmartxAPI.Controllers
                         string table = QueryString["X_TableName"].ToString();
                         string Criteria = QueryString["X_Criteria"].ToString();
                         if(Criteria!="")
-                        Criteria = " Where "+QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal").Replace("'BVal'", "@BVal").Replace("'FVal'", "@FVal");
+                        Criteria = " Where "+QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal ").Replace("'BVal'", "@BVal ").Replace("'FVal'", "@FVal ");
                         ListSqlParams.Add("@BVal", bval);
                         ListSqlParams.Add("@CVal", cval);
                         ListSqlParams.Add("@FVal", fval);
-                        string ListSql = "select " + fields + " from " + table + Criteria;
+                        string ListSql = "select " + fields + " from " + table +" "+ Criteria;
                         
                         outTable = dLayer.ExecuteDataTable(ListSql, ListSqlParams, connection);
                     }
