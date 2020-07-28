@@ -933,7 +933,6 @@ namespace SmartxAPI.GeneralFunctions
         {
             try
             {
-                OpenConnection();
                 SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
                 sqlCommand.CommandTimeout = 0;
                 sqlCommand.CommandType = CommandType.StoredProcedure;

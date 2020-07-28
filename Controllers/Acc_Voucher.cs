@@ -134,16 +134,16 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_VoucherNo"] = InvoiceNo;
                     }
 
-                    int N_InvoiceId = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", 0, MasterTable, connection, transaction);
-                    if (N_InvoiceId <= 0)
+                    int N_VoucherId = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", 0, MasterTable, connection, transaction);
+                    if (N_VoucherId <= 0)
                     {
                         transaction.Rollback();
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["N_VoucherId"] = N_InvoiceId;
+                        DetailTable.Rows[j]["N_VoucherId"] = N_VoucherId;
                     }
-                    int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "n_SalesDetailsID", 0, DetailTable, connection, transaction);
+                    int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", 0, DetailTable, connection, transaction);
                     transaction.Commit();
                 }
                 return Ok("Data Saved");
