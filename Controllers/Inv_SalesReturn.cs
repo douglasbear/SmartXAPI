@@ -41,10 +41,10 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearId);
 
             try{
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                 dt=_api.Format(dt);
                 if (dt.Rows.Count==0)
@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403,_api.ErrorResponse(e));
             }
         }
-        [HttpGet("details")]
+        [HttpGet("listdetails")]
         public ActionResult GetSalesReturnDetails(int? nCompanyId,string xDebitNoteNo,int nFnYearId,bool bAllBranchData,int nBranchId)
         {
             DataSet dt=new DataSet();
@@ -65,12 +65,11 @@ namespace SmartxAPI.Controllers
             string sqlCommandText="";
             if (bAllBranchData == true)
             {
-                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@DebitNoteNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@DebitNoteNo,1,SALES,0,@FnYearID";
             }
             else
             {
-                sqlCommandText="Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@DebitNoteNo and N_FnYearID=@FnYearID and N_BranchID=@BranchID and B_Invoice=0";
-
+                sqlCommandText="SP_InvSalesReturn_Disp @CompanyID,@DebitNoteNo,1,SALES,@BranchID,@FnYearID";
             }
             
             Params.Add("@CompanyID",nCompanyId);
@@ -80,30 +79,27 @@ namespace SmartxAPI.Controllers
 
             try{
                 DataTable SalesReturn = new DataTable();
-                                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
+                connection.Open();
                 SalesReturn=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 SalesReturn=_api.Format(SalesReturn,"Master");
                 dt.Tables.Add(SalesReturn);
                 
-            int N_DebitNoteId = myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString());
-            Params.Add("@DebitNoteID",N_DebitNoteId);
-            string  sqlCommandText2="SELECT   * from  vw_SalesReturnWithoutSale_Disp Where N_DebitNoteId=@DebitNoteID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+                 int N_DebitNoteId = myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString());
+                 Params.Add("@DebitNoteID",N_DebitNoteId);     
+                 string  sqlCommandText2="Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
 
-            DataTable SalesReturnDetails = new DataTable();
-            SalesReturnDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection);
-            SalesReturnDetails=_api.Format(SalesReturnDetails,"Details");
-            dt.Tables.Add(SalesReturnDetails);
+                 DataTable SalesReturnDetails = new DataTable();
+                 SalesReturnDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection);
+                 SalesReturnDetails=_api.Format(SalesReturnDetails,"Details");
+                 dt.Tables.Add(SalesReturnDetails);
 
                 }
-
-
-
-return Ok(dt);
-            }catch(Exception e){
+                return Ok(dt);
+                }catch(Exception e){
                 return StatusCode(403,_api.ErrorResponse(e));
-            }
+                }
         }
 
        //Save....
@@ -122,6 +118,9 @@ return Ok(dt);
                     DataRow masterRow=MasterTable.Rows[0];
                     var values = masterRow["X_DebitNoteNo"].ToString();
                     
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                     {
+                         connection.Open();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",masterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
@@ -143,6 +142,7 @@ return Ok(dt);
                         }
                     int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesReturnDetails","N_DebitnoteDetailsID",0,DetailTable);                    
                     dLayer.commit();
+                     }
                     return Ok("Sales Return Saved");
                 }
                 catch (Exception ex)
@@ -152,6 +152,32 @@ return Ok(dt);
                 }
         }
         //Delete....
+         [HttpDelete()]
+        public ActionResult DeleteData(int? nCompanyId,int? nDebitNoteId)
+        {
+            try
+            {
+                string sqlCommandText="";
+                SortedList Params = new SortedList();
+                sqlCommandText="SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
+                Params.Add("@N_CompanyId",nCompanyId);
+                Params.Add("@N_DebitNoteId",nDebitNoteId);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+
+                }
+                return StatusCode(200,_api.Response(200 ,"Sales Return deleted" ));
+               
+                
+            }
+            catch (Exception ex)
+                {
+                    return StatusCode(403,_api.ErrorResponse(ex));
+                }
+
+        }
          
         
     }
