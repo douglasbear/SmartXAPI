@@ -309,54 +309,50 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpDelete()]
-        // public ActionResult DeleteData(int nPOrderID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         dLayer.setTransaction();
-        //         Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_PurchaseOrderID", N_PurchaseOrderID, "");
-        //         if (Results <= 0)
-        //         {
-        //             dLayer.rollBack();
-        //             return StatusCode(409, _api.Response(409, "Unable to delete Purchase Order"));
-        //         }
-        //         else
-        //         {
-        //             Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "");
-        //             if (Results <= 0)
-        //             {
-        //                 dLayer.rollBack();
-        //                 return StatusCode(409, _api.Response(409, "Unable to delete PurchaseOrder"));
-        //             }
-        //             else
-        //             {
-        //                 Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", nPOrderID, "");
-        //             }
-
-        //         if (Results > 0)
-        //         {
-        //             dLayer.commit();
-        //             return StatusCode(200, _api.Response(200, "Purchase Order deleted"));
-        //         }
-        //         else
-        //         {
-        //             dLayer.rollBack();
-        //             return StatusCode(409, _api.Response(409, "Unable to delete Purchase Order"));
-        //         }
-
-        //         return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseOrder"));
+        [HttpDelete()]
+        public ActionResult DeleteData(int nPOrderID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return StatusCode(409, _api.Response(409, "Unable to delete PurchaseOrder"));
+                    }
+                    else
+                    {
+                        Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", nPOrderID, "");
+                    }
 
 
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return StatusCode(403, _api.ErrorResponse(ex));
-        //     }
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return StatusCode(200, _api.Response(200, "PurchaseOrder deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                    }
+                }
+
+                return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseOrder"));
 
 
-        // }
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(403, _api.ErrorResponse(ex));
+            }
+
+
+        }
 
     }
 }
