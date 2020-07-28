@@ -52,6 +52,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                connection.Open();
                 dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                 dt=_api.Format(dt);
