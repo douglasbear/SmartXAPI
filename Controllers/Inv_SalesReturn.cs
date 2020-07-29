@@ -121,33 +121,34 @@ namespace SmartxAPI.Controllers
                     using (SqlConnection connection = new SqlConnection(connectionString))
                      {
                          connection.Open();
+                         SqlTransaction transaction;
+                          transaction = connection.BeginTransaction();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",masterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID",masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",masterRow["n_BranchId"].ToString());
-                        InvoiceNo =  dLayer.GetAutoNumber("Inv_SalesReturnMaster","X_DebitNoteNo", Params);
+                        InvoiceNo =  dLayer.GetAutoNumber("Inv_SalesReturnMaster","X_DebitNoteNo", Params, connection, transaction);
                         if(InvoiceNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate sales return" ));}
                         MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
                     }
 
-                    dLayer.setTransaction();
+                    // dLayer.setTransaction();
                     int N_InvoiceId=dLayer.SaveData("Inv_SalesReturnMaster","N_DebitNoteId",0,MasterTable);                    
                     if(N_InvoiceId<=0){
-                        dLayer.rollBack();
+                        transaction.Rollback();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
                             DetailTable.Rows[j]["N_DebitNoteId"]=N_InvoiceId;
                         }
-                    int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesReturnDetails","N_DebitnoteDetailsID",0,DetailTable);                    
-                    dLayer.commit();
+                    int N_InvoiceDetailId=dLayer.SaveData("Inv_SalesReturnDetails","N_DebitnoteDetailsID",0,DetailTable,connection, transaction);                    
+                    transaction.Commit();
                      }
                     return Ok("Sales Return Saved");
                 }
                 catch (Exception ex)
                 {
-                    dLayer.rollBack();
                     return StatusCode(403,ex);
                 }
         }
