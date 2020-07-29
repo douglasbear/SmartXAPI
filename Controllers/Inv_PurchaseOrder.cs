@@ -195,10 +195,10 @@ namespace SmartxAPI.Controllers
 
                     int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
 
-                    if (!myFunctions.checkExistence(Master,"n_POTypeID"))
+                    if (myFunctions.checkIsNull(Master,"n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
 
-                    if (!myFunctions.checkExistence(Master,"n_POType"))
+                    if (myFunctions.checkIsNull(Master,"n_POType"))
                         MasterTable.Rows[0]["n_POType"] = 121;
 
                     transaction = connection.BeginTransaction();

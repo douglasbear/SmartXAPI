@@ -190,9 +190,9 @@ namespace SmartxAPI.GeneralFunctions
             return Convert.ToDecimal(val);
         }
 
-        public bool checkExistence(DataRow Row,String KeyName){
+        public bool checkIsNull(DataRow Row,String KeyName){
             if (Row[KeyName].ToString() == null || this.getIntVAL(Row[KeyName].ToString()) == 0)
-            {return false;}else{return true;}
+            {return true;}else{return false;}
         }
 
 
@@ -213,6 +213,6 @@ public interface IMyFunctions
         public bool getBoolVAL(string val);
         public string EncryptString(string inputString);
         public string DecryptString(string inputString);
-        public bool checkExistence(DataRow Row,String KeyName);
+        public bool checkIsNull(DataRow Row,String KeyName);
     }    
 }
