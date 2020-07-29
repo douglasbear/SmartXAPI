@@ -1,46 +1,48 @@
 using System;
-using System.Collections.Generic;
 using System.Data;
-using System.Data.SqlClient;
-using System.Linq;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc;
 
 namespace SmartxAPI.GeneralFunctions
 {
     public class ApiFunctions : IApiFunctions
     {
         private readonly IMapper _mapper;
-        public ApiFunctions(IMapper mapper)
+        private readonly IWebHostEnvironment env;
+        public ApiFunctions(IMapper mapper,IWebHostEnvironment envn)
         {
             _mapper = mapper;
+            env = envn;
         }
 
         public object Response(int Code, string ResMessage)
         {
-            return (new { StatusCode = 404, Message = ResMessage, Data = "" });
+            return (new { StatusCode = Code, Message = ResMessage, Data = "" });
         }
 
-        public object BadRequest(string message)
+        public object Error(string message)
         {
             return (new { type = "error", Message = message, Data = "" });
         }
-        public object Ok(DataTable dataTable)
+        public object Success(DataTable dataTable)
         {
             return (new { type = "success", Message = "null", Data = dataTable });
         }
-        public object Ok(DataSet dataSet)
+        public object Success(DataSet dataSet)
         {
             return (new { type = "success", Message = "null", Data = dataSet });
         }
-        public object Ok(string message)
+        public object Success(string message)
         {
             return (new { type = "success", Message = message, Data = "" });
         }
-        public object NotFound(string message)
+        public object Notice(string message)
         {
-            return (new { type = "error", Message = message, Data = "" });
+            return (new { type = "notice", Message = message, Data = "" });
+        }
+        public object Warning(string message)
+        {
+            return (new { type = "warning", Message = message, Data = "" });
         }
         public object ErrorResponse(Exception ex)
         {
@@ -56,12 +58,42 @@ namespace SmartxAPI.GeneralFunctions
                     Msg = ex.Message.Substring(0, 42);
                     break;
                 default:
-                    Msg = "invalid request parameters or server error occurred" + ex.Message;
+                    if (env.EnvironmentName=="Development")
+                        Msg = ex.Message;
+                        else
+                        Msg = "Internal Server Error";
                     break;
             }
 
 
-            return (new { StatusCode = 403, Message = Msg });
+            return (new { type = "error", Message = Msg , Data = "" });
+
+
+        }
+
+        public object Error(Exception ex)
+        {
+            string Msg = "";
+            string subString = ex.Message.Substring(8, ex.Message.Length - 8);
+
+            switch (ex.Message.Substring(0, 8))
+            {
+                case "Column '":
+                    Msg = ex.Message.Substring(7, subString.IndexOf("'") + 1) + " is required";
+                    break;
+                case "Error co":
+                    Msg = ex.Message.Substring(0, 42);
+                    break;
+                default:
+                    if (env.EnvironmentName=="Development")
+                        Msg = ex.Message;
+                        else
+                        Msg = "Internal Server Error";
+                    break;
+            }
+
+
+            return (new { type = "error", Message = Msg , Data = "" });
 
 
         }
@@ -89,12 +121,14 @@ namespace SmartxAPI.GeneralFunctions
     {
         public object Response(int Code, string Response);
         public object ErrorResponse(Exception ex);
+        public object Error(Exception ex);
         public DataTable Format(DataTable table, string tableName);
         public DataTable Format(DataTable dt);
-        public object BadRequest(string message);
-        public object Ok(DataTable dataTable);
-        public object Ok(DataSet dataSet);
-        public object Ok(string message);
-        public object NotFound(string message);
+        public object Error(string message);
+        public object Success(DataTable dataTable);
+        public object Success(DataSet dataSet);
+        public object Success(string message);
+        public object Notice(string message);
+        public object Warning(string message);
     }
 }

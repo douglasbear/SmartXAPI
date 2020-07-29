@@ -1,5 +1,6 @@
 using System;
 using System.Collections;
+using System.Data;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -189,6 +190,11 @@ namespace SmartxAPI.GeneralFunctions
             return Convert.ToDecimal(val);
         }
 
+        public bool checkExistence(DataRow Row,String KeyName){
+            if (Row[KeyName].ToString() == null || this.getIntVAL(Row[KeyName].ToString()) == 0)
+            {return false;}else{return true;}
+        }
+
 
     }
 public interface IMyFunctions
@@ -207,5 +213,6 @@ public interface IMyFunctions
         public bool getBoolVAL(string val);
         public string EncryptString(string inputString);
         public string DecryptString(string inputString);
+        public bool checkExistence(DataRow Row,String KeyName);
     }    
 }

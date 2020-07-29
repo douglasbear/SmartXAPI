@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.NotFound("Sales Receipt Not Found"));
+                    return Ok(api.Notice("Sales Receipt Not Found"));
                 }
                 else
                 {
@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTablePro("SP_InvSalesReceipt_Disp", mParamsList, connection);
-                    if (MasterTable.Rows.Count == 0) { return Ok(api.NotFound("No data found")); }
+                    if (MasterTable.Rows.Count == 0) { return Ok(api.Notice("No data found")); }
                     MasterTable = api.Format(MasterTable, "Master");
 
                     string balanceSql = "";
@@ -131,7 +131,7 @@ namespace SmartxAPI.Controllers
                             detailParams.Add("@PayReceiptID", n_PayReceiptId);
                             detailParams.Add("@BranchID", nBranchId);
                             DetailTable = dLayer.ExecuteDataTable(DetailSql, detailParams, connection);
-                            if (DetailTable.Rows.Count == 0) { return Ok(api.NotFound("No data found")); }
+                            if (DetailTable.Rows.Count == 0) { return Ok(api.Notice("No data found")); }
                         }
                         else
                         {
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
                         {"N_BranchID",nBranchId}
                     };
                             DetailTable = dLayer.ExecuteDataTablePro("SP_InvReceivables_Disp", detailParams, connection);
-                            if (DetailTable.Rows.Count == 0) { return Ok(api.NotFound("No data found")); }
+                            if (DetailTable.Rows.Count == 0) { return Ok(api.Notice("No data found")); }
                         }
                     }
                     else
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                         {"N_BranchID",nBranchId}
                     };
                         DetailTable = dLayer.ExecuteDataTablePro("SP_InvReceivables", detailParams, connection);
-                        if (DetailTable.Rows.Count == 0) { return Ok(api.NotFound("No data found")); }
+                        if (DetailTable.Rows.Count == 0) { return Ok(api.Notice("No data found")); }
                     }
                     DetailTable = api.Format(DetailTable, "Details");
 
@@ -173,7 +173,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.ErrorResponse(e));
+                return BadRequest(api.Error(e));
             }
         }
 
@@ -193,7 +193,6 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction;
 
-
                     // Auto Gen
                     string PorderNo = "";
                     var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
@@ -201,6 +200,17 @@ namespace SmartxAPI.Controllers
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
                     int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(Master["n_FnYearId"].ToString());
+                    SortedList InvCounterParams = new SortedList()
+                    {
+                        {"@MenuID",66},
+                        {"@CompanyID",nCompanyId},
+                        {"@FnYearID",nFnYearID}
+                    };
+
+                    bool B_AutoInvoice = Convert.ToBoolean(dLayer.ExecuteScalar("Select Isnull(B_AutoInvoiceEnabled,0) from Inv_InvoiceCounter where N_MenuID=@MenuID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID",InvCounterParams));
+                    
+                    if(!B_AutoInvoice){return Ok(api.Warning("Auto Invoice Not Enabled"));}
 
                     if (Master["n_POTypeID"].ToString() == null || myFunctions.getIntVAL(Master["n_POTypeID"].ToString()) == 0)
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
@@ -213,11 +223,11 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyId);
-                        Params.Add("N_YearID", Master["n_FnYearId"].ToString());
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
-                        PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
+                        PorderNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_POrderNo", Params, connection, transaction);
                         if (PorderNo == "") { return StatusCode(409, api.Response(409, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
 
