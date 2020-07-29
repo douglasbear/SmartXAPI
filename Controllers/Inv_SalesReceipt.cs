@@ -177,5 +177,115 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                DataTable DetailTable;
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                SortedList Params = new SortedList();
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+
+
+                    // Auto Gen
+                    string PorderNo = "";
+                    var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
+                    int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
+
+                    int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+
+                    if (Master["n_POTypeID"].ToString() == null || myFunctions.getIntVAL(Master["n_POTypeID"].ToString()) == 0)
+                        MasterTable.Rows[0]["n_POTypeID"] = 174;
+
+                    if (Master["n_POType"].ToString() == null || myFunctions.getIntVAL(Master["n_POType"].ToString()) == 0)
+                        MasterTable.Rows[0]["n_POType"] = 121;
+
+                    transaction = connection.BeginTransaction();
+
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyId);
+                        Params.Add("N_YearID", Master["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", 80);
+                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
+
+                        PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
+                        if (PorderNo == "") { return StatusCode(409, api.Response(409, "Unable to generate Quotation Number")); }
+                        MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
+
+                        MasterTable.Columns.Remove("n_POrderID");
+                        MasterTable.AcceptChanges();
+                        DetailTable.Columns.Remove("n_POrderDetailsID");
+                        DetailTable.AcceptChanges();
+                    }
+                    else
+                    {
+                        SortedList AdvParams = new SortedList();
+                        AdvParams.Add("@companyId", Master["n_CompanyId"].ToString());
+                        AdvParams.Add("@PorderId", Master["n_POrderID"].ToString());
+                        object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
+                        if (AdvancePRProcessed != null)
+                        {
+                            if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                            {
+                                transaction.Rollback();
+                                return StatusCode(400, "Payment Request Processed");
+                            }
+                        }
+
+
+                        if (N_POrderID > 0)
+                        {
+                            MasterTable.Columns.Remove("n_POrderID");
+                            MasterTable.AcceptChanges();
+                            DetailTable.Columns.Remove("n_POrderDetailsID");
+                            DetailTable.AcceptChanges();
+
+                            bool B_PRSVisible = false;
+                            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer, connection, transaction);
+                            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", dLayer, connection, transaction);
+
+                            if (MaterailRequestVisible || PurchaseRequestVisible)
+                                B_PRSVisible = true;
+
+                           
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+                                {"X_TransType","Purchase Order"},
+                                {"N_VoucherID",N_POrderID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        }
+                    }
+
+
+                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", N_POrderID, MasterTable, connection, transaction);
+                    if (N_PurchaseOrderId <= 0)
+                    {
+                        transaction.Rollback();
+                        return StatusCode(403, "Error");
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["n_POrderID"] = N_PurchaseOrderId;
+                    }
+                    int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", 0, DetailTable, connection, transaction);
+                    transaction.Commit();
+                }
+                return Ok("Purchase Order Saved");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(403, ex);
+            }
+        }
+
     }
 }
