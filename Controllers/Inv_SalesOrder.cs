@@ -5,6 +5,8 @@ using SmartxAPI.GeneralFunctions;
 using System;
 using System.Data;
 using System.Collections;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.Controllers
 
@@ -18,6 +20,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
+        private readonly string connectionString;
 
         
         public Inv_SalesOrderController(IDataAccessLayer dl,IApiFunctions api)
@@ -38,8 +41,11 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearId);
 
             try{
-                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 dt=_api.Format(dt);
+                }
                 if(dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
@@ -77,6 +83,8 @@ namespace SmartxAPI.Controllers
             try
             {
 
+ using (SqlConnection connection = new SqlConnection(connectionString))
+                {
                 MasterTable=dLayer.ExecuteDataTable(Mastersql,Params);
                 MasterTable = _api.Format(MasterTable,"Master");
                 dt.Tables.Add(MasterTable);
@@ -93,6 +101,7 @@ namespace SmartxAPI.Controllers
             DetailTable=dLayer.ExecuteDataTable(DetailSql,Params);
             DetailTable=_api.Format(DetailTable,"Details");
             dt.Tables.Add(DetailTable);
+                }
             return Ok(dt);
             }catch(Exception e){
                 return Ok(MasterTable);
