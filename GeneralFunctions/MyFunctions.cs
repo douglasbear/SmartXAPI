@@ -102,6 +102,93 @@ namespace SmartxAPI.GeneralFunctions
 
         }
 
+                public double getVAL(string val)
+        {
+            try
+            {
+                if (val.Trim() == "" || val.Trim() == "." || val.Trim() == "-")
+                    return 0;
+                else
+                {
+                    string ValWithFormat = val;
+                    //if (val.Substring(ValWithFormat.Length - 3, 1) == ",")
+                    //    ValWithFormat = ValWithFormat.Substring(0, ValWithFormat.Length - 3) + ValWithFormat.Substring(ValWithFormat.Length - 3).Replace(",", ".");
+                    return Convert.ToDouble(ValWithFormat);
+                }
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
+
+                public double Round(double val, int RoundDigit)
+        {
+            decimal RoundVal = 0;
+            RoundVal = Decimal.Round(Convert.ToDecimal(val), RoundDigit);
+            return (Convert.ToDouble(RoundVal.ToString()));
+
+        }
+        public double Round(string val, int RoundDigit)
+        {
+            decimal RoundVal = 0;
+            RoundVal = Decimal.Round(getDecimalVAL(val), RoundDigit);
+            return (getVAL(RoundVal.ToString()));
+
+        }
+        public string decimalPlaceString(int decimalNo)
+        {
+            string PlaceString = "";
+            if (decimalNo == 2 || decimalNo == 0)
+                PlaceString = "#,##0.00";
+            else if (decimalNo == 3)
+                PlaceString = "#,##0.000";
+            else if (decimalNo == 4)
+                PlaceString = "#,##0.0000";
+            else
+                PlaceString = "#,##0.00000";
+
+            return PlaceString;
+
+        }
+
+               public bool getBoolVAL(string val)
+        {
+            if (val.Trim() == "")
+                return false;
+            else
+                return Convert.ToBoolean(val);
+        }
+        public int getIntVAL(bool val)
+        {
+            if (val)
+                return 1;
+            else
+                return 0;
+        }
+        public float getFloatVAL(string val)
+        {
+            if (val.Trim() == ".")
+                return 0;
+            if (val.Trim() == "")
+                return 0;
+            else
+                return float.Parse(val);
+        }
+        public decimal getDecimalVAL(string val)
+        {
+            if (val.Trim() == ".")
+                return 0;
+            if (val.Trim() == "")
+                return 0;
+            else
+                return Convert.ToDecimal(val);
+        }
+        public decimal getDecimalVAL(double val)
+        {
+            return Convert.ToDecimal(val);
+        }
+
 
     }
 public interface IMyFunctions
@@ -109,6 +196,15 @@ public interface IMyFunctions
         public bool CheckPermission(int N_CompanyID,int N_MenuID, string admin,IDataAccessLayer dLayer);
         public bool CheckPermission(int N_CompanyID,int N_MenuID, string admin,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction);
         public int getIntVAL(string val);
+        public double getVAL(string val);
+        public double Round(double val, int RoundDigit);
+        public double Round(string val, int RoundDigit);
+        public string decimalPlaceString(int decimalNo);
+        public decimal getDecimalVAL(double val);
+        public decimal getDecimalVAL(string val);
+        public float getFloatVAL(string val);
+        public int getIntVAL(bool val);
+        public bool getBoolVAL(string val);
         public string EncryptString(string inputString);
         public string DecryptString(string inputString);
     }    

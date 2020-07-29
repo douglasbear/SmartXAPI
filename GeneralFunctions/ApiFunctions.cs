@@ -30,6 +30,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = dataTable });
         }
+        public object Ok(DataSet dataSet)
+        {
+            return (new { type = "success", Message = "null", Data = dataSet });
+        }
         public object Ok(string message)
         {
             return (new { type = "success", Message = message, Data = "" });
@@ -89,6 +93,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable Format(DataTable dt);
         public object BadRequest(string message);
         public object Ok(DataTable dataTable);
+        public object Ok(DataSet dataSet);
         public object Ok(string message);
         public object NotFound(string message);
     }

@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", nPOrderID, "");
+                        Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", nPOrderID, "",connection,transaction);
                     }
 
 
