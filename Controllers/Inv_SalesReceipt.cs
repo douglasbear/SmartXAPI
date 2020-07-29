@@ -186,21 +186,19 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
-                SortedList Params = new SortedList();
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction;
+                    SqlTransaction transaction = connection.BeginTransaction();
 
-                    // Auto Gen
-                    string PorderNo = "";
-                    var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
-                    int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
+                    var xVoucherNo = Master["x_VoucherNo"].ToString();
+                    var xType = Master["x_Type"].ToString();
+                    int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
+                    int PayReceiptId = myFunctions.getIntVAL(Master["n_PayReceiptId"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(Master["n_FnYearID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
 
-                    int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-                    int nFnYearID = myFunctions.getIntVAL(Master["n_FnYearId"].ToString());
                     SortedList InvCounterParams = new SortedList()
                     {
                         {"@MenuID",66},
@@ -208,93 +206,113 @@ namespace SmartxAPI.Controllers
                         {"@FnYearID",nFnYearID}
                     };
 
-                    bool B_AutoInvoice = Convert.ToBoolean(dLayer.ExecuteScalar("Select Isnull(B_AutoInvoiceEnabled,0) from Inv_InvoiceCounter where N_MenuID=@MenuID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID",InvCounterParams));
-                    
-                    if(!B_AutoInvoice){return Ok(api.Warning("Auto Invoice Not Enabled"));}
+                    bool B_AutoInvoice = Convert.ToBoolean(dLayer.ExecuteScalar("Select Isnull(B_AutoInvoiceEnabled,0) from Inv_InvoiceCounter where N_MenuID=@MenuID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID", InvCounterParams, connection, transaction));
+                    if (!B_AutoInvoice) { transaction.Rollback(); return Ok(api.Warning("Auto Invoice Not Enabled")); }
 
-                    if (Master["n_POTypeID"].ToString() == null || myFunctions.getIntVAL(Master["n_POTypeID"].ToString()) == 0)
-                        MasterTable.Rows[0]["n_POTypeID"] = 174;
-
-                    if (Master["n_POType"].ToString() == null || myFunctions.getIntVAL(Master["n_POType"].ToString()) == 0)
-                        MasterTable.Rows[0]["n_POType"] = 121;
-
-                    transaction = connection.BeginTransaction();
-
-                    if (values == "@Auto")
+                    if (PayReceiptId > 0)
                     {
+                        SortedList deleteParams = new SortedList()
+                            {
+                                {"N_CompanyID",nCompanyId},
+                                {"X_TransType",xType},
+                                {"N_VoucherID",PayReceiptId}
+                            };
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    }
+
+                    if (xVoucherNo == "@Auto")
+                    {
+                        SortedList Params = new SortedList();
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", 80);
-                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
+                        Params.Add("N_FormID", 66);
+                        Params.Add("N_BranchID", nBranchID);
 
-                        PorderNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_POrderNo", Params, connection, transaction);
-                        if (PorderNo == "") { return StatusCode(409, api.Response(409, "Unable to generate Quotation Number")); }
-                        MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
+                        xVoucherNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                        if (xVoucherNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
 
-                        MasterTable.Columns.Remove("n_POrderID");
+                        MasterTable.Rows[0]["x_POrderNo"] = xVoucherNo;
+
+                        MasterTable.Columns.Remove("n_PayReceiptId");
                         MasterTable.AcceptChanges();
-                        DetailTable.Columns.Remove("n_POrderDetailsID");
+                        DetailTable.Columns.Remove("n_PayReceiptDetailsId");
                         DetailTable.AcceptChanges();
                     }
-                    else
-                    {
-                        SortedList AdvParams = new SortedList();
-                        AdvParams.Add("@companyId", Master["n_CompanyId"].ToString());
-                        AdvParams.Add("@PorderId", Master["n_POrderID"].ToString());
-                        object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
-                        if (AdvancePRProcessed != null)
-                        {
-                            if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
-                            {
-                                transaction.Rollback();
-                                return StatusCode(400, "Payment Request Processed");
-                            }
-                        }
 
-
-                        if (N_POrderID > 0)
-                        {
-                            MasterTable.Columns.Remove("n_POrderID");
-                            MasterTable.AcceptChanges();
-                            DetailTable.Columns.Remove("n_POrderDetailsID");
-                            DetailTable.AcceptChanges();
-
-                            bool B_PRSVisible = false;
-                            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer, connection, transaction);
-                            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", dLayer, connection, transaction);
-
-                            if (MaterailRequestVisible || PurchaseRequestVisible)
-                                B_PRSVisible = true;
-
-                           
-                            SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyId},
-                                {"X_TransType","Purchase Order"},
-                                {"N_VoucherID",N_POrderID}};
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                        }
-                    }
-
-
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", N_POrderID, MasterTable, connection, transaction);
-                    if (N_PurchaseOrderId <= 0)
+                    PayReceiptId = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptId", PayReceiptId, MasterTable, connection, transaction);
+                    if (PayReceiptId <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(403, "Error");
+                        return Ok(api.Error("Unable To Save Customer Payment"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_POrderID"] = N_PurchaseOrderId;
+                        DetailTable.Rows[j]["n_PayReceiptId"] = PayReceiptId;
                     }
-                    int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", 0, DetailTable, connection, transaction);
+                    int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_PayReceiptDetailsId", 0, DetailTable, connection, transaction);
                     transaction.Commit();
+                    if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { return Ok(api.Success("Customer Payment Saved")); }
+                    else { return Ok(api.Error("Unable To Save Customer Payment")); }
                 }
-                return Ok("Purchase Order Saved");
+
             }
             catch (Exception ex)
             {
-                return StatusCode(403, ex);
+                return BadRequest(api.Error(ex));
             }
+        }
+
+        [HttpDelete()]
+        public ActionResult DeleteData(int nPayReceiptId, int nCompanyId, string xType)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList deleteParams = new SortedList()
+                            {
+                                {"N_CompanyID",nCompanyId},
+                                {"X_TransType",xType},
+                                {"N_VoucherID",nPayReceiptId}
+                            };
+                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    transaction.Commit();
+                }
+
+                return Ok(api.Success("Sales Receipt Deleted"));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(api.Error(ex));
+            }
+
+
+        }
+
+        [HttpGet("all")]
+        public ActionResult GetCustomer()
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string sqlCommandText="select * from Inv_PayReceipt";
+            
+
+            try{
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                     if(dt.Rows.Count==0)
+                    {
+                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
+                    }else{
+                    return Ok(dt);
+
+                    }
+                }catch(Exception e){
+                    return Ok("Error");
+                }
         }
 
     }

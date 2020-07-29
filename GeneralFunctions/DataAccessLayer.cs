@@ -98,47 +98,88 @@ namespace SmartxAPI.GeneralFunctions
         {
             TransactionScope.Rollback();
         }
-        public int ExecuteNonQuery(string sqlCommandText)
+
+
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection)
         {
             try
             {
                 OpenConnection();
-                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, databaseConnection);
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
                 sqlCommand.CommandTimeout = 0;
                 sqlCommand.CommandType = CommandType.Text;
-                sqlCommand.Transaction = databaseTransaction;
                 return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-            finally
-            {
-                CloseConnection();
-            }
         }
 
-        public int ExecuteNonQuery(string sqlCommandText, System.Data.CommandType sqlCommandType)
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
                 OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return this.commandStatement.ExecuteNonQuery();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-            finally
+        }
+        public int ExecuteNonQuery(string sqlCommandText, SortedList paramList, SqlConnection connection)
+        {
+            try
             {
-                CloseConnection();
+                OpenConnection();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+                return sqlCommand.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
+        public int ExecuteNonQuery(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction)
+        {
+            try
+            {
+                OpenConnection();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
 
         public int ExecuteNonQueryLinkDB(string sqlCommandText, System.Data.CommandType sqlCommandType)
         {
@@ -178,6 +219,37 @@ namespace SmartxAPI.GeneralFunctions
                 CloseConnection();
             }
         }
+
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandType = CommandType.Text;
+                return sqlCommand.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection, SqlTransaction transaction)
+        {
+            try
+            {
+                OpenConnection();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
 
         public object ExecuteScalar(string sqlCommandText, SortedList paramList)
         {
@@ -345,6 +417,32 @@ namespace SmartxAPI.GeneralFunctions
                 sqlCommand.CommandTimeout = 0;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
                 sqlCommand.Transaction = transaction;
+
+
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+
+                return sqlCommand.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
 
 
                 if (paramList.Count > 0)
@@ -978,6 +1076,32 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+
+
+                return sqlCommand.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
 
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList)
         {
@@ -1018,7 +1142,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList,SqlConnection connection)
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection)
         {
             try
             {
@@ -1156,6 +1280,18 @@ namespace SmartxAPI.GeneralFunctions
             return Result;
         }
 
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection)
+        {
+            int Result = 0;
+            SortedList paramList = new SortedList();
+            paramList.Add("X_TableName", TableName);
+            paramList.Add("X_IDFieldName", IDFieldName);
+            paramList.Add("N_IDFieldValue", IDFieldValue);
+            paramList.Add("X_Critieria", X_Critieria);
+            Result = (int)ExecuteNonQueryPro("DELETE_DATA", paramList, connection);
+            return Result;
+        }
+
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params)
         {
@@ -1223,27 +1359,35 @@ namespace SmartxAPI.GeneralFunctions
     public interface IDataAccessLayer
     {
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList);
-        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList,SqlConnection connection);
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
         //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);
-        public DataTable ExecuteDataTable(string sqlCommandText);
         public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
         public object ExecuteScalar(string sqlCommandText);
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection);
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection, SqlTransaction transaction);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable);
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
         public object ExecuteScalarPro(string sqlCommandText, SortedList paramList);
+        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection);
         public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
         public void setTransaction();
         public void commit();
         public void rollBack();
         public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria);
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection);
         public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection, SqlTransaction transaction);
         public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList);
         public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection);
+         public int ExecuteNonQuery(string sqlCommandText,SortedList paramList, SqlConnection connection,SqlTransaction transaction);
+          public int ExecuteNonQuery(string sqlCommandText,SortedList paramList, SqlConnection connection);
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection, SqlTransaction transaction);
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection);
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params);
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
