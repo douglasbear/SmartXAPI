@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly string connectionString;
 
-
         public UserController(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
             _repository = repository;
@@ -88,6 +87,62 @@ namespace SmartxAPI.Controllers
             {
                 return StatusCode(403, _api.ErrorResponse(e));
             }
+        }
+        //Save....
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+
+
+                    transaction = connection.BeginTransaction();
+                    int Result = dLayer.SaveData("Sec_User", "n_UserID", 0, MasterTable, connection, transaction);
+                    if (Result > 0)
+                    {
+                        //MULTI COMPANY USER CREATION
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return StatusCode(403, "Error");
+                    }
+                    transaction.Commit();
+                }
+                return Ok("User Saved");
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(403, _api.ErrorResponse(ex));
+            }
+        }
+        [HttpGet("all")]
+        public ActionResult GetCustomer(int? nCompanyId,int nFnYearId)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            
+            string sqlCommandText="select * from Sec_user";
+            
+
+            try{
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                     if(dt.Rows.Count==0)
+                    {
+                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
+                    }else{
+                    return Ok(dt);
+
+                    }
+                }catch(Exception e){
+                    return StatusCode(403,_api.ErrorResponse(e));
+                }
         }
     }
 }
