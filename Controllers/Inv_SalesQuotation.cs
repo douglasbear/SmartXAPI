@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
-                    object objSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "N_SalesOrderID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer,connection);
+                    object objSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "N_SalesOrderID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     DataColumn col1 = new DataColumn("B_SalesOrderProcessed", typeof(Boolean));
                     col1.DefaultValue = false;
                     dsQuotation.Tables["Master"].Columns.Add(col1);
@@ -122,7 +122,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     //object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
-                    object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer,connection);
+                    object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     DataColumn col2 = new DataColumn("B_DeliveryNoteProcessed", typeof(Boolean));
                     col2.DefaultValue = false;
                     dsQuotation.Tables["Master"].Columns.Add(col2);
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     //object objSales = dLayer.ExecuteScalar("select N_SalesID from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft = 0", Params);
-                    object objSales = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer,connection);
+                    object objSales = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     DataColumn col3 = new DataColumn("B_SalesProcessed", typeof(Boolean));
                     col3.DefaultValue = false;
                     dsQuotation.Tables["Master"].Columns.Add(col3);
@@ -204,12 +204,12 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
 
-                     QueryParams.Add("@nCompanyID", N_CompanyID);
-                     QueryParams.Add("@nFnYearID", N_FnYearID);
-                     QueryParams.Add("@nQuotationID", N_QuotationID);
-                     QueryParams.Add("@nBranchID", N_BranchID);
-                     QueryParams.Add("@nLocationID", N_LocationID);
-                        
+                    QueryParams.Add("@nCompanyID", N_CompanyID);
+                    QueryParams.Add("@nFnYearID", N_FnYearID);
+                    QueryParams.Add("@nQuotationID", N_QuotationID);
+                    QueryParams.Add("@nBranchID", N_BranchID);
+                    QueryParams.Add("@nLocationID", N_LocationID);
+
 
                     bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", dLayer, connection, transaction);
 
@@ -228,8 +228,8 @@ namespace SmartxAPI.Controllers
                         if (QuotationNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
 
-                        
-                        MasterTable.Columns.Remove("n_QuotationID");                        
+
+                        MasterTable.Columns.Remove("n_QuotationID");
                         DetailTable.Columns.Remove("n_QuotationDetailsID");
                         DetailTable.AcceptChanges();
                     }
@@ -248,7 +248,7 @@ namespace SmartxAPI.Controllers
                     if (MasterID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Quotation"));                        
+                        return Ok(_api.Error("Unable to save Quotation"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -263,20 +263,27 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        QueryParams.Add("@nItemID", 0);                        
+                        QueryParams.Add("@nCRMID", 0);
+                        QueryParams.Add("@nPurchaseCost", 0);
                         for (int k = 0; k < DetailTable.Rows.Count; k++)
                         {
-                            if (myFunctions.getVAL(DetailTable.Rows[k]["N_PurchaseCost"].ToString()) > 0)
-                                dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=" + myFunctions.getVAL(DetailTable.Rows[k]["N_PurchaseCost"].ToString()) + " Where X_ItemCode='" + DetailTable.Rows[k]["X_ItemCode"].ToString() + "' and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                            if (myFunctions.getIntVAL(DetailTable.Rows[k]["N_CRMID"].ToString()) > 0)
-                                dLayer.ExecuteNonQuery("Update Inv_CRMDetails Set B_Processed=1 Where N_CRMID=" + myFunctions.getIntVAL(DetailTable.Rows[k]["N_CRMID"].ToString()) + " and N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[k]["N_ItemID"].ToString()) + " and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                            QueryParams["@nItemID"] = myFunctions.getIntVAL(DetailTable.Rows[k]["n_ItemID"].ToString());                            
+                            QueryParams["@nCRMID"] = myFunctions.getIntVAL(DetailTable.Rows[k]["n_CRMID"].ToString());
+                            QueryParams["@nPurchaseCost"] = myFunctions.getVAL(DetailTable.Rows[k]["n_PurchaseCost"].ToString());
+
+                            if (myFunctions.getVAL(QueryParams["@nPurchaseCost"].ToString()) > 0)
+                                dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@nPurchaseCost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                            if (myFunctions.getIntVAL(QueryParams["@nCRMID"].ToString()) > 0)
+                                dLayer.ExecuteNonQuery("Update Inv_CRMDetails Set B_Processed=1 Where N_CRMID=@nCRMID and N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
                         }
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));                    
+                    return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
                 }
             }
             catch (Exception ex)
-            {                
+            {
                 return BadRequest(_api.Error(ex));
             }
         }
