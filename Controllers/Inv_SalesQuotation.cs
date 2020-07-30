@@ -105,11 +105,12 @@ namespace SmartxAPI.Controllers
                         dsQuotation.Tables.Add(dtFollowUp);
                     }
 
-                    object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
+                    //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
+                    object objSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "N_SalesOrderID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer);
                     DataColumn col1 = new DataColumn("B_SalesOrderProcessed", typeof(Boolean));
                     col1.DefaultValue = false;
                     dsQuotation.Tables["Master"].Columns.Add(col1);
-                    if (objSalesOrder != null)
+                    if (objSalesOrder.ToString() != "")
                     {
                         if (myFunctions.getIntVAL(objSalesOrder.ToString()) > 0)
                         {
@@ -119,11 +120,12 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
+                    //object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
+                    object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer);
                     DataColumn col2 = new DataColumn("B_DeliveryNoteProcessed", typeof(Boolean));
                     col2.DefaultValue = false;
                     dsQuotation.Tables["Master"].Columns.Add(col2);
-                    if (objDeliveryNote != null)
+                    if (objDeliveryNote.ToString() != "")
                     {
                         if (myFunctions.getIntVAL(objDeliveryNote.ToString()) > 0)
                         {
@@ -132,11 +134,12 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    object objSales = dLayer.ExecuteScalar("select N_SalesID from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft = 0", Params);
+                    //object objSales = dLayer.ExecuteScalar("select N_SalesID from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft = 0", Params);
+                    object objSales = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer);
                     DataColumn col3 = new DataColumn("B_SalesProcessed", typeof(Boolean));
                     col3.DefaultValue = false;
                     dsQuotation.Tables["Master"].Columns.Add(col3);
-                    if (objSales != null)
+                    if (objSales.ToString() != "")
                     {
                         if (myFunctions.getIntVAL(objSales.ToString()) > 0)
                         {
@@ -155,7 +158,7 @@ namespace SmartxAPI.Controllers
 
                     //ATTACHMENTS
                     DataTable dtAttachments = new DataTable();
-                    SortedList ParamsAttachment=new SortedList();
+                    SortedList ParamsAttachment = new SortedList();
                     ParamsAttachment.Add("CompanyID", nCompanyId);
                     ParamsAttachment.Add("FnyearID", nFnYearId);
                     ParamsAttachment.Add("PayID", nQuotationId);
@@ -189,8 +192,14 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction;
-                    //dLayer.setTransaction();
+                    DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
+
+                    int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["N_CompnayID"].ToString());
+                    bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", dLayer, connection, transaction);
+
+
                     // Auto Gen
                     string QuotationNo = "";
                     var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
@@ -205,18 +214,28 @@ namespace SmartxAPI.Controllers
                         if (QuotationNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
                     }
-
-
-                    int N_QuotationId = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", 0, MasterTable, connection, transaction);
-                    if (N_QuotationId <= 0)
+                    else
+                    {
+                        if (N_QuotationID > 0)
+                        {
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",N_CompanyID},
+                                {"X_TransType","Sales Quotation"},
+                                {"N_VoucherID",N_QuotationID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        }
+                    }
+                    int MasterID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", N_QuotationID, MasterTable, connection, transaction);
+                    if (MasterID <= 0)
                     {
                         transaction.Rollback();
                         return StatusCode(409, _api.Response(409, "Unable to save Quotation"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_QuotationID"] = N_QuotationId;
+                        DetailTable.Rows[j]["n_QuotationID"] = MasterID;
                     }
+
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", 0, DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
                     {
@@ -225,6 +244,12 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        // for (int k = 0; k < DetailTable.Rows.Count; k++)
+                        // {
+                        //     //if(myFunctions.getVAL(DetailTable.Rows[k]["n_FnYearId"].ToString())>0)
+                        //     //dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=" + flxSales.get_TextMatrix(i, mcPurchaseCost) + " Where X_ItemCode='" + flxSales.get_TextMatrix(i, mcItemcode) + "' and N_CompanyID=" + myCompanyID._CompanyID")
+                        //     //DetailTable.Rows[j]["n_QuotationID"] = MasterID;
+                        // }
                         transaction.Commit();
                     }
                     return Ok("Sales quotation saved" + ":" + QuotationNo);
@@ -242,29 +267,33 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-                dLayer.setTransaction();
-                Results = dLayer.DeleteData("Inv_SalesQuotation", "n_quotationID", N_QuotationID, "");
-                if (Results <= 0)
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
-                }
-                else
-                {
-                    dLayer.DeleteData("Inv_SalesQuotationDetails", "n_quotationID", N_QuotationID, "");
-                }
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Inv_SalesQuotation", "n_quotationID", N_QuotationID, "", connection, transaction);
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
+                    }
+                    else
+                    {
+                        dLayer.DeleteData("Inv_SalesQuotationDetails", "n_quotationID", N_QuotationID, "", connection, transaction);
+                    }
 
-                if (Results > 0)
-                {
-                    dLayer.commit();
-                    return StatusCode(200, _api.Response(200, "Sales quotation deleted"));
-                }
-                else
-                {
-                    dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
-                }
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return StatusCode(200, _api.Response(200, "Sales quotation deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
+                    }
 
+                }
             }
             catch (Exception ex)
             {

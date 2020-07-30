@@ -8,32 +8,32 @@ using Microsoft.Data.SqlClient;
 
 namespace SmartxAPI.GeneralFunctions
 {
-    public class MyFunctions:IMyFunctions
+    public class MyFunctions : IMyFunctions
     {
-         public MyFunctions()
+        public MyFunctions()
         {
         }
 
-    public bool CheckPermission(int N_CompanyID,int N_MenuID, string admin,IDataAccessLayer dLayer)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer)
         {
-            SortedList Params=new SortedList();
-            Params.Add("@p1",N_CompanyID);
-            Params.Add("@p2",N_MenuID);
-            Params.Add("@p3",admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3",Params));
+            SortedList Params = new SortedList();
+            Params.Add("@p1", N_CompanyID);
+            Params.Add("@p2", N_MenuID);
+            Params.Add("@p3", admin);
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params));
             return Result;
         }
 
-    public bool CheckPermission(int N_CompanyID,int N_MenuID, string admin,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
-            SortedList Params=new SortedList();
-            Params.Add("@p1",N_CompanyID);
-            Params.Add("@p2",N_MenuID);
-            Params.Add("@p3",admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3",Params,connection,transaction));
+            SortedList Params = new SortedList();
+            Params.Add("@p1", N_CompanyID);
+            Params.Add("@p2", N_MenuID);
+            Params.Add("@p3", admin);
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection, transaction));
             return Result;
         }
-    public int getIntVAL(string val)
+        public int getIntVAL(string val)
         {
             if (val.Trim() == "")
                 return 0;
@@ -41,7 +41,7 @@ namespace SmartxAPI.GeneralFunctions
                 return Convert.ToInt32(val);
         }
 
-         public string EncryptString(string inputString)
+        public string EncryptString(string inputString)
         {
             MemoryStream memStream = null;
             try
@@ -97,13 +97,13 @@ namespace SmartxAPI.GeneralFunctions
                 else
                     return inputString;
             }
-                
+
             else
                 return inputString;
 
         }
 
-                public double getVAL(string val)
+        public double getVAL(string val)
         {
             try
             {
@@ -123,7 +123,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-                public double Round(double val, int RoundDigit)
+        public double Round(double val, int RoundDigit)
         {
             decimal RoundVal = 0;
             RoundVal = Decimal.Round(Convert.ToDecimal(val), RoundDigit);
@@ -153,7 +153,7 @@ namespace SmartxAPI.GeneralFunctions
 
         }
 
-               public bool getBoolVAL(string val)
+        public bool getBoolVAL(string val)
         {
             if (val.Trim() == "")
                 return false;
@@ -190,17 +190,23 @@ namespace SmartxAPI.GeneralFunctions
             return Convert.ToDecimal(val);
         }
 
-        public bool checkIsNull(DataRow Row,String KeyName){
+         public bool checkIsNull(DataRow Row,String KeyName){
             if (Row[KeyName].ToString() == null || this.getIntVAL(Row[KeyName].ToString()) == 0)
             {return true;}else{return false;}
+         }
+        public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where " + ColumnValidate + "=" + ValidateValue + " and " + Condition + "", Params);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
         }
-
-
     }
-public interface IMyFunctions
+    public interface IMyFunctions
     {
-        public bool CheckPermission(int N_CompanyID,int N_MenuID, string admin,IDataAccessLayer dLayer);
-        public bool CheckPermission(int N_CompanyID,int N_MenuID, string admin,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public int getIntVAL(string val);
         public double getVAL(string val);
         public double Round(double val, int RoundDigit);
@@ -213,6 +219,7 @@ public interface IMyFunctions
         public bool getBoolVAL(string val);
         public string EncryptString(string inputString);
         public string DecryptString(string inputString);
-        public bool checkIsNull(DataRow Row,String KeyName);
-    }    
+        public bool checkIsNull(DataRow Row, String KeyName);
+        public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer);
+    }
 }
