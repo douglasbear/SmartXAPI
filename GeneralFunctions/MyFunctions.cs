@@ -190,14 +190,16 @@ namespace SmartxAPI.GeneralFunctions
             return Convert.ToDecimal(val);
         }
 
-         public bool checkIsNull(DataRow Row,String KeyName){
+        public bool checkIsNull(DataRow Row, String KeyName)
+        {
             if (Row[KeyName].ToString() == null || this.getIntVAL(Row[KeyName].ToString()) == 0)
-            {return true;}else{return false;}
-         }
-        public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer)
+            { return true; }
+            else { return false; }
+        }
+        public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection)
         {
             string Result = "";
-            object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where " + ColumnValidate + "=" + ValidateValue + " and " + Condition + "", Params);
+            object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where " + ColumnValidate + "=" + ValidateValue + " and " + Condition + "", Params, connection);
             if (obj != null)
                 Result = obj.ToString();
             return Result;
@@ -220,6 +222,6 @@ namespace SmartxAPI.GeneralFunctions
         public string EncryptString(string inputString);
         public string DecryptString(string inputString);
         public bool checkIsNull(DataRow Row, String KeyName);
-        public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer);
+        public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
     }
 }
