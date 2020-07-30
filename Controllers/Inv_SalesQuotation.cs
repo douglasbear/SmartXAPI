@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                         for (int k = 0; k < DetailTable.Rows.Count; k++)
                         {
                             if(myFunctions.getVAL(DetailTable.Rows[k]["n_FnYearId"].ToString())>0)
-                            dLayer.Execute("Update Inv_ItemMaster Set N_PurchaseCost=" + flxSales.get_TextMatrix(i, mcPurchaseCost) + " Where X_ItemCode='" + flxSales.get_TextMatrix(i, mcItemcode) + "' and N_CompanyID=" + myCompanyID._CompanyID")
+                            dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=" + flxSales.get_TextMatrix(i, mcPurchaseCost) + " Where X_ItemCode='" + flxSales.get_TextMatrix(i, mcItemcode) + "' and N_CompanyID=" + myCompanyID._CompanyID")
                             DetailTable.Rows[j]["n_QuotationID"] = MasterID;
                         }
                         transaction.Commit();
