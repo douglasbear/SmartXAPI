@@ -231,7 +231,7 @@ namespace SmartxAPI.Controllers
                         xVoucherNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
                         if (xVoucherNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
 
-                        MasterTable.Rows[0]["x_POrderNo"] = xVoucherNo;
+                        MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
 
                         MasterTable.Columns.Remove("n_PayReceiptId");
                         MasterTable.AcceptChanges();
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_PayReceiptId"] = PayReceiptId;
                     }
-                    int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_PayReceiptDetailsId", 0, DetailTable, connection, transaction);
+                    int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsId", 0, DetailTable, connection, transaction);
                     transaction.Commit();
                     if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { return Ok(api.Success("Customer Payment Saved")); }
                     else { return Ok(api.Error("Unable To Save Customer Payment")); }
@@ -292,27 +292,33 @@ namespace SmartxAPI.Controllers
 
         }
 
-        [HttpGet("all")]
-        public ActionResult GetCustomer()
+        [HttpGet("dummy")]
+        public ActionResult GetPurchaseInvoiceDummy(int? Id)
         {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            
-            string sqlCommandText="select * from Inv_PayReceipt";
-            
+            try
+            {
+                string sqlCommandText = "select * from Inv_PayReceipt where n_PayReceiptId=@p1";
+                SortedList mParamList = new SortedList() { { "@p1", Id } };
+                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
+                masterTable = api.Format(masterTable, "master");
 
-            try{
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
-                     if(dt.Rows.Count==0)
-                    {
-                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
-                    }else{
-                    return Ok(dt);
+                string sqlCommandText2 = "select * from Inv_PayReceiptDetails where n_PayReceiptId=@p1";
+                SortedList dParamList = new SortedList() { { "@p1", Id } };
+                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
+                detailTable = api.Format(detailTable, "details");
 
-                    }
-                }catch(Exception e){
-                    return Ok("Error");
-                }
+                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                DataSet dataSet = new DataSet();
+                dataSet.Tables.Add(masterTable);
+                dataSet.Tables.Add(detailTable);
+
+                return Ok(dataSet);
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, api.ErrorResponse(e));
+            }
         }
 
     }
