@@ -45,17 +45,17 @@ namespace SmartxAPI.GeneralFunctions
         {
             MemoryStream memStream = null;
 
-                byte[] key = { };
-                byte[] IV = { 12, 21, 43, 17, 57, 35, 67, 27 };
-                string encryptKey = "aXb2uy4z";
-                key = Encoding.UTF8.GetBytes(encryptKey);
-                byte[] byteInput = Encoding.UTF8.GetBytes(inputString);
-                DESCryptoServiceProvider provider = new DESCryptoServiceProvider();
-                memStream = new MemoryStream();
-                ICryptoTransform transform = provider.CreateEncryptor(key, IV);
-                CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write);
-                cryptoStream.Write(byteInput, 0, byteInput.Length);
-                cryptoStream.FlushFinalBlock();
+            byte[] key = { };
+            byte[] IV = { 12, 21, 43, 17, 57, 35, 67, 27 };
+            string encryptKey = "aXb2uy4z";
+            key = Encoding.UTF8.GetBytes(encryptKey);
+            byte[] byteInput = Encoding.UTF8.GetBytes(inputString);
+            DESCryptoServiceProvider provider = new DESCryptoServiceProvider();
+            memStream = new MemoryStream();
+            ICryptoTransform transform = provider.CreateEncryptor(key, IV);
+            CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write);
+            cryptoStream.Write(byteInput, 0, byteInput.Length);
+            cryptoStream.FlushFinalBlock();
 
             return Convert.ToBase64String(memStream.ToArray());
         }
@@ -63,19 +63,19 @@ namespace SmartxAPI.GeneralFunctions
         public string DecryptString(string inputString)
         {
             MemoryStream memStream = null;
-            
-                byte[] key = { };
-                byte[] IV = { 12, 21, 43, 17, 57, 35, 67, 27 };
-                string encryptKey = "aXb2uy4z";
-                key = Encoding.UTF8.GetBytes(encryptKey);
-                byte[] byteInput = new byte[inputString.Length];
-                byteInput = Convert.FromBase64String(inputString);
-                DESCryptoServiceProvider provider = new DESCryptoServiceProvider();
-                memStream = new MemoryStream();
-                ICryptoTransform transform = provider.CreateDecryptor(key, IV);
-                CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write);
-                cryptoStream.Write(byteInput, 0, byteInput.Length);
-                cryptoStream.FlushFinalBlock();
+
+            byte[] key = { };
+            byte[] IV = { 12, 21, 43, 17, 57, 35, 67, 27 };
+            string encryptKey = "aXb2uy4z";
+            key = Encoding.UTF8.GetBytes(encryptKey);
+            byte[] byteInput = new byte[inputString.Length];
+            byteInput = Convert.FromBase64String(inputString);
+            DESCryptoServiceProvider provider = new DESCryptoServiceProvider();
+            memStream = new MemoryStream();
+            ICryptoTransform transform = provider.CreateDecryptor(key, IV);
+            CryptoStream cryptoStream = new CryptoStream(memStream, transform, CryptoStreamMode.Write);
+            cryptoStream.Write(byteInput, 0, byteInput.Length);
+            cryptoStream.FlushFinalBlock();
 
 
             Encoding encoding1 = Encoding.UTF8;
@@ -193,6 +193,22 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
+        public string RetunSettings(int CompanyID, string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=" + CompanyID + " and " + ConditionColumn + "=" + Value + " ", Params, Connection);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
+          public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ColumnReturn + " from " + TableName + " where  " + Condition + "", Params, connection);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
     }
     public interface IMyFunctions
     {
@@ -212,5 +228,7 @@ namespace SmartxAPI.GeneralFunctions
         public string DecryptString(string inputString);
         public bool checkIsNull(DataRow Row, String KeyName);
         public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
+        public string RetunSettings(string CompanyID, string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
+        public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }
