@@ -12,7 +12,7 @@ namespace SmartxAPI.Data
         public SmartxContext()
         {
         }
-        private readonly IConfiguration _config;
+        //private readonly IConfiguration _config;
         public SmartxContext(DbContextOptions<SmartxContext> options,IConfiguration config)
             : base(options)
         {
@@ -33,13 +33,13 @@ namespace SmartxAPI.Data
         public virtual DbSet<VwLanMultilingual> VwLanMultilingual { get; set; }
         
 
-        protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
-        {
-            if (!optionsBuilder.IsConfigured)
-            {
-                optionsBuilder.UseSqlServer(_config.GetConnectionString("SmartxConnection"));
-            }
-        }
+        // protected override void OnConfiguring(DbContextOptionsBuilder optionsBuilder)
+        // {
+        //     if (!optionsBuilder.IsConfigured)
+        //     {
+        //         optionsBuilder.UseSqlServer(_config.GetConnectionString("SmartxConnection"));
+        //     }
+        // }
 
         protected override void OnModelCreating(ModelBuilder modelBuilder)
         {

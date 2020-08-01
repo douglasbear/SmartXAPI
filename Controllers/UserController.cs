@@ -60,7 +60,6 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
             
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);

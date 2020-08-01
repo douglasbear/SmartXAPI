@@ -16,18 +16,18 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Acc_PaymentVoucher : ControllerBase
     {
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
 
-        public Acc_PaymentVoucher(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Acc_PaymentVoucher(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
-            _api = api;
+            api = apifun;
             dLayer = dl;
             myFunctions = myFun;
-            connectionString = conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString(myCompanyID._ConnectionString);
         }
 
 
@@ -49,10 +49,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                dt = _api.Format(dt);
+                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.Message));
+                return BadRequest(api.Error(e));
             }
         }
         [HttpGet("details")]
@@ -75,6 +75,14 @@ namespace SmartxAPI.Controllers
             Params.Add("@FnYearID", nFnYearId);
             Params.Add("@VoucherNo", xVoucherNo);
             Params.Add("@TransType", xTransType);
+            int nFormID = 0;
+
+            if (xTransType.ToLower() == "pv")
+                nFormID = 1;
+            else if (xTransType.ToLower() == "rv")
+                nFormID = 2;
+            else if (xTransType.ToLower() == "jv")
+                nFormID = 3;
 
             try
             {
@@ -83,7 +91,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable Voucher = new DataTable();
                     Voucher = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    Voucher = _api.Format(Voucher, "Master");
+                    Voucher = api.Format(Voucher, "Master");
                     dt.Tables.Add(Voucher);
                     int nVoucherID = myFunctions.getIntVAL(Voucher.Rows[0]["N_VoucherID"].ToString());
                     Params.Add("@VoucherID", nVoucherID);
@@ -91,15 +99,28 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText2 = "Select Acc_VoucherMaster_Details.*,Acc_MastLedger.*,Acc_MastGroup.X_Type,Acc_TaxCategory.X_DisplayName,Acc_TaxCategory.N_Amount,Acc_CashFlowCategory.X_Description AS X_TypeCategory from Acc_VoucherMaster_Details inner join Acc_MastLedger on Acc_VoucherMaster_Details.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster_Details.N_CompanyID=Acc_MastLedger.N_CompanyID inner join Acc_MastGroup On Acc_MastLedger.N_GroupID=Acc_MastGroup.N_GroupID and Acc_MastLedger.N_CompanyID=Acc_MastGroup.N_CompanyID  and Acc_MastLedger.N_FnYearID=Acc_MastGroup.N_FnYearID  LEFT OUTER JOIN Acc_TaxCategory ON Acc_VoucherMaster_Details.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID LEFT OUTER JOIN Acc_CashFlowCategory on Acc_VoucherMaster_Details.N_TypeID=Acc_CashFlowCategory.N_CategoryID Where N_VoucherID =@VoucherID and Acc_VoucherMaster_Details.N_CompanyID=@CompanyID and Acc_MastGroup.N_FnYearID=@FnYearID";
                     DataTable VoucherDetails = new DataTable();
                     VoucherDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
-                    VoucherDetails = _api.Format(VoucherDetails, "Details");
+                    VoucherDetails = api.Format(VoucherDetails, "details");
                     dt.Tables.Add(VoucherDetails);
+
+                    DataTable Acc_CostCentreTrans = new DataTable();
+                    SortedList ProParams = new SortedList();
+                    ProParams.Add("N_CompanyID", nCompanyId);
+                    ProParams.Add("N_FnYearID", nFnYearId);
+                    ProParams.Add("N_VoucherID", nVoucherID);
+                    ProParams.Add("N_Flag", nFormID);
+
+                    Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp", ProParams, connection);
+                    Acc_CostCentreTrans = api.Format(Acc_CostCentreTrans, "costCenterTrans");
+                    dt.Tables.Add(Acc_CostCentreTrans);
+
+
                 }
-                return Ok(dt);
+                return Ok(api.Success(dt));
 
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.Message));
+                return BadRequest(api.Error(e));
             }
         }
 
@@ -115,42 +136,50 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
-                // Auto Gen
-                string InvoiceNo = "";
+
                 DataRow masterRow = MasterTable.Rows[0];
-                var values = masterRow["x_VoucherNo"].ToString();
+                var xVoucherNo = masterRow["x_VoucherNo"].ToString();
+                var xTransType = masterRow["x_TransType"].ToString();
+                var InvoiceNo = masterRow["x_TransType"].ToString();
+                int nVoucherId = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    if (values == "@Auto")
+                    if (xVoucherNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                        InvoiceNo = dLayer.GetAutoNumber("Acc_VoucherMaster", "x_VoucherNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
-                        MasterTable.Rows[0]["x_VoucherNo"] = InvoiceNo;
+                        xVoucherNo = dLayer.GetAutoNumber("Acc_VoucherMaster", "x_VoucherNo", Params, connection, transaction);
+                        if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
+
+                        MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
+
+                        MasterTable.Columns.Remove("N_VoucherId");
+                        DetailTable.Columns.Remove("N_VoucherDetailsID");
+                        DetailTable.AcceptChanges();
                     }
 
-                    int N_VoucherId = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", 0, MasterTable, connection, transaction);
-                    if (N_VoucherId <= 0)
+                    nVoucherId = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", nVoucherId, MasterTable, connection, transaction);
+                    if (nVoucherId <= 0)
                     {
                         transaction.Rollback();
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["N_VoucherId"] = N_VoucherId;
+                        DetailTable.Rows[j]["N_VoucherId"] = nVoucherId;
                     }
                     int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", 0, DetailTable, connection, transaction);
                     transaction.Commit();
                 }
-                return Ok("Data Saved");
+                return Ok(api.Success("Data Saved"));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, ex);
+                return BadRequest(api.Error(ex));
             }
         }
         //Delete....
@@ -165,7 +194,7 @@ namespace SmartxAPI.Controllers
                 if (Results <= 0)
                 {
                     dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
+                    return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
                 }
                 else
                 {
@@ -175,18 +204,18 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {
                     dLayer.commit();
-                    return StatusCode(200, _api.Response(200, "Sales quotation deleted"));
+                    return StatusCode(200, api.Response(200, "Sales quotation deleted"));
                 }
                 else
                 {
                     dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
+                    return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(404, _api.Response(404, ex.Message));
+                return StatusCode(404, api.Response(404, ex.Message));
             }
 
 
