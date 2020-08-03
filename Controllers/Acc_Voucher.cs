@@ -7,6 +7,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Security.Claims;
 
 namespace SmartxAPI.Controllers
 
@@ -133,15 +134,41 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable InfoTable;
+                DataTable CostCenterTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                CostCenterTable = ds.Tables["costcenter"];
+                InfoTable = ds.Tables["info"];
                 SortedList Params = new SortedList();
 
                 DataRow masterRow = MasterTable.Rows[0];
                 var xVoucherNo = masterRow["x_VoucherNo"].ToString();
                 var xTransType = masterRow["x_TransType"].ToString();
                 var InvoiceNo = masterRow["x_TransType"].ToString();
-                int nVoucherId = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
+                var nCompanyId = masterRow["n_CompanyId"].ToString();
+                var nFnYearId = masterRow["n_FnYearId"].ToString();
+                int N_VoucherID = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
+                var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                var nFormID = 0;
+                if (xTransType.ToLower() == "pv")
+                    nFormID = 44;
+                else if (xTransType.ToLower() == "rv")
+                    nFormID = 45;
+                else if (xTransType.ToLower() == "jv")
+                    nFormID = 46;
+
+                var xAction = "INSERT";
+                if (N_VoucherID > 0)
+                {
+                    xAction = "UPDATE";
+                }
+
+                string ipAddress = "";
+                if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -149,10 +176,13 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     if (xVoucherNo == "@Auto")
                     {
-                        Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 80);
+                        Params.Add("N_CompanyID", nCompanyId);
+                        Params.Add("N_YearID", nFnYearId);
+                        Params.Add("N_FormID", nFormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+
+
+
                         xVoucherNo = dLayer.GetAutoNumber("Acc_VoucherMaster", "x_VoucherNo", Params, connection, transaction);
                         if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
 
@@ -163,20 +193,33 @@ namespace SmartxAPI.Controllers
                         DetailTable.AcceptChanges();
                     }
 
-                    nVoucherId = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", nVoucherId, MasterTable, connection, transaction);
-                    if (nVoucherId <= 0)
+                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", N_VoucherID, MasterTable, connection, transaction);
+                    if (N_VoucherID > 0)
                     {
-                        transaction.Rollback();
+                        SortedList LogParams = new SortedList();
+                        LogParams.Add("N_CompanyID", nCompanyId);
+                        LogParams.Add("N_FnYearID", nFnYearId);
+                        LogParams.Add("N_TransID", N_VoucherID);
+                        LogParams.Add("N_FormID", nFormID);
+                        LogParams.Add("N_UserId", nUserId);
+                        LogParams.Add("X_Action", xAction);
+                        LogParams.Add("X_SystemName", "WebRequest");
+                        LogParams.Add("X_IP", ipAddress);
+                        LogParams.Add("X_TransCode", xVoucherNo);
+                        LogParams.Add("X_Remark", "");
+
+                        //dLayer.ExecuteNonQuery("SP_Log_SysActivity ",LogParams,connection,transaction);
+
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
+                        }
+                        int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", 0, DetailTable, connection, transaction);
+                        transaction.Commit();
                     }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_VoucherId"] = nVoucherId;
-                    }
-                    int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", 0, DetailTable, connection, transaction);
-                    transaction.Commit();
+                    return Ok(api.Success("Data Saved"));
                 }
-                return Ok(api.Success("Data Saved"));
-            }
+                }
             catch (Exception ex)
             {
                 return BadRequest(api.Error(ex));

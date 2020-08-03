@@ -79,12 +79,24 @@ namespace SmartxAPI.GeneralFunctions
             switch (ex.Message.Substring(0, 8))
             {
                 case "Column '":
-                    Msg = ex.Message.Substring(7, subString.IndexOf("'") + 1) + " is required";
+                    Msg = ex.Message.Substring(8, subString.IndexOf("'") + 1) + " is required";
                     break;
                 case "Error co":
                     Msg = ex.Message.Substring(0, 42);
                     break;
+                case "Invalid co":
+                    Msg = ex.Message.Substring(0, 42);
+                    break;
                 default:
+                    if(ex.Message.Contains("Invalid column name '")== true){
+                        Msg = ex.Message.Substring(20, subString.IndexOf("'") + 1) + " is unknown";
+                        break;
+                    }
+                    if(ex.Message.Contains("is specified more than once in the SET clause") == true){
+                        subString = ex.Message.Substring(17, ex.Message.Length - 17);
+                        Msg = ex.Message.Substring(16, subString.IndexOf("'") + 1) + "' is not required or specified more than once";
+                        break;
+                    }
                     if (env.EnvironmentName=="Development")
                         Msg = ex.Message;
                         else
