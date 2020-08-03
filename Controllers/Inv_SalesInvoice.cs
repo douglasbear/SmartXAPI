@@ -102,8 +102,8 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-                        masterTable.Rows[0]["X_TandC"] = myFunctions.RetunSettings("@nCompanyID", "64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
+                    // if (masterTable.Rows[0]["X_TandC"].ToString() == "")
+                    //     masterTable.Rows[0]["X_TandC"] = myFunctions.RetunSettings("@nCompanyID", "64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
 
                     int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
                     if (N_TermsID > 0)
@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
                         DataColumn ColTerms = new DataColumn("X_Terms", typeof(string));
                         ColTerms.DefaultValue = "";
                         masterTable.Columns.Add(ColTerms);
-                        masterTable.Rows[0][ColTerms] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", mParamsList, dLayer, Con));
+                        //masterTable.Rows[0][ColTerms] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", mParamsList, dLayer, Con));
                     }
 
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
