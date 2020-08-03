@@ -68,6 +68,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
+                    Con.Open();
                     SortedList QueryParamsList = new SortedList();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
@@ -102,25 +103,39 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    // if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-                    //     masterTable.Rows[0]["X_TandC"] = myFunctions.RetunSettings("@nCompanyID", "64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
+                    if (masterTable.Rows[0]["X_TandC"].ToString() == "")
+                        masterTable.Rows[0]["X_TandC"] = myFunctions.RetunSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
 
                     int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
                     if (N_TermsID > 0)
                     {
-                        QueryParamsList.Add("@nTermsID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));                        
+                        QueryParamsList.Add("@nTermsID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
                         DataColumn ColTerms = new DataColumn("X_Terms", typeof(string));
                         ColTerms.DefaultValue = "";
                         masterTable.Columns.Add(ColTerms);
-                        //masterTable.Rows[0][ColTerms] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", mParamsList, dLayer, Con));
+                        masterTable.Rows[0][ColTerms] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", mParamsList, dLayer, Con);
                     }
 
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
                         QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
+                        DataColumn ColFileNo = new DataColumn("X_FileNo", typeof(string));
+                        ColFileNo.DefaultValue = "";
+                        masterTable.Columns.Add(ColFileNo);
 
+                    SortedList ProParamList = new SortedList()
+                    {
+                        {"N_CompanyID",nCompanyId},
+                        {"N_FnYearID",nFnYearId},
+                        {"N_PkID",myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())},
+                        {"Type","DN"}
+                    };
+                        object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, Con);
+                        if (objFileNo != null)
+                            masterTable.Rows[0][ColFileNo] = objFileNo.ToString();
                     }
 
+                    //Details
                     SortedList dParamList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
