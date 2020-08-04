@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
                     int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-                    
+
                     if (Master["n_POTypeID"].ToString() == null || myFunctions.getIntVAL(Master["n_POTypeID"].ToString()) == 0)
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
 
@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
-                        
+
                         PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
                         if (PorderNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
@@ -287,17 +287,8 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    // if (txtDescription.Text.Trim() == "Notes")
-                    //     X_Notes = "";
-                    // else
-                    //     X_Notes = txtDescription.Text.Replace("'", "''");
 
-                    // if (B_PRSVisible)
-                    //     X_Currency = cmbcurrency.Text.Trim();
-                    // else
-                    //     X_Currency = X_CurrencyCode;
-
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", N_POrderID , MasterTable, connection, transaction);
+                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", N_POrderID, MasterTable, connection, transaction);
                     if (N_PurchaseOrderId <= 0)
                     {
                         transaction.Rollback();
@@ -319,33 +310,40 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete()]
-        public ActionResult DeleteData(int N_PurchaseOrderID)
+        public ActionResult DeleteData(int nPOrderID)
         {
             int Results = 0;
             try
             {
-                dLayer.setTransaction();
-                Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_PurchaseOrderID", N_PurchaseOrderID, "");
-                if (Results <= 0)
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales PurchaseOrder"));
-                }
-                else
-                {
-                    Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_PurchaseOrderID", N_PurchaseOrderID, "");
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return StatusCode(409, _api.Response(409, "Unable to delete PurchaseOrder"));
+                    }
+                    else
+                    {
+                        Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", nPOrderID, "",connection,transaction);
+                    }
+
+
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return StatusCode(200, _api.Response(200, "PurchaseOrder deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                    }
                 }
 
-                if (Results > 0)
-                {
-                    dLayer.commit();
-                    return StatusCode(200, _api.Response(200, "Sales PurchaseOrder deleted"));
-                }
-                else
-                {
-                    dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales PurchaseOrder"));
-                }
+                return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseOrder"));
+
 
             }
             catch (Exception ex)

@@ -79,6 +79,8 @@ namespace SmartxAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+
             app.UseCors(options=>
             //options.WithOrigins("http://localhost:3000")
             options.AllowAnyOrigin()
@@ -89,7 +91,12 @@ namespace SmartxAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                //app.UseExceptionHandler("/error"); 
             }
+            // else
+            // {
+            //     app.UseExceptionHandler("/error"); 
+            // }
 
             
 

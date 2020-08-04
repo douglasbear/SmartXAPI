@@ -42,8 +42,9 @@ namespace SmartxAPI.Controllers
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                     connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    
                 }
                 dt = _api.Format(dt);
                      if(dt.Rows.Count==0)

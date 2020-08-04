@@ -231,6 +231,28 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
+        public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandType = CommandType.Text;
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+                return sqlCommand.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
         public object ExecuteScalar(string connectionString, string sqlCommandText)
         {
             try
@@ -933,7 +955,6 @@ namespace SmartxAPI.GeneralFunctions
         {
             try
             {
-                OpenConnection();
                 SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
                 sqlCommand.CommandTimeout = 0;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
@@ -994,6 +1015,40 @@ namespace SmartxAPI.GeneralFunctions
             finally
             {
                 CloseConnection();
+            }
+        }
+
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList,SqlConnection connection)
+        {
+            try
+            {
+                int recordsReturned;
+                SqlDataAdapter dataAdapter = new SqlDataAdapter();
+                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, connection);
+                dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
+                dataAdapter.SelectCommand.CommandText = sqlCommandText;
+
+
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        dataAdapter.SelectCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+
+
+
+                DataTable resultTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resultTable);
+                return resultTable;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
             }
         }
 
@@ -1168,6 +1223,7 @@ namespace SmartxAPI.GeneralFunctions
     public interface IDataAccessLayer
     {
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList);
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList,SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
         //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);
@@ -1175,6 +1231,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
         public object ExecuteScalar(string sqlCommandText);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList);
+        public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable);
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
