@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
                     if (masterTable.Rows.Count == 0) { return Ok(new { }); }
                     DataRow MasterRow = masterTable.Rows[0];
 
-
+                    QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
                     int N_TruckID = myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString());
                     object objPlateNo = null;
                     if (N_TruckID > 0)
@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
                         ColFileNo.DefaultValue = "";
                         masterTable.Columns.Add(ColFileNo);
 
-                    SortedList ProParamList = new SortedList()
+                        SortedList ProParamList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
                         {"N_FnYearID",nFnYearId},
@@ -134,6 +134,38 @@ namespace SmartxAPI.Controllers
                         if (objFileNo != null)
                             masterTable.Rows[0][ColFileNo] = objFileNo.ToString();
                     }
+
+
+
+
+                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList);
+                    DataColumn ColPayment = new DataColumn("B_PaymentProcessed", typeof(Boolean));
+                    ColPayment.DefaultValue = false;
+                    masterTable.Columns.Add(ColPayment);
+                    if (objPayment.ToString() != "")
+                    {
+                        if (myFunctions.getIntVAL(objPayment.ToString()) > 0)
+                            masterTable.Rows[0][ColPayment] = true;
+                    }
+                    object objSalesReturn = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList);
+                    DataColumn ColSalesReturn = new DataColumn("N_SalesReturn", typeof(Boolean));
+                    ColSalesReturn.DefaultValue = 0;
+                    masterTable.Columns.Add(ColSalesReturn);
+                    if (objSalesReturn.ToString() != "")
+                    {
+                        if (myFunctions.getIntVAL(objSalesReturn.ToString()) > 0)
+                            masterTable.Rows[0][ColSalesReturn] = myFunctions.getIntVAL(objSalesReturn.ToString());
+                    }
+                    object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList);
+                    DataColumn ColSalesReturnDraft = new DataColumn("N_SalesReturnDraft", typeof(Boolean));
+                    ColSalesReturnDraft.DefaultValue = 0;
+                    masterTable.Columns.Add(ColSalesReturnDraft);
+                    if (objSalesReturnDraft.ToString() != "")
+                    {
+                        if (myFunctions.getIntVAL(objSalesReturnDraft.ToString()) > 0)
+                            masterTable.Rows[0][ColSalesReturnDraft] = myFunctions.getIntVAL(objSalesReturnDraft.ToString());
+                    }
+
 
                     //Details
                     SortedList dParamList = new SortedList()
