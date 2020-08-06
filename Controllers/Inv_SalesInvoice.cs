@@ -69,11 +69,13 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
+                    DataSet dsSalesInvoice = new DataSet();
                     SortedList QueryParamsList = new SortedList();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
+                    QueryParamsList.Add("@xTransType", "SALES");
 
                     SortedList mParamsList = new SortedList()
                     {
@@ -139,32 +141,61 @@ namespace SmartxAPI.Controllers
 
 
                     object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList);
-                    DataColumn ColPayment = new DataColumn("B_PaymentProcessed", typeof(Boolean));
-                    ColPayment.DefaultValue = false;
-                    masterTable.Columns.Add(ColPayment);
-                    if (objPayment.ToString() != "")
-                    {
-                        if (myFunctions.getIntVAL(objPayment.ToString()) > 0)
-                            masterTable.Rows[0][ColPayment] = true;
-                    }
+                    if (objPayment != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), myFunctions.getBoolVAL(objPayment.ToString()));
+
+                    //sales return count(draft and non draft)
                     object objSalesReturn = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList);
-                    DataColumn ColSalesReturn = new DataColumn("N_SalesReturn", typeof(Boolean));
-                    ColSalesReturn.DefaultValue = 0;
-                    masterTable.Columns.Add(ColSalesReturn);
-                    if (objSalesReturn.ToString() != "")
-                    {
-                        if (myFunctions.getIntVAL(objSalesReturn.ToString()) > 0)
-                            masterTable.Rows[0][ColSalesReturn] = myFunctions.getIntVAL(objSalesReturn.ToString());
-                    }
+                    if (objSalesReturn != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturn", typeof(int), myFunctions.getIntVAL(objSalesReturn.ToString()));
+
                     object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList);
-                    DataColumn ColSalesReturnDraft = new DataColumn("N_SalesReturnDraft", typeof(Boolean));
-                    ColSalesReturnDraft.DefaultValue = 0;
-                    masterTable.Columns.Add(ColSalesReturnDraft);
-                    if (objSalesReturnDraft.ToString() != "")
+                    if (objSalesReturnDraft != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
+
+                    object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList);
+                    if (obPaymentMenthodid != null)
                     {
-                        if (myFunctions.getIntVAL(objSalesReturnDraft.ToString()) > 0)
-                            masterTable.Rows[0][ColSalesReturnDraft] = myFunctions.getIntVAL(objSalesReturnDraft.ToString());
+                        QueryParamsList.Add("@nPaymentMethodID", myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_PaymentMethodID", typeof(int), myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_PaymentMethod", typeof(string), myFunctions.ReturnValue("Inv_CustomerType", "X_TypeName", "N_TypeID =@nPaymentMethodID", mParamsList, dLayer, Con));
                     }
+
+                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer);
+                    if (B_DeliveryDispatch)
+                    {
+                        DataTable dtDispatch = new DataTable();
+                        string qry = "Select * From Inv_DeliveryDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_InvoiceID=@nSalesID";
+                        dtDispatch = dLayer.ExecuteDataTable(qry, QueryParamsList);
+                        dtDispatch = _api.Format(dtDispatch, "Delivery Dispatch");
+                        dsSalesInvoice.Tables.Add(dtDispatch);
+                    }
+
+                    DataTable dtPayment = new DataTable();
+                    string qry = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
+                    dtPayment = dLayer.ExecuteDataTable(qry, QueryParamsList);
+                    string InvoiceNos = "";
+                    foreach (DataRow var in dtPayment.Rows)
+                        InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                        
+
+
+
+                    //invoice status
+                    DataTable dtStatus = new DataTable();
+                    object objInvoiceRecievable = null, objBal = null;
+                    double N_InvoiceRecievable = 0, N_BalanceAmt = 0;
+
+                    objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=@nSalesID and Inv_Sales.N_CompanyID=@nCompanyID", QueryParamsList);
+                    objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=@nSalesID and X_Type= @xTransType and N_CompanyID=@nCompanyID", QueryParamsList);
+                    if (objInvoiceRecievable != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_InvoiceRecievable", typeof(double), N_InvoiceRecievable);
+                    if (objBal != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_BalanceAmt", typeof(double), N_BalanceAmt);
+
+                    dsSalesInvoice.Tables.Add(dtStatus);
+
+
 
 
                     //Details
@@ -176,11 +207,10 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                    DataSet dataSet = new DataSet();
-                    dataSet.Tables.Add(masterTable);
-                    dataSet.Tables.Add(detailTable);
+                    dsSalesInvoice.Tables.Add(masterTable);
+                    dsSalesInvoice.Tables.Add(detailTable);
 
-                    return Ok(dataSet);
+                    return Ok(dsSalesInvoice);
 
                 }
             }

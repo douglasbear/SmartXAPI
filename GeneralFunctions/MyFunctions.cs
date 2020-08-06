@@ -193,7 +193,7 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
-        public string RetunSettings( string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection)
+        public string RetunSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection)
         {
             string Result = "";
             object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=@nCompanyID and " + ConditionColumn + "=" + Value + " ", Params, Connection);
@@ -209,6 +209,14 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
+        public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value)
+        {
+            DataColumn NewCol = new DataColumn(ColName, dataType);
+            NewCol.DefaultValue = Value;
+            MasterDt.Columns.Add(NewCol);
+            return MasterDt;
+        }
+
     }
     public interface IMyFunctions
     {
@@ -230,5 +238,6 @@ namespace SmartxAPI.GeneralFunctions
         public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
         public string RetunSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection);
+        public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value);
     }
 }
