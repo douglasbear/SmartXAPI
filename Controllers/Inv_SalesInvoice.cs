@@ -259,5 +259,56 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+
+
+
+        [HttpGet("deliveryNoteSearch")]
+        public ActionResult GetInvoiceList(int? nCompanyId,int nCustomerId,bool bAllBranchData,int nBranchId,int nLocationId)
+        {
+            SortedList Params=new SortedList();
+            
+            string crieteria="";
+
+
+            if (bAllBranchData == true)
+            {
+                if (nCustomerId > 0)
+                    crieteria = " where X_TransType='DELIVERY' and N_DeliveryType = 0 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and B_IsSaveDraft=0";
+                else
+                    crieteria = " where X_TransType='DELIVERY' and N_DeliveryType = 0 and N_CompanyID=@nCompanyId and B_IsSaveDraft=0";
+            }
+            else
+            {
+                if (nCustomerId > 0)
+                    crieteria = " where X_TransType='DELIVERY' and N_DeliveryType = 0 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_BranchID=@nBranchId and N_LocationID=@nLocationId and B_IsSaveDraft=0";
+                else
+                    crieteria = " where X_TransType='DELIVERY' and N_DeliveryType = 0 and N_CompanyID=@nCompanyId and N_BranchID=@nBranchId and N_LocationID=@nLocationId and B_IsSaveDraft=0";
+            }
+            
+            Params.Add("@nCompanyId",nCompanyId);
+            Params.Add("@nCustomerId",nCustomerId);
+            Params.Add("@bAllBranchData",bAllBranchData);
+            Params.Add("@nBranchId",nBranchId);
+            Params.Add("@nLocationId",nLocationId);
+            string sqlCommandText="select [Invoice No],[Invoice Date],[Customer] as X_CustomerName,N_CompanyID,N_CustomerID,N_DeliveryNoteId,N_DeliveryType,X_TransType,N_FnYearID,N_BranchID,X_LocationName,N_LocationID,B_IsSaveDraft from vw_InvDeliveryNote_Search "+ crieteria + " order by N_DeliveryNoteId DESC,[Invoice No]";
+            try{
+                DataTable SalesInvoiceList = new DataTable();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                connection.Open();
+                SalesInvoiceList=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                SalesInvoiceList=_api.Format(SalesInvoiceList);
+                if(SalesInvoiceList.Rows.Count==0){return Ok(_api.Notice("No Sales Invoices Found"));}
+                }
+                return Ok(_api.Success(SalesInvoiceList));
+                }catch(Exception e){
+                return BadRequest(_api.Error(e));
+                }
+        }
+
+
+       
+
     }
 }

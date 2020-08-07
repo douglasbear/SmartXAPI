@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationDetails(int? nCompanyId, int nQuotationId, int nFnYearId, bool bAllBranchData, int nBranchID, int nCustomerID, int nFormID)
+        public ActionResult GetSalesQuotationDetails(int? nCompanyId, int xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID)
         {
             DataSet dsQuotation = new DataSet();
             DataTable dtProcess = new DataTable();
@@ -67,17 +67,15 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);
-            Params.Add("@nQuotationID", nQuotationId);
-            Params.Add("@nCustomerID", nCustomerID);
-            Params.Add("@nFormID", nFormID);
+            Params.Add("@xQuotationNo", xQuotationNo);
 
             if (bAllBranchData == true)
             {
-                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
+                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and [Quotation No]=@xQuotationNo";
             }
             else
             {
-                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID and N_BranchID=@nBranchID";
+                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and [Quotation No]=@xQuotationNo and N_BranchID=@nBranchID";
                 Params.Add("@nBranchID", nBranchID);
             }
 
@@ -94,6 +92,13 @@ namespace SmartxAPI.Controllers
 
                     if (dsQuotation.Tables["Master"].Rows.Count == 0)
                         return Ok(_api.Notice("There is no data!"));
+
+                    var nQuotationId = dtQuotation.Rows[0]["N_QuotationId"];
+                    var nFormID = 80;
+                    var nCustomerID = dtQuotation.Rows[0]["N_CustomerId"];
+                    var nSalesOrderID = dtQuotation.Rows[0]["N_CustomerId"];
+                    Params.Add("@nQuotationID", nQuotationId);
+                    Params.Add("@nFormID", nFormID);
 
                     object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params);
                     if (objFollowup != null)
@@ -117,11 +122,10 @@ namespace SmartxAPI.Controllers
                         {
                             Params.Add("@nSalesOrderID", myFunctions.getIntVAL(objSalesOrder.ToString()));
                             dsQuotation.Tables["Master"].Rows[0][col1] = true;
-                        }
 
-                    }
 
-                    //object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
+
+                            //object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
                     object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     DataColumn col2 = new DataColumn("B_DeliveryNoteProcessed", typeof(Boolean));
                     col2.DefaultValue = false;
@@ -135,6 +139,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+
                     //object objSales = dLayer.ExecuteScalar("select N_SalesID from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft = 0", Params);
                     object objSales = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     DataColumn col3 = new DataColumn("B_SalesProcessed", typeof(Boolean));
@@ -144,10 +149,17 @@ namespace SmartxAPI.Controllers
                     {
                         if (myFunctions.getIntVAL(objSales.ToString()) > 0)
                         {
-                            Params.Add("@nSalesID", myFunctions.getIntVAL(objSales.ToString()));
+                            Params.Add("@nSalesOrderID", myFunctions.getIntVAL(objSales.ToString()));
                             dsQuotation.Tables["Master"].Rows[0][col3] = true;
                         }
                     }
+
+                        }
+
+                    }
+
+                    
+                    
                     //Quotation Details
 
                     string sqlCommandText2 = "select * from vw_InvQuotationDetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";

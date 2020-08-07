@@ -58,24 +58,40 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetSalesReturnDetails(int? nCompanyId,string xDebitNoteNo,int nFnYearId,bool bAllBranchData,int nBranchId)
+        public ActionResult GetSalesReturnDetails(int? nCompanyId,string xDebitNoteNo,string xReceiptNo,int nFnYearId,bool bAllBranchData,int nBranchId,bool bDeliveryNote=false)
         {
             DataSet dt=new DataSet();
             SortedList Params=new SortedList();
             string sqlCommandText="";
+            string X_type="";
+            if (bDeliveryNote)
+                X_type = "DELIVERY";
+            else
+                X_type = "SALES";
             if (bAllBranchData == true)
             {
-                sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@DebitNoteNo,1,SALES,0,@FnYearID";
+                if(xReceiptNo!=""&&xReceiptNo!=null)
+               { sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,0,@FnYearID";
+                Params.Add("@RcptNo",xReceiptNo);}
+                else
+                {sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
+                Params.Add("@RcptNo",xDebitNoteNo);}
             }
             else
             {
-                sqlCommandText="SP_InvSalesReturn_Disp @CompanyID,@DebitNoteNo,1,SALES,@BranchID,@FnYearID";
+                if(xReceiptNo!=""&&xReceiptNo!=null)
+                {sqlCommandText="SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,@BranchID,@FnYearID";
+                Params.Add("@RcptNo",xReceiptNo);}
+                else
+                {sqlCommandText="SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
+                Params.Add("@RcptNo",xDebitNoteNo);}
             }
             
             Params.Add("@CompanyID",nCompanyId);
             Params.Add("@FnYearID",nFnYearId);
-            Params.Add("@DebitNoteNo",xDebitNoteNo);
             Params.Add("@BranchID",nBranchId);
+            Params.Add("@Xtype",X_type);
+
 
             try{
                 DataTable SalesReturn = new DataTable();
@@ -101,6 +117,9 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403,_api.ErrorResponse(e));
                 }
         }
+
+
+        
 
        //Save....
        [HttpPost("Save")]
@@ -178,6 +197,51 @@ namespace SmartxAPI.Controllers
                     return StatusCode(403,_api.ErrorResponse(ex));
                 }
 
+        }
+
+
+         [HttpGet("salesreturnpendinglist")]
+        public ActionResult GetReturnPendingList(int? nCompanyId,int nCustomerId,bool bAllBranchData,int nBranchId,int nLocationId)
+        {
+            SortedList Params=new SortedList();
+            
+            string crieteria="";
+
+
+            if (bAllBranchData == true)
+            {
+                if (nCustomerId > 0)
+                    crieteria = " where X_TransType='SALES' and N_SalesType = 0 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and B_IsSaveDraft=0 and N_balanceQty>0";
+                else
+                    crieteria = " where X_TransType='SALES' and N_SalesType = 0 and N_CompanyID=@nCompanyId and B_IsSaveDraft=0 and N_balanceQty>0";
+            }
+            else
+            {
+                if (nCustomerId > 0)
+                    crieteria = " where X_TransType='SALES' and N_SalesType = 0 and N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyId and N_BranchID=@nBranchId and N_LocationID=@nLocationId and B_IsSaveDraft=0 and N_balanceQty>0 ";
+                else
+                    crieteria = " where X_TransType='SALES' and N_SalesType = 0 and N_CompanyID=@nCompanyId and N_BranchID=@nBranchId and N_LocationID=@nLocationId and B_IsSaveDraft=0 and N_balanceQty>0 ";
+            }
+            
+            Params.Add("@nCompanyId",nCompanyId);
+            Params.Add("@nCustomerId",nCustomerId);
+            Params.Add("@bAllBranchData",bAllBranchData);
+            Params.Add("@nBranchId",nBranchId);
+            Params.Add("@nLocationId",nLocationId);
+            string sqlCommandText="select [Invoice No],[Invoice Date],[Customer] as X_CustomerName,X_CustPONo,X_BranchName,N_CompanyID,N_CustomerID,N_SalesID,N_SalesType,X_TransType,N_FnYearID,N_BranchID,X_LocationName,N_LocationID,B_IsSaveDraft,N_balanceQty from vw_InvSalesReturnPending_Search "+ crieteria +" order by N_SalesID DESC,[Invoice No]";
+            try{
+                DataTable SalesRetunPList = new DataTable();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                connection.Open();
+                SalesRetunPList=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                SalesRetunPList=_api.Format(SalesRetunPList);
+                if(SalesRetunPList.Rows.Count==0){return Ok(_api.Notice("No Sales Return Pending List Found"));}
+                }
+                return Ok(_api.Success(SalesRetunPList));
+                }catch(Exception e){
+                return BadRequest(_api.Error(e));
+                }
         }
          
         

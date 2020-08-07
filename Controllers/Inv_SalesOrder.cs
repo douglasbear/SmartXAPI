@@ -23,10 +23,12 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
         
-        public Inv_SalesOrderController(IDataAccessLayer dl,IApiFunctions api)
+        public Inv_SalesOrderController(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
-            dLayer=dl;
-            _api=api;
+            _api = api;
+            dLayer = dl;
+            myFunctions = myFun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
        
 

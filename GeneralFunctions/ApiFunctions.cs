@@ -28,6 +28,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = dataTable });
         }
+                public object Success(DataTable dataTable,string msg)
+        {
+            return (new { type = "success", Message = msg, Data = dataTable });
+        }
         public object Success(DataSet dataSet)
         {
             return (new { type = "success", Message = "null", Data = dataSet });
@@ -138,6 +142,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable Format(DataTable dt);
         public object Error(string message);
         public object Success(DataTable dataTable);
+        public object Success(DataTable dataTable,string message);
         public object Success(DataSet dataSet);
         public object Success(string message);
         public object Notice(string message);
