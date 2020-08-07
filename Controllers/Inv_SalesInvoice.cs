@@ -161,23 +161,24 @@ namespace SmartxAPI.Controllers
                         myFunctions.AddNewColumnToDataTable(masterTable, "X_PaymentMethod", typeof(string), myFunctions.ReturnValue("Inv_CustomerType", "X_TypeName", "N_TypeID =@nPaymentMethodID", mParamsList, dLayer, Con));
                     }
 
+                    string qry = "";
                     bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer);
                     if (B_DeliveryDispatch)
                     {
                         DataTable dtDispatch = new DataTable();
-                        string qry = "Select * From Inv_DeliveryDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_InvoiceID=@nSalesID";
+                        qry = "Select * From Inv_DeliveryDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_InvoiceID=@nSalesID";
                         dtDispatch = dLayer.ExecuteDataTable(qry, QueryParamsList);
                         dtDispatch = _api.Format(dtDispatch, "Delivery Dispatch");
                         dsSalesInvoice.Tables.Add(dtDispatch);
                     }
 
                     DataTable dtPayment = new DataTable();
-                    string qry = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
-                    dtPayment = dLayer.ExecuteDataTable(qry, QueryParamsList);
+                    string qry1 = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
+                    dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList);
                     string InvoiceNos = "";
                     foreach (DataRow var in dtPayment.Rows)
                         InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
-                        
+
 
 
 
