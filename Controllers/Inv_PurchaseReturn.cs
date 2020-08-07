@@ -5,6 +5,8 @@ using SmartxAPI.GeneralFunctions;
 using System;
 using System.Data;
 using System.Collections;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.Controllers
 
@@ -16,12 +18,17 @@ namespace SmartxAPI.Controllers
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
+        private readonly IMyFunctions myFunctions;
+        private readonly string connectionString;
 
         
-        public Inv_PurchaseReturn(IApiFunctions api,IDataAccessLayer dl)
+        public Inv_PurchaseReturn(IApiFunctions api,IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api=api;
             dLayer=dl;
+            myFunctions = myFun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
+
         }
        
 
@@ -37,19 +44,23 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearId);
 
             try{
-                dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
-                dt=_api.Format(dt);
-                if (dt.Rows.Count==0)
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                    connection.Open();
+                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
+                    }
+                     dt=_api.Format(dt);
+                      if (dt.Rows.Count==0)
                     {
                         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
                     }else{
                         return Ok(dt);
                     }   
-            }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
-            }
+                  }catch(Exception e){
+                     return StatusCode(404,_api.Response(404,e.Message));
+                }
         }
-        [HttpGet("details")]
+        [HttpGet("listdetails")]
         public ActionResult GetPurchaseReturnList(int? nCompanyId,int nQuotationId,int nFnYearId)
         {
             DataSet dt=new DataSet();
@@ -61,32 +72,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3",nQuotationId);
 
             try{
-                DataTable Quotation = new DataTable();
+                 DataTable MasterTable = new DataTable();
+                 DataTable DetailTable = new DataTable();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                     MasterTable=dLayer.ExecuteDataTable(sqlCommandText,Params);
                 
-                Quotation=dLayer.ExecuteDataTable(sqlCommandText,Params);
-                Quotation= _api.Format(Quotation,"Master");
-                dt.Tables.Add(Quotation);
+                MasterTable= _api.Format(MasterTable,"Master");
+                dt.Tables.Add(MasterTable);
                 
                 //Quotation Details
 
             string  sqlCommandText2="select * from vw_InvQuotationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            DataTable QuotationDetails = new DataTable();
-            QuotationDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params);
-            QuotationDetails=_api.Format(QuotationDetails,"Details");
-            dt.Tables.Add(QuotationDetails);
-
-            
-
-
-
-return Ok(dt);
-
-                // if(dt.Tables["Master"].Rows.Count==0)
-                //     {
-                //         return StatusCode(200,_api.Response(200 ,"No Results Found" ));
-                //     }else{
-                //         return Ok(dt.Tables[0]);
-                //     }   
+           // DataTable QuotationDetails = new DataTable();
+            DetailTable=dLayer.ExecuteDataTable(sqlCommandText2,Params);
+            DetailTable=_api.Format(DetailTable,"Details");
+            dt.Tables.Add(DetailTable);
+            }
+            return Ok(dt);
             }catch(Exception e){
                 return StatusCode(404,_api.Response(404,e.Message));
             }
