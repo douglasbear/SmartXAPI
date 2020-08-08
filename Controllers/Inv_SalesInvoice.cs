@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-                        masterTable.Rows[0]["X_TandC"] = myFunctions.RetunSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
+                        masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
 
                     int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
                     if (N_TermsID > 0)

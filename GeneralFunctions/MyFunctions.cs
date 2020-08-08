@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Data;
+using System.Globalization;
 using System.IO;
 using System.Security.Cryptography;
 using System.Text;
@@ -193,10 +194,20 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
-        public string RetunSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection)
+        public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection)
         {
             string Result = "";
-            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=@nCompanyID and " + ConditionColumn + "=" + Value + " ", Params, Connection);
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=@nCompanyID and "
+             + ConditionColumn + "=" + Value + " ", Params, Connection);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
+        public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID="+nCompanyID+" and "
+             + ConditionColumn + "=" + Value + " ", Connection);
             if (obj != null)
                 Result = obj.ToString();
             return Result;
@@ -215,6 +226,21 @@ namespace SmartxAPI.GeneralFunctions
             NewCol.DefaultValue = Value;
             MasterDt.Columns.Add(NewCol);
             return MasterDt;
+        }
+
+                public string getDateVAL(DateTime val)
+        {
+            return val.ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture);
+
+        }
+
+        public DateTime GetFormatedDate(string val)
+        {
+            DateTime dt;
+            DateTimeFormatInfo sysFormat = CultureInfo.CurrentCulture.DateTimeFormat;
+            DateTime.TryParseExact(val, sysFormat.ShortDatePattern, CultureInfo.CurrentCulture, DateTimeStyles.None, out dt);
+
+            return dt;
         }
 
     }
@@ -236,8 +262,11 @@ namespace SmartxAPI.GeneralFunctions
         public string DecryptString(string inputString);
         public bool checkIsNull(DataRow Row, String KeyName);
         public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
-        public string RetunSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
+        public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
+        public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value);
+         public string getDateVAL(DateTime val);
+         public DateTime GetFormatedDate(string val);
     }
 }
