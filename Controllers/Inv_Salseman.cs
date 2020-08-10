@@ -159,16 +159,16 @@ namespace SmartxAPI.Controllers
                         DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
                         outputDt = _api.Format(outputDt, "SalesManList");
 
-                        DataRow[] NewRow = outputDt.Select("N_SalesmanID = " + N_SalesmanID);
-                        DataTable NewSalesMan=new DataTable();
-                        if(NewRow.Length==0){
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
-                        }
-                        NewSalesMan.Rows.Add(NewRow);
-                        NewSalesMan = _api.Format(NewSalesMan,"NewSalesMan");
+                        // DataRow[] NewRow = outputDt.Select("N_SalesmanID = " + N_SalesmanID);
+                        // DataTable NewSalesMan=new DataTable();
+                        // if(NewRow.Length==0){
+                        //     transaction.Rollback();
+                        //     return Ok(_api.Error("Unable to save"));
+                        // }
+                        // NewSalesMan.Rows.Add(NewRow);
+                        // NewSalesMan = _api.Format(NewSalesMan,"NewSalesMan");
                         DataSet SalesManMaster= new DataSet();
-                        SalesManMaster.Tables.Add(NewSalesMan);
+                        // SalesManMaster.Tables.Add(NewSalesMan);
                         SalesManMaster.Tables.Add(outputDt);
                         return Ok(_api.Success(SalesManMaster, "Salesman Saved"));
                     }
