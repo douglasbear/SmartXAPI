@@ -39,11 +39,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string criteria = "";
+            int nVendorId= 0;
             if (vendorId != "" && vendorId != null)
             {
                 criteria = " and N_VendorID =@nVendorID ";
-                Params.Add("@nVendorID", vendorId);
+                nVendorId=myFunctions.getIntVAL(vendorId.ToString());
             }
+            Params.Add("@nVendorID", nVendorId);
 
             string qryCriteria = "";
             if (qry != "" && qry != null)
@@ -69,6 +71,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
+                    if(nVendorId>0){
                     bool B_IsUsed = false;
                     object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params);
                     if (objIsUsed != null)
@@ -79,7 +82,8 @@ namespace SmartxAPI.Controllers
                     object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params);
                     if (objUsedCount != null)
                         myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
-
+                    }
+                    
                     if (msg == "")
                         return Ok(_api.Success(dt));
                     else
@@ -112,7 +116,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction(); ;
+                    SqlTransaction transaction = connection.BeginTransaction();
                     if (xVendorCode == "@Auto")
                     {
                         Params.Add("N_CompanyID",nCompanyID);

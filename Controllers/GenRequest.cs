@@ -5,6 +5,8 @@ using System;
 using SmartxAPI.GeneralFunctions;
 using System.Data;
 using System.Collections;
+using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
 
 namespace SmartxAPI.Controllers
 {
@@ -16,14 +18,18 @@ namespace SmartxAPI.Controllers
     
     public class GenDefults : ControllerBase
     {
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
+        private readonly IMyFunctions myFunctions;
+        private readonly string connectionString;
         
 
-        public GenDefults(IDataAccessLayer dl,IApiFunctions api)
+        public GenDefults(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
+            api = apifun;
             dLayer = dl;
-            _api=api;
+            myFunctions = myFun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
        
@@ -49,16 +55,20 @@ namespace SmartxAPI.Controllers
             string sqlCommandText="select * from Gen_Defaults where "+X_Criteria;
                 
             try{
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param);
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
                     if(dt.Rows.Count==0)
                         {
-                            return Ok(new {});
+                            return Ok(api.Notice("No Results Found"));
                         }else{
-                            return Ok(dt);
+                            return Ok(api.Success(dt));
                         }
                 
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return BadRequest(api.Error(e));
             }   
         }
 
@@ -79,16 +89,20 @@ namespace SmartxAPI.Controllers
             string sqlCommandText="select * from Gen_LookupTable where "+X_Criteria;
                 
             try{
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param);
+                                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
                     if(dt.Rows.Count==0)
                         {
-                            return Ok(new {});
+                            return Ok(api.Notice("No Results Found"));
                         }else{
-                            return Ok(dt);
+                            return Ok(api.Success(dt));
                         }
                 
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return BadRequest(api.Error(e));
             }   
         }
 
