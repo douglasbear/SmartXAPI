@@ -39,8 +39,8 @@ namespace SmartxAPI.Controllers
             string criteria = "";
             if (vendorId != "" && vendorId != null)
             {
-                criteria = " and N_VendorID =@vendorId ";
-                Params.Add("@vendorId", vendorId);
+                criteria = " and N_VendorID =@nVendorID ";
+                Params.Add("@nVendorID", vendorId);
             }
 
             string qryCriteria = "";
@@ -49,10 +49,10 @@ namespace SmartxAPI.Controllers
                 qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
                 Params.Add("@qry", "%" + qry + "%");
             }
-            string sqlCommandText = "select * from vw_InvVendor where B_Inactive=@p1 and N_CompanyID=@p2 and N_FnYearID=@p3 " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
-            Params.Add("@p1", 0);
-            Params.Add("@p2", nCompanyId);
-            Params.Add("@p3", nFnYearId);
+            string sqlCommandText = "select * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
+            Params.Add("@bInactive", 0);
+            Params.Add("@nCompanyID", nCompanyId);
+            Params.Add("@nFnYearID", nFnYearId);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -67,6 +67,17 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
+                    bool B_IsUsed = false;
+                    object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params);
+                    if (objIsUsed != null)
+                        if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
+                            B_IsUsed = true;
+                    myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
+
+                    object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params);
+                    if (objUsedCount != null)
+                        myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
+
                     if (msg == "")
                         return Ok(_api.Success(dt));
                     else
