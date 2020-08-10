@@ -136,6 +136,9 @@ namespace SmartxAPI.Controllers
                         if (ExecutiveCode == "") { return Ok(_api.Error("Unable to generate Sales Executive Code")); }
                         MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
 
+                    }else
+                    {
+                        dLayer.DeleteData("inv_salesman", "N_SalesmanID", N_SalesmanID, "", connection, transaction);
                     }
 
                         MasterTable.Columns.Remove("n_SalesmanID");

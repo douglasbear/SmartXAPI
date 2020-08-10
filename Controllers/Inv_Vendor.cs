@@ -21,12 +21,14 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int FormID;
         public Inv_Vendor(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            FormID=52;
         }
 
 
@@ -105,15 +107,17 @@ namespace SmartxAPI.Controllers
                 string VendorCode = "";
                 var xVendorCode = MasterRow["x_VendorCode"].ToString();
                 int nVendorID = myFunctions.getIntVAL(MasterRow["n_VendorID"].ToString());
+                int nCompanyID = myFunctions.getIntVAL( MasterRow["n_CompanyId"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction(); ;
                     if (xVendorCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 52);
+                        Params.Add("N_CompanyID",nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
                         if (VendorCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Vendor Code")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
@@ -122,21 +126,35 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
                     }
+
                     MasterTable.Columns.Remove("n_VendorID");
                     MasterTable.AcceptChanges();
 
 
-                    int N_VendorId = dLayer.SaveData("Inv_Vendor", "N_VendorID", nVendorID, MasterTable, connection, transaction);
-                    if (N_VendorId <= 0)
+                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", nVendorID, MasterTable, connection, transaction);
+                    if (nVendorID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save"));
                     }
                     else
                     {
+
+                        SortedList nParams = new SortedList();
+                        nParams.Add("@nCompanyID",nCompanyID);
+                        nParams.Add("@nFnYearID",nFnYearID);
+                        nParams.Add("@nVendorID",nVendorID);
+                        string sqlCommandText = "select * from vw_InvVendor where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_VendorID =@nVendorID  order by X_VendorName,X_VendorCode";
+                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
+                        outputDt = _api.Format(outputDt, "NewVendor");
+
+                        if(outputDt.Rows.Count==0){
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save"));
+                        }
+                        DataRow NewRow = outputDt.Rows[0];
                         transaction.Commit();
-                        string msg = "Vendor successfully created";
-                        return GetVendorList(myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString()), myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString()), true, N_VendorId.ToString(), "", msg);
+                        return Ok(_api.Success(NewRow.Table, "Vendor successfully created"));
                     }
                 }
             }
