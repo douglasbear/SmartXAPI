@@ -160,7 +160,9 @@ namespace SmartxAPI.Controllers
                         outputDt = _api.Format(outputDt, "SalesManList");
 
                         DataRow[] NewRow = outputDt.Select("N_SalesmanID = " + N_SalesmanID);
-                        DataTable NewSalesMan=new DataTable();
+                        DataTable NewSalesMan=_api.Format(outputDt, "SalesManList");
+                        NewSalesMan.Clear();
+                        NewSalesMan.AcceptChanges();
                         if(NewRow.Length==0){
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to save"));

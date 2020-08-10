@@ -46,19 +46,23 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(new { });
+                    return Ok(_api.Notice("No Data Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
         }
         [HttpGet("listDetails")]
@@ -75,11 +79,11 @@ namespace SmartxAPI.Controllers
 
             if (bAllBranchData == true)
             {
-                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and [Quotation No]=@xQuotationNo";
+                sqlCommandText = "select * from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo";
             }
             else
             {
-                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and [Quotation No]=@xQuotationNo and N_BranchID=@nBranchID";
+                sqlCommandText = "select * from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
                 Params.Add("@nBranchID", nBranchID);
             }
 
@@ -95,14 +99,13 @@ namespace SmartxAPI.Controllers
                     dsQuotation.Tables.Add(dtQuotation);
 
                     if (dsQuotation.Tables["Master"].Rows.Count == 0)
-                        return Ok(_api.Notice("There is no data!"));
+                        return Ok(_api.Notice("No data found!"));
 
                     var nQuotationId = dtQuotation.Rows[0]["N_QuotationId"];
-                    var nFormID = 80;
                     var nCustomerID = dtQuotation.Rows[0]["N_CustomerId"];
                     var nSalesOrderID = dtQuotation.Rows[0]["N_CustomerId"];
                     Params.Add("@nQuotationID", nQuotationId);
-                    Params.Add("@nFormID", nFormID);
+                    Params.Add("@nFormID", this.FormID);
 
                     object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params);
                     if (objFollowup != null)
@@ -180,7 +183,7 @@ namespace SmartxAPI.Controllers
                     ParamsAttachment.Add("FnyearID", nFnYearId);
                     ParamsAttachment.Add("PayID", nQuotationId);
                     ParamsAttachment.Add("PartyID", nCustomerID);
-                    ParamsAttachment.Add("FormID", nFormID);
+                    ParamsAttachment.Add("FormID", this.FormID);
                     dtAttachments = dLayer.ExecuteDataTablePro("SP_VendorAttachments", ParamsAttachment);
                     dtAttachments = _api.Format(dtAttachments, "Attachments");
                     dsQuotation.Tables.Add(dtAttachments);
@@ -409,7 +412,7 @@ namespace SmartxAPI.Controllers
 
                             if (B_LastPurchaseCost)
                             {
-                                object LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc",Params,connection);
+                                object LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc", Params, connection);
                                 if (LastPurchaseCost != null)
                                     var["LastPurchasePrice"] = (myFunctions.getVAL(LastPurchaseCost.ToString()) * myFunctions.getIntVAL(BaseUnitQty.ToString())).ToString(myFunctions.decimalPlaceString(myCompanyID.DecimalPlaces));
                             }
