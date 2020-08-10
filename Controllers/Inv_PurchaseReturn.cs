@@ -76,8 +76,8 @@ namespace SmartxAPI.Controllers
                  DataTable DetailTable = new DataTable();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-                     MasterTable=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                connection.Open();
+                MasterTable=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 
                 MasterTable= _api.Format(MasterTable,"Master");
                 dt.Tables.Add(MasterTable);
@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
 
             string  sqlCommandText2="select * from vw_InvQuotationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
            // DataTable QuotationDetails = new DataTable();
-            DetailTable=dLayer.ExecuteDataTable(sqlCommandText2,Params);
+            DetailTable=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection);
             DetailTable=_api.Format(DetailTable,"Details");
             dt.Tables.Add(DetailTable);
             }
