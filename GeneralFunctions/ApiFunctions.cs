@@ -46,6 +46,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = message, Data = dataSet });
         }
+                public object Success(DataRow dataRow, String message)
+        {
+            return (new { type = "success", Message = message, Data = dataRow });
+        }
         public object Success(string message)
         {
             return (new { type = "success", Message = message, Data = "" });
@@ -159,6 +163,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataSet dataSet);
         public object Success(string message);
         public object Success(DataSet dataSet, String message);
+        public object Success(DataRow dataRow, String message);
         public object Notice(string message);
         public object Warning(string message);
     }

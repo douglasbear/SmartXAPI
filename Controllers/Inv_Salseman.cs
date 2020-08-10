@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesman_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
+            string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
 
@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
@@ -73,40 +73,40 @@ namespace SmartxAPI.Controllers
         }
 
         //List
-        [HttpGet("listdetails")]
-        public ActionResult GetAllSalesExecutivesDetails(int? nCompanyID, int? nFnyearID, int? n_SalesmanID)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
+        // [HttpGet("listdetails")]
+        // public ActionResult GetAllSalesExecutivesDetails(int? nCompanyID, int? nFnyearID, int? n_SalesmanID)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nFnyearID);
-            Params.Add("@p3", n_SalesmanID);
+        //     string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
+        //     Params.Add("@p1", nCompanyID);
+        //     Params.Add("@p2", nFnyearID);
+        //     Params.Add("@p3", n_SalesmanID);
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(dt);
-                }
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         dt = _api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(dt);
+        //         }
 
-            }
-            catch (Exception e)
-            {
-                return BadRequest(_api.Error(e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return BadRequest(_api.Error(e));
+        //     }
+        // }
 
         //Save....
         [HttpPost("save")]
@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.AcceptChanges();
 
 
-                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", 0, MasterTable, connection, transaction);
+                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", N_SalesmanID, MasterTable, connection, transaction);
                     if (N_SalesmanID <= 0)
                     {
                         transaction.Rollback();
@@ -157,22 +157,14 @@ namespace SmartxAPI.Controllers
                         nParams.Add("@p3",N_SalesmanID);
                         string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
                         DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
-                        outputDt = _api.Format(outputDt, "SalesManList");
+                        outputDt = _api.Format(outputDt, "NewSalesMan");
 
-                        DataRow[] NewRow = outputDt.Select("N_SalesmanID = " + N_SalesmanID);
-                        DataTable NewSalesMan=_api.Format(outputDt, "SalesManList");
-                        NewSalesMan.Clear();
-                        NewSalesMan.AcceptChanges();
-                        if(NewRow.Length==0){
+                        if(outputDt.Rows.Count==0){
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to save"));
                         }
-                        NewSalesMan.Rows.Add(NewRow);
-                        NewSalesMan = _api.Format(NewSalesMan,"NewSalesMan");
-                        DataSet SalesManMaster= new DataSet();
-                        SalesManMaster.Tables.Add(NewSalesMan);
-                        SalesManMaster.Tables.Add(outputDt);
-                        return Ok(_api.Success(SalesManMaster, "Salesman Saved"));
+                        DataRow NewRow = outputDt.Rows[0];
+                        return Ok(_api.Success(NewRow.Table, "Salesman Saved"));
                     }
                 }
             }
@@ -190,20 +182,24 @@ namespace SmartxAPI.Controllers
                 int Results = 0;
                 try
                 {
-                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "");
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "",connection);
+                }
                     if (Results > 0)
                     {
-                        return StatusCode(200, _api.Response(200, "Sales Executive deleted"));
+                        return Ok(_api.Success("Sales Executive deleted"));
                     }
                     else
                     {
-                        return StatusCode(409, _api.Response(409, "Unable to delete Sales Executive"));
+                        return Ok(_api.Error("Unable to delete Sales Executive"));
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(403, _api.ErrorResponse(ex));
+                    return BadRequest(_api.ErrorResponse(ex));
                 }
 
 

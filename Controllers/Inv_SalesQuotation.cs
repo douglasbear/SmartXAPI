@@ -313,6 +313,7 @@ namespace SmartxAPI.Controllers
                     DataColumn col1 = new DataColumn("B_SalesOrderProcessed", typeof(Boolean));
                     col1.DefaultValue = false;
                     Master.Columns.Add(col1);
+                    Master =myFunctions.AddNewColumnToDataTable(Master,"B_SalesOrderProcessed", typeof(Boolean),myFunctions.getBoolVAL(objSalesOrder.ToString()));
                     if (objSalesOrder.ToString() != "")
                     {
                         if (myFunctions.getIntVAL(objSalesOrder.ToString()) > 0)
