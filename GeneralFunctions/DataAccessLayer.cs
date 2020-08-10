@@ -410,7 +410,33 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
                 SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                string CmdText = Command.CommandText;
+                dataAdapter.SelectCommand = Command;
+                DataTable resTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resTable);
+                return resTable;
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+    public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con,SqlTransaction transaction)
+        {
+            try
+            {
+                int recordsReturned;
+                SqlCommand Command = new SqlCommand(sqlCommandText, con);
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        Command.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+                SqlDataAdapter dataAdapter = new SqlDataAdapter();
+                Command.Transaction =transaction;
                 dataAdapter.SelectCommand = Command;
                 DataTable resTable = new DataTable();
                 recordsReturned = dataAdapter.Fill(resTable);
@@ -805,6 +831,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
+        public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con, SqlTransaction transaction);
         //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);
         public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
         public object ExecuteScalar(string sqlCommandText);
