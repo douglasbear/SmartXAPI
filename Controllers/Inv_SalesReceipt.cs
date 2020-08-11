@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
             }
             catch (Exception e)
@@ -169,7 +169,7 @@ namespace SmartxAPI.Controllers
                     ds.Tables.Add(DetailTable);
                 }
                 //return Ok(api.Ok(ds));
-                return Ok(ds);
+                return Ok(api.Success(ds));
             }
             catch (Exception e)
             {

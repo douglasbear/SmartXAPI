@@ -51,13 +51,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(dt);
+                        return Ok(_api.Success(dt));
                     }
                 }
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
         [HttpGet("details")]
@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                     };
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList);
                     masterTable = _api.Format(masterTable, "Master");
-                    if (masterTable.Rows.Count == 0) { return Ok(new { }); }
+                    if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
 
                     QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
@@ -152,13 +152,13 @@ namespace SmartxAPI.Controllers
                     object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList);
                     if (objSalesReturnDraft != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
-
+                    QueryParamsList.Add("@nCustomerID",masterTable.Rows[0]["N_CustomerID"].ToString());
                     object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList);
                     if (obPaymentMenthodid != null)
                     {
                         QueryParamsList.Add("@nPaymentMethodID", myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_PaymentMethodID", typeof(int), myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
-                        myFunctions.AddNewColumnToDataTable(masterTable, "X_PaymentMethod", typeof(string), myFunctions.ReturnValue("Inv_CustomerType", "X_TypeName", "N_TypeID =@nPaymentMethodID", mParamsList, dLayer, Con));
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_PaymentMethod", typeof(string), myFunctions.ReturnValue("Inv_CustomerType", "X_TypeName", "N_TypeID =@nPaymentMethodID", QueryParamsList, dLayer, Con));
                     }
 
                     string qry = "";
@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
 
 
                     //invoice status
-                    DataTable dtStatus = new DataTable();
+                   
                     object objInvoiceRecievable = null, objBal = null;
                     double N_InvoiceRecievable = 0, N_BalanceAmt = 0;
 
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                     if (objBal != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_BalanceAmt", typeof(double), N_BalanceAmt);
 
-                    dsSalesInvoice.Tables.Add(dtStatus);
+                   
 
 
 
@@ -207,17 +207,17 @@ namespace SmartxAPI.Controllers
                     };
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList);
                     detailTable = _api.Format(detailTable, "Details");
-                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
 
-                    return Ok(dsSalesInvoice);
+                    return Ok(_api.Success(dsSalesInvoice));
 
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
         }
 

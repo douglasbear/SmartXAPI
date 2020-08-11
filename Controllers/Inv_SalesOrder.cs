@@ -50,12 +50,12 @@ namespace SmartxAPI.Controllers
                 }
                 if(dt.Rows.Count==0)
                     {
-                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                        return Ok(_api.Notice("No Results Found" ));
                     }else{
-                        return Ok(dt);
+                        return Ok(_api.Success(dt));
                     }   
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
         }
         [HttpGet("listDetails")]
@@ -104,9 +104,9 @@ namespace SmartxAPI.Controllers
             DetailTable=_api.Format(DetailTable,"Details");
             dt.Tables.Add(DetailTable);
                 }
-            return Ok(dt);
+            return Ok(_api.Success(dt));
             }catch(Exception e){
-                return Ok(MasterTable);
+                return BadRequest(_api.Error(e));
             }
         }
 
