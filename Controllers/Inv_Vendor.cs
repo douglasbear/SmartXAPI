@@ -100,14 +100,24 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
                 // Auto Gen
                 DataRow MasterRow = MasterTable.Rows[0];
                 string VendorCode = "";
                 var xVendorCode = MasterRow["x_VendorCode"].ToString();
                 int nVendorID = myFunctions.getIntVAL(MasterRow["n_VendorID"].ToString());
+
+                QueryParams.Add("@nCompanyID", MasterRow["n_CompanyId"].ToString());
+                QueryParams.Add("@nFnYearID", MasterRow["n_FnYearId"].ToString());
+                QueryParams.Add("@nFormID", 52);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@n_FnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
+                        return Ok(_api.Error("Year is closed, Cannot create new Vendor..."));
+
                     SqlTransaction transaction = connection.BeginTransaction(); ;
                     if (xVendorCode == "@Auto")
                     {
@@ -147,14 +157,29 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nVendorID)
+        public ActionResult DeleteData(DataSet ds, int nVendorID)
         {
             int Results = 0;
             try
             {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
+
+                DataRow MasterRow = MasterTable.Rows[0];
+                QueryParams.Add("@nCompanyID", MasterRow["n_CompanyId"].ToString());
+                QueryParams.Add("@nFnYearID", MasterRow["n_FnYearId"].ToString());
+                QueryParams.Add("@nFormID", 52);
+                QueryParams.Add("@nVendorID", nVendorID);
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@n_FnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
+                        return Ok(_api.Error("Year is closed, Cannot create new Vendor..."));
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
                     transaction.Commit();
