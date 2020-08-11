@@ -215,6 +215,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
 
                         MasterTable.Columns.Remove("n_POrderID");
+                        MasterTable.AcceptChanges();
                         DetailTable.Columns.Remove("n_POrderDetailsID");
                         DetailTable.AcceptChanges();
                     }
