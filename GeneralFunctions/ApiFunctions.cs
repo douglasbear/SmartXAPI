@@ -1,4 +1,5 @@
 using System;
+using System.Collections.Generic;
 using System.Data;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
@@ -9,7 +10,7 @@ namespace SmartxAPI.GeneralFunctions
     {
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment env;
-        public ApiFunctions(IMapper mapper,IWebHostEnvironment envn)
+        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn)
         {
             _mapper = mapper;
             env = envn;
@@ -28,13 +29,26 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = dataTable });
         }
-                public object Success(DataTable dataTable,string msg)
+        public object Success(DataTable dataTable, string msg)
         {
             return (new { type = "success", Message = msg, Data = dataTable });
+        }
+
+        public object Success(Dictionary<DataRow,DataTable> dictionary, string message)
+        {
+            return (new { type = "success", Message = message, Data = dictionary });
         }
         public object Success(DataSet dataSet)
         {
             return (new { type = "success", Message = "null", Data = dataSet });
+        }
+        public object Success(DataSet dataSet, String message)
+        {
+            return (new { type = "success", Message = message, Data = dataSet });
+        }
+                public object Success(DataRow dataRow, String message)
+        {
+            return (new { type = "success", Message = message, Data = dataRow });
         }
         public object Success(string message)
         {
@@ -62,15 +76,15 @@ namespace SmartxAPI.GeneralFunctions
                     Msg = ex.Message.Substring(0, 42);
                     break;
                 default:
-                    if (env.EnvironmentName=="Development")
+                    if (env.EnvironmentName == "Development")
                         Msg = ex.Message;
-                        else
+                    else
                         Msg = "Internal Server Error";
                     break;
             }
 
 
-            return (new { type = "error", Message = Msg , Data = "" });
+            return (new { type = "error", Message = Msg, Data = "" });
 
 
         }
@@ -92,24 +106,26 @@ namespace SmartxAPI.GeneralFunctions
                     Msg = ex.Message.Substring(0, 42);
                     break;
                 default:
-                    if(ex.Message.Contains("Invalid column name '")== true){
+                    if (ex.Message.Contains("Invalid column name '") == true)
+                    {
                         Msg = ex.Message.Substring(20, subString.IndexOf("'") + 1) + " is unknown";
                         break;
                     }
-                    if(ex.Message.Contains("is specified more than once in the SET clause") == true){
+                    if (ex.Message.Contains("is specified more than once in the SET clause") == true)
+                    {
                         subString = ex.Message.Substring(17, ex.Message.Length - 17);
                         Msg = ex.Message.Substring(16, subString.IndexOf("'") + 1) + "' is not required or specified more than once";
                         break;
                     }
-                    if (env.EnvironmentName=="Development")
+                    if (env.EnvironmentName == "Development")
                         Msg = ex.Message;
-                        else
+                    else
                         Msg = "Internal Server Error";
                     break;
             }
 
 
-            return (new { type = "error", Message = Msg , Data = "" });
+            return (new { type = "error", Message = Msg, Data = "" });
 
 
         }
@@ -142,9 +158,12 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable Format(DataTable dt);
         public object Error(string message);
         public object Success(DataTable dataTable);
-        public object Success(DataTable dataTable,string message);
+        public object Success(DataTable dataTable, string message);
+        public object Success(Dictionary<DataRow,DataTable> dictionary, string message);
         public object Success(DataSet dataSet);
         public object Success(string message);
+        public object Success(DataSet dataSet, String message);
+        public object Success(DataRow dataRow, String message);
         public object Notice(string message);
         public object Warning(string message);
     }

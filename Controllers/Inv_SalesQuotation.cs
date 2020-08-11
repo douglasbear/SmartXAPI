@@ -46,19 +46,23 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(new { });
+                    return Ok(_api.Notice("No Data Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
         }
         [HttpGet("listDetails")]
@@ -75,11 +79,11 @@ namespace SmartxAPI.Controllers
 
             if (bAllBranchData == true)
             {
-                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and [Quotation No]=@xQuotationNo";
+                sqlCommandText = "select * from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo";
             }
             else
             {
-                sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and [Quotation No]=@xQuotationNo and N_BranchID=@nBranchID";
+                sqlCommandText = "select * from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
                 Params.Add("@nBranchID", nBranchID);
             }
 
@@ -95,14 +99,13 @@ namespace SmartxAPI.Controllers
                     dsQuotation.Tables.Add(dtQuotation);
 
                     if (dsQuotation.Tables["Master"].Rows.Count == 0)
-                        return Ok(_api.Notice("There is no data!"));
+                        return Ok(_api.Notice("No data found!"));
 
                     var nQuotationId = dtQuotation.Rows[0]["N_QuotationId"];
-                    var nFormID = 80;
                     var nCustomerID = dtQuotation.Rows[0]["N_CustomerId"];
                     var nSalesOrderID = dtQuotation.Rows[0]["N_CustomerId"];
                     Params.Add("@nQuotationID", nQuotationId);
-                    Params.Add("@nFormID", nFormID);
+                    Params.Add("@nFormID", this.FormID);
 
                     object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params);
                     if (objFollowup != null)
@@ -180,7 +183,7 @@ namespace SmartxAPI.Controllers
                     ParamsAttachment.Add("FnyearID", nFnYearId);
                     ParamsAttachment.Add("PayID", nQuotationId);
                     ParamsAttachment.Add("PartyID", nCustomerID);
-                    ParamsAttachment.Add("FormID", nFormID);
+                    ParamsAttachment.Add("FormID", this.FormID);
                     dtAttachments = dLayer.ExecuteDataTablePro("SP_VendorAttachments", ParamsAttachment);
                     dtAttachments = _api.Format(dtAttachments, "Attachments");
                     dsQuotation.Tables.Add(dtAttachments);
@@ -299,7 +302,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("@nRefTypeID", 8);
                         DataTable dtFollowUp = new DataTable();
                         string qry = "Select * from vw_QuotaionFollowup Where N_CompanyID=@nCompanyID and N_RefTypeID=@nRefTypeID and N_RefID= @nQuotationID";
-                        dtFollowUp = dLayer.ExecuteDataTable(qry, Params);
+                        dtFollowUp = dLayer.ExecuteDataTable(qry, Params,connection);
                         dtFollowUp = _api.Format(dtFollowUp, "FollowUp");
                         dsQuotation.Tables.Add(dtFollowUp);
                     }
@@ -307,44 +310,35 @@ namespace SmartxAPI.Controllers
 
                     //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
                     object objSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "N_SalesOrderID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                    DataColumn col1 = new DataColumn("B_SalesOrderProcessed", typeof(Boolean));
-                    col1.DefaultValue = false;
-                    Master.Columns.Add(col1);
+                    Master =myFunctions.AddNewColumnToDataTable(Master,"B_SalesOrderProcessed", typeof(Boolean),false);
+                    Master =myFunctions.AddNewColumnToDataTable(Master,"B_DeliveryNoteProcessed", typeof(Boolean),false);
+                    Master =myFunctions.AddNewColumnToDataTable(Master,"B_SalesProcessed", typeof(Boolean),false);
                     if (objSalesOrder.ToString() != "")
                     {
                         if (myFunctions.getIntVAL(objSalesOrder.ToString()) > 0)
                         {
                             Params.Add("@nSalesOrderID", myFunctions.getIntVAL(objSalesOrder.ToString()));
-                            Master.Rows[0][col1] = true;
-
-
-
-                            //object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
+                            Master.Rows[0]["B_SalesOrderProcessed"] = true;
+                            
                             object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                            DataColumn col2 = new DataColumn("B_DeliveryNoteProcessed", typeof(Boolean));
-                            col2.DefaultValue = false;
-                            Master.Columns.Add(col2);
+                            
                             if (objDeliveryNote.ToString() != "")
                             {
                                 if (myFunctions.getIntVAL(objDeliveryNote.ToString()) > 0)
                                 {
                                     Params.Add("@nDeliveryNoteID", myFunctions.getIntVAL(objDeliveryNote.ToString()));
-                                    Master.Rows[0][col2] = true;
+                                     Master.Rows[0]["B_DeliveryNoteProcessed"] = true;
                                 }
                             }
 
 
-                            //object objSales = dLayer.ExecuteScalar("select N_SalesID from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft = 0", Params);
                             object objSales = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                            DataColumn col3 = new DataColumn("B_SalesProcessed", typeof(Boolean));
-                            col3.DefaultValue = false;
-                            Master.Columns.Add(col3);
                             if (objSales.ToString() != "")
                             {
                                 if (myFunctions.getIntVAL(objSales.ToString()) > 0)
                                 {
                                     Params.Add("@nSalesInvID", myFunctions.getIntVAL(objSales.ToString()));
-                                    Master.Rows[0][col3] = true;
+                                    Master.Rows[0]["B_SalesProcessed"] = true;
                                 }
                             }
 
@@ -381,7 +375,7 @@ namespace SmartxAPI.Controllers
                         {
                             Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
                             if (var["N_SPriceTypeID"].ToString() != "")
-                                var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompany and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
+                                var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
 
                             Params["@xClassItemCode"] = var["ClassItemCode"].ToString();
                             Params["@nItemID"] = var["N_ItemId"].ToString();
@@ -392,12 +386,13 @@ namespace SmartxAPI.Controllers
                         {
                             Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
                             if (var["N_SPriceTypeID"].ToString() != "")
-                                var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompany and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
+                                var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Params, connection));
                             Params["@nItemID"] = var["N_ItemId"].ToString();
                             Params["@xItemUnit"] = var["X_ItemUnit"].ToString();
                             object BaseUnitQty = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=@nCompanyID and N_ItemID =@nItemID and X_ItemUnit=@xItemUnit", Params, connection);
-                            if (BaseUnitQty != null)
+                            if (BaseUnitQty != null){
                                 var["BaseUnitQty"] = BaseUnitQty.ToString();
+                            }
 
                             if (B_LastSPrice)
                             {
@@ -409,7 +404,8 @@ namespace SmartxAPI.Controllers
 
                             if (B_LastPurchaseCost)
                             {
-                                object LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc",Params,connection);
+                                if(BaseUnitQty==null){BaseUnitQty=0;}
+                                object LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc", Params, connection);
                                 if (LastPurchaseCost != null)
                                     var["LastPurchasePrice"] = (myFunctions.getVAL(LastPurchaseCost.ToString()) * myFunctions.getIntVAL(BaseUnitQty.ToString())).ToString(myFunctions.decimalPlaceString(myCompanyID.DecimalPlaces));
                             }
@@ -417,27 +413,14 @@ namespace SmartxAPI.Controllers
 
                         }
 
+                    }
+                        if(Master.Rows.Count==0 || Details.Rows.Count==0){
+                            return Ok(_api.Notice("No data found"));
+                        }
                         dsQuotation.Tables.Add(Master);
                         dsQuotation.Tables.Add(Details);
 
-
-                        //ATTACHMENTS
-                        // DataTable dtAttachments = new DataTable();
-                        // SortedList ParamsAttachment = new SortedList();
-                        // ParamsAttachment.Add("CompanyID", nCompanyId);
-                        // ParamsAttachment.Add("FnyearID", nFnYearId);
-                        // ParamsAttachment.Add("PayID", nQuotationId);
-                        // ParamsAttachment.Add("PartyID", nCustomerID);
-                        // ParamsAttachment.Add("FormID", nFormID);
-                        // dtAttachments = dLayer.ExecuteDataTablePro("SP_VendorAttachments", ParamsAttachment);
-                        // dtAttachments = _api.Format(dtAttachments, "Attachments");
-                        // dsQuotation.Tables.Add(dtAttachments);
-
-
-
-
-                    }
-                    return Ok(dsQuotation);
+                    return Ok(_api.Success(dsQuotation));
                 }
             }
             catch (Exception e)
@@ -601,7 +584,7 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
+                        return Ok(_api.Error("Unable to delete sales quotation"));
                     }
                     else
                     {
@@ -611,19 +594,19 @@ namespace SmartxAPI.Controllers
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return StatusCode(200, _api.Response(200, "Sales quotation deleted"));
+                        return Ok( _api.Success("Sales quotation deleted"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete sales quotation"));
+                        return Ok(_api.Error( "Unable to delete sales quotation"));
                     }
 
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return BadRequest(_api.ErrorResponse(ex));
             }
 
 
