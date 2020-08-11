@@ -180,19 +180,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(DataSet ds, int nVendorID)
+        public ActionResult DeleteData(int nVendorID,int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
-            {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
+            {                        
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();
-
-                DataRow MasterRow = MasterTable.Rows[0];
-                QueryParams.Add("@nCompanyID", MasterRow["n_CompanyId"].ToString());
-                QueryParams.Add("@nFnYearID", MasterRow["n_FnYearId"].ToString());
+                SortedList QueryParams = new SortedList();                
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
                 QueryParams.Add("@nVendorID", nVendorID);
 
