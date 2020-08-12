@@ -108,7 +108,7 @@ namespace SmartxAPI.GeneralFunctions
                 default:
                     if (ex.Message.Contains("Invalid column name '") == true)
                     {
-                        Msg = ex.Message.Substring(20, subString.IndexOf("'") + 1) + " is unknown";
+                        Msg = subString + " is unknown";
                         break;
                     }
                     if (ex.Message.Contains("is specified more than once in the SET clause") == true)

@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
                     object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList);
                     if (objSalesReturnDraft != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
-                    QueryParamsList.Add("@nCustomerID",masterTable.Rows[0]["N_CustomerID"].ToString());
+                    QueryParamsList.Add("@nCustomerID", masterTable.Rows[0]["N_CustomerID"].ToString());
                     object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList);
                     if (obPaymentMenthodid != null)
                     {
@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
 
 
                     //invoice status
-                   
+
                     object objInvoiceRecievable = null, objBal = null;
                     double N_InvoiceRecievable = 0, N_BalanceAmt = 0;
 
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                     if (objBal != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_BalanceAmt", typeof(double), N_BalanceAmt);
 
-                   
+
 
 
 
@@ -232,40 +232,82 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
                 // Auto Gen
                 string InvoiceNo = "";
-                DataRow masterRow = MasterTable.Rows[0];
-                var values = masterRow["x_ReceiptNo"].ToString();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    transaction = connection.BeginTransaction();
 
-                if (values == "@Auto")
-                {
-                    Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                    Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
-                    Params.Add("N_FormID", 80);
-                    Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                    InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params);
-                    if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
-                    MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
-                }
+                    int N_SalesID = myFunctions.getIntVAL(MasterRow["n_SalesID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                    int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
 
-                dLayer.setTransaction();
-                int N_InvoiceId = dLayer.SaveData("Inv_Sales", "N_SalesId", 0, MasterTable);
-                if (N_InvoiceId <= 0)
-                {
-                    dLayer.rollBack();
+                    QueryParams.Add("@nCompanyID", N_CompanyID);
+                    QueryParams.Add("@nFnYearID", N_FnYearID);
+                    QueryParams.Add("@nSalesID", N_SalesID);
+                    QueryParams.Add("@nBranchID", N_BranchID);
+                    QueryParams.Add("@nLocationID", N_LocationID);
+
+                    var values = MasterRow["x_ReceiptNo"].ToString();
+
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", 80);
+                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                        InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params);
+                        if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
+                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                    }
+                    else
+                    {
+                        if (N_SalesID > 0)
+                        {
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",N_CompanyID},
+                                {"X_TransType","SALES"},
+                                {"N_VoucherID",N_SalesID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        }
+                    }
+
+                    MasterTable.Columns.Remove("n_SalesID");
+                    MasterTable.AcceptChanges();
+
+                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", 0, MasterTable, connection, transaction);
+                    if (N_SalesID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Sales Invoice!"));
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                    }
+                    int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", 0, DetailTable, connection, transaction);
+                    if (N_InvoiceDetailId <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Sales Invoice!"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                    }
+                    //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
+                    return Ok(_api.Success("Sales invoice saved" + ":" + InvoiceNo));
                 }
-                for (int j = 0; j < DetailTable.Rows.Count; j++)
-                {
-                    DetailTable.Rows[j]["N_SalesId"] = N_InvoiceId;
-                }
-                int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", 0, DetailTable);
-                dLayer.commit();
-                return GetSalesInvoiceDetails(int.Parse(masterRow["n_CompanyId"].ToString()), int.Parse(masterRow["n_FnYearId"].ToString()), int.Parse(masterRow["n_BranchId"].ToString()), InvoiceNo);
             }
             catch (Exception ex)
             {
-                dLayer.rollBack();
-                return StatusCode(403, ex);
+                return BadRequest(_api.Error(ex));
             }
         }
         //Delete....
@@ -342,11 +384,11 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("deliveryNoteSearch")]
-        public ActionResult GetInvoiceList(int? nCompanyId,int nCustomerId,bool bAllBranchData,int nBranchId,int nLocationId)
+        public ActionResult GetInvoiceList(int? nCompanyId, int nCustomerId, bool bAllBranchData, int nBranchId, int nLocationId)
         {
-            SortedList Params=new SortedList();
-            
-            string crieteria="";
+            SortedList Params = new SortedList();
+
+            string crieteria = "";
 
 
             if (bAllBranchData == true)
@@ -363,30 +405,33 @@ namespace SmartxAPI.Controllers
                 else
                     crieteria = " where X_TransType='DELIVERY' and N_DeliveryType = 0 and N_CompanyID=@nCompanyId and N_BranchID=@nBranchId and N_LocationID=@nLocationId and B_IsSaveDraft=0";
             }
-            
-            Params.Add("@nCompanyId",nCompanyId);
-            Params.Add("@nCustomerId",nCustomerId);
-            Params.Add("@bAllBranchData",bAllBranchData);
-            Params.Add("@nBranchId",nBranchId);
-            Params.Add("@nLocationId",nLocationId);
-            string sqlCommandText="select [Invoice No],[Invoice Date],[Customer] as X_CustomerName,N_CompanyID,N_CustomerID,N_DeliveryNoteId,N_DeliveryType,X_TransType,N_FnYearID,N_BranchID,X_LocationName,N_LocationID,B_IsSaveDraft from vw_InvDeliveryNote_Search "+ crieteria + " order by N_DeliveryNoteId DESC,[Invoice No]";
-            try{
+
+            Params.Add("@nCompanyId", nCompanyId);
+            Params.Add("@nCustomerId", nCustomerId);
+            Params.Add("@bAllBranchData", bAllBranchData);
+            Params.Add("@nBranchId", nBranchId);
+            Params.Add("@nLocationId", nLocationId);
+            string sqlCommandText = "select [Invoice No],[Invoice Date],[Customer] as X_CustomerName,N_CompanyID,N_CustomerID,N_DeliveryNoteId,N_DeliveryType,X_TransType,N_FnYearID,N_BranchID,X_LocationName,N_LocationID,B_IsSaveDraft from vw_InvDeliveryNote_Search " + crieteria + " order by N_DeliveryNoteId DESC,[Invoice No]";
+            try
+            {
                 DataTable SalesInvoiceList = new DataTable();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                connection.Open();
-                SalesInvoiceList=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-                SalesInvoiceList=_api.Format(SalesInvoiceList);
-                if(SalesInvoiceList.Rows.Count==0){return Ok(_api.Notice("No Sales Invoices Found"));}
+                    connection.Open();
+                    SalesInvoiceList = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SalesInvoiceList = _api.Format(SalesInvoiceList);
+                    if (SalesInvoiceList.Rows.Count == 0) { return Ok(_api.Notice("No Sales Invoices Found")); }
                 }
                 return Ok(_api.Success(SalesInvoiceList));
-                }catch(Exception e){
+            }
+            catch (Exception e)
+            {
                 return BadRequest(_api.Error(e));
-                }
+            }
         }
 
 
-       
+
 
     }
 }

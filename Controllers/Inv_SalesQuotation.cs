@@ -65,136 +65,7 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
-        [HttpGet("listDetails")]
-        public ActionResult GetSalesQuotationDetails(int? nCompanyId, int xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID)
-        {
-            DataSet dsQuotation = new DataSet();
-            DataTable dtProcess = new DataTable();
-            SortedList Params = new SortedList();
-            string sqlCommandText = "";
-
-            Params.Add("@nCompanyID", nCompanyId);
-            Params.Add("@nFnYearID", nFnYearId);
-            Params.Add("@xQuotationNo", xQuotationNo);
-
-            if (bAllBranchData == true)
-            {
-                sqlCommandText = "select * from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo";
-            }
-            else
-            {
-                sqlCommandText = "select * from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
-                Params.Add("@nBranchID", nBranchID);
-            }
-
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    DataTable dtQuotation = new DataTable();
-                    dtQuotation = dLayer.ExecuteDataTable(sqlCommandText, Params);
-                    dtQuotation = _api.Format(dtQuotation, "Master");
-                    dsQuotation.Tables.Add(dtQuotation);
-
-                    if (dsQuotation.Tables["Master"].Rows.Count == 0)
-                        return Ok(_api.Notice("No data found!"));
-
-                    var nQuotationId = dtQuotation.Rows[0]["N_QuotationId"];
-                    var nCustomerID = dtQuotation.Rows[0]["N_CustomerId"];
-                    var nSalesOrderID = dtQuotation.Rows[0]["N_CustomerId"];
-                    Params.Add("@nQuotationID", nQuotationId);
-                    Params.Add("@nFormID", this.FormID);
-
-                    object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params);
-                    if (objFollowup != null)
-                    {
-                        Params.Add("@nRefTypeID", 8);
-                        DataTable dtFollowUp = new DataTable();
-                        string qry = "Select * from vw_QuotaionFollowup Where N_CompanyID=@nCompanyID and N_RefTypeID=@nRefTypeID and N_RefID= @nQuotationID";
-                        dtFollowUp = dLayer.ExecuteDataTable(qry, Params);
-                        dtFollowUp = _api.Format(dtFollowUp, "FollowUp");
-                        dsQuotation.Tables.Add(dtFollowUp);
-                    }
-
-                    //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
-                    object objSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "N_SalesOrderID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                    DataColumn col1 = new DataColumn("B_SalesOrderProcessed", typeof(Boolean));
-                    col1.DefaultValue = false;
-                    dsQuotation.Tables["Master"].Columns.Add(col1);
-                    if (objSalesOrder.ToString() != "")
-                    {
-                        if (myFunctions.getIntVAL(objSalesOrder.ToString()) > 0)
-                        {
-                            Params.Add("@nSalesOrderID", myFunctions.getIntVAL(objSalesOrder.ToString()));
-                            dsQuotation.Tables["Master"].Rows[0][col1] = true;
-
-
-
-                            //object objDeliveryNote = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft=0", Params);
-                            object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                            DataColumn col2 = new DataColumn("B_DeliveryNoteProcessed", typeof(Boolean));
-                            col2.DefaultValue = false;
-                            dsQuotation.Tables["Master"].Columns.Add(col2);
-                            if (objDeliveryNote.ToString() != "")
-                            {
-                                if (myFunctions.getIntVAL(objDeliveryNote.ToString()) > 0)
-                                {
-                                    Params.Add("@nDeliveryNoteID", myFunctions.getIntVAL(objDeliveryNote.ToString()));
-                                    dsQuotation.Tables["Master"].Rows[0][col2] = true;
-                                }
-                            }
-
-
-                            //object objSales = dLayer.ExecuteScalar("select N_SalesID from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSalesOrderID and B_IsSaveDraft = 0", Params);
-                            object objSales = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                            DataColumn col3 = new DataColumn("B_SalesProcessed", typeof(Boolean));
-                            col3.DefaultValue = false;
-                            dsQuotation.Tables["Master"].Columns.Add(col3);
-                            if (objSales.ToString() != "")
-                            {
-                                if (myFunctions.getIntVAL(objSales.ToString()) > 0)
-                                {
-                                    Params.Add("@nSalesInvID", myFunctions.getIntVAL(objSales.ToString()));
-                                    dsQuotation.Tables["Master"].Rows[0][col3] = true;
-                                }
-                            }
-
-                        }
-
-                    }
-
-
-
-                    //Quotation Details
-
-                    string sqlCommandText2 = "select * from vw_InvQuotationDetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nQuotationID";
-                    DataTable QuotationDetails = new DataTable();
-                    QuotationDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params);
-                    QuotationDetails = _api.Format(QuotationDetails, "Details");
-                    dsQuotation.Tables.Add(QuotationDetails);
-
-
-                    //ATTACHMENTS
-                    DataTable dtAttachments = new DataTable();
-                    SortedList ParamsAttachment = new SortedList();
-                    ParamsAttachment.Add("CompanyID", nCompanyId);
-                    ParamsAttachment.Add("FnyearID", nFnYearId);
-                    ParamsAttachment.Add("PayID", nQuotationId);
-                    ParamsAttachment.Add("PartyID", nCustomerID);
-                    ParamsAttachment.Add("FormID", this.FormID);
-                    dtAttachments = dLayer.ExecuteDataTablePro("SP_VendorAttachments", ParamsAttachment);
-                    dtAttachments = _api.Format(dtAttachments, "Attachments");
-                    dsQuotation.Tables.Add(dtAttachments);
-                }
-                return Ok(dsQuotation);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.ErrorResponse(e));
-            }
-        }
+       
 
 
         [HttpGet("details")]
@@ -234,10 +105,10 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Notice("There is no data!"));
 
                     var nQuotationId = Master.Rows[0]["N_QuotationId"];
-                    var nFormID = 80;
-                    var nCRMID = Master.Rows[0]["N_CRMID"];
-
-                    if (myFunctions.getIntVAL(nCRMID.ToString()) > 0)
+                    var nFormID = this.FormID;
+                    int nCRMID = myFunctions.getIntVAL(Master.Rows[0]["N_CRMID"].ToString());
+                    Master.Rows[0]["N_CRMID"] = nCRMID;
+                    if (nCRMID > 0)
                     {
                         object crmcode = dLayer.ExecuteScalar("select X_CRMCode from Inv_CRMMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID and N_CRMID=@nCRMID", Params, connection);
                         Master = myFunctions.AddNewColumnToDataTable(Master, "X_CRMCode", typeof(string), crmcode.ToString());
@@ -284,7 +155,7 @@ namespace SmartxAPI.Controllers
 
                     int N_SalesmanID = myFunctions.getIntVAL(Master.Rows[0]["N_SalesmanID"].ToString());
                     object X_SalesmanName = "", X_SalesmanCode = "";
-                    if (N_SalesmanID.ToString() != "")
+                    if (N_SalesmanID.ToString() != "" && N_SalesmanID != 0)
                     {
                         Params.Add("@nSalesmanID", N_SalesmanID);
                         X_SalesmanName = dLayer.ExecuteScalar("select X_SalesmanName from Inv_Salesman where N_CompanyID=@nCompanyID and N_SalesmanID=@nSalesmanID", Params, connection);
@@ -425,7 +296,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return BadRequest(_api.ErrorResponse(e));
             }
         }
 
@@ -510,10 +381,6 @@ namespace SmartxAPI.Controllers
                         if (QuotationNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
 
-
-                        MasterTable.Columns.Remove("n_QuotationID");
-                        DetailTable.Columns.Remove("n_QuotationDetailsID");
-                        DetailTable.AcceptChanges();
                     }
                     else
                     {
@@ -526,15 +393,21 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
                     }
-                    int MasterID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", N_QuotationID, MasterTable, connection, transaction);
-                    if (MasterID <= 0)
+
+                        MasterTable.Columns.Remove("n_QuotationId");
+                        MasterTable.AcceptChanges();
+
+
+
+                    N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", N_QuotationID, MasterTable, connection, transaction);
+                    if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Quotation"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_QuotationID"] = MasterID;
+                        DetailTable.Rows[j]["n_QuotationID"] = N_QuotationID;
                     }
 
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", 0, DetailTable, connection, transaction);
@@ -569,6 +442,243 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(ex));
             }
         }
+
+
+        //  [HttpGet("getItem")]
+        // public ActionResult GetItem(int nCompanyID,int locationID,int branchID,string date,string itemCode,int sPriceID, bool selected)
+        // {
+        //     string ItemClass = "", ItemCondition = "", Sprice = "", Pprice = "";
+        //     object subItemPrice, subPprice, subMrp;
+        //     int row = flxSales.Row;
+        //     double SpriceSum = 0, PpriceSum = 0, Mrpsum = 0;
+        //     int ClassRow = 0;
+        //     string sql = "";
+        //     int SPrice_Id = myFunctions.getIntVAL(flxSales.get_TextMatrix(row, mcUpdatedSPriceID));
+
+        //     if (InputVal == "") { txtGridTextBox.Focus(); return true; }
+
+
+        //     ItemCondition = "[Item Code] ='" + InputVal + "'";
+
+        //     if (B_BarcodeBilling)
+        //         ItemCondition = "([Item Code] ='" + InputVal + "' OR X_Barcode ='" + InputVal + "')";
+        //     //else if (selected) ItemCondition = "[Item Code] ='" + InputVal + "'";
+        //     //else ItemCondition = "[Item Code] like '%" + InputVal + "%'";
+
+
+        //     if (dsSalesQuotation.Tables.Contains("Inv_ItemDetails"))
+        //         dsSalesQuotation.Tables.Remove("Inv_ItemDetails");
+        //     //dbo.SP_GenGetStock(vw_InvSalesOrderDetails.N_ItemID,@N_LocationID,'','branch') As N_Stock
+        //     sql="Select * ,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + myCompanyID._LocationID + ",'','Location') As N_AvlStock,  dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock, dbo.SP_GetQuotationCount(" + myCompanyID._CompanyID + ",vw_InvItem_Search.N_ItemID,'" + myFunctions.getDateVAL(dtpDate.Value.Date) + "') As QuotedQty, dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + myCompanyID._CompanyID;
+           
+        //     if (B_SPRiceType)
+        //     {
+        //         if (SPrice_Id > 0)
+        //         {
+        //             sql = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + myCompanyID._LocationID + ",'','Location') As N_AvlStock , dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit) As N_LPrice ,dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock, dbo.SP_GetQuotationCount(" + myCompanyID._CompanyID + ",vw_InvItem_Search.N_ItemID,'" + myFunctions.getDateVAL(dtpDate.Value.Date) + "') As QuotedQty,dbo.SP_SellingPrice_Select(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + SPrice_Id + "," + myCompanyID._BranchID + ") As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + myCompanyID._CompanyID;
+        //         }
+        //         else
+        //             sql = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + myCompanyID._LocationID + ",'','Location') As N_AvlStock, dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit) As N_LPrice ,dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock, dbo.SP_GetQuotationCount(" + myCompanyID._CompanyID + ",vw_InvItem_Search.N_ItemID,'" + myFunctions.getDateVAL(dtpDate.Value.Date) + "') As QuotedQty,dbo.SP_SellingPrice_Select(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID," + N_DefSPriceID + "," + myCompanyID._BranchID + ") As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + myCompanyID._CompanyID;
+        //     }
+        //     dba.FillDataSet(ref dsSalesQuotation, "Inv_ItemDetails", sql, "TEXT", new DataTable());
+        //     if (dsSalesQuotation.Tables["Inv_ItemDetails"].Rows.Count == 1)
+        //     {
+        //         N_ItemID = myFunctions.getIntVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_ItemID"].ToString());
+        //         //flxSales.set_TextMatrix(row, mcItemID, N_ItemID.ToString());
+        //         object Mrp = dba.ExecuteSclar("Select top 1 N_Mrp from Inv_PurchaseDetails where N_ItemId=" + N_ItemID.ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " Order By N_PurchaseDetailsId desc", "TEXT", new DataTable());
+        //         flxSales.set_TextMatrix(row, mcItemcode, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["Item Code"].ToString());
+        //         flxSales.set_TextMatrix(row, mcDescription, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["Description"].ToString());
+        //         flxSales.set_TextMatrix(row, mcItemClassID, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_ClassID"].ToString());
+
+        //         flxSales.set_TextMatrix(row, mcPartNo, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["Part No"].ToString());
+
+        //         string varUnit = dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_SalesUnit"].ToString();
+        //         if (varUnit == "")
+        //         {
+        //             flxSales.set_TextMatrix(row, mcUnit, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_ItemUnit"].ToString());
+
+        //         }
+        //         else
+        //         {
+        //             flxSales.set_TextMatrix(row, mcUnit, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_SalesUnit"].ToString());
+        //         }
+
+
+        //         if (B_SPRiceType)
+        //         {
+        //             if (N_SPriceID == 0)
+        //             {
+        //                 object obj1 = dba.ExecuteSclar("Select isnull(Count(N_PriceID),0) from Inv_ItemPriceMaster where N_ItemID=" + N_ItemID.ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " and N_BranchID=" + myCompanyID._BranchID + " and N_PriceID=" + N_DefSPriceID.ToString() + " and N_PriceVal>0", "TEXT", new DataTable());
+        //                 if (obj1 != null)
+        //                 {
+        //                     if (myFunctions.getIntVAL(obj1.ToString()) > 0)
+        //                     {
+        //                         flxSales.set_TextMatrix(row, mcUpdatedSPrice, X_DefSPriceType);
+        //                         flxSales.set_TextMatrix(row, mcUpdatedSPriceID, N_DefSPriceID.ToString());
+        //                     }
+        //                     else
+        //                     {
+        //                         flxSales.set_TextMatrix(row, mcUpdatedSPrice, "");
+        //                         flxSales.set_TextMatrix(row, mcUpdatedSPriceID, "0");
+        //                     }
+        //                 }
+        //                 else
+        //                 {
+        //                     flxSales.set_TextMatrix(row, mcUpdatedSPrice, "");
+        //                     flxSales.set_TextMatrix(row, mcUpdatedSPriceID, "0");
+        //                 }
+        //             }
+        //         }
+
+        //         flxSales.set_TextMatrix(row, mcTempItemID, N_ItemID.ToString());
+        //         Pprice = Convert.ToDouble(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_Lprice"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace));
+        //         flxSales.set_TextMatrix(row, mcBaseUnit, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_ItemUnit"].ToString());
+        //         flxSales.set_TextMatrix(row, mcUnitSPrice, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_Sprice"].ToString());
+        //         flxSales.set_TextMatrix(row, mcUnitCost, myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_Lprice"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //         flxSales.set_TextMatrix(row, mcUnitQty, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_Qty"].ToString());
+        //         flxSales.set_TextMatrix(row, mcMarginPerc, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_MinimumMargin"].ToString());
+               
+        //         if (B_ShowPurchaseCost)
+        //             flxSales.set_TextMatrix(row, mcPurchaseCost, myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_PurchaseCost"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //         else
+        //             flxSales.set_TextMatrix(row, mcPurchaseCost, "");
+        //         flxSales.set_TextMatrix(row, mcSPrice, myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_Sprice"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //         ItemClass = dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["Item Class"].ToString();
+
+        //         if (myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_PurchaseCost"].ToString()) > 0 && myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_MinimumMargin"].ToString()) > 0)
+        //         {
+        //             double N_PurchaseCost = myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_PurchaseCost"].ToString());
+        //             double N_MinimumMargin = myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_MinimumMargin"].ToString());
+        //             Sprice = (N_PurchaseCost + (N_PurchaseCost * N_MinimumMargin / 100)).ToString(myFunctions.decimalPlaceString(N_decimalPlace));
+        //             flxSales.set_TextMatrix(row, mcUnitSPrice, Sprice);
+        //         }
+        //         else
+        //             Sprice = dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_Sprice"].ToString();
+
+        //         flxSales.set_TextMatrix(row, mcDelDays, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_DeliveryDays"].ToString());
+        //         double stock = myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_AvlStock"].ToString());
+        //         flxSales.set_TextMatrix(row, mcStock, stock.ToString());
+        //         double T_stock = myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["T_Stock"].ToString());
+        //         flxSales.set_TextMatrix(row, mcBranchStock, T_stock.ToString());
+
+        //         flxSales.set_TextMatrix(row, mcQtyOnQuotn, myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["QuotedQty"].ToString()).ToString());
+
+        //         //TAX          
+        //         flxSales.set_TextMatrix(row, mcTaxPerc1, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_TaxAmt"].ToString());
+        //         flxSales.set_TextMatrix(row, mcTaxPerc2, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_TaxAmt2"].ToString());
+
+        //         flxSales.set_TextMatrix(row, mcTaxCategoryId1, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_PkeyID"].ToString());
+        //         flxSales.set_TextMatrix(row, mcTaxCategoryId2, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_TaxID2"].ToString());
+
+        //         flxSales.set_TextMatrix(row, mcTaxCategoryName1, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_DisplayName"].ToString());
+        //         flxSales.set_TextMatrix(row, mcTaxCategoryName2, dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_DisplayName2"].ToString());
+
+
+
+        //         //QuotedQty
+
+        //         if (B_LastSPrice)
+        //         {
+        //             object res;
+        //             res = dba.ExecuteSclar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=" + myCompanyID._CompanyID + " and N_ItemID = " + N_ItemID + " and X_ItemUnit='" + dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["X_SalesUnit"].ToString() + "' ", "TEXT", new DataTable());
+        //             if (res != null)
+        //                 SetLastSellingPrice(flxSales.Row, myFunctions.getVAL(res.ToString()), N_ItemID);
+        //             else
+        //                 SetLastSellingPrice(flxSales.Row, myFunctions.getVAL("1"), N_ItemID);
+        //         }
+
+        //         if (B_LastPurchaseCost)
+        //         {
+        //             object LastPurchaseCost = dba.ExecuteSclar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=" + N_ItemID.ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " and N_LocationID=" + myCompanyID._LocationID + " and (X_Type='Purchase' or X_Type='Opening') Order by N_StockID Desc", "TEXT", new DataTable());
+        //             if (LastPurchaseCost != null)
+        //                 flxSales.set_TextMatrix(row, mcLastPurchasePrice, myFunctions.getVAL(LastPurchaseCost.ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //             else
+        //                 flxSales.set_TextMatrix(row, mcLastPurchasePrice, "0.00");
+        //         }
+
+
+        //         if (ItemClass != "Group Item")
+        //         {
+        //             flxSales.set_TextMatrix(row, mcItemID, N_ItemID.ToString());
+        //         }
+        //         if (ItemClass == "Group Item")
+        //         {
+        //             ClassRow = row;
+        //             if (dsSalesQuotation.Tables.Contains("Sub Items"))
+        //                 dsSalesQuotation.Tables.Remove("Sub Items");
+        //             dba.FillDataSet(ref dsSalesQuotation, "Sub Items", "Select * from vw_invitemdetails where N_MainItemId=" + N_ItemID.ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " order by X_Itemname", "TEXT", new DataTable());
+        //             foreach (DataRow var in dsSalesQuotation.Tables["Sub Items"].Rows)
+        //             {
+        //                 row += 1;
+        //                 if (row + 1 >= flxSales.Rows) flxSales.Rows = flxSales.Rows + 1;
+        //                 flxSales.set_TextMatrix(row, mcDescription, var["X_Itemname"].ToString());
+        //                 flxSales.set_TextMatrix(row, mcQuantity, var["N_Qty"].ToString());
+        //                 flxSales.set_TextMatrix(row, mcUnit, var["X_ItemUnit"].ToString());
+        //                 flxSales.set_TextMatrix(row, mcSubItemId, var["N_ItemDetailsID"].ToString());
+        //                 flxSales.set_TextMatrix(row, mcItemcode, var["X_ItemCode"].ToString());
+        //                 flxSales.set_TextMatrix(row, mcSubQty, var["N_Qty"].ToString());
+        //                 flxSales.set_TextMatrix(row, mcDelDays, var["N_DeliveryDays"].ToString());
+        //                 if (var["N_ItemDetailsID"].ToString() == "")
+        //                 {
+        //                     flxSales.set_TextMatrix(row, mcItemID, "");
+        //                 }
+        //                 else
+        //                 {
+        //                     flxSales.set_TextMatrix(row, mcItemID, var["N_ItemId"].ToString());
+        //                     subItemPrice = dba.ExecuteSclar("Select top 1 N_Sprice from Inv_StockMaster where N_ItemId=" + var["N_ItemId"].ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " order by n_stockid desc", "TEXT", new DataTable());
+        //                     subPprice = dba.ExecuteSclar("Select top 1 N_Sprice from Inv_StockMaster where N_ItemId=" + var["N_ItemId"].ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " order by n_stockid desc", "TEXT", new DataTable());
+        //                     subMrp = dba.ExecuteSclar("Select top 1 N_Mrp from Inv_PurchaseDetails where N_ItemId=" + var["N_ItemId"].ToString() + " and N_CompanyID=" + myCompanyID._CompanyID + " Order By N_PurchaseDetailsId desc", "TEXT", new DataTable());
+        //                     if (subItemPrice != null) SpriceSum = myFunctions.getVAL(subItemPrice.ToString()) * myFunctions.getVAL(var["N_Qty"].ToString()) + SpriceSum; else flxSales.set_TextMatrix(row, mcSPrice, "0.00");
+        //                     if (subPprice != null) PpriceSum = myFunctions.getVAL(subPprice.ToString()) + PpriceSum; else flxSales.set_TextMatrix(row, mcPPrice, "0.00");
+        //                     if (subMrp != null) Mrpsum = myFunctions.getVAL(subMrp.ToString()) + Mrpsum; else flxSales.set_TextMatrix(row, mcMRP, "0.00");
+        //                 }
+        //             }
+        //             flxSales.set_TextMatrix(ClassRow, mcSPrice, SpriceSum.ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //             flxSales.set_TextMatrix(ClassRow, mcPPrice, PpriceSum.ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //             flxSales.set_TextMatrix(ClassRow, mcMRP, Mrpsum.ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //         }
+        //         else
+        //         {
+        //             if (Mrp != null) { flxSales.set_TextMatrix(row, mcMRP, myFunctions.getVAL(Mrp.ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace))); }
+        //             flxSales.set_TextMatrix(row, mcPPrice, myFunctions.getVAL(Pprice).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+        //             //flxSales.set_TextMatrix(row, mcSPrice, myFunctions.getVAL(Sprice).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+
+
+        //             flxSales.set_TextMatrix(row, mcSPrice, (myFunctions.getVAL(Sprice) * myFunctions.getVAL(dsSalesQuotation.Tables["Inv_ItemDetails"].Rows[0]["N_SalesUnitQty"].ToString())).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+
+        //         }
+        //         AllocateStockAndPrice(flxSales.Row);
+                
+        //         object value = dba.ExecuteSclar("select N_DiscPerc from inv_CustomerDiscount where N_ProductID = '" + N_Value + "' and N_CustomerID = '" + N_CustomerID + "' and N_CompanyID = '" + myCompanyID._CompanyID + "'", "TEXT", new DataTable());
+        //     if (value != null)
+        //     {
+        //         flxSales.set_TextMatrix(Row, mcCustDiscount, value.ToString());
+        //     }
+        //     else
+        //     {
+        //         flxSales.set_TextMatrix(Row, mcDiscount, "0.00");
+        //         flxSales.set_TextMatrix(Row, mcCustDiscount, "0.00");
+        //     }
+
+
+        //         if (row + 1 >= flxSales.Rows) { flxSales.Rows += 1; }
+        //         if (B_BarcodeBilling)
+        //         {
+        //             flxSales.set_TextMatrix(row, mcQuantity, "1");
+        //             CalculateRowTotal(row);
+        //             Checkpurchasecost(flxSales.Row);
+        //             CalculateGridTotal();
+        //             CalculateGrandTotal();
+        //         }
+        //         return true;
+        //     }
+        //     else
+        //     {
+        //         return false;
+        //     }
+        // }
+
+
         //Delete....
         [HttpDelete()]
         public ActionResult DeleteData(int N_QuotationID)

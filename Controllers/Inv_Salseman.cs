@@ -208,6 +208,27 @@ namespace SmartxAPI.Controllers
 
             }
 
+            [HttpGet("dummy")]
+        public ActionResult GetSalesInvoiceDummy(int? nSalesId)
+        {
+            try
+            {
+                string sqlCommandText = "select * from inv_salesman where N_SalesmanID=@p1";
+                SortedList mParamList = new SortedList() { { "@p1", nSalesId } };
+                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
+                masterTable = _api.Format(masterTable, "master");
+                DataSet dataSet = new DataSet();
+                dataSet.Tables.Add(masterTable);
+
+                return Ok(masterTable);
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.ErrorResponse(e));
+            }
+        }
+
 
 
 
