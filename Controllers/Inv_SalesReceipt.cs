@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetSalesReceiptDetails(int? nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, bool bAllBranchData, string dTransDate)
+        public ActionResult GetSalesReceiptDetails(int? nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, bool bAllBranchData, string dTransDate,string xType)
         {
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
@@ -77,7 +77,8 @@ namespace SmartxAPI.Controllers
                         {"N_CompanyID",nCompanyId},
                         {"X_VoucherNo",xInvoiceNo},
                         {"N_FnYearID",nFnYearId},
-                        {"N_BranchId",nBranchId}
+                        {"N_BranchId",nBranchId},
+                        {"X_Type",xType}
                     };
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
