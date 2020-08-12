@@ -95,36 +95,30 @@ namespace SmartxAPI.Controllers
                     object objPlateNo = null;
                     if (N_TruckID > 0)
                     {
-                        DataColumn ColPlateNo = new DataColumn("X_PlateNo", typeof(string));
-                        ColPlateNo.DefaultValue = "";
-                        masterTable.Columns.Add(ColPlateNo);
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_PlateNo", typeof(string), "");
                         QueryParamsList.Add("@nTruckID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
-                        objPlateNo = dLayer.ExecuteScalar("Select X_PlateNumber from Inv_TruckMaster where N_TruckID=@nTruckID and N_companyID=@nCompanyID", mParamsList, Con);
+                        objPlateNo = dLayer.ExecuteScalar("Select X_PlateNumber from Inv_TruckMaster where N_TruckID=@nTruckID and N_companyID=@nCompanyID", QueryParamsList, Con);
                         if (objPlateNo != null)
-                            masterTable.Rows[0][ColPlateNo] = objPlateNo.ToString();
+                            masterTable.Rows[0]["X_PlateNo"] = objPlateNo.ToString();
+
+
 
                     }
 
                     if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-                        masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", mParamsList, dLayer, Con);
-
+                        masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
                     int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
                     if (N_TermsID > 0)
                     {
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_Terms", typeof(string), "");
                         QueryParamsList.Add("@nTermsID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
-                        DataColumn ColTerms = new DataColumn("X_Terms", typeof(string));
-                        ColTerms.DefaultValue = "";
-                        masterTable.Columns.Add(ColTerms);
-                        masterTable.Rows[0][ColTerms] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", mParamsList, dLayer, Con);
+                        masterTable.Rows[0]["X_Terms"] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", QueryParamsList, dLayer, Con);
                     }
 
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
                         QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-                        DataColumn ColFileNo = new DataColumn("X_FileNo", typeof(string));
-                        ColFileNo.DefaultValue = "";
-                        masterTable.Columns.Add(ColFileNo);
-
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_FileNo", typeof(string), "");
                         SortedList ProParamList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
@@ -134,7 +128,7 @@ namespace SmartxAPI.Controllers
                     };
                         object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, Con);
                         if (objFileNo != null)
-                            masterTable.Rows[0][ColFileNo] = objFileNo.ToString();
+                            masterTable.Rows[0]["X_FileNo"] = objFileNo.ToString();
                     }
 
 
@@ -172,18 +166,7 @@ namespace SmartxAPI.Controllers
                         dsSalesInvoice.Tables.Add(dtDispatch);
                     }
 
-                    DataTable dtPayment = new DataTable();
-                    string qry1 = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
-                    dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList);
-                    string InvoiceNos = "";
-                    foreach (DataRow var in dtPayment.Rows)
-                        InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
-
-
-
-
                     //invoice status
-
                     object objInvoiceRecievable = null, objBal = null;
                     double N_InvoiceRecievable = 0, N_BalanceAmt = 0;
 
@@ -194,10 +177,13 @@ namespace SmartxAPI.Controllers
                     if (objBal != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_BalanceAmt", typeof(double), N_BalanceAmt);
 
-
-
-
-
+                    DataTable dtPayment = new DataTable();
+                    string qry1 = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
+                    dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList);
+                    string InvoiceNos = "";
+                    foreach (DataRow var in dtPayment.Rows)
+                        InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                    myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNos", typeof(string), InvoiceNos);
 
                     //Details
                     SortedList dParamList = new SortedList()
