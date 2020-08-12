@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(_api.Error("Year is closed, Cannot create new Vendor..."));
+                        return Ok(_api.Warning("Year is closed, Cannot create new Vendor..."));
 
                     SqlTransaction transaction = connection.BeginTransaction(); ;
                     if (xVendorCode == "@Auto")
