@@ -93,7 +93,7 @@ switch (reqtype.ToLower())
                 user.XToken=loginRes.RefreshToken;
                 
                 object abc = dLayer.ExecuteScalar("Update Sec_User set X_Token='"+loginRes.RefreshToken+"' where N_UserID="+loginRes.N_UserID+" and N_CompanyID=" + loginRes.N_CompanyID );
-
+                if(loginRes.I_Logo!=null)
                 loginRes.I_CompanyLogo = Convert.ToBase64String(loginRes.I_Logo);
                 var MenuList =_context.VwUserMenus
                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId==loginRes.N_UserCategoryID && VwUserMenus.NCompanyId==loginRes.N_CompanyID && VwUserMenus.BShowOnline==true)
