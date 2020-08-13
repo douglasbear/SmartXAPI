@@ -244,7 +244,7 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {
                     Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("nCustomerID",nCompanyID.ToString());
+                    res.Add("n_CustomerID",nCustomerID.ToString());
                     return Ok(api.Success(res,"Customer deleted"));
                 }
                 else
@@ -255,7 +255,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                return Ok(api.Error("Unable to delete Customer"));
             }
 
 
