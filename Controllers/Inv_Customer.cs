@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -236,49 +237,27 @@ namespace SmartxAPI.Controllers
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
                         return Ok(api.Error("Year is closed, Cannot create new Customer..."));
-
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
-                    return StatusCode(200, api.Response(200, "Customer deleted"));
+                    Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("nCustomerID",nCompanyID.ToString());
+                    return Ok(api.Success(res,"Customer deleted"));
                 }
                 else
                 {
-                    return StatusCode(409, api.Response(409, "Unable to delete Customer"));
+                    return Ok(api.Error("Unable to delete Customer"));
                 }
 
             }
             catch (Exception ex)
             {
-                // return StatusCode(403, api.ErrorResponse(ex));
-                return StatusCode(409, api.Response(409, "Unable to delete Customer"));
+                return BadRequest(ex);
             }
 
-            // int Results = 0;
-            // try
-            // {
-            //     using (SqlConnection connection = new SqlConnection(connectionString))
-            //     {
-            //         connection.Open();
-            //         Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerId, "", connection);
-            //     }
-            //     if (Results > 0)
-            //     {
-            //         return Ok(api.Success("Customer deleted"));
-            //     }
-            //     else
-            //     {
-            //         return Ok(api.Error("Unable to delete customer"));
-            //     }
-
-            // }
-            // catch (Exception ex)
-            // {
-            //     return BadRequest(api.Error(ex));
-            // }
 
 
         }
