@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {                    
-                    return Ok(_api.Success("Vendor deleted"));
+                    return Ok(_api.Success("Vendor deletedd"));
             
 
                 }
