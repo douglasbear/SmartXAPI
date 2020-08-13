@@ -204,18 +204,20 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                 }
                 if (Results > 0)
-                {
-                    return StatusCode(200, _api.Response(200, "vendor deleted"));
+                {                    
+                    return Ok(_api.Success("Vendor deleted"));
+            
+
                 }
                 else
                 {
-                    return StatusCode(409, _api.Response(409, "Unable to delete vendor"));
+                    return Ok(_api.Error("Unable to delete vendor"));                    
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return BadRequest(_api.Error(ex));
             }
 
 
