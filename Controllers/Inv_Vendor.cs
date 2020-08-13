@@ -206,8 +206,6 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {                    
                     return Ok(_api.Success("Vendor deleted"));
-            
-
                 }
                 else
                 {
@@ -217,7 +215,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(_api.Error("Unable to delete vendor"));
             }
 
 
