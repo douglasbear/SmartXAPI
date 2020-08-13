@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-    public ActionResult GetSalesOrderDetails(int? nCompanyId,string xOrderNo,int nFnYearId,int nLocationID,bool bAllBranchData,int nBranchID)
+    public ActionResult GetSalesOrderDetails(int? nCompanyID,string xOrderNo,int nFnYearId,int nLocationID,bool bAllBranchData,int nBranchID)
         {
             bool B_PRSVisible=false;
             DataSet dt=new DataSet();
@@ -68,26 +68,22 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
 
-            string Mastersql="";
+            string Mastersql="Select Inv_SalesOrder.*,Inv_CustomerProjects.X_Projectname,inv_SalesQuotation.X_QuotationNo,Inv_warehouseMaster.* " +
+              
+                " from Inv_SalesOrder Left Outer Join  Inv_CustomerProjects ON Inv_SalesOrder.N_ProjectID = Inv_CustomerProjects.N_ProjectID Left Outer Join inv_SalesQuotation On Inv_SalesOrder.N_QuotationID= inv_SalesQuotation.N_QuotationID "+
+                " Inner Join Inv_warehouseMaster on Inv_SalesOrder.N_warehouseID = Inv_warehouseMaster.N_warehouseID And Inv_SalesOrder.N_CompanyID = Inv_warehouseMaster.N_CompanyID " +
+                " Where Inv_SalesOrder.N_CompanyID=@nCompanyID and X_OrderNo=@xOrderNo";
             
-            if (bAllBranchData == true){
-                Mastersql="SP_InvSalesOrder_Disp @P1,@P3,1,0,@P2";
-            }
-            else
-            {
-                Mastersql="SP_InvSalesOrder_Disp @P1,@P3,1,@P4,@P2";
-                Params.Add("@P4",nBranchID);
-            }
 
-            Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",xOrderNo);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@xOrderNo",xOrderNo);
             try
             {
 
  using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                MasterTable=dLayer.ExecuteDataTable(Mastersql,Params);
+                    connection.Open();
+                MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection);
                 MasterTable = _api.Format(MasterTable,"Master");
                 dt.Tables.Add(MasterTable);
             
@@ -96,7 +92,7 @@ namespace SmartxAPI.Controllers
             
             
             string DetailSql="";
-            DetailSql="SP_InvSalesOrderDtls_Disp @p1,@p5,@p2,1,@p4";
+            //DetailSql=dba.FillDataSet(ref dsSalesQuotation, "Inv_SalesDetails", "Select *,dbo.SP_Stock(vw_InvSalesOrderDetails.N_ItemID," + N_WarehouseID + ") As N_Stock ,dbo.SP_Cost(vw_InvSalesOrderDetails.N_ItemID,vw_InvSalesOrderDetails.N_CompanyID,vw_InvSalesOrderDetails.X_ItemUnit) As N_LPrice,dbo.SP_SellingPrice(vw_InvSalesOrderDetails.N_ItemID,vw_InvSalesOrderDetails.N_CompanyID) As N_UnitSPrice  from vw_InvSalesOrderDetails Where N_CompanyID=@ and N_SalesOrderId=@nSalesOrderID";
             Params.Add("@p4",nLocationID);
             Params.Add("@p5",N_SOrderID);
 

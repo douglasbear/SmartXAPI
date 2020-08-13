@@ -38,6 +38,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = message, Data = dictionary });
         }
+                public object Success(Dictionary<string,string> dictionary, string message)
+        {
+            return (new { type = "success", Message = message, Data = dictionary });
+        }
         public object Success(DataSet dataSet)
         {
             return (new { type = "success", Message = "null", Data = dataSet });
@@ -160,6 +164,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataTable dataTable);
         public object Success(DataTable dataTable, string message);
         public object Success(Dictionary<DataRow,DataTable> dictionary, string message);
+        public object Success(Dictionary<string,string> dictionary, string message);
         public object Success(DataSet dataSet);
         public object Success(string message);
         public object Success(DataSet dataSet, String message);

@@ -259,7 +259,8 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    int N_PaymentMethodID =myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
+                    int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
+                    int N_AmtSplit = 0;
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_POS = false;
 
 
@@ -284,7 +285,7 @@ namespace SmartxAPI.Controllers
                         int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_CustomerID) from Inv_Customer where N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchID or N_BranchId=0) and N_EnablePopup=1", QueryParams, connection, transaction).ToString());
                         if (count > 0)
                         {
-                            myFunctions.AddNewColumnToDataTable(MasterTable, "N_AmtSplit", typeof(int), 1);
+                            N_AmtSplit = 1;
                             //Filling sales amount details
                             DataTable dtInvoiceSplit = new DataTable();
                             if (ds.Tables.Contains("InvoiceSplit"))
@@ -312,7 +313,7 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-
+                    //saving data
                     var values = MasterRow["x_ReceiptNo"].ToString();
                     if (values == "@Auto")
                     {
@@ -345,6 +346,10 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Sales Invoice!"));
                     }
+                    // if (B_UserLevel)
+                    // {
+                    //     Inv_WorkFlowCatalog saving code here
+                    // }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
@@ -417,8 +422,8 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                         if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete sales Invoice"));
+                            // transaction.Rollback();
+                            // return Ok(_api.Error("Unable to delete sales Invoice"));
                         }
                         if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", dLayer, connection, transaction))
                             if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory, dLayer, connection, transaction))
