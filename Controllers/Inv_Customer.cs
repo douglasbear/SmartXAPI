@@ -21,6 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int FormID;
 
         public Inv_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -216,30 +217,68 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCustomerId)
+        public ActionResult DeleteData(int nCustomerID,int nCompanyID, int nFnYearID)
         {
-            int Results = 0;
+
+             int Results = 0;
             try
-            {
+            {                        
+                SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();                
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nFormID", 51);
+                QueryParams.Add("@nCustomerID", nCustomerID);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerId, "", connection);
+
+                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
+                        return Ok(api.Error("Year is closed, Cannot create new Customer..."));
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                    transaction.Commit();
                 }
                 if (Results > 0)
                 {
-                    return Ok(api.Success("Customer deleted"));
+                    return StatusCode(200, api.Response(200, "Customer deleted"));
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete customer"));
+                    return StatusCode(409, api.Response(409, "Unable to delete Customer"));
                 }
 
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                // return StatusCode(403, api.ErrorResponse(ex));
+                return StatusCode(409, api.Response(409, "Unable to delete Customer"));
             }
+
+            // int Results = 0;
+            // try
+            // {
+            //     using (SqlConnection connection = new SqlConnection(connectionString))
+            //     {
+            //         connection.Open();
+            //         Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerId, "", connection);
+            //     }
+            //     if (Results > 0)
+            //     {
+            //         return Ok(api.Success("Customer deleted"));
+            //     }
+            //     else
+            //     {
+            //         return Ok(api.Error("Unable to delete customer"));
+            //     }
+
+            // }
+            // catch (Exception ex)
+            // {
+            //     return BadRequest(api.Error(ex));
+            // }
 
 
         }
