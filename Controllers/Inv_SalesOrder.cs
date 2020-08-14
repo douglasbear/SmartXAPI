@@ -46,6 +46,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = _api.Format(dt);
                 }
@@ -63,7 +64,7 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
-        [HttpGet("listDetails")]
+        [HttpGet("details")]
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID)
         {
             bool B_PRSVisible = false;
@@ -156,21 +157,20 @@ namespace SmartxAPI.Controllers
                     }
 
                     int N_ProjectID = myFunctions.getIntVAL(MasterRow["N_ProjectID"].ToString());
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_ProjectName", typeof(string), "");
+                    //MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_ProjectName", typeof(string), "");
 
-                    if (N_ProjectID > 0)
-                    {
-                        DetailParams.Add("@nProjectID", N_ProjectID);
-                        MasterTable.Rows[0]["X_ProjectName"] = Convert.ToString(dLayer.ExecuteScalar("select X_ProjectName from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", DetailParams, connection));
-                    }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_SalesmanName", typeof(string), "");
+                    // if (N_ProjectID > 0)
+                    // {
+                    //     DetailParams.Add("@nProjectID", N_ProjectID);
+                    //     MasterTable.Rows[0]["X_ProjectName"] = Convert.ToString(dLayer.ExecuteScalar("select X_ProjectName from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", DetailParams, connection));
+                    // }
+                    //MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_SalesmanName", typeof(string), "");
 
-                    if (MasterRow["N_SalesmanID"].ToString() != "")
-                    {
-                        DetailParams.Add("@nSalesmanID", MasterRow["N_SalesmanID"].ToString());
-                        MasterTable.Rows[0]["X_SalesmanName"] = Convert.ToString(dLayer.ExecuteScalar("select X_SalesmanName from Inv_Salesman where N_CompanyID=@nCompanyID and N_SalesmanID=@nSalesmanID", DetailParams, connection));
-                    }
+                    // if (MasterRow["N_SalesmanID"].ToString() != "")
+                    // {
+                    //     DetailParams.Add("@nSalesmanID", MasterRow["N_SalesmanID"].ToString());
+                    //     MasterTable.Rows[0]["X_SalesmanName"] = Convert.ToString(dLayer.ExecuteScalar("select X_SalesmanName from Inv_Salesman where N_CompanyID=@nCompanyID and N_SalesmanID=@nSalesmanID", DetailParams, connection));
+                    // }
 
 
 
@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                     NewParams.Add("@nFnYearID", nFnYearID);
                     NewParams.Add("@nCompanyID", nCompanyID);
                     NewParams.Add("@nSOrderID", N_SOrderID);
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams);
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams,connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
 
@@ -213,62 +213,62 @@ namespace SmartxAPI.Controllers
         }
 
         //Save....
-        [HttpPost("Save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable MasterTable;
-                DataTable DetailTable;
-                MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
-                SortedList Params = new SortedList();
-                dLayer.setTransaction();
-                // Auto Gen
-                string xOrderNo = "";
-                var values = MasterTable.Rows[0]["X_OrderNo"].ToString();
-                DataRow Master = MasterTable.Rows[0];
-                if (values == "@Auto")
-                {
-                    Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
-                    Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-                    Params.Add("N_FormID", 81);
-                    Params.Add("N_BranchID", Master["n_BranchId"].ToString());
-                    xOrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params);
-                    if (xOrderNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Sales Order Number")); }
-                    MasterTable.Rows[0]["X_OrderNo"] = xOrderNo;
-                }
+        // [HttpPost("Save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         DataTable MasterTable;
+        //         DataTable DetailTable;
+        //         MasterTable = ds.Tables["master"];
+        //         DetailTable = ds.Tables["details"];
+        //         SortedList Params = new SortedList();
+        //         dLayer.setTransaction();
+        //         // Auto Gen
+        //         string xOrderNo = "";
+        //         var values = MasterTable.Rows[0]["X_OrderNo"].ToString();
+        //         DataRow Master = MasterTable.Rows[0];
+        //         if (values == "@Auto")
+        //         {
+        //             Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
+        //             Params.Add("N_YearID", Master["n_FnYearId"].ToString());
+        //             Params.Add("N_FormID", 81);
+        //             Params.Add("N_BranchID", Master["n_BranchId"].ToString());
+        //             xOrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params);
+        //             if (xOrderNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Sales Order Number")); }
+        //             MasterTable.Rows[0]["X_OrderNo"] = xOrderNo;
+        //         }
 
 
-                int nSalesOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", 0, MasterTable);
-                if (nSalesOrderID <= 0)
-                {
-                    dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to save sales order"));
-                }
-                for (int j = 0; j < DetailTable.Rows.Count; j++)
-                {
-                    DetailTable.Rows[j]["N_SalesOrderID"] = nSalesOrderID;
-                }
-                int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetails", 0, DetailTable);
-                if (N_QuotationDetailId <= 0)
-                {
-                    dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to save sales order"));
-                }
-                else
-                {
-                    dLayer.commit();
-                }
+        //         int nSalesOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", 0, MasterTable);
+        //         if (nSalesOrderID <= 0)
+        //         {
+        //             dLayer.rollBack();
+        //             return StatusCode(409, _api.Response(409, "Unable to save sales order"));
+        //         }
+        //         for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //         {
+        //             DetailTable.Rows[j]["N_SalesOrderID"] = nSalesOrderID;
+        //         }
+        //         int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetails", 0, DetailTable);
+        //         if (N_QuotationDetailId <= 0)
+        //         {
+        //             dLayer.rollBack();
+        //             return StatusCode(409, _api.Response(409, "Unable to save sales order"));
+        //         }
+        //         else
+        //         {
+        //             dLayer.commit();
+        //         }
 
-                return GetSalesOrderDetails(int.Parse(Master["n_CompanyId"].ToString()), MasterTable.Rows[0]["X_OrderNo"].ToString(), int.Parse(Master["n_FnYearId"].ToString()), int.Parse(Master["N_LocationID"].ToString()), true, 1);
-            }
-            catch (Exception ex)
-            {
-                dLayer.rollBack();
-                return StatusCode(403, _api.ErrorResponse(ex));
-            }
-        }
+        //         return GetSalesOrderDetails(int.Parse(Master["n_CompanyId"].ToString()), MasterTable.Rows[0]["X_OrderNo"].ToString(), int.Parse(Master["n_FnYearId"].ToString()), int.Parse(Master["N_LocationID"].ToString()), true, 1);
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         dLayer.rollBack();
+        //         return StatusCode(403, _api.ErrorResponse(ex));
+        //     }
+        // }
         //Delete....
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nSalesOrderID)
@@ -307,6 +307,37 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+        
+        // [HttpGet("dummy")]
+        // public ActionResult GetQtyDummy(int? Id)
+        // {
+        //     try
+        //     {
+        //         string sqlCommandText = "select * from Inv_SalesOrder where N_SalesOrderID=@p1";
+        //         SortedList mParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
+        //         masterTable = _api.Format(masterTable, "master");
+
+        //         string sqlCommandText2 = "select * from Inv_SalesOrderDetails where N_SalesOrderID=@p1";
+        //         SortedList dParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
+        //         detailTable = _api.Format(detailTable, "details");
+
+        //         if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+        //         DataSet dataSet = new DataSet();
+        //         dataSet.Tables.Add(masterTable);
+        //         dataSet.Tables.Add(detailTable);
+
+        //         return Ok(dataSet);
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, _api.ErrorResponse(e));
+        //     }
+        // }
+
 
     }
 }

@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
                         {"N_FnYearID",nFnYearId},
                         {"N_BranchId",nBranchId}
                     };
-                    DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList);
+                    DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList,Con);
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     string qry = "";
-                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer);
+                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer,Con);
                     if (B_DeliveryDispatch)
                     {
                         DataTable dtDispatch = new DataTable();
@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
                         {"N_CompanyID",nCompanyId},
                         {"N_SalesID",masterTable.Rows[0]["n_SalesId"].ToString()}
                     };
-                    DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList);
+                    DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList,Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dsSalesInvoice.Tables.Add(masterTable);

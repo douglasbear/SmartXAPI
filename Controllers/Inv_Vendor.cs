@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -63,7 +64,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
+                
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -74,13 +75,13 @@ namespace SmartxAPI.Controllers
                     if (nVendorId > 0)
                     {
                         bool B_IsUsed = false;
-                        object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params);
+                        object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params,connection);
                         if (objIsUsed != null)
                             if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
                                 B_IsUsed = true;
                         myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
 
-                        object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params);
+                        object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params,connection);
                         if (objUsedCount != null)
                             myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
                     }
@@ -89,6 +90,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dt));
                     else
                         return Ok(_api.Success(dt, msg));
+                }
                 }
             }
             catch (Exception e)
@@ -205,7 +207,9 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {                    
-                    return Ok(_api.Success("Vendor deleted"));
+                    Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("n_VendorID",nVendorID.ToString());
+                    return Ok(_api.Success(res,"Vendor deleted"));
                 }
                 else
                 {

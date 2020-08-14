@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nQuotationID", nQuotationId);
                     Params.Add("@nFormID", nFormID);
 
-                    object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params);
+                    object objFollowup = dLayer.ExecuteScalar("Select  isnull(max(N_id),0) from vsa_appointment where n_refid = @nQuotationID and N_companyID=@nCompanyID and B_IsComplete=0", Params,connection);
                     if (objFollowup != null)
                     {
                         Params.Add("@nRefTypeID", 8);
@@ -668,34 +668,34 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("dummy")]
-        public ActionResult GetQtyDummy(int? Id)
-        {
-            try
-            {
-                string sqlCommandText = "select * from Inv_SalesQuotation where N_QuotationID=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
-                masterTable = _api.Format(masterTable, "master");
+        // [HttpGet("dummy")]
+        // public ActionResult GetQtyDummy(int? Id)
+        // {
+        //     try
+        //     {
+        //         string sqlCommandText = "select * from Inv_SalesQuotation where N_QuotationID=@p1";
+        //         SortedList mParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
+        //         masterTable = _api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Inv_SalesQuotationDetails where N_QuotationID=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
-                detailTable = _api.Format(detailTable, "details");
+        //         string sqlCommandText2 = "select * from Inv_SalesQuotationDetails where N_QuotationID=@p1";
+        //         SortedList dParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
+        //         detailTable = _api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+        //         if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+        //         DataSet dataSet = new DataSet();
+        //         dataSet.Tables.Add(masterTable);
+        //         dataSet.Tables.Add(detailTable);
 
-                return Ok(dataSet);
+        //         return Ok(dataSet);
 
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.ErrorResponse(e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, _api.ErrorResponse(e));
+        //     }
+        // }
 
     }
 }

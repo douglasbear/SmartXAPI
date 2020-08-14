@@ -106,8 +106,8 @@ namespace SmartxAPI.Controllers
                     int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
 
                     string DetailSql = "";
-                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", dLayer);
+                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer,connection);
+                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", dLayer,connection);
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;

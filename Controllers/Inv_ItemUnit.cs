@@ -43,7 +43,11 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -72,7 +76,11 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -99,24 +107,29 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
 
                 SortedList Params = new SortedList();
-                dLayer.setTransaction();
-                int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", 0, MasterTable);
-                if (N_ItemUnitID <= 0)
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    dLayer.rollBack();
-                    return StatusCode(409, api.Response(409, "Unable to save ItemUnit"));
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", 0, MasterTable, connection, transaction);
+                    if (N_ItemUnitID <= 0)
+                    {
+                        transaction.Rollback();
+                        return StatusCode(409, api.Response(409, "Unable to save ItemUnit"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                    }
+                    return GetItemUnitListDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_ItemUnitID);
                 }
-                else
-                {
-                    dLayer.commit();
-                }
-                return GetItemUnitListDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_ItemUnitID);
+                
 
             }
 
             catch (Exception ex)
             {
-                dLayer.rollBack();
                 return StatusCode(403, api.ErrorResponse(ex));
             }
         }
@@ -155,8 +168,11 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-
-                Results = dLayer.DeleteData("Inv_ItemUnit", "N_ItemUnitID", nItemUnitID, "");
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                Results = dLayer.DeleteData("Inv_ItemUnit", "N_ItemUnitID", nItemUnitID, "",connection);
+                }
                 if (Results > 0)
                 {
                     return StatusCode(200, api.Response(200, "Product Unit deleted"));
