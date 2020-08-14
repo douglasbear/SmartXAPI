@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                         nParams.Add("@nFnYearID", nFnYearID);
                         nParams.Add("@nVendorID", nVendorID);
                         string sqlCommandText = "select * from vw_InvVendor where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_VendorID =@nVendorID  order by X_VendorName,X_VendorCode";
-                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText,nParams,connection,transaction);
+                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection, transaction);
                         outputDt = _api.Format(outputDt, "NewVendor");
 
                         if (outputDt.Rows.Count == 0)
@@ -182,13 +182,13 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nVendorID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nVendorID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
+                SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 52);
@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to delete vendor"));                    
+                    return Ok(_api.Error("Unable to delete vendor"));
                 }
 
             }
