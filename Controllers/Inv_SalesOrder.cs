@@ -184,19 +184,25 @@ namespace SmartxAPI.Controllers
                     NewParams.Add("@nFnYearID", nFnYearID);
                     NewParams.Add("@nCompanyID", nCompanyID);
                     NewParams.Add("@nSOrderID", N_SOrderID);
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams,connection);
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
-
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_CustomerName", typeof(string), "");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "customer_PONo", typeof(string), "");
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "X_UpdatedSPrice", typeof(string), "");
-                    SortedList Param =new SortedList();
-                    Param.Add("@nCompanyID",nCompanyID);
-                    Param.Add("@nSPriceTypeID","");
+                    if (DetailTable.Rows.Count != 0){
+                        MasterTable.Rows[0]["x_CustomerName"] = DetailTable.Rows[0]["x_CustomerName"];
+                        MasterTable.Rows[0]["customer_PONo"] = DetailTable.Rows[0]["customer_PONo"];
+                        }
+                    SortedList Param = new SortedList();
+                    Param.Add("@nCompanyID", nCompanyID);
+                    Param.Add("@nSPriceTypeID", "");
                     foreach (DataRow var in DetailTable.Rows)
                     {
-                        if (var["N_SPriceTypeID"].ToString() != ""){
-                            Params["@nSPriceTypeID"]=var["N_SPriceTypeID"].ToString();
-                            var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID",Param,connection));
+                        if (var["N_SPriceTypeID"].ToString() != "")
+                        {
+                            Params["@nSPriceTypeID"] = var["N_SPriceTypeID"].ToString();
+                            var["X_UpdatedSPrice"] = Convert.ToString(dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_CompanyID=@nCompanyID and N_ReferId=3 and N_PkeyId=@nSPriceTypeID", Param, connection));
                         }
                     }
 
@@ -308,7 +314,7 @@ namespace SmartxAPI.Controllers
 
         }
 
-        
+
         // [HttpGet("dummy")]
         // public ActionResult GetQtyDummy(int? Id)
         // {
