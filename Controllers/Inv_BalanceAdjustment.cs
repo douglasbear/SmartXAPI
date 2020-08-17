@@ -13,12 +13,12 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("salesman")]
+    [Route("BalanceAdjustment")]
     [ApiController]
 
 
 
-    public class Inv_Salseman : ControllerBase
+    public class Inv_BalanceAdjustment : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -27,7 +27,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
 
 
-        public Inv_Salseman(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_BalanceAdjustment(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
@@ -39,14 +39,22 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetAllSalesExecutives(int? nCompanyID, int? nFnyearID)
+        public ActionResult GetBalanceDetails(int? nCompanyID, int? nFnyearID,int? nPartyType,int nPartyID,int N_TransType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText="";
+            if(nPartyID>0)
 
-            string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2";
+            sqlCommandText = "select [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5";
+
+            else
+            sqlCommandText = "select [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5";
+
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nFnyearID);
+            Params.Add("@p3", nPartyID);
+            Params.Add("@p4", N_TransType);
+            Params.Add("@p5", nPartyType);
 
             try
             {

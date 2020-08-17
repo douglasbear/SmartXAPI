@@ -38,6 +38,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = message, Data = dictionary });
         }
+                public object Success(Dictionary<string,string> dictionary, string message)
+        {
+            return (new { type = "success", Message = message, Data = dictionary });
+        }
         public object Success(DataSet dataSet)
         {
             return (new { type = "success", Message = "null", Data = dataSet });
@@ -108,7 +112,7 @@ namespace SmartxAPI.GeneralFunctions
                 default:
                     if (ex.Message.Contains("Invalid column name '") == true)
                     {
-                        Msg = ex.Message.Substring(20, subString.IndexOf("'") + 1) + " is unknown";
+                        Msg = subString + " is unknown";
                         break;
                     }
                     if (ex.Message.Contains("is specified more than once in the SET clause") == true)
@@ -160,6 +164,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataTable dataTable);
         public object Success(DataTable dataTable, string message);
         public object Success(Dictionary<DataRow,DataTable> dictionary, string message);
+        public object Success(Dictionary<string,string> dictionary, string message);
         public object Success(DataSet dataSet);
         public object Success(string message);
         public object Success(DataSet dataSet, String message);

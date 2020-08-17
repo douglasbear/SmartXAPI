@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -28,7 +29,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID=52;
+            FormID = 52;
         }
 
 
@@ -39,11 +40,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string criteria = "";
+            int nVendorId = 0;
             if (vendorId != "" && vendorId != null)
             {
                 criteria = " and N_VendorID =@nVendorID ";
-                Params.Add("@nVendorID", vendorId);
+                nVendorId = myFunctions.getIntVAL(vendorId.ToString());
             }
+            Params.Add("@nVendorID", nVendorId);
 
             string qryCriteria = "";
             if (qry != "" && qry != null)
@@ -61,7 +64,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
+                
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -69,21 +72,25 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    bool B_IsUsed = false;
-                    object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params);
-                    if (objIsUsed != null)
-                        if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
-                            B_IsUsed = true;
-                    myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
+                    if (nVendorId > 0)
+                    {
+                        bool B_IsUsed = false;
+                        object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params,connection);
+                        if (objIsUsed != null)
+                            if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
+                                B_IsUsed = true;
+                        myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
 
-                    object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params);
-                    if (objUsedCount != null)
-                        myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
+                        object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params,connection);
+                        if (objUsedCount != null)
+                            myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
+                    }
 
                     if (msg == "")
                         return Ok(_api.Success(dt));
                     else
                         return Ok(_api.Success(dt, msg));
+                }
                 }
             }
             catch (Exception e)
@@ -102,20 +109,29 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
                 // Auto Gen
                 DataRow MasterRow = MasterTable.Rows[0];
                 string VendorCode = "";
                 var xVendorCode = MasterRow["x_VendorCode"].ToString();
                 int nVendorID = myFunctions.getIntVAL(MasterRow["n_VendorID"].ToString());
-                int nCompanyID = myFunctions.getIntVAL( MasterRow["n_CompanyId"].ToString());
+                int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+                QueryParams.Add("@nCompanyID", MasterRow["n_CompanyId"].ToString());
+                QueryParams.Add("@nFnYearID", MasterRow["n_FnYearId"].ToString());
+                QueryParams.Add("@nFormID", 52);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
+                        return Ok(_api.Warning("Year is closed, Cannot create new Vendor..."));
+
                     SqlTransaction transaction = connection.BeginTransaction(); ;
                     if (xVendorCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID",nCompanyID);
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
@@ -141,14 +157,15 @@ namespace SmartxAPI.Controllers
                     {
 
                         SortedList nParams = new SortedList();
-                        nParams.Add("@nCompanyID",nCompanyID);
-                        nParams.Add("@nFnYearID",nFnYearID);
-                        nParams.Add("@nVendorID",nVendorID);
+                        nParams.Add("@nCompanyID", nCompanyID);
+                        nParams.Add("@nFnYearID", nFnYearID);
+                        nParams.Add("@nVendorID", nVendorID);
                         string sqlCommandText = "select * from vw_InvVendor where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_VendorID =@nVendorID  order by X_VendorName,X_VendorCode";
-                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
+                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection, transaction);
                         outputDt = _api.Format(outputDt, "NewVendor");
 
-                        if(outputDt.Rows.Count==0){
+                        if (outputDt.Rows.Count == 0)
+                        {
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to save"));
                         }
@@ -165,31 +182,44 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nVendorID)
+        public ActionResult DeleteData(int nVendorID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
             {
+                SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nFormID", 52);
+                QueryParams.Add("@nVendorID", nVendorID);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
+                        return Ok(_api.Error("Year is closed, Cannot create new Vendor..."));
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
-                {
-                    return StatusCode(200, _api.Response(200, "vendor deleted"));
+                {                    
+                    Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("n_VendorID",nVendorID.ToString());
+                    return Ok(_api.Success(res,"Vendor deleted"));
                 }
                 else
                 {
-                    return StatusCode(409, _api.Response(409, "Unable to delete vendor"));
+                    return Ok(_api.Error("Unable to delete vendor"));
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return BadRequest(_api.Error("Unable to delete vendor"));
             }
 
 

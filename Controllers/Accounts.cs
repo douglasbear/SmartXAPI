@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearId);
             Params.Add("@p3",xType);
 
-            if(xType!="All")
+            if(xType.ToLower() !="all")
                 sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
             else
                 sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
@@ -58,14 +58,14 @@ namespace SmartxAPI.Controllers
                 dt=_api.Format(dt);
                 if(dt.Rows.Count==0)
                     {
-                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                        return Ok(_api.Warning("No Results Found" ));
                     }else{
-                        return Ok(dt);
+                        return Ok(_api.Success(dt));
                     }
                 
             }
             catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
         }       
     }
