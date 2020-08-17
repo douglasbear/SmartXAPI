@@ -44,7 +44,8 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params);
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
@@ -86,7 +87,7 @@ namespace SmartxAPI.Controllers
                         {"N_FnYearID",nFnYearId},
                         {"N_BranchId",nBranchId}
                     };
-                    DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList,Con);
+                    DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
@@ -157,12 +158,12 @@ namespace SmartxAPI.Controllers
                     }
 
                     string qry = "";
-                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer,Con);
+                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer, Con);
                     if (B_DeliveryDispatch)
                     {
                         DataTable dtDispatch = new DataTable();
                         qry = "Select * From Inv_DeliveryDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_InvoiceID=@nSalesID";
-                        dtDispatch = dLayer.ExecuteDataTable(qry, QueryParamsList);
+                        dtDispatch = dLayer.ExecuteDataTable(qry, QueryParamsList, Con);
                         dtDispatch = _api.Format(dtDispatch, "Delivery Dispatch");
                         dsSalesInvoice.Tables.Add(dtDispatch);
                     }
@@ -180,7 +181,7 @@ namespace SmartxAPI.Controllers
 
                     DataTable dtPayment = new DataTable();
                     string qry1 = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
-                    dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList);
+                    dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList, Con);
                     string InvoiceNos = "";
                     foreach (DataRow var in dtPayment.Rows)
                         InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
@@ -192,7 +193,7 @@ namespace SmartxAPI.Controllers
                         {"N_CompanyID",nCompanyId},
                         {"N_SalesID",masterTable.Rows[0]["n_SalesId"].ToString()}
                     };
-                    DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList,Con);
+                    DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dsSalesInvoice.Tables.Add(masterTable);
@@ -241,6 +242,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
                 // Auto Gen
@@ -321,7 +323,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
-                        InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params);
+                        InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params, connection, transaction);
                         if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
@@ -362,6 +364,62 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+
+                        //Inv_WorkFlowCatalog insertion here
+
+                        DataTable dtInvoiceSplit = ds.Tables["InvoiceSplit"];
+                        DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
+                        DataRow RowInvoiceSplit = ds.Tables["InvoiceSplit"].Rows[0];
+                        DataRow Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
+                        int N_IsSave = 1;
+                        int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
+                        bool B_EnablePointSystem = myFunctions.getBoolVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", "2", QueryParams, dLayer, connection));
+                        if (N_AmtSplit == 1)
+                        {
+
+                            if (N_IsSave == 1)
+                            {
+                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", 0, dtInvoiceSplit, connection, transaction);
+                                if (N_SalesAmountID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                }
+                                else
+                                {
+                                    if (B_EnablePointSystem)
+                                    {
+                                        int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", 0, dtloyalitypoints, connection, transaction);
+                                        if (N_SalesAmountID <= 0)
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                        }
+                                        else
+                                        {
+                                            double N_DiscountAmt = myFunctions.getVAL(Rowloyalitypoints["N_AppliedAmt"].ToString()) + myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
+                                            dLayer.ExecuteNonQuery("update  Inv_Sales  Set N_DiscountAmt=" + N_DiscountAmt + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                                        }
+                                    }
+                                }
+                            }
+                            else if (N_IsSave == 0)
+                            {
+                                if (N_CurrentSalesID != N_SalesID)
+                                    dLayer.ExecuteNonQuery("update  Inv_SaleAmountDetails set N_SalesID=" + N_SalesID + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                            }
+                        }
+                        else
+                        {
+                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", 0, dtInvoiceSplit, connection, transaction);
+                            if (N_SalesAmountID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save Sales Invoice!"));
+                            }
+                        }
+
+
                         transaction.Commit();
                     }
                     //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
@@ -450,23 +508,27 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                string sqlCommandText = "select * from Inv_Sales where N_SalesId=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", nSalesId } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
-                masterTable = _api.Format(masterTable, "master");
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    string sqlCommandText = "select * from Inv_Sales where N_SalesId=@p1";
+                    SortedList mParamList = new SortedList() { { "@p1", nSalesId } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,Con);
+                    masterTable = _api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Inv_SalesDetails where N_SalesId=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", nSalesId } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
-                detailTable = _api.Format(detailTable, "details");
+                    string sqlCommandText2 = "select * from Inv_SalesDetails where N_SalesId=@p1";
+                    SortedList dParamList = new SortedList() { { "@p1", nSalesId } };
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,Con);
+                    detailTable = _api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    dataSet.Tables.Add(detailTable);
 
-                return Ok(dataSet);
+                    return Ok(dataSet);
 
+                }
             }
             catch (Exception e)
             {
