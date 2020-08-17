@@ -262,8 +262,10 @@ namespace SmartxAPI.Controllers
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
+                    int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int N_AmtSplit = 0;
-                    bool B_AllBranchData = false, B_AllowCashPay = false, B_POS = false;
+                    int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
+                    bool B_AllBranchData = false, B_AllowCashPay = false, B_POS = false, B_DirectPosting = false;
 
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -273,6 +275,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
 
+                    B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (objAllBranchData != null)
                         B_AllBranchData = myFunctions.getBoolVAL(objAllBranchData.ToString());
@@ -370,10 +373,17 @@ namespace SmartxAPI.Controllers
                         DataTable dtInvoiceSplit = ds.Tables["InvoiceSplit"];
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
                         DataRow RowInvoiceSplit = ds.Tables["InvoiceSplit"].Rows[0];
-                        DataRow Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
-                        int N_IsSave = 1;
+
+                        DataRow Rowloyalitypoints = null;
+                        if (ds.Tables.Contains("loyalitypoints"))
+                            Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
+
+                        int N_IsSave = myFunctions.getIntVAL(RowInvoiceSplit["n_IsSave"].ToString());
+                        dtInvoiceSplit.Columns.Remove("n_IsSave");
+                        dtInvoiceSplit.AcceptChanges();
+
                         int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
-                        bool B_EnablePointSystem = myFunctions.getBoolVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", "2", QueryParams, dLayer, connection));
+                        bool B_EnablePointSystem = myFunctions.getBoolVAL(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_value", "N_UserCategoryID", "2", QueryParams, dLayer, connection, transaction)).ToString());                       
                         if (N_AmtSplit == 1)
                         {
 
@@ -389,16 +399,19 @@ namespace SmartxAPI.Controllers
                                 {
                                     if (B_EnablePointSystem)
                                     {
-                                        int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", 0, dtloyalitypoints, connection, transaction);
-                                        if (N_SalesAmountID <= 0)
+                                        if (ds.Tables.Contains("loyalitypoints") && dtloyalitypoints.Rows.Count > 0)
                                         {
-                                            transaction.Rollback();
-                                            return Ok(_api.Error("Unable to save Sales Invoice!"));
-                                        }
-                                        else
-                                        {
-                                            double N_DiscountAmt = myFunctions.getVAL(Rowloyalitypoints["N_AppliedAmt"].ToString()) + myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
-                                            dLayer.ExecuteNonQuery("update  Inv_Sales  Set N_DiscountAmt=" + N_DiscountAmt + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                                            int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", 0, dtloyalitypoints, connection, transaction);
+                                            if (N_SalesAmountID <= 0)
+                                            {
+                                                transaction.Rollback();
+                                                return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                            }
+                                            else
+                                            {
+                                                double N_DiscountAmt = myFunctions.getVAL(Rowloyalitypoints["N_AppliedAmt"].ToString()) + myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
+                                                dLayer.ExecuteNonQuery("update  Inv_Sales  Set N_DiscountAmt=" + N_DiscountAmt + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                                            }
                                         }
                                     }
                                 }
@@ -419,7 +432,38 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
+                        // Warranty Save Code here
+                        //optical prescription saving here
 
+                        if (N_SaveDraft == 0)
+                        {
+                            SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", N_CompanyID);
+                            PostingParam.Add("X_InventoryMode", "SALES");
+                            PostingParam.Add("N_InternalID", N_SalesID);
+                            PostingParam.Add("N_UserID", N_UserID);
+                            PostingParam.Add("X_SystemName", "ERP Cloud");
+
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            bool B_AmtpaidEnable = myFunctions.getBoolVAL(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_value", "N_UserCategoryID", "0", QueryParams, dLayer, connection, transaction)).ToString());
+                            if (B_AmtpaidEnable)
+                            {
+                                if (!B_DirectPosting)
+                                {
+                                    if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
+                                    {
+                                        SortedList ParamCustomerRcpt_Ins = new SortedList();
+                                        ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
+                                        ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
+                                        ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
+                                        ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
+                                        dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                                    }
+                                }
+
+                            }
+                        }
+                        //dispatch saving here
                         transaction.Commit();
                     }
                     //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
@@ -513,12 +557,12 @@ namespace SmartxAPI.Controllers
                     Con.Open();
                     string sqlCommandText = "select * from Inv_Sales where N_SalesId=@p1";
                     SortedList mParamList = new SortedList() { { "@p1", nSalesId } };
-                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,Con);
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
                     masterTable = _api.Format(masterTable, "master");
 
                     string sqlCommandText2 = "select * from Inv_SalesDetails where N_SalesId=@p1";
                     SortedList dParamList = new SortedList() { { "@p1", nSalesId } };
-                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,Con);
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
                     detailTable = _api.Format(detailTable, "details");
 
                     if (detailTable.Rows.Count == 0) { return Ok(new { }); }

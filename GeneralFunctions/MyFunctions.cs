@@ -17,13 +17,13 @@ namespace SmartxAPI.GeneralFunctions
         {
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer,SqlConnection connection)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params,connection));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection));
             return Result;
         }
 
@@ -205,10 +205,19 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
+        public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=@nCompanyID and "
+             + ConditionColumn + "=" + Value + " ", Params, Connection, transaction);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection)
         {
             string Result = "";
-            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID="+nCompanyID+" and "
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=" + nCompanyID + " and "
              + ConditionColumn + "=" + Value + " ", Connection);
             if (obj != null)
                 Result = obj.ToString();
@@ -230,7 +239,7 @@ namespace SmartxAPI.GeneralFunctions
             return MasterDt;
         }
 
-                public string getDateVAL(DateTime val)
+        public string getDateVAL(DateTime val)
         {
             return val.ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture);
 
@@ -248,7 +257,7 @@ namespace SmartxAPI.GeneralFunctions
     }
     public interface IMyFunctions
     {
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer,SqlConnection connection);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public int getIntVAL(string val);
         public double getVAL(string val);
@@ -265,10 +274,11 @@ namespace SmartxAPI.GeneralFunctions
         public bool checkIsNull(DataRow Row, String KeyName);
         public string checkProcessed(string TableName, string ColumnReturn, string ColumnValidate, string ValidateValue, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection);
+        public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value);
-         public string getDateVAL(DateTime val);
-         public DateTime GetFormatedDate(string val);
+        public string getDateVAL(DateTime val);
+        public DateTime GetFormatedDate(string val);
     }
 }
