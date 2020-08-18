@@ -1,4 +1,5 @@
 using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.Data;
 using AutoMapper;
@@ -34,11 +35,11 @@ namespace SmartxAPI.GeneralFunctions
             return (new { type = "success", Message = msg, Data = dataTable });
         }
 
-        public object Success(Dictionary<DataRow,DataTable> dictionary, string message)
+        public object Success(Dictionary<DataRow, DataTable> dictionary, string message)
         {
             return (new { type = "success", Message = message, Data = dictionary });
         }
-                public object Success(Dictionary<string,string> dictionary, string message)
+        public object Success(Dictionary<string, string> dictionary, string message)
         {
             return (new { type = "success", Message = message, Data = dictionary });
         }
@@ -46,11 +47,15 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = dataSet });
         }
+        public object Success(SortedList result)
+        {
+            return (new { type = "success", Message = "null", Data = result });
+        }
         public object Success(DataSet dataSet, String message)
         {
             return (new { type = "success", Message = message, Data = dataSet });
         }
-                public object Success(DataRow dataRow, String message)
+        public object Success(DataRow dataRow, String message)
         {
             return (new { type = "success", Message = message, Data = dataRow });
         }
@@ -163,8 +168,9 @@ namespace SmartxAPI.GeneralFunctions
         public object Error(string message);
         public object Success(DataTable dataTable);
         public object Success(DataTable dataTable, string message);
-        public object Success(Dictionary<DataRow,DataTable> dictionary, string message);
-        public object Success(Dictionary<string,string> dictionary, string message);
+        public object Success(Dictionary<DataRow, DataTable> dictionary, string message);
+        public object Success(Dictionary<string, string> dictionary, string message);
+        public object Success(SortedList data);
         public object Success(DataSet dataSet);
         public object Success(string message);
         public object Success(DataSet dataSet, String message);
