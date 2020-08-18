@@ -383,7 +383,7 @@ namespace SmartxAPI.Controllers
                         dtInvoiceSplit.AcceptChanges();
 
                         int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
-                        bool B_EnablePointSystem = myFunctions.getBoolVAL(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_value", "N_UserCategoryID", "2", QueryParams, dLayer, connection, transaction)).ToString());                       
+                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_value", "N_UserCategoryID", "2", QueryParams, dLayer, connection, transaction)).ToString());
                         if (N_AmtSplit == 1)
                         {
 
