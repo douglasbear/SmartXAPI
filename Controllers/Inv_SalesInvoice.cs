@@ -263,6 +263,7 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                    int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_POS = false, B_DirectPosting = false;
@@ -383,7 +384,8 @@ namespace SmartxAPI.Controllers
                         dtInvoiceSplit.AcceptChanges();
 
                         int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
-                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_value", "N_UserCategoryID", "2", QueryParams, dLayer, connection, transaction)).ToString());
+                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection,transaction)));
+                        //bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_value", "N_UserCategoryID", "2", QueryParams, dLayer, connection, transaction)).ToString());
                         if (N_AmtSplit == 1)
                         {
 
@@ -445,7 +447,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
-                            bool B_AmtpaidEnable = myFunctions.getBoolVAL(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_value", "N_UserCategoryID", "0", QueryParams, dLayer, connection, transaction)).ToString());
+                            bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection,transaction)));                           
                             if (B_AmtpaidEnable)
                             {
                                 if (!B_DirectPosting)
