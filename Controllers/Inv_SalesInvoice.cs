@@ -384,8 +384,7 @@ namespace SmartxAPI.Controllers
                         dtInvoiceSplit.AcceptChanges();
 
                         int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
-                        //bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection,transaction)));
-                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_value", "N_UserCategoryID", "2", QueryParams, dLayer, connection, transaction)).ToString());
+                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection,transaction)));                        
                         if (N_AmtSplit == 1)
                         {
 
@@ -447,23 +446,23 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
-                            // bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection,transaction)));                           
-                            // if (B_AmtpaidEnable)
-                            // {
-                            //     if (!B_DirectPosting)
-                            //     {
-                            //         if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
-                            //         {
-                            //             SortedList ParamCustomerRcpt_Ins = new SortedList();
-                            //             ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
-                            //             ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
-                            //             ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
-                            //             ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
-                            //             dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
-                            //         }
-                            //     }
+                            bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection,transaction)));                           
+                            if (B_AmtpaidEnable)
+                            {
+                                if (!B_DirectPosting)
+                                {
+                                    if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
+                                    {
+                                        SortedList ParamCustomerRcpt_Ins = new SortedList();
+                                        ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
+                                        ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
+                                        ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
+                                        ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
+                                        dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                                    }
+                                }
 
-                            // }
+                            }
                         }
                         //dispatch saving here
                         transaction.Commit();
