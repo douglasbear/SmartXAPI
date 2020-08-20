@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetBanksList(int? nCompanyId)
         {
             string sqlCommandText="";
-            if(nCompanyId==null){return StatusCode(404,_api.Response(404,"Company ID Required"));}                       
+            if(nCompanyId==null){return Ok(_api.Warning("Company ID Required"));}                       
                               
                 
             DataTable dt=new DataTable();
