@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
             }
         }
           [HttpGet("listDetails")]
-        public ActionResult GetPurchaseOrderDetails(int nCompanyId, int N_PartyType,string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
+        public ActionResult GetBalanceListDetails(int nCompanyId, int N_PartyType,string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
         {
             bool B_PRSVisible = false;
             DataSet dt = new DataSet();
