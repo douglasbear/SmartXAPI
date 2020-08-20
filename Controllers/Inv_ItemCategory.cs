@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select Code,Category,CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 order by CategoryCode";
+            string sqlCommandText = "select Code as N_CategoryID,Category as X_Category,CategoryCode as X_CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 order by CategoryCode";
             Params.Add("@p1", nCompanyId);
 
             try
@@ -64,14 +64,17 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listdetails")]
-        public ActionResult GetItemCategoryDetails(int? nCompanyId, int? n_CategoryId)
+        public ActionResult GetItemCategoryDetails(int nCompanyId,int nFnYearID, int n_CategoryId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select Code,Category,CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 and code=@p2 order by CategoryCode";
+            string sqlCommandText = "Select TOP 1 *,Code as X_CategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and (N_FnYearID =@p3 or N_FnYearID is null ) and N_Level=0 Order By N_CategoryID";
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", n_CategoryId);
+            Params.Add("@p3", nFnYearID);
+            
 
             try
             {
@@ -82,16 +85,16 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Notice("No Data Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
         }
 
@@ -108,8 +111,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    // Auto Gen
-                    //var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    int N_CategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CategoryID"].ToString());
+                    int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string CategoryCode = "";
@@ -117,30 +120,30 @@ namespace SmartxAPI.Controllers
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterTable.Rows[0]["N_FnYearId"].ToString());
+                        Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 73);
                         CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
                         if (CategoryCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
-
-                    MasterTable.Columns.Remove("n_FnYearId");
-                    int N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", 0, MasterTable, connection, transaction);
+                    MasterTable.Columns.Remove("N_FnYearId");
+                    MasterTable.Columns.Remove("N_CategoryID");
+                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", N_CategoryID, MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(404, _api.Response(404, "Unable to save"));
+                        return Ok( _api.Error("Unable to save"));
                     }
                     else
                     {
                         transaction.Commit();
-                        return GetItemCategoryDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_CategoryID);
+                        return GetItemCategoryDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_FnYearId, N_CategoryID);
                     }
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return BadRequest( _api.Error(ex));
             }
         }
 
