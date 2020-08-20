@@ -535,6 +535,70 @@ namespace SmartxAPI.Controllers
             }
         }
 
+   
+
+//         [HttpGet("getItem")]
+//         public ActionResult SalesPriceValidation(int nCompanyID, int nLocationID, int nBranchID,  int nItemID, int nCustomerID)
+//         {
+
+//             using (SqlConnection connection = new SqlConnection(connectionString))
+//             {
+//                 connection.Open();
+//            bool B_SPRiceType=false;
+//            string X_DefSPriceType="";
+//            int N_DefSPriceID=0;
+//            DataTable SalePrice = new DataTable();
+// SortedList Params =new SortedList();
+// Params.Add("@nCompanyID",nCompanyID);
+
+//         object res = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'",Params,connection);
+//             if (res != null)
+//             {
+//                 if (myFunctions.getIntVAL(res.ToString()) == 4)
+//                     B_SPRiceType = true;
+//                 else
+//                     B_SPRiceType = false;
+
+//             }
+//             if (B_SPRiceType)
+//             {
+//                 X_DefSPriceType = "";
+//                 var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
+//                 N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
+//                 Params.Add("@nDefSPriceID",N_DefSPriceID);
+//                 object res2 = dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_PkeyId=@nDefSPriceID and N_ReferId=3 and N_CompanyID=@nCompanyID",Params,connection);
+//                 if (res2 != null)
+//                     X_DefSPriceType = res.ToString();
+//                     else X_DefSPriceType="";
+
+//             }
+//             Params.Add("@nBranchID",nBranchID);
+//             Params.Add("@nItemID",nItemID);
+//             Params.Add("@xDefSPriceType",X_DefSPriceType);
+//             SalePrice = dLayer.ExecuteDataTable("Select N_PriceID,N_PriceVal From Inv_ItemPriceMaster  Where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_itemId=@nItemID and N_PriceID in(Select N_PkeyId from Gen_LookupTable where X_Name=@xDefSPriceType and N_CompanyID=@nCompanyID)",Params,connection);
+
+//             SalePrice = myFunctions
+//             if (SalePrice.Rows.Count > 0)
+//             {
+//                 N_SPriceID = myFunctions.getIntVAL(dsSalesQuotation.Tables["Inv_ItemPriceMaster"].Rows[0]["N_PriceID"].ToString());
+
+//                 flxSales.set_TextMatrix(Row, mcUpdatedSPriceID, N_SPriceID.ToString());
+//                 flxSales.set_TextMatrix(Row, mcUnitSPrice, dsSalesQuotation.Tables["Inv_ItemPriceMaster"].Rows[0]["N_PriceVal"].ToString());
+//                 double UnitQuantity = myFunctions.getVAL(flxSales.get_TextMatrix(flxSales.Row, mcBaseUnitQty));
+//                 flxSales.set_TextMatrix(Row, mcSPrice, (myFunctions.getVAL(flxSales.get_TextMatrix(flxSales.Row, mcUnitSPrice)) * UnitQuantity).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
+//                 //int result = GetItem(flxSales.get_TextMatrix(flxSales.Row, mcItemcode), true);
+//                 return true;
+//             }
+//             else
+//             {
+//                 N_SPriceID = 0;
+//                 flxSales.set_TextMatrix(Row, mcUpdatedSPriceID, N_SPriceID.ToString());
+//                 flxSales.set_TextMatrix(Row, mcUpdatedSPrice, "".ToString());
+//                 return false;
+//             }
+
+//         }
+
 
 
         [HttpGet("getItemList")]
