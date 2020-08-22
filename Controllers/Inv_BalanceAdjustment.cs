@@ -166,90 +166,77 @@ namespace SmartxAPI.Controllers
                     transaction = connection.BeginTransaction();
 
 
-                    int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
+                    int N_AdjustmentID = myFunctions.getIntVAL(MasterRow["N_AdjustmentId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
-                    int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
+                    int N_TransType = myFunctions.getIntVAL(MasterRow["N_TransType"].ToString());
+                    string X_Trasnaction="";
+
+                    if(N_TransType==1)
+                        X_Trasnaction="CUSTOMER CREDIT NOTE";
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
-                    QueryParams.Add("@nQuotationID", N_QuotationID);
+                    QueryParams.Add("@nQuotationID", N_AdjustmentID);
                     QueryParams.Add("@nBranchID", N_BranchID);
-                    QueryParams.Add("@nLocationID", N_LocationID);
-
-
-                    bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", dLayer, connection, transaction);
-
 
                     // Auto Gen
-                    string QuotationNo = "";
-                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    string AdjustmentNo = "";
+                    var values = MasterTable.Rows[0]["X_VoucherNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 80);
+                        if(N_TransType==1)
+                            Params.Add("N_FormID", 504);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
-                        QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
-                        if (QuotationNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
-                        MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
+
+                        AdjustmentNo = dLayer.GetAutoNumber("Inv_BalanceAdjustmentMaster", "X_VoucherNo", Params, connection, transaction);
+                        if (AdjustmentNo == "") { return Ok(_api.Error("Unable to generate Adjustment Number")); }
+                        MasterTable.Rows[0]["X_VoucherNo"] = AdjustmentNo;
 
                     }
                     else
                     {
-                        if (N_QuotationID > 0)
+                        if (N_AdjustmentID > 0)
                         {
                             SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",N_CompanyID},
-                                {"X_TransType","Sales Quotation"},
-                                {"N_VoucherID",N_QuotationID}};
+                                {"X_TransType",X_Trasnaction},
+                                {"N_VoucherID",N_AdjustmentID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
                     }
 
-                    MasterTable.Columns.Remove("n_QuotationId");
+                    MasterTable.Columns.Remove("N_AdjustmentID");
                     MasterTable.AcceptChanges();
 
 
 
-                    N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", N_QuotationID, MasterTable, connection, transaction);
-                    if (N_QuotationID <= 0)
+                    N_AdjustmentID = dLayer.SaveData("Inv_BalanceAdjustmentMaster", "N_AdjustmentID", N_AdjustmentID, MasterTable, connection, transaction);
+                    if (N_AdjustmentID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Quotation"));
+                        return Ok(_api.Error("Unable to save Adjustment"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_QuotationID"] = N_QuotationID;
+                        DetailTable.Rows[j]["N_AdjustmentID"] = N_AdjustmentID;
                     }
 
-                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", 0, DetailTable, connection, transaction);
-                    if (N_QuotationDetailId <= 0)
+                    int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", 0, DetailTable, connection, transaction);
+                    if (N_AdjustmentDetailsId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Quotation"));
+                        return Ok(_api.Error("Unable to save Adjustment"));
                     }
                     else
                     {
-                        QueryParams.Add("@nItemID", 0);
-                        QueryParams.Add("@nCRMID", 0);
-                        QueryParams.Add("@nPurchaseCost", 0);
-                        for (int k = 0; k < DetailTable.Rows.Count; k++)
-                        {
-                            QueryParams["@nItemID"] = myFunctions.getIntVAL(DetailTable.Rows[k]["n_ItemID"].ToString());
-                            QueryParams["@nCRMID"] = myFunctions.getIntVAL(DetailTable.Rows[k]["n_CRMID"].ToString());
-                            QueryParams["@nPurchaseCost"] = myFunctions.getVAL(DetailTable.Rows[k]["n_PurchaseCost"].ToString());
-
-                            if (myFunctions.getVAL(QueryParams["@nPurchaseCost"].ToString()) > 0)
-                                dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@nPurchaseCost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                            if (myFunctions.getIntVAL(QueryParams["@nCRMID"].ToString()) > 0)
-                                dLayer.ExecuteNonQuery("Update Inv_CRMDetails Set B_Processed=1 Where N_CRMID=@nCRMID and N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
-                        }
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
+                    return Ok(_api.Success("Adjustment saved" + ":" + N_AdjustmentID));
                 }
             }
             catch (Exception ex)
