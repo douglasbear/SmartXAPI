@@ -222,62 +222,76 @@ namespace SmartxAPI.Controllers
         }
 
         //Save....
-        // [HttpPost("Save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         DataTable DetailTable;
-        //         MasterTable = ds.Tables["master"];
-        //         DetailTable = ds.Tables["details"];
-        //         SortedList Params = new SortedList();
-        //         dLayer.setTransaction();
-        //         // Auto Gen
-        //         string xOrderNo = "";
-        //         var values = MasterTable.Rows[0]["X_OrderNo"].ToString();
-        //         DataRow Master = MasterTable.Rows[0];
-        //         if (values == "@Auto")
-        //         {
-        //             Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
-        //             Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-        //             Params.Add("N_FormID", 81);
-        //             Params.Add("N_BranchID", Master["n_BranchId"].ToString());
-        //             xOrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params);
-        //             if (xOrderNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Sales Order Number")); }
-        //             MasterTable.Rows[0]["X_OrderNo"] = xOrderNo;
-        //         }
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    SortedList Params = new SortedList();
 
 
-        //         int nSalesOrderID = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", 0, MasterTable);
-        //         if (nSalesOrderID <= 0)
-        //         {
-        //             dLayer.rollBack();
-        //             return StatusCode(409, _api.Response(409, "Unable to save sales order"));
-        //         }
-        //         for (int j = 0; j < DetailTable.Rows.Count; j++)
-        //         {
-        //             DetailTable.Rows[j]["N_SalesOrderID"] = nSalesOrderID;
-        //         }
-        //         int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetails", 0, DetailTable);
-        //         if (N_QuotationDetailId <= 0)
-        //         {
-        //             dLayer.rollBack();
-        //             return StatusCode(409, _api.Response(409, "Unable to save sales order"));
-        //         }
-        //         else
-        //         {
-        //             dLayer.commit();
-        //         }
+                    int n_SalesOrderId = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                    int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
+                    string x_OrderNo = MasterRow["x_OrderNo"].ToString();
 
-        //         return GetSalesOrderDetails(int.Parse(Master["n_CompanyId"].ToString()), MasterTable.Rows[0]["X_OrderNo"].ToString(), int.Parse(Master["n_FnYearId"].ToString()), int.Parse(Master["N_LocationID"].ToString()), true, 1);
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         dLayer.rollBack();
-        //         return StatusCode(403, _api.ErrorResponse(ex));
-        //     }
-        // }
+                    if (x_OrderNo == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", N_CompanyID);
+                        Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_FormID", this.FormID);
+                        Params.Add("N_BranchID", N_BranchID);
+                        x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
+                        if (x_OrderNo == "") { return Ok("Unable to generate Sales Order Number"); }
+                        MasterTable.Rows[0]["X_OrderNo"] = x_OrderNo;
+                    }
+
+                    MasterTable.Columns.Remove("n_SalesOrderId");
+                    MasterTable.AcceptChanges();
+
+
+                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", n_SalesOrderId, MasterTable, connection, transaction);
+                    if (n_SalesOrderId <= 0)
+                    {
+                        transaction.Rollback();
+                    return Ok("Unable to save sales order");
+                    }
+
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["n_SalesOrderId"] = n_SalesOrderId;
+                    }
+                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", 0, DetailTable);
+                    if (N_QuotationDetailId <= 0)
+                    {
+                        transaction.Rollback();
+                   return Ok("Unable to save sales order");
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                    }
+
+                    return Ok(_api.Success("Sales Order Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+
+                return Ok(_api.Error(ex));
+            }
+        }
         //Delete....
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nSalesOrderID)
@@ -535,74 +549,91 @@ namespace SmartxAPI.Controllers
             }
         }
 
-   
 
-//         [HttpGet("getItem")]
-//         public ActionResult SalesPriceValidation(int nCompanyID, int nLocationID, int nBranchID,  int nItemID, int nCustomerID)
-//         {
 
-//             using (SqlConnection connection = new SqlConnection(connectionString))
-//             {
-//                 connection.Open();
-//            bool B_SPRiceType=false;
-//            string X_DefSPriceType="";
-//            int N_DefSPriceID=0;
-//            DataTable SalePrice = new DataTable();
-// SortedList Params =new SortedList();
-// Params.Add("@nCompanyID",nCompanyID);
+        [HttpGet("validateItemPrice")]
+        public ActionResult SalesPriceValidation(int nCompanyID, int nLocationID, int nBranchID, int nItemID, int nCustomerID)
+        {
 
-//         object res = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'",Params,connection);
-//             if (res != null)
-//             {
-//                 if (myFunctions.getIntVAL(res.ToString()) == 4)
-//                     B_SPRiceType = true;
-//                 else
-//                     B_SPRiceType = false;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    bool B_SPRiceType = false;
+                    string X_DefSPriceType = "";
+                    int N_DefSPriceID = 0;
+                    DataTable SalePrice = new DataTable();
+                    SortedList Params = new SortedList();
+                    SortedList OutPut = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
 
-//             }
-//             if (B_SPRiceType)
-//             {
-//                 X_DefSPriceType = "";
-//                 var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
-//                 N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
-//                 Params.Add("@nDefSPriceID",N_DefSPriceID);
-//                 object res2 = dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_PkeyId=@nDefSPriceID and N_ReferId=3 and N_CompanyID=@nCompanyID",Params,connection);
-//                 if (res2 != null)
-//                     X_DefSPriceType = res.ToString();
-//                     else X_DefSPriceType="";
+                    object res = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'", Params, connection);
+                    if (res != null)
+                    {
+                        if (myFunctions.getIntVAL(res.ToString()) == 4)
+                            B_SPRiceType = true;
+                        else
+                            B_SPRiceType = false;
 
-//             }
-//             Params.Add("@nBranchID",nBranchID);
-//             Params.Add("@nItemID",nItemID);
-//             Params.Add("@xDefSPriceType",X_DefSPriceType);
-//             SalePrice = dLayer.ExecuteDataTable("Select N_PriceID,N_PriceVal From Inv_ItemPriceMaster  Where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_itemId=@nItemID and N_PriceID in(Select N_PkeyId from Gen_LookupTable where X_Name=@xDefSPriceType and N_CompanyID=@nCompanyID)",Params,connection);
+                    }
+                    if (B_SPRiceType)
+                    {
+                        X_DefSPriceType = "";
+                        var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
+                        N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
+                        Params.Add("@nDefSPriceID", N_DefSPriceID);
+                        object res2 = dLayer.ExecuteScalar("select X_Name from Gen_LookupTable where N_PkeyId=@nDefSPriceID and N_ReferId=3 and N_CompanyID=@nCompanyID", Params, connection);
+                        if (res2 != null)
+                            X_DefSPriceType = res.ToString();
+                        else X_DefSPriceType = "";
 
-//             SalePrice = myFunctions
-//             if (SalePrice.Rows.Count > 0)
-//             {
-//                 N_SPriceID = myFunctions.getIntVAL(dsSalesQuotation.Tables["Inv_ItemPriceMaster"].Rows[0]["N_PriceID"].ToString());
+                    }
+                    Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@nItemID", nItemID);
+                    Params.Add("@xDefSPriceType", X_DefSPriceType);
+                    SalePrice = dLayer.ExecuteDataTable("Select N_PriceID,N_PriceVal From Inv_ItemPriceMaster  Where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_itemId=@nItemID and N_PriceID in(Select N_PkeyId from Gen_LookupTable where X_Name=@xDefSPriceType and N_CompanyID=@nCompanyID)", Params, connection);
 
-//                 flxSales.set_TextMatrix(Row, mcUpdatedSPriceID, N_SPriceID.ToString());
-//                 flxSales.set_TextMatrix(Row, mcUnitSPrice, dsSalesQuotation.Tables["Inv_ItemPriceMaster"].Rows[0]["N_PriceVal"].ToString());
-//                 double UnitQuantity = myFunctions.getVAL(flxSales.get_TextMatrix(flxSales.Row, mcBaseUnitQty));
-//                 flxSales.set_TextMatrix(Row, mcSPrice, (myFunctions.getVAL(flxSales.get_TextMatrix(flxSales.Row, mcUnitSPrice)) * UnitQuantity).ToString(myFunctions.decimalPlaceString(N_decimalPlace)));
-//                 //int result = GetItem(flxSales.get_TextMatrix(flxSales.Row, mcItemcode), true);
-//                 return true;
-//             }
-//             else
-//             {
-//                 N_SPriceID = 0;
-//                 flxSales.set_TextMatrix(Row, mcUpdatedSPriceID, N_SPriceID.ToString());
-//                 flxSales.set_TextMatrix(Row, mcUpdatedSPrice, "".ToString());
-//                 return false;
-//             }
 
-//         }
+                    if (SalePrice.Rows.Count > 0)
+                    {
+                        OutPut.Add("N_PriceID", SalePrice.Rows[0]["N_PriceID"]);
+                        OutPut.Add("N_PriceVal", SalePrice.Rows[0]["N_PriceVal"]);
+
+                    }
+                    else
+                    {
+                        OutPut.Add("N_PriceID", 0);
+                        OutPut.Add("N_PriceVal", "");
+                    }
+
+                    Params.Add("@nCustomerID", nCustomerID);
+                    object value = dLayer.ExecuteScalar("select N_DiscPerc from inv_CustomerDiscount where N_ProductID =@nItemID and N_CustomerID =@nCustomerID and N_CompanyID =@nCompanyID", Params, connection);
+                    if (value != null)
+                    {
+                        OutPut.Add("N_DiscPerc", value);
+                    }
+                    else
+                    {
+                        OutPut.Add("N_DiscPerc", "");
+                    }
+
+
+
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(e);
+            }
+
+        }
 
 
 
         [HttpGet("getItemList")]
-        public ActionResult GetItemList(int nCompanyID, int nLocationID, int nBranchID,string query, int PageSize,int Page)
+        public ActionResult GetItemList(int nCompanyID, int nLocationID, int nBranchID, string query, int PageSize, int Page)
         {
             string sql = "";
 
@@ -619,14 +650,15 @@ namespace SmartxAPI.Controllers
                 paramList.Add("@nBranchID", nBranchID);
                 paramList.Add("@PSize", PageSize);
                 paramList.Add("@Offset", Page);
-                
+
 
 
                 DataTable ItemDetails = new DataTable();
-                string qry="";
-                if(query!="" && query!=null){
-                 qry =" and (Description like @query or [Item Code] like @query) order by [Item Code],Description";
-                paramList.Add("@query", "%"+query+"%");
+                string qry = "";
+                if (query != "" && query != null)
+                {
+                    qry = " and (Description like @query or [Item Code] like @query) order by [Item Code],Description";
+                    paramList.Add("@query", "%" + query + "%");
                 }
 
                 string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
