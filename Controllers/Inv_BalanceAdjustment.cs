@@ -152,60 +152,91 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList Params = new SortedList();
-                    string ExecutiveCode = MasterTable.Rows[0]["X_SalesmanCode"].ToString();
-                    string SalesmanName = MasterTable.Rows[0]["X_SalesmanName"].ToString();
-                    string nCompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
-                    string nFnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
-                    int N_SalesmanID= myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());
-                    if (ExecutiveCode == "@Auto")
+                    SqlTransaction transaction;
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    transaction = connection.BeginTransaction();
+
+
+                    int N_AdjustmentID = myFunctions.getIntVAL(MasterRow["N_AdjustmentId"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                    int N_TransType = myFunctions.getIntVAL(MasterRow["N_TransType"].ToString());
+                    string X_Trasnaction="";
+
+                    if(N_TransType==1)
+                        X_Trasnaction="CUSTOMER CREDIT NOTE";
+
+                    QueryParams.Add("@nCompanyID", N_CompanyID);
+                    QueryParams.Add("@nFnYearID", N_FnYearID);
+                    QueryParams.Add("@nQuotationID", N_AdjustmentID);
+                    QueryParams.Add("@nBranchID", N_BranchID);
+
+                    // Auto Gen
+                    string AdjustmentNo = "";
+                    var values = MasterTable.Rows[0]["X_VoucherNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
+                    if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
-                        ExecutiveCode = dLayer.GetAutoNumber("inv_salesman", "X_SalesmanCode", Params, connection, transaction);
-                        if (ExecutiveCode == "") { return Ok(_api.Error("Unable to generate Sales Executive Code")); }
-                        MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
+                        Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", Master["n_FnYearId"].ToString());
+                        if(N_TransType==1)
+                            Params.Add("N_FormID", 504);
+                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
-                    }else
-                    {
-                        dLayer.DeleteData("inv_salesman", "N_SalesmanID", N_SalesmanID, "", connection, transaction);
-                    }
+                        AdjustmentNo = dLayer.GetAutoNumber("Inv_BalanceAdjustmentMaster", "X_VoucherNo", Params, connection, transaction);
+                        if (AdjustmentNo == "") { return Ok(_api.Error("Unable to generate Adjustment Number")); }
+                        MasterTable.Rows[0]["X_VoucherNo"] = AdjustmentNo;
 
-                        MasterTable.Columns.Remove("n_SalesmanID");
-                        MasterTable.AcceptChanges();
-
-
-                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", N_SalesmanID, MasterTable, connection, transaction);
-                    if (N_SalesmanID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
                     }
                     else
                     {
-
-                        SortedList nParams = new SortedList();
-                        nParams.Add("@p1",nCompanyID);
-                        nParams.Add("@p2",nFnYearID);
-                        nParams.Add("@p3",N_SalesmanID);
-                        string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
-                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
-                        outputDt = _api.Format(outputDt, "NewSalesMan");
-
-                        if(outputDt.Rows.Count==0){
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
+                        if (N_AdjustmentID > 0)
+                        {
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",N_CompanyID},
+                                {"X_TransType",X_Trasnaction},
+                                {"N_VoucherID",N_AdjustmentID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
-                        DataRow NewRow = outputDt.Rows[0];
-                        return Ok(_api.Success(NewRow.Table, "Salesman Saved"));
                     }
+
+                    MasterTable.Columns.Remove("N_AdjustmentID");
+                    MasterTable.AcceptChanges();
+
+
+
+                    N_AdjustmentID = dLayer.SaveData("Inv_BalanceAdjustmentMaster", "N_AdjustmentID", N_AdjustmentID, MasterTable, connection, transaction);
+                    if (N_AdjustmentID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Adjustment"));
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_AdjustmentID"] = N_AdjustmentID;
+                    }
+
+                    int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", 0, DetailTable, connection, transaction);
+                    if (N_AdjustmentDetailsId <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Adjustment"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                    }
+                    return Ok(_api.Success("Adjustment saved" + ":" + N_AdjustmentID));
                 }
             }
             catch (Exception ex)
@@ -216,31 +247,33 @@ namespace SmartxAPI.Controllers
 
 
 
-                [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesmanID)
+         [HttpDelete("delete")]
+        public ActionResult DeleteData(int nCompanyID,int nAdjustmentId,string xTransType)
             {
-                int Results = 0;
-                try
-                {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "",connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList deleteParams = new SortedList()
+                            {
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType",xTransType},
+                                {"N_VoucherID",nAdjustmentId}
+                             
+                            };
+                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    transaction.Commit();
                 }
-                    if (Results > 0)
-                    {
-                        return Ok(_api.Success("Sales Executive deleted"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error("Unable to delete Sales Executive"));
-                    }
 
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(_api.ErrorResponse(ex));
-                }
+                return Ok(_api.Success("Deleted"));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(_api.Error(ex));
+            }
 
 
             }
