@@ -12,9 +12,9 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
-    [Route("accounts")]
+    [Route("Banks")]
     [ApiController]
-    public class Accounts : ControllerBase
+    public class Banks : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         
         
-        public Accounts(IApiFunctions api,IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Banks(IApiFunctions api,IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer=dl;
@@ -30,24 +30,20 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpGet("glaccount/list")]
-        public ActionResult GetGLAccountList(int? nCompanyId,int? nFnYearId,string xType)
+        [HttpGet("list")]
+        public ActionResult GetBanksList(int? nCompanyId)
         {
             string sqlCommandText="";
-            if(nCompanyId==null){return StatusCode(404,_api.Response(404,"Company ID Required"));}                       
-            if(nFnYearId==null){return StatusCode(404,_api.Response(404,"FnYear ID Required"));}                       
+            if(nCompanyId==null){return Ok(_api.Warning("Company ID Required"));}                       
+                              
                 
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",xType);
 
-            if(xType.ToLower() !="all")
-                sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
-            else
-                sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
 
+                sqlCommandText="select code,Description from vw_AccBank_Disp where N_CompanyID=@p1 and B_isCompany =1 group by code,Description";
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

@@ -19,7 +19,6 @@ namespace SmartxAPI.Controllers
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
-        private readonly string conString;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         

@@ -10,17 +10,19 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using System.Net.Http;
+using System.IO;
+using System.Net;
 
 namespace SmartxAPI.Controllers
 {
-    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("report")]
     [ApiController]
     public class ReportMenus : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
-        private readonly string conString;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
@@ -79,13 +81,7 @@ namespace SmartxAPI.Controllers
                         {
 
                         }
-
-
-
-
                     }
-
-
                 }
 
                 if (dt.Rows.Count == 0)
@@ -128,11 +124,11 @@ namespace SmartxAPI.Controllers
                         string table = QueryString["X_TableName"].ToString();
                         string Criteria = QueryString["X_Criteria"].ToString();
                         if(Criteria!="")
-                        Criteria = " Where "+QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal").Replace("'BVal'", "@BVal").Replace("'FVal'", "@FVal");
+                        Criteria = " Where "+QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal ").Replace("'BVal'", "@BVal ").Replace("'FVal'", "@FVal ");
                         ListSqlParams.Add("@BVal", bval);
                         ListSqlParams.Add("@CVal", cval);
                         ListSqlParams.Add("@FVal", fval);
-                        string ListSql = "select " + fields + " from " + table + Criteria;
+                        string ListSql = "select " + fields + " from " + table +" "+ Criteria;
                         
                         outTable = dLayer.ExecuteDataTable(ListSql, ListSqlParams, connection);
                     }
@@ -159,35 +155,27 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
-        [HttpGet("listdetails")]
-        public ActionResult GetCategoryDetails(int? nCompanyId, int? nCategoryId)
+         [HttpGet("getreport")]
+        public ActionResult GetReport(string reportName, string critiria)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
+            //var client = new HttpClient();
 
-            string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1 and N_UserCategoryID=@p2 order by N_UserCategoryID DESC";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nCategoryId);
+var handler = new HttpClientHandler
+            {
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>{  return true;  }
+            };
+var client = new HttpClient(handler );
+            //HttpClient client = new HttpClient(clientHandler);
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                if (dt.Rows.Count == 0)
-                { return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" }); }
-                else { return Ok(dt); }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.ErrorResponse(e));
-            }
+            var path = client.GetAsync ("https://192.169.227.51:87/api/report?reportname="+reportName +" &critiria=" + critiria);
+            path.Wait ();
+            string ReportPath=path.ToString();
+            ReportPath="C:\\"+ reportName + ".pdf";
+            Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
+            if(fileStream==null){return StatusCode(403,"Report Generation Error");}
+            return File(fileStream, "application/octet-stream",reportName+".pdf");
         }
-
+        
 
     }
 }

@@ -9,21 +9,10 @@ namespace SmartxAPI.GeneralFunctions
 {
     public class DataAccessLayer : IDataAccessLayer
     {
-        /// <summary>
-        /// Class Variables for Data Layer...
-        /// </summary>
-        #region Declarations
-        //Common Variable Declarations...
-        bool isHQUtility;								//True -> HQ, False -> Store
-        public static string connectionString;			//Connection String
-        public int formatCode;							//Format Code of Date Format
-        public string formatString;						//Format string of Date Format
 
-        //Database variable declarations...
-        public static string serverName;				//Server Name
-        public static string databaseUser;				//Database User Name
-        public static string databasePassword;			//Database Password
-        public static string databaseName;
+        #region Declarations
+
+
 
         IConfiguration config;				//Database Name
 
@@ -31,7 +20,6 @@ namespace SmartxAPI.GeneralFunctions
         private SqlCommand commandStatement;			//SQL Statement
         public SqlConnection databaseConnection;		//SQL Connection		//Data Adapter
         private static DataTable resultTable;			//Data table to store result
-        private static DataSet resultSet;
         public SqlTransaction databaseTransaction;      //Transaction
         #endregion
 
@@ -50,39 +38,7 @@ namespace SmartxAPI.GeneralFunctions
         }
         #endregion
 
-        /// <summary>
-        /// Server and Database name can be passed in these properties...
-        /// </summary>
-        #region Properties
-        public string server
-        {
-            get
-            {
-                return serverName;
-            }
-            set
-            {
-                serverName = value;
-            }
-        }
 
-        public string database
-        {
-            get
-            {
-                return databaseName;
-            }
-            set
-            {
-                databaseName = value;
-            }
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Database functions for Database...
-        /// </summary>
         #region Functions
         public static SqlTransaction TransactionScope = null;
         public void setTransaction()
@@ -98,64 +54,81 @@ namespace SmartxAPI.GeneralFunctions
         {
             TransactionScope.Rollback();
         }
-        public int ExecuteNonQuery(string sqlCommandText)
+
+
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection)
         {
             try
             {
-                OpenConnection();
-                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, databaseConnection);
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
                 sqlCommand.CommandTimeout = 0;
                 sqlCommand.CommandType = CommandType.Text;
-                sqlCommand.Transaction = databaseTransaction;
                 return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-            finally
-            {
-                CloseConnection();
-            }
         }
 
-        public int ExecuteNonQuery(string sqlCommandText, System.Data.CommandType sqlCommandType)
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
-                OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return this.commandStatement.ExecuteNonQuery();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-            finally
-            {
-                CloseConnection();
-            }
         }
-
-        public int ExecuteNonQueryLinkDB(string sqlCommandText, System.Data.CommandType sqlCommandType)
+        public int ExecuteNonQuery(string sqlCommandText, SortedList paramList, SqlConnection connection)
         {
             try
             {
-                OpenConnection();
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                return this.commandStatement.ExecuteNonQuery();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+                return sqlCommand.ExecuteNonQuery();
             }
             catch (Exception ex)
             {
                 throw ex;
             }
-            finally
+        }
+        public int ExecuteNonQuery(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction)
+        {
+            try
             {
-                CloseConnection();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
             }
         }
 
@@ -178,6 +151,36 @@ namespace SmartxAPI.GeneralFunctions
                 CloseConnection();
             }
         }
+
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandType = CommandType.Text;
+                return sqlCommand.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection, SqlTransaction transaction)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandType = CommandType.Text;
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteScalar();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
 
         public object ExecuteScalar(string sqlCommandText, SortedList paramList)
         {
@@ -231,51 +234,25 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public object ExecuteScalar(string connectionString, string sqlCommandText)
+        public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection)
         {
             try
             {
-                if (databaseConnection.State != ConnectionState.Closed || this.databaseConnection.State != ConnectionState.Broken)
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandType = CommandType.Text;
+                if (paramList.Count > 0)
                 {
-                    databaseConnection.Close();
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
                 }
-                this.databaseConnection.ConnectionString = connectionString;
-                this.databaseConnection.Open();
-                commandStatement.CommandType = CommandType.Text;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = TransactionScope;
-                return this.commandStatement.ExecuteScalar();
+                return sqlCommand.ExecuteScalar();
             }
             catch (Exception ex)
             {
                 throw ex;
-            }
-            finally
-            {
-                if (databaseConnection.State != ConnectionState.Closed || this.databaseConnection.State != ConnectionState.Broken)
-                {
-                    databaseConnection.Close();
-                }
-            }
-        }
-
-        public object ExecuteScalar(string sqlCommandText, System.Data.CommandType sqlCommandType)
-        {
-            try
-            {
-                OpenConnection();
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return this.commandStatement.ExecuteScalar();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
             }
         }
 
@@ -342,65 +319,29 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public IDataReader ExecuteReader(string sqlCommandText)
+        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection)
         {
             try
             {
-                OpenConnection();
-                commandStatement.CommandType = CommandType.Text;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return (IDataReader)this.commandStatement.ExecuteReader();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
 
-        public IDataReader ExecuteReader(string sqlCommandText, System.Data.CommandType sqlCommandType)
-        {
-            try
-            {
-                OpenConnection();
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Transaction = databaseTransaction;
-                return (IDataReader)this.commandStatement.ExecuteReader();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
 
-        public DataTable ExecuteDataTable(string sqlCommandText)
-        {
-            try
-            {
-                OpenConnection();
-                int recordsReturned;
-                SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
-                resultTable = new DataTable();
-                recordsReturned = dataAdapter.Fill(resultTable);
-                return resultTable;
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+
+                return sqlCommand.ExecuteScalar();
             }
             catch (Exception ex)
             {
                 throw ex;
-            }
-            finally
-            {
-                CloseConnection();
             }
         }
 
@@ -469,7 +410,6 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
                 SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                string CmdText = Command.CommandText;
                 dataAdapter.SelectCommand = Command;
                 DataTable resTable = new DataTable();
                 recordsReturned = dataAdapter.Fill(resTable);
@@ -481,157 +421,26 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-
-
-        public DataSet FillDataSet(string sqlCommandText)
+        public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con, SqlTransaction transaction)
         {
             try
             {
-                OpenConnection();
                 int recordsReturned;
+                SqlCommand Command = new SqlCommand(sqlCommandText, con);
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        Command.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
                 SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
-                resultSet = new DataSet();
-                recordsReturned = dataAdapter.Fill(resultTable);
-                return resultSet;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-        public DataTable ExecuteDataTable(string sqlCommandText, string dataTableName)
-        {
-            try
-            {
-                OpenConnection();
-                int recordsReturned;
-                SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
-                if (dataTableName.Trim().Length > 0)
-                {
-                    resultTable = new DataTable(dataTableName);
-                }
-                else
-                {
-                    resultTable = new DataTable();
-                }
-                recordsReturned = dataAdapter.Fill(resultTable);
-                return resultTable;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        public DataTable ExecuteDataTable(string sqlCommandText, System.Data.CommandType sqlCommandType)
-        {
-            try
-            {
-                OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Connection = databaseConnection;
-                SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.SelectCommand = commandStatement;
-                commandStatement.Transaction = databaseTransaction;
-
-                int recordsReturned;
-                dataAdapter.SelectCommand = commandStatement;
-
-                resultTable = new DataTable();
-                recordsReturned = dataAdapter.Fill(resultTable);
-                return resultTable;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        public DataTable ExecuteDataTable(string sqlCommandText, System.Data.CommandType sqlCommandType, string dataTableName)
-        {
-            try
-            {
-                OpenConnection();
-                commandStatement.CommandTimeout = 0;
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                commandStatement.Connection = databaseConnection;
-                SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.SelectCommand = commandStatement;
-                commandStatement.Transaction = databaseTransaction;
-
-                int recordsReturned;
-                dataAdapter.SelectCommand = commandStatement;
-
-                if (dataTableName.Trim().Length > 0)
-                {
-                    resultTable = new DataTable(dataTableName);
-                }
-                else
-                {
-                    resultTable = new DataTable();
-                }
-                recordsReturned = dataAdapter.Fill(resultTable);
-                return resultTable;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        public string ExecuteForXML(string sqlCommandText, System.Data.CommandType sqlCommandType)
-        {
-            try
-            {
-                OpenConnection();
-                commandStatement.CommandType = sqlCommandType;
-                commandStatement.CommandText = sqlCommandText;
-                SqlDataReader readerResultSet;
-                readerResultSet = this.commandStatement.ExecuteReader();
-                System.Text.StringBuilder resultData = new System.Text.StringBuilder();
-                do
-                {
-                    resultData.Append(readerResultSet.GetString(0));
-                }
-                while (readerResultSet.Read());
-                return Convert.ToString(resultData);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-            finally
-            {
-                CloseConnection();
-            }
-        }
-
-        public void ClearParameters()
-        {
-            try
-            {
-                this.commandStatement.Parameters.Clear();
+                Command.Transaction = transaction;
+                dataAdapter.SelectCommand = Command;
+                DataTable resTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resTable);
+                return resTable;
             }
             catch (Exception ex)
             {
@@ -639,152 +448,6 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public IDataParameter AddParameter()
-        {
-            try
-            {
-                SqlParameter sqlParam = new SqlParameter();
-                this.commandStatement.Parameters.Add(sqlParam);
-                return sqlParam;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public IDataParameter AddParameter(string parameterName, SqlDbType sqlDatabaseType, int parameterLength, ParameterDirection parameterDirection)
-        {
-            try
-            {
-                SqlParameter sqlParam = new SqlParameter(parameterName, sqlDatabaseType, parameterLength);
-                sqlParam.Direction = parameterDirection;
-                return this.commandStatement.Parameters.Add(sqlParam);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public IDataParameter AddParameter(string parameterName, SqlDbType sqlDatabaseType, int parameterLength, ParameterDirection parameterDirection, object parameterValue)
-        {
-            try
-            {
-                SqlParameter sqlParam = (SqlParameter)this.AddParameter(parameterName, sqlDatabaseType, parameterLength, parameterDirection);
-                sqlParam.Value = parameterValue;
-                return sqlParam;
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        #endregion
-
-        /// <summary>
-        /// Functions for date formatting...
-        /// </summary>
-        #region Date Formatting
-
-        /// <summary>
-        /// Converts supplied date to SQL universal format...
-        /// </summary>
-        /// <param name="rawDate"> Date in DateTime </param>
-        public string UniversalDateFormat(DateTime rawDate)
-        {
-            try
-            {
-                return string.Format("{0:s}", rawDate);
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Converts supplied date to SQL universal format...
-        /// </summary>
-        /// <param name="rawDate"> Date in string </param>
-        public string UniversalDateFormat(string rawDate)
-        {
-            try
-            {
-                return string.Format("{0:s}", Convert.ToDateTime(rawDate));
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// To set the date format of SQL Server...
-        /// </summary>
-        private void SetDateFormat()
-        {
-            try
-            {
-                string sqlQuery = "";
-                string dateFormat = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.ShortDatePattern;
-                string dateSeparator = System.Globalization.CultureInfo.CurrentCulture.DateTimeFormat.DateSeparator;
-
-                dateFormat = dateFormat.ToUpper();
-
-                //Getting Date Format...
-                if (dateFormat.Substring(0, 1) == "M" && dateFormat.Substring(dateFormat.Length - 1, 1) == "Y")
-                {
-                    formatCode = 101;
-                    formatString = "MM" + dateSeparator + "dd" + dateSeparator + "yyy";
-                    sqlQuery = "SET DATEFORMAT mdy";
-                }
-                else if (dateFormat.Substring(0, 1) == "M" && dateFormat.Substring(dateFormat.Length - 1, 1) == "D")
-                {
-                    formatString = "MM" + dateSeparator + "yyy" + dateSeparator + "dd";
-                    sqlQuery = "SET DATEFORMAT myd";
-                }
-                else if (dateFormat.Substring(0, 1) == "D" && dateFormat.Substring(dateFormat.Length - 1, 1) == "Y")
-                {
-                    formatCode = 103;
-                    formatString = "dd" + dateSeparator + "MM" + dateSeparator + "yyy";
-                    sqlQuery = "SET DATEFORMAT dmy";
-                }
-                else if (dateFormat.Substring(0, 1) == "D" && dateFormat.Substring(dateFormat.Length - 1, 1) == "M")
-                {
-                    formatString = "dd" + dateSeparator + "yyy" + dateSeparator + "MM";
-                    sqlQuery = "SET DATEFORMAT dym";
-                }
-                else if (dateFormat.Substring(0, 1) == "Y" && dateFormat.Substring(dateFormat.Length - 1, 1) == "M")
-                {
-                    formatString = "yyy" + dateSeparator + "dd" + dateSeparator + "MM";
-                    sqlQuery = "SET DATEFORMAT ydm";
-                }
-                else if (dateFormat.Substring(0, 1) == "Y" && dateFormat.Substring(dateFormat.Length - 1, 1) == "D")
-                {
-                    formatString = "yyy" + dateSeparator + "MM" + dateSeparator + "dd";
-                    sqlQuery = "SET DATEFORMAT ymd";
-                }
-
-                this.commandStatement.CommandType = CommandType.Text;
-                this.commandStatement.CommandText = sqlQuery;
-                this.commandStatement.ExecuteNonQuery();
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-        #endregion
-
-        /// <summary>
-        /// Functions to connect to database...and to set date format...
-        /// </summary>
-        #region Database Connection
-        /// <summary>
-        /// Opens connection to database without transaction...
-        /// </summary>
 
         public void OpenConnection()
         {
@@ -805,37 +468,6 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        /// <summary>
-        /// Opens database connection with transaction...
-        /// </summary>
-        /// <param name="transactionType"> true = Begin Transaction, false = No Transaction </param>
-
-        public void OpenConnectionLinkServer()
-        {
-            try
-            {
-                if (databaseConnection.State == ConnectionState.Closed || this.databaseConnection.State == ConnectionState.Broken)
-                {
-                    this.databaseConnection.ConnectionString = "Integrated Security=SSPI;Persist Security Info=False;"
-                                                                    + "Server=" + serverName
-                                                                    + ";Database=" + databaseName
-                                                                    + ";User ID=" + databaseUser
-                                                                    + ";Password=" + databasePassword
-                                                                    + ";Trusted_Connection=False";
-
-                    this.databaseConnection.Open();	//Open connection to Database...
-                    SetDateFormat();					//Server date format...
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        /// <summary>
-        /// Close connection to server for connection having no transaction...
-        /// </summary>
         public void CloseConnection()
         {
             try
@@ -850,49 +482,6 @@ namespace SmartxAPI.GeneralFunctions
                 throw ex;
             }
         }
-
-        /// <summary>
-        /// Close connection to server for connection having transaction...
-        /// </summary>
-        /// <param name="commitRollBack"> true = Commit, false = RollBack </param>
-        public void CloseConnection(bool commitRollBack)
-        {
-            try
-            {
-                if (databaseConnection.State != ConnectionState.Closed || this.databaseConnection.State != ConnectionState.Broken)
-                {
-                    if (commitRollBack == true)
-                    {
-                        databaseTransaction.Commit();
-                    }
-                    else
-                    {
-                        databaseTransaction.Rollback();
-                    }
-                    databaseConnection.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
-        public void CloseConnectionLinkServer()
-        {
-            try
-            {
-                if (databaseConnection.State != ConnectionState.Closed || this.databaseConnection.State != ConnectionState.Broken)
-                {
-                    databaseConnection.Close();
-                }
-            }
-            catch (Exception ex)
-            {
-                throw ex;
-            }
-        }
-
 
         #endregion
 
@@ -933,7 +522,6 @@ namespace SmartxAPI.GeneralFunctions
         {
             try
             {
-                OpenConnection();
                 SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
                 sqlCommand.CommandTimeout = 0;
                 sqlCommand.CommandType = CommandType.StoredProcedure;
@@ -957,15 +545,39 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-
-        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList)
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection)
         {
             try
             {
-                OpenConnection();
+                SqlCommand sqlCommand = new SqlCommand(sqlCommandText, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.StoredProcedure;
+
+                if (paramList.Count > 0)
+                {
+                    ICollection Keys = paramList.Keys;
+                    foreach (string key in Keys)
+                    {
+                        sqlCommand.Parameters.Add(new SqlParameter(key.ToString(), paramList[key].ToString()));
+                    }
+                }
+
+
+                return sqlCommand.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection)
+        {
+            try
+            {
                 int recordsReturned;
                 SqlDataAdapter dataAdapter = new SqlDataAdapter();
-                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, databaseConnection);
+                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, connection);
                 dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
                 dataAdapter.SelectCommand.CommandText = sqlCommandText;
 
@@ -981,7 +593,7 @@ namespace SmartxAPI.GeneralFunctions
 
 
 
-                resultTable = new DataTable();
+                DataTable resultTable = new DataTable();
                 recordsReturned = dataAdapter.Fill(resultTable);
                 return resultTable;
 
@@ -990,10 +602,6 @@ namespace SmartxAPI.GeneralFunctions
             {
 
                 throw ex;
-            }
-            finally
-            {
-                CloseConnection();
             }
         }
 
@@ -1101,6 +709,18 @@ namespace SmartxAPI.GeneralFunctions
             return Result;
         }
 
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection)
+        {
+            int Result = 0;
+            SortedList paramList = new SortedList();
+            paramList.Add("X_TableName", TableName);
+            paramList.Add("X_IDFieldName", IDFieldName);
+            paramList.Add("N_IDFieldValue", IDFieldValue);
+            paramList.Add("X_Critieria", X_Critieria);
+            Result = (int)ExecuteNonQueryPro("DELETE_DATA", paramList, connection);
+            return Result;
+        }
+
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params)
         {
@@ -1167,28 +787,39 @@ namespace SmartxAPI.GeneralFunctions
 
     public interface IDataAccessLayer
     {
-        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList);
+
+        /*  Dep Methodes */
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList);
-        public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
-        //public  DataTable ExecuteDataTableAsync(string sqlCommandText,SortedList paramList);
-        public DataTable ExecuteDataTable(string sqlCommandText);
-        public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
-        public object ExecuteScalar(string sqlCommandText);
         public object ExecuteScalar(string sqlCommandText, SortedList paramList);
-        public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable);
-        public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
-        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList);
-        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
         public void setTransaction();
         public void commit();
         public void rollBack();
         public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria);
-        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection, SqlTransaction transaction);
-        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList);
-        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
-
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params);
+
+        /*  Dep Methodes End */
+
+
+        public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection);
+        public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
+        public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con, SqlTransaction transaction);
+        public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection);
+        public object ExecuteScalar(string sqlCommandText, SqlConnection connection, SqlTransaction transaction);
+        public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection);
+        public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
+        public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
+        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection);
+        public object ExecuteScalarPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection);
+        public int DeleteData(string TableName, string IDFieldName, int IDFieldValue, string X_Critieria, SqlConnection connection, SqlTransaction transaction);
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
+        public int ExecuteNonQueryPro(string sqlCommandText, SortedList paramList, SqlConnection connection);
+        public int ExecuteNonQuery(string sqlCommandText, SortedList paramList, SqlConnection connection, SqlTransaction transaction);
+        public int ExecuteNonQuery(string sqlCommandText, SortedList paramList, SqlConnection connection);
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection, SqlTransaction transaction);
+        public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection);
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
     }
 

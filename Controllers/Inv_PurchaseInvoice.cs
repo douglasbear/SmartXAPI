@@ -5,6 +5,8 @@ using SmartxAPI.GeneralFunctions;
 using System;
 using System.Data;
 using System.Collections;
+using Microsoft.Data.SqlClient;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.Controllers
 
@@ -17,11 +19,13 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
-        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun)
+        private readonly string connectionString;
+        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = fun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
 
@@ -53,17 +57,18 @@ namespace SmartxAPI.Controllers
                 return StatusCode(404, _api.Response(404, e.Message));
             }
         }
-        [HttpGet("details")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, int nPurchaseId, bool showAllBranch, int nBranchId)
+        [HttpGet("listdetails")]
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, int nPurchaseNO, bool showAllBranch, int nBranchId)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             DataTable dtPurchaseInvoice = new DataTable();
             DataTable dtPurchaseInvoiceDetails = new DataTable();
+            int N_PurchaseID=0;
 
             Params.Add("@CompanyID", nCompanyId);
             Params.Add("@YearID", nFnYearId);
-            Params.Add("@PurchaseID", nPurchaseId);
+            Params.Add("@PurchaseNo", nPurchaseNO);
             Params.Add("@TransType", "PURCHASE");
             Params.Add("@BranchID", nBranchId);
             string X_Crieteria = "";
@@ -72,44 +77,50 @@ namespace SmartxAPI.Controllers
 
             if (showAllBranch == true)
             {
-                X_Crieteria = " where N_CompanyID=@CompanyID and N_FnYearID=@YearID and N_PurchaseID=@PurchaseID and X_TransType=@TransType";
+                X_Crieteria = "where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType";
             }
             else
             {
-
-                X_Crieteria = " where N_CompanyID=@CompanyID and N_FnYearID=@YearID and N_PurchaseID=@PurchaseID and X_TransType=@TransType and  N_BranchId=@BranchID";
+                X_Crieteria = "where N_CompanyID=@CompanyID and X_InvoiceNo=@PurchaseNo and N_FnYearID=@YearID and X_TransType=@TransType  and  N_BranchId=@BranchID";
+                
             }
             X_MasterSql = "select * from vw_Inv_PurchaseDisp " + X_Crieteria + "";
             try
             {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
 
-
-                dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params);
+                connection.Open();
+                
+                dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params,connection);
                 if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(new { }); }
                 dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
+                dtPurchaseInvoice.Rows[0]["N_PurchaseID"] = N_PurchaseID;
                 dt.Tables.Add(dtPurchaseInvoice);
 
 
                 //PURCHASE INVOICE DETAILS
-                bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer);
+                bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer,connection);
 
                 if (B_MRNVisible)
                 {
                     if (showAllBranch == true)
-                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompnayID and vw_InvPurchaseDetails.N_PurchaseID=@PurchaseID";
+                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompnayID and vw_InvPurchaseDetails.N_PurchaseID="+ N_PurchaseID;
                     else
-                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID Where vw_InvPurchaseDetails.N_CompanyID=@CompnayID and vw_InvPurchaseDetails.N_PurchaseID=@PurchaseID and vw_InvPurchaseDetails.N_BranchId=@BranchID";
+                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID Where vw_InvPurchaseDetails.N_CompanyID=@CompnayID and vw_InvPurchaseDetails.N_PurchaseID="+ N_PurchaseID +" and vw_InvPurchaseDetails.N_BranchId=@BranchID";
                 }
                 else
                 {
                     if (showAllBranch == true)
-                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=@PurchaseID";
+                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID="+N_PurchaseID;
                     else
-                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=@PurchaseID and vw_InvPurchaseDetails.N_BranchId=@BranchID ";
+                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID="+N_PurchaseID+" and vw_InvPurchaseDetails.N_BranchId=@BranchID ";
                 }
-                dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql,Params);
+                dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql,Params,connection);
                 dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
                 dt.Tables.Add(dtPurchaseInvoiceDetails);
+                }
+
                 return Ok(dt);
 
             }
@@ -133,6 +144,10 @@ namespace SmartxAPI.Controllers
             string InvoiceNo = "";
             DataRow masterRow = MasterTable.Rows[0];
             var values = masterRow["x_InvoiceNo"].ToString();
+            try
+            {
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
 
             if (values == "@Auto")
             {
@@ -144,8 +159,8 @@ namespace SmartxAPI.Controllers
                 if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
                 MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
             }
-            try
-            {
+           
+                
                 dLayer.setTransaction();
                 int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable);
                 if (N_InvoiceId <= 0)
@@ -158,7 +173,8 @@ namespace SmartxAPI.Controllers
                 }
                 int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", 0, DetailTable);
                 dLayer.commit();
-                return Ok("Data Saved");// GetPurchaseInvoiceDetails(int.Parse(masterRow["n_CompanyId"].ToString()),int.Parse(masterRow["n_FnYearId"].ToString()),N_InvoiceId,true,0);
+            }
+                return Ok("Data Saved");
             }
             catch (Exception ex)
             {
@@ -188,12 +204,12 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {
                     dLayer.commit();
-                    return StatusCode(200, _api.Response(200, "Sales PurchaseInvoice deleted"));
+                    return StatusCode(200, _api.Response(200, "Purchase Invoice deleted"));
                 }
                 else
                 {
                     dLayer.rollBack();
-                    return StatusCode(409, _api.Response(409, "Unable to delete sales PurchaseInvoice"));
+                    return StatusCode(409, _api.Response(409, "Unable to delete Purchase Invoice"));
                 }
 
             }

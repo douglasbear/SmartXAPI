@@ -1,19 +1,12 @@
 using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Threading.Tasks;
 using AutoMapper;
-using SmartxAPI.Models;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Builder;
 using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.HttpsPolicy;
-using Microsoft.AspNetCore.Mvc;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 using Newtonsoft.Json.Serialization;
 using SmartxAPI.Profiles;
 using System.Text;
@@ -79,6 +72,8 @@ namespace SmartxAPI
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
         public void Configure(IApplicationBuilder app, IWebHostEnvironment env)
         {
+
+
             app.UseCors(options=>
             //options.WithOrigins("http://localhost:3000")
             options.AllowAnyOrigin()
@@ -89,7 +84,12 @@ namespace SmartxAPI
             if (env.IsDevelopment())
             {
                 app.UseDeveloperExceptionPage();
+                //app.UseExceptionHandler("/error"); 
             }
+            // else
+            // {
+            //     app.UseExceptionHandler("/error"); 
+            // }
 
             
 
