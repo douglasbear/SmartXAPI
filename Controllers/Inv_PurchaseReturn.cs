@@ -60,39 +60,74 @@ namespace SmartxAPI.Controllers
                      return StatusCode(404,_api.Response(404,e.Message));
                 }
         }
-        [HttpGet("listdetails")]
-        public ActionResult GetPurchaseReturnList(int? nCompanyId,int nQuotationId,int nFnYearId)
+       [HttpGet("listDetails")]
+        public ActionResult GetPurchaseReturnDetails(int nCompanyId, string xCreditNoteNo,string xInvoiceNo, int nFnYearId, bool bAllBranchData, int nBranchID)
         {
-            DataSet dt=new DataSet();
-            SortedList Params=new SortedList();
-            
-            string sqlCommandText="select * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-            Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",nQuotationId);
 
-            try{
-                 DataTable MasterTable = new DataTable();
-                 DataTable DetailTable = new DataTable();
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            DataTable DataTable = new DataTable();
+
+            string Mastersql = "";
+
+            if (bAllBranchData == true)
+            {
+                if(xInvoiceNo=="0")
+                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',0";
+                else
+                {
+                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',0";
+                    Params.Add("@p4", xInvoiceNo);
+                }
+            }
+            else
+            {
+              if(xInvoiceNo=="0")
+                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',@p5";
+                else
+                {
+                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',@p5";
+                    Params.Add("@p5", nBranchID);
+                }
+            }
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", xCreditNoteNo);
+
+            try
+            {
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                connection.Open();
-                MasterTable=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-                
-                MasterTable= _api.Format(MasterTable,"Master");
-                dt.Tables.Add(MasterTable);
-                
-                //Quotation Details
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
 
-            string  sqlCommandText2="select * from vw_InvQuotationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
-           // DataTable QuotationDetails = new DataTable();
-            DetailTable=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection);
-            DetailTable=_api.Format(DetailTable,"Details");
-            dt.Tables.Add(DetailTable);
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    //PurchaseOrder Details
+                    string DetailSql = "";
+                        if (bAllBranchData == true)
+                        {
+                            DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                        }
+                        else
+                        {
+                             DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                        }
+                        
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
+                }
+                return Ok(dt);
             }
-            return Ok(dt);
-            }catch(Exception e){
-                return StatusCode(404,_api.Response(404,e.Message));
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.ErrorResponse(e));
             }
         }
 
@@ -130,7 +165,7 @@ namespace SmartxAPI.Controllers
                         }
                     int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",0,DetailTable);                    
                     dLayer.commit();
-                    return StatusCode(200,_api.Response(200 ,"Sales Quotation Saved" ));
+                    return StatusCode(200,_api.Response(200 ,"Purchase Return Saved" ));
                 }
                 catch (Exception ex)
                 {
@@ -138,39 +173,7 @@ namespace SmartxAPI.Controllers
                     return StatusCode(403,ex);
                 }
         }
-        //Delete....
-         [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID)
-        {
-             int Results=0;
-            try
-            {
-                dLayer.setTransaction();
-                Results=dLayer.DeleteData("Inv_PurchaseReturnMaster","N_CreditNoteID",N_QuotationID,"");
-                if(Results<=0){
-                        dLayer.rollBack();
-                        return StatusCode(409,_api.Response(409 ,"Unable to delete sales quotation" ));
-                        }
-                        else{
-                dLayer.DeleteData("Inv_PurchaseReturnDetails","N_CreditNoteDetailsID",N_QuotationID,"");
-                }
-                
-                if(Results>0){
-                    dLayer.commit();
-                    return StatusCode(200,_api.Response(200 ,"Purchase Return deleted" ));
-                }else{
-                    dLayer.rollBack();
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete Purchase Return" ));
-                }
-                
-                }
-            catch (Exception ex)
-                {
-                    return StatusCode(404,_api.Response(404,ex.Message));
-                }
-            
-
-        }
+       
         [HttpGet("dummy")]
         public ActionResult GetPurchaseInvoiceDummy(int? Id)
         {
@@ -195,6 +198,36 @@ namespace SmartxAPI.Controllers
             }catch(Exception e){
                 return StatusCode(403,_api.ErrorResponse(e));
             }
+        }
+
+        [HttpDelete()]
+        public ActionResult DeleteData(int nCreditNoteId, int nCompanyId, string xType)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList deleteParams = new SortedList()
+                            {
+                                {"N_CompanyID",nCompanyId},
+                                {"X_TransType",xType},
+                                {"N_VoucherID",nCreditNoteId}
+                            };
+                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    transaction.Commit();
+                }
+
+                return Ok(_api.Success("Purchase Return Deleted"));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(_api.Error(ex));
+            }
+
+
         }
         
     }
