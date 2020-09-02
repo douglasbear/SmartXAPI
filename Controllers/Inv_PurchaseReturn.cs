@@ -7,7 +7,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-
 namespace SmartxAPI.Controllers
 
 {
