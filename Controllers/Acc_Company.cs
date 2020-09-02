@@ -64,6 +64,38 @@ namespace SmartxAPI.Controllers
 
         }
 
+  [HttpGet("details")]
+        public ActionResult GetCompanyInfo(int nCompanyID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "select * from Acc_Company where B_Inactive =@p1 and N_CompanyID=@p2";
+            Params.Add("@p1", 0);
+            Params.Add("@p2", nCompanyID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+
+        }
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID)
