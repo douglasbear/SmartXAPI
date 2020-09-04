@@ -384,12 +384,17 @@ namespace SmartxAPI.Controllers
                         dtInvoiceSplit.AcceptChanges();
 
                         int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
-                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection,transaction)));                        
+                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
+                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
+                        //Sales amount details/payment popup
+                        for (int i = 0; i < dtInvoiceSplit.Rows.Count; i++)
+                            dtInvoiceSplit.Rows[i]["N_SalesId"] = N_SalesID;
                         if (N_AmtSplit == 1)
                         {
 
                             if (N_IsSave == 1)
                             {
+
                                 int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", 0, dtInvoiceSplit, connection, transaction);
                                 if (N_SalesAmountID <= 0)
                                 {
@@ -432,7 +437,25 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error("Unable to save Sales Invoice!"));
                             }
                         }
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            /*if (B_salesOrder == true)
+                         {
+                             if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcSalesOrderID)) > 0)
+                             {
+                                 dba.ExecuteNonQuery("Update Inv_SalesOrder Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_SalesOrderID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                                 if(B_ServiceSheet)
+                                     dba.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
 
+                             }
+
+                         }
+                         else
+                         {
+                             if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcQuotationID)) > 0)
+                                 dba.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_QuotationID=" + flxSales.get_TextMatrix(i, mcQuotationID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                         }*/
+                        }
                         // Warranty Save Code here
                         //optical prescription saving here
 
@@ -446,7 +469,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
-                            bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection,transaction)));                           
+                            bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
                                 if (!B_DirectPosting)
