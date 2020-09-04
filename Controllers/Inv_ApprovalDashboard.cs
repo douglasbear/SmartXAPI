@@ -14,9 +14,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("SalesFunnel")]
+    [Route("ApprovalDashboard")]
     [ApiController]
-    public class SalesFunnel : ControllerBase
+    public class Inv_ApprovalDashboard : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
 
-        public SalesFunnel(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_ApprovalDashboard(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -33,14 +33,46 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listDetails")]
-        public ActionResult GetCustomerDetails(int nCompanyID, int nFnyearID)
+        public ActionResult GetApprovalDetails(int nCompanyID, int nnextApproverID,bool bShowAll,bool bShowAllBranch,int N_Branchid,int nApprovalType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText="";
 
-            string sqlCommandText = "select X_Name as name,value from vw_SalesFunnel where N_CompanyID=@p1 and N_FnYearID=@p2 order by value desc";
+            if(nApprovalType==1)
+            {
+                if(bShowAllBranch)
+                {
+                    if(bShowAll)
+                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1";
+                    else
+                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2";
+                }
+                else
+                {
+                    if(bShowAll)
+                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_Branchid = @p3";
+                    else
+                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 and N_Branchid = @p3";
+
+                    Params.Add("@p3", N_Branchid);     
+                }
+            
+            }
+            else
+            {
+                if(bShowAllBranch)
+                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6";
+                else
+                {
+                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 and N_Branchid = @p3"; 
+                    Params.Add("@p3", N_Branchid);
+                }
+
+            }
+            
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nFnyearID);
+            Params.Add("@p2", nnextApproverID);
 
             try
             {
