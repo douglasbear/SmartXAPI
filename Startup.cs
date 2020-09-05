@@ -13,6 +13,7 @@ using System.Text;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using SmartxAPI.GeneralFunctions;
+using System.Collections.Generic;
 
 namespace SmartxAPI
 {
@@ -91,7 +92,7 @@ namespace SmartxAPI
             //     app.UseExceptionHandler("/error"); 
             // }
 
-            
+            app.UseDefaultFiles(new DefaultFilesOptions { DefaultFileNames = new List<string> { "index.html" } });
 
             app.UseHttpsRedirection();
 
