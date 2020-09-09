@@ -19,6 +19,7 @@ using SmartxAPI.GeneralFunctions;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections;
+using System.Data;
 
 namespace SmartxAPI.Data
 {
@@ -50,16 +51,65 @@ namespace SmartxAPI.Data
                 return null;
 
             var password = _context.SecUser
-            .Where(y => y.NCompanyId == companyid && y.XUserName == username && y.NUserId == userid)
+            .Where(y => y.NCompanyId == companyid && y.XUserId == username && y.NUserId == userid)
             .Select(x => x.XPassword)
             .FirstOrDefault();
 
-            var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3", companyname, "", username, password)
-            .ToList()
-            .FirstOrDefault();
+            // var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3", companyname, "", username, password)
+            // .ToList()
+            // .FirstOrDefault();
+
+
+
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
+
+                                            SortedList paramsList = new SortedList()
+                    {
+                        {"X_CompanyName",companyname},
+                        {"X_FnYearDescr",""},
+                        {"X_LoginName",username},
+                        {"X_Pwd",password.ToString()}
+                    };
+                    DataTable loginDt = dLayer.ExecuteDataTablePro("SP_LOGIN",paramsList,connection);
+            //var loginRes = new List<SP_LOGIN>();  
+    var loginRes = (from DataRow dr in loginDt.Rows  
+            select new SP_LOGIN()  
+            {  
+                N_UserID = Convert .ToInt32 (dr["N_UserID"]),  
+                X_UserName = dr["X_UserName"].ToString(),  
+                X_FnYearDescr = dr["X_FnYearDescr"].ToString(),  
+                N_FnYearID = myFunctions.getIntVAL(dr["N_FnYearID"].ToString()) ,
+                D_Start = Convert.ToDateTime(dr["D_Start"].ToString()),
+                D_End = Convert.ToDateTime(dr["D_End"].ToString()),
+                X_AcYearDescr = dr["X_AcYearDescr"].ToString(),
+                N_AcYearID = myFunctions.getIntVAL(dr["N_AcYearID"].ToString()) ,
+                D_AcStart = Convert.ToDateTime(dr["D_AcStart"].ToString()),
+                D_AcEnd = Convert.ToDateTime(dr["D_AcEnd"].ToString()),
+                X_CompanyName = dr["X_CompanyName"].ToString(),  
+                X_CompanyName_Ar = dr["X_CompanyName_Ar"].ToString(),  
+                X_CompanyCode = dr["X_CompanyCode"].ToString(),  
+                N_CompanyID = myFunctions.getIntVAL(dr["N_CompanyID"].ToString()) ,
+                X_UserCategory = dr["X_UserCategory"].ToString(),  
+                N_UserCategoryID = myFunctions.getIntVAL(dr["N_UserCategoryID"].ToString()) ,
+                X_Country = dr["X_Country"].ToString(),  
+                N_CurrencyID = myFunctions.getIntVAL(dr["N_CurrencyID"].ToString()) ,
+                D_LoginDate = Convert.ToDateTime(dr["D_LoginDate"].ToString()),
+                X_Language = dr["X_Language"].ToString(),  
+                N_LanguageID = myFunctions.getIntVAL(dr["N_LanguageID"].ToString()) ,
+                N_BranchID = dr["N_BranchID"].ToString(),  
+                X_BranchName = dr["X_BranchName"].ToString(),  
+                X_LocationName = dr["X_LocationName"].ToString(),  
+                N_LocationID = dr["N_LocationID"].ToString(),  
+                I_Logo = (byte [])dr["I_Logo"],
+                B_AllBranchesData = (bool)dr["B_AllBranchesData"],  
+                N_TaxType = myFunctions.getIntVAL(dr["N_TaxType"].ToString()) ,
+                X_UserFullName = dr["X_UserFullName"].ToString()
+            }).ToList()
+            .FirstOrDefault();  
+            
+
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", loginRes.N_CompanyID);
 
@@ -86,7 +136,7 @@ namespace SmartxAPI.Data
                         {
                             Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
                         new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
-                        new Claim(ClaimTypes.Name,loginRes.X_UserName),
+                        new Claim(ClaimTypes.Name,loginRes.X_UserName.ToString()),
                         new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
                         new Claim(ClaimTypes.GroupSid,loginRes.N_UserCategoryID.ToString()),
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
@@ -106,7 +156,7 @@ namespace SmartxAPI.Data
 
                         object abc = dLayer.ExecuteScalar("Update Sec_User set X_Token='" + loginRes.RefreshToken + "' where N_UserID=" + loginRes.N_UserID + " and N_CompanyID=" + loginRes.N_CompanyID, connection);
                         if (loginRes.I_Logo != null)
-                            loginRes.I_CompanyLogo = Convert.ToBase64String(loginRes.I_Logo);
+                            loginRes.I_CompanyLogo = "data:image/png;base64," + Convert.ToBase64String(loginRes.I_Logo, 0, loginRes.I_Logo.Length);
                         var MenuList = _context.VwUserMenus
                         .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
                         .ToList();
@@ -161,7 +211,7 @@ namespace SmartxAPI.Data
                         {
                             Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
                         new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
-                        new Claim(ClaimTypes.Name,loginRes.X_UserName),
+                        new Claim(ClaimTypes.Name,loginRes.X_UserName.ToString()),
                         new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
                         new Claim(ClaimTypes.GroupSid,loginRes.N_UserCategoryID.ToString()),
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
