@@ -112,6 +112,7 @@ namespace SmartxAPI.Data
 
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", loginRes.N_CompanyID);
+                    Params.Add("@nUserID", loginRes.N_UserID);
 
                 if (loginRes.N_BranchID == null || loginRes.N_BranchID == "")
                 {
@@ -124,6 +125,13 @@ namespace SmartxAPI.Data
                 loginRes.N_LocationID = dLayer.ExecuteScalar("Select N_LocationID From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID",Params, connection).ToString();
 
                 loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1",Params, connection).ToString());
+                
+                DataTable EmplData= dLayer.ExecuteDataTable("SELECT Pay_Employee.N_EmpID, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Sec_User.N_UserID FROM Sec_User LEFT OUTER JOIN Pay_Employee ON Sec_User.N_UserID = Pay_Employee.N_UserID AND Sec_User.N_CompanyID = Pay_Employee.N_CompanyID AND Sec_User.N_EmpID = Pay_Employee.N_EmpID where Sec_User.N_CompanyID=@nCompanyID  and Sec_User.N_UserID=@nUserID",Params, connection);
+                if(EmplData.Rows.Count>0){
+                loginRes.N_EmpID = myFunctions.getIntVAL(EmplData.Rows[0]["N_EmpID"].ToString());
+                loginRes.X_EmpCode = EmplData.Rows[0]["X_EmpCode"].ToString();
+                loginRes.X_EmpName = EmplData.Rows[0]["X_EmpName"].ToString();
+                }
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCompanyID",Params, connection).ToString();
 
 

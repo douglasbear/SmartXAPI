@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.ErrorResponse(e));
+                return BadRequest(api.Error(e));
             }
         }
 
@@ -293,34 +293,34 @@ namespace SmartxAPI.Controllers
 
         }
 
-        [HttpGet("dummy")]
-        public ActionResult GetPurchaseInvoiceDummy(int? Id)
-        {
-            try
-            {
-                string sqlCommandText = "select * from Inv_PayReceipt where n_PayReceiptId=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
-                masterTable = api.Format(masterTable, "master");
+        // [HttpGet("dummy")]
+        // public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        // {
+        //     try
+        //     {
+        //         string sqlCommandText = "select * from Inv_PayReceipt where n_PayReceiptId=@p1";
+        //         SortedList mParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
+        //         masterTable = api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Inv_PayReceiptDetails where n_PayReceiptId=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
-                detailTable = api.Format(detailTable, "details");
+        //         string sqlCommandText2 = "select * from Inv_PayReceiptDetails where n_PayReceiptId=@p1";
+        //         SortedList dParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
+        //         detailTable = api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+        //         if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+        //         DataSet dataSet = new DataSet();
+        //         dataSet.Tables.Add(masterTable);
+        //         dataSet.Tables.Add(detailTable);
 
-                return Ok(dataSet);
+        //         return Ok(dataSet);
 
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, api.ErrorResponse(e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, api.Error(e));
+        //     }
+        // }
 
     }
 }

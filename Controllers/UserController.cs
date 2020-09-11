@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return StatusCode(403, _api.Error(ex));
             }
         }
 
@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return StatusCode(403, _api.Error(e));
             }
         }
         //Save....
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return StatusCode(403, _api.Error(ex));
             }
         }
         [HttpGet("all")]
@@ -131,7 +131,11 @@ namespace SmartxAPI.Controllers
             
 
             try{
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params);
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
                      if(dt.Rows.Count==0)
                     {
                        return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
@@ -140,7 +144,7 @@ namespace SmartxAPI.Controllers
 
                     }
                 }catch(Exception e){
-                    return StatusCode(403,_api.ErrorResponse(e));
+                    return StatusCode(403,_api.Error(e));
                 }
         }
     }

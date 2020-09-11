@@ -15,32 +15,33 @@ using System.Security.Claims;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("employeeloanrequest")]
+    [Route("waiverequest")]
     [ApiController]
 
 
 
-    public class Ess_EmployeeLoanRequest : ControllerBase
+    public class Ess_WaiveRequest : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
 
-        public Ess_EmployeeLoanRequest(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+
+        public Ess_WaiveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
-            _api = api;
+            api = apiFun;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 212;
+            FormID = 1232;
         }
 
 
         //List
         [HttpGet("list")]
-        public ActionResult GetEmployeeLoanRequest(int? nCompanyID, string xReqType)
+        public ActionResult GetTravelOrderRequest(int? nCompanyID, string xReqType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -76,124 +77,89 @@ namespace SmartxAPI.Controllers
 
 
                 }
-                dt = _api.Format(dt);
+                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(api.Error(e));
             }
         }
-        
+       
+        //Save....
         [HttpPost("save")]
-        public ActionResult SaveLoanRequest([FromBody] DataSet ds)
+        public ActionResult SaveTORequest([FromBody] DataSet ds)
         {
             try
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();
-                // Auto Gen
                 DataRow MasterRow = MasterTable.Rows[0];
-                string xLoanID = "";
-
-                var nLoanID = MasterRow["n_LoanID"].ToString();
-                int nLoanTransID = myFunctions.getIntVAL(MasterRow["n_LoanTransID"].ToString());
+                var x_RequestCode = MasterRow["x_RequestCode"].ToString();
+                int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
-                var dDateFrom = MasterRow["d_LoanPeriodFrom"].ToString();
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nEmpID", nEmpID);
-                //QueryParams.Add("@nLoanTransID", nLoanTransID);
+                int nBranchID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction(); ;
-                    if (nLoanID == "@Auto")
+                    if (x_RequestCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        xLoanID = dLayer.GetAutoNumber("Pay_LoanIssue", "n_LoanID", Params, connection, transaction);
-                        if (xLoanID == "") { return Ok( _api.Error( "Unable to generate Loan ID")); }
-                        MasterTable.Rows[0]["n_LoanID"] = xLoanID;
+                        Params.Add("N_BranchID", nBranchID);
+
+                        x_RequestCode = dLayer.GetAutoNumber("Pay_AnytimeRequest", "x_RequestCode", Params, connection, transaction);
+                        if (x_RequestCode == "") { return Ok(api.Error("Unable to generate Waive Request Number")); }
+                            MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
                     }
                     else
                     {
-                        dLayer.DeleteData("Pay_LoanIssue", "n_LoanTransID", nLoanTransID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_AnytimeRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
-
-                    int nInstAmount = myFunctions.getIntVAL( MasterTable.Rows[0]["n_InstallmentAmount"].ToString());
-                    int nInstNos = myFunctions.getIntVAL( MasterTable.Rows[0]["n_Installments"].ToString());
-                    MasterTable.Columns.Remove("n_LoanTransID");
-                    MasterTable.Columns.Remove("n_InstallmentAmount");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_RequestType",typeof(int),this.FormID);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_UserID",typeof(int),api.GetUserID(User));
+                    MasterTable.Columns.Remove("n_RequestID");
                     MasterTable.AcceptChanges();
 
 
-                    nLoanTransID = dLayer.SaveData("Pay_LoanIssue", "n_LoanTransID", nLoanTransID, MasterTable, connection, transaction);
-                    if (nLoanTransID <= 0)
+                    nRequestID = dLayer.SaveData("Pay_AnytimeRequest", "n_RequestID", nRequestID, MasterTable, connection, transaction);
+                    if (nRequestID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Loan Request"));
+                        return Ok(api.Error("Unable to save"));
                     }
                     else
                     {
-                        DataTable dt=new DataTable(); 
-                        dt.Clear();
-                        dt.Columns.Add("N_CompanyID");
-                        dt.Columns.Add("N_LoanTransID");
-                        dt.Columns.Add("D_DateFrom");
-                        dt.Columns.Add("D_DateTo");
-                        dt.Columns.Add("N_InstAmount");
-
-                        DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
-
-                        for (int i = 1; i <= nInstNos; i++)
-                        {
-                            DateTime End = new DateTime(Start.AddMonths(1).Year, Start.AddMonths(1).Month, 1).AddDays(-1);
-                            DataRow row = dt.NewRow();
-                            row["N_CompanyID"] = nCompanyID;
-                            row["N_LoanTransID"] = nLoanTransID;
-                            row["D_DateFrom"] = myFunctions.getDateVAL(Start);
-                            row["D_DateTo"] = myFunctions.getDateVAL(End);
-                            row["N_InstAmount"] = nInstAmount;
-                            dt.Rows.Add(row);   
-                            Start = Start.AddMonths(1);
-                        }
-                        
-                        int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", 0, dt, connection, transaction);
-                        if (N_LoanTransDeatilsID <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to save Loan Request"));
-                        }
-
                          transaction.Commit();
                     }
-                    return Ok(_api.Success("Loan request saved" + ":" + xLoanID));
+                    Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("x_RequestCode",x_RequestCode.ToString());
+                    return Ok(api.Success(res,"Waive Request saved"));
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
         }
 
 
-         [HttpDelete()]
-        public ActionResult DeleteData(int nLoanTransID)
+          [HttpDelete()]
+        public ActionResult DeleteData(int nRequestID)
         {
             int Results = 0;
             try
@@ -202,27 +168,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",_api.GetCompanyID(User)},
-                                {"X_TransType","EMPLOYEE LOAN"},
-                                {"N_VoucherID",nLoanTransID}};
-                            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                    Results = dLayer.DeleteData("Pay_AnytimeRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Error( "Unable to delete Loan request"));
+                        return Ok( api.Error( "Unable to delete Waive Request"));
                     }
                         transaction.Commit();
-                        return Ok( _api.Success("Loan request Deleted Successfully"));
-                   
+                         Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("n_RequestID",nRequestID.ToString());
+                    return Ok(api.Success(res,"Waive Request Deleted Successfully"));
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
-
-
         }
 
 

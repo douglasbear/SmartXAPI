@@ -232,27 +232,31 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-                dLayer.setTransaction();
-                Results = dLayer.DeleteData("Inv_SalesVoucher", "n_quotationID", N_VoucherID, "");
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                Results = dLayer.DeleteData("Inv_SalesVoucher", "n_quotationID", N_VoucherID, "",connection,transaction);
                 if (Results <= 0)
                 {
-                    dLayer.rollBack();
+                    transaction.Rollback();
                     return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
                 }
                 else
                 {
-                    dLayer.DeleteData("Inv_SalesVoucherDetails", "n_quotationID", N_VoucherID, "");
+                    dLayer.DeleteData("Inv_SalesVoucherDetails", "n_quotationID", N_VoucherID, "",connection,transaction);
                 }
 
                 if (Results > 0)
                 {
-                    dLayer.commit();
+                    transaction.Commit();
                     return StatusCode(200, api.Response(200, "Sales quotation deleted"));
                 }
                 else
                 {
-                    dLayer.rollBack();
+                     transaction.Rollback();
                     return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
+                }
                 }
 
             }

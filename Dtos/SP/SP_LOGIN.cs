@@ -51,6 +51,12 @@ namespace SmartxAPI.Dtos.SP
 		public string I_CompanyLogo { get; set; }
 		[NotMapped]
 		public string X_CurrencyName {get;set;}
+				[NotMapped]
+		public int N_EmpID {get;set;}
+		[NotMapped]
+		public string X_EmpCode {get;set;}
+		[NotMapped]
+		public string X_EmpName {get;set;}
 		
     }
 }

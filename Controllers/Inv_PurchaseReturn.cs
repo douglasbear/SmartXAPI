@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return StatusCode(403, _api.Error(e));
             }
         }
 
@@ -141,6 +141,11 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     // Auto Gen
+                                try{
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                    connection.Open();
+                    SqlTransaction transaction=connection.BeginTransaction();
                     string QuotationNo="";
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
@@ -148,56 +153,30 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params);
+                        QuotationNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
                         if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
                         MasterTable.Rows[0]["X_CreditNoteNo"] = QuotationNo;
                     }
-                try{
-                    dLayer.setTransaction();
-                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",0,MasterTable);                    
+                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",0,MasterTable,connection,transaction);                    
                     if(N_CreditNoteID<=0){
-                        dLayer.rollBack();
+                        transaction.Rollback();
                         }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                         {
                             DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
                         }
-                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",0,DetailTable);                    
-                    dLayer.commit();
+                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",0,DetailTable,connection,transaction);                    
+                    transaction.Commit();
                     return StatusCode(200,_api.Response(200 ,"Purchase Return Saved" ));
+                    }
                 }
                 catch (Exception ex)
                 {
-                    dLayer.rollBack();
                     return StatusCode(403,ex);
                 }
         }
        
-        [HttpGet("dummy")]
-        public ActionResult GetPurchaseInvoiceDummy(int? Id)
-        {
-            try{
-            string  sqlCommandText="select * from Inv_PurchaseReturnMaster where N_CreditNoteID=@p1";
-            SortedList mParamList = new SortedList() { {"@p1",Id} };
-            DataTable masterTable =dLayer.ExecuteDataTable(sqlCommandText,mParamList);
-            masterTable=_api.Format(masterTable,"master");
-
-            string  sqlCommandText2="select * from Inv_PurchaseReturnDetails where N_CreditNoteID=@p1";
-            SortedList dParamList = new SortedList() { {"@p1",Id} };
-            DataTable detailTable =dLayer.ExecuteDataTable(sqlCommandText2,dParamList);
-            detailTable=_api.Format(detailTable,"details");
-
-            if(detailTable.Rows.Count==0){return Ok(new {});}
-            DataSet dataSet=new DataSet();
-            dataSet.Tables.Add(masterTable);
-            dataSet.Tables.Add(detailTable);
-            
-            return Ok(dataSet);
-            
-            }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
-            }
-        }
+     
 
         [HttpDelete()]
         public ActionResult DeleteData(int nCreditNoteId, int nCompanyId, string xType)

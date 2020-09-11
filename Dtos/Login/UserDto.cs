@@ -16,5 +16,8 @@ namespace SmartxAPI.Dtos.Login
         public bool B_AllBranchesData { get; set; }
 		
 		public string X_UserFullName { get; set; }
+		public int N_EmpID {get;set;}
+		public string X_EmpCode {get;set;}
+		public string X_EmpName {get;set;}
     }
 }

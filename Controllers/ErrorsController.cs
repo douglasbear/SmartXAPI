@@ -5,7 +5,7 @@ using Microsoft.AspNetCore.Mvc;
 public class ErrorsController : ControllerBase
 {
     [Route("error")]
-    public ErrorResponse Error()
+    public Error Error()
     {
         var context = HttpContext.Features.Get<IExceptionHandlerFeature>();
         var exception = context?.Error; // Your exception
@@ -17,6 +17,6 @@ public class ErrorsController : ControllerBase
 
         Response.StatusCode = code; // You can use HttpStatusCode enum instead
 
-        return new ErrorResponse(exception); // Your error model
+        return new Error(exception); // Your error model
     }
 }

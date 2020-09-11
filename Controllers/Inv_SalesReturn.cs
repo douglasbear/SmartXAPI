@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                         return Ok(dt);
                     }   
             }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return StatusCode(403,_api.Error(e));
             }
         }
         [HttpGet("listdetails")]
@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                 }
                 return Ok(dt);
                 }catch(Exception e){
-                return StatusCode(403,_api.ErrorResponse(e));
+                return StatusCode(403,_api.Error(e));
                 }
         }
 
@@ -155,7 +155,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // dLayer.setTransaction();
-                    int N_InvoiceId=dLayer.SaveData("Inv_SalesReturnMaster","N_DebitNoteId",0,MasterTable);                    
+                    int N_InvoiceId=dLayer.SaveData("Inv_SalesReturnMaster","N_DebitNoteId",0,MasterTable,connection,transaction);                    
                     if(N_InvoiceId<=0){
                         transaction.Rollback();
                         }
@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
                 {
-                    return StatusCode(403,_api.ErrorResponse(ex));
+                    return StatusCode(403,_api.Error(ex));
                 }
 
         }

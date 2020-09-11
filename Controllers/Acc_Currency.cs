@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
                        return StatusCode(200, _api.Response(200, "No Results Found")); }
                        else{return Ok(dt);}
                 }catch(Exception e){
-                    return StatusCode(403,_api.ErrorResponse(e));
+                    return StatusCode(403,_api.Error(e));
                 }
         }
 
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                 else{return Ok(dt);}
                 }
             catch(Exception e){
-                    return StatusCode(403,_api.ErrorResponse(e));}
+                    return StatusCode(403,_api.Error(e));}
         }
 
 
@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
                 catch (Exception ex)
                 {
                    
-                    return StatusCode(403,_api.ErrorResponse(ex));
+                    return StatusCode(403,_api.Error(ex));
                 }
         }
 
@@ -134,17 +134,21 @@ namespace SmartxAPI.Controllers
              int Results=0;
             try
             {
-                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"");
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"",connection);
                 if(Results>0){
                     return StatusCode(200,_api.Response(200 ,"Currency deleted" ));
                 }else{
                     return StatusCode(409,_api.Response(409 ,"Unable to delete Currency" ));
                 }
+                }
                 
             }
             catch (Exception ex)
                 {
-                    return StatusCode(403,_api.ErrorResponse(ex));
+                    return StatusCode(403,_api.Error(ex));
                 }
             
 
