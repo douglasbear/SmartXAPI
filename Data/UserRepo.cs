@@ -35,7 +35,6 @@ namespace SmartxAPI.Data
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public Sec_UserRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper,ICommenServiceRepo service,IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -48,7 +47,6 @@ namespace SmartxAPI.Data
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1234;
         }
 
         
