@@ -7,10 +7,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using System.ComponentModel;
 using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 
 namespace SmartxAPI.Controllers
 {
@@ -70,6 +67,51 @@ namespace SmartxAPI.Controllers
             }
         }
 
+ //List
+        [HttpGet("vacationBenefits")]
+        public ActionResult GetVacationBenefits(string nEmpID,int nMainVacationID)
+        {
+            DataTable dt = new DataTable();
+            SortedList QueryParams = new SortedList();
+            int companyid = api.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@nEmpID", nEmpID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    
+                object res = dLayer.ExecuteScalar("Select ISNULL(sum(N_VacDays),0) as N_VacDays from Pay_VacationDetails where (B_Allowance=1) and  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID",QueryParams,connection);
+                
+                if (res == null)
+                    res = 0;
+                string sql = "";
+                if(nMainVacationID>0)
+                    sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0";
+                else
+                    sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
+               
+                    dt = dLayer.ExecuteDataTable(sql, QueryParams, connection);
+
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                    return Ok(api.Notice("No Results Found"));
+                else
+                    return Ok(api.Success(dt));
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
+
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveTORequest([FromBody] DataSet ds)
@@ -98,7 +140,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", nBranchID);
 
-                        x_RequestCode = dLayer.GetAutoNumber("Pay_AnytimeRequest", "x_RequestCode", Params, connection, transaction);
+                        x_RequestCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_RequestCode", Params, connection, transaction);
                         if (x_RequestCode == "") { return Ok(api.Error("Unable to generate Waive Request Number")); }
                         MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
                     }

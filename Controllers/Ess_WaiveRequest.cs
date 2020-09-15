@@ -94,6 +94,53 @@ namespace SmartxAPI.Controllers
             }
         }
        
+
+ [HttpGet("details")]
+        public ActionResult GetEmployeeLoanDetails(int nRequestID, int nEmpID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+           int companyid = api.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@nRequestID", nRequestID);
+            QueryParams.Add("@nEmpID", nEmpID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string _sqlQuery = "SELECT     Pay_AnytimeRequest.N_CompanyID, Pay_AnytimeRequest.N_UserID, Pay_AnytimeRequest.N_BranchID, Pay_AnytimeRequest.N_RequestID,  Pay_AnytimeRequest.N_EmpID, Pay_AnytimeRequest.X_Time, Pay_AnytimeRequest.D_RequestDate, Pay_AnytimeRequest.D_EntryDate, Pay_AnytimeRequest.X_Notes, Pay_AnytimeRequest.N_ApprovalLevelID, Pay_AnytimeRequest.N_ProcStatus, Pay_AnytimeRequest.B_IsSaveDraft,  Pay_AnytimeRequest.D_Date, Pay_AnytimeRequest.X_FileName, Pay_AnytimeRequest.B_IsAttach, Pay_AnytimeRequest.N_RequestType, Pay_AnytimeRequest.N_FnYearID, Pay_AnytimeRequest.X_Comments, Pay_AnytimeRequest.D_Time, Pay_AnytimeRequest.D_Shift1_In, Pay_AnytimeRequest.D_Shift1_Out, Pay_AnytimeRequest.D_Shift2_In, Pay_AnytimeRequest.D_Shift2_Out, Pay_AnytimeRequest.X_RequestCode, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID AS Expr1 FROM         Pay_AnytimeRequest LEFT OUTER JOIN Pay_Employee ON Pay_AnytimeRequest.N_EmpID = Pay_Employee.N_EmpID AND Pay_AnytimeRequest.N_CompanyID = Pay_Employee.N_CompanyID  where Pay_AnytimeRequest.N_RequestID=@nRequestID and Pay_AnytimeRequest.N_EmpID=@nEmpID and Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
+                
+                        dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
+
+       
+
+
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveTORequest([FromBody] DataSet ds)
