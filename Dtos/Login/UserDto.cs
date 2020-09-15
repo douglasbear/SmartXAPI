@@ -19,5 +19,7 @@ namespace SmartxAPI.Dtos.Login
 		public int N_EmpID {get;set;}
 		public string X_EmpCode {get;set;}
 		public string X_EmpName {get;set;}
+        public int N_PositionID { get; set; }
+        public string X_Position { get; set; }
     }
 }

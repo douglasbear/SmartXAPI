@@ -67,9 +67,9 @@ namespace SmartxAPI.Controllers
             }
         }
 
- //List
+        //List
         [HttpGet("vacationBenefits")]
-        public ActionResult GetVacationBenefits(string nEmpID,int nMainVacationID)
+        public ActionResult GetVacationBenefits(string nEmpID, int nMainVacationID)
         {
             DataTable dt = new DataTable();
             SortedList QueryParams = new SortedList();
@@ -83,17 +83,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    
-                object res = dLayer.ExecuteScalar("Select ISNULL(sum(N_VacDays),0) as N_VacDays from Pay_VacationDetails where (B_Allowance=1) and  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID",QueryParams,connection);
-                
-                if (res == null)
-                    res = 0;
-                string sql = "";
-                if(nMainVacationID>0)
-                    sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0";
-                else
-                    sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
-               
+
+                    object res = dLayer.ExecuteScalar("Select ISNULL(sum(N_VacDays),0) as N_VacDays from Pay_VacationDetails where (B_Allowance=1) and  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID", QueryParams, connection);
+
+                    if (res == null)
+                        res = 0;
+                    string sql = "";
+                    if (nMainVacationID > 0)
+                        sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0";
+                    else
+                        sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
+
                     dt = dLayer.ExecuteDataTable(sql, QueryParams, connection);
 
                 }
@@ -118,12 +118,13 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
+                DataTable MasterTable, DetailTable;
                 MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
-                var x_RequestCode = MasterRow["x_RequestCode"].ToString();
-                int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
+                var x_VacationGroupCode = MasterRow["x_VacationGroupCode"].ToString();
+                int n_VacationGroupID = myFunctions.getIntVAL(MasterRow["n_VacationGroupID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
@@ -133,40 +134,46 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction(); ;
-                    if (x_RequestCode == "@Auto")
+                    if (x_VacationGroupCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.FormID);
+                        Params.Add("N_FormID", "210");
                         Params.Add("N_BranchID", nBranchID);
-
-                        x_RequestCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_RequestCode", Params, connection, transaction);
-                        if (x_RequestCode == "") { return Ok(api.Error("Unable to generate Waive Request Number")); }
-                        MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
+                        x_VacationGroupCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_VacationGroupCode", Params, connection, transaction);
+                        if (x_VacationGroupCode == "") { return Ok(api.Error("Unable to generate leave Request Code")); }
+                        MasterTable.Rows[0]["x_VacationGroupCode"] = x_VacationGroupCode;
                     }
                     else
                     {
-                        dLayer.DeleteData("Pay_AnytimeRequest", "n_RequestID", nRequestID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_UserID", typeof(int), api.GetUserID(User));
-                    MasterTable.Columns.Remove("n_RequestID");
                     MasterTable.AcceptChanges();
 
 
-                    nRequestID = dLayer.SaveData("Pay_AnytimeRequest", "n_RequestID", nRequestID, MasterTable, connection, transaction);
-                    if (nRequestID <= 0)
+                    n_VacationGroupID = dLayer.SaveData("Pay_VacationMaster", "n_VacationGroupID", MasterTable, connection, transaction);
+                    if (n_VacationGroupID > 0)
+                    {
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            DetailTable.Rows[j]["n_VacationGroupID"] = n_VacationGroupID;
+                        }
+                        int N_PurchaseOrderDetailId = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", DetailTable, connection, transaction);
+                        if(N_PurchaseOrderDetailId>0){
+                        transaction.Commit();}
+                        else{
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                        }
+                    }
+                    else
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-                    else
-                    {
-                        transaction.Commit();
-                    }
                     Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("x_RequestCode", x_RequestCode.ToString());
-                    return Ok(api.Success(res, "Waive Request saved"));
+                    res.Add("x_RequestCode", x_VacationGroupCode.ToString());
+                    return Ok(api.Success(res, "Leave Request saved"));
                 }
             }
             catch (Exception ex)
@@ -177,7 +184,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nRequestID)
+        public ActionResult DeleteData(int n_VacationGroupID)
         {
             int Results = 0;
             try
@@ -186,16 +193,16 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_AnytimeRequest", "n_RequestID", nRequestID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Waive Request"));
+                        return Ok(api.Error("Unable to delete Leave Request"));
                     }
                     transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("n_RequestID", nRequestID.ToString());
-                    return Ok(api.Success(res, "Waive Request Deleted Successfully"));
+                    res.Add("n_VacationGroupID", n_VacationGroupID.ToString());
+                    return Ok(api.Success(res, "Leave Request Deleted Successfully"));
                 }
             }
             catch (Exception ex)
