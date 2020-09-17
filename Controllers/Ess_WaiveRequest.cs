@@ -39,60 +39,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        //List
-        [HttpGet("list")]
-        public ActionResult GetTravelOrderRequest(int? nCompanyID, string xReqType)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            SortedList QueryParams = new SortedList();
-
-            int userid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
-            string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
-            string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
-
-            QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@nUserID", userid);
-            string sqlCommandText = "";
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    object objEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
-                    if (objEmpID != null)
-                    {
-                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(objEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "select * from vw_PayLoanApprovals where N_CompanyID=@nCompanyID order by D_LoanPeriodTo Desc";
-                        else
-
-                            sqlCommandText = "select * from vw_PayLoanApprovals where N_CompanyID=@nCompanyID and X_Status like '%@xStatus%'  order by D_LoanPeriodTo Desc ";
-
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    }
-
-
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-
-            }
-            catch (Exception e)
-            {
-                return BadRequest(api.Error(e));
-            }
-        }
+       
        
 
  [HttpGet("details")]
