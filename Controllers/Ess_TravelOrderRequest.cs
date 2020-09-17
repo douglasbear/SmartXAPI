@@ -23,16 +23,16 @@ namespace SmartxAPI.Controllers
     public class Ess_TravelOrderRequest : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
 
 
-        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
-            _api = api;
+            api = _api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1235;
@@ -40,20 +40,18 @@ namespace SmartxAPI.Controllers
 
 
         //List
+     
         [HttpGet("list")]
-        public ActionResult GetTravelOrderRequest(int? nCompanyID, string xReqType)
+        public ActionResult GetTravelOrderList(string xReqType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int userid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-            int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
-            string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
-            string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
-
-            QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@nUserID", userid);
+            int nUserID = api.GetUserID(User);
+            int nCompanyID = api.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
 
             try
@@ -61,38 +59,41 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object objEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
-                    if (objEmpID != null)
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    if (nEmpID != null)
                     {
-                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(objEmpID.ToString()));
+                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         QueryParams.Add("@xStatus", xReqType);
                         if (xReqType.ToLower() == "all")
-                            sqlCommandText = "select * from vw_PayLoanApprovals where N_CompanyID=@nCompanyID order by D_LoanPeriodTo Desc";
+                            sqlCommandText = "Select * From vw_Pay_EmpBussinessTripRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
                         else
-
-                            sqlCommandText = "select * from vw_PayLoanApprovals where N_CompanyID=@nCompanyID and X_Status like '%@xStatus%'  order by D_LoanPeriodTo Desc ";
+                        if (xReqType.ToLower() == "pending")
+                            sqlCommandText = "select * from vw_Pay_EmpBussinessTripRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
+                        else
+                            sqlCommandText = "Select * From vw_Pay_EmpBussinessTripRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_RequestDate Desc";
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     }
 
 
                 }
-                dt = _api.Format(dt);
+                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(api.Error(e));
             }
         }
+
        
         //Save....
         [HttpPost("save")]
@@ -137,7 +138,7 @@ namespace SmartxAPI.Controllers
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(api.Error("Unable to save"));
                     }
                     else
                     {
@@ -145,12 +146,12 @@ namespace SmartxAPI.Controllers
                     }
                     Dictionary<string,string> res=new Dictionary<string, string>();
                     res.Add("x_RequestCode",x_RequestCode.ToString());
-                    return Ok(_api.Success(res,"Travel Order request saved"));
+                    return Ok(api.Success(res,"Travel Order request saved"));
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
         }
 
@@ -169,16 +170,16 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Error( "Unable to delete Travel Order request"));
+                        return Ok( api.Error( "Unable to delete Travel Order request"));
                     }
                         transaction.Commit();
-                        return Ok( _api.Success("Travel Order request Deleted Successfully"));
+                        return Ok( api.Success("Travel Order request Deleted Successfully"));
                    
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
         }
 

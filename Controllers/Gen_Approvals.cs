@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("GetApprovalSettings")]
-        public ActionResult GetApprovalSettings(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID)
+        public ActionResult GetApprovalSettings(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID)
         {
             DataTable SecUserLevel = new DataTable();
             DataTable GenStatus = new DataTable();
@@ -108,6 +108,8 @@ namespace SmartxAPI.Controllers
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
             bool bIsEditable = false;
+            int loggedInUserID = api.GetUserID(User);
+
 
             /* Approval Response Set */
             SortedList Response = new SortedList();
@@ -137,10 +139,10 @@ namespace SmartxAPI.Controllers
             ApprovalParams.Add("@nTransApprovalLevel", nTransApprovalLevel);
             ApprovalParams.Add("@nTransStatus", nTransStatus);
             ApprovalParams.Add("@nGroupID", nGroupID);
+            ApprovalParams.Add("@loggedInUserID", loggedInUserID);
 
 
 
-            int loggedInUserID = api.GetUserID(User);
 
             try
             {
@@ -149,11 +151,29 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if (nApprovalID == 0)
                     {
-                        object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
-                        if (ApprovalCode != null)
+                        if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "")
                         {
-                            nApprovalID = myFunctions.getIntVAL(ApprovalCode.ToString());
-                            ApprovalParams["@nApprovalID"] = nApprovalID;
+                            SortedList EmpParams = new SortedList();
+                            EmpParams.Add("@nCompanyID", nCompanyID);
+                            EmpParams.Add("@nFnYearID", nFnYearID);
+                            EmpParams.Add("@nEmpID", nEmpID);
+                            EmpParams.Add("@nActionID", nActionID);
+                            object objApproval = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from vw_EmpApprovalSettings where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and N_ActionID=@nActionID", EmpParams, connection);
+                            if (objApproval != null)
+                            {
+                                nApprovalID = myFunctions.getIntVAL(objApproval.ToString());
+                                ApprovalParams["@nApprovalID"] = nApprovalID;
+                            }
+
+                        }
+                        else
+                        {
+                            object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                            if (ApprovalCode != null)
+                            {
+                                nApprovalID = myFunctions.getIntVAL(ApprovalCode.ToString());
+                                ApprovalParams["@nApprovalID"] = nApprovalID;
+                            }
                         }
                     }
 

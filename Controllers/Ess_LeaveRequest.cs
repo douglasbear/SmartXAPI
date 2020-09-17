@@ -36,6 +36,134 @@ namespace SmartxAPI.Controllers
         }
 
 
+
+        [HttpGet("leaveList")]
+        public ActionResult GetEmployeeLeaveRequest(string xReqType)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int nUserID = api.GetUserID(User);
+            int nCompanyID = api.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nUserID", nUserID);
+            string sqlCommandText = "";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    if (nEmpID != null)
+                    {
+                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
+                        QueryParams.Add("@xStatus", xReqType);
+                        if (xReqType.ToLower() == "all")
+                            sqlCommandText = "Select * From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by VacationRequestDate Desc";
+                        else
+                        if (xReqType.ToLower() == "pending")
+                            sqlCommandText = "select * from vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by VacationRequestDate Desc ";
+                        else
+                            sqlCommandText = "Select * From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by VacationRequestDate Desc";
+
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    }
+
+
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
+
+        [HttpGet("details")]
+        public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = api.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@xVacationGroupCode", xVacationGroupCode);
+            QueryParams.Add("@nBranchID", nBranchID);
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (bShowAllBranchData == true)
+                        Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_TransType=1";
+                    else
+                        Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_BranchID=@nBranchID and N_TransType=1";
+
+
+                    _sqlQuery = "Select * from vw_PayVacationMaster Where " + Condition + "";
+
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Master = api.Format(Master, "master");
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
+
+                        ds.Tables.Add(Master);
+                        Condition = "";
+                        if (bShowAllBranchData == true)
+                            Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
+                        else
+                            Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_BranchID=@nBranchID  and N_TransType=1 and X_Type='B'";
+
+                        _sqlQuery = "Select * from vw_PayVacationDetails_Disp Where " + Condition + "";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Detail = api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+
+                        return Ok(api.Success(ds));
+                    }
+
+
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
+
         //List
         [HttpGet("vacationList")]
         public ActionResult GetVacationList(string nEmpID)
@@ -159,11 +287,14 @@ namespace SmartxAPI.Controllers
                             DetailTable.Rows[j]["n_VacationGroupID"] = n_VacationGroupID;
                         }
                         int N_PurchaseOrderDetailId = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", DetailTable, connection, transaction);
-                        if(N_PurchaseOrderDetailId>0){
-                        transaction.Commit();}
-                        else{
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        if (N_PurchaseOrderDetailId > 0)
+                        {
+                            transaction.Commit();
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save"));
                         }
                     }
                     else
@@ -194,12 +325,17 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
-                    if (Results <= 0)
+                    if (Results > 0)
+                    {
+                        Results = dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
+                        transaction.Commit();
+                    }
+                    else
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to delete Leave Request"));
                     }
-                    transaction.Commit();
+
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("n_VacationGroupID", n_VacationGroupID.ToString());
                     return Ok(api.Success(res, "Leave Request Deleted Successfully"));
