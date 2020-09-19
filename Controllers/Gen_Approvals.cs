@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + " order by d_TransDate", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -126,6 +126,8 @@ namespace SmartxAPI.Controllers
             Response.Add("nextApprovalLevel", nNextApprovalLevel);
             Response.Add("lblVisible", false);
             Response.Add("lblText", "");
+            Response.Add("approvalID", nApprovalID);
+            Response.Add("formID", nFormID);
 
             /* Approval Param Set */
             SortedList ApprovalParams = new SortedList();
@@ -180,7 +182,7 @@ namespace SmartxAPI.Controllers
                     if (nApprovalID > 0)
                     {
                         nIsApprovalSystem = 1;
-                        Response["nIsApprovalSystem"] = nIsApprovalSystem;
+                        Response["isApprovalSystem"] = nIsApprovalSystem;
                     }
 
                     if (nIsApprovalSystem == -1)
@@ -191,7 +193,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(res.ToString()) > 0)
                         {
                             nIsApprovalSystem = 1;
-                            Response["nIsApprovalSystem"] = nIsApprovalSystem;
+                            Response["isApprovalSystem"] = nIsApprovalSystem;
                         }
                         else
                         {
@@ -202,6 +204,7 @@ namespace SmartxAPI.Controllers
                             Response["saveTag"] = 0;
                             Response["deleteTag"] = 0;
                             Response["isApprovalSystem"] = 0;
+                            Response["ApprovalID"] = nApprovalID;
                             Response["isEditable"] = true;
                             return Ok(api.Success(Response));
                         }
@@ -482,6 +485,8 @@ namespace SmartxAPI.Controllers
                         }
                     }
                 }
+                            Response["ApprovalID"] = nApprovalID;
+
                 return Ok(api.Success(Response));
             }
             catch (Exception e)
@@ -505,43 +510,7 @@ namespace SmartxAPI.Controllers
         //     return Response;
         // }
 
-        // public static void saveApprovals(DataTable MasterTable, int FormID, int ApprovalID,DataAccessLayer dLayer)
-        // {
-        //     int N_MaxLevelID = 0, N_Submitter = 0;
-        //     int N_ApprovalID = 0;
-        //     N_ApprovalID = ApprovalID;
-        //     SortedList Params = new SortedList();
-
-        //     if (N_ApprovalID == 0)
-        //     {
-        //         object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=" + FormID + " and N_CompanyID=" + myCompanyID._CompanyID);
-        //         if (ApprovalCode != null)
-        //             N_ApprovalID = myFunctions.getIntVAL(ApprovalCode.ToString());
-        //     }
-
-        //     if (N_IsApprovalSystem == 1)
-        //     {
-        //         N_MaxLevelID = myFunctions.getIntVAL(dba.ExecuteSclar("Select Isnull (max(N_level),0) from Gen_ApprovalCodesDetails where N_ApprovalID=" + N_ApprovalID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString());
-
-        //         object OB_Submitter = dba.ExecuteSclar("Select isnull(N_level,0) as N_level from Gen_ApprovalCodesDetails where N_ApprovalID=" + N_ApprovalID + " and N_CompanyID=" + myCompanyID._CompanyID + " and N_ActionTypeId=111", "TEXT", new DataTable());
-        //         if (OB_Submitter != null)
-        //             N_Submitter = myFunctions.getIntVAL(OB_Submitter.ToString());
-        //         else
-        //             N_Submitter = N_MaxLevelID;
-
-        //         if (N_userLevel == N_MaxLevelID || N_userLevel == N_Submitter)
-        //             N_SaveDraft = 0;
-        //         else
-        //             N_SaveDraft = 1;
-        //         FieldList += ",N_ApprovalLevelId,N_ProcStatus,B_IssaveDraft";
-        //         FieldValues += "|" + N_userLevel + "|'" + N_ProcStatus + "'|" + N_SaveDraft;
-        //     }
-        //     else if (N_IsApprovalSystem == 0)
-        //     {
-        //         FieldList += ",B_IssaveDraft";
-        //         FieldValues += "|" + 0;
-        //     }
-        // }
+        
 
 
 

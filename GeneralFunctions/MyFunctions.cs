@@ -273,7 +273,182 @@ namespace SmartxAPI.GeneralFunctions
             return dt;
         }
 
+
+
+        public DataTable saveApprovals(DataTable MasterTable,DataTable Approvals,IDataAccessLayer dLayer ,SqlConnection connection,SqlTransaction transaction)
+        {
+            DataRow MasterRow= MasterTable.Rows[0];
+            DataRow ApprovalRow= Approvals.Rows[0];
+
+            int N_MaxLevelID = 0, N_Submitter = 0;
+            int N_ApprovalID = 0, N_IsApprovalSystem = 0 ,FormID =0,N_CompanyID=0,N_userLevel=0, N_SaveDraft=0,N_ProcStatus =0;
+
+            N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
+            N_IsApprovalSystem = this.getIntVAL(ApprovalRow["isApprovalSystem"].ToString());
+            FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
+            N_ProcStatus = this.getIntVAL(ApprovalRow["saveTag"].ToString());
+            N_CompanyID = this.getIntVAL(MasterRow["N_CompanyID"].ToString());
+            N_userLevel = this.getIntVAL(ApprovalRow["nextApprovalLevel"].ToString());
+
+            SortedList Params = new SortedList();
+            Params.Add("@FormID",FormID);
+            Params.Add("@nCompanyID",N_CompanyID);
+            Params.Add("@nApprovalID",N_ApprovalID);
+
+            if (N_ApprovalID == 0)
+            {
+                object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@FormID and N_CompanyID=@nCompanyID",Params,connection,transaction);
+                if (ApprovalCode != null)
+                    Params["@nApprovalID"] = this.getIntVAL(ApprovalCode.ToString());
+            }
+
+            if (N_IsApprovalSystem == 1)
+            {
+                N_MaxLevelID = this.getIntVAL(dLayer.ExecuteScalar("Select Isnull (max(N_level),0) from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID",Params,connection,transaction).ToString());
+
+                object OB_Submitter = dLayer.ExecuteScalar("Select isnull(N_level,0) as N_level from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_ActionTypeId=111",Params,connection,transaction);
+                if (OB_Submitter != null)
+                    N_Submitter = this.getIntVAL(OB_Submitter.ToString());
+                else
+                    N_Submitter = N_MaxLevelID;
+
+                if (N_userLevel == N_MaxLevelID || N_userLevel == N_Submitter)
+                    N_SaveDraft = 0;
+                else
+                    N_SaveDraft = 1;
+
+                MasterTable = this.AddNewColumnToDataTable(MasterTable,"N_ApprovalLevelId",typeof(int),N_userLevel);
+                MasterTable = this.AddNewColumnToDataTable(MasterTable,"N_ProcStatus",typeof(int),N_ProcStatus);
+                MasterTable = this.AddNewColumnToDataTable(MasterTable,"B_IssaveDraft",typeof(int),N_SaveDraft);
+            }
+            else if (N_IsApprovalSystem == 0)
+            {
+                MasterTable = this.AddNewColumnToDataTable(MasterTable,"B_IssaveDraft",typeof(int),0);
+            }
+            return MasterTable;
+        }
+
+        public void logApprovals(DataTable Approvals,int N_CompanyID,int N_FnYearID, string X_TransType, int N_TransID,string X_TransCode, DateTime D_TransDate, int N_ApprovalUserID, int N_ApprovalUserCatID,int GroupID,string PartyName,int EmpID,string DepLevel,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction )
+        {
+            DataRow ApprovalRow = Approvals.Rows[0];
+            string X_Action =ApprovalRow["btnSaveText"].ToString();
+            int N_ApprovalLevelID = this.getIntVAL(ApprovalRow["nextApprovalLevel"].ToString());
+            int N_ProcStatusID = this.getIntVAL(ApprovalRow["saveTag"].ToString());
+            int N_IsApprovalSystem = this.getIntVAL(ApprovalRow["isApprovalSystem"].ToString());
+            int N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
+            int N_FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
+            string Comments = ApprovalRow["comments"].ToString();
+            
+            int N_GroupID = 1,N_NxtUserID=0;
+            N_GroupID = GroupID;
+
+            SortedList LogParams = new SortedList();
+            LogParams.Add("@nCompanyID",N_CompanyID);
+            LogParams.Add("@nFormID",N_FormID);
+            LogParams.Add("@nApprovalUserID",N_ApprovalUserID);
+            LogParams.Add("@nTransID",N_TransID);
+            LogParams.Add("@nApprovalLevelID",N_ApprovalLevelID);
+            LogParams.Add("@nProcStatusID",N_ProcStatusID);
+            LogParams.Add("@nApprovalID",N_ApprovalID);
+            LogParams.Add("@nGroupID",N_GroupID);
+            LogParams.Add("@nFnYearID",N_FnYearID);
+            LogParams.Add("@xAction",X_Action);
+            LogParams.Add("@nEmpID",EmpID);
+            LogParams.Add("@xDepLevel",DepLevel);
+            
+            if (N_IsApprovalSystem == 1)
+            {
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel",LogParams,connection,transaction);
+
+                object NxtUser = null;
+                NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0",LogParams,connection,transaction);
+                if (NxtUser != null)
+                    N_NxtUserID = this.getIntVAL(NxtUser.ToString());
+            
+            LogParams.Add("@xTransType",X_TransType);
+            LogParams.Add("@nApprovalUserCatID",N_ApprovalUserCatID);
+            LogParams.Add("@xSystemName","WebRequest");
+            LogParams.Add("@xTransCode",X_TransCode);
+            LogParams.Add("@dTransDate",D_TransDate.ToString("dd/MMM/yyyy"));
+            LogParams.Add("@xComments",Comments);
+            LogParams.Add("@xPartyName",PartyName);
+            LogParams.Add("@nNxtUserID",N_NxtUserID);
+                dLayer.ExecuteNonQuery("SP_Log_Approval_Status @nCompanyID,@nFnYearID,@xTransType,@nTransID,@nFormID,@nApprovalUserID,@nApprovalUserCatID,@xAction,@xSystemName,@xTransCode,@dTransDate,@nApprovalLevelID,@nApprovalUserID,@nProcStatusID,@xComments,@xPartyName,@nNxtUserID",LogParams,connection,transaction);
+                
+                object Count = null;
+                SortedList NewParam = new SortedList();
+                NewParam.Add("@nCompanyID",N_CompanyID);
+                NewParam.Add("@nFormID",N_FormID);
+                NewParam.Add("@nTransID",N_TransID);
+
+                Count = dLayer.ExecuteScalar("select COUNT(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and (N_Status=0 or N_Status=-1)",NewParam,connection,transaction);
+                if (Count != null)
+                {
+                    if (this.getIntVAL(Count.ToString()) == 0 )
+                    {
+                        string TableName = dLayer.ExecuteScalar("select X_ScreenTable from vw_ScreenTables where N_FormID=@nFormID",NewParam,connection,transaction).ToString();
+                        string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID",NewParam,connection,transaction).ToString();
+                        
+                        dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID",NewParam,connection,transaction);
+                    }
+                }
+            }
+        }
+
+        public void UpdateApproverEntry(DataTable Approvals,string ScreenTable, string Criterea,int N_TransID,int N_CompanyID,int N_UserID,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction )
+        {
+            DataRow ApprovalRow = Approvals.Rows[0];
+            int N_ApprovalLevelId = this.getIntVAL(ApprovalRow["nextApprovalLevel"].ToString());
+            int N_ProcStatus = this.getIntVAL(ApprovalRow["saveTag"].ToString());
+            int N_IsApprovalSystem = this.getIntVAL(ApprovalRow["isApprovalSystem"].ToString());
+            int ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
+            int FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
+            int N_MaxLevelID = 0, N_Submitter = 0;
+            int N_ApprovalID = 0;
+            N_ApprovalID = ApprovalID;
+
+            SortedList Params = new SortedList();
+            Params.Add("@nFormID",FormID);
+            Params.Add("@nCompanyID",N_CompanyID);
+            Params.Add("@nApprovalID",N_ApprovalID);
+            Params.Add("@nTransID",N_TransID);
+            Params.Add("@nProcStatus",N_ProcStatus);
+            Params.Add("@nApprovalLevelId",N_ApprovalLevelId);
+            Params.Add("@nUserID",N_UserID);
+
+            if (N_ApprovalID == 0)
+            {
+                object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID",Params,connection,transaction);
+                if (ApprovalCode != null){
+                    N_ApprovalID = this.getIntVAL(ApprovalCode.ToString());
+                    Params["@nApprovalID"]=N_ApprovalID;
+                    }
+            }
+
+            if (N_IsApprovalSystem == 1)
+            {
+                N_MaxLevelID = this.getIntVAL(dLayer.ExecuteScalar("select ISNULL(MAX(N_LevelID),0) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_FormID=@nFormID  and N_TransID=@nTransID",Params,connection,transaction).ToString());
+
+                object OB_Submitter = dLayer.ExecuteScalar("select ISNULL(N_LevelID,0) from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeId=111",Params,connection,transaction);
+                if (OB_Submitter != null)
+                    N_Submitter = this.getIntVAL(OB_Submitter.ToString());
+                else
+                    N_Submitter = N_MaxLevelID;
+
+                if (N_ApprovalLevelId == N_MaxLevelID || N_ApprovalLevelId == N_Submitter)
+                 Params.Add("@nSaveDraft",0);
+                else
+                 Params.Add("@nSaveDraft",1);
+
+
+                dLayer.ExecuteNonQuery("UPDATE " + ScreenTable + " SET N_ProcStatus=@nProcStatus, N_ApprovalLevelId=@nApprovalLevelId,N_UserID=@nUserID,B_IssaveDraft=@nSaveDraft where " + Criterea,Params,connection,transaction);
+            }
+        }
+
     }
+
+    
+
     public interface IMyFunctions
     {
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection);
@@ -302,5 +477,9 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value);
         public string getDateVAL(DateTime val);
         public DateTime GetFormatedDate(string val);
+        public DataTable saveApprovals(DataTable MasterTable,DataTable Approvals,IDataAccessLayer dLayer ,SqlConnection connection,SqlTransaction transaction);
+        public void logApprovals(DataTable Approvals,int N_CompanyID,int N_FnYearID, string X_TransType, int N_TransID,string X_TransCode, DateTime D_TransDate, int N_ApprovalUserID, int N_ApprovalUserCatID,int GroupID,string PartyName,int EmpID,string DepLevel,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction );
+        public void UpdateApproverEntry(DataTable Approvals,string ScreenTable, string Criterea,int N_TransID,int N_CompanyID,int N_UserID,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction );
+        
     }
 }
