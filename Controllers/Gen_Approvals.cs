@@ -399,9 +399,13 @@ namespace SmartxAPI.Controllers
                                 if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920)
                                 {
                                     if (nTransStatus == 913 || nTransStatus == 7)
-                                    { nTransStatus = 916; }
+                                    { nTransStatus = 916;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                     }
                                     else
-                                    { nTransStatus = 915; }
+                                    { nTransStatus = 915; 
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                    }
                                 }
                                 NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
                                 if (NextApprovalUser != null)

@@ -94,6 +94,46 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetTravelOrderDetails(string xRequestCode)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int nUserID = api.GetUserID(User);
+            int nCompanyID = api.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@xRequestCode", xRequestCode);
+
+            try
+            {
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string _sqlQuery = "SELECT     Pay_EmpBussinessTripRequest.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID FROM  Pay_EmpBussinessTripRequest LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID  where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
+                
+                        dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
        
         //Save....
         [HttpPost("save")]
