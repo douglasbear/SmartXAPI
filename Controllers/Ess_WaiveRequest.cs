@@ -44,8 +44,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int nUserID = api.GetUserID(User);
-            int nCompanyID = api.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
@@ -97,8 +97,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int nUserID = api.GetUserID(User);
-            int nCompanyID = api.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             QueryParams.Add("@nFnYearID", nFnYearID);
@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-           int companyid = api.GetCompanyID(User);
+           int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
             QueryParams.Add("@nRequestID", nRequestID);
@@ -225,7 +225,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_AnytimeRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_RequestType",typeof(int),this.FormID);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_UserID",typeof(int),api.GetUserID(User));
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_UserID",typeof(int),myFunctions.GetUserID(User));
                     MasterTable.Columns.Remove("n_RequestID");
                     MasterTable.AcceptChanges();
 

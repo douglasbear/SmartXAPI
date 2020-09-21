@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-      
+
         [HttpGet("loanList")]
         public ActionResult GetEmployeeLoanRequest(string xReqType)
         {
@@ -48,8 +48,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int nUserID = api.GetUserID(User);
-            int nCompanyID = api.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
@@ -94,14 +94,14 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult GetEmployeeLoanDetails(int nLoanID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-           int companyid = api.GetCompanyID(User);
+            int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
             QueryParams.Add("@nLoanID", nLoanID);
@@ -111,8 +111,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     string _sqlQuery = "SELECT     Pay_LoanIssue.N_CompanyID, Pay_LoanIssue.N_EmpID, Pay_LoanIssue.N_LoanTransID, Pay_LoanIssue.D_LoanIssueDate, Pay_LoanIssue.D_EntryDate,  Pay_LoanIssue.X_Remarks, Pay_LoanIssue.D_LoanPeriodFrom, Pay_LoanIssue.D_LoanPeriodTo, Pay_LoanIssue.N_LoanAmount, Pay_LoanIssue.N_LoanID, Pay_LoanIssue.N_PayID, Pay_LoanIssue.N_Installments, Pay_LoanIssue.N_DefLedgerID, Pay_LoanIssue.X_Paymentmethod, Pay_LoanIssue.X_ChequeNo, Pay_LoanIssue.D_ChequeDate, Pay_LoanIssue.N_UserID, Pay_LoanIssue.X_BankName, Pay_LoanIssue.N_FnYearID, Pay_LoanIssue.N_LoanStatus,  Pay_LoanIssue.B_OpeningBal, Pay_LoanIssue.N_BranchID, Pay_LoanIssue.N_WebLoanId, Pay_LoanIssue.N_ApprovalLevelId, Pay_LoanIssue.N_ProcStatus, Pay_LoanIssue.N_NextApprovalID, Pay_LoanIssue.B_IsSaveDraft, Pay_LoanIssue.X_Comments, Pay_LoanIssue.X_Guarantor1, Pay_LoanIssue.X_Guarantor2, Pay_LoanIssue.X_RefFrom, Pay_LoanIssue.N_RefID,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID FROM         Pay_LoanIssue LEFT OUTER JOIN Pay_Employee ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID  where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
-                
-                        dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
 
                 }
@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
                 return BadRequest(api.Error(e));
             }
         }
-        
+
         [HttpPost("save")]
         public ActionResult SaveLoanRequest([FromBody] DataSet ds)
         {
@@ -148,8 +148,8 @@ namespace SmartxAPI.Controllers
                 // Auto Gen
                 DataRow MasterRow = MasterTable.Rows[0];
 
-                int nUserID=api.GetUserID(User);
-               
+                int nUserID = myFunctions.GetUserID(User);
+
 
                 string xLoanID = MasterRow["n_LoanID"].ToString();
                 int nLoanTransID = myFunctions.getIntVAL(MasterRow["n_LoanTransID"].ToString());
@@ -167,15 +167,16 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
-                        EmpParams.Add("@nCompanyID", nCompanyID);
-                        EmpParams.Add("@nEmpID", nEmpID);
-                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection,transaction);
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nEmpID", nEmpID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
 
-                    if(!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())){
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
                         int N_PkeyID = nLoanTransID;
                         string X_Criteria = "N_LoanTransID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
-                        myFunctions.UpdateApproverEntry(Approvals,"Pay_LoanIssue", X_Criteria,N_PkeyID,nCompanyID,nUserID,dLayer,connection,transaction );
-                        myFunctions.logApprovals(Approvals,api.GetCompanyID(User),nFnYearID,this.xTransType, N_PkeyID, xLoanID, DateTime.Now,api.GetUserID(User),api.GetUserCategory(User),1,objEmpName.ToString(),0,"",dLayer,connection,transaction);
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_LoanIssue", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, N_PkeyID, xLoanID, 1,objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
                         transaction.Commit();
                         return Ok(api.Success("Loan request Approval updated" + "-" + xLoanID));
                     }
@@ -187,7 +188,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xLoanID = dLayer.GetAutoNumber("Pay_LoanIssue", "n_LoanID", Params, connection, transaction);
-                        if (xLoanID == "") { return Ok( api.Error( "Unable to generate Loan ID")); }
+                        if (xLoanID == "") { return Ok(api.Error("Unable to generate Loan ID")); }
                         MasterTable.Rows[0]["n_LoanID"] = xLoanID;
                     }
                     else
@@ -195,12 +196,12 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_LoanIssue", "n_LoanTransID", nLoanTransID, "", connection, transaction);
                     }
 
-                    int nInstAmount = myFunctions.getIntVAL( MasterTable.Rows[0]["n_InstallmentAmount"].ToString());
-                    int nInstNos = myFunctions.getIntVAL( MasterTable.Rows[0]["n_Installments"].ToString());
+                    int nInstAmount = myFunctions.getIntVAL(MasterTable.Rows[0]["n_InstallmentAmount"].ToString());
+                    int nInstNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Installments"].ToString());
                     MasterTable.Columns.Remove("n_InstallmentAmount");
                     MasterTable.AcceptChanges();
 
-                    MasterTable = myFunctions.saveApprovals(MasterTable,Approvals,dLayer,connection,transaction);
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     nLoanTransID = dLayer.SaveData("Pay_LoanIssue", "n_LoanTransID", MasterTable, connection, transaction);
                     if (nLoanTransID <= 0)
                     {
@@ -211,9 +212,9 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        myFunctions.logApprovals(Approvals,api.GetCompanyID(User),nFnYearID,this.xTransType, nLoanTransID, xLoanID, DateTime.Now,api.GetUserID(User),api.GetUserCategory(User),1,objEmpName.ToString(),0,"",dLayer,connection,transaction);
-                    
-                        DataTable dt=new DataTable(); 
+                        myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, xLoanID,1, objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
+
+                        DataTable dt = new DataTable();
                         dt.Clear();
                         dt.Columns.Add("N_LoanTransDetailsID");
                         dt.Columns.Add("N_CompanyID");
@@ -234,10 +235,10 @@ namespace SmartxAPI.Controllers
                             row["D_DateFrom"] = myFunctions.getDateVAL(Start);
                             row["D_DateTo"] = myFunctions.getDateVAL(End);
                             row["N_InstAmount"] = nInstAmount;
-                            dt.Rows.Add(row);   
+                            dt.Rows.Add(row);
                             Start = Start.AddMonths(1);
                         }
-                        
+
                         int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", dt, connection, transaction);
                         if (N_LoanTransDeatilsID <= 0)
                         {
@@ -245,7 +246,7 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error("Unable to save Loan Request"));
                         }
 
-                         transaction.Commit();
+                        transaction.Commit();
                     }
                     return Ok(api.Success("Loan request saved" + ":" + xLoanID));
                 }
@@ -257,29 +258,43 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpDelete()]
-        public ActionResult DeleteData(int nLoanTransID)
+        [HttpDelete()]
+        public ActionResult DeleteData(int nLoanTransID, int nFnYearID)
         {
-            int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",api.GetCompanyID(User)},
-                                {"X_TransType","EMPLOYEE LOAN"},
-                                {"N_VoucherID",nLoanTransID}};
-                            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                    if (Results <= 0)
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nLoanTransID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,N_loanID from Pay_LoanIssue where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_LoanTransID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
                     {
-                        transaction.Rollback();
-                        return Ok( api.Error( "Unable to delete Loan request"));
+                        return Ok(api.Error("Transaction not Found"));
                     }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nLoanTransID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2001,User, dLayer, connection));
+                    Approvals=myFunctions.AddNewColumnToDataTable(Approvals,"comments",typeof(string),"Auto Generated Comment");
+                    SqlTransaction transaction = connection.BeginTransaction();;
+
+                    string X_Criteria = "N_LoanTransID=" + nLoanTransID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    if (myFunctions.UpdateApprovals(Approvals, nFnYearID, "EMPLOYEE LOAN", nLoanTransID,TransRow["N_loanID"].ToString(),myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()),"Pay_LoanIssue",X_Criteria,"",User,dLayer,connection,transaction))
+                    {
+                        //Delete Attachement
                         transaction.Commit();
-                        return Ok( api.Success("Loan request Deleted Successfully"));
-                   
+                    return Ok(api.Success("Loan request Deleted Successfully"));
+                    }else{
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to delete Loan request"));
+                    }
+                    
+
                 }
             }
             catch (Exception ex)

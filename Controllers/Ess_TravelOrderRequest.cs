@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
 
 
         //List
-     
+
         [HttpGet("list")]
         public ActionResult GetTravelOrderList(string xReqType)
         {
@@ -48,8 +48,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int nUserID = api.GetUserID(User);
-            int nCompanyID = api.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
@@ -101,19 +101,19 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int nUserID = api.GetUserID(User);
-            int nCompanyID = api.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@xRequestCode", xRequestCode);
 
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     string _sqlQuery = "SELECT     Pay_EmpBussinessTripRequest.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID FROM  Pay_EmpBussinessTripRequest LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID  where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
-                
-                        dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
 
                 }
@@ -134,7 +134,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-       
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveTORequest([FromBody] DataSet ds)
@@ -145,6 +145,9 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
 
                 var x_RequestCode = MasterRow["x_RequestCode"].ToString();
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
@@ -155,26 +158,41 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction(); ;
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nEmpID", nEmpID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
+                        int N_PkeyID = nRequestID;
+                        string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpBussinessTripRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        return Ok(api.Success("Travel Order Request Approval updated" + "-" + x_RequestCode));
+                    }
                     if (x_RequestCode == "@Auto")
                     {
                         Params.Add("@nCompanyID", nCompanyID);
-                        object objReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpBussinessTripRequest where N_CompanyID=@nCompanyID",Params,connection,transaction);
-                            if(objReqCode.ToString()==""|| objReqCode.ToString()==null){x_RequestCode="1";}else{
+                        object objReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpBussinessTripRequest where N_CompanyID=@nCompanyID", Params, connection, transaction);
+                        if (objReqCode.ToString() == "" || objReqCode.ToString() == null) { x_RequestCode = "1"; }
+                        else
+                        {
                             x_RequestCode = objReqCode.ToString();
-                            }
-                            MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
+                        }
+                        MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
                     }
                     else
                     {
                         dLayer.DeleteData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_RequestType",typeof(int),this.FormID);
-                    MasterTable.Columns.Remove("n_RequestID");
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
                     MasterTable.AcceptChanges();
 
-
-                    nRequestID = dLayer.SaveData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, MasterTable, connection, transaction);
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    nRequestID = dLayer.SaveData("Pay_EmpBussinessTripRequest", "n_RequestID", MasterTable, connection, transaction);
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -182,11 +200,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                         transaction.Commit();
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+
+                        transaction.Commit();
                     }
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("x_RequestCode",x_RequestCode.ToString());
-                    return Ok(api.Success(res,"Travel Order request saved"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("x_RequestCode", x_RequestCode.ToString());
+                    return Ok(api.Success(res, "Travel Order request saved"));
                 }
             }
             catch (Exception ex)
@@ -196,25 +216,45 @@ namespace SmartxAPI.Controllers
         }
 
 
-          [HttpDelete()]
-        public ActionResult DeleteData(int nRequestID)
+        [HttpDelete()]
+        public ActionResult DeleteData(int nRequestID, int nFnYearID)
         {
-            int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                           Results = dLayer.DeleteData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, "", connection, transaction);
-                    if (Results <= 0)
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nRequestID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode from Pay_EmpBussinessTripRequest where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2001, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "Auto Generated Comment");
+                    SqlTransaction transaction = connection.BeginTransaction(); ;
+
+                    string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    if (myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), "Pay_EmpBussinessTripRequest", X_Criteria, "", User, dLayer, connection, transaction))
+                    {
+                        //Delete Attachement
+                        transaction.Commit();
+                        return Ok(api.Success("Travel Order Request Deleted Successfully"));
+                    }
+                    else
                     {
                         transaction.Rollback();
-                        return Ok( api.Error( "Unable to delete Travel Order request"));
+                        return Ok(api.Error("Unable to delete Travel Order Request"));
                     }
-                        transaction.Commit();
-                        return Ok( api.Success("Travel Order request Deleted Successfully"));
-                   
+
+
                 }
             }
             catch (Exception ex)

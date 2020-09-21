@@ -135,19 +135,6 @@ namespace SmartxAPI.GeneralFunctions
             return dt;
         }
 
-        public int GetUserID(ClaimsPrincipal  User)
-        {
-            return myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-        }
-        public int GetCompanyID(ClaimsPrincipal  User)
-        {
-            return myFunctions.getIntVAL(User.FindFirst(ClaimTypes.Sid)?.Value);
-        }
-        public int GetUserCategory(ClaimsPrincipal  User)
-        {
-            return myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
-        }
-
     }
     public interface IApiFunctions
     {
@@ -171,8 +158,5 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataRow dataRow, String message);
         public object Notice(string message);
         public object Warning(string message);
-        public int GetUserID(ClaimsPrincipal  User);
-        public int GetCompanyID(ClaimsPrincipal  User);
-        public int GetUserCategory(ClaimsPrincipal  User);
     }
 }

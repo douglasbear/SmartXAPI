@@ -2,14 +2,13 @@ using System;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Collections;
-using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.GeneralFunctions
 {
     public class DataAccessLayer : IDataAccessLayer
     {
         private readonly IMyFunctions myFunctions;
-        public DataAccessLayer(IConfiguration conf,IMyFunctions myFun)
+        public DataAccessLayer(IMyFunctions myFun)
         {
             myFunctions=myFun;
         }
