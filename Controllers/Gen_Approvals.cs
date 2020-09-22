@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboard")]
-        public ActionResult GetApprovalDetails(int nCompanyID, int nnextApproverID, bool bShowAll, bool bShowAllBranch, int N_Branchid, int nApprovalType)
+        public ActionResult GetApprovalDetails( bool bShowAll, bool bShowAllBranch, int N_Branchid, int nApprovalType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -55,6 +55,7 @@ namespace SmartxAPI.Controllers
                     else
                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 and N_Branchid = @p3";
 
+                    //Params.Add("@p3", N_Branchid);
                     Params.Add("@p3", N_Branchid);
                 }
 
@@ -70,9 +71,11 @@ namespace SmartxAPI.Controllers
                 }
 
             }
+            int nUserID = api.GetUserID(User);
+            int nCompanyID = api.GetCompanyID(User);
 
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nnextApproverID);
+            Params.Add("@p2", nUserID);
 
             try
             {
