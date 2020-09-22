@@ -53,6 +53,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            
 
             try
             {
