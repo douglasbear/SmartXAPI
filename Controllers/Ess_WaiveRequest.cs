@@ -198,6 +198,12 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
+
+                                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
+
                 var x_RequestCode = MasterRow["x_RequestCode"].ToString();
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
@@ -208,7 +214,23 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction(); ;
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nEmpID", nEmpID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
+                        int N_PkeyID = nRequestID;
+                        string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_AnytimeRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        return Ok(api.Success("Waive Request Approval updated" + "-" + x_RequestCode));
+                    }
+
                     if (x_RequestCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -226,11 +248,10 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_RequestType",typeof(int),this.FormID);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_UserID",typeof(int),myFunctions.GetUserID(User));
-                    MasterTable.Columns.Remove("n_RequestID");
                     MasterTable.AcceptChanges();
 
-
-                    nRequestID = dLayer.SaveData("Pay_AnytimeRequest", "n_RequestID", nRequestID, MasterTable, connection, transaction);
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    nRequestID = dLayer.SaveData("Pay_AnytimeRequest", "n_RequestID", MasterTable, connection, transaction);
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -238,6 +259,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                         myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+
                          transaction.Commit();
                     }
                     Dictionary<string,string> res=new Dictionary<string, string>();
@@ -253,25 +276,44 @@ namespace SmartxAPI.Controllers
 
 
           [HttpDelete()]
-        public ActionResult DeleteData(int nRequestID)
+        public ActionResult DeleteData(int nRequestID,int nFnYearID)
         {
-            int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_AnytimeRequest", "n_RequestID", nRequestID, "", connection, transaction);
-                    if (Results <= 0)
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nRequestID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode from Pay_AnytimeRequest where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2001, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "Auto Generated Comment");
+                    SqlTransaction transaction = connection.BeginTransaction(); ;
+
+                    string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    if (myFunctions.UpdateApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, TransRow["X_RequestCode"].ToString(), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), "Pay_AnytimeRequest", X_Criteria, "", User, dLayer, connection, transaction))
+                    {
+                        //Delete Attachement
+                        transaction.Commit();
+                        return Ok(api.Success("Waive Request Deleted Successfully"));
+                    }
+                    else
                     {
                         transaction.Rollback();
-                        return Ok( api.Error( "Unable to delete Waive Request"));
+                        return Ok(api.Error("Unable to delete Waive Request"));
                     }
-                        transaction.Commit();
-                         Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("n_RequestID",nRequestID.ToString());
-                    return Ok(api.Success(res,"Waive Request Deleted Successfully"));
+
+
                 }
             }
             catch (Exception ex)
