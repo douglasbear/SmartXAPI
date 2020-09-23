@@ -23,7 +23,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
         public Gen_Approvals(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
@@ -71,8 +70,8 @@ namespace SmartxAPI.Controllers
                 }
 
             }
-            int nUserID = api.GetUserID(User);
-            int nCompanyID = api.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nUserID);

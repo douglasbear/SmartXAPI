@@ -7,10 +7,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using System.ComponentModel;
-using System.Collections.Generic;
-using System.Linq;
-using System.Security.Claims;
 
 namespace SmartxAPI.Controllers
 {
@@ -110,7 +106,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT     Pay_LoanIssue.N_CompanyID, Pay_LoanIssue.N_EmpID, Pay_LoanIssue.N_LoanTransID, Pay_LoanIssue.D_LoanIssueDate, Pay_LoanIssue.D_EntryDate,  Pay_LoanIssue.X_Remarks, Pay_LoanIssue.D_LoanPeriodFrom, Pay_LoanIssue.D_LoanPeriodTo, Pay_LoanIssue.N_LoanAmount, Pay_LoanIssue.N_LoanID, Pay_LoanIssue.N_PayID, Pay_LoanIssue.N_Installments, Pay_LoanIssue.N_DefLedgerID, Pay_LoanIssue.X_Paymentmethod, Pay_LoanIssue.X_ChequeNo, Pay_LoanIssue.D_ChequeDate, Pay_LoanIssue.N_UserID, Pay_LoanIssue.X_BankName, Pay_LoanIssue.N_FnYearID, Pay_LoanIssue.N_LoanStatus,  Pay_LoanIssue.B_OpeningBal, Pay_LoanIssue.N_BranchID, Pay_LoanIssue.N_WebLoanId, Pay_LoanIssue.N_ApprovalLevelId, Pay_LoanIssue.N_ProcStatus, Pay_LoanIssue.N_NextApprovalID, Pay_LoanIssue.B_IsSaveDraft, Pay_LoanIssue.X_Comments, Pay_LoanIssue.X_Guarantor1, Pay_LoanIssue.X_Guarantor2, Pay_LoanIssue.X_RefFrom, Pay_LoanIssue.N_RefID,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID FROM         Pay_LoanIssue LEFT OUTER JOIN Pay_Employee ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID  where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT Pay_LoanIssue.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position FROM  Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_LoanIssue ON Pay_Employee.N_EmpID = Pay_LoanIssue.N_EmpID AND Pay_Employee.N_CompanyID = Pay_LoanIssue.N_CompanyID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
