@@ -38,19 +38,42 @@ namespace SmartxAPI.Controllers
 
 
         //List
-        [HttpGet("list")]
-        public ActionResult GetEmployeeRequest(int? nCompanyID, string xReqType)
+       [HttpGet("list")]
+        public ActionResult GetEmpReqList(string xReqType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
 
-            string sqlCommandText = "select * from vw_EmployeeRequestApprovalDashBoard";
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nUserID", nUserID);
+            string sqlCommandText = "";
+            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    if (nEmpID != null)
+                    {
+                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
+                        QueryParams.Add("@xStatus", xReqType);
+                        if (xReqType.ToLower() == "all")
+                            sqlCommandText = "Select * From vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
+                        else
+                        if (xReqType.ToLower() == "pending")
+                            sqlCommandText = "select * from vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
+                        else
+                            sqlCommandText = "Select * From vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_RequestDate Desc";
+
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    }
+
+
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -103,7 +126,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetEmployeeLoanDetails(int nRequestID, int nEmpID)
+        public ActionResult GetEmployeeLoanDetails(string xRequestCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -112,15 +135,13 @@ namespace SmartxAPI.Controllers
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@nRequestID", nRequestID);
-            QueryParams.Add("@nEmpID", nEmpID);
-
+            QueryParams.Add("@xRequestCode", xRequestCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT     Pay_EmpAnyRequest.N_CompanyID, Pay_EmpAnyRequest.N_BranchID, Pay_EmpAnyRequest.N_FnYearID, Pay_EmpAnyRequest.N_RequestID, Pay_EmpAnyRequest.N_RequestType, Pay_EmpAnyRequest.N_EmpID, Pay_EmpAnyRequest.D_RequestDate, Pay_EmpAnyRequest.D_EntryDate, Pay_EmpAnyRequest.D_DateFrom, Pay_EmpAnyRequest.D_DateTo, Pay_EmpAnyRequest.X_Notes, Pay_EmpAnyRequest.N_ApprovalLevelID, Pay_EmpAnyRequest.N_ProcStatus, Pay_EmpAnyRequest.B_IsSaveDraft, Pay_EmpAnyRequest.N_UserID, Pay_EmpAnyRequest.X_FileName, Pay_EmpAnyRequest.B_IsAttach, Pay_EmpAnyRequest.X_Comments, Pay_EmpAnyRequest.N_RequestStatus, Pay_EmpAnyRequest.N_EntryUserID, Pay_EmpAnyRequest.X_RequestCode, Pay_Employee.X_EmpName, Pay_Employee.X_EmpCode, Pay_EmployeeRequestType.X_RequestTypeDesc FROM         Pay_EmpAnyRequest INNER JOIN Pay_EmployeeRequestType ON Pay_EmpAnyRequest.N_CompanyID = Pay_EmployeeRequestType.N_CompanyID AND  Pay_EmpAnyRequest.N_RequestType = Pay_EmployeeRequestType.N_RequestTypeID LEFT OUTER JOIN Pay_Employee ON Pay_EmpAnyRequest.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_EmpAnyRequest.N_EmpID = Pay_Employee.N_EmpID  where Pay_EmpAnyRequest.N_RequestID=@nRequestID and Pay_EmpAnyRequest.N_EmpID=@nEmpID and Pay_EmpAnyRequest.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT     Pay_EmpAnyRequest.N_CompanyID, Pay_EmpAnyRequest.N_BranchID, Pay_EmpAnyRequest.N_FnYearID, Pay_EmpAnyRequest.N_RequestID, Pay_EmpAnyRequest.N_RequestType, Pay_EmpAnyRequest.N_EmpID, Pay_EmpAnyRequest.D_RequestDate, Pay_EmpAnyRequest.D_EntryDate, Pay_EmpAnyRequest.D_DateFrom, Pay_EmpAnyRequest.D_DateTo, Pay_EmpAnyRequest.X_Notes, Pay_EmpAnyRequest.N_ApprovalLevelID, Pay_EmpAnyRequest.N_ProcStatus, Pay_EmpAnyRequest.B_IsSaveDraft, Pay_EmpAnyRequest.N_UserID, Pay_EmpAnyRequest.X_FileName, Pay_EmpAnyRequest.B_IsAttach, Pay_EmpAnyRequest.X_Comments, Pay_EmpAnyRequest.N_RequestStatus, Pay_EmpAnyRequest.N_EntryUserID, Pay_EmpAnyRequest.X_RequestCode, Pay_Employee.X_EmpName, Pay_Employee.X_EmpCode, Pay_EmployeeRequestType.X_RequestTypeDesc FROM         Pay_EmpAnyRequest INNER JOIN Pay_EmployeeRequestType ON Pay_EmpAnyRequest.N_CompanyID = Pay_EmployeeRequestType.N_CompanyID AND  Pay_EmpAnyRequest.N_RequestType = Pay_EmployeeRequestType.N_RequestTypeID LEFT OUTER JOIN Pay_Employee ON Pay_EmpAnyRequest.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_EmpAnyRequest.N_EmpID = Pay_Employee.N_EmpID  where Pay_EmpAnyRequest.X_RequestCode=@xRequestCode and Pay_EmpAnyRequest.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
@@ -158,7 +179,7 @@ namespace SmartxAPI.Controllers
 
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                string xReqCode = MasterRow["X_RequestCode"].ToString();
+                string xReqCode = MasterRow["x_RequestCode"].ToString();
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
 
@@ -188,8 +209,8 @@ namespace SmartxAPI.Controllers
                     {
                         SortedList Params = new SortedList();
                         Params.Add("@nCompanyID", nCompanyID);
-                        string XReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpAnyRequest where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
-                        MasterTable.Rows[0]["X_RequestCode"] = XReqCode;
+                        xReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpAnyRequest where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
+                        MasterTable.Rows[0]["X_RequestCode"] = xReqCode;
                     }
 
 

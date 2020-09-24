@@ -143,7 +143,7 @@ namespace SmartxAPI.Controllers
        
 
  [HttpGet("details")]
-        public ActionResult GetRequestDetails(int nRequestID, int nEmpID)
+        public ActionResult GetRequestDetails(string xRequestCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -152,15 +152,14 @@ namespace SmartxAPI.Controllers
            int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@nRequestID", nRequestID);
-            QueryParams.Add("@nEmpID", nEmpID);
+            QueryParams.Add("@xRequestCode", xRequestCode);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_AnytimeRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_AnytimeRequest ON Pay_Employee.N_EmpID = Pay_AnytimeRequest.N_EmpID AND Pay_Employee.N_CompanyID = Pay_AnytimeRequest.N_CompanyID  where Pay_AnytimeRequest.N_RequestID=@nRequestID and Pay_AnytimeRequest.N_EmpID=@nEmpID and Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT Pay_AnytimeRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_AnytimeRequest ON Pay_Employee.N_EmpID = Pay_AnytimeRequest.N_EmpID AND Pay_Employee.N_CompanyID = Pay_AnytimeRequest.N_CompanyID  where Pay_AnytimeRequest.X_RequestCode=@xRequestCode and  Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
                 
                         dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
