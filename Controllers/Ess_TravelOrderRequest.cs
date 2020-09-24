@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
-                int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int nEmpID =    myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
