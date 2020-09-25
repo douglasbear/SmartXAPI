@@ -182,11 +182,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-       
-
-
-
         //Save....
         [HttpPost("save")]
         public ActionResult SaveTORequest([FromBody] DataSet ds)
@@ -198,10 +193,9 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
 
-                                DataTable Approvals;
+                DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
-
 
                 var x_RequestCode = MasterRow["x_RequestCode"].ToString();
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
@@ -259,7 +253,6 @@ namespace SmartxAPI.Controllers
                     else
                     {
                          myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-
                          transaction.Commit();
                     }
                     Dictionary<string,string> res=new Dictionary<string, string>();
