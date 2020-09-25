@@ -195,6 +195,29 @@ namespace SmartxAPI.Controllers
             }
         }
 
+    //    [HttpGet("getAvailable")]
+    //     public ActionResult GetAvailableDays(int nVacTypeID,DateTime dDateFrom,double nAccrued,double nEmpID)
+    //     {
+    //         DateTime toDate;
+    //         int days = 0;
+    //         double totalDays = 0;
+    //         int nCompanyID = myFunctions.GetCompanyID(User);
+
+    //         double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(VacTypeID));
+    //         toDate = Convert.ToDateTime(dba.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =" + compID + " and  N_EmpID  =" + empID + " and N_VacTypeID =" + VacTypeID + " and N_VacationStatus = 0 and N_VacDays>0 ").ToString());
+    //         if (toDate < fromdate)
+    //             days = Convert.ToInt32(dba.ExecuteScalar("select  DATEDIFF(day,'" + Convert.ToDateTime(toDate) + "','" + dDateFrom + "')").ToString());
+    //         else
+    //             days = 0;
+    //         if (VacTypeID == 6)
+    //         {
+    //             totalDays = Math.Round(AvlDays + ((days / 30.458) * N_AccruedValue), 0);
+    //         }
+    //         else
+    //             totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+    //         return totalDays.ToString();
+    //     }
+
         //List
         [HttpGet("vacationBenefits")]
         public ActionResult GetVacationBenefits(string nEmpID, int nMainVacationID)
@@ -249,6 +272,10 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable, DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
                 var x_VacationGroupCode = MasterRow["x_VacationGroupCode"].ToString();
@@ -261,7 +288,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction(); ;
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nEmpID", nEmpID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
+                        int N_PkeyID = n_VacationGroupID;
+                        string X_Criteria = "N_VacationGroupID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", N_PkeyID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        return Ok(api.Success("Leave Request Approval updated" + "-" + x_VacationGroupCode));
+                    }
+
                     if (x_VacationGroupCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -278,10 +320,12 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.AcceptChanges();
 
-
+                MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     n_VacationGroupID = dLayer.SaveData("Pay_VacationMaster", "n_VacationGroupID", MasterTable, connection, transaction);
                     if (n_VacationGroupID > 0)
                     {
+                        myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
                             DetailTable.Rows[j]["n_VacationGroupID"] = n_VacationGroupID;
