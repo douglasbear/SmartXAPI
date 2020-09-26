@@ -103,6 +103,7 @@ namespace SmartxAPI.Controllers
                 }
                
                 dt.Tables.Add(EmployeeDetails);
+                PayslipDetails=api.Format(PayslipDetails,"PayslipDetails");
                 dt.Tables.Add(PayslipDetails);
 
                 return Ok(api.Success(dt));
