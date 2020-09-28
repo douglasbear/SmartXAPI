@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
                     //Params.Add("@p3", N_Branchid);
                     Params.Add("@p3", N_Branchid);
                 }
-
+    
             }
             else
             {
@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText + " order by d_TransDate", Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005) order by d_TransDate desc", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
