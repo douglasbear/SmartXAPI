@@ -91,10 +91,14 @@ namespace SmartxAPI.Controllers
                     object Deduction = dLayer.ExecuteScalar(_Deduction, Params, connection);
                     object GrossEarnings = dLayer.ExecuteScalar(_GrossEarnings, Params, connection);
                     object GrossDeduction = dLayer.ExecuteScalar(_GrossDeduction, Params, connection);
+
+                    double Netsalary=double.Parse(GrossEarnings.ToString())-double.Parse(GrossDeduction.ToString());
+
                      PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"Earnings",typeof(string),Earnings);
                      PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"Deduction",typeof(string),Deduction);
                      PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"GrossEarnings",typeof(string),GrossEarnings);
                      PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"GrossDeduction",typeof(string),GrossDeduction);
+                     PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"NetSalary",typeof(string),Netsalary);
                      DataRow row=PayslipDetails.NewRow();
                      PayslipDetails.Rows.Add(row);
                      PayslipDetails.AcceptChanges();
