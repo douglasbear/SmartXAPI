@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             api = apiFun;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1229;
+            FormID = 210;
         }
 
 
@@ -358,21 +358,70 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpDelete()]
-        public ActionResult DeleteData(int n_VacationGroupID)
+        // [HttpDelete()]
+        // public ActionResult DeleteData(int n_VacationGroupID)
+        // {
+        //     int Results = 0;
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             Results = dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
+        //             if (Results > 0)
+        //             {
+        //                 Results = dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
+        //                 transaction.Commit();
+        //             }
+        //             else
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(api.Error("Unable to delete Leave Request"));
+        //             }
+
+        //             Dictionary<string, string> res = new Dictionary<string, string>();
+        //             res.Add("n_VacationGroupID", n_VacationGroupID.ToString());
+        //             return Ok(api.Success(res, "Leave Request Deleted Successfully"));
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return BadRequest(api.Error(ex));
+        //     }
+        // }
+
+          [HttpDelete()]
+        public ActionResult DeleteData(int n_VacationGroupID,int nFnYearID)
         {
-            int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
-                    if (Results > 0)
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", n_VacationGroupID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_VacationGroupCode,N_vacTypeID from Pay_VacationMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_VacationGroupID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
                     {
-                        Results = dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
-                        transaction.Commit();
+                        return Ok(api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, n_VacationGroupID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), myFunctions.getIntVAL(TransRow["N_vacTypeID"].ToString()), User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+                    SqlTransaction transaction = connection.BeginTransaction(); ;
+
+                    string X_Criteria = "N_VacationGroupID=" + n_VacationGroupID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, TransRow["X_VacationGroupCode"].ToString(), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), "Pay_VacationMaster", X_Criteria, "", User, dLayer, connection, transaction);
+                    if (status != "Error" )
+                    {
+                    transaction.Commit();
+                    return Ok(api.Success("Leave Request "+status+" Successfully"));
                     }
                     else
                     {
@@ -380,9 +429,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error("Unable to delete Leave Request"));
                     }
 
-                    Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("n_VacationGroupID", n_VacationGroupID.ToString());
-                    return Ok(api.Success(res, "Leave Request Deleted Successfully"));
+
                 }
             }
             catch (Exception ex)

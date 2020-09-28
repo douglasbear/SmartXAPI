@@ -288,16 +288,16 @@ namespace SmartxAPI.Controllers
                     }
                     DataRow TransRow = TransData.Rows[0];
 
-                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2001, User, dLayer, connection));
-                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "Auto Generated Comment");
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2003, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                    if (myFunctions.UpdateApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, TransRow["X_RequestCode"].ToString(), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), "Pay_AnytimeRequest", X_Criteria, "", User, dLayer, connection, transaction))
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, TransRow["X_RequestCode"].ToString(), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), "Pay_AnytimeRequest", X_Criteria, "", User, dLayer, connection, transaction);
+                    if (status != "Error" )
                     {
-                        //Delete Attachement
-                        transaction.Commit();
-                        return Ok(api.Success("Waive Request Deleted Successfully"));
+                    transaction.Commit();
+                    return Ok(api.Success("Waive Request "+status+" Successfully"));
                     }
                     else
                     {
