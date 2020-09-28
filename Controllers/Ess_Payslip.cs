@@ -41,25 +41,30 @@ namespace SmartxAPI.Controllers
 
         
         [HttpGet("details")]
-        public ActionResult GetPayslipDetails(int nFnYearID,int nEmpID)
+        public ActionResult GetPayslipDetails(int nFnYearID,int nEmpID,string xPayrun)
         {
-            DataTable dt = new DataTable();
+            DataSet dt=new DataSet();
+                                    
+            DataTable EmployeeDetails = new DataTable();
+            DataTable PayslipDetails = new DataTable();
+            // DataTable Deduction = new DataTable();
+            // DataTable GrossEarnings = new DataTable();
+            // DataTable GrossDeduction = new DataTable();
+
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            QueryParams.Add("@nCompanyID", nCompanyID);
-            QueryParams.Add("@nFnYearID", nFnYearID);
-            QueryParams.Add("@nEmpID", nEmpID);
+
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT N_EmpID, X_EmpCode, I_Employe_Image,X_EmpName,X_SocSecNo as GosiNo, REPLACE(CONVERT(VARCHAR(11),D_DOB,103), ' ', '-') AS  D_DOB , " +
+                    string _EmployeDetails = "SELECT N_EmpID, X_EmpCode, I_Employe_Image,X_EmpName,X_SocSecNo as GosiNo, REPLACE(CONVERT(VARCHAR(11),D_DOB,103), ' ', '-') AS  D_DOB , " +
                             " X_Phone1, X_EmailID,Pay_Position.X_Position,X_EmpImageNAme,  " +
                             " Pay_Department.X_Department, X_Sex, REPLACE(CONVERT(VARCHAR(11),D_HireDate,103), ' ', '-') AS  D_HireDate, X_Phone2 " +
                             " X_Phone2, X_NickName, X_AlternateName, X_PassportNo, " +
@@ -69,19 +74,40 @@ namespace SmartxAPI.Controllers
                             " LEFT OUTER JOIN Pay_Department ON Pay_Employee.N_DepartmentID = Pay_Department.N_DepartmentID and Pay_Employee.N_FnYearID = Pay_Department.N_FnYearID " +
                             " WHERE Pay_Employee.N_EmpID = @nEmpID AND Pay_Employee.N_CompanyID = @nCompanyID and Pay_Employee.N_FnYearID = @nFnYearID";
 
-                    dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                    string _Earnings = "select ISNULL(CONVERT(DECIMAL(10,2),N_Payrate),0) as N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
+                    string _Deduction = "select ISNULL(CONVERT(DECIMAL(10,2),N_Payrate),0) as N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 1 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
+                    string _GrossEarnings = "select ISNULL(sum(N_Payrate),0) as GrossEarnings from vw_Pay_EmployeePayments_RPT where N_Type = 0  and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
+                    string _GrossDeduction = "select IsNull(sum(N_Payrate),0) as GrossDeductions from vw_Pay_EmployeePayments_RPT where N_Type = 1 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
 
 
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nEmpID", nEmpID);
+                    Params.Add("@xPayrun", xPayrun);
+                    
+                    EmployeeDetails = dLayer.ExecuteDataTable(_EmployeDetails, Params, connection);
+                    EmployeeDetails=api.Format(EmployeeDetails,"EmployeeDetails");
+                    object Earnings = dLayer.ExecuteScalar(_Earnings, Params, connection);
+                    object Deduction = dLayer.ExecuteScalar(_Deduction, Params, connection);
+                    object GrossEarnings = dLayer.ExecuteScalar(_GrossEarnings, Params, connection);
+                    object GrossDeduction = dLayer.ExecuteScalar(_GrossDeduction, Params, connection);
+                     PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"Earnings",typeof(string),Earnings);
+                     PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"Deduction",typeof(string),Deduction);
+                     PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"GrossEarnings",typeof(string),GrossEarnings);
+                     PayslipDetails=myFunctions.AddNewColumnToDataTable(PayslipDetails,"GrossDeduction",typeof(string),GrossDeduction);
+                     DataRow row=PayslipDetails.NewRow();
+                     PayslipDetails.Rows.Add(row);
+                     PayslipDetails.AcceptChanges();
+
+                    
                 }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+               
+                dt.Tables.Add(EmployeeDetails);
+                PayslipDetails=api.Format(PayslipDetails,"PayslipDetails");
+                dt.Tables.Add(PayslipDetails);
+
+                return Ok(api.Success(dt));
+               
 
             }
             catch (Exception e)
