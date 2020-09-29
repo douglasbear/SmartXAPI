@@ -839,7 +839,7 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        public bool UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public string UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             int N_ApprovalLevelID = this.getIntVAL(ApprovalRow["nextApprovalLevel"].ToString());
@@ -848,6 +848,7 @@ namespace SmartxAPI.GeneralFunctions
             int ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
             int FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
             string X_Action = "";
+            string X_Message = "Error";
             bool B_IsDelete = false;
             int N_MaxLevelID = 0;
             int N_ApprovalID = 0;
@@ -885,12 +886,14 @@ namespace SmartxAPI.GeneralFunctions
                     dLayer.ExecuteNonQuery("UPDATE " + X_ScreenTable + " SET N_ProcStatus=@xButtonTag, N_ApprovalLevelId=(@nApprovalLevelID - 1),N_UserID=@nApprovalUserID,B_IssaveDraft=1 where " + X_Criteria, UpdateParams, connection, transaction);
                 X_Action = "Reject";
                 B_IsDelete = false;
+                X_Message = "Rejected";
             }
             else if (ButtonTag == "4")
             {
                 dLayer.ExecuteNonQuery("UPDATE " + X_ScreenTable + " SET N_ApprovalLevelId=@nApprovalLevelID,N_ProcStatus=@xButtonTag,N_UserID=@nApprovalUserID,B_IssaveDraft=1 where " + X_Criteria, UpdateParams, connection, transaction);
                 X_Action = "Revoke";
                 B_IsDelete = false;
+                X_Message = "Revoked";
             }
             else if (ButtonTag == "6" || ButtonTag == "0")
             {
@@ -904,6 +907,7 @@ namespace SmartxAPI.GeneralFunctions
                 SortedList DeleteParamsPro = new SortedList() { { "N_CompanyID", N_CompanyID }, { "X_TransType", X_TransType }, { "N_VoucherID", N_TransID } };
 
                 X_Action = "Delete";
+                X_Message = "Deleted";
                 switch (FormID)
                 {
                     case 82:
@@ -982,7 +986,7 @@ namespace SmartxAPI.GeneralFunctions
             Approvals.AcceptChanges();
 
             this.LogApprovals(Approvals, N_FnYearID, X_TransType, N_TransID, X_TransCode, 1, PartyName, 0, "", User, dLayer, connection, transaction);
-            return B_IsDelete;
+            return X_Message;
         }
 
         public DataTable ListToTable(SortedList List)
@@ -1050,7 +1054,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable SaveApprovals(DataTable MasterTable, DataTable Approvals, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public void LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public bool UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public string UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable ListToTable(SortedList List);
         public int GetUserID(ClaimsPrincipal User);

@@ -276,15 +276,15 @@ namespace SmartxAPI.Controllers
                     DataRow TransRow = TransData.Rows[0];
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nLoanTransID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2001,User, dLayer, connection));
-                    Approvals=myFunctions.AddNewColumnToDataTable(Approvals,"comments",typeof(string),"Auto Generated Comment");
+                    Approvals=myFunctions.AddNewColumnToDataTable(Approvals,"comments",typeof(string),"");
                     SqlTransaction transaction = connection.BeginTransaction();;
 
                     string X_Criteria = "N_LoanTransID=" + nLoanTransID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                    if (myFunctions.UpdateApprovals(Approvals, nFnYearID, "EMPLOYEE LOAN", nLoanTransID,TransRow["N_loanID"].ToString(),myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()),"Pay_LoanIssue",X_Criteria,"",User,dLayer,connection,transaction))
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "EMPLOYEE LOAN", nLoanTransID,TransRow["N_loanID"].ToString(),myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()),"Pay_LoanIssue",X_Criteria,"",User,dLayer,connection,transaction);
+                    if (status != "Error" )
                     {
-                        //Delete Attachement
                         transaction.Commit();
-                    return Ok(api.Success("Loan request Deleted Successfully"));
+                    return Ok(api.Success("Loan Request "+status+" Successfully"));
                     }else{
                         transaction.Rollback();
                         return Ok(api.Error("Unable to delete Loan request"));
