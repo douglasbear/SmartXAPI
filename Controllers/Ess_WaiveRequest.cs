@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nUserID", nUserID);
             QueryParams.Add("@nFnYearID", nFnYearID);
             QueryParams.Add("@nEmpID", nEmpID);
-            QueryParams.Add("@dDate", date);
+            QueryParams.Add("@dDate", myFunctions.getDateVAL(date));
             string sqlCommandText = "";
 
             try
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Notice("No Results Found"));
+                    return Ok(api.Notice("Time Sheet details not found for selected date."));
                 }
                 else
                 {
