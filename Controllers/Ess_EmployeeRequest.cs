@@ -202,7 +202,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        return Ok(api.Success("Employee Request Approval updated" + "-" + xReqCode));
+                        return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
                     }
 
                     if (xReqCode == "@Auto")
@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
-                        return Ok(api.Success(res, "Request successfully created"));
+                        return Ok(api.Success(res, "Employee Request successfully created with Request No" + "-" + xReqCode));
                     }
                 }
             }
