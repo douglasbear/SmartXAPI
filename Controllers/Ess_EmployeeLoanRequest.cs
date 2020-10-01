@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_LoanIssue", "n_LoanTransID", nLoanTransID, "", connection, transaction);
                     }
 
-                    int nInstAmount = myFunctions.getIntVAL(MasterTable.Rows[0]["n_InstallmentAmount"].ToString());
+                    decimal nInstAmount = myFunctions.getDecimalVAL(MasterTable.Rows[0]["n_InstallmentAmount"].ToString());
                     int nInstNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Installments"].ToString());
                     MasterTable.Columns.Remove("n_InstallmentAmount");
                     MasterTable.AcceptChanges();

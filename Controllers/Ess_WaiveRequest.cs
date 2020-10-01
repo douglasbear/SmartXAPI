@@ -304,8 +304,6 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error("Unable to delete Waive Request"));
                     }
-
-
                 }
             }
             catch (Exception ex)
