@@ -37,9 +37,11 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
-
+            string DateCol="D_ApprovedDate";
             if (nApprovalType == 1)
             {
+                DateCol = "D_ApprovedDate";
+
                 if (bShowAllBranch)
                 {
                     if (bShowAll)
@@ -61,6 +63,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
+                DateCol = "X_RequestDate";
                 if (bShowAllBranch)
                     sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6";
                 else
@@ -81,7 +84,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005) order by d_TransDate desc", Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005) order by "+ DateCol +" desc", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

@@ -174,7 +174,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_LoanIssue", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, N_PkeyID, xLoanID, 1,objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
                         transaction.Commit();
-                        return Ok(api.Success("Loan request Approval updated" + "-" + xLoanID));
+                        return Ok(api.Success("Loan request updated" + "-" + xLoanID));
                     }
 
 
@@ -280,7 +280,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();;
 
                     string X_Criteria = "N_LoanTransID=" + nLoanTransID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "EMPLOYEE LOAN", nLoanTransID,TransRow["N_loanID"].ToString(),myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()),"Pay_LoanIssue",X_Criteria,"",User,dLayer,connection,transaction);
+                    
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus=myFunctions.getIntVAL(ButtonTag.ToString());
+                    //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID,TransRow["N_loanID"].ToString(),ProcStatus,"Pay_LoanIssue",X_Criteria,"",User,dLayer,connection,transaction);
                     if (status != "Error" )
                     {
                         transaction.Commit();

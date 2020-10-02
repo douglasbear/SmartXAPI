@@ -243,7 +243,10 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), "Pay_EmpBussinessTripRequest", X_Criteria, "", User, dLayer, connection, transaction);
+                                                            string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus=myFunctions.getIntVAL(ButtonTag.ToString());
+
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(),ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, "", User, dLayer, connection, transaction);
                     if (status != "Error" )
                     {
                     transaction.Commit();
