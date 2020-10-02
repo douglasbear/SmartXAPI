@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -9,8 +7,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using System.Collections.Generic;
-using System.Security.Claims;
 
 namespace SmartxAPI.Controllers
 {
@@ -126,19 +122,6 @@ namespace SmartxAPI.Controllers
 
         }
 
-        // public SortedList SetStatus(SortedList Response, DataRow rw, string struserName, string strEntryTime)
-        // {
-        //     if (rw != null)
-        //     {
-        //         Response["lblVisible"] = true;
-        //         Response["lblText"] = rw["X_MsgStatus"].ToString();
-        //         Response["lblText"] = Response["lblText"].ToString().Replace("#NAME", struserName);
-        //         if (strEntryTime.Trim() != "")
-        //             strEntryTime = Convert.ToDateTime(strEntryTime).ToString("dd/MM/yyyy HH:mm:ss");
-        //         Response["lblText"] = Response["lblText"].ToString().Replace("#DATE", strEntryTime);
-        //     }
-        //     return Response;
-        // }
 
         
 

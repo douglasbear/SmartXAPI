@@ -148,9 +148,9 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Notice("No Results Found"));
                         }
 
-                        DataTable benifits = FillCodeList(companyid,myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), connection);
+                        DataTable benifits = FillCodeList(companyid, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), connection);
 
-                        ds.Tables.Add(api.Format(benifits,"benifits"));
+                        ds.Tables.Add(api.Format(benifits, "benifits"));
                         ds.Tables.Add(Detail);
 
                         return Ok(api.Success(ds));
@@ -221,9 +221,14 @@ namespace SmartxAPI.Controllers
 
                     toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 ", paramList, connection).ToString());
                     if (toDate < dDateFrom)
-                        days = Convert.ToInt32(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + Convert.ToDateTime(toDate) + "','" + dDateFrom + "')", connection).ToString());
+                    {
+                        string daySql = "select  DATEDIFF(day,'" + toDate.ToString("yyyy-MM-dd") + "','" + dDateFrom.ToString("yyyy-MM-dd") + "')";
+                        days = Convert.ToInt32(dLayer.ExecuteScalar(daySql, connection).ToString());
+                    }
                     else
+                    {
                         days = 0;
+                    }
                     if (nVacTypeID == 6)
                     {
                         totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
@@ -427,9 +432,9 @@ namespace SmartxAPI.Controllers
                                     if (myFunctions.getIntVAL(var["Value"].ToString()) < 0) continue;
 
                                 }
-                                
+
                                 DataTable BenifitsTable = new DataTable();
-                                BenifitsTable=DetailTable.Clone();
+                                BenifitsTable = DetailTable.Clone();
                                 BenifitsTable.Rows.Add(DetailTable.Rows[0].ItemArray);
                                 DataRow BenifitsRow = BenifitsTable.Rows[0];
 
@@ -443,7 +448,7 @@ namespace SmartxAPI.Controllers
                                 BenifitsRow["N_FormID"] = 210;
                                 BenifitsRow["N_VacTypeID"] = var["n_VacTypeID"].ToString();
 
-                                
+
                                 BenifitsTable.AcceptChanges();
                                 int BeniftID = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", BenifitsTable, connection, transaction);
                                 if (BeniftID <= 0)
@@ -479,7 +484,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private DataTable FillCodeList(int nCompanyID,  int nEmpID, int nVacGroupID, SqlConnection connection)
+        private DataTable FillCodeList(int nCompanyID, int nEmpID, int nVacGroupID, SqlConnection connection)
         {
             DataTable Benifits = new DataTable();
 
@@ -499,7 +504,7 @@ namespace SmartxAPI.Controllers
                 sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
             Benifits = dLayer.ExecuteDataTable(sql, benifitParam, connection);
 
-            DataTable PayVacDetails = dLayer.ExecuteDataTable("Select * from vw_PayVacationDetails Where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and N_VacationGroupID=@nVacGroupID and (X_Type='A' or X_Type='T')",benifitParam,connection);
+            DataTable PayVacDetails = dLayer.ExecuteDataTable("Select * from vw_PayVacationDetails Where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and N_VacationGroupID=@nVacGroupID and (X_Type='A' or X_Type='T')", benifitParam, connection);
             foreach (DataRow var in PayVacDetails.Rows)
             {
                 for (int i = 0; i < Benifits.Rows.Count; i++)
@@ -530,7 +535,8 @@ namespace SmartxAPI.Controllers
                     SortedList ParamList = new SortedList();
                     ParamList.Add("@nTransID", n_VacationGroupID);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    ParamList.Add("@nCompanyID", nCompanyID);
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_VacationGroupCode,N_vacTypeID from Pay_VacationMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_VacationGroupID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
@@ -544,12 +550,17 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_VacationGroupID=" + n_VacationGroupID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                                        string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
-                    int ProcStatus=myFunctions.getIntVAL(ButtonTag.ToString());
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, TransRow["X_VacationGroupCode"].ToString(), ProcStatus, "Pay_VacationMaster", X_Criteria, "", User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
+                        if (ButtonTag == "6" || ButtonTag == "0")
+                        {
+                            dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", n_VacationGroupID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID ,connection,transaction);
+                        }
+
                         transaction.Commit();
                         return Ok(api.Success("Leave Request " + status + " Successfully"));
                     }
