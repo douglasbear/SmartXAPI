@@ -30,68 +30,6 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
-        // private String CalculateGridEstDays(int VacTypeID, DateTime fromdate, float N_AccruedValue)
-        // {
-        //     DateTime toDate;
-        //     int days = 0;
-        //     double totalDays = 0;
-        //     int empID = Convert.ToInt32(Session["EmpID"].ToString());
-        //     int compID = Convert.ToInt32(Session["CompID"].ToString());
-        //     double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(VacTypeID));
-        //     toDate = Convert.ToDateTime(dba.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =" + compID + " and  N_EmpID  =" + empID + " and N_VacTypeID =" + VacTypeID + " and N_VacationStatus = 0 and N_VacDays>0 and ISNULL(B_IsSaveDraft,0) = 0").ToString());
-        //     if (toDate < fromdate)
-        //         days = Convert.ToInt32(dba.ExecuteScalar("select  DATEDIFF(day,'" + Convert.ToDateTime(toDate) + "','" + Convert.ToDateTime(fromdate) + "')").ToString());
-        //     else
-        //         days = 0;
-        //     if (VacTypeID == 6)
-        //     {
-        //         totalDays = Math.Round(AvlDays + ((days / 30.458) * N_AccruedValue), 0);
-        //     }
-        //     else
-        //         totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
-        //     return totalDays.ToString();
-        // }
-        // private String CalculateGridAnnualDays(int VacTypeID,int compID,int empID)
-        // {
-
-        //     double vacation;
-        //     const double tolerance = 8e-14;
-        //     int N_VacationGroupID = 0;
-        //     int.TryParse(Request.QueryString["VacationID"] == null ? "" : Request.QueryString["VacationID"].ToString(), out N_VacationGroupID);
-
-
-        //     DateTime toDate = Convert.ToDateTime(dba.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =" + compID + " and  N_EmpID  =" + empID + " and N_VacTypeID =" + VacTypeID + " and N_VacDays>0 ").ToString());
-
-        //     if (N_VacationGroupID == 0)
-        //         vacation = Convert.ToDouble(dba.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =" + compID + " and  N_EmpID  =" + empID + " and N_VacTypeID =" + VacTypeID).ToString());
-        //     else
-        //         vacation = Convert.ToDouble(dba.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =" + compID + " and  N_EmpID  =" + empID + " and N_VacTypeID =" + VacTypeID + " and isnull(N_VacationGroupID,0) < " + N_VacationGroupID).ToString());
-
-        //     String AvlDays = RoundApproximate(vacation, 0, tolerance, MidpointRounding.AwayFromZero).ToString();
-
-
-        //     return AvlDays;
-        // }
-         private static double RoundApproximate(double dbl, int digits, double margin, MidpointRounding mode)
-        {
-            double fraction = dbl * Math.Pow(10, digits);
-            double value = Math.Truncate(fraction);
-            fraction = fraction - value;
-            if (fraction == 0)
-                return dbl;
-
-            double tolerance = margin * dbl;
-            // Any remaining fractional value greater than .5 is not a midpoint value. 
-            if (fraction > .5)
-                return (value + 0.5) / Math.Pow(10, digits);
-            else if (fraction < -(0.5))
-                return (value + 0.5) / Math.Pow(10, digits);
-            else if (fraction == .5)
-                return Math.Round(dbl, 1);
-            else
-                return value / Math.Pow(10, digits);
-        }
-
         [HttpGet("listDetails")]
         public ActionResult GetCustomerDetails(int nEmpID,int nFnyearID)
         {
@@ -109,7 +47,7 @@ namespace SmartxAPI.Controllers
             // string sqlCommandPendingVacation = "Select SUM(N_VacDays) from Pay_VacationDetails where N_VacDays < 0 and ISNULL(B_IsSaveDraft,0)<>0 and N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             string sqlCommandPendingVacation = "select COUNT(*) AS N_LeaveRequest from vw_WebApprovalDashboard where N_NextApproverID =@p4 and N_CompanyID=@p1 and N_EmpID <> @p3 and N_VacationStatus not in (2,4)";
             string sqlCommandNextLeave = "SELECT CONVERT(VARCHAR,Pay_VacationDetails.D_VacDateFrom, 106) as D_VacDateFrom,CONVERT(VARCHAR, Pay_VacationDetails.D_VacDateTo, 106) as D_VacDateTo, Pay_VacationDetails.N_VacDays,( 60 * Pay_VacationDetails.N_VacDays) as N_hours,Pay_VacationType.X_VacType FROM  Pay_VacationDetails INNER JOIN Pay_VacationType ON Pay_VacationDetails.N_VacTypeID = Pay_VacationType.N_VacTypeID AND  Pay_VacationDetails.N_CompanyID = Pay_VacationType.N_CompanyID WHERE  (Pay_VacationDetails.N_CompanyID = @p1) AND (N_FnYearID = @p2) AND (N_EmpID = @p3) and   (Pay_VacationDetails.N_VacationID = (SELECT     MAX(N_VacationID) AS Expr1 FROM         Pay_VacationDetails AS Pay_VacationDetails_1 WHERE     (N_CompanyID = @p1) AND (N_FnYearID = @p2) AND (N_EmpID = @p3) and  n_vacdays<0 ))";
-
+            //string sqlCommandDailyLogin = "SELECT MAX(D_In) as D_In,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),Convert(Time, GetDate())), '19000101') AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=getdate()";
 
             
 
@@ -122,14 +60,7 @@ namespace SmartxAPI.Controllers
             DataTable DashboardDetails = new DataTable();
             DataTable LeaveDetails = new DataTable();
             DataTable NextLeaveDetails = new DataTable();
-            // DataTable Vacation = new DataTable();
-            // DataTable ProjectCount = new DataTable();
-            // DataTable ContractAmt = new DataTable();
-            // DataTable BudgetAmt = new DataTable();
-            // DataTable ProjectDetails = new DataTable();
-            // DataTable EmployeeCount = new DataTable();
-
-
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -142,7 +73,7 @@ namespace SmartxAPI.Controllers
                     if (EmployeeDetails.Rows[0]["i_Employe_Image"] != null){
                         DataRow dataRow=EmployeeDetails.Rows[0];
                         string ImageData = dataRow["i_Employe_Image"].ToString();
-                        if(ImageData!=null){
+                        if(ImageData!=""){
                         byte[] Image = (byte[])dataRow["i_Employe_Image"];
                             EmployeeDetails.Rows[0]["EmployeeImage"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
                         EmployeeDetails.Columns.Remove("i_Employe_Image");
@@ -162,42 +93,26 @@ namespace SmartxAPI.Controllers
 
                     LeaveDetails = dLayer.ExecuteDataTable(sqlCommandLeave, Params, connection);
                     LeaveDetails=api.Format(LeaveDetails,"EmployeeLeaves");
+                   
+                    int i=0;
+                    foreach (DataRow dtRow in LeaveDetails.Rows)
+                    {
+                        String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, myFunctions.getIntVAL(LeaveDetails.Rows[0]["N_Accrued"].ToString()),nEmpID);
+                        dtRow["x_Days"] = Avail;
+                        i++;
+                    }
+                    LeaveDetails.AcceptChanges();
+
+                    
                     NextLeaveDetails = dLayer.ExecuteDataTable(sqlCommandNextLeave, Params, connection);
                     NextLeaveDetails=api.Format(NextLeaveDetails,"EmployeeNextLeave");
-
-
-
-                    // Loan = dLayer.ExecuteDataTable(sqlCommandLoan, Params, connection);
-                    // Loan=api.Format(Loan,"Loan");
-                    // Vacation = dLayer.ExecuteDataTable(sqlCommandVacation, Params, connection);
-                    // Vacation=api.Format(Vacation,"Vacation");
-                    // ProjectCount = dLayer.ExecuteDataTable(sqlCommandProjectCount, Params, connection);
-                    // ProjectCount=api.Format(ProjectCount,"ProjectCount");
-                    // ContractAmt = dLayer.ExecuteDataTable(sqlCommandContractAmt, Params, connection);
-                    // ContractAmt=api.Format(ContractAmt,"ContractAmt");
-                    // BudgetAmt = dLayer.ExecuteDataTable(sqlCommandBudgetAmt, Params, connection);
-                    // BudgetAmt=api.Format(BudgetAmt,"BudgetAmt");
-                    // ProjectDetails = dLayer.ExecuteDataTable(sqlCommandProjectDetails, Params, connection);
-                    // ProjectDetails=api.Format(ProjectDetails,"ProjectDetails");
-                    // EmployeeCount = dLayer.ExecuteDataTable(sqlCommandEmployeeCount, Params, connection);
-                    // EmployeeCount=api.Format(EmployeeCount,"EmployeeCount");
-
                     
                 }
                 dt.Tables.Add(EmployeeDetails);
-                 DashboardDetails=api.Format(DashboardDetails,"DashboardDetails");
+                DashboardDetails=api.Format(DashboardDetails,"DashboardDetails");
                 dt.Tables.Add(DashboardDetails);
                 dt.Tables.Add(LeaveDetails);
                 dt.Tables.Add(NextLeaveDetails);
-                // dt.Tables.Add(Loan);
-                // dt.Tables.Add(Vacation);
-                //  dt.Tables.Add(SalesFunnel);
-                //  dt.Tables.Add(ProjectCount);
-                //  dt.Tables.Add(ContractAmt);
-                //  dt.Tables.Add(BudgetAmt);
-                //  dt.Tables.Add(ProjectDetails);
-                //  dt.Tables.Add(EmployeeCount);
-
 
                  return Ok(api.Success(dt));
 
@@ -206,6 +121,88 @@ namespace SmartxAPI.Controllers
             {
                 return BadRequest(api.Error(e));
             }
+        }
+         public string GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID)
+        {
+            DateTime toDate;
+            int days = 0;
+            double totalDays = 0;
+            int nVacationGroupID=0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@nCompanyID", nCompanyID);
+                    paramList.Add("@nEmpID", nEmpID);
+                    paramList.Add("@nVacTypeID", nVacTypeID);
+                    paramList.Add("@nVacationGroupID", nVacationGroupID);
+
+                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 ", paramList, connection).ToString());
+                    if (toDate < dDateFrom)
+                        days = Convert.ToInt32(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + Convert.ToDateTime(toDate) + "','" + dDateFrom + "')", connection).ToString());
+                    else
+                        days = 0;
+                    if (nVacTypeID == 6)
+                    {
+                        totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
+                    }
+                    else
+                        totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+                }
+              
+                return totalDays.ToString();
+            }
+            catch (Exception e)
+            {
+                return "0";
+            }
+        }
+         private String CalculateGridAnnualDays(int VacTypeID, int empID, int compID, int nVacationGroupID, SqlConnection connection)
+        {
+            double vacation;
+            const double tolerance = 8e-14;
+            SortedList paramList = new SortedList();
+            paramList.Add("@nCompanyID", compID);
+            paramList.Add("@nEmpID", empID);
+            paramList.Add("@nVacTypeID", VacTypeID);
+            paramList.Add("@nVacationGroupID", nVacationGroupID);
+
+
+            DateTime toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacDays>0 ", paramList, connection).ToString());
+
+            if (nVacationGroupID == 0)
+                vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID", paramList, connection).ToString());
+            else
+                vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and isnull(N_VacationGroupID,0) < @nVacationGroupID", paramList, connection).ToString());
+
+            String AvlDays = RoundApproximate(vacation, 0, tolerance, MidpointRounding.AwayFromZero).ToString();
+
+
+            return AvlDays;
+        }
+        private static double RoundApproximate(double dbl, int digits, double margin, MidpointRounding mode)
+        {
+            double fraction = dbl * Math.Pow(10, digits);
+            double value = Math.Truncate(fraction);
+            fraction = fraction - value;
+            if (fraction == 0)
+                return dbl;
+
+            double tolerance = margin * dbl;
+            // Any remaining fractional value greater than .5 is not a midpoint value. 
+            if (fraction > .5)
+                return (value + 0.5) / Math.Pow(10, digits);
+            else if (fraction < -(0.5))
+                return (value + 0.5) / Math.Pow(10, digits);
+            else if (fraction == .5)
+                return Math.Round(dbl, 1);
+            else
+                return value / Math.Pow(10, digits);
         }
         
 
