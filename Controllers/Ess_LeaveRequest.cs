@@ -147,6 +147,10 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(api.Notice("No Results Found"));
                         }
+
+                        DataTable benifits = FillCodeList(companyid,myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), connection);
+
+                        ds.Tables.Add(api.Format(benifits,"benifits"));
                         ds.Tables.Add(Detail);
 
                         return Ok(api.Success(ds));
@@ -206,7 +210,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                     connection.Open();
+                    connection.Open();
                     double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
 
                     SortedList paramList = new SortedList();
@@ -228,7 +232,7 @@ namespace SmartxAPI.Controllers
                         totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
                 }
                 Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("availableDays", totalDays.ToString());
+                res.Add("availableDays", totalDays.ToString());
 
                 return Ok(api.Success(res));
             }
@@ -340,6 +344,9 @@ namespace SmartxAPI.Controllers
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
 
+                DataTable Benifits;
+                Benifits = ds.Tables["benifits"];
+
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
                 var x_VacationGroupCode = MasterRow["x_VacationGroupCode"].ToString();
@@ -394,10 +401,58 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["n_VacationGroupID"] = n_VacationGroupID;
                         }
-                        int N_PurchaseOrderDetailId = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", DetailTable, connection, transaction);
-                        if (N_PurchaseOrderDetailId > 0)
+                        int DetailID = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", DetailTable, connection, transaction);
+                        if (DetailID > 0)
                         {
-                            transaction.Commit();
+
+
+
+                            foreach (DataRow var in Benifits.Rows)
+                            {
+                                bool ticketSelected = false;
+                                if (!myFunctions.getBoolVAL(var["Mark"].ToString())) continue;
+                                ticketSelected = true;
+
+
+
+                                SortedList benifitParam = new SortedList();
+                                benifitParam.Add("@nVacTypeID", myFunctions.getIntVAL(var["N_VacTypeID"].ToString()));
+                                benifitParam.Add("@nCompanyID", nCompanyID);
+                                benifitParam.Add("@nFnYearID", nFnYearID);
+                                benifitParam.Add("@nEmpID", nEmpID);
+
+                                object result = dLayer.ExecuteScalar("select ISNULL(Sum(N_VacDays),0) from Pay_VacationDetails where  N_VacTypeID=@nVacTypeID and  N_CompanyID =@nCompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", benifitParam, connection, transaction);
+                                if (myFunctions.getIntVAL(result.ToString()) <= 0)
+                                {
+                                    if (myFunctions.getIntVAL(var["Value"].ToString()) < 0) continue;
+
+                                }
+                                
+                                DataTable BenifitsTable = new DataTable();
+                                BenifitsTable=DetailTable.Clone();
+                                BenifitsTable.Rows.Add(DetailTable.Rows[0].ItemArray);
+                                DataRow BenifitsRow = BenifitsTable.Rows[0];
+
+                                BenifitsRow["N_VacDays"] = -1;
+                                BenifitsRow["N_TransType"] = 1;
+                                BenifitsRow["N_VacationStatus"] = 1;
+                                BenifitsRow["B_IsAdjustEntry"] = 0;
+                                BenifitsRow["B_Ticket"] = ticketSelected;
+                                BenifitsRow["X_VacationCode"] = x_VacationGroupCode;
+                                BenifitsRow["B_Allowance"] = 1;
+                                BenifitsRow["N_FormID"] = 210;
+                                BenifitsRow["N_VacTypeID"] = var["n_VacTypeID"].ToString();
+
+                                
+                                BenifitsTable.AcceptChanges();
+                                int BeniftID = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", BenifitsTable, connection, transaction);
+                                if (BeniftID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(api.Error("Unable to save"));
+                                }
+
+                            }
                         }
                         else
                         {
@@ -410,6 +465,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
+
+                    transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_RequestCode", x_VacationGroupCode.ToString());
                     return Ok(api.Success(res, "Leave Request saved"));
@@ -422,38 +479,44 @@ namespace SmartxAPI.Controllers
         }
 
 
-        // [HttpDelete()]
-        // public ActionResult DeleteData(int n_VacationGroupID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
-        //             if (Results > 0)
-        //             {
-        //                 Results = dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
-        //                 transaction.Commit();
-        //             }
-        //             else
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(api.Error("Unable to delete Leave Request"));
-        //             }
+        private DataTable FillCodeList(int nCompanyID,  int nEmpID, int nVacGroupID, SqlConnection connection)
+        {
+            DataTable Benifits = new DataTable();
 
-        //             Dictionary<string, string> res = new Dictionary<string, string>();
-        //             res.Add("n_VacationGroupID", n_VacationGroupID.ToString());
-        //             return Ok(api.Success(res, "Leave Request Deleted Successfully"));
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return BadRequest(api.Error(ex));
-        //     }
-        // }
+            SortedList benifitParam = new SortedList();
+            benifitParam.Add("@nCompanyID", nCompanyID);
+            benifitParam.Add("@nEmpID", nEmpID);
+            benifitParam.Add("@nVacGroupID", nVacGroupID);
+
+            object res = dLayer.ExecuteScalar("Select ISNULL(sum(N_VacDays),0) as N_VacDays from Pay_VacationDetails where (B_Allowance=1) and  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID", benifitParam, connection);
+
+            if (res == null)
+                res = 0;
+            string sql = "";
+            if (nVacGroupID > 0)
+                sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays<=0";
+            else
+                sql = "SELECT    N_VacTypeID,X_VacCode,X_VacType as Code,N_Accrued as Value,N_Accrued+isnull(" + res.ToString() + ",0) as Avlbl,CONVERT(bit,0) As Mark,B_IsReturn,X_Type,0 as DetailsID  from vw_pay_EmpVacation_Alowance  where (X_Type='A' or X_Type='T') AND  N_CompanyID=@nCompanyID and N_EmpId=@nEmpID and N_VacDays>0";
+            Benifits = dLayer.ExecuteDataTable(sql, benifitParam, connection);
+
+            DataTable PayVacDetails = dLayer.ExecuteDataTable("Select * from vw_PayVacationDetails Where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and N_VacationGroupID=@nVacGroupID and (X_Type='A' or X_Type='T')",benifitParam,connection);
+            foreach (DataRow var in PayVacDetails.Rows)
+            {
+                for (int i = 0; i < Benifits.Rows.Count; i++)
+                {
+
+                    if (Benifits.Rows[i]["N_VacTypeID"].ToString() == var["N_VacTypeID"].ToString())
+                    {
+                        Benifits.Rows[i]["DetailsID"] = var["N_VacationID"].ToString();
+                        Benifits.Rows[i]["Mark"] = true;
+                    }
+
+                }
+            }
+            Benifits.AcceptChanges();
+
+            return Benifits;
+        }
 
         [HttpDelete()]
         public ActionResult DeleteData(int n_VacationGroupID, int nFnYearID)
