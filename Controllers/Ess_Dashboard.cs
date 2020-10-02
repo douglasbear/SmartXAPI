@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public EssDashboard(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -142,9 +141,12 @@ namespace SmartxAPI.Controllers
                     EmployeeDetails=myFunctions.AddNewColumnToDataTable(EmployeeDetails,"EmployeeImage",typeof(string),null);
                     if (EmployeeDetails.Rows[0]["i_Employe_Image"] != null){
                         DataRow dataRow=EmployeeDetails.Rows[0];
+                        string ImageData = dataRow["i_Employe_Image"].ToString();
+                        if(ImageData!=null){
                         byte[] Image = (byte[])dataRow["i_Employe_Image"];
                             EmployeeDetails.Rows[0]["EmployeeImage"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
                         EmployeeDetails.Columns.Remove("i_Employe_Image");
+                        }
                         EmployeeDetails.AcceptChanges();
                     }
                     object Loan = dLayer.ExecuteScalar(sqlCommandLoan, Params, connection);
