@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                     int i = 0;
                     foreach (DataRow dtRow in LeaveDetails.Rows)
                     {
-                        String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, myFunctions.getIntVAL(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
+                        String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, double.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
                         dtRow["x_Days"] = Avail;
                         i++;
                     }
