@@ -2,6 +2,8 @@ using System;
 using Microsoft.Data.SqlClient;
 using System.Data;
 using System.Collections;
+using System.IO;
+using System.Text.RegularExpressions;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -10,7 +12,7 @@ namespace SmartxAPI.GeneralFunctions
         private readonly IMyFunctions myFunctions;
         public DataAccessLayer(IMyFunctions myFun)
         {
-            myFunctions=myFun;
+            myFunctions = myFun;
         }
 
         public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection)
@@ -416,16 +418,16 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        public int SaveData(string TableName, string IDFieldName , DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
+        public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
         {
             string FieldList = "";
             string FieldValues = "";
-            int IDFieldValue = 0 ;
+            int IDFieldValue = 0;
             int Result = 0;
             for (int i = 0; i < DataTable.Columns.Count; i++)
             {
-                if(DataTable.Columns[i].ColumnName.ToString().ToLower()!=IDFieldName.ToLower())
-                FieldList = FieldList + "," + DataTable.Columns[i].ColumnName.ToString();
+                if (DataTable.Columns[i].ColumnName.ToString().ToLower() != IDFieldName.ToLower())
+                    FieldList = FieldList + "," + DataTable.Columns[i].ColumnName.ToString();
             }
             FieldList = FieldList.Substring(1);
 
@@ -433,10 +435,11 @@ namespace SmartxAPI.GeneralFunctions
             {
                 for (int k = 0; k < DataTable.Columns.Count; k++)
                 {
-                    if(DataTable.Columns[k].ColumnName.ToString().ToLower()!=IDFieldName.ToLower()){
-                    var values = DataTable.Rows[j][k].ToString();
-                    values = values.Replace("|", " ");
-                    FieldValues = FieldValues + "|" + values;
+                    if (DataTable.Columns[k].ColumnName.ToString().ToLower() != IDFieldName.ToLower())
+                    {
+                        var values = DataTable.Rows[j][k].ToString();
+                        values = values.Replace("|", " ");
+                        FieldValues = FieldValues + "|" + values;
                     }
                 }
 
@@ -452,7 +455,7 @@ namespace SmartxAPI.GeneralFunctions
                 paramList.Add("X_FieldValue", FieldValues);
                 Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
                 FieldValues = "";
-                if(Result<=0)return 0;
+                if (Result <= 0) return 0;
             }
 
             return Result;
@@ -522,13 +525,41 @@ namespace SmartxAPI.GeneralFunctions
             return AutoNumber;
         }
 
+        public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int compID, SqlConnection connection, SqlTransaction transaction)
+        {
+            try
+            {
+
+                DataRow FileRow = FilesTable.Rows[0];
+                var base64Data = Regex.Match(FileRow["fileData"].ToString(),  @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
+                byte[] FileBytes = Convert.FromBase64String(base64Data);
+                string ActFileName = FileRow["fileName"].ToString();
+                SortedList param =new SortedList();
+                param.Add("@nCompanyID",compID);
+                DataTable tblDetails = ExecuteDataTable("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param,connection,transaction);
+                string filepath = tblDetails.Rows[0]["X_Value"].ToString();
+                //string filepath = "UploadDocs/";
+                string fname = PrependStr + PkeyVal.ToString() + ActFileName;
+                string fullfilePath = filepath + fname;
+                File.WriteAllBytes(fullfilePath, FileBytes);
+                ExecuteNonQuery("Update "+TableName+" Set X_FileName='"+ActFileName+"' where "+PkeyName+"="+PkeyVal,connection);
+
+            }
+            catch (Exception ex)
+            {
+
+                return true;
+            }
+            return true;
+        }
+
 
 
     }
 
     public interface IDataAccessLayer
     {
-        
+
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con, SqlTransaction transaction);
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
@@ -558,10 +589,12 @@ namespace SmartxAPI.GeneralFunctions
         /* Deprecated Method Don't Use */
         [Obsolete("IApiFunctions.SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction) is deprecated \n please use IApiFunctions.SaveData.(string TableName, string IDFieldName , DataTable DataTable, SqlConnection connection, SqlTransaction transaction) instead. \n\n Deprecate note added by Ratheesh KS-\n\n")]
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
-         /* End Of Deprecated Method */
+        /* End Of Deprecated Method */
 
-        public int SaveData(string TableName, string IDFieldName , DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
-       
+        public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
+
+        public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr,int CompanyID, SqlConnection connection, SqlTransaction transaction);
+
 
     }
 

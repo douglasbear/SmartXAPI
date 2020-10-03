@@ -1019,6 +1019,8 @@ namespace SmartxAPI.GeneralFunctions
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
         }
 
+
+
     }
 
 

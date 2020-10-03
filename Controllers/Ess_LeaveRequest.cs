@@ -349,8 +349,8 @@ namespace SmartxAPI.Controllers
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
 
-                DataTable Benifits;
-                Benifits = ds.Tables["benifits"];
+                DataTable Benifits = ds.Tables["benifits"];
+
 
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
@@ -469,6 +469,14 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
+                    }
+
+                    DataTable Files = ds.Tables["files"];
+                    if(Files.Rows.Count>0){
+                        if(!dLayer.SaveFiles(Files,"Pay_VacationMaster","N_VacationGroupID",n_VacationGroupID,nEmpID.ToString(),nCompanyID,connection,transaction)){
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                        }
                     }
 
                     transaction.Commit();
