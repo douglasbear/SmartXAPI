@@ -420,28 +420,28 @@ namespace SmartxAPI.GeneralFunctions
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
         {
-            string FieldList = "";
-            string FieldValues = "";
+
             int IDFieldValue = 0;
             int Result = 0;
-            for (int i = 0; i < DataTable.Columns.Count; i++)
-            {
-                if (DataTable.Columns[i].ColumnName.ToString().ToLower() != IDFieldName.ToLower())
-                    FieldList = FieldList + "," + DataTable.Columns[i].ColumnName.ToString();
-            }
-            FieldList = FieldList.Substring(1);
+
 
             for (int j = 0; j < DataTable.Rows.Count; j++)
             {
+                string FieldList = "";
+                string FieldValues = "";
                 for (int k = 0; k < DataTable.Columns.Count; k++)
                 {
                     if (DataTable.Columns[k].ColumnName.ToString().ToLower() != IDFieldName.ToLower())
                     {
+                        if (DataTable.Rows[j][k] == DBNull.Value) { continue; }
                         var values = DataTable.Rows[j][k].ToString();
                         values = values.Replace("|", " ");
                         FieldValues = FieldValues + "|" + values;
+                        FieldList = FieldList + "," + DataTable.Columns[k].ColumnName.ToString();
+
                     }
                 }
+                FieldList = FieldList.Substring(1);
 
                 IDFieldValue = myFunctions.getIntVAL(DataTable.Rows[j][IDFieldName].ToString());
 
@@ -531,18 +531,18 @@ namespace SmartxAPI.GeneralFunctions
             {
 
                 DataRow FileRow = FilesTable.Rows[0];
-                var base64Data = Regex.Match(FileRow["fileData"].ToString(),  @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
+                var base64Data = Regex.Match(FileRow["fileData"].ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
                 byte[] FileBytes = Convert.FromBase64String(base64Data);
                 string ActFileName = FileRow["fileName"].ToString();
-                SortedList param =new SortedList();
-                param.Add("@nCompanyID",compID);
-                DataTable tblDetails = ExecuteDataTable("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param,connection,transaction);
+                SortedList param = new SortedList();
+                param.Add("@nCompanyID", compID);
+                DataTable tblDetails = ExecuteDataTable("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection, transaction);
                 string filepath = tblDetails.Rows[0]["X_Value"].ToString();
                 //string filepath = "UploadDocs/";
                 string fname = PrependStr + PkeyVal.ToString() + ActFileName;
                 string fullfilePath = filepath + fname;
                 File.WriteAllBytes(fullfilePath, FileBytes);
-                ExecuteNonQuery("Update "+TableName+" Set X_FileName='"+ActFileName+"' where "+PkeyName+"="+PkeyVal,connection);
+                ExecuteNonQuery("Update " + TableName + " Set X_FileName='" + ActFileName + "' where " + PkeyName + "=" + PkeyVal, connection);
 
             }
             catch (Exception ex)
@@ -593,7 +593,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
-        public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr,int CompanyID, SqlConnection connection, SqlTransaction transaction);
+        public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);
 
 
     }

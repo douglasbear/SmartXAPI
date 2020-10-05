@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
-            
+
 
             try
             {
@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
-                int nEmpID =    myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -202,7 +202,15 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-
+                        DataTable Files = ds.Tables["files"];
+                        if (Files.Rows.Count > 0)
+                        {
+                            if (!dLayer.SaveFiles(Files, "Pay_EmpBussinessTripRequest", "N_RequestID", nRequestID, nEmpID.ToString(), nCompanyID, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error("Unable to save"));
+                            }
+                        }
                         transaction.Commit();
                     }
                     Dictionary<string, string> res = new Dictionary<string, string>();
@@ -243,14 +251,14 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
-                                                            string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
-                    int ProcStatus=myFunctions.getIntVAL(ButtonTag.ToString());
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(),ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, "", User, dLayer, connection, transaction);
-                    if (status != "Error" )
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, "", User, dLayer, connection, transaction);
+                    if (status != "Error")
                     {
-                    transaction.Commit();
-                    return Ok(api.Success("Travel Order Request "+status+" Successfully"));
+                        transaction.Commit();
+                        return Ok(api.Success("Travel Order Request " + status + " Successfully"));
                     }
                     else
                     {

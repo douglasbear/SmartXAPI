@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
 
 
         //List
-       [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult GetEmpReqList(string xReqType)
         {
             DataTable dt = new DataTable();
@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
-            
+
 
             try
             {
@@ -230,6 +230,17 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+
+                        DataTable Files = ds.Tables["files"];
+                        if (Files.Rows.Count > 0)
+                        {
+                            if (!dLayer.SaveFiles(Files, "Pay_EmpAnyRequest", "N_RequestID", nRequestID, nEmpID.ToString(), nCompanyID, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error("Unable to save"));
+                            }
+                        }
+
                         transaction.Commit();
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
@@ -271,14 +282,14 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
 
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
-                    int ProcStatus=myFunctions.getIntVAL(ButtonTag.ToString());
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
 
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpAnyRequest", X_Criteria, "", User, dLayer, connection, transaction);
-                    if (status != "Error" )
+                    if (status != "Error")
                     {
                         transaction.Commit();
-                    return Ok(api.Success("Employee Request "+status+" Successfully"));
+                        return Ok(api.Success("Employee Request " + status + " Successfully"));
                     }
                     else
                     {
