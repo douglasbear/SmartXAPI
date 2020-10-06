@@ -153,7 +153,7 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
-                    int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", 0, MasterTable, connection, transaction);
+                    int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
                     {
                         transaction.Rollback();
