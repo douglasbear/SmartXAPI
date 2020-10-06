@@ -34,12 +34,10 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string sqlCommandText = "";
             string DateCol="D_ApprovedDate";
-            string X_Status="";
-
+            
             if(nApprovalType == 0)
             {
                 DateCol = "D_ApprovedDate";
-                X_Status="Request";
                 if (bShowAllBranch)
                 {
                     if (bShowAll)
