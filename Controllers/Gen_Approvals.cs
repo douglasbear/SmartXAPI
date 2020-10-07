@@ -72,8 +72,6 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_Branchid = @p3";
                     else
                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 and N_Branchid = @p3";
-
-                    //Params.Add("@p3", N_Branchid);
                     Params.Add("@p3", N_Branchid);
                 }
     
