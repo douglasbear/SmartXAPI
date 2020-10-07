@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
                         object FileName = dLayer.ExecuteScalar("Select X_FileName from Pay_VacationMaster where X_VacationGroupCode=@xVacationGroupCode and N_TransType=1", QueryParams, connection);
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_FileName", typeof(string), FileName);
+                       // Master = myFunctions.AddNewColumnToDataTable(Master, "X_FileName", typeof(string), FileName);
 
                         object filePath = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", QueryParams, connection);
                         string fileData = "";

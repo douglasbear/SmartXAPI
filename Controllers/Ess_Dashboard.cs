@@ -48,6 +48,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandPendingVacation = "select COUNT(*) AS N_LeaveRequest from vw_WebApprovalDashboard where N_NextApproverID =@p4 and N_CompanyID=@p1 and N_EmpID <> @p3 and N_VacationStatus not in (2,4)";
             string sqlCommandNextLeave = "SELECT CONVERT(VARCHAR,Pay_VacationDetails.D_VacDateFrom, 106) as D_VacDateFrom,CONVERT(VARCHAR, Pay_VacationDetails.D_VacDateTo, 106) as D_VacDateTo, Pay_VacationDetails.N_VacDays,( 60 * Pay_VacationDetails.N_VacDays) as N_hours,Pay_VacationType.X_VacType FROM  Pay_VacationDetails INNER JOIN Pay_VacationType ON Pay_VacationDetails.N_VacTypeID = Pay_VacationType.N_VacTypeID AND  Pay_VacationDetails.N_CompanyID = Pay_VacationType.N_CompanyID WHERE  (Pay_VacationDetails.N_CompanyID = @p1) AND (N_FnYearID = @p2) AND (N_EmpID = @p3) and   (Pay_VacationDetails.N_VacationID = (SELECT     MAX(N_VacationID) AS Expr1 FROM         Pay_VacationDetails AS Pay_VacationDetails_1 WHERE     (N_CompanyID = @p1) AND (N_FnYearID = @p2) AND (N_EmpID = @p3) and  n_vacdays<0 ))";
             string sqlCommandDailyLogin = "SELECT MAX(D_In) as D_In,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),Convert(Time, GetDate())), '19000101') AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=getdate()";
+            string EnableLeave = "select N_Value from Gen_Settings where X_Group='EssOnline' and N_CompanyID=@p1";
 
 
 
@@ -83,28 +84,34 @@ namespace SmartxAPI.Controllers
                         }
                         EmployeeDetails.AcceptChanges();
                     }
+                    object EnableLeaveData = dLayer.ExecuteScalar(EnableLeave, Params, connection);
                     object Loan = dLayer.ExecuteScalar(sqlCommandLoan, Params, connection);
-                    object TotalVacation = dLayer.ExecuteScalar(sqlCommandVacation, Params, connection);
+                    object TotalVacation=null;
+                    if(EnableLeaveData.ToString()=="1")
+                         TotalVacation = dLayer.ExecuteScalar(sqlCommandVacation, Params, connection);
                     object PendingVacation = dLayer.ExecuteScalar(sqlCommandPendingVacation, Params, connection);
+                    
 
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Loan", typeof(string), Loan);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Vacation", typeof(string), TotalVacation);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingVacation", typeof(string), PendingVacation);
+                    DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "EnableLeave", typeof(string), EnableLeaveData);
                     DataRow row = DashboardDetails.NewRow();
                     DashboardDetails.Rows.Add(row);
                     DashboardDetails.AcceptChanges();
-
-                    LeaveDetails = dLayer.ExecuteDataTable(sqlCommandLeave, Params, connection);
-                    LeaveDetails = api.Format(LeaveDetails, "EmployeeLeaves");
-
-                    int i = 0;
-                    foreach (DataRow dtRow in LeaveDetails.Rows)
+                    if(EnableLeaveData.ToString()=="1")
                     {
+                        LeaveDetails = dLayer.ExecuteDataTable(sqlCommandLeave, Params, connection);
+                          int i = 0;
+                        foreach (DataRow dtRow in LeaveDetails.Rows)
+                        {
                         String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, double.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
                         dtRow["x_Days"] = Avail;
                         i++;
+                        }
+                         LeaveDetails.AcceptChanges();
                     }
-                    LeaveDetails.AcceptChanges();
+                    LeaveDetails = api.Format(LeaveDetails, "EmployeeLeaves");
 
 
                     NextLeaveDetails = dLayer.ExecuteDataTable(sqlCommandNextLeave, Params, connection);
