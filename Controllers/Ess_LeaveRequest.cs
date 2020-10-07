@@ -8,6 +8,9 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
+using System.Net.Http;
 
 namespace SmartxAPI.Controllers
 {
@@ -124,6 +127,7 @@ namespace SmartxAPI.Controllers
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                     Master = api.Format(Master, "master");
+
                     if (Master.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -131,6 +135,25 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
+                        object FileName = dLayer.ExecuteScalar("Select X_FileName from Pay_VacationMaster where X_VacationGroupCode=@xVacationGroupCode and N_TransType=1", QueryParams, connection);
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_FileName", typeof(string), FileName);
+
+                        object filePath = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", QueryParams, connection);
+                        string fileData = "";
+                        if (FileName.ToString() != "")
+                        {
+                            // try
+                            // {
+                            //     string fullfilePath = filePath.ToString() + FileName.ToString();
+                            //     Byte[] bytes = System.IO.File.ReadAllBytes(fullfilePath);
+                            //     fileData = Convert.ToBase64String(bytes);
+                            // }
+                            // catch (Exception)
+                            // {
+                            // }
+                        }
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_FileName", typeof(string), FileName);
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "File_Data", typeof(string), fileData);
 
                         ds.Tables.Add(Master);
                         Condition = "";
@@ -165,6 +188,24 @@ namespace SmartxAPI.Controllers
             {
                 return BadRequest(api.Error(e));
             }
+        }
+
+        [HttpGet("file")]
+        public static async Task<byte[]> DownloadFile(string url)
+        {
+            using (var client = new HttpClient())
+            {
+
+                using (var result = await client.GetAsync(url))
+                {
+                    if (result.IsSuccessStatusCode)
+                    {
+                        return await result.Content.ReadAsByteArrayAsync();
+                    }
+
+                }
+            }
+            return null;
         }
 
 

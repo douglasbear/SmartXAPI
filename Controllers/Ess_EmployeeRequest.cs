@@ -254,6 +254,44 @@ namespace SmartxAPI.Controllers
             }
         }
 
+          [HttpPost("saveRequestType")]
+        public ActionResult SaveReqType([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                DataRow MasterRow = MasterTable.Rows[0];
+
+                int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestTypeID"].ToString());
+
+
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
+                    nRequestID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
+                    if (nRequestID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success( "Request Type Successfully Created" ));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(api.Error(ex));
+            }
+        }
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nRequestID, int nFnYearID)
         {

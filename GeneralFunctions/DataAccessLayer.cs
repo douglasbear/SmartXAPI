@@ -542,7 +542,7 @@ namespace SmartxAPI.GeneralFunctions
                 string fname = PrependStr + PkeyVal.ToString() + ActFileName;
                 string fullfilePath = filepath + fname;
                 File.WriteAllBytes(fullfilePath, FileBytes);
-                ExecuteNonQuery("Update " + TableName + " Set X_FileName='" + ActFileName + "' where " + PkeyName + "=" + PkeyVal, connection);
+                ExecuteNonQuery("Update " + TableName + " Set X_FileName='" + fname + "' where " + PkeyName + "=" + PkeyVal, connection,transaction);
 
             }
             catch (Exception ex)
