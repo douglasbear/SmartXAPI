@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         //Save....
-        [HttpPost("Save")]
+        [HttpGet("ChangePassword")]
         public ActionResult savedata(string xOldPasswd,string xNewpasswd,string xConfirmpasswd)
         {
             try
@@ -48,11 +48,11 @@ namespace SmartxAPI.Controllers
                 int ID=0;
                 ID=ValidatePasswordMatching(xOldPasswd,xNewpasswd,xConfirmpasswd);
                 if(ID==1)
-                    return BadRequest(api.Error("Invalid Password"));
+                    return Ok(api.Warning("Invalid Password"));
                 if(ID==2)
-                    return BadRequest(api.Error("Password Not Matching"));
+                    return Ok(api.Warning("Password Not Matching"));
                 if(ID==3)
-                    return BadRequest(api.Error("Please Choose Different Password"));
+                    return Ok(api.Warning("Please Choose Different Password"));
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {

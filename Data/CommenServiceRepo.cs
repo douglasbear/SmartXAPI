@@ -65,7 +65,7 @@ namespace SmartxAPI.Data
             {
                 connection.Open();
 
-                                            SortedList paramsList = new SortedList()
+                    SortedList paramsList = new SortedList()
                     {
                         {"X_CompanyName",companyname},
                         {"X_FnYearDescr",""},
