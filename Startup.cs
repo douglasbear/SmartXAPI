@@ -14,6 +14,8 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using Microsoft.IdentityModel.Tokens;
 using SmartxAPI.GeneralFunctions;
 using System.Collections.Generic;
+using System.Globalization;
+using Microsoft.AspNetCore.Localization;
 
 namespace SmartxAPI
 {
@@ -68,6 +70,7 @@ namespace SmartxAPI
             services.AddScoped<IApiFunctions,ApiFunctions>();
             services.AddScoped<IMyFunctions,MyFunctions>();
             
+            
         }
 
         // This method gets called by the runtime. Use this method to configure the HTTP request pipeline.
@@ -99,8 +102,21 @@ namespace SmartxAPI
             app.UseRouting();
 
             app.UseAuthorization();
-            
-            
+
+        
+            var supportedCultures = new[]
+                {
+                    new CultureInfo("en"),
+                    new CultureInfo("en-US"),
+                    new CultureInfo("es"),
+                    new CultureInfo("es-ES")
+                };
+                app.UseRequestLocalization(new RequestLocalizationOptions
+                {
+                    DefaultRequestCulture = new RequestCulture("en-US"),
+                    SupportedCultures = supportedCultures,
+                    SupportedUICultures = supportedCultures
+                });
             
             app.UseEndpoints(endpoints =>
             {
