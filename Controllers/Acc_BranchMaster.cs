@@ -49,12 +49,12 @@ namespace SmartxAPI.Controllers
                             }
                     if(dt.Rows.Count==0)
                         {
-                            return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                            return Ok(_api.Notice("No Results Found" ));
                         }else{
                             return Ok(dt);
                         }
             }catch(Exception e){
-                return StatusCode(404,_api.ErrorResponse(e));
+                return BadRequest(_api.Error(e));
             }
           
         }
@@ -71,17 +71,14 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
-                    // MasterTable.Columns.Remove("X_Password");
-                    // MasterTable.AcceptChanges();
-                    int N_BranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",0,MasterTable,connection,transaction);  
+                    int N_BranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",MasterTable,connection,transaction);  
                     transaction.Commit();
-                    return Ok("Data Saved") ;
+                    return Ok(_api.Success("Branch Created")) ;
                 }
             }
             catch (Exception ex)
             {
-                dLayer.rollBack();
-                return StatusCode(403,_api.ErrorResponse(ex));
+                return BadRequest(_api.Error(ex));
             }
         }
 

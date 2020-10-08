@@ -219,7 +219,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error("Unable to delete vendor"));
+                return BadRequest(_api.Error(ex));
             }
 
 

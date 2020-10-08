@@ -41,7 +41,11 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params);
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -148,37 +152,33 @@ namespace SmartxAPI.Controllers
             {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-
+                SqlTransaction transaction=connection.BeginTransaction();
             if (values == "@Auto")
             {
                 Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                 Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
                 Params.Add("N_FormID", 80);
                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params);
+                InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
                 if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
                 MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
             }
-           
-                
-                dLayer.setTransaction();
-                int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable);
+                int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable,connection,transaction);
                 if (N_InvoiceId <= 0)
                 {
-                    dLayer.rollBack();
+                    transaction.Rollback();
                 }
                 for (int j = 0; j < DetailTable.Rows.Count; j++)
                 {
                     DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
                 }
-                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", 0, DetailTable);
-                dLayer.commit();
+                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", 0, DetailTable,connection,transaction);
+                transaction.Commit();
             }
                 return Ok("Data Saved");
             }
             catch (Exception ex)
             {
-                dLayer.rollBack();
                 return StatusCode(403, ex);
             }
         }
@@ -189,29 +189,31 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-                dLayer.setTransaction();
-                Results = dLayer.DeleteData("Inv_Purchase", "n_PurchaseID", nPurchaseID, "");
+                            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                SqlTransaction transaction=connection.BeginTransaction();
+                Results = dLayer.DeleteData("Inv_Purchase", "n_PurchaseID", nPurchaseID, "",connection,transaction);
                 if (Results <= 0)
                 {
-                    dLayer.rollBack();
+                    transaction.Rollback();
                     return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseInvoice"));
                 }
                 else
                 {
-                    Results = dLayer.DeleteData("Inv_PurchaseDetails", "n_PurchaseID", nPurchaseID, "");
+                    Results = dLayer.DeleteData("Inv_PurchaseDetails", "n_PurchaseID", nPurchaseID, "",connection,transaction);
                 }
 
                 if (Results > 0)
                 {
-                    dLayer.commit();
+                    transaction.Commit();
                     return StatusCode(200, _api.Response(200, "Purchase Invoice deleted"));
                 }
                 else
                 {
-                    dLayer.rollBack();
+                    transaction.Rollback();
                     return StatusCode(409, _api.Response(409, "Unable to delete Purchase Invoice"));
                 }
-
+            }
             }
             catch (Exception ex)
             {
@@ -220,34 +222,34 @@ namespace SmartxAPI.Controllers
 
 
         }
-        [HttpGet("dummy")]
-        public ActionResult GetPurchaseInvoiceDummy(int? Id)
-        {
-            try
-            {
-                string sqlCommandText = "select * from Inv_Purchase where N_PurchaseId=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
-                masterTable = _api.Format(masterTable, "master");
+        // [HttpGet("dummy")]
+        // public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        // {
+        //     try
+        //     {
+        //         string sqlCommandText = "select * from Inv_Purchase where N_PurchaseId=@p1";
+        //         SortedList mParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
+        //         masterTable = _api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Inv_PurchaseDetails where N_PurchaseId=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
-                detailTable = _api.Format(detailTable, "details");
+        //         string sqlCommandText2 = "select * from Inv_PurchaseDetails where N_PurchaseId=@p1";
+        //         SortedList dParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
+        //         detailTable = _api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+        //         if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+        //         DataSet dataSet = new DataSet();
+        //         dataSet.Tables.Add(masterTable);
+        //         dataSet.Tables.Add(detailTable);
 
-                return Ok(dataSet);
+        //         return Ok(dataSet);
 
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.ErrorResponse(e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, _api.Error(e));
+        //     }
+        // }
 
     }
 }

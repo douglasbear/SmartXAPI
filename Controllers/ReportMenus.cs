@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return StatusCode(403, _api.Error(e));
             }
         }
 
@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return StatusCode(403, _api.Error(e));
             }
         }
 

@@ -15,6 +15,11 @@ using Newtonsoft.Json;
 using SmartxAPI.Dtos.Login;
 using AutoMapper;
 using System.Security.Cryptography;
+using SmartxAPI.GeneralFunctions;
+using Microsoft.Data.SqlClient;
+using System.Data;
+using System.Collections;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.Data
 {
@@ -26,79 +31,67 @@ namespace SmartxAPI.Data
 
         private readonly ICommenServiceRepo _services;
 
-        public Sec_UserRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper,ICommenServiceRepo service)
+        private readonly IDataAccessLayer dLayer;
+        private readonly IApiFunctions _api;
+        private readonly IMyFunctions myFunctions;
+        private readonly string connectionString;
+
+        public Sec_UserRepo(SmartxContext context,IOptions<AppSettings> appSettings,IMapper mapper,ICommenServiceRepo service,IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _context = context;
             _appSettings=appSettings.Value;
             _mapper=mapper;
             _services=service;
+
+            dLayer = dl;
+            _api = api;
+            myFunctions = myFun;
+            connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
         
            
             
-        public void CreateUser(SecUser cust)
-        {
-            if(cust == null)
-            {
-                throw new ArgumentNullException(nameof(cust));
-            }
-
-            _context.SecUser.Add(cust);
-        }
-
-        public void DeleteUser(SecUser cust)
-        {
-            if(cust == null)
-            {
-                throw new ArgumentNullException(nameof(cust));
-            }
-            _context.SecUser.Remove(cust);
-        }
-
-        public IEnumerable<SecUser> GetAllUsers()
-        {
-            return _context.SecUser.ToList();
-        }
-
-        public SecUser GetUserById(int id)
-        {
-            return _context.SecUser.FirstOrDefault(p => p.NUserId == id);
-        }
-
-        public bool SaveChanges()
-        {
-            return (_context.SaveChanges() >= 0);
-        }
-
-        public void UpdateUser(SecUser cust)
-        {
-            //Nothing
-        }
-
   public LoginResponseDto Authenticate(string companyname,string username, string password,string ipAddress)
         {
             
             if (string.IsNullOrEmpty(companyname) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(password))
                 return null;
 
-                var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
-                .ToList()
-                .FirstOrDefault();
-                
-               return(_services.Authenticate(loginRes.N_CompanyID,loginRes.X_CompanyName,username,loginRes.N_UserID,"All"));
-                
+                // var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3",companyname,"",username,password)    
+                // .ToList()
+                // .FirstOrDefault();
+            DataTable dt=new DataTable();
+                            SortedList paramsList = new SortedList()
+                    {
+                        {"X_CompanyName",companyname},
+                        {"X_FnYearDescr",""},
+                        {"X_LoginName",username},
+                        {"X_Pwd",password}
+                    };
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTablePro("SP_LOGIN",paramsList,connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return null;
+                }
+                else
+                {
+                    DataRow dr =dt.Rows[0];
+                   return(_services.Authenticate(myFunctions.getIntVAL(dr["N_CompanyID"].ToString()),dr["X_CompanyName"].ToString(),dr["X_UserName"].ToString(),myFunctions.getIntVAL(dr["N_UserID"].ToString()),"All"));
+                }                   
         }
     }
 
     public interface ISec_UserRepo
     {
-        bool SaveChanges();
-        IEnumerable<SecUser> GetAllUsers();
+
         LoginResponseDto Authenticate(string companyname,string username, string password ,string IpAddress);
-        SecUser GetUserById(int id);
-        void CreateUser(SecUser cust);
-        void UpdateUser(SecUser cust);
-        void DeleteUser(SecUser cust);
+ 
     }
 }

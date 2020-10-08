@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, api.Response(200, "No Results Found"));
+                    return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.ErrorResponse(e));
+                return StatusCode(403, api.Error(e));
             }
         }
 
@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, api.Response(200, "No Results Found"));
+                    return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.ErrorResponse(e));
+                return StatusCode(403, api.Error(e));
             }
         }
 
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ex)
             {
-                return StatusCode(403, api.ErrorResponse(ex));
+                return StatusCode(403, api.Error(ex));
             }
         }
 
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, api.ErrorResponse(ex));
+                return StatusCode(403, api.Error(ex));
             }
 
 

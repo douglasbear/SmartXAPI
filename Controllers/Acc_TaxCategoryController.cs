@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return StatusCode(403, _api.Error(e));
             }
         }
 
@@ -96,7 +96,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.ErrorResponse(e));
+                return StatusCode(403, _api.Error(e));
             }
         }
 
@@ -144,8 +144,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                dLayer.rollBack();
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return StatusCode(403, _api.Error(ex));
             }
         }
 
@@ -155,22 +154,24 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-
-                Results = dLayer.DeleteData("Acc_TaxCategory", "N_PkeyID", nCategoryID, "");
-
-                if (Results > 0)
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    return StatusCode(200, _api.Response(200, "Tax category deleted"));
-                }
-                else
-                {
-                    return StatusCode(409, _api.Response(409, "Unable to delete Tax category"));
-                }
+                    connection.Open();
+                    Results = dLayer.DeleteData("Acc_TaxCategory", "N_PkeyID", nCategoryID, "",connection);
 
+                    if (Results > 0)
+                    {
+                        return StatusCode(200, _api.Response(200, "Tax category deleted"));
+                    }
+                    else
+                    {
+                        return StatusCode(409, _api.Response(409, "Unable to delete Tax category"));
+                    }
+                }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.ErrorResponse(ex));
+                return StatusCode(403, _api.Error(ex));
             }
 
 

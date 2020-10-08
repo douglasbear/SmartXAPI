@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                        return StatusCode(200, _api.Response(200, "No Results Found")); }
                        else{return Ok(dt);}
                 }catch(Exception e){
-                    return StatusCode(403,_api.ErrorResponse(e));
+                    return StatusCode(403,_api.Error(e));
                 }
         }
 
@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
                 else{return Ok(dt);}
                 }
             catch(Exception e){
-                    return StatusCode(403,_api.ErrorResponse(e));}
+                    return StatusCode(403,_api.Error(e));}
         }
 
 
@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
                 catch (Exception ex)
                 {
                    
-                    return StatusCode(403,_api.ErrorResponse(ex));
+                    return StatusCode(403,_api.Error(ex));
                 }
         }
 
@@ -133,17 +133,21 @@ namespace SmartxAPI.Controllers
              int Results=0;
             try
             {
-                Results=dLayer.DeleteData("sec_usercategory","N_UserCategoryID",nUsercategoryId,"");
+                                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                Results=dLayer.DeleteData("sec_usercategory","N_UserCategoryID",nUsercategoryId,"",connection);
                 if(Results>0){
                     return StatusCode(200,_api.Response(200 ,"Category deleted" ));
                 }else{
                     return StatusCode(409,_api.Response(409 ,"Unable to delete Category" ));
                 }
+                }
                 
             }
             catch (Exception ex)
                 {
-                    return StatusCode(403,_api.ErrorResponse(ex));
+                    return StatusCode(403,_api.Error(ex));
                 }
             
 

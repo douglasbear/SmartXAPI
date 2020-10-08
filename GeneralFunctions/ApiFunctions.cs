@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.Security.Claims;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 
@@ -11,10 +12,12 @@ namespace SmartxAPI.GeneralFunctions
     {
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment env;
-        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn)
+        private readonly IMyFunctions myFunctions;
+        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn,IMyFunctions myFun)
         {
             _mapper = mapper;
             env = envn;
+            myFunctions=myFun;
         }
 
         public object Response(int Code, string ResMessage)
@@ -42,6 +45,10 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(Dictionary<string, string> dictionary, string message)
         {
             return (new { type = "success", Message = message, Data = dictionary });
+        }
+                public object Success(Dictionary<string, string> dictionary)
+        {
+            return (new { type = "success", Message = "null", Data = dictionary });
         }
         public object Success(DataSet dataSet)
         {
@@ -71,32 +78,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "warning", Message = message, Data = "" });
         }
-        public object ErrorResponse(Exception ex)
-        {
-            string Msg = "";
-            string subString = ex.Message.Substring(8, ex.Message.Length - 8);
 
-            switch (ex.Message.Substring(0, 8))
-            {
-                case "Column '":
-                    Msg = ex.Message.Substring(7, subString.IndexOf("'") + 1) + " is required";
-                    break;
-                case "Error co":
-                    Msg = ex.Message.Substring(0, 42);
-                    break;
-                default:
-                    if (env.EnvironmentName == "Development")
-                        Msg = ex.Message;
-                    else
-                        Msg = "Internal Server Error";
-                    break;
-            }
-
-
-            return (new { type = "error", Message = Msg, Data = "" });
-
-
-        }
 
         public object Error(Exception ex)
         {
@@ -134,7 +116,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
 
-            return (new { type = "error", Message = Msg, Data = "" });
+            return (new { type = "error", Message = ex.Message, Data = "" });
 
 
         }
@@ -160,8 +142,11 @@ namespace SmartxAPI.GeneralFunctions
     }
     public interface IApiFunctions
     {
+        /* Deprecated Method Don't Use */
+        [Obsolete("IApiFunctions.Response is deprecated \n please use IApiFunctions.Success/ Error/ Warning/ Notice instead. \n\n Deprecate note added by Ratheesh KS-\n\n")]
         public object Response(int Code, string Response);
-        public object ErrorResponse(Exception ex);
+        /*  End Of Deprecated Method  */     
+                
         public object Error(Exception ex);
         public DataTable Format(DataTable table, string tableName);
         public DataTable Format(DataTable dt);
@@ -170,6 +155,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataTable dataTable, string message);
         public object Success(Dictionary<DataRow, DataTable> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary, string message);
+        public object Success(Dictionary<string, string> dictionary);
         public object Success(SortedList data);
         public object Success(DataSet dataSet);
         public object Success(string message);
