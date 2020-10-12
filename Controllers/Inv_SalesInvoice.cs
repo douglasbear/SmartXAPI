@@ -342,11 +342,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
                     }
-
-                    MasterTable.Columns.Remove("n_SalesID");
-                    MasterTable.AcceptChanges();
-
-                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", 0, MasterTable, connection, transaction);
+                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId",  MasterTable, connection, transaction);
                     if (N_SalesID <= 0)
                     {
                         transaction.Rollback();
@@ -360,7 +356,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
                     }
-                    int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", 0, DetailTable, connection, transaction);
+                    int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)
                     {
                         transaction.Rollback();
@@ -395,7 +391,7 @@ namespace SmartxAPI.Controllers
                             if (N_IsSave == 1)
                             {
 
-                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", 0, dtInvoiceSplit, connection, transaction);
+                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtInvoiceSplit, connection, transaction);
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
@@ -407,7 +403,7 @@ namespace SmartxAPI.Controllers
                                     {
                                         if (ds.Tables.Contains("loyalitypoints") && dtloyalitypoints.Rows.Count > 0)
                                         {
-                                            int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", 0, dtloyalitypoints, connection, transaction);
+                                            int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId",dtloyalitypoints, connection, transaction);
                                             if (N_SalesAmountID <= 0)
                                             {
                                                 transaction.Rollback();
@@ -430,7 +426,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", 0, dtInvoiceSplit, connection, transaction);
+                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtInvoiceSplit, connection, transaction);
                             if (N_SalesAmountID <= 0)
                             {
                                 transaction.Rollback();

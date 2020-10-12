@@ -17,14 +17,14 @@ namespace SmartxAPI.Controllers
     [ApiController]
     public class Acc_Currency : ControllerBase
     {
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         
-        public Acc_Currency(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Acc_Currency(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
         {
-            _api=api;
+            api=_api;
             dLayer = dl;
              myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
@@ -45,13 +45,13 @@ namespace SmartxAPI.Controllers
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                     
                 }
-                dt = _api.Format(dt);
+                dt = api.Format(dt);
                      if(dt.Rows.Count==0)
                     {
-                       return StatusCode(200, _api.Response(200, "No Results Found")); }
+                       return Ok(api.Warning("No Results Found")); }
                        else{return Ok(dt);}
                 }catch(Exception e){
-                    return StatusCode(403,_api.Error(e));
+                    return BadRequest(api.Error(e));
                 }
         }
 
@@ -74,11 +74,12 @@ namespace SmartxAPI.Controllers
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                 if(dt.Rows.Count==0)
-                {return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });}
+                { return Ok(api.Warning("No Results Found"));}
                 else{return Ok(dt);}
                 }
             catch(Exception e){
-                    return StatusCode(403,_api.Error(e));}
+                     return BadRequest(api.Error(e));
+                     }
         }
 
 
@@ -104,17 +105,19 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID",612);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_CurrencyCode =  dLayer.GetAutoNumber("Acc_CurrencyMaster","X_CurrencyCode", Params,connection,transaction);
-                        if(X_CurrencyCode==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Category Code" ));}
+                        if(X_CurrencyCode==""){
+                            return Ok(api.Warning("Unable to generate Category Code"));
+                            }
                         MasterTable.Rows[0]["X_CurrencyCode"] = X_CurrencyCode;
                     }
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
 
-                    int N_CurrencyID=dLayer.SaveData("Acc_CurrencyMaster","N_CurrencyID",0,MasterTable,connection,transaction);                    
+                    int N_CurrencyID=dLayer.SaveData("Acc_CurrencyMaster","N_CurrencyID",MasterTable,connection,transaction);                    
                     if(N_CurrencyID<=0){
                         transaction.Rollback();
-                        return StatusCode(404,_api.Response(404 ,"Unable to save" ));
+                        return Ok(api.Warning("Unable to save"));
                         }else{
                     transaction.Commit();
                     return  GetCurrencyDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_CurrencyID);
@@ -124,7 +127,7 @@ namespace SmartxAPI.Controllers
                 catch (Exception ex)
                 {
                    
-                    return StatusCode(403,_api.Error(ex));
+                    return BadRequest(api.Error(ex));
                 }
         }
 
@@ -139,19 +142,17 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                 Results=dLayer.DeleteData("Acc_CurrencyMaster","N_CurrencyID",nCurrencyId,"",connection);
                 if(Results>0){
-                    return StatusCode(200,_api.Response(200 ,"Currency deleted" ));
+                    return Ok(api.Success("Currency deleted" ));
                 }else{
-                    return StatusCode(409,_api.Response(409 ,"Unable to delete Currency" ));
+                    return Ok(api.Warning("Unable to delete Currency" ));
                 }
                 }
                 
             }
             catch (Exception ex)
                 {
-                    return StatusCode(403,_api.Error(ex));
+                    return BadRequest(api.Error(ex));
                 }
-            
-
         }
     }
 }

@@ -51,12 +51,12 @@ namespace SmartxAPI.Controllers
                      dt=_api.Format(dt);
                       if (dt.Rows.Count==0)
                     {
-                        return StatusCode(200,_api.Response(200 ,"No Results Found" ));
+                        return Ok(_api.Notice("No Results Found" ));
                     }else{
                         return Ok(dt);
                     }   
                   }catch(Exception e){
-                     return StatusCode(404,_api.Response(404,e.Message));
+                     return BadRequest(_api.Error(e));
                 }
         }
        [HttpGet("listDetails")]
@@ -154,10 +154,10 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         QuotationNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
-                        if(QuotationNo==""){return StatusCode(409,_api.Response(409 ,"Unable to generate Quotation Number" ));}
+                        if(QuotationNo==""){return Ok(_api.Warning("Unable to generate Quotation Number"));}
                         MasterTable.Rows[0]["X_CreditNoteNo"] = QuotationNo;
                     }
-                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",0,MasterTable,connection,transaction);                    
+                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
                     if(N_CreditNoteID<=0){
                         transaction.Rollback();
                         }
@@ -165,14 +165,14 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
                         }
-                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",0,DetailTable,connection,transaction);                    
+                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
                     transaction.Commit();
-                    return StatusCode(200,_api.Response(200 ,"Purchase Return Saved" ));
+                    return Ok(_api.Success("Purchase Return Saved" ));
                     }
                 }
                 catch (Exception ex)
                 {
-                    return StatusCode(403,ex);
+                    return BadRequest(_api.Error(ex));
                 }
         }
        

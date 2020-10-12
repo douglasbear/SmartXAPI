@@ -187,13 +187,9 @@ namespace SmartxAPI.Controllers
                         if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
 
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
-
-                        MasterTable.Columns.Remove("N_VoucherId");
-                        DetailTable.Columns.Remove("N_VoucherDetailsID");
-                        DetailTable.AcceptChanges();
                     }
 
-                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", N_VoucherID, MasterTable, connection, transaction);
+                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
                         SortedList LogParams = new SortedList();
@@ -214,7 +210,7 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
                         }
-                        int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", 0, DetailTable, connection, transaction);
+                        int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
                         transaction.Commit();
                     }
                     return Ok(api.Success("Data Saved"));
@@ -240,7 +236,7 @@ namespace SmartxAPI.Controllers
                 if (Results <= 0)
                 {
                     transaction.Rollback();
-                    return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
+                    return Ok(api.Error("Unable to delete sales quotation"));
                 }
                 else
                 {
@@ -250,19 +246,19 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {
                     transaction.Commit();
-                    return StatusCode(200, api.Response(200, "Sales quotation deleted"));
+                    return Ok(api.Success("Sales quotation deleted"));
                 }
                 else
                 {
                      transaction.Rollback();
-                    return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
+                    return Ok(api.Error("Unable to delete sales quotation"));
                 }
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(404, api.Response(404, ex.Message));
+                return BadRequest(api.Error(ex));
             }
 
 
