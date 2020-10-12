@@ -17,15 +17,15 @@ namespace SmartxAPI.Controllers
     public class Inv_PurchaseOrderController : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
-        private readonly IApiFunctions _api;
+        private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
 
-        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
-            _api = api;
+            api = _api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
 
@@ -50,19 +50,19 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
 
-                dt = _api.Format(dt);
+                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.StackTrace));
+                return BadRequest(api.Error( e));
             }
         }
         [HttpGet("listDetails")]
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
 
-                    MasterTable = _api.Format(MasterTable, "Master");
+                    MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
 
                     //PurchaseOrder Details
@@ -158,14 +158,14 @@ namespace SmartxAPI.Controllers
 
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
+                    DetailTable = api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
-                return Ok(dt);
+                return Ok(api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest(api.Error(e));
             }
         }
 
@@ -189,6 +189,9 @@ namespace SmartxAPI.Controllers
 
                     // Auto Gen
                     string PorderNo = "";
+                    if(MasterTable.Rows.Count>0){
+
+                    }
                     var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
@@ -211,13 +214,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
-                        if (PorderNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Quotation Number")); }
+                        if (PorderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
-
-                        MasterTable.Columns.Remove("n_POrderID");
-                        MasterTable.AcceptChanges();
-                        DetailTable.Columns.Remove("n_POrderDetailsID");
-                        DetailTable.AcceptChanges();
                     }
                     else
                     {
@@ -230,17 +228,13 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
                             {
                                 transaction.Rollback();
-                                return StatusCode(400, "Payment Request Processed");
+                                return Ok(api.Success("Payment Request Processed"));
                             }
                         }
 
 
                         if (N_POrderID > 0)
                         {
-                            MasterTable.Columns.Remove("n_POrderID");
-                            MasterTable.AcceptChanges();
-                            DetailTable.Columns.Remove("n_POrderDetailsID");
-                            DetailTable.AcceptChanges();
 
                             bool B_PRSVisible = false;
                             bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer, connection, transaction);
@@ -288,24 +282,24 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", N_POrderID, MasterTable, connection, transaction);
+                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
                     if (N_PurchaseOrderId <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(403, "Error");
+                        return Ok(api.Error("Error"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_POrderID"] = N_PurchaseOrderId;
                     }
-                    int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", 0, DetailTable, connection, transaction);
+                    int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID",DetailTable, connection, transaction);
                     transaction.Commit();
                 }
-                return Ok("Purchase Order Saved");
+                return Ok(api.Success("Purchase Order Saved"));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, ex);
+                return BadRequest(ex);
             }
         }
 
@@ -323,7 +317,7 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete PurchaseOrder"));
+                        return Ok(api.Error("Unable to delete PurchaseOrder"));
                     }
                     else
                     {
@@ -334,7 +328,7 @@ namespace SmartxAPI.Controllers
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return StatusCode(200, _api.Response(200, "PurchaseOrder deleted"));
+                        return Ok(api.Success( "PurchaseOrder deleted"));
                     }
                     else
                     {
@@ -342,13 +336,13 @@ namespace SmartxAPI.Controllers
                     }
                 }
 
-                return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseOrder"));
+                return Ok(api.Error("Unable to Delete PurchaseOrder"));
 
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
 
 

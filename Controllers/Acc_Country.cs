@@ -47,17 +47,17 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest( _api.Error(e));
             }
         }
 
