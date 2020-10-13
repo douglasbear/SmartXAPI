@@ -245,7 +245,7 @@ namespace SmartxAPI.Controllers
 
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
-                // Auto Gen
+                // Auto Gen 
                 string InvoiceNo = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -464,7 +464,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                           // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
@@ -650,9 +650,5 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
-
-
-
-
     }
 }
