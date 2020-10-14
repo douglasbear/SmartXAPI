@@ -240,6 +240,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
 
@@ -293,9 +294,9 @@ namespace SmartxAPI.Controllers
                         {
                             N_AmtSplit = 1;
                             //Filling sales amount details
-                            DataTable dtInvoiceSplit = new DataTable();
-                            if (ds.Tables.Contains("InvoiceSplit"))
-                                ds.Tables.Remove("InvoiceSplit");
+                            DataTable dtsaleamountdetails = new DataTable();
+                            if (ds.Tables.Contains("saleamountdetails"))
+                                ds.Tables.Remove("saleamountdetails");
                             string qry = "";
                             if (N_SalesID > 0)
                             {
@@ -309,13 +310,13 @@ namespace SmartxAPI.Controllers
                                 }
                                 else
                                     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
-                                dtInvoiceSplit = dLayer.ExecuteDataTable(qry, QueryParams, connection, transaction);
+                                dtsaleamountdetails = dLayer.ExecuteDataTable(qry, QueryParams, connection, transaction);
                             }
                             else
                                 qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
 
-                            dtInvoiceSplit = _api.Format(dtInvoiceSplit, "InvoiceSplit");
-                            ds.Tables.Add(dtInvoiceSplit);
+                            dtsaleamountdetails = _api.Format(dtsaleamountdetails, "saleamountdetails");
+                            ds.Tables.Add(dtsaleamountdetails);
 
                         }
                     }
@@ -367,31 +368,31 @@ namespace SmartxAPI.Controllers
 
                         //Inv_WorkFlowCatalog insertion here
 
-                        DataTable dtInvoiceSplit = ds.Tables["InvoiceSplit"];
+                        DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
-                        DataRow RowInvoiceSplit = ds.Tables["InvoiceSplit"].Rows[0];
+                        DataRow Rowsaleamountdetails = ds.Tables["saleamountdetails"].Rows[0];
 
                         DataRow Rowloyalitypoints = null;
                         if (ds.Tables.Contains("loyalitypoints"))
                             Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
 
-                        int N_IsSave = myFunctions.getIntVAL(RowInvoiceSplit["n_IsSave"].ToString());
-                        dtInvoiceSplit.Columns.Remove("n_IsSave");
-                        dtInvoiceSplit.AcceptChanges();
+                        int N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
+                        dtsaleamountdetails.Columns.Remove("n_IsSave");
+                        dtsaleamountdetails.AcceptChanges();
 
-                        int N_CurrentSalesID = myFunctions.getIntVAL(RowInvoiceSplit["N_SalesID"].ToString());
+                        int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
                         bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
                         //Sales amount details/payment popup
-                        for (int i = 0; i < dtInvoiceSplit.Rows.Count; i++)
-                            dtInvoiceSplit.Rows[i]["N_SalesId"] = N_SalesID;
+                        for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
+                            dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
                         if (N_AmtSplit == 1)
                         {
 
                             if (N_IsSave == 1)
                             {
 
-                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtInvoiceSplit, connection, transaction);
+                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtsaleamountdetails, connection, transaction);
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
@@ -426,7 +427,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtInvoiceSplit, connection, transaction);
+                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtsaleamountdetails, connection, transaction);
                             if (N_SalesAmountID <= 0)
                             {
                                 transaction.Rollback();
@@ -585,10 +586,15 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
                     detailTable = _api.Format(detailTable, "details");
 
+                    string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";                    
+                    DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
+                    dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
+
                     if (detailTable.Rows.Count == 0) { return Ok(new { }); }
                     DataSet dataSet = new DataSet();
                     dataSet.Tables.Add(masterTable);
                     dataSet.Tables.Add(detailTable);
+                    dataSet.Tables.Add(dtAmountDetails);
 
                     return Ok(dataSet);
 
