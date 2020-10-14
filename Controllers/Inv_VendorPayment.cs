@@ -19,11 +19,14 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly string connectionString;
+        private readonly IMyFunctions myFunctions;
 
-        public Inv_VendorPayment(IDataAccessLayer dl, IApiFunctions apiFun, IConfiguration conf)
+
+        public Inv_VendorPayment(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             api = apiFun;
+            myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
 
         }
@@ -101,7 +104,86 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, api.Error(e));
             }
         }
+        [HttpGet("payDetails")]
+        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID,bool bShaowAllbranch, int nPayReceiptID, string xTransType)
+        {
+            DataSet OutPut = new DataSet();
+                    DataTable PayReceipt = new DataTable();
+
+            string sql = "";
+            int AllBranch = 0;
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    if (bShaowAllbranch == true)
+                        sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
+                    else
+                        sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@nVendorID", nVendorID);
+                    paramList.Add("@dTransDate", dTransDate);
+                    paramList.Add("@nBranchID", nBranchID);
+                    paramList.Add("@nPayReceiptID", nPayReceiptID);
+                    paramList.Add("@xTransType", xTransType);
+                    paramList.Add("@nCompanyID",nCompanyId);
+                    DataTable VendorBalance = dLayer.ExecuteDataTable(sql, paramList, connection);
+                    if (bShaowAllbranch == true)
+                    {
+                        AllBranch = 1;
+                        nBranchID = 0;
+                    }
+                    SortedList proParams1 = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+                                {"N_FnYearID",nFnYearId},
+                                {"N_CustomerID",nVendorID},
+                                {"N_PayReceiptId",nPayReceiptID},
+                                {"D_InvoiceDate",dTransDate},
+                                {"BranchFlag",AllBranch},
+                                {"BranchId",nBranchID}};
+
+
+                    if (nPayReceiptID > 0)
+                    {
+
+                        if (xTransType == "PA")
+                        {
+                            PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams1, connection);
+                            if (PayReceipt.Rows.Count > 0)
+                            {
+                                object obj = dLayer.ExecuteScalar("Select isnull(Count(N_InventoryId),0) as CountExists from Inv_PayReceiptDetails where N_CompanyID=@nCompanyID and N_InventoryId<>N_PayReceiptId and N_InventoryId=@nPayReceiptID and X_TransType =@xTransType", paramList, connection);
+                                if (obj != null)
+                                {
+                                    if (myFunctions.getIntVAL(obj.ToString()) > 0)
+                                    {
+                                        return Ok(api.Notice("Transaction started."));
+                                    }
+                                }
+                                return Ok(api.Notice(""));
+                            }
+                        }
+                        else
+                        {
+                            PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams1, connection);
+                        }
+                    }
+                    else
+                    {
+                        PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams1, connection);
+                    }
+
+                }
+                return Ok(api.Format(PayReceipt,"details"));
+            }
+            catch (Exception e)
+            {
+                return BadRequest( api.Error(e));
+            }
+        }
+    }
+
 
 
     }
-}
