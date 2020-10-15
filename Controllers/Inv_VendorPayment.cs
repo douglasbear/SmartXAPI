@@ -194,18 +194,18 @@ namespace SmartxAPI.Controllers
 
                 }
 
-                // if (PayReceipt.Rows.Count > 0)
-                // {
-                //     double N_ListedAmtTotal = 0;
-                //     foreach (DataRow dr in PayReceipt.Rows)
-                //     {
+                if (PayReceipt.Rows.Count > 0)
+                {
+                    double N_ListedAmtTotal = 0;
+                    foreach (DataRow dr in PayReceipt.Rows)
+                    {
 
-                //         double N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());// +myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
-                //         N_ListedAmtTotal += N_InvoiceDueAmt;
-                //         if (N_InvoiceDueAmt == 0) {dr.Delete();continue;}
-                //         if ( nPayReceiptID >0 && (myFunctions.getVAL(dr["N_DiscountAmt"].ToString()) == 0 && myFunctions.getVAL(dr["N_Amount"].ToString()) == 0)) {dr.Delete();continue;}
-                //     }
-                // }
+                        double N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());// +myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
+                        N_ListedAmtTotal += N_InvoiceDueAmt;
+                        if (N_InvoiceDueAmt == 0) {dr.Delete();continue;}
+                        if ( nPayReceiptID >0 && (myFunctions.getVAL(dr["N_DiscountAmt"].ToString()) == 0 && myFunctions.getVAL(dr["N_Amount"].ToString()) == 0)) {dr.Delete();continue;}
+                    }
+                }
                 PayReceipt.AcceptChanges();
                 return Ok(api.Success(api.Format(PayReceipt,"details")));
             }
