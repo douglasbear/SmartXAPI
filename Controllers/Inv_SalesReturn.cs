@@ -66,6 +66,9 @@ namespace SmartxAPI.Controllers
             SortedList Params=new SortedList();
             string sqlCommandText="";
             string X_type="";
+
+            
+            
             if (bDeliveryNote)
                 X_type = "DELIVERY";
             else
@@ -94,20 +97,40 @@ namespace SmartxAPI.Controllers
             Params.Add("@BranchID",nBranchId);
             Params.Add("@Xtype",X_type);
 
-
             try{
                 DataTable SalesReturn = new DataTable();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                 connection.Open();
+                SqlTransaction transaction;
+
+                object Res = dLayer.ExecuteScalar("Select B_Invoice from Inv_SalesReturnMaster where X_DebitNoteNo="+ xDebitNoteNo +" and N_CompanyID="+ nCompanyId +" and N_FnYearID="+ nFnYearId, Params, connection);
+                if(myFunctions.getBoolVAL(Res.ToString())==false)
+                {
+                 if (bAllBranchData == true)
+                     {
+                     sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                     }
+                     else
+                     {
+                         sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                     }
+
+                }
+
+
                 SalesReturn=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 SalesReturn=_api.Format(SalesReturn,"Master");
                 dt.Tables.Add(SalesReturn);
                 
                  int N_DebitNoteId = myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString());
-                 Params.Add("@DebitNoteID",N_DebitNoteId);     
-                 string  sqlCommandText2="Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
+                 Params.Add("@DebitNoteID",N_DebitNoteId);  
 
+                 string  sqlCommandText2="Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
+                 if(myFunctions.getBoolVAL(Res.ToString())==false)
+                 {
+                     sqlCommandText2="SELECT   * from  vw_SalesReturnWithoutSale_Disp Where N_DebitNoteId="+N_DebitNoteId+" and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+                 }
                  DataTable SalesReturnDetails = new DataTable();
                  SalesReturnDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection);
                  SalesReturnDetails=_api.Format(SalesReturnDetails,"Details");
