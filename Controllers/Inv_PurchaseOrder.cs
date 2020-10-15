@@ -313,7 +313,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderID", nPOrderID, "", connection, transaction);
                     if (Results <= 0)
                     {
                         transaction.Rollback();
@@ -321,7 +321,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", nPOrderID, "",connection,transaction);
+                        Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "",connection,transaction);
                     }
 
 

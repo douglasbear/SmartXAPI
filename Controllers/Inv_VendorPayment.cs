@@ -105,14 +105,20 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("payDetails")]
-        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID,bool bShaowAllbranch, int nPayReceiptID, string xTransType)
+        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID,bool bShaowAllbranch, string xInvoiceNo, string xTransType)
         {
             DataSet OutPut = new DataSet();
                     DataTable PayReceipt = new DataTable();
 
             string sql = "";
             int AllBranch = 0;
+            int nPayReceiptID=0;
             int nCompanyId = myFunctions.GetCompanyID(User);
+                                if (bShaowAllbranch == true)
+                    {
+                        AllBranch = 1;
+                        nBranchID = 0;
+                    }
 
             try
             {
@@ -122,6 +128,21 @@ namespace SmartxAPI.Controllers
                         sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
                     else
                         sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";
+                   
+                   if(xInvoiceNo!=null && myFunctions.getIntVAL(xInvoiceNo)>0){
+                            SortedList proParams1 = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+                                {"X_VoucherNo",xInvoiceNo},
+                                {"N_FnYearID",nFnYearId},
+                                {"N_BranchID",nBranchID}};
+                           DataTable PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
+                           if(PayInfo.Rows.Count>0){
+                               nPayReceiptID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
+                               xTransType = PayInfo.Rows[0]["X_Type"].ToString();
+                               nVendorID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
+                           }
+                   }
+                   
                     SortedList paramList = new SortedList();
                     paramList.Add("@nVendorID", nVendorID);
                     paramList.Add("@dTransDate", dTransDate);
@@ -130,12 +151,8 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@xTransType", xTransType);
                     paramList.Add("@nCompanyID",nCompanyId);
                     DataTable VendorBalance = dLayer.ExecuteDataTable(sql, paramList, connection);
-                    if (bShaowAllbranch == true)
-                    {
-                        AllBranch = 1;
-                        nBranchID = 0;
-                    }
-                    SortedList proParams1 = new SortedList(){
+
+                    SortedList proParams2 = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"N_FnYearID",nFnYearId},
                                 {"N_CustomerID",nVendorID},
@@ -150,7 +167,7 @@ namespace SmartxAPI.Controllers
 
                         if (xTransType == "PA")
                         {
-                            PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams1, connection);
+                            PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams2, connection);
                             if (PayReceipt.Rows.Count > 0)
                             {
                                 object obj = dLayer.ExecuteScalar("Select isnull(Count(N_InventoryId),0) as CountExists from Inv_PayReceiptDetails where N_CompanyID=@nCompanyID and N_InventoryId<>N_PayReceiptId and N_InventoryId=@nPayReceiptID and X_TransType =@xTransType", paramList, connection);
@@ -161,21 +178,36 @@ namespace SmartxAPI.Controllers
                                         return Ok(api.Notice("Transaction started."));
                                     }
                                 }
-                                return Ok(api.Notice(""));
+                                                              // return Ok(api.Success(api.Format(PayReceipt,"details")));
+
                             }
                         }
                         else
                         {
-                            PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams1, connection);
+                            PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams2, connection);
                         }
                     }
                     else
                     {
-                        PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams1, connection);
+                        PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams2, connection);
                     }
 
                 }
-                return Ok(api.Format(PayReceipt,"details"));
+
+                // if (PayReceipt.Rows.Count > 0)
+                // {
+                //     double N_ListedAmtTotal = 0;
+                //     foreach (DataRow dr in PayReceipt.Rows)
+                //     {
+
+                //         double N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());// +myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
+                //         N_ListedAmtTotal += N_InvoiceDueAmt;
+                //         if (N_InvoiceDueAmt == 0) {dr.Delete();continue;}
+                //         if ( nPayReceiptID >0 && (myFunctions.getVAL(dr["N_DiscountAmt"].ToString()) == 0 && myFunctions.getVAL(dr["N_Amount"].ToString()) == 0)) {dr.Delete();continue;}
+                //     }
+                // }
+                PayReceipt.AcceptChanges();
+                return Ok(api.Success(api.Format(PayReceipt,"details")));
             }
             catch (Exception e)
             {
