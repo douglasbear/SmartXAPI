@@ -152,22 +152,27 @@ namespace SmartxAPI.Controllers
             {
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                SqlTransaction transaction=connection.BeginTransaction();
-            if (values == "@Auto")
-            {
-                Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
-                Params.Add("N_FormID", 80);
-                Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
-                if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
-                MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
-            }
-                int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable,connection,transaction);
-                if (N_InvoiceId <= 0)
-                {
-                    transaction.Rollback();
-                }
+                connection.Open();
+                SqlTransaction transaction;
+                transaction = connection.BeginTransaction();
+                if (values == "@Auto")
+                    {
+                    Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                    Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
+                    Params.Add("N_FormID", 80);
+                    Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+                    InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
+                    if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
+                    MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+                    }
+                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable,connection,transaction);
+                    
+                    
+                    
+                    if (N_InvoiceId <= 0)
+                     {
+                        transaction.Rollback();
+                     }
                 for (int j = 0; j < DetailTable.Rows.Count; j++)
                 {
                     DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
@@ -189,31 +194,31 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             try
             {
-                            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                SqlTransaction transaction=connection.BeginTransaction();
-                Results = dLayer.DeleteData("Inv_Purchase", "n_PurchaseID", nPurchaseID, "",connection,transaction);
-                if (Results <= 0)
-                {
-                    transaction.Rollback();
-                    return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseInvoice"));
-                }
-                else
-                {
-                    Results = dLayer.DeleteData("Inv_PurchaseDetails", "n_PurchaseID", nPurchaseID, "",connection,transaction);
-                }
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                    SqlTransaction transaction=connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Inv_Purchase", "n_PurchaseID", nPurchaseID, "",connection,transaction);
+                    if (Results <= 0)
+                     {
+                        transaction.Rollback();
+                         return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseInvoice"));
+                     }
+                    else
+                     {
+                      Results = dLayer.DeleteData("Inv_PurchaseDetails", "n_PurchaseID", nPurchaseID, "",connection,transaction);
+                     }
 
-                if (Results > 0)
-                {
-                    transaction.Commit();
-                    return StatusCode(200, _api.Response(200, "Purchase Invoice deleted"));
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return StatusCode(200, _api.Response(200, "Purchase Invoice deleted"));
+                    }
+                     else
+                     {
+                        transaction.Rollback();
+                        return StatusCode(409, _api.Response(409, "Unable to delete Purchase Invoice"));
+                    }
                 }
-                else
-                {
-                    transaction.Rollback();
-                    return StatusCode(409, _api.Response(409, "Unable to delete Purchase Invoice"));
-                }
-            }
             }
             catch (Exception ex)
             {
