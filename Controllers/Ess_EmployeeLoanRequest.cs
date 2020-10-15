@@ -306,6 +306,47 @@ namespace SmartxAPI.Controllers
         }
 
 
+        private bool CheckLoanCountLimit(string fromDate,SortedList Params,SqlConnection connection,SqlTransaction transaction)
+        {
+            int N_EmpLoanCount = 0, N_LoanLimitCount=0;
+            object obj=dLayer.ExecuteScalar("SELECT isnull(N_LoanCountLimit,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID",Params,connection,transaction);
+            if(obj!=null)
+                N_LoanLimitCount = myFunctions.getIntVAL(obj.ToString());
+            object EmpLoanCount = dLayer.ExecuteScalar("SELECT isnull(COUNT(N_LoanTransID),0) From Pay_LoanIssue Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID",Params,connection,transaction);
+            if (EmpLoanCount != null)
+                N_EmpLoanCount = myFunctions.getIntVAL(EmpLoanCount.ToString());
+            if ((N_EmpLoanCount + 1) > N_LoanLimitCount && N_EmpLoanCount!=0)
+            {
+                return false;
+            }
+                return true;
+        }
+        private bool CheckEmpLoanEligibility(string fromDate,SortedList Params,SqlConnection connection,SqlTransaction transaction)
+        {
+            object obj = null;
+            double N_EmpLoanEligible = 0;
+            DateTime D_HireDate = DateTime.Now ;
+
+                obj = dLayer.ExecuteScalar("SELECT isnull(N_LoanEligible,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID and N_FnyearID=@nFnYearID",Params,connection,transaction);
+                if (obj != null)
+                    N_EmpLoanEligible = myFunctions.getVAL(obj.ToString());
+                object EmpHireDate = dLayer.ExecuteScalar("SELECT D_HireDate From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID and N_FnyearID=@nFnYearID",Params,connection,transaction);
+                if (EmpHireDate != null)
+                    D_HireDate = Convert.ToDateTime(EmpHireDate.ToString());
+
+                TimeSpan TS = Convert.ToDateTime(fromDate.ToString()) - D_HireDate;
+
+
+                double Years = TS.TotalDays / 365.25;
+
+                if (N_EmpLoanEligible > Years)
+                {
+                    return false;
+                }
+            return true;
+        }
+
+
 
     }
 }

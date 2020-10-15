@@ -7,6 +7,9 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
+using System.IO;
+using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
@@ -105,6 +108,67 @@ namespace SmartxAPI.Controllers
                 return BadRequest(api.Error(e));
             }   
         }
+
+
+[HttpGet("file")]
+  public async Task<IActionResult> Download(string filename)  
+  {  
+      if (filename == null)  
+          return Content("filename not present");  
+
+          var path ="";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                          SortedList param = new SortedList();
+                param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                DataTable tblDetails = dLayer.ExecuteDataTable("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection);
+                path = tblDetails.Rows[0]["X_Value"].ToString();
+                  }
+
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+       path = path + filename;
+  
+      var memory = new MemoryStream();  
+      using (var stream = new FileStream(path, FileMode.Open))  
+      {  
+          await stream.CopyToAsync(memory);  
+      }  
+      memory.Position = 0;  
+      return File(memory, GetContentType(path), Path.GetFileName(path));  
+  } 
+
+     private string GetContentType(string path)  
+        {  
+            var types = GetMimeTypes();  
+            var ext = Path.GetExtension(path).ToLowerInvariant();  
+            return types[ext];  
+        }  
+
+                private Dictionary<string, string> GetMimeTypes()  
+        {  
+            return new Dictionary<string, string>  
+            {  
+                {".txt", "text/plain"},  
+                {".pdf", "application/pdf"},  
+                {".doc", "application/vnd.ms-word"},  
+                {".docx", "application/vnd.ms-word"},  
+                {".xls", "application/vnd.ms-excel"},  
+                {".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, 
+                {".png", "image/png"},  
+                {".jpg", "image/jpeg"},  
+                {".jpeg", "image/jpeg"},  
+                {".gif", "image/gif"},  
+                {".csv", "text/csv"}  
+            };  
+        } 
 
        
     }
