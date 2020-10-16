@@ -136,20 +136,20 @@ namespace SmartxAPI.Controllers
 
 
 
-                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList,Con);
+                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList, Con);
                     if (objPayment != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), myFunctions.getBoolVAL(objPayment.ToString()));
 
                     //sales return count(draft and non draft)
-                    object objSalesReturn = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList,Con);
+                    object objSalesReturn = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     if (objSalesReturn != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturn", typeof(int), myFunctions.getIntVAL(objSalesReturn.ToString()));
 
-                    object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList,Con);
+                    object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     if (objSalesReturnDraft != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
                     QueryParamsList.Add("@nCustomerID", masterTable.Rows[0]["N_CustomerID"].ToString());
-                    object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList,Con);
+                    object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList, Con);
                     if (obPaymentMenthodid != null)
                     {
                         QueryParamsList.Add("@nPaymentMethodID", myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
@@ -172,8 +172,8 @@ namespace SmartxAPI.Controllers
                     object objInvoiceRecievable = null, objBal = null;
                     double N_InvoiceRecievable = 0, N_BalanceAmt = 0;
 
-                    objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=@nSalesID and Inv_Sales.N_CompanyID=@nCompanyID", QueryParamsList,Con);
-                    objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=@nSalesID and X_Type= @xTransType and N_CompanyID=@nCompanyID", QueryParamsList,Con);
+                    objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=@nSalesID and Inv_Sales.N_CompanyID=@nCompanyID", QueryParamsList, Con);
+                    objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=@nSalesID and X_Type= @xTransType and N_CompanyID=@nCompanyID", QueryParamsList, Con);
                     if (objInvoiceRecievable != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_InvoiceRecievable", typeof(double), N_InvoiceRecievable);
                     if (objBal != null)
@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
-                
+
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
 
@@ -343,7 +343,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
                     }
-                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId",  MasterTable, connection, transaction);
+                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", MasterTable, connection, transaction);
                     if (N_SalesID <= 0)
                     {
                         transaction.Rollback();
@@ -370,17 +370,26 @@ namespace SmartxAPI.Controllers
 
                         DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
-                        DataRow Rowsaleamountdetails = ds.Tables["saleamountdetails"].Rows[0];
+                        int N_IsSave = 0;
+                        int N_CurrentSalesID = 0;
+                        if (ds.Tables["saleamountdetails"].Rows.Count > 0)
+                        {
+                            DataRow Rowsaleamountdetails = ds.Tables["saleamountdetails"].Rows[0];
+                            N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
+                            dtsaleamountdetails.Columns.Remove("n_IsSave");
+                            dtsaleamountdetails.AcceptChanges();
+                            N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
+                        }
 
                         DataRow Rowloyalitypoints = null;
                         if (ds.Tables.Contains("loyalitypoints"))
                             Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
 
-                        int N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
-                        dtsaleamountdetails.Columns.Remove("n_IsSave");
-                        dtsaleamountdetails.AcceptChanges();
+                        // int N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
+                        // dtsaleamountdetails.Columns.Remove("n_IsSave");
+                        // dtsaleamountdetails.AcceptChanges();
 
-                        int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
+                        // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
                         bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
                         //Sales amount details/payment popup
@@ -392,7 +401,7 @@ namespace SmartxAPI.Controllers
                             if (N_IsSave == 1)
                             {
 
-                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtsaleamountdetails, connection, transaction);
+                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
@@ -404,7 +413,7 @@ namespace SmartxAPI.Controllers
                                     {
                                         if (ds.Tables.Contains("loyalitypoints") && dtloyalitypoints.Rows.Count > 0)
                                         {
-                                            int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId",dtloyalitypoints, connection, transaction);
+                                            int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", dtloyalitypoints, connection, transaction);
                                             if (N_SalesAmountID <= 0)
                                             {
                                                 transaction.Rollback();
@@ -427,7 +436,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID",dtsaleamountdetails, connection, transaction);
+                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
                             if (N_SalesAmountID <= 0)
                             {
                                 transaction.Rollback();
@@ -465,7 +474,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                           // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
@@ -586,7 +595,7 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
                     detailTable = _api.Format(detailTable, "details");
 
-                    string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";                    
+                    string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
                     DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
                     dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
 
