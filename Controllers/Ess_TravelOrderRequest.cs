@@ -75,8 +75,6 @@ namespace SmartxAPI.Controllers
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     }
-
-
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

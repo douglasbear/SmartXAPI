@@ -180,6 +180,12 @@ namespace SmartxAPI.Controllers
 
                     if (xLoanID == "@Auto")
                     {
+                        if(!EligibleForLoan(dDateFrom,QueryParams,connection,transaction)){
+                           return Ok(api.Warning("Not Eligible For Loan!"));  
+                        }
+                        if(LoanCountLimitExceed(QueryParams,connection,transaction)){
+                           return Ok(api.Warning("Loan Limit Exceeded!"));  
+                        }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
@@ -306,7 +312,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private bool CheckLoanCountLimit(string fromDate,SortedList Params,SqlConnection connection,SqlTransaction transaction)
+        private bool LoanCountLimitExceed(SortedList Params,SqlConnection connection,SqlTransaction transaction)
         {
             int N_EmpLoanCount = 0, N_LoanLimitCount=0;
             object obj=dLayer.ExecuteScalar("SELECT isnull(N_LoanCountLimit,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID",Params,connection,transaction);
@@ -317,11 +323,11 @@ namespace SmartxAPI.Controllers
                 N_EmpLoanCount = myFunctions.getIntVAL(EmpLoanCount.ToString());
             if ((N_EmpLoanCount + 1) > N_LoanLimitCount && N_EmpLoanCount!=0)
             {
-                return false;
-            }
                 return true;
+            }
+                return false;
         }
-        private bool CheckEmpLoanEligibility(string fromDate,SortedList Params,SqlConnection connection,SqlTransaction transaction)
+        private bool EligibleForLoan(string fromDate,SortedList Params,SqlConnection connection,SqlTransaction transaction)
         {
             object obj = null;
             double N_EmpLoanEligible = 0;
