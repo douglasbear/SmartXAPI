@@ -93,7 +93,6 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-
                 connection.Open();
                 
                 dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params,connection);
@@ -178,6 +177,7 @@ namespace SmartxAPI.Controllers
                     DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
                 }
                 int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", 0, DetailTable,connection,transaction);
+                
                 transaction.Commit();
             }
                 return Ok("Data Saved");
