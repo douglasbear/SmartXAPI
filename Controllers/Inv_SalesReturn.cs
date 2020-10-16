@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
                  string  sqlCommandText2="Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
                  if(myFunctions.getBoolVAL(Res.ToString())==false)
                  {
-                     sqlCommandText2="SELECT   * from  vw_SalesReturnWithoutSale_Disp Where N_DebitNoteId="+N_DebitNoteId+" and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+                     sqlCommandText2="SELECT   * from    Where N_DebitNoteId="+N_DebitNoteId+" and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
                  }
                  DataTable SalesReturnDetails = new DataTable();
                  SalesReturnDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection);
