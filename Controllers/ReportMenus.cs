@@ -13,6 +13,7 @@ using System.Collections.Generic;
 using System.Net.Http;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
@@ -156,24 +157,35 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("getreport")]
-        public ActionResult GetReport(string reportName, string critiria)
+        public async Task<IActionResult> GetReport(string reportName, string critiria)
         {
             //var client = new HttpClient();
 
-var handler = new HttpClientHandler
+            var handler = new HttpClientHandler
             {
                 ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>{  return true;  }
             };
-var client = new HttpClient(handler );
+            var client = new HttpClient(handler );
             //HttpClient client = new HttpClient(clientHandler);
 
-            var path = client.GetAsync ("https://192.169.227.51:87/api/report?reportname="+reportName +" &critiria=" + critiria);
+            var path = client.GetAsync ("https://localhost:44315/api/report?reportname="+reportName +"&critiria=" + critiria+"&con="+connectionString);
             path.Wait ();
-            string ReportPath=path.ToString();
-            ReportPath="C:\\"+ reportName + ".pdf";
-            Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
-            if(fileStream==null){return StatusCode(403,"Report Generation Error");}
-            return File(fileStream, "application/octet-stream",reportName+".pdf");
+            string ReportPath="D:\\"+reportName.Trim()+".pdf";
+
+             var memory = new MemoryStream();  
+             using (var stream = new FileStream(ReportPath, FileMode.Open))  
+                {  
+                  await stream.CopyToAsync(memory);  
+                }  
+                memory.Position = 0;  
+                return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath)); 
+
+
+
+            // ReportPath="C:\\"+ reportName + ".pdf";
+            // Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
+            // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
+            // return File(fileStream, "application/octet-stream",reportName+".pdf");
         }
         
 
