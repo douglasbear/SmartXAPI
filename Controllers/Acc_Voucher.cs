@@ -264,38 +264,6 @@ namespace SmartxAPI.Controllers
 
         }
 
-         [HttpGet("dummy")]
-        public ActionResult GetPurchaseInvoiceDummy(int? Id)
-        {
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                string sqlCommandText = "select * from Acc_VoucherMaster where N_VoucherId=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
-                masterTable = api.Format(masterTable, "master");
-
-                string sqlCommandText2 = "select * from Acc_VoucherMaster_Details where N_VoucherId=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
-                detailTable = api.Format(detailTable, "details");
-
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
-
-                return Ok(dataSet);
-                }
-
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, api.Error(e));
-            }
-        }
 
     }
 }
