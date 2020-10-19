@@ -107,13 +107,16 @@ namespace SmartxAPI.Controllers
         [HttpGet("payDetails")]
         public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShaowAllbranch, string xInvoiceNo, string xTransType)
         {
-            DataSet OutPut = new DataSet();
+            SortedList OutPut = new SortedList();
             DataTable PayReceipt = new DataTable();
 
             string sql = "";
             int AllBranch = 0;
             int nPayReceiptID = 0;
             int nCompanyId = myFunctions.GetCompanyID(User);
+            OutPut.Add("totalAmtDue",0);
+            OutPut.Add("totalBalance",0);
+            OutPut.Add("txnStarted",false);
             if (bShaowAllbranch == true)
             {
                 AllBranch = 1;
@@ -154,6 +157,16 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@nCompanyID", nCompanyId);
                     DataTable VendorBalance = dLayer.ExecuteDataTable(sql, paramList, connection);
 
+                    if(VendorBalance.Rows.Count>0){
+                        OutPut["totalAmtDue"] = myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString());
+                        if (myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()) < 0)
+                            OutPut["totalBalance"] = Convert.ToDouble(-1 * myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()));
+                        else if (myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()) > 0)
+                            OutPut["totalBalance"] = myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString());
+                        else
+                            OutPut["totalBalance"] = 0;
+                    }
+
                     SortedList proParams2 = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"N_FnYearID",nFnYearId},
@@ -177,7 +190,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     if (myFunctions.getIntVAL(obj.ToString()) > 0)
                                     {
-                                        return Ok(api.Notice("Transaction started."));
+                                        OutPut["txnStarted"]=true;
                                     }
                                 }
                                 // return Ok(api.Success(api.Format(PayReceipt,"details")));
@@ -209,7 +222,7 @@ namespace SmartxAPI.Controllers
                     }
                 }
                 PayReceipt.AcceptChanges();
-                return Ok(api.Success(api.Format(PayReceipt, "details")));
+                return Ok(api.Success(new SortedList(){{"details",api.Format(PayReceipt)},{"masterData",OutPut}}));
             }
             catch (Exception e)
             {
