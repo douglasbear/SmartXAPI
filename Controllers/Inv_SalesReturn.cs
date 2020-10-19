@@ -206,6 +206,7 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 sqlCommandText="SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
                 Params.Add("@N_CompanyId",nCompanyId);
+                
                 Params.Add("@N_DebitNoteId",nDebitNoteId);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -213,6 +214,7 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
 
                 }
+                
                 return StatusCode(200,_api.Response(200 ,"Sales Return deleted" ));
                
                 
