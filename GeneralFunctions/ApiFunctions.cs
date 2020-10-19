@@ -2,6 +2,7 @@ using System;
 using System.Collections;
 using System.Collections.Generic;
 using System.Data;
+using System.IO;
 using System.Security.Claims;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
@@ -138,8 +139,36 @@ namespace SmartxAPI.GeneralFunctions
             }
             return dt;
         }
+        public string GetContentType(string path)  
+        {  
+            var types = GetMimeTypes();  
+            var ext = Path.GetExtension(path).ToLowerInvariant();  
+            return types[ext];  
+        }  
 
+                public Dictionary<string, string> GetMimeTypes()  
+        {  
+            return new Dictionary<string, string>  
+            {  
+                {".txt", "text/plain"},  
+                {".pdf", "application/pdf"},  
+                {".doc", "application/vnd.ms-word"},  
+                {".docx", "application/vnd.ms-word"},  
+                {".xls", "application/vnd.ms-excel"},  
+                {".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, 
+                {".png", "image/png"},  
+                {".jpg", "image/jpeg"},  
+                {".jpeg", "image/jpeg"},  
+                {".gif", "image/gif"},  
+                {".csv", "text/csv"}  
+            };  
+        } 
+
+        
+
+       
     }
+
     public interface IApiFunctions
     {
         /* Deprecated Method Don't Use */
@@ -163,5 +192,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataRow dataRow, String message);
         public object Notice(string message);
         public object Warning(string message);
+        public string GetContentType(string path)  ;
+        public Dictionary<string, string> GetMimeTypes()  ;
     }
 }
