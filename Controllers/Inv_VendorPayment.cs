@@ -277,19 +277,6 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        SortedList AdvParams = new SortedList();
-                        AdvParams.Add("@companyId", Master["n_CompanyId"].ToString());
-                        AdvParams.Add("@PorderId", Master["n_POrderID"].ToString());
-                        object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@companyId and N_TransID=@PorderId and N_FormID=82", AdvParams, connection, transaction);
-                        if (AdvancePRProcessed != null)
-                        {
-                            if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(api.Success("Payment Request Processed"));
-                            }
-                        }
-
 
                         if (n_PayReceiptID > 0)
                         {
@@ -315,20 +302,20 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
-                    if (N_PurchaseOrderId <= 0)
+                    n_PayReceiptID = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptID", MasterTable, connection, transaction);
+                    if (n_PayReceiptID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Error"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_POrderID"] = N_PurchaseOrderId;
+                        DetailTable.Rows[j]["n_PayReceiptID"] = n_PayReceiptID;
                     }
-                    int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID",DetailTable, connection, transaction);
+                    int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID",DetailTable, connection, transaction);
                     transaction.Commit();
                 }
-                return Ok(api.Success("Purchase Order Saved"));
+                return Ok(api.Success("Vendor Payment Saved"));
             }
             catch (Exception ex)
             {
