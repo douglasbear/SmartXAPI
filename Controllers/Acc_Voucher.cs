@@ -213,7 +213,8 @@ namespace SmartxAPI.Controllers
                         int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
                         transaction.Commit();
                     }
-                    return Ok(api.Success("Data Saved"));
+                    //return Ok(api.Success("Data Saved"));
+                    return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
                 }
                 }
             catch (Exception ex)
@@ -263,39 +264,44 @@ namespace SmartxAPI.Controllers
 
 
         }
-
-         [HttpGet("dummy")]
-        public ActionResult GetPurchaseInvoiceDummy(int? Id)
+    [HttpGet("dummy")]
+        public ActionResult GetVoucherDummy(int? nVoucherID)
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection Con = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-                string sqlCommandText = "select * from Acc_VoucherMaster where N_VoucherId=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
-                masterTable = api.Format(masterTable, "master");
+                    Con.Open();
+                    string sqlCommandText = "select * from Acc_VoucherMaster where N_VoucherID=@p1";
+                    SortedList mParamList = new SortedList() { { "@p1", nVoucherID } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
+                    masterTable = api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Acc_VoucherMaster_Details where N_VoucherId=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
-                detailTable = api.Format(detailTable, "details");
+                    string sqlCommandText2 = "select * from Acc_VoucherMaster_Details where N_VoucherID=@p1";
+                    SortedList dParamList = new SortedList() { { "@p1", nVoucherID } };
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
+                    detailTable = api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+                    // string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
+                    // DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
+                    // dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
 
-                return Ok(dataSet);
+                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    dataSet.Tables.Add(detailTable);
+                    //dataSet.Tables.Add(dtAmountDetails);
+
+                    return Ok(dataSet);
+
                 }
-
             }
             catch (Exception e)
             {
                 return StatusCode(403, api.Error(e));
             }
         }
+
 
     }
 }
