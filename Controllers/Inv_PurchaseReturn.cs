@@ -207,6 +207,45 @@ namespace SmartxAPI.Controllers
 
 
         }
+         [HttpGet("dummy")]
+        public ActionResult GetPurchaseReturnDummy(int? nPurchaseReturnId)
+        {
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    string sqlCommandText = "select * from Inv_PurchaseReturnMaster where N_CreditNoteId=@p1";
+                    SortedList mParamList = new SortedList() { { "@p1", nPurchaseReturnId } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
+                    masterTable = _api.Format(masterTable, "master");
+
+                    string sqlCommandText2 = "select * from Inv_PurchaseReturnDetails where N_CreditNoteId=@p1";
+                    SortedList dParamList = new SortedList() { { "@p1", nPurchaseReturnId } };
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
+                    detailTable = _api.Format(detailTable, "details");
+
+                    // string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
+                    // DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
+                    // dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
+
+                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    dataSet.Tables.Add(detailTable);
+                    //dataSet.Tables.Add(dtAmountDetails);
+
+                    return Ok(dataSet);
+
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(e));
+            }
+        }
+
+
         
     }
 }

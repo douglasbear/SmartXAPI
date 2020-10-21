@@ -213,7 +213,8 @@ namespace SmartxAPI.Controllers
                         int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
                         transaction.Commit();
                     }
-                    return Ok(api.Success("Data Saved"));
+                    //return Ok(api.Success("Data Saved"));
+                    return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
                 }
                 }
             catch (Exception ex)
@@ -262,6 +263,43 @@ namespace SmartxAPI.Controllers
             }
 
 
+        }
+    [HttpGet("dummy")]
+        public ActionResult GetVoucherDummy(int? nVoucherID)
+        {
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    string sqlCommandText = "select * from Acc_VoucherMaster where N_VoucherID=@p1";
+                    SortedList mParamList = new SortedList() { { "@p1", nVoucherID } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
+                    masterTable = api.Format(masterTable, "master");
+
+                    string sqlCommandText2 = "select * from Acc_VoucherMaster_Details where N_VoucherID=@p1";
+                    SortedList dParamList = new SortedList() { { "@p1", nVoucherID } };
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
+                    detailTable = api.Format(detailTable, "details");
+
+                    // string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
+                    // DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
+                    // dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
+
+                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    dataSet.Tables.Add(detailTable);
+                    //dataSet.Tables.Add(dtAmountDetails);
+
+                    return Ok(dataSet);
+
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, api.Error(e));
+            }
         }
 
 
