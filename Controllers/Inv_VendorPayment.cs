@@ -109,14 +109,15 @@ namespace SmartxAPI.Controllers
         {
             SortedList OutPut = new SortedList();
             DataTable PayReceipt = new DataTable();
+            DataTable PayInfo = new DataTable();
 
             string sql = "";
             int AllBranch = 0;
             int nPayReceiptID = 0;
             int nCompanyId = myFunctions.GetCompanyID(User);
-            OutPut.Add("totalAmtDue",0);
-            OutPut.Add("totalBalance",0);
-            OutPut.Add("txnStarted",false);
+            OutPut.Add("totalAmtDue", 0);
+            OutPut.Add("totalBalance", 0);
+            OutPut.Add("txnStarted", false);
             if (bShaowAllbranch == true)
             {
                 AllBranch = 1;
@@ -139,7 +140,7 @@ namespace SmartxAPI.Controllers
                                 {"X_VoucherNo",xInvoiceNo},
                                 {"N_FnYearID",nFnYearId},
                                 {"N_BranchID",nBranchID}};
-                        DataTable PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
+                        PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
                         {
                             nPayReceiptID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
@@ -157,7 +158,8 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@nCompanyID", nCompanyId);
                     DataTable VendorBalance = dLayer.ExecuteDataTable(sql, paramList, connection);
 
-                    if(VendorBalance.Rows.Count>0){
+                    if (VendorBalance.Rows.Count > 0)
+                    {
                         OutPut["totalAmtDue"] = myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString());
                         if (myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()) < 0)
                             OutPut["totalBalance"] = Convert.ToDouble(-1 * myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()));
@@ -190,7 +192,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     if (myFunctions.getIntVAL(obj.ToString()) > 0)
                                     {
-                                        OutPut["txnStarted"]=true;
+                                        OutPut["txnStarted"] = true;
                                     }
                                 }
                                 // return Ok(api.Success(api.Format(PayReceipt,"details")));
@@ -209,7 +211,7 @@ namespace SmartxAPI.Controllers
 
                 }
 
-                PayReceipt=myFunctions.AddNewColumnToDataTable(PayReceipt,"n_DueAmount",typeof(double),0);
+                PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
 
                 if (PayReceipt.Rows.Count > 0)
                 {
@@ -225,7 +227,7 @@ namespace SmartxAPI.Controllers
                     }
                 }
                 PayReceipt.AcceptChanges();
-                return Ok(api.Success(new SortedList(){{"details",api.Format(PayReceipt)},{"masterData",OutPut}}));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(PayReceipt) }, { "masterData", OutPut }, { "master", PayInfo } }));
             }
             catch (Exception e)
             {
@@ -233,7 +235,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpPost("Save")]
+        [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -252,7 +254,8 @@ namespace SmartxAPI.Controllers
 
                     // Auto Gen
                     string PorderNo = "";
-                    if(MasterTable.Rows.Count>0){
+                    if (MasterTable.Rows.Count > 0)
+                    {
 
                     }
                     var x_VoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
@@ -260,7 +263,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
                     int n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
-                    string x_Type= MasterTable.Rows[0]["x_Type"].ToString();
+                    string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
 
                     transaction = connection.BeginTransaction();
 
@@ -280,23 +283,23 @@ namespace SmartxAPI.Controllers
 
                         if (n_PayReceiptID > 0)
                         {
-                        
-                                SortedList DeleteParams = new SortedList(){
+
+                            SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
                                 {"X_TransType",x_Type},
                                 {"N_VoucherID",n_PayReceiptID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                                         
-                        
-                    // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
-                    // {
-                    //     dLayer.DeleteData("Inv_PurchasePaymentStatus", "N_PaymentID",)
-                    //     dba.DeleteDataNoTry("Inv_PurchasePaymentStatus", "N_PaymentID", PayReceiptId_Loc.ToString(), "N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
-                    //     dba.DeleteDataNoTry("Inv_PaymentDetails", "N_PaymentID", PayReceiptId_Loc.ToString(), "N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
 
-                    // }
 
-                           
+                            // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
+                            // {
+                            //     dLayer.DeleteData("Inv_PurchasePaymentStatus", "N_PaymentID",)
+                            //     dba.DeleteDataNoTry("Inv_PurchasePaymentStatus", "N_PaymentID", PayReceiptId_Loc.ToString(), "N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
+                            //     dba.DeleteDataNoTry("Inv_PaymentDetails", "N_PaymentID", PayReceiptId_Loc.ToString(), "N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
+
+                            // }
+
+
 
                         }
                     }
@@ -312,7 +315,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_PayReceiptID"] = n_PayReceiptID;
                     }
-                    int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID",DetailTable, connection, transaction);
+                    int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID", DetailTable, connection, transaction);
                     transaction.Commit();
                 }
                 return Ok(api.Success("Vendor Payment Saved"));
@@ -322,10 +325,38 @@ namespace SmartxAPI.Controllers
                 return BadRequest(ex);
             }
         }
+        [HttpDelete]
+        public ActionResult DeleteData(int nPayReceiptId, string xTransType)
+        {
+           try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    if (nPayReceiptId > 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                                {"X_TransType",xTransType},
+                                {"N_VoucherID",nPayReceiptId}};
+                        if(myFunctions.getBoolVAL(dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection).ToString())){
+                            return Ok(api.Success("Vendor Payment Deleted"));
+                        }
+                    }
+                }
+                    return Ok(api.Warning("Unable to delete Vendor Payment"));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
 
 
 
-        
+
+
+
         //  [HttpGet("dummy")]
         // public ActionResult GetPurchaseInvoiceDummy(int? Id)
         // {
