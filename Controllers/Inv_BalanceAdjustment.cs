@@ -39,11 +39,12 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetBalanceDetails(int? nCompanyID, int? nFnyearID,int? nPartyType,int nPartyID,int N_TransType)
+        public ActionResult GetBalanceDetails( int nFnyearID,int nPartyType,int nPartyID,int N_TransType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText="";
+            int nCompanyID=myFunctions.GetCompanyID(User);
             if(nPartyID>0)
 
             sqlCommandText = "select [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
@@ -80,9 +81,10 @@ namespace SmartxAPI.Controllers
             }
         }
           [HttpGet("listDetails")]
-        public ActionResult GetBalanceListDetails(int nCompanyId, int N_PartyType,string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
+        public ActionResult GetBalanceListDetails(int N_PartyType,string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
         {
             bool B_PRSVisible = false;
+            int nCompanyId=myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             DataTable MasterTable = new DataTable();
@@ -107,7 +109,6 @@ namespace SmartxAPI.Controllers
             Mastersql ="SELECT     Inv_BalanceAdjustmentMaster.N_CompanyID, Inv_BalanceAdjustmentMaster.N_FnYearID, Inv_BalanceAdjustmentMaster.X_VoucherNo, Inv_BalanceAdjustmentMaster.D_AdjustmentDate, Inv_BalanceAdjustmentMaster.D_EntryDate, Inv_BalanceAdjustmentMaster.N_Amount, Inv_BalanceAdjustmentMaster.N_UserID, Inv_BalanceAdjustmentMaster.N_BranchID, Inv_BalanceAdjustmentMaster.N_TransType, Inv_BalanceAdjustmentMaster.X_notes, Inv_BalanceAdjustmentMaster.N_PartyType, Inv_BalanceAdjustmentMaster.N_PartyID, Inv_BalanceAdjustmentMaster.N_AdjustmentId, Inv_BalanceAdjustmentMaster.N_AmountF, Inv_BalanceAdjustmentMaster.N_CurExchRate, Inv_BalanceAdjustmentMaster.N_WOID, Inv_Vendor.N_CompanyID AS Expr1, Inv_Vendor.N_VendorID, Inv_Vendor.X_VendorCode, Inv_Vendor.X_VendorName, Inv_Vendor.X_ContactName, Inv_Vendor.X_Address, Inv_Vendor.X_ZipCode, Inv_Vendor.X_Country, Inv_Vendor.X_PhoneNo1, Inv_Vendor.X_PhoneNo2, Inv_Vendor.X_FaxNo, Inv_Vendor.X_Email, Inv_Vendor.X_WebSite, Inv_Vendor.N_CreditLimit, Inv_Vendor.B_Inactive, Inv_Vendor.N_LedgerID, Inv_Vendor.N_InvDueDays, Inv_Vendor.N_FnYearID AS Expr2, Inv_Vendor.D_Entrydate AS Expr3, Inv_Vendor.X_CountryCode, Inv_Vendor.N_TypeID, Inv_Vendor.B_DirPosting, Inv_Vendor.N_CurrencyID, Inv_Vendor.X_ReminderMsg, Inv_Vendor.X_VendorName_Ar, Inv_Vendor.N_CountryID, Inv_Vendor.X_TaxRegistrationNo, Inv_Vendor.N_TaxCategoryID, Inv_Vendor.B_AllowCashPay, Inv_Vendor.N_PartnerTypeID, Inv_Vendor.N_VendorTypeID, Inv_Vendor.N_GoodsDeliveryIn, Inv_Vendor.X_TandC, Acc_CurrencyMaster.N_CompanyID AS Expr4, Acc_CurrencyMaster.N_CurrencyID AS Expr5, Acc_CurrencyMaster.X_CurrencyCode, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.X_ShortName, Acc_CurrencyMaster.N_ExchangeRate, Acc_CurrencyMaster.B_default, Acc_CurrencyMaster.N_Decimal, Prj_WorkOrder.N_WorkOrderId, Prj_WorkOrder.X_WorkOrderNo FROM         Inv_BalanceAdjustmentMaster INNER JOIN Inv_Vendor ON Inv_BalanceAdjustmentMaster.N_PartyID = Inv_Vendor.N_VendorID AND Inv_BalanceAdjustmentMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND  Inv_BalanceAdjustmentMaster.N_FnYearID = Inv_Vendor.N_FnYearID INNER JOIN Acc_CurrencyMaster ON Inv_Vendor.N_CurrencyID = Acc_CurrencyMaster.N_CurrencyID LEFT OUTER JOIN Prj_WorkOrder ON Inv_BalanceAdjustmentMaster.N_CompanyID = Prj_WorkOrder.N_CompanyId AND Inv_BalanceAdjustmentMaster.N_WOID = Prj_WorkOrder.N_WorkOrderId Where  Inv_BalanceAdjustmentMaster.N_CompanyID=@p1 and Inv_BalanceAdjustmentMaster.N_FnYearID=@p3 and Inv_BalanceAdjustmentMaster.N_TransType=@p2 and Inv_BalanceAdjustmentMaster.X_VoucherNo=@p4 and Inv_BalanceAdjustmentMaster.N_PartyType=@p5 and Inv_BalanceAdjustmentMaster.N_BranchID=@p6";
             Params.Add("@p6", nBranchID);
             }
-
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", N_TransType);
             Params.Add("@p3", nFnYearId);
@@ -121,6 +122,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+
+                    if(MasterTable.Rows.Count==0){
+                        return Ok(_api.Warning("No Data Found !!"));
+                    }
 
                     MasterTable = _api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
@@ -138,11 +143,11 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
-                return Ok(dt);
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
         //Save....
@@ -210,12 +215,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    MasterTable.Columns.Remove("N_AdjustmentID");
-                    MasterTable.AcceptChanges();
-
-
-
-                    N_AdjustmentID = dLayer.SaveData("Inv_BalanceAdjustmentMaster", "N_AdjustmentID", N_AdjustmentID, MasterTable, connection, transaction);
+                    N_AdjustmentID = dLayer.SaveData("Inv_BalanceAdjustmentMaster", "N_AdjustmentID", MasterTable, connection, transaction);
                     if (N_AdjustmentID <= 0)
                     {
                         transaction.Rollback();
@@ -226,7 +226,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_AdjustmentID"] = N_AdjustmentID;
                     }
 
-                    int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", 0, DetailTable, connection, transaction);
+                    int N_AdjustmentDetailsId = dLayer.SaveData("Inv_BalanceAdjustmentMasterDetails", "N_AdjustmentDetailsId", DetailTable, connection, transaction);
                     if (N_AdjustmentDetailsId <= 0)
                     {
                         transaction.Rollback();
