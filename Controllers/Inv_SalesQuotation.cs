@@ -645,7 +645,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_SalesQuotationDetails", "n_quotationID", N_QuotationID, "", connection, transaction);
                     }
-
                     if (Results > 0)
                     {
                         transaction.Commit();

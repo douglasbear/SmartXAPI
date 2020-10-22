@@ -187,42 +187,70 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, ex);
             }
         }
+        private bool CheckProcessed(int nPurchaseID)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            object AdvancePRProcessed=null;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        string sqlCommand="Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@p1 and N_TransID=@p2 and N_FormID=65";
+                        Params.Add("@p1", nCompanyID);
+                        Params.Add("@p2", nPurchaseID);
+                        AdvancePRProcessed = dLayer.ExecuteScalar(sqlCommand, Params, connection);
+                         
+                    }
+                    if (AdvancePRProcessed != null)
+                    {
+                        if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                        {
+                            return true;
+                        }
+                    }
+                     return false;
+        }
         //Delete....
-        [HttpDelete()]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nPurchaseID)
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
+            if (CheckProcessed(nPurchaseID))
+                return Ok(_api.Error("Transaction Started"));
             try
             {
+
                  using (SqlConnection connection = new SqlConnection(connectionString))
                     {
+                        connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_Purchase", "n_PurchaseID", nPurchaseID, "",connection,transaction);
+                     SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","PURCHASE"},
+                                {"N_VoucherID",nPurchaseID},
+                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"},
+                                {"@B_MRNVisible","0"}};
+
+                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                      {
                         transaction.Rollback();
-                         return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseInvoice"));
-                     }
-                    else
-                     {
-                      Results = dLayer.DeleteData("Inv_PurchaseDetails", "n_PurchaseID", nPurchaseID, "",connection,transaction);
+                        return Ok(_api.Error("Unable to Delete PurchaseInvoice"));
                      }
 
-                    if (Results > 0)
-                    {
-                        transaction.Commit();
-                        return StatusCode(200, _api.Response(200, "Purchase Invoice deleted"));
-                    }
-                     else
-                     {
-                        transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete Purchase Invoice"));
-                    }
+                     transaction.Commit();
+                     return Ok(_api.Success("Purchase invoice deleted"));
+                   
                 }
+
             }
             catch (Exception ex)
             {
-                return StatusCode(404, _api.Response(404, ex.Message));
+                return BadRequest(_api.Error(ex));
             }
 
 

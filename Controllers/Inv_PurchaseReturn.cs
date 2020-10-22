@@ -193,7 +193,7 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType",xType},
                                 {"N_VoucherID",nCreditNoteId}
                             };
-                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
                     transaction.Commit();
                 }
 
