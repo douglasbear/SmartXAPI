@@ -303,7 +303,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpDelete()]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nPOrderID)
         {
             int Results = 0;

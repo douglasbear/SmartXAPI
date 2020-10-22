@@ -169,11 +169,12 @@ namespace SmartxAPI.Controllers
             //HttpClient client = new HttpClient(clientHandler);
 
             var path = client.GetAsync ("https://localhost:44315/api/report?reportname="+reportName +"&critiria=" + critiria+"&con="+connectionString);
+            
             path.Wait ();
             string ReportPath="D:\\"+reportName.Trim()+".pdf";
+            var memory = new MemoryStream();
 
-             var memory = new MemoryStream();  
-             using (var stream = new FileStream(ReportPath, FileMode.Open))  
+            using (var stream = new FileStream(ReportPath, FileMode.Open))  
                 {  
                   await stream.CopyToAsync(memory);  
                 }  
