@@ -30,26 +30,32 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId,int nListID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string sqlCommandText ="";
 
-            string sqlCommandText = "select N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            int Count= (nListID - 1) * 30;
+            if(Count==0)
+                 sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            else
+                sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+            
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-
+            
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return StatusCode(200, _api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -58,7 +64,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.Message));
+                return StatusCode(404, _api.Error(e.Message));
             }
         }
         [HttpGet("listdetails")]
@@ -129,7 +135,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.Message));
+                return StatusCode(404, _api.Error(e.Message));
             }
         }
 
@@ -161,7 +167,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("N_FormID", 80);
                     Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                     InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
-                    if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
+                    if (InvoiceNo == "") { return StatusCode(409, _api.Error("Unable to generate Invoice Number")); }
                     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
                     int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable,connection,transaction);
