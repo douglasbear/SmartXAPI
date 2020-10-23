@@ -369,14 +369,14 @@ namespace SmartxAPI.Controllers
 
                         DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
-                        int N_IsSave = 0;
+                        int N_IsSave = 1;
                         int N_CurrentSalesID = 0;
                         if (ds.Tables["saleamountdetails"].Rows.Count > 0)
                         {
                             DataRow Rowsaleamountdetails = ds.Tables["saleamountdetails"].Rows[0];
-                            N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
-                            dtsaleamountdetails.Columns.Remove("n_IsSave");
-                            dtsaleamountdetails.AcceptChanges();
+                            // N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
+                            // dtsaleamountdetails.Columns.Remove("n_IsSave");
+                            // dtsaleamountdetails.AcceptChanges();
                             N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         }
 
@@ -473,7 +473,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
