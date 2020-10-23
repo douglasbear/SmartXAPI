@@ -33,14 +33,18 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId,int nListID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
-            string sqlCommandText = "select * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by D_POrderDate DESC,[Order No]";
+            string sqlCommandText ="";
+            int Count= (nListID - 1) * 30;
+            if(Count==0)
+                sqlCommandText = "select top(30) * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            else
+                sqlCommandText = "select top(30) * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_POrderID not in(select top(30) N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
+            Params.Add("@p2", nFnYearId) ;
 
             try
             {
