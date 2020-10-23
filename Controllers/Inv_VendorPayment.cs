@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("payDetails")]
-        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShaowAllbranch, string xInvoiceNo, string xTransType)
+        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShowAllbranch, string xInvoiceNo, string xTransType)
         {
             SortedList OutPut = new SortedList();
             DataTable PayReceipt = new DataTable();
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             OutPut.Add("totalAmtDue", 0);
             OutPut.Add("totalBalance", 0);
             OutPut.Add("txnStarted", false);
-            if (bShaowAllbranch == true)
+            if (bShowAllbranch == true)
             {
                 AllBranch = 1;
                 nBranchID = 0;
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    if (bShaowAllbranch == true)
+                    if (bShowAllbranch == true)
                         sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
                     else
                         sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";

@@ -33,8 +33,9 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReceipt(int? nCompanyId, int nFnYearId)
+        public ActionResult GetSalesReceipt(int nFnYearId)
         {
+            int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -66,7 +67,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetSalesReceiptDetails(int nCustomerId, int nFnYearId, int nBranchId, string xInvoiceNo, bool bAllBranchData, string dTransDate, string xType)
+        public ActionResult GetSalesReceiptDetails(int nCustomerId, int nFnYearId, int nBranchId, string xInvoiceNo, bool bShowAllbranch, string dTransDate, string xTransType)
         {
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
@@ -88,7 +89,7 @@ namespace SmartxAPI.Controllers
                                 {"@nFnYearID",nFnYearId},
                                 {"@nBranchID",nBranchId}};
                         string sql = "";
-                        if (bAllBranchData == true)
+                        if (bShowAllbranch == true)
                             sql = "select N_PayReceiptId,X_Type,N_PartyID from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
                         else
                             sql = "select N_PayReceiptId,X_Type,N_PartyID from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
@@ -97,24 +98,27 @@ namespace SmartxAPI.Controllers
                         if (PayInfo.Rows.Count > 0)
                         {
                             n_PayReceiptId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
-                            xType = PayInfo.Rows[0]["X_Type"].ToString();
+                            xTransType = PayInfo.Rows[0]["X_Type"].ToString();
                             nCustomerId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
                         }
-                    }
 
+                        
                     SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
                         {"X_VoucherNo",xInvoiceNo},
                         {"N_FnYearID",nFnYearId},
                         {"N_BranchId",nBranchId},
-                        {"X_Type",xType}
+                        {"X_Type",xTransType}
                     };
                         MasterTable = dLayer.ExecuteDataTablePro("SP_InvSalesReceipt_Disp", mParamsList, connection);
                         MasterTable = api.Format(MasterTable, "Master");
 
+                    }
+
+
                     string balanceSql = "";
-                    if (bAllBranchData == true)
+                    if (bShowAllbranch == true)
                         balanceSql = "SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=@AccType and N_AccID=@CustomerID and N_CompanyID=@CompanyID and  D_TransDate<=@TransDate and B_IsSaveDraft = 0";
                     else
                         balanceSql = "SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=@AccType and N_AccID=@CustomerID and N_CompanyID=@CompanyID and  D_TransDate<=@TransDate and N_BranchId=@BranchID  and B_IsSaveDraft = 0";
@@ -139,10 +143,10 @@ namespace SmartxAPI.Controllers
 
                     if (n_PayReceiptId > 0)
                     {
-                        if (xType == "SA")
+                        if (xTransType == "SA")
                         {
                             string DetailSql = "";
-                            if (bAllBranchData == true)
+                            if (bShowAllbranch == true)
                             {
                                 DetailSql = "Select Inv_PayReceiptDetails.N_CompanyID,N_InventoryId,N_Amount+N_DiscountAmt+Isnull(N_AmtPaidFromAdvance,0) AS N_Amount,X_Description,N_BranchID  from Inv_PayReceiptDetails " +
                                         " Where N_CompanyID =@CompanyID and N_PayReceiptId =@PayReceiptID";
@@ -175,7 +179,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         int branchFlag = 0;
-                        if (bAllBranchData) { branchFlag = 1; }
+                        if (bShowAllbranch) { branchFlag = 1; }
                         SortedList detailParams = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
@@ -376,8 +380,9 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nPayReceiptId, int nCompanyId, string xType)
+        public ActionResult DeleteData(int nPayReceiptId, string xType)
         {
+            int nCompanyId=myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
