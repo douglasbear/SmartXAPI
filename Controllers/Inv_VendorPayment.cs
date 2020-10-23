@@ -105,19 +105,20 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("payDetails")]
-        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShaowAllbranch, string xInvoiceNo, string xTransType)
+        public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShowAllbranch, string xInvoiceNo, string xTransType)
         {
             SortedList OutPut = new SortedList();
             DataTable PayReceipt = new DataTable();
+            DataTable PayInfo = new DataTable();
 
             string sql = "";
             int AllBranch = 0;
             int nPayReceiptID = 0;
             int nCompanyId = myFunctions.GetCompanyID(User);
-            OutPut.Add("totalAmtDue",0);
-            OutPut.Add("totalBalance",0);
-            OutPut.Add("txnStarted",false);
-            if (bShaowAllbranch == true)
+            OutPut.Add("totalAmtDue", 0);
+            OutPut.Add("totalBalance", 0);
+            OutPut.Add("txnStarted", false);
+            if (bShowAllbranch == true)
             {
                 AllBranch = 1;
                 nBranchID = 0;
@@ -127,7 +128,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    if (bShaowAllbranch == true)
+                    if (bShowAllbranch == true)
                         sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
                     else
                         sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";
@@ -139,7 +140,7 @@ namespace SmartxAPI.Controllers
                                 {"X_VoucherNo",xInvoiceNo},
                                 {"N_FnYearID",nFnYearId},
                                 {"N_BranchID",nBranchID}};
-                        DataTable PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
+                        PayInfo = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_Disp", proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
                         {
                             nPayReceiptID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
@@ -157,7 +158,8 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@nCompanyID", nCompanyId);
                     DataTable VendorBalance = dLayer.ExecuteDataTable(sql, paramList, connection);
 
-                    if(VendorBalance.Rows.Count>0){
+                    if (VendorBalance.Rows.Count > 0)
+                    {
                         OutPut["totalAmtDue"] = myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString());
                         if (myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()) < 0)
                             OutPut["totalBalance"] = Convert.ToDouble(-1 * myFunctions.getVAL(VendorBalance.Rows[0]["N_BalanceAmount"].ToString()));
@@ -190,7 +192,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     if (myFunctions.getIntVAL(obj.ToString()) > 0)
                                     {
-                                        OutPut["txnStarted"]=true;
+                                        OutPut["txnStarted"] = true;
                                     }
                                 }
                                 // return Ok(api.Success(api.Format(PayReceipt,"details")));
@@ -209,7 +211,7 @@ namespace SmartxAPI.Controllers
 
                 }
 
-                PayReceipt=myFunctions.AddNewColumnToDataTable(PayReceipt,"n_DueAmount",typeof(double),0);
+                PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
 
                 if (PayReceipt.Rows.Count > 0)
                 {
@@ -225,7 +227,7 @@ namespace SmartxAPI.Controllers
                     }
                 }
                 PayReceipt.AcceptChanges();
-                return Ok(api.Success(new SortedList(){{"details",api.Format(PayReceipt)},{"masterData",OutPut}}));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(PayReceipt) }, { "masterData", OutPut }, { "master", PayInfo } }));
             }
             catch (Exception e)
             {
@@ -233,39 +235,160 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        
-         [HttpGet("dummy")]
-        public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
+                DataTable MasterTable;
+                DataTable DetailTable;
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                SortedList Params = new SortedList();
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                string sqlCommandText = "select * from Inv_PayReceipt where N_PayReceiptId=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
-                masterTable = api.Format(masterTable, "master");
+                    SqlTransaction transaction;
 
-                string sqlCommandText2 = "select * from Inv_PayReceiptDetails where N_PayReceiptId=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
-                detailTable = api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+                    // Auto Gen
+                    string PorderNo = "";
+                    if (MasterTable.Rows.Count > 0)
+                    {
 
-                return Ok(dataSet);
+                    }
+                    var x_VoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
+                    int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
+
+                    int n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
+                    string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
+
+                    transaction = connection.BeginTransaction();
+
+                    if (x_VoucherNo == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyId);
+                        Params.Add("N_YearID", Master["n_FnYearID"].ToString());
+                        Params.Add("N_FormID", 80);
+                        Params.Add("N_BranchID", Master["n_BranchID"].ToString());
+
+                        PorderNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                        if (PorderNo == "") { return Ok(api.Warning("Unable to generate Receipt Number")); }
+                        MasterTable.Rows[0]["x_VoucherNo"] = PorderNo;
+                    }
+                    else
+                    {
+
+                        if (n_PayReceiptID > 0)
+                        {
+
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyId},
+                                {"X_TransType",x_Type},
+                                {"N_VoucherID",n_PayReceiptID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+
+
+                            // if (myFunctions.CheckPermission(nCompanyId, 576, "Administrator", dLayer, connection, transaction))
+                            // {
+                            //     dLayer.DeleteData("Inv_PurchasePaymentStatus", "N_PaymentID",)
+                            //     dba.DeleteDataNoTry("Inv_PurchasePaymentStatus", "N_PaymentID", PayReceiptId_Loc.ToString(), "N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
+                            //     dba.DeleteDataNoTry("Inv_PaymentDetails", "N_PaymentID", PayReceiptId_Loc.ToString(), "N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
+
+                            // }
+
+
+
+                        }
+                    }
+
+
+                    n_PayReceiptID = dLayer.SaveData("Inv_PayReceipt", "n_PayReceiptID", MasterTable, connection, transaction);
+                    if (n_PayReceiptID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Error"));
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["n_PayReceiptID"] = n_PayReceiptID;
+                    }
+                    int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID", DetailTable, connection, transaction);
+                    transaction.Commit();
                 }
-
+                return Ok(api.Success("Vendor Payment Saved"));
             }
-            catch (Exception e)
+            catch (Exception ex)
             {
-                return StatusCode(403, api.Error(e));
+                return BadRequest(ex);
             }
         }
+        [HttpDelete]
+        public ActionResult DeleteData(int nPayReceiptId, string xTransType)
+        {
+           try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    if (nPayReceiptId > 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                                {"X_TransType",xTransType},
+                                {"N_VoucherID",nPayReceiptId}};
+                        if(myFunctions.getBoolVAL(dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection).ToString())){
+                            return Ok(api.Success("Vendor Payment Deleted"));
+                        }
+                    }
+                }
+                    return Ok(api.Warning("Unable to delete Vendor Payment"));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
+
+
+
+
+
+
+        //  [HttpGet("dummy")]
+        // public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        // {
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //         string sqlCommandText = "select * from Inv_PayReceipt where N_PayReceiptId=@p1";
+        //         SortedList mParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
+        //         masterTable = api.Format(masterTable, "master");
+
+        //         string sqlCommandText2 = "select * from Inv_PayReceiptDetails where N_PayReceiptId=@p1";
+        //         SortedList dParamList = new SortedList() { { "@p1", Id } };
+        //         DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
+        //         detailTable = api.Format(detailTable, "details");
+
+        //         if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+        //         DataSet dataSet = new DataSet();
+        //         dataSet.Tables.Add(masterTable);
+        //         dataSet.Tables.Add(detailTable);
+
+        //         return Ok(dataSet);
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, api.Error(e));
+        //     }
+        // }
     }
 
 

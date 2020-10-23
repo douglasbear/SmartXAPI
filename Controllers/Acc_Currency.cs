@@ -82,6 +82,25 @@ namespace SmartxAPI.Controllers
                      }
         }
 
+        [HttpGet("currencyExchangeRate")]
+        public ActionResult GetCurrencyExchangeRate(int nCurrencyCode)
+        {
+            try
+            {
+                SortedList Params = new SortedList();
+                Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                Params.Add("@nCurrencyCode", nCurrencyCode);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    DataTable AccCurrencyMaster = dLayer.ExecuteDataTable("Select X_ShortName,N_ExchangeRate,N_Decimal From Acc_CurrencyMaster Where N_CompanyID=@nCompanyID and N_CurrencyID=@nCurrencyCode", Params, connection);
+                    return Ok(api.Success(api.Format(AccCurrencyMaster)));
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(ex);
+            }
+        }
 
        //Save....
        [HttpPost("save")]

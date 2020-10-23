@@ -29,7 +29,6 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-
         [HttpGet("list")]
         public ActionResult GetSalesInvoiceList(int? nCompanyId, int nFnYearId)
         {
