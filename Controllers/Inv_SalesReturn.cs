@@ -179,6 +179,7 @@ namespace SmartxAPI.Controllers
                 int N_CompanyID=0;
                 DataRow masterRow = MasterTable.Rows[0];
                 var values = masterRow["X_DebitNoteNo"].ToString();
+                int UserID = myFunctions.GetUserID(User);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -212,8 +213,8 @@ namespace SmartxAPI.Controllers
                         SortedList PostingParam = new SortedList();
                         PostingParam.Add("N_CompanyID",N_CompanyID );
                         PostingParam.Add("X_InventoryMode", "SALES RETURN");
-                        PostingParam.Add("N_InternalID", N_SalesID);
-                        PostingParam.Add("N_UserID", N_UserID);
+                        PostingParam.Add("N_InternalID", N_InvoiceId);
+                        PostingParam.Add("N_UserID", UserID );
                         PostingParam.Add("X_SystemName", "ERP Cloud");
 
                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
