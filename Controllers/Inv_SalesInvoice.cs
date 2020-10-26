@@ -506,7 +506,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nYearID, int nBranchID, int nQuotationID)
+        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID)
         {
             int Results = 0;
             try
@@ -527,7 +527,7 @@ namespace SmartxAPI.Controllers
 
                     SortedList QueryParams = new SortedList(){
                                 {"@nCompanyID",nCompanyID},
-                                {"@nFnYearID",nYearID},
+                                {"@nFnYearID",nFnYearID},
                                 {"@nUserID",nUserID},
                                 {"@xTransType","SALES"},
                                 {"@xSystemName","WebRequest"},
