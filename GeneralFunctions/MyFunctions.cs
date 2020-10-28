@@ -728,8 +728,12 @@ namespace SmartxAPI.GeneralFunctions
             int N_IsApprovalSystem = this.getIntVAL(ApprovalRow["isApprovalSystem"].ToString());
             int N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
             int N_FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
-            string Comments = ApprovalRow["comments"].ToString();
-
+            string Comments = "";
+            DataColumnCollection columns = Approvals.Columns;        
+            if (columns.Contains("comments"))
+            {
+                    Comments = ApprovalRow["comments"].ToString();
+            }
             if(Comments==null){
                 Comments="";
             }
