@@ -170,7 +170,7 @@ namespace SmartxAPI.Controllers
                     if (InvoiceNo == "") { return StatusCode(409, _api.Error("Unable to generate Invoice Number")); }
                     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
-                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable,connection,transaction);
+                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "n_PurchaseID", MasterTable,connection,transaction);
                     
                     
                     
@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
                 {
                     DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
                 }
-                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", 0, DetailTable,connection,transaction);
+                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID",  DetailTable,connection,transaction);
                 
                 transaction.Commit();
             }
