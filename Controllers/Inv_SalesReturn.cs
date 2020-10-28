@@ -176,7 +176,6 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 // Auto Gen
                 string InvoiceNo = "";
-                int N_CompanyID=0;
                 DataRow masterRow = MasterTable.Rows[0];
                 var values = masterRow["X_DebitNoteNo"].ToString();
                 int UserID = myFunctions.GetUserID(User);

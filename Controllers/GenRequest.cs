@@ -48,6 +48,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "ProductType": id=36;
                 break;
+                case "TravelType": id=56;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
