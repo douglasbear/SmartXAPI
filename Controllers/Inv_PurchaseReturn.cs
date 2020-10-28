@@ -84,7 +84,10 @@ namespace SmartxAPI.Controllers
             else
             {
               if(xInvoiceNo=="0")
+                {
                     Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',@p5";
+                    Params.Add("@p5", nBranchID);
+                }
                 else
                 {
                     Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',@p5";

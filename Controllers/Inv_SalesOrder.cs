@@ -262,11 +262,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_OrderNo"] = x_OrderNo;
                     }
 
-                    MasterTable.Columns.Remove("n_SalesOrderId");
-                    MasterTable.AcceptChanges();
 
-
-                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", n_SalesOrderId, MasterTable, connection, transaction);
+                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", MasterTable, connection, transaction);
                     if (n_SalesOrderId <= 0)
                     {
                         transaction.Rollback();
@@ -277,7 +274,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_SalesOrderId"] = n_SalesOrderId;
                     }
-                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", 0, DetailTable, connection, transaction);
+                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
                     {
                         transaction.Rollback();
@@ -308,32 +305,33 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete sales order"));
+                        return Ok(_api.Error("Unable to delete sales order"));
                     }
                     else
                     {
-                        Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+
                     }
 
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return StatusCode(200, _api.Response(200, "Sales order deleted"));
+                        return Ok(_api.Error("Sales order deleted"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete sales order"));
+                        return Ok(_api.Error("Unable to delete sales order"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return BadRequest(_api.Error(ex));
             }
 
 
