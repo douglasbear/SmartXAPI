@@ -61,6 +61,48 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
+        [HttpGet("listOrder")]
+        public ActionResult GetSalesOrderList(int? nCompanyId, int nFnYearId)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            bool B_Project=false;
+
+            string sqlCommandText = "select * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            SortedList QueryProject = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    QueryProject.Add("@nFormID", 74);
+                    object Project = dLayer.ExecuteScalar("select N_InternalID from Sec_UserPrevileges where N_MenuID=@nFormID", QueryProject, connection);
+
+                    if(Project!=null)
+                    
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
+        }
         [HttpGet("details")]
         public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo)
         {
