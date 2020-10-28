@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                 dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params,connection);
                 if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(new { }); }
                 dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
-                dtPurchaseInvoice.Rows[0]["N_PurchaseID"] = N_PurchaseID;
+                N_PurchaseID =myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()) ;
                 dt.Tables.Add(dtPurchaseInvoice);
 
 
@@ -243,7 +243,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
                     if (N_SaveDraft == 0)
-                        {
+                    {
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingParam.Add("X_InventoryMode", "PURCHASE");
@@ -252,31 +252,10 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
                             dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
-                            // bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
-                            // if (B_AmtpaidEnable)
-                            // {
-                            //     if (!B_DirectPosting)
-                            //     {
-                            //         if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
-                            //         {
-                            //             SortedList ParamCustomerRcpt_Ins = new SortedList();
-                            //             ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
-                            //             ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
-                            //             ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
-                            //             ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
-                            //             dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
-                            //         }
-                            //     }
-
-                            // }
-                        }
-
-
-
-
+                    }
                 transaction.Commit();
             }
-                return Ok("Data Saved");
+                return Ok("Purchase Invoice Saved :"+InvoiceNo);
             }
             catch (Exception ex)
             {
