@@ -67,6 +67,39 @@ namespace SmartxAPI.Controllers
                 return StatusCode(404, _api.Error(e.Message));
             }
         }
+         [HttpGet("listOrder")]
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId,int nVendorId, bool showAllBranch)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText ="";
+            sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+  
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return StatusCode(200, _api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(dt);
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(404, _api.Error(e.Message));
+            }
+        }
         [HttpGet("listdetails")]
         public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, int nPurchaseNO, bool showAllBranch, int nBranchId)
         {
@@ -155,6 +188,8 @@ namespace SmartxAPI.Controllers
             var values = masterRow["x_InvoiceNo"].ToString();
             int N_PurchaseID=0;
             int N_SaveDraft = 0;
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
                
@@ -207,33 +242,33 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
-                if (N_SaveDraft == 0)
+                    if (N_SaveDraft == 0)
                         {
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingParam.Add("X_InventoryMode", "PURCHASE");
                             PostingParam.Add("N_InternalID", N_PurchaseID);
-                            PostingParam.Add("N_UserID", N_UserID);
+                            PostingParam.Add("N_UserID", nUserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
-                            bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
-                            if (B_AmtpaidEnable)
-                            {
-                                if (!B_DirectPosting)
-                                {
-                                    if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
-                                    {
-                                        SortedList ParamCustomerRcpt_Ins = new SortedList();
-                                        ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
-                                        ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
-                                        ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
-                                        ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
-                                        dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
-                                    }
-                                }
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                            // bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
+                            // if (B_AmtpaidEnable)
+                            // {
+                            //     if (!B_DirectPosting)
+                            //     {
+                            //         if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
+                            //         {
+                            //             SortedList ParamCustomerRcpt_Ins = new SortedList();
+                            //             ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
+                            //             ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
+                            //             ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
+                            //             ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
+                            //             dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                            //         }
+                            //     }
 
-                            }
+                            // }
                         }
 
 
