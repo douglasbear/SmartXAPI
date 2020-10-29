@@ -507,11 +507,18 @@ namespace SmartxAPI.GeneralFunctions
                 {"N_FormID", Params["N_FormID"]},
                 {"N_BranchID", BranchId}
                 };
+            SortedList validParam = new SortedList(){
+                {"@CompanyID", Params["N_CompanyID"]},
+                {"@FnYearID", Params["N_YearID"]},
+                {"@FormID", Params["N_FormID"]}
+                };
+            object objCount = ExecuteScalar("Select Count(1) from Inv_InvoiceCounter where N_FormID=@FormID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID", validParam, connection, transaction);
+            if(myFunctions.getIntVAL(objCount.ToString())==0){
+                throw new Exception("Invoice Counter not found");
+            }
             while (true)
             {
                 AutoNumber = (string)ExecuteScalarPro("SP_AutoNumberGenerate", paramList, connection, transaction);
-
-                DataTable ResultTable = new DataTable();
                 string sqlCommandText = "select 1 from " + TableName + " where " + Coloumn + " = @p1 and N_CompanyID=@p2";
                 SortedList SqlParams = new SortedList(){
                     {"@p1",AutoNumber},

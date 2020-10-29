@@ -20,12 +20,14 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int N_FormID;
         public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = fun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            N_FormID = 65;
         }
 
 
@@ -42,6 +44,39 @@ namespace SmartxAPI.Controllers
             else
                 sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
             
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return StatusCode(200, _api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(dt);
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(404, _api.Error(e.Message));
+            }
+        }
+         [HttpGet("listOrder")]
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId,int nVendorId, bool showAllBranch)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText ="";
+            sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+  
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             
@@ -153,27 +188,48 @@ namespace SmartxAPI.Controllers
             string InvoiceNo = "";
             DataRow masterRow = MasterTable.Rows[0];
             var values = masterRow["x_InvoiceNo"].ToString();
+            int N_PurchaseID=0;
+            int N_SaveDraft = 0;
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
+               
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
                 SqlTransaction transaction;
                 transaction = connection.BeginTransaction();
-                if (values == "@Auto")
+                    if (values == "@Auto")
                     {
+                     N_PurchaseID = myFunctions.getIntVAL(masterRow["N_PurchaseID"].ToString());
+                     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                     if (N_PurchaseID > 0)
+                     {
+                        if (CheckProcessed(N_PurchaseID))
+                            return Ok(_api.Error("Transaction Started!"));
+                     }
                     Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                     Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
-                    Params.Add("N_FormID", 80);
+                    Params.Add("N_FormID", this.N_FormID);
                     Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+
                     InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
                     if (InvoiceNo == "") { return StatusCode(409, _api.Error("Unable to generate Invoice Number")); }
                     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
-                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "n_PurchaseID", MasterTable,connection,transaction);
-                    
-                    
-                    
+
+                    if (N_PurchaseID > 0)
+                        {
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
+                                {"X_TransType","PURCHASE"},
+                                {"N_VoucherID",N_PurchaseID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        }
+
+                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable,connection,transaction);
+
                     if (N_InvoiceId <= 0)
                      {
                         transaction.Rollback();
@@ -182,8 +238,44 @@ namespace SmartxAPI.Controllers
                 {
                     DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
                 }
-                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID",  DetailTable,connection,transaction);
-                
+                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable,connection,transaction);
+                 if (N_InvoiceDetailId <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
+                    }
+                    // if (N_SaveDraft == 0)
+                    //     {
+                    //         SortedList PostingParam = new SortedList();
+                    //         PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                    //         PostingParam.Add("X_InventoryMode", "PURCHASE");
+                    //         PostingParam.Add("N_InternalID", N_PurchaseID);
+                    //         PostingParam.Add("N_UserID", nUserID);
+                    //         PostingParam.Add("X_SystemName", "ERP Cloud");
+
+                    //         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                    //         // bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
+                    //         // if (B_AmtpaidEnable)
+                    //         // {
+                    //         //     if (!B_DirectPosting)
+                    //         //     {
+                    //         //         if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
+                    //         //         {
+                    //         //             SortedList ParamCustomerRcpt_Ins = new SortedList();
+                    //         //             ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
+                    //         //             ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
+                    //         //             ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
+                    //         //             ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
+                    //         //             dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                    //         //         }
+                    //         //     }
+
+                    //         // }
+                    //     }
+
+
+
+
                 transaction.Commit();
             }
                 return Ok("Data Saved");

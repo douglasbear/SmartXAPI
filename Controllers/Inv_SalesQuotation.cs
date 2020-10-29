@@ -401,12 +401,8 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    MasterTable.Columns.Remove("n_QuotationId");
-                    MasterTable.AcceptChanges();
 
-
-
-                    N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", N_QuotationID, MasterTable, connection, transaction);
+                    N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", MasterTable, connection, transaction);
                     if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
@@ -417,7 +413,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["n_QuotationID"] = N_QuotationID;
                     }
 
-                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", 0, DetailTable, connection, transaction);
+                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID",  DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
                     {
                         transaction.Rollback();
@@ -640,7 +636,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_SalesQuotation", "n_quotationID", N_QuotationID, "", connection, transaction);
+                    Results=dLayer.DeleteData("Inv_SalesQuotationDetails", "n_quotationID", N_QuotationID, "", connection, transaction);
+
                     if (Results <= 0)
                     {
                         transaction.Rollback();
@@ -648,7 +645,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        dLayer.DeleteData("Inv_SalesQuotationDetails", "n_quotationID", N_QuotationID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_SalesQuotation", "n_quotationID", N_QuotationID, "", connection, transaction);
+
                     }
                     if (Results > 0)
                     {

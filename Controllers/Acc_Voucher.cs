@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
             }
             catch (Exception e)
