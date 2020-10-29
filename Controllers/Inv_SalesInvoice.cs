@@ -62,15 +62,12 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listOrder")]
-        public ActionResult GetSalesOrderList(int? nCompanyId, int nFnYearId)
+        public ActionResult GetSalesOrderList(int nCompanyId, int nFnYearId,int nCustomerID,int nBranchId,bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            bool B_Project=false;
 
-            string sqlCommandText = "select * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
+            string sqlCommandText ="";
             SortedList QueryProject = new SortedList();
 
             try
@@ -79,15 +76,41 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    QueryProject.Add("@nFormID", 74);
-                    object Project = dLayer.ExecuteScalar("select N_InternalID from Sec_UserPrevileges where N_MenuID=@nFormID", QueryProject, connection);
-
-                    if(Project!=null)
-                    
+                    bool B_Project = myFunctions.CheckPermission(nCompanyId, 74, "Administrator", dLayer,connection);
+                    bool B_DeliveryNote = myFunctions.CheckPermission(nCompanyId, 729, "Administrator", dLayer,connection);
+                    bool B_SalesOrder = myFunctions.CheckPermission(nCompanyId, 81, "Administrator", dLayer,connection);
 
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = _api.Format(dt);
+                        if(B_DeliveryNote)
+                        {
+                            if(bAllBranchData)
+                                sqlCommandText= "select N_CompanyID,N_CustomerID,N_FnYearID,N_BranchID,N_SalesOrderID,N_DeliveryNoteId,N_ProjectID from vw_Inv_DeliveryNotePending where N_CompanyID=@p1 and N_CustomerID=@p3";
+                            else
+                                sqlCommandText= "select N_CompanyID,N_CustomerID,N_FnYearID,N_BranchID,N_SalesOrderID,N_DeliveryNoteId,N_ProjectID from vw_Inv_DeliveryNotePending where N_CompanyID=@p1 and N_CustomerID=@p3 and N_BranchId=@p4";
+                        }
+                        if(B_SalesOrder)
+                        {
+                            if(bAllBranchData)
+                                sqlCommandText= "select N_CompanyID,N_CustomerID,N_FnYearID,N_BranchID,N_Processed,B_CancelOrder,B_IsSaveDraft,N_ProjectID,SODate from vw_InvSoSearch_Sales where N_CompanyID=@p1 and B_CancelOrder=0 and N_CustomerID=@p3 and (B_IsSaveDraft=0 or B_IsSaveDraft is null)";
+                            else
+                                sqlCommandText= "select N_CompanyID,N_CustomerID,N_FnYearID,N_BranchID,N_Processed,B_CancelOrder,B_IsSaveDraft,N_ProjectID,SODate from vw_InvSoSearch_Sales where N_CompanyID=@p1 and B_CancelOrder=0 and N_CustomerID=@p3 and (B_IsSaveDraft=0 or B_IsSaveDraft is null) and N_BranchId=@p4";
+                        }
+                        else
+                        {
+                            if(bAllBranchData)
+                                sqlCommandText= "select N_CompanyID,N_CustomerID,N_QuotationId,N_FnYearID,D_QuotationDate,N_BranchID,B_YearEndProcess,N_Processed,N_ProjectID from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_Processed=0 and N_FnYearID=@p2 and N_CustomerID=@p3";
+                            else
+                                sqlCommandText= "select N_CompanyID,N_CustomerID,N_QuotationId,N_FnYearID,D_QuotationDate,N_BranchID,B_YearEndProcess,N_Processed,N_ProjectID from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_Processed=0 and N_FnYearID=@p2 and N_CustomerID=@p3 and N_BranchID=@p4";
+                        }
+                        Params.Add("@p1", nCompanyId);
+                        Params.Add("@p2", nFnYearId);
+                        Params.Add("@p3", nCustomerID);
+                        Params.Add("@p4", nBranchId);
+                   
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                        dt = _api.Format(dt);
+                }
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));
@@ -96,7 +119,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Success(dt));
                     }
-                }
+
             }
             catch (Exception e)
             {
