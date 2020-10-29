@@ -83,7 +83,6 @@ namespace SmartxAPI.Controllers
           [HttpGet("listDetails")]
         public ActionResult GetBalanceListDetails(int N_PartyType,string N_TransType, int nFnYearId, string X_ReceiptNo, bool bAllBranchData, int nBranchID)
         {
-            bool B_PRSVisible = false;
             int nCompanyId=myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();

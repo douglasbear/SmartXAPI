@@ -21,12 +21,14 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int N_FormID;
         public Inv_SalesInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            N_FormID = 64;
         }
 
         [HttpGet("list")]
@@ -353,7 +355,7 @@ namespace SmartxAPI.Controllers
 
                     if (N_PaymentMethodID == 2 && B_AllowCashPay || B_POS)
                     {
-                        int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_CustomerID) from Inv_Customer where N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchID or N_BranchId=0) and N_EnablePopup=1", QueryParams, connection, transaction).ToString());
+                        int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_CustomerID) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchID or N_BranchId=0) and N_EnablePopup=1", QueryParams, connection, transaction).ToString());
                         if (count > 0)
                         {
                             N_AmtSplit = 1;
@@ -675,7 +677,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -729,5 +731,163 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
+
+        [HttpGet("updateSalesPrice")]
+        public ActionResult ValidateSellingPrice(int nBranchID,int nItemID, decimal nSPrice)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SortedList Params =new SortedList();
+                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+                    Params.Add("@nBranchID",nBranchID);
+                    Params.Add("@nItemID",nItemID);
+                    Params.Add("@nSPrice",nSPrice);
+                    DataTable Sprice = dLayer.ExecuteDataTable("Select N_PriceID,N_PriceVal,N_itemId From Inv_ItemPriceMaster  Where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_itemId=@nItemID and N_PriceID in(Select N_PkeyId from Gen_LookupTable where X_Name=@nSPrice and N_CompanyID=@nCompanyID)",Params,connection);
+                    return Ok(_api.Success(Sprice));
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
+        }
+
+
+        // [HttpGet("getItem")]
+        // public ActionResult GetItem(int nLocationID, int nBranchID, string dDate, string xInputVal, int nCustomerID,string xBatch,string xInvoiceNo)
+        // {
+        //     using (SqlConnection connection = new SqlConnection(connectionString))
+        //     {
+        //         connection.Open();
+        //         int N_DefSPriceID = 0;
+        //     int nCompanyID =myFunctions.GetCompanyID(User);
+
+        //         var UserCategoryID = myFunctions.GetUserCategory(User);
+        //         N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
+        //         int nSPriceID = N_DefSPriceID;
+        //     bool IsSerial = false;
+        //     string ItemClass = "", Sprice = "", Pprice = "", ItemCondition = "";
+        //     object subItemPrice, subPprice, subMrp;
+        //     double SpriceSum = 0, PpriceSum = 0, Mrpsum = 0, InputValDecimal = 0;
+        //     int ClassRow = 0;
+        //     ItemCondition = "([Item Code] =@xItemCode)";
+
+        //     if (ItemCondition != "")
+        //         ItemCondition += "and B_InActive=0";
+
+        //                 SortedList Params = new SortedList();
+        //     Params.Add("@xItemCode",xInputVal);
+        //     Params.Add("@nLocationID",nLocationID);
+        //     Params.Add("@xBatch",xBatch);
+        //     Params.Add("@nCompanyID",nCompanyID);
+        //     Params.Add("@nSPriceID",nSPriceID);
+        //     Params.Add("@nDefSPriceID",N_DefSPriceID);
+        //     Params.Add("@nBranchID",nBranchID);
+
+        //         bool B_SPRiceType = false;
+
+        //         object objSPrice = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'", Params, connection);
+        //         if (objSPrice != null)
+        //         {
+        //             if (myFunctions.getIntVAL(objSPrice.ToString()) == 4)
+        //                 B_SPRiceType = true;
+        //             else
+        //                 B_SPRiceType = false;
+
+        //         }
+
+
+        //     string SQL = "";
+        //     if (xBatch != "")
+        //         SQL = "Select *,dbo.SP_BatchStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch,NULL)As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit,@nLocationID) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice,vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
+        //     else
+        //         SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit,@nLocationID) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice,vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
+        //     if (B_SPRiceType)
+        //     {
+        //         if (nSPriceID > 0)
+        //         {
+        //             SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location') As N_AvlStock ,dbo.SP_BatchStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch,NULL) As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit,@nLocationID) As N_LPrice ,dbo.SP_SellingPrice_Select(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,@nSPriceID,@nBranchID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
+        //         }
+        //         else
+        //             SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock ,dbo.SP_BatchStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch,NULL) As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit,@nLocationID) As N_LPrice ,dbo.SP_SellingPrice_Select(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,@nDefSPriceID,@nBranchID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
+        //     }
+        //     if (IsSerial)
+        //     {
+        //         SQL = "Select vw_InvItem_Search.*,dbo.SP_Stock(vw_InvItem_Search.N_ItemID) As N_Stock,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock, case when ISNULL(dbo.SP_Cost_IMEI(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,isnull(vw_InvItem_Search.X_SalesUnit,vw_InvItem_Search.X_StockUnit), Inv_StockMaster_IMEI.N_StockID),0)=0 Then dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit,@nLocationID) else dbo.SP_Cost_IMEI(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,isnull(vw_InvItem_Search.X_SalesUnit,vw_InvItem_Search.X_StockUnit), Inv_StockMaster_IMEI.N_StockID) end As N_LPrice,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice,Inv_StockMaster_IMEI.*  From vw_InvItem_Search " +
+        //        " Inner Join Inv_StockMaster On vw_InvItem_Search.N_ItemID = Inv_StockMaster.N_ItemID and vw_InvItem_Search.N_CompanyID =Inv_StockMaster.N_CompanyID " +
+        //        " Left Outer Join Inv_StockMaster_IMEI On Inv_StockMaster.N_StockID = Inv_StockMaster_IMEI.N_StockID and Inv_StockMaster.N_CompanyID =Inv_StockMaster_IMEI.N_CompanyID " +
+        //        " Where " + ItemCondition + " and vw_InvItem_Search.N_CompanyID=@nCompanyID and Inv_StockMAster_IMEI.N_Status<>1 Order By Inv_StockMaster_IMEI.N_Status, Inv_StockMaster.N_StockID";
+        //         if (B_SPRiceType)
+        //         {
+        //             if (nSPriceID > 0)
+        //             {
+        //                 SQL = "Select vw_InvItem_Search.*,dbo.SP_Stock(vw_InvItem_Search.N_ItemID) As N_Stock ,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock, case when ISNULL(dbo.SP_Cost_IMEI(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit, Inv_StockMaster_IMEI.N_StockID),0)=0 Then dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit,@nLocationID) else dbo.SP_Cost_IMEI(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit, Inv_StockMaster_IMEI.N_StockID) end As N_LPrice,dbo.SP_SellingPrice_Select(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,@nSPriceID,@nBranchID) As N_SPrice,Inv_StockMaster_IMEI.*  From vw_InvItem_Search " +
+        //          " Inner Join Inv_StockMaster On vw_InvItem_Search.N_ItemID = Inv_StockMaster.N_ItemID and vw_InvItem_Search.N_CompanyID =Inv_StockMaster.N_CompanyID " +
+        //          " Left Outer Join Inv_StockMaster_IMEI On Inv_StockMaster.N_StockID = Inv_StockMaster_IMEI.N_StockID and Inv_StockMaster.N_CompanyID =Inv_StockMaster_IMEI.N_CompanyID " +
+        //          " Where " + ItemCondition + " and vw_InvItem_Search.N_CompanyID=@nCompanyID and Inv_StockMAster_IMEI.N_Status<>1 Order By Inv_StockMaster_IMEI.N_Status, Inv_StockMaster.N_StockID";
+        //             }
+        //             else
+        //                 SQL = "Select vw_InvItem_Search.*,dbo.SP_Stock(vw_InvItem_Search.N_ItemID) As N_Stock ,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock, case when ISNULL(dbo.SP_Cost_IMEI(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit, Inv_StockMaster_IMEI.N_StockID),0)=0 Then dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit,@nLocationID) else dbo.SP_Cost_IMEI(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_SalesUnit, Inv_StockMaster_IMEI.N_StockID) end As N_LPrice,dbo.SP_SellingPrice_Select(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,@nDefSPriceID,@nBranchID) As N_SPrice,Inv_StockMaster_IMEI.*  From vw_InvItem_Search " +
+        //        " Inner Join Inv_StockMaster On vw_InvItem_Search.N_ItemID = Inv_StockMaster.N_ItemID and vw_InvItem_Search.N_CompanyID =Inv_StockMaster.N_CompanyID " +
+        //        " Left Outer Join Inv_StockMaster_IMEI On Inv_StockMaster.N_StockID = Inv_StockMaster_IMEI.N_StockID and Inv_StockMaster.N_CompanyID =Inv_StockMaster_IMEI.N_CompanyID " +
+        //        " Where " + ItemCondition + " and vw_InvItem_Search.N_CompanyID=@nCompanyID and Inv_StockMAster_IMEI.N_Status<>1 Order By Inv_StockMaster_IMEI.N_Status, Inv_StockMaster.N_StockID";
+        //         }
+        //     }
+
+        //     DataTable ItemDetails = dLayer.ExecuteDataTable( SQL,Params,connection);
+        //     if (ItemDetails.Rows.Count != 1)
+        //         return Ok(_api.Warning("Invalid Item"));
+
+        //     ItemClass = ItemDetails.Rows[0]["N_ClassID"].ToString();
+
+        //     string Query = "select isnull(s.N_Qty,'0') from Inv_SalesDetails s inner join Inv_Sales sm on s.N_SalesID = sm.N_SalesId inner join Inv_ItemMaster i on s.N_ItemID = i.N_ItemID where i.X_ItemCode =@xItemCode and sm.X_ReceiptNo = '" + xInvoiceNo + "'";
+        //     if (xBatch != "")
+        //         Query += "and X_BatchCode = '" + xBatch + "' ";
+        //     object O_InvoicedQty = dLayer.ExecuteScalar(Query,connection);
+        //     int X_Stock = myFunctions.getIntVAL(ItemDetails.Rows[0]["N_AvlStock"].ToString());
+        //     double stock = O_InvoicedQty != null ? myFunctions.getVAL(O_InvoicedQty.ToString()) + X_Stock : X_Stock;
+
+        //     int N_ItemID = myFunctions.getIntVAL(ItemDetails.Rows[0]["N_ItemID"].ToString());
+        //     object Mrp = dLayer.ExecuteScalar("Select top 1 N_Mrp from Inv_PurchaseDetails where N_ItemId=" + N_ItemID.ToString() + " and N_CompanyID=@nCompanyID Order By N_PurchaseDetailsId desc",connection);
+            
+
+            
+
+        //     bool B_LastPurchaseCost = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings(this.N_FormID.ToString(), "LastPurchaseCost", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+
+        //     Pprice = ItemDetails.Rows[0]["N_Lprice"].ToString();
+        //     Sprice = ItemDetails.Rows[0]["N_Sprice"].ToString();
+        //     string varUnit = ItemDetails.Rows[0]["X_SalesUnit"].ToString();
+        //     object LastPurchaseCost=0;
+        //     bool B_NegStockEnabled  = true;
+
+        //     if (B_LastPurchaseCost)
+        //     {
+        //         LastPurchaseCost = dLayer.ExecuteScalar("Select TOP(1) ISNULL(N_LPrice,0) from Inv_StockMaster Where N_ItemID=" + N_ItemID.ToString() + " and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and (X_Type='Purchase' or X_Type='Opening'or X_Type='TransferRecive') Order by N_StockID Desc",Params,connection);
+        //     }
+
+
+
+        //     if (ItemClass != "1" && ItemClass != "4")
+        //     {
+        //     B_NegStockEnabled = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Negative Stock Enabled", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+
+        //         if (!B_NegStockEnabled)
+        //             if (stock <= 0)
+        //             {
+        //               return Ok(_api.Warning("There is no enough stock qty to proceed... Do You Want To Continue"));
+        //             }
+        //     }
+
+
+
+
+        //     ApplyCustDiscount(N_ItemID, row);
+
+        // }
+
     }
 }
