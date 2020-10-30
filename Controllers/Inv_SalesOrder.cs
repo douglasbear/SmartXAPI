@@ -388,8 +388,8 @@ namespace SmartxAPI.Controllers
             {
                 connection.Open();
                 int N_DefSPriceID = 0;
-                var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
-                N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
+                var UserCategoryID = myFunctions.GetUserCategory(User);
+                N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
                 int nSPriceID = N_DefSPriceID;
                 DateTime dateVal = myFunctions.GetFormatedDate(dDate.ToString());
                 SortedList paramList = new SortedList();
