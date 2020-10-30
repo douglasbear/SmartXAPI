@@ -49,6 +49,7 @@ namespace SmartxAPI.Controllers
             
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+                SortedList OutPut = new SortedList();
             
             try
             {
@@ -60,26 +61,21 @@ namespace SmartxAPI.Controllers
                 dt = _api.Format(dt,"Details");
                 sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                CountTable = myFunctions.AddNewColumnToDataTable(CountTable, "TotalCount", typeof(string), TotalCount);
-                DataRow row = CountTable.NewRow();
-                CountTable.Rows.Add(row);
-                CountTable.AcceptChanges();
-                CountTable = _api.Format(CountTable,"TotalCount");
-                dataSet.Tables.Add(dt);
-                dataSet.Tables.Add(CountTable);
+                OutPut.Add("List",dt);
+                OutPut.Add("TotalCount",TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Warning("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dataSet);
+                    return Ok(_api.Success(OutPut));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Error(e.Message));
+                return BadRequest( _api.Error(e));
             }
         }
          [HttpGet("listOrder")]
