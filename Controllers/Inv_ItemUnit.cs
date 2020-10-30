@@ -136,8 +136,9 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("itemwiselist")]
-        public ActionResult GetItemWiseUnitList(int? nCompanyId, string baseUnit, int itemId)
+        public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)
         {
+            int nCompanyId = myFunctions.GetCompanyID(User);
             if (baseUnit == null) { baseUnit = ""; }
             try
             {

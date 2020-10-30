@@ -32,17 +32,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int? nCompanyId, int nFnYearId,int nListID)
+        public ActionResult GetSalesInvoiceList(int? nCompanyId, int nFnYearId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-             string sqlCommandText ="";
 
-            int Count= (nListID - 1) * 30;
-            if(Count==0)
-                sqlCommandText = "select top(30) * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
-            else
-                sqlCommandText = "select top(30) * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesID not in(select top("+ Count +") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+            string sqlCommandText = "select * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
 
@@ -397,7 +392,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 80);
+                        Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params, connection, transaction);
                         if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
