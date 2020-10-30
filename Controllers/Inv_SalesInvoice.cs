@@ -32,14 +32,23 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int? nCompanyId, int nFnYearId)
+        public ActionResult GetSalesInvoiceList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
+
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesID not in (select top("+ Count +") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+            
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -47,14 +56,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = _api.Format(dt);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",dt);
+                    OutPut.Add("TotalCount",TotalCount);
+
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                     }
                     else
                     {
-                        return Ok(_api.Success(dt));
+                    return Ok(_api.Success(OutPut));
                     }
                 }
             }

@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-                SortedList OutPut = new SortedList();
+            SortedList OutPut = new SortedList();
             
             try
             {
@@ -58,10 +58,10 @@ namespace SmartxAPI.Controllers
                 connection.Open();
                 dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                 
-                dt = _api.Format(dt,"Details");
+                //dt = _api.Format(dt,"Details");
                 sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                OutPut.Add("List",dt);
+                OutPut.Add("Details",dt);
                 OutPut.Add("TotalCount",TotalCount);
                 }
                 if (dt.Rows.Count == 0)
