@@ -32,17 +32,20 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId,int nListID)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
+            DataTable CountTable = new DataTable();
             SortedList Params = new SortedList();
+            DataSet dataSet=new DataSet();
             string sqlCommandText ="";
+            string sqlCommandCount ="";
 
-            int Count= (nListID - 1) * 30;
+            int Count= (nPage - 1) * nSizeperpage;
             if(Count==0)
-                 sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                 sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
             else
-                sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
             
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -51,17 +54,27 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                connection.Open();
+                dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                
+                dt = _api.Format(dt,"Details");
+                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                CountTable = myFunctions.AddNewColumnToDataTable(CountTable, "TotalCount", typeof(string), TotalCount);
+                DataRow row = CountTable.NewRow();
+                CountTable.Rows.Add(row);
+                CountTable.AcceptChanges();
+                CountTable = _api.Format(CountTable,"TotalCount");
+                dataSet.Tables.Add(dt);
+                dataSet.Tables.Add(CountTable);
                 }
-                dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
                     return StatusCode(200, _api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(dataSet);
                 }
             }
             catch (Exception e)
@@ -246,10 +259,22 @@ namespace SmartxAPI.Controllers
                     }
                     if (N_SaveDraft == 0)
                     {
+                            SortedList PostingMRNParam = new SortedList();
+                            PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                            PostingMRNParam.Add("N_PurchaseID", N_InvoiceId);
+                            PostingMRNParam.Add("N_UserID", nUserID);
+                            PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+                            PostingMRNParam.Add("X_UseMRN", "");
+                            PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+                            PostingMRNParam.Add("N_MRNID", 0);
+
+                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+                            
+                            
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingParam.Add("X_InventoryMode", "PURCHASE");
-                            PostingParam.Add("N_InternalID", N_PurchaseID);
+                            PostingParam.Add("N_InternalID", N_InvoiceId);
                             PostingParam.Add("N_UserID", nUserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
