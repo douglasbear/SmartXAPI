@@ -33,22 +33,24 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReceipt(int nFnYearId,int nListID)
+        public ActionResult GetSalesReceipt(int nFnYearId,int nListID,int nPage,int nSizeperpage)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nListID - 1) * 30;
+            int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+            string sqlCommandCount="";
 
             if(Count==0)
-                sqlCommandText = "select top(30) * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
             else
-                sqlCommandText = "select top(30) * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and n_PayReceiptId not in (select top("+ Count +") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and n_PayReceiptId not in (select top("+ Count +") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId)";
             
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -56,16 +58,19 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
                 }
-                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("Sales Receipt Not Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                    {
+                   return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                    return Ok(api.Success(OutPut));
+                    }
             }
             catch (Exception e)
             {
