@@ -219,9 +219,9 @@ namespace SmartxAPI.Controllers
                     Params1.Add("@xType", "RadioButton");
                     Params1.Add("@nCompID", ReportID);
 
-                    reportName = dLayer.ExecuteScalar("select X_ReportCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
+                    reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
 
-
+                    reportName = reportName.Substring(0,reportName.Length-4);
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -258,8 +258,8 @@ namespace SmartxAPI.Controllers
                 };
                 var client = new HttpClient(handler);
                 //HttpClient client = new HttpClient(clientHandler);
-
-                var path = client.GetAsync(reportApi + "/api/report?reportname=" + reportName + "&critiria=" + Criteria + "&con=" + connectionString);
+string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=" ;//+ connectionString;
+                var path = client.GetAsync(URL);
 
                 path.Wait();
                 string RptPath = reportPath + reportName.Trim() + ".pdf";
