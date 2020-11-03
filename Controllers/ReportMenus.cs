@@ -237,10 +237,10 @@ namespace SmartxAPI.Controllers
 
                         if (type == "datepicker")
                         {
-                            DateTime dateFrom = myFunctions.GetFormatedDate(value);
-                            DateTime dateTo = myFunctions.GetFormatedDate(valueTo);
+                            DateTime dateFrom = Convert.ToDateTime(value);
+                            DateTime dateTo = Convert.ToDateTime(valueTo);
 
-                            string DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Date + ") And " + xFeild + " >= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Date + ") ";
+                            string DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
                             Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
                         }
                         else
