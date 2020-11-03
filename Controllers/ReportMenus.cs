@@ -26,6 +26,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string reportApi;
 
         public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -33,6 +34,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            reportApi = conf.GetConnectionString("ReportAPI");
         }
         [HttpGet("list")]
         public ActionResult GetReportList(int? nMenuId, int? nLangId)
@@ -52,8 +54,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
 
-
-                    string sqlCommandText1 = "select * from vw_ReportMenus where N_LanguageId=@p2";
+                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn from vw_WebReportMenus where N_LanguageId=@p2";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -87,13 +88,13 @@ namespace SmartxAPI.Controllers
 
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Notice("No Results Found"));
                 }
-                else { return Ok(dt); }
+                else { return Ok(_api.Success(dt)); }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
 
@@ -105,7 +106,7 @@ namespace SmartxAPI.Controllers
             DataTable outTable = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select TOP 1 X_TableName,X_FieldList,X_Criteria from vw_ReportMenus where N_MenuID=@p1 and N_LanguageId=@p2 and N_CompID=@p3 and X_CompType=@p4";
+            string sqlCommandText = "select TOP 1 X_TableName,X_FieldList,X_Criteria from vw_WebReportMenus where N_MenuID=@p1 and N_LanguageId=@p2 and N_CompID=@p3 and X_CompType=@p4";
             Params.Add("@p1", nMenuId);
             Params.Add("@p2", nLangId);
             Params.Add("@p3", nCompId);
@@ -124,13 +125,13 @@ namespace SmartxAPI.Controllers
                         string fields = QueryString["X_FieldList"].ToString();
                         string table = QueryString["X_TableName"].ToString();
                         string Criteria = QueryString["X_Criteria"].ToString();
-                        if(Criteria!="")
-                        Criteria = " Where "+QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal ").Replace("'BVal'", "@BVal ").Replace("'FVal'", "@FVal ");
+                        if (Criteria != "")
+                            Criteria = " Where " + QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal ").Replace("'BVal'", "@BVal ").Replace("'FVal'", "@FVal ");
                         ListSqlParams.Add("@BVal", bval);
                         ListSqlParams.Add("@CVal", cval);
                         ListSqlParams.Add("@FVal", fval);
-                        string ListSql = "select " + fields + " from " + table +" "+ Criteria;
-                        
+                        string ListSql = "select " + fields + " from " + table + " " + Criteria;
+
                         outTable = dLayer.ExecuteDataTable(ListSql, ListSqlParams, connection);
                     }
 
@@ -138,48 +139,50 @@ namespace SmartxAPI.Controllers
                 }
                 if (outTable.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Notice("No Results Found"));
                 }
-                else {
+                else
+                {
                     //Dictionary<string,Dictionary<string,DataTable>> Menu = new Dictionary<string,Dictionary<string,DataTable>>();
                     outTable = _api.Format(outTable);
-                    Dictionary<string,DataTable> Component = new Dictionary<string,DataTable>();
-                    Component.Add(nCompId.ToString(),outTable); 
+                    //Dictionary<string,DataTable> Component = new Dictionary<string,DataTable>();
+                    SortedList Component = new SortedList();
+                    Component.Add(nCompId.ToString(), outTable);
                     //Menu.Add(nMenuId.ToString(),Component);
 
-                     return Ok(Component); 
-                     }
+                    return Ok(_api.Success(Component));
+                }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
 
-         [HttpGet("getreport")]
+        [HttpGet("getreport")]
         public async Task<IActionResult> GetReport(string reportName, string critiria)
         {
             //var client = new HttpClient();
 
             var handler = new HttpClientHandler
             {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) =>{  return true;  }
+                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
             };
-            var client = new HttpClient(handler );
+            var client = new HttpClient(handler);
             //HttpClient client = new HttpClient(clientHandler);
 
-            var path = client.GetAsync ("https://localhost:4439/api/report?reportname="+reportName +"&critiria=" + critiria+"&con="+connectionString);
-            
-            path.Wait ();
-            string ReportPath="C:\\"+reportName.Trim()+".pdf";
+            var path = client.GetAsync("https://localhost:4439/api/report?reportname=" + reportName + "&critiria=" + critiria + "&con=" + connectionString);
+
+            path.Wait();
+            string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
             var memory = new MemoryStream();
 
-            using (var stream = new FileStream(ReportPath, FileMode.Open))  
-                {  
-                  await stream.CopyToAsync(memory);  
-                }  
-                memory.Position = 0;  
-                return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath)); 
+            using (var stream = new FileStream(ReportPath, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+            return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
 
 
 
@@ -188,7 +191,93 @@ namespace SmartxAPI.Controllers
             // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
             // return File(fileStream, "application/octet-stream",reportName+".pdf");
         }
-        
+
+        [HttpPost("getModuleReport")]
+        public async Task<IActionResult> GetModuleReports([FromBody] DataSet ds)
+        {
+            DataTable MasterTable;
+            DataTable DetailTable;
+
+            MasterTable = ds.Tables["master"];
+            DetailTable = ds.Tables["details"];
+
+            try
+            {
+                String Criteria = "";
+                String reportName = "";
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+                    int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
+                    int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
+
+                    SortedList Params1 = new SortedList();
+                    Params1.Add("@nMenuID", MenuID);
+                    Params1.Add("@xType", "RadioButton");
+                    Params1.Add("@nCompID", ReportID);
+
+                    reportName = dLayer.ExecuteScalar("select X_ReportCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
+
+
+                    foreach (DataRow var in DetailTable.Rows)
+                    {
+                        int compID = myFunctions.getIntVAL(var["compId"].ToString());
+                        string type = var["type"].ToString();
+                        string value = var["value"].ToString();
+                        string valueTo = var["valueTo"].ToString();
+
+                        SortedList Params = new SortedList();
+                        Params.Add("@nMenuID", MenuID);
+                        Params.Add("@xType", type);
+                        Params.Add("@nCompID", compID);
+                        string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+
+                        if (type == "datepicker")
+                        {
+                            DateTime dateFrom = myFunctions.GetFormatedDate(value);
+                            DateTime dateTo = myFunctions.GetFormatedDate(valueTo);
+
+                            string DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Date + ") And " + xFeild + " >= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Date + ") ";
+                            Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
+                        }
+                        else
+                        {
+                            Criteria = Criteria == "" ? xFeild + "=" + value + " " : Criteria + " and " + xFeild + "=" + value + " ";
+                        }
+
+                        //{table.fieldname} in {?Start date} to {?End date}
+                    }
+                }
+
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                };
+                var client = new HttpClient(handler);
+                //HttpClient client = new HttpClient(clientHandler);
+
+                var path = client.GetAsync(reportApi + "/api/report?reportname=" + reportName + "&critiria=" + Criteria + "&con=" + connectionString);
+
+                path.Wait();
+                string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
+                var memory = new MemoryStream();
+
+                using (var stream = new FileStream(ReportPath, FileMode.Open))
+                {
+                    await stream.CopyToAsync(memory);
+                }
+                memory.Position = 0;
+                return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
+        }
+
+
 
     }
 }
