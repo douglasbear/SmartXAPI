@@ -72,6 +72,51 @@ namespace SmartxAPI.Controllers
                      return BadRequest(_api.Error(e));
                 }
         }
+
+
+        [HttpGet("listInvoice")]
+        public ActionResult GetPurchaseInvoiceList(int nFnYearId,int nPage,int nSizeperpage)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
+            
+            if(Count==0)
+                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            else
+                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+
+            Params.Add("@p1",nCompanyId);
+            Params.Add("@p2",nFnYearId);
+            SortedList OutPut = new SortedList();
+
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
+                     sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",_api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(OutPut));
+                }     
+                  }catch(Exception e){
+                     return BadRequest(_api.Error(e));
+                }
+        }
+
        [HttpGet("listDetails")]
         public ActionResult GetPurchaseReturnDetails(int nCompanyId, string xCreditNoteNo,string xInvoiceNo, int nFnYearId, bool bAllBranchData, int nBranchID)
         {
