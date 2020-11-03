@@ -27,6 +27,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly string reportApi;
+        private readonly string reportPath;
 
         public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -35,6 +36,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             reportApi = conf.GetConnectionString("ReportAPI");
+            reportPath = conf.GetConnectionString("ReportPath");
         }
         [HttpGet("list")]
         public ActionResult GetReportList(int? nMenuId, int? nLangId)
@@ -260,15 +262,15 @@ namespace SmartxAPI.Controllers
                 var path = client.GetAsync(reportApi + "/api/report?reportname=" + reportName + "&critiria=" + Criteria + "&con=" + connectionString);
 
                 path.Wait();
-                string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
+                string RptPath = reportPath + reportName.Trim() + ".pdf";
                 var memory = new MemoryStream();
 
-                using (var stream = new FileStream(ReportPath, FileMode.Open))
+                using (var stream = new FileStream(RptPath, FileMode.Open))
                 {
                     await stream.CopyToAsync(memory);
                 }
                 memory.Position = 0;
-                return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
+                return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
 
             }
             catch (Exception e)
