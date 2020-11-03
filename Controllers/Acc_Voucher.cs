@@ -33,15 +33,24 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType)
+        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3)";
+
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", voucherType);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -49,15 +58,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
                 }
-                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Notice("No Results Found"));
+                    return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(OutPut));
                 }
             }
             catch (Exception e)

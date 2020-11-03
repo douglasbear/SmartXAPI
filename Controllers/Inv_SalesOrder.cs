@@ -35,19 +35,22 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId,int nListID)
+        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
-            int Count= (nListID - 1) * 30;
+            string sqlCommandCount="";
+
             if(Count==0)
-                sqlCommandText = "select top(30) * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
             else
-                sqlCommandText = "select top(30) * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId not in (select top("+ Count +") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId not in (select top("+ Count +") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
            
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -55,15 +58,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = _api.Format(dt);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",_api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(OutPut));
                 }
             }
             catch (Exception e)

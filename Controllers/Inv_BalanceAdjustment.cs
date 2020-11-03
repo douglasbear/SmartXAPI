@@ -39,23 +39,35 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetBalanceDetails( int nFnyearID,int nPartyType,int nPartyID,int N_TransType)
+        public ActionResult GetBalanceDetails( int nFnyearID,int nPartyType,int nPartyID,int N_TransType,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandText="";
             int nCompanyID=myFunctions.GetCompanyID(User);
+
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
+            if(Count==0)
+            {
             if(nPartyID>0)
-
-            sqlCommandText = "select [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
-
+                sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
             else
-            sqlCommandText = "select [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
+                sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
+            }
+            else
+            {
+            if(nPartyID>0)
+                sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top("+ Count +") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 N_AdjustmentID not in (select top("+ Count +") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
 
+            }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p3", nPartyID);
             Params.Add("@p4", N_TransType);
             Params.Add("@p5", nPartyType);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -63,15 +75,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",_api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
                 }
-                dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(OutPut));
                 }
 
             }
