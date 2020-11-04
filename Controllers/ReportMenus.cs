@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpPost("getModuleReport")]
-        public async Task<IActionResult> GetModuleReports([FromBody] DataSet ds)
+        public  IActionResult GetModuleReports([FromBody] DataSet ds)
         {
             DataTable MasterTable;
             DataTable DetailTable;
@@ -219,9 +219,9 @@ namespace SmartxAPI.Controllers
                     Params1.Add("@xType", "RadioButton");
                     Params1.Add("@nCompID", ReportID);
 
-                    reportName = dLayer.ExecuteScalar("select X_ReportCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
+                    reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
 
-
+                    reportName = reportName.Substring(0,reportName.Length-4);
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -245,7 +245,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            Criteria = Criteria == "" ? xFeild + "=" + value + " " : Criteria + " and " + xFeild + "=" + value + " ";
+                            Criteria = Criteria == "" ? xFeild + "='" + value + "' " : Criteria + " and " + xFeild + "='" + value + "' ";
                         }
 
                         //{table.fieldname} in {?Start date} to {?End date}
@@ -258,19 +258,20 @@ namespace SmartxAPI.Controllers
                 };
                 var client = new HttpClient(handler);
                 //HttpClient client = new HttpClient(clientHandler);
-
-                var path = client.GetAsync(reportApi + "/api/report?reportname=" + reportName + "&critiria=" + Criteria + "&con=" + connectionString);
+string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=&path="+reportPath ;//+ connectionString;
+                var path = client.GetAsync(URL);
 
                 path.Wait();
-                string RptPath = reportPath + reportName.Trim() + ".pdf";
-                var memory = new MemoryStream();
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                //string RptPath = reportPath + reportName.Trim() + ".pdf";
+                // var memory = new MemoryStream();
 
-                using (var stream = new FileStream(RptPath, FileMode.Open))
-                {
-                    await stream.CopyToAsync(memory);
-                }
-                memory.Position = 0;
-                return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
+                // using (var stream = new FileStream(RptPath, FileMode.Open))
+                // {
+                //     await stream.CopyToAsync(memory);
+                // }
+                // memory.Position = 0;
+                // return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
             }
             catch (Exception e)
             {
