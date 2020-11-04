@@ -271,7 +271,6 @@ namespace SmartxAPI.Controllers
                 }
                 memory.Position = 0;
                 return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
-
             }
             catch (Exception e)
             {
