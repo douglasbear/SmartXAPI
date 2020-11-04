@@ -14,11 +14,11 @@ namespace SmartxAPI.GeneralFunctions
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment env;
         private readonly IMyFunctions myFunctions;
-        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn,IMyFunctions myFun)
+        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun)
         {
             _mapper = mapper;
             env = envn;
-            myFunctions=myFun;
+            myFunctions = myFun;
         }
 
         public object Response(int Code, string ResMessage)
@@ -42,12 +42,12 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(Dictionary<DataRow, DataTable> dictionary, string message)
         {
             return (new { type = "success", Message = message, Data = dictionary });
-        }        
+        }
         public object Success(Dictionary<string, string> dictionary, string message)
         {
             return (new { type = "success", Message = message, Data = dictionary });
         }
-                public object Success(Dictionary<string, string> dictionary)
+        public object Success(Dictionary<string, string> dictionary)
         {
             return (new { type = "success", Message = "null", Data = dictionary });
         }
@@ -84,6 +84,8 @@ namespace SmartxAPI.GeneralFunctions
         public object Error(Exception ex)
         {
             string Msg = "";
+            if (ex.Message.Length < 8)
+                return (new { type = "error", Message = ex.Message, Data = "" });
             string subString = ex.Message.Substring(8, ex.Message.Length - 8);
 
             switch (ex.Message.Substring(0, 8))
@@ -139,34 +141,34 @@ namespace SmartxAPI.GeneralFunctions
             }
             return dt;
         }
-        public string GetContentType(string path)  
-        {  
-            var types = GetMimeTypes();  
-            var ext = Path.GetExtension(path).ToLowerInvariant();  
-            return types[ext];  
-        }  
+        public string GetContentType(string path)
+        {
+            var types = GetMimeTypes();
+            var ext = Path.GetExtension(path).ToLowerInvariant();
+            return types[ext];
+        }
 
-                public Dictionary<string, string> GetMimeTypes()  
-        {  
-            return new Dictionary<string, string>  
-            {  
-                {".txt", "text/plain"},  
-                {".pdf", "application/pdf"},  
-                {".doc", "application/vnd.ms-word"},  
-                {".docx", "application/vnd.ms-word"},  
-                {".xls", "application/vnd.ms-excel"},  
-                {".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"}, 
-                {".png", "image/png"},  
-                {".jpg", "image/jpeg"},  
-                {".jpeg", "image/jpeg"},  
-                {".gif", "image/gif"},  
-                {".csv", "text/csv"}  
-            };  
-        } 
+        public Dictionary<string, string> GetMimeTypes()
+        {
+            return new Dictionary<string, string>
+            {
+                {".txt", "text/plain"},
+                {".pdf", "application/pdf"},
+                {".doc", "application/vnd.ms-word"},
+                {".docx", "application/vnd.ms-word"},
+                {".xls", "application/vnd.ms-excel"},
+                {".xlsx", "application/vnd.openxmlformats-officedocument.spreadsheetml.sheet"},
+                {".png", "image/png"},
+                {".jpg", "image/jpeg"},
+                {".jpeg", "image/jpeg"},
+                {".gif", "image/gif"},
+                {".csv", "text/csv"}
+            };
+        }
 
-        
 
-       
+
+
     }
 
     public interface IApiFunctions
@@ -174,15 +176,15 @@ namespace SmartxAPI.GeneralFunctions
         /* Deprecated Method Don't Use */
         [Obsolete("IApiFunctions.Response is deprecated \n please use IApiFunctions.Success/ Error/ Warning/ Notice instead. \n\n Deprecate note added by Ratheesh KS-\n\n")]
         public object Response(int Code, string Response);
-        /*  End Of Deprecated Method  */     
-                
+        /*  End Of Deprecated Method  */
+
         public object Error(Exception ex);
         public DataTable Format(DataTable table, string tableName);
         public DataTable Format(DataTable dt);
         public object Error(string message);
         public object Success(DataTable dataTable);
         public object Success(DataTable dataTable, string message);
-        public object Success(Dictionary<DataRow, DataTable> dictionary, string message);        
+        public object Success(Dictionary<DataRow, DataTable> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary);
         public object Success(SortedList data);
@@ -192,7 +194,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(DataRow dataRow, String message);
         public object Notice(string message);
         public object Warning(string message);
-        public string GetContentType(string path)  ;
-        public Dictionary<string, string> GetMimeTypes()  ;
+        public string GetContentType(string path);
+        public Dictionary<string, string> GetMimeTypes();
     }
 }
