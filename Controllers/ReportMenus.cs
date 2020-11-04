@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpPost("getModuleReport")]
-        public async Task<IActionResult> GetModuleReports([FromBody] DataSet ds)
+        public  IActionResult GetModuleReports([FromBody] DataSet ds)
         {
             DataTable MasterTable;
             DataTable DetailTable;
@@ -258,19 +258,20 @@ namespace SmartxAPI.Controllers
                 };
                 var client = new HttpClient(handler);
                 //HttpClient client = new HttpClient(clientHandler);
-string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=" ;//+ connectionString;
+string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=&path="+reportPath ;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
-                string RptPath = reportPath + reportName.Trim() + ".pdf";
-                var memory = new MemoryStream();
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                //string RptPath = reportPath + reportName.Trim() + ".pdf";
+                // var memory = new MemoryStream();
 
-                using (var stream = new FileStream(RptPath, FileMode.Open))
-                {
-                    await stream.CopyToAsync(memory);
-                }
-                memory.Position = 0;
-                return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
+                // using (var stream = new FileStream(RptPath, FileMode.Open))
+                // {
+                //     await stream.CopyToAsync(memory);
+                // }
+                // memory.Position = 0;
+                // return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
             }
             catch (Exception e)
             {
