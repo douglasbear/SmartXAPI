@@ -271,7 +271,6 @@ string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" +
                 }
                 memory.Position = 0;
                 return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
-
             }
             catch (Exception e)
             {

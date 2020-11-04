@@ -33,38 +33,54 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(int? nCompanyID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page)
         {
+            int nCompanyID =myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlComandText = "select * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 order by [Item Code]";
+            string qry = "";
+                if (query != "" && query != null)
+                {
+                    qry = " and (Description like @query or [Item Code] like @query) order by [Item Code],Description";
+                    Params.Add("@query", "%" + query + "%");
+                }
+
+            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
+            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
+
+            string sqlComandText = " * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 ";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
             Params.Add("@p3", "001");
             Params.Add("@p4", 1);
+            Params.Add("@PSize", PageSize);
+            Params.Add("@Offset", Page);
+
+            
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlComandText, Params, connection);
+                    string sql = pageQry + sqlComandText + pageQryEnd +qry;
+                    dt = dLayer.ExecuteDataTable(sql, Params, connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest(_api.Error(e));
             }
 
         }
@@ -92,26 +108,26 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", GeneralTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID", 53);
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
-                        if (ItemCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate product Code")); }
+                        if (ItemCode == "") { return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTable.Rows[0]["X_ItemCode"] = ItemCode;
                     }
 
 
-                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", 0, MasterTable, connection, transaction);
+                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", MasterTable, connection, transaction);
                     if (N_ItemID <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(404, _api.Response(404, "Unable to save"));
+                        return Ok( _api.Warning( "Unable to save"));
                     }
                     else
                         transaction.Commit();
                 }
-                return StatusCode(200, _api.Response(200, "Product Saved"));
+                return Ok(_api.Success("Product Saved"));
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return BadRequest( _api.Error(ex));
             }
         }
 
@@ -134,17 +150,17 @@ namespace SmartxAPI.Controllers
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(new { });
+                    return Ok(_api.Warning("no result found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest( _api.Error(e));
             }
 
         }
