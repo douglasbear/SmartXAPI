@@ -376,7 +376,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID)
+        public ActionResult DeleteData(int nDeliveryNoteID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID)
         {
             int Results = 0;
             try
@@ -391,50 +391,34 @@ namespace SmartxAPI.Controllers
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"N_UserID",nUserID},
-                                {"X_TransType","SALES"},
+                                {"X_TransType","DELIVERY"},
                                 {"X_SystemName","WebRequest"},
-                                {"N_VoucherID",nInvoiceID}};
+                                {"N_VoucherID",nDeliveryNoteID}};
 
                     SortedList QueryParams = new SortedList(){
                                 {"@nCompanyID",nCompanyID},
                                 {"@nFnYearID",nFnYearID},
                                 {"@nUserID",nUserID},
-                                {"@xTransType","SALES"},
+                                {"@xTransType","DELIVERY"},
                                 {"@xSystemName","WebRequest"},
-                                {"@nSalesID",nInvoiceID},
-                                {"@nPartyID",nCustomerID},
-                                {"@nQuotationID",nQuotationID},
+                                {"@nDeliveryNoteID",nDeliveryNoteID},
+                                {"@nPartyID",nCustomerID},                                
                                 {"@nBranchID",nBranchID}};
 
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete sales Invoice"));
+                        return Ok(_api.Error("Unable to delete delivery note"));
                     }
                     else
                     {
-                        dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        //   if (N_AmtSplit == 1)
-                        //     {                                                
-                        dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        // }                        
-                        dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                        if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
-                        {
-                            // transaction.Rollback();
-                            // return Ok(_api.Error("Unable to delete sales Invoice"));
-                        }
-                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", dLayer, connection, transaction))
-                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory, dLayer, connection, transaction))
-                                if (nQuotationID > 0)
-                                    dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                        
                     }
                     //Attachment delete code here
 
                     transaction.Commit();
-                    return Ok(_api.Success("Sales invoice deleted"));
+                    return Ok(_api.Success("Delivery note deleted"));
                 }
             }
             catch (Exception ex)
