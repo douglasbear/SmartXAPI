@@ -231,6 +231,14 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
+        public string ReturnSettings(string Group, string Description, string ValueColumn, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=" + nCompanyID + " ", Connection, transaction);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction)
         {
             string Result = "";
@@ -366,10 +374,10 @@ namespace SmartxAPI.GeneralFunctions
                     Response["btnSaveText"] = "Save";
                     Response["btnDeleteText"] = "Delete";
                     Response["saveEnabled"] = true;
-                    if(nTransID==0)
-                    {Response["deleteEnabled"] = false;}
+                    if (nTransID == 0)
+                    { Response["deleteEnabled"] = false; }
                     else
-                    {Response["deleteEnabled"] = true;}
+                    { Response["deleteEnabled"] = true; }
 
                     Response["saveTag"] = 0;
                     Response["deleteTag"] = 0;
@@ -729,13 +737,14 @@ namespace SmartxAPI.GeneralFunctions
             int N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
             int N_FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
             string Comments = "";
-            DataColumnCollection columns = Approvals.Columns;        
+            DataColumnCollection columns = Approvals.Columns;
             if (columns.Contains("comments"))
             {
-                    Comments = ApprovalRow["comments"].ToString();
+                Comments = ApprovalRow["comments"].ToString();
             }
-            if(Comments==null){
-                Comments="";
+            if (Comments == null)
+            {
+                Comments = "";
             }
 
             int N_GroupID = 1, N_NxtUserID = 0;
@@ -1059,7 +1068,7 @@ namespace SmartxAPI.GeneralFunctions
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnSettings(string Group, string Description, string ValueColumn, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);
-
+        public string ReturnSettings(string Group, string Description, string ValueColumn, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value);
