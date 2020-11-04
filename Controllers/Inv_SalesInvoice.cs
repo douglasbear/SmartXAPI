@@ -445,104 +445,105 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        //Inv_WorkFlowCatalog insertion here
 
-                        DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
-                        DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
-                        int N_IsSave = 1;
-                        int N_CurrentSalesID = 0;
-                        if (ds.Tables["saleamountdetails"].Rows.Count > 0)
-                        {
-                            DataRow Rowsaleamountdetails = ds.Tables["saleamountdetails"].Rows[0];
-                            // N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
-                            // dtsaleamountdetails.Columns.Remove("n_IsSave");
-                            // dtsaleamountdetails.AcceptChanges();
-                            N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
-                        }
+                        // //Inv_WorkFlowCatalog insertion here
 
-                        DataRow Rowloyalitypoints = null;
-                        if (ds.Tables.Contains("loyalitypoints"))
-                            Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
+                        // DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
+                        // DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
+                        // int N_IsSave = 1;
+                        // int N_CurrentSalesID = 0;
+                        // if (ds.Tables["saleamountdetails"].Rows.Count > 0)
+                        // {
+                        //     DataRow Rowsaleamountdetails = ds.Tables["saleamountdetails"].Rows[0];
+                        //     // N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
+                        //     // dtsaleamountdetails.Columns.Remove("n_IsSave");
+                        //     // dtsaleamountdetails.AcceptChanges();
+                        //     N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
+                        // }
 
-                        // int N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
-                        // dtsaleamountdetails.Columns.Remove("n_IsSave");
-                        // dtsaleamountdetails.AcceptChanges();
+                        // DataRow Rowloyalitypoints = null;
+                        // if (ds.Tables.Contains("loyalitypoints"))
+                        //     Rowloyalitypoints = ds.Tables["loyalitypoints"].Rows[0];
 
-                        // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
-                        bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
-                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
-                        //Sales amount details/payment popup
-                        for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
-                            dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
-                        if (N_AmtSplit == 1)
-                        {
+                        // // int N_IsSave = myFunctions.getIntVAL(Rowsaleamountdetails["n_IsSave"].ToString());
+                        // // dtsaleamountdetails.Columns.Remove("n_IsSave");
+                        // // dtsaleamountdetails.AcceptChanges();
 
-                            if (N_IsSave == 1)
-                            {
+                        // // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
+                        // bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
+                        // bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
+                        // //Sales amount details/payment popup
+                        // for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
+                        //     dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
+                        // if (N_AmtSplit == 1)
+                        // {
 
-                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
-                                if (N_SalesAmountID <= 0)
-                                {
-                                    transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save Sales Invoice!"));
-                                }
-                                else
-                                {
-                                    if (B_EnablePointSystem)
-                                    {
-                                        if (ds.Tables.Contains("loyalitypoints") && dtloyalitypoints.Rows.Count > 0)
-                                        {
-                                            int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", dtloyalitypoints, connection, transaction);
-                                            if (N_SalesAmountID <= 0)
-                                            {
-                                                transaction.Rollback();
-                                                return Ok(_api.Error("Unable to save Sales Invoice!"));
-                                            }
-                                            else
-                                            {
-                                                double N_DiscountAmt = myFunctions.getVAL(Rowloyalitypoints["N_AppliedAmt"].ToString()) + myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
-                                                dLayer.ExecuteNonQuery("update  Inv_Sales  Set N_DiscountAmt=" + N_DiscountAmt + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
-                                            }
-                                        }
-                                    }
-                                }
-                            }
-                            else if (N_IsSave == 0)
-                            {
-                                if (N_CurrentSalesID != N_SalesID)
-                                    dLayer.ExecuteNonQuery("update  Inv_SaleAmountDetails set N_SalesID=" + N_SalesID + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
-                            }
-                        }
-                        else
-                        {
-                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
-                            if (N_SalesAmountID <= 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error("Unable to save Sales Invoice!"));
-                            }
-                        }
-                        for (int j = 0; j < DetailTable.Rows.Count; j++)
-                        {
-                            /*if (B_salesOrder == true)
-                         {
-                             if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcSalesOrderID)) > 0)
-                             {
-                                 dba.ExecuteNonQuery("Update Inv_SalesOrder Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_SalesOrderID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-                                 if(B_ServiceSheet)
-                                     dba.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                        //     if (N_IsSave == 1)
+                        //     {
 
-                             }
+                        //         int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
+                        //         if (N_SalesAmountID <= 0)
+                        //         {
+                        //             transaction.Rollback();
+                        //             return Ok(_api.Error("Unable to save Sales Invoice!"));
+                        //         }
+                        //         else
+                        //         {
+                        //             if (B_EnablePointSystem)
+                        //             {
+                        //                 if (ds.Tables.Contains("loyalitypoints") && dtloyalitypoints.Rows.Count > 0)
+                        //                 {
+                        //                     int N_PointOutId = dLayer.SaveData("Inv_LoyaltyPointOut", "n_PointOutId", dtloyalitypoints, connection, transaction);
+                        //                     if (N_SalesAmountID <= 0)
+                        //                     {
+                        //                         transaction.Rollback();
+                        //                         return Ok(_api.Error("Unable to save Sales Invoice!"));
+                        //                     }
+                        //                     else
+                        //                     {
+                        //                         double N_DiscountAmt = myFunctions.getVAL(Rowloyalitypoints["N_AppliedAmt"].ToString()) + myFunctions.getVAL(MasterRow["N_DiscountAmt"].ToString());
+                        //                         dLayer.ExecuteNonQuery("update  Inv_Sales  Set N_DiscountAmt=" + N_DiscountAmt + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                        //                     }
+                        //                 }
+                        //             }
+                        //         }
+                        //     }
+                        //     else if (N_IsSave == 0)
+                        //     {
+                        //         if (N_CurrentSalesID != N_SalesID)
+                        //             dLayer.ExecuteNonQuery("update  Inv_SaleAmountDetails set N_SalesID=" + N_SalesID + " where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                        //     }
+                        // }
+                        // else
+                        // {
+                        //     int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
+                        //     if (N_SalesAmountID <= 0)
+                        //     {
+                        //         transaction.Rollback();
+                        //         return Ok(_api.Error("Unable to save Sales Invoice!"));
+                        //     }
+                        // }
+                        // for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        // {
+                        //     /*if (B_salesOrder == true)
+                        //  {
+                        //      if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcSalesOrderID)) > 0)
+                        //      {
+                        //          dba.ExecuteNonQuery("Update Inv_SalesOrder Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_SalesOrderID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                        //          if(B_ServiceSheet)
+                        //              dba.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
 
-                         }
-                         else
-                         {
-                             if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcQuotationID)) > 0)
-                                 dba.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_QuotationID=" + flxSales.get_TextMatrix(i, mcQuotationID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-                         }*/
-                        }
-                        // Warranty Save Code here
-                        //optical prescription saving here
+                        //      }
+
+                        //  }
+                        //  else
+                        //  {
+                        //      if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcQuotationID)) > 0)
+                        //          dba.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_QuotationID=" + flxSales.get_TextMatrix(i, mcQuotationID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                        //  }*/
+                        // }
+                        // // Warranty Save Code here
+                        // //optical prescription saving here
 
                         if (N_SaveDraft == 0)
                         {

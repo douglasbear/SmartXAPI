@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             if(nPartyID>0)
                 sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top("+ Count +") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 N_AdjustmentID not in (select top("+ Count +") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+                sqlCommandText = "select top("+ nSizeperpage +") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top("+ Count +") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
 
             }
             Params.Add("@p1", nCompanyID);
