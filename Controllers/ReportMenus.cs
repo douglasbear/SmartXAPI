@@ -245,7 +245,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            Criteria = Criteria == "" ? xFeild + "=" + value + " " : Criteria + " and " + xFeild + "=" + value + " ";
+                            Criteria = Criteria == "" ? xFeild + "='" + value + "' " : Criteria + " and " + xFeild + "='" + value + "' ";
                         }
 
                         //{table.fieldname} in {?Start date} to {?End date}
