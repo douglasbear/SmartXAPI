@@ -47,7 +47,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID=@nUserCatID inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
             Params.Add("@nMenuId", nMenuId);
             Params.Add("@nLangId", nLangId);
-            Params.Add("@nUserCatID", myFunctions.GetUserCategory(User));
+            Params.Add("@nUserCatID", 2);
 
             try
             {
@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn from vw_WebReportMenus where N_LanguageId=@p2";
+                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn from vw_WebReportMenus where N_LanguageId=@nLangId";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
