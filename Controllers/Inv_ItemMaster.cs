@@ -91,9 +91,10 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable;
+                DataTable MasterTable, GeneralTable,UnitTable;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
+                UnitTable = ds.Tables["itemunit"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -119,8 +120,23 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok( _api.Warning( "Unable to save"));
                     }
-                    else
-                        transaction.Commit();
+
+
+                     foreach (DataRow var in UnitTable.Rows)
+                    {
+                        var["n_ItemID"] = N_ItemID;
+                    }
+                    UnitTable.AcceptChanges();
+                    int UnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", UnitTable, connection, transaction);
+                    if (UnitID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok( _api.Warning( "Unable to save"));
+                    }
+                    
+                    
+                    
+                    transaction.Commit();
                 }
                 return Ok(_api.Success("Product Saved"));
 
