@@ -165,6 +165,39 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("dummy")]
+        public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                string sqlCommandText = "select * from Inv_PayReceipt where N_PayReceiptId=@p1";
+                SortedList mParamList = new SortedList() { { "@p1", Id } };
+                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
+                masterTable = _api.Format(masterTable, "master");
+
+                string sqlCommandText2 = "select * from Inv_PayReceiptDetails where N_PayReceiptId=@p1";
+                SortedList dParamList = new SortedList() { { "@p1", Id } };
+                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
+                detailTable = _api.Format(detailTable, "details");
+
+                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                DataSet dataSet = new DataSet();
+                dataSet.Tables.Add(masterTable);
+                dataSet.Tables.Add(detailTable);
+
+                return Ok(dataSet);
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest( _api.Error(e));
+            }
+        }
+
 
 
     }
