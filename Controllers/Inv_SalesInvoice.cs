@@ -319,10 +319,10 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
-                DataTable dtsaleamountdetails;;
+                DataTable dtsaleamountdetails; ;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
-                DetailTable = ds.Tables["saleamountdetails"];
+                dtsaleamountdetails = ds.Tables["saleamountdetails"];
 
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
@@ -398,7 +398,7 @@ namespace SmartxAPI.Controllers
                             //     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
 
                             dtsaleamountdetails = _api.Format(dtsaleamountdetails, "saleamountdetails");
-                            ds.Tables.Add(dtsaleamountdetails);
+                            //ds.Tables.Add(dtsaleamountdetails);
 
                         }
                     }
@@ -450,8 +450,7 @@ namespace SmartxAPI.Controllers
 
 
                         //Inv_WorkFlowCatalog insertion here
-
-                        DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
+                        //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
                         int N_IsSave = 1;
                         int N_CurrentSalesID = 0;

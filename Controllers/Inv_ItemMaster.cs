@@ -42,14 +42,14 @@ namespace SmartxAPI.Controllers
             string qry = "";
                 if (query != "" && query != null)
                 {
-                    qry = " and (Description like @query or [Item Code] like @query) order by [Item Code],Description";
+                    qry = " and (Description like @query or [Item Code] like @query) ";
                     Params.Add("@query", "%" + query + "%");
                 }
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
-            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
+            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by [Item Code],Description";
 
-            string sqlComandText = " * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 ";
+            string sqlComandText = " * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
             Params.Add("@p3", "001");
@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string sql = pageQry + sqlComandText + pageQryEnd +qry;
+                    string sql = pageQry + sqlComandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
                 }
                 dt = _api.Format(dt);
@@ -163,6 +163,39 @@ namespace SmartxAPI.Controllers
                 return BadRequest( _api.Error(e));
             }
 
+        }
+
+        [HttpGet("dummy")]
+        public ActionResult GetPurchaseInvoiceDummy(int? Id)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                string sqlCommandText = "select * from Inv_PayReceipt where N_PayReceiptId=@p1";
+                SortedList mParamList = new SortedList() { { "@p1", Id } };
+                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
+                masterTable = _api.Format(masterTable, "master");
+
+                string sqlCommandText2 = "select * from Inv_PayReceiptDetails where N_PayReceiptId=@p1";
+                SortedList dParamList = new SortedList() { { "@p1", Id } };
+                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
+                detailTable = _api.Format(detailTable, "details");
+
+                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                DataSet dataSet = new DataSet();
+                dataSet.Tables.Add(masterTable);
+                dataSet.Tables.Add(detailTable);
+
+                return Ok(dataSet);
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest( _api.Error(e));
+            }
         }
 
 
