@@ -382,6 +382,42 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
+        public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID, SqlConnection connection)
+        {
+            try
+            {
+
+
+
+                int recordsReturned;
+                SqlDataAdapter dataAdapter = new SqlDataAdapter();
+                dataAdapter.SelectCommand = new SqlCommand(sqlCommandText, connection);
+                dataAdapter.SelectCommand.CommandType = CommandType.StoredProcedure;
+                dataAdapter.SelectCommand.CommandText = sqlCommandText;
+
+                dataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@N_CompanyID",nCompanyID));
+                SqlParameter tvparam =dataAdapter.SelectCommand.Parameters.AddWithValue("@SettingsList",paramTable);
+                tvparam.SqlDbType = SqlDbType.Structured;
+                tvparam.TypeName = "dbo.Type_GenSettingsList";
+
+
+
+                DataTable resultTable = new DataTable();
+                recordsReturned = dataAdapter.Fill(resultTable);
+                return resultTable;
+
+            }
+            catch (Exception ex)
+            {
+
+                throw ex;
+            }
+        }
+
+
+
+
+
         public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
         {
             string FieldList = "";
@@ -569,6 +605,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con, SqlTransaction transaction);
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection);
+        public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID, SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
         public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
 
