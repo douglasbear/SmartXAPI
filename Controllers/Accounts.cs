@@ -31,11 +31,11 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("glaccount/list")]
-        public ActionResult GetGLAccountList(int? nCompanyId,int? nFnYearId,string xType)
+        public ActionResult GetGLAccountList(int? nFnYearId,string xType)
         {
-            string sqlCommandText="";
-            if(nCompanyId==null){return StatusCode(404,_api.Response(404,"Company ID Required"));}                       
-            if(nFnYearId==null){return StatusCode(404,_api.Response(404,"FnYear ID Required"));}                       
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText="";                       
+            if(nFnYearId==null){return Ok(_api.Notice("FnYear ID Required"));}                       
                 
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();

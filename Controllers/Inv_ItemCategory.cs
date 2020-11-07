@@ -33,10 +33,11 @@ namespace SmartxAPI.Controllers
 
         //GET api/productcategory/list?....
         [HttpGet("list")]
-        public ActionResult GetItemCategory(int? nCompanyId)
+        public ActionResult GetItemCategory()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "select Code as N_CategoryID,Category as X_Category,CategoryCode as X_CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 order by CategoryCode";
             Params.Add("@p1", nCompanyId);
@@ -50,16 +51,16 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
 
