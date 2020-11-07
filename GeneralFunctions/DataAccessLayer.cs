@@ -382,7 +382,7 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID, SqlConnection connection)
+        public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID,int nFnYearID, SqlConnection connection)
         {
             try
             {
@@ -396,6 +396,7 @@ namespace SmartxAPI.GeneralFunctions
                 dataAdapter.SelectCommand.CommandText = sqlCommandText;
 
                 dataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@N_CompanyID",nCompanyID));
+                dataAdapter.SelectCommand.Parameters.Add(new SqlParameter("@N_FnYearID",nFnYearID));
                 SqlParameter tvparam =dataAdapter.SelectCommand.Parameters.AddWithValue("@SettingsList",paramTable);
                 tvparam.SqlDbType = SqlDbType.Structured;
                 tvparam.TypeName = "dbo.Type_GenSettingsList";
@@ -605,7 +606,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con, SqlTransaction transaction);
         public DataTable ExecuteDataTablePro(string sqlCommandText, SortedList paramList, SqlConnection connection);
-        public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID, SqlConnection connection);
+        public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID,int nFnYearID, SqlConnection connection);
         public DataTable ExecuteDataTable(string sqlCommandText, SortedList paramList, SqlConnection con);
         public DataTable ExecuteDataTable(string sqlCommandText, SqlConnection connection);
 

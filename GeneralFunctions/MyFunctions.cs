@@ -265,6 +265,17 @@ namespace SmartxAPI.GeneralFunctions
             return MasterDt;
         }
 
+        public DataTable GetSettingsTable()
+        {
+            DataTable QList = new DataTable();
+            QList.Columns.Add(new DataColumn("X_Group", typeof(string)));
+            QList.Columns.Add(new DataColumn("X_Description", typeof(string)));
+            DataColumn NewCol = new DataColumn("N_UserCategoryID", typeof(int));
+            NewCol.DefaultValue = 0;
+            QList.Columns.Add(NewCol);
+            return QList;
+        }
+
         public string getDateVAL(DateTime val)
         {
             return val.ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture);
@@ -1083,6 +1094,7 @@ namespace SmartxAPI.GeneralFunctions
         public int GetUserID(ClaimsPrincipal User);
         public int GetCompanyID(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+        public DataTable GetSettingsTable();
 
     }
 }
