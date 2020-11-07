@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                 var password = myFunctions.EncryptString(model.Password);
                 //var password = model.Password;
-                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress);
+                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress,model.AppType);
 
                 if (user == null) { return StatusCode(403, _api.Response(403, "Username or password is incorrect")); }
 

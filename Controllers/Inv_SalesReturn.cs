@@ -20,7 +20,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -73,7 +72,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest( _api.Error(e));
             }
         }
         [HttpGet("listdetails")]
@@ -163,11 +162,11 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(SalesReturnDetails);
 
                 }
-                return Ok(dt);
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest( _api.Error(e));
             }
         }
 
@@ -233,11 +232,11 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                 }
-                return Ok("Sales Return Saved");
+                return Ok(_api.Success("Sales Return Saved"));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, ex);
+                return BadRequest(ex);
             }
         }
         //Delete....
@@ -267,7 +266,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return BadRequest(_api.Error(ex));
             }
 
         }

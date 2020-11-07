@@ -162,37 +162,59 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        // [HttpGet("getreport")]
+        // public async Task<IActionResult> GetReport(string reportName, string critiria)
+        // {
+        //     //var client = new HttpClient();
+
+        //     var handler = new HttpClientHandler
+        //     {
+        //         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+        //     };
+        //     var client = new HttpClient(handler);
+        //     //HttpClient client = new HttpClient(clientHandler);
+
+        //     var path = client.GetAsync("https://localhost:4439/api/report?reportname=" + reportName + "&critiria=" + critiria + "&con=" + connectionString);
+
+        //     path.Wait();
+        //     string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
+        //     var memory = new MemoryStream();
+
+        //     using (var stream = new FileStream(ReportPath, FileMode.Open))
+        //     {
+        //         await stream.CopyToAsync(memory);
+        //     }
+        //     memory.Position = 0;
+        //     return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
+
+
+
+        //     // ReportPath="C:\\"+ reportName + ".pdf";
+        //     // Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
+        //     // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
+        //     // return File(fileStream, "application/octet-stream",reportName+".pdf");
+        // }
+
+
         [HttpGet("getreport")]
-        public async Task<IActionResult> GetReport(string reportName, string critiria)
+        public  IActionResult GetModuleReports(string reportName, string critiria)
         {
-            //var client = new HttpClient();
-
-            var handler = new HttpClientHandler
+            try
             {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
-            };
-            var client = new HttpClient(handler);
-            //HttpClient client = new HttpClient(clientHandler);
-
-            var path = client.GetAsync("https://localhost:4439/api/report?reportname=" + reportName + "&critiria=" + critiria + "&con=" + connectionString);
-
-            path.Wait();
-            string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
-            var memory = new MemoryStream();
-
-            using (var stream = new FileStream(ReportPath, FileMode.Open))
-            {
-                await stream.CopyToAsync(memory);
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                };
+                var client = new HttpClient(handler);
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&con=&path="+reportPath ;//+ connectionString;
+                var path = client.GetAsync(URL);
+                path.Wait();
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
             }
-            memory.Position = 0;
-            return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
-
-
-
-            // ReportPath="C:\\"+ reportName + ".pdf";
-            // Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
-            // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
-            // return File(fileStream, "application/octet-stream",reportName+".pdf");
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
         }
 
         [HttpPost("getModuleReport")]

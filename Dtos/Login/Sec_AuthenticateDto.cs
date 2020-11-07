@@ -12,5 +12,8 @@ namespace SmartxAPI.Dtos.Login
 
         [Required]
         public string Password { get; set; }
+        
+        [Required]
+        public string AppType { get; set; }
     }
 }

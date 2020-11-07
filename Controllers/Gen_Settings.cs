@@ -32,32 +32,6 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-
-
-        //Save....
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    transaction.Commit();
-                }
-                return Ok(_api.Success("Saved"));
-
-            }
-            catch (Exception ex)
-            {
-                return BadRequest(_api.Error(ex));
-            }
-        }
-
-
         [HttpGet("invSettingsDetails")]
         public ActionResult GetDetails(int nFnYearID,int nLangID)
         {
@@ -115,6 +89,30 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return BadRequest(_api.Error(e));
+            }
+        }
+
+                //Save....
+        [HttpPost("saveInventorySettings")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable InvoiceCounter = ds.Tables["invoiceCounter"];
+                DataTable Settings = ds.Tables["settings"];
+                
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    transaction.Commit();
+                }
+                return Ok(_api.Success("Saved"));
+
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(_api.Error(ex));
             }
         }
 
