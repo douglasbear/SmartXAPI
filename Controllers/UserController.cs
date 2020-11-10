@@ -44,13 +44,13 @@ namespace SmartxAPI.Controllers
                 //var password = model.Password;
                 var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress,model.AppType);
 
-                if (user == null) { return StatusCode(403, _api.Response(403, "Username or password is incorrect")); }
+                if (user == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
                 return Ok(user);
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
 
 
                     transaction = connection.BeginTransaction();
-                    int Result = dLayer.SaveData("Sec_User", "n_UserID", 0, MasterTable, connection, transaction);
+                    int Result = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                     if (Result > 0)
                     {
                         //MULTI COMPANY USER CREATION

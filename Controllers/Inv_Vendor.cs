@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
-                        if (VendorCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Vendor Code")); }
+                        if (VendorCode == "") { return Ok(_api.Error("Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
                     else
