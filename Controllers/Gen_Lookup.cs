@@ -35,11 +35,12 @@ namespace SmartxAPI.Controllers
 
         
         [HttpGet("listDetails")]
-        public ActionResult OpportunityListDetails(int? nCompanyId, int nFnYearId,int nPkeyId)
+        public ActionResult OpportunityListDetails(int nFnYearId,int nPkeyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string criteria = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
   
             string sqlCommandText = "select * from Gen_LookupTable where N_CompanyID=@p1 and N_FnyearID=@p2 and N_PkeyId=@p3";
             Params.Add("@p1", nCompanyId);

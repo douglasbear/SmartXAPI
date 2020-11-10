@@ -50,6 +50,10 @@ namespace SmartxAPI.Controllers
                 break;
                 case "TravelType": id=56;
                 break;
+                case "StageType": id=56;
+                break;
+                case "LeadSource": id=56;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
