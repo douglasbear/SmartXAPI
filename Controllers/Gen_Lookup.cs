@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return OpportunityListDetails(nCompanyID, nFnYearId, nPkeyId);
+                        return OpportunityListDetails( nFnYearId, nPkeyId);
                     }
                 }
             }
