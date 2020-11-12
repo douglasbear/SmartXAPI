@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
 
             string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID=@nUserCatID inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
-            Params.Add("@nMenuId", nMenuId);
+            Params.Add("@nMenuId", nMenuId==0?318:nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", 2);
 
@@ -162,37 +162,59 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        // [HttpGet("getreport")]
+        // public async Task<IActionResult> GetReport(string reportName, string critiria)
+        // {
+        //     //var client = new HttpClient();
+
+        //     var handler = new HttpClientHandler
+        //     {
+        //         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+        //     };
+        //     var client = new HttpClient(handler);
+        //     //HttpClient client = new HttpClient(clientHandler);
+
+        //     var path = client.GetAsync("https://localhost:4439/api/report?reportname=" + reportName + "&critiria=" + critiria + "&con=" + connectionString);
+
+        //     path.Wait();
+        //     string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
+        //     var memory = new MemoryStream();
+
+        //     using (var stream = new FileStream(ReportPath, FileMode.Open))
+        //     {
+        //         await stream.CopyToAsync(memory);
+        //     }
+        //     memory.Position = 0;
+        //     return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
+
+
+
+        //     // ReportPath="C:\\"+ reportName + ".pdf";
+        //     // Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
+        //     // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
+        //     // return File(fileStream, "application/octet-stream",reportName+".pdf");
+        // }
+
+
         [HttpGet("getreport")]
-        public async Task<IActionResult> GetReport(string reportName, string critiria)
+        public  IActionResult GetModuleReports(string reportName, string critiria)
         {
-            //var client = new HttpClient();
-
-            var handler = new HttpClientHandler
+            try
             {
-                ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
-            };
-            var client = new HttpClient(handler);
-            //HttpClient client = new HttpClient(clientHandler);
-
-            var path = client.GetAsync("https://localhost:4439/api/report?reportname=" + reportName + "&critiria=" + critiria + "&con=" + connectionString);
-
-            path.Wait();
-            string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
-            var memory = new MemoryStream();
-
-            using (var stream = new FileStream(ReportPath, FileMode.Open))
-            {
-                await stream.CopyToAsync(memory);
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                };
+                var client = new HttpClient(handler);
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&con=&path="+reportPath ;//+ connectionString;
+                var path = client.GetAsync(URL);
+                path.Wait();
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
             }
-            memory.Position = 0;
-            return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
-
-
-
-            // ReportPath="C:\\"+ reportName + ".pdf";
-            // Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
-            // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
-            // return File(fileStream, "application/octet-stream",reportName+".pdf");
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
         }
 
         [HttpPost("getModuleReport")]
@@ -220,6 +242,7 @@ namespace SmartxAPI.Controllers
                     Params1.Add("@xType", "RadioButton");
                     Params1.Add("@nCompID", ReportID);
 
+                    
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
 
                     reportName = reportName.Substring(0,reportName.Length-4);

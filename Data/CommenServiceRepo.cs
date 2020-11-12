@@ -44,7 +44,7 @@ namespace SmartxAPI.Data
         }
 
 
-        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype)
+        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype,string AppType)
         {
 
             if (string.IsNullOrEmpty(companyid.ToString()) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userid.ToString()))
@@ -70,7 +70,8 @@ namespace SmartxAPI.Data
                         {"X_CompanyName",companyname},
                         {"X_FnYearDescr",""},
                         {"X_LoginName",username},
-                        {"X_Pwd",password.ToString()}
+                        {"X_Pwd",password.ToString()},
+                        {"X_AppType",AppType}
                     };
                     DataTable loginDt = dLayer.ExecuteDataTablePro("SP_LOGIN",paramsList,connection);
             //var loginRes = new List<SP_LOGIN>();  
@@ -154,6 +155,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
+                        new Claim(ClaimTypes.System,AppType)
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -229,6 +231,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
+                        new Claim(ClaimTypes.System,AppType)
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(rkey), SecurityAlgorithms.HmacSha256Signature)
@@ -262,6 +265,6 @@ namespace SmartxAPI.Data
 
     public interface ICommenServiceRepo
     {
-        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype);
+        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype,string AppType);
     }
 }

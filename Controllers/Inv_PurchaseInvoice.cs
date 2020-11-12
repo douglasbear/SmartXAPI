@@ -224,7 +224,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
                     InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
-                    if (InvoiceNo == "") { return StatusCode(409, _api.Error("Unable to generate Invoice Number")); }
+                    if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Invoice Number")); }
                     MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
 
@@ -278,11 +278,11 @@ namespace SmartxAPI.Controllers
                     }
                 transaction.Commit();
             }
-                return Ok("Purchase Invoice Saved :"+InvoiceNo);
+                return Ok(_api.Success("Purchase Invoice Saved :"+InvoiceNo));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, ex);
+                return Ok(_api.Error(ex));
             }
         }
         private bool CheckProcessed(int nPurchaseID)

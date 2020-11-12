@@ -107,6 +107,7 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow dtRow in LeaveDetails.Rows)
                         {
                         String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, double.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
+                        //String Avail = CalculateGridEstDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, float.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
                         dtRow["x_Days"] = Avail;
                         i++;
                         }
@@ -162,7 +163,7 @@ namespace SmartxAPI.Controllers
                     paramList.Add("@nVacTypeID", nVacTypeID);
                     paramList.Add("@nVacationGroupID", nVacationGroupID);
 
-                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 ", paramList, connection).ToString());
+                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 and ISNULL(B_IsSaveDraft,0) = 0", paramList, connection).ToString());
                     if (toDate < dDateFrom)
                     {
                         string daySql = "select  DATEDIFF(day,'" + toDate.ToString("yyyy-MM-dd") + "','" + dDateFrom.ToString("yyyy-MM-dd") + "')";
@@ -208,6 +209,7 @@ namespace SmartxAPI.Controllers
 
             return AvlDays;
         }
+
         private static double RoundApproximate(double dbl, int digits, double margin, MidpointRounding mode)
         {
             double fraction = dbl * Math.Pow(10, digits);
