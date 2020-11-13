@@ -14,9 +14,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("opportunity")]
+    [Route("leads")]
     [ApiController]
-    public class CRM_Opportunity : ControllerBase
+    public class CRM_Leads : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
 
-        public CRM_Opportunity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public CRM_Leads(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult OpportunityList(int? nCompanyId, int nFnYearId,int nBranchId,int nPage,int nSizeperpage)
+        public ActionResult LeadList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -44,12 +44,12 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMLeads where N_CompanyID=@p1 and N_FnyearID=@p2 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3 and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMLeads where N_CompanyID=@p1 and N_FnyearID=@p2 and N_LeadID not in (select top("+ Count +") N_LeadID from vw_CRMLeads where N_CompanyID=@p1 and N_FnyearID=@p2)";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nBranchId);
+
             SortedList OutPut = new SortedList();
 
 
@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMLeads where N_CompanyID=@p1 and N_FnyearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -83,17 +83,17 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listDetails")]
-        public ActionResult OpportunityListDetails(int? nCompanyId, int nFnYearId,int nOpportunityID,int nBranchId)
+        public ActionResult LeadListDetails(int? nCompanyId, int nFnYearId,int nLeadID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string criteria = "";
   
-            string sqlCommandText = "select * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_OpportunityID=@p3 and N_BranchId=@p4";
+            string sqlCommandText = "select * from vw_CRMLeads where N_CompanyID=@p1 and N_FnyearID=@p2 and N_LeadID=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nOpportunityID);
-            Params.Add("@p4", nBranchId);
+            Params.Add("@p3", nLeadID);
+
 
             try
             {
@@ -130,36 +130,35 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_OpportunityID"].ToString());
-                int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
+                int nLeadID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LeadID"].ToString());
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string OpportunityCode = "";
-                    var values = MasterTable.Rows[0]["X_OpportunityCode"].ToString();
+                    string LeadCode = "";
+                    var values = MasterTable.Rows[0]["X_LeadCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
-                        Params.Add("N_FormID", 1302);
-                        Params.Add("N_BranchID", nBranchId);
-                        OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "X_OpportunityCode", Params, connection, transaction);
-                        if (OpportunityCode == "") { return Ok(api.Error("Unable to generate Opportunity Code")); }
-                        MasterTable.Rows[0]["X_OpportunityCode"] = OpportunityCode;
+                        Params.Add("N_FormID", 1305);
+                        LeadCode = dLayer.GetAutoNumber("CRM_Leads", "X_LeadCode", Params, connection, transaction);
+                        if (LeadCode == "") { return Ok(api.Error("Unable to generate LeadCode Code")); }
+                        MasterTable.Rows[0]["X_LeadCode"] = LeadCode;
                     }
                     else
                     {
-                        dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                        dLayer.DeleteData("CRM_Leads", "N_LeadID", nLeadID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("N_OpportunityID");
+                    MasterTable.Columns.Remove("N_LeadID");
                     MasterTable.AcceptChanges();
 
 
-                    nOpportunityID = dLayer.SaveData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, MasterTable, connection, transaction);
-                    if (nOpportunityID <= 0)
+                    nLeadID = dLayer.SaveData("CRM_Leads", "N_LeadID", nLeadID, MasterTable, connection, transaction);
+                    if (nLeadID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
@@ -167,7 +166,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return OpportunityListDetails(nCompanyID, nFnYearId, nOpportunityID,nBranchId);
+                        return LeadListDetails(nCompanyID, nFnYearId, nLeadID);
                     }
                 }
             }
@@ -179,7 +178,7 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nOpportunityID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nLeadID,int nCompanyID, int nFnYearID)
         {
 
              int Results = 0;
@@ -189,34 +188,34 @@ namespace SmartxAPI.Controllers
                 SortedList QueryParams = new SortedList();                
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nFormID", 1302);
-                QueryParams.Add("@nOpportunityID", nOpportunityID);
+                QueryParams.Add("@nFormID", 1305);
+                QueryParams.Add("@nLeadID", nLeadID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Opportunity..."));
+                        return Ok(api.Error("Year is closed, Cannot create new Lead..."));
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    Results = dLayer.DeleteData("CRM_Leads", "N_LeadID", nLeadID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
                     Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_OpportunityID",nOpportunityID.ToString());
-                    return Ok(api.Success(res,"Opportunity deleted"));
+                    res.Add("N_LeadID",nLeadID.ToString());
+                    return Ok(api.Success(res,"Lead deleted"));
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Opportunity"));
+                    return Ok(api.Error("Unable to delete Lead"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete Opportunity"));
+                return Ok(api.Error("Unable to delete Lead"));
             }
 
 
