@@ -777,10 +777,11 @@ namespace SmartxAPI.GeneralFunctions
             LogParams.Add("@xAction", X_Action);
             LogParams.Add("@nEmpID", EmpID);
             LogParams.Add("@xDepLevel", DepLevel);
+            LogParams.Add("@dTransDate", DateTime.Now.ToString("dd/MMM/yyyy"));
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel", LogParams, connection, transaction);
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0", LogParams, connection, transaction);
 
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
@@ -791,7 +792,6 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
                 LogParams.Add("@xSystemName", "WebRequest");
                 LogParams.Add("@xTransCode", X_TransCode);
-                LogParams.Add("@dTransDate", DateTime.Now.ToString("dd/MMM/yyyy"));
                 LogParams.Add("@xComments", Comments);
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);

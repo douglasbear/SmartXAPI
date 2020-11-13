@@ -15,9 +15,6 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("employee")]
     [ApiController]
-
-
-
     public class Pay_EmployeeMaster : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
@@ -36,7 +33,7 @@ namespace SmartxAPI.Controllers
             FormID = 0;
         }
 
-         [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult GetEmployeeList(int? nCompanyID,int nFnYearID, bool bAllBranchData,int nBranchID)
         {
             DataTable dt = new DataTable();
@@ -69,16 +66,11 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(_api.Success(dt));
                 }
-
             }
             catch (Exception e)
             {
                 return BadRequest(_api.Error(e));
             }
         }
-
-
-
-
         }
     }
