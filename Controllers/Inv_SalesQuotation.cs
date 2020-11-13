@@ -80,13 +80,13 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetQuotationDetails(int? nCompanyId, int xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID)
+        public ActionResult GetQuotationDetails(int xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID)
         {
             DataSet dsQuotation = new DataSet();
             DataTable dtProcess = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
-
+            int nCompanyId=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);
             Params.Add("@xQuotationNo", xQuotationNo);
@@ -151,7 +151,10 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCustomerID", nCustomerID);
                     if (nCustomerID > 0)
                     {
-                        object xCustomerCode = dLayer.ExecuteScalar(" select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", Params, connection);
+                        string sql="select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0";
+                        if(bAllBranchData)
+                            sql="select X_CustomerCode from Inv_Customer where N_CustomerID=@nCustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive = 0";
+                        object xCustomerCode = dLayer.ExecuteScalar(sql, Params, connection);
                         Master = myFunctions.AddNewColumnToDataTable(Master, "X_CustomerCode", typeof(string), xCustomerCode.ToString());
                     }
                     else
@@ -192,15 +195,21 @@ namespace SmartxAPI.Controllers
 
                     //object objSalesOrder = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder Where N_CompanyID=@nCompanyID and N_QuotationID =@nQuotationID and B_IsSaveDraft=0", Params);
                     object objSalesOrder = myFunctions.checkProcessed("Inv_SalesOrder", "N_SalesOrderID", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesOrderProcessed", typeof(Boolean), false);
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_DeliveryNoteProcessed", typeof(Boolean), false);
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesProcessed", typeof(Boolean), false);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesOrderProcessed", typeof(int), 0);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesOrderNo", typeof(string), "");
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_DeliveryNoteProcessed", typeof(int), 0);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_DeliveryNoteNo", typeof(string), "");
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "B_SalesProcessed", typeof(int), 0);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_SalesReceiptNo", typeof(string), "");
                     if (objSalesOrder.ToString() != "")
                     {
                         if (myFunctions.getIntVAL(objSalesOrder.ToString()) > 0)
                         {
                             Params.Add("@nSalesOrderID", myFunctions.getIntVAL(objSalesOrder.ToString()));
-                            Master.Rows[0]["B_SalesOrderProcessed"] = true;
+                            Master.Rows[0]["B_SalesOrderProcessed"] = 1;
+                            object objxSalesOrderNo = myFunctions.checkProcessed("Inv_SalesOrder", "X_OrderNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
+                            Master.Rows[0]["X_SalesOrderNo"] = objxSalesOrderNo;
+
 
                             object objDeliveryNote = myFunctions.checkProcessed("Inv_DeliveryNote", "N_DeliveryNoteID", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
 
@@ -209,7 +218,9 @@ namespace SmartxAPI.Controllers
                                 if (myFunctions.getIntVAL(objDeliveryNote.ToString()) > 0)
                                 {
                                     Params.Add("@nDeliveryNoteID", myFunctions.getIntVAL(objDeliveryNote.ToString()));
-                                    Master.Rows[0]["B_DeliveryNoteProcessed"] = true;
+                                    Master.Rows[0]["B_DeliveryNoteProcessed"] = 1;
+                                    object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_SalesOrderID", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
+                                    Master.Rows[0]["X_DeliveryNoteNo"] = objxDeliveryNoteNo;
                                 }
                             }
 
@@ -220,7 +231,10 @@ namespace SmartxAPI.Controllers
                                 if (myFunctions.getIntVAL(objSales.ToString()) > 0)
                                 {
                                     Params.Add("@nSalesInvID", myFunctions.getIntVAL(objSales.ToString()));
-                                    Master.Rows[0]["B_SalesProcessed"] = true;
+                                    Master.Rows[0]["B_SalesProcessed"] = 1;
+                                    object objxSalesNo = myFunctions.checkProcessed("Inv_Sales", "N_SalesID", "X_ReceiptNo", "@nSalesOrderID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
+                                    Master.Rows[0]["X_SalesReceiptNo"] = objxSalesNo;
+
                                 }
                             }
 

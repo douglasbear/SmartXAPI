@@ -32,8 +32,9 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage)
+        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, int nSizeperpage)
         {
+            int nCompanyId=myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -42,9 +43,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2  order by [Invoice No] DESC";
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2   order by [Invoice No] DESC)   order by [Invoice No] DESC";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -287,31 +288,7 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
-        // private bool ValidateCreditLimit(int nCustomerID, int nFnYearID, int nCompanyID, double nCreditLimit)
-        // {
-        //     if (N_CreditLimit > 0)
-        //     {
-        //         double CurrentBalance = myFunctions.getVAL(dba.ExecuteSclar("SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=2 and N_AccID=" + N_CustomerID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString());//----Customer Balance
-        //         double CreditLimt = myFunctions.getVAL(N_CreditLimit.ToString());
-        //         double Total = myFunctions.getVAL(txtBalance.Text.Trim()) + CurrentBalance;
-        //         if (N_SalesId > 0)
-        //         {
-        //             double salesamt = myFunctions.getVAL(txtBalance.Tag.ToString());
-        //             Total = myFunctions.getVAL(txtBalance.Text.Trim()) + CurrentBalance - salesamt;
-        //         }
-        //         if (((CreditLimt - Total) * 100 / CreditLimt) <= 5)
-        //         {
 
-        //         }
-        //         if (Total > CreditLimt)
-        //         {
-        //             msg.msgInformation(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "The Payment Amount would breach the Credit limit" + " " + myFunctions.getVAL(CreditLimt.ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace)) + " " + ". Please Contact Your Supervisor to adjust the credit limit if necessary."));
-        //             return false;
-        //         }
-        //     }
-        //     return true;
-        // }
-        //Save....
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -367,41 +344,41 @@ namespace SmartxAPI.Controllers
                     else
                         B_AllowCashPay = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select cast(count(N_CustomerID) as bit) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID  and N_AllowCashPay=1 and (N_BranchId=@nBranchID or N_BranchId=0)", QueryParams, connection, transaction).ToString());
 
-                    if (N_PaymentMethodID == 2 && B_AllowCashPay || B_POS)
-                    {
-                        int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_CustomerID) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchID or N_BranchId=0) and N_EnablePopup=1", QueryParams, connection, transaction).ToString());
-                        if (count > 0)
-                        {
-                            N_AmtSplit = 1;
-                            //Filling sales amount details
-                            //                            DataTable dtsaleamountdetails = new DataTable();
-                            // if (ds.Tables.Contains("saleamountdetails"))
-                            //     ds.Tables.Remove("saleamountdetails");
-                            string qry = "";
-                            if (N_SalesID > 0)
-                            {
-                                if (ds.Tables.Contains("saleamountdetails"))
-                                    ds.Tables.Remove("saleamountdetails");
-                                object ObjSaleAmountCustID = dLayer.ExecuteScalar("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection, transaction);
-                                if (ObjSaleAmountCustID != null)
-                                {
-                                    if (myFunctions.getIntVAL(ObjSaleAmountCustID.ToString()) == N_CustomerID)
-                                        qry = "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID";
-                                    else
-                                        qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
-                                }
-                                else
-                                    qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
-                                dtsaleamountdetails = dLayer.ExecuteDataTable(qry, QueryParams, connection, transaction);
-                            }
-                            // else
-                            //     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
+                    // if (N_PaymentMethodID == 2 && B_AllowCashPay || B_POS)
+                    // {
+                    //     int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_CustomerID) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchID or N_BranchId=0) and N_EnablePopup=1", QueryParams, connection, transaction).ToString());
+                    //     if (count > 0)
+                    //     {
+                    //         N_AmtSplit = 1;
+                    //         //Filling sales amount details
+                    //         //                            DataTable dtsaleamountdetails = new DataTable();
+                    //         // if (ds.Tables.Contains("saleamountdetails"))
+                    //         //     ds.Tables.Remove("saleamountdetails");
+                    //         string qry = "";
+                    //         if (N_SalesID > 0)
+                    //         {
+                    //             if (ds.Tables.Contains("saleamountdetails"))
+                    //                 ds.Tables.Remove("saleamountdetails");
+                    //             object ObjSaleAmountCustID = dLayer.ExecuteScalar("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection, transaction);
+                    //             if (ObjSaleAmountCustID != null)
+                    //             {
+                    //                 if (myFunctions.getIntVAL(ObjSaleAmountCustID.ToString()) == N_CustomerID)
+                    //                     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID";
+                    //                 else
+                    //                     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
+                    //             }
+                    //             else
+                    //                 qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
+                    //             dtsaleamountdetails = dLayer.ExecuteDataTable(qry, QueryParams, connection, transaction);
+                    //         }
+                    //         // else
+                    //         //     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
 
-                            dtsaleamountdetails = _api.Format(dtsaleamountdetails, "saleamountdetails");
-                            //ds.Tables.Add(dtsaleamountdetails);
+                    //         dtsaleamountdetails = _api.Format(dtsaleamountdetails, "saleamountdetails");
+                    //         //ds.Tables.Add(dtsaleamountdetails);
 
-                        }
-                    }
+                    //     }
+                    // }
                     //saving data
                     var values = MasterRow["x_ReceiptNo"].ToString();
                     if (values == "@Auto")

@@ -84,14 +84,24 @@ namespace SmartxAPI.Controllers
         [HttpGet("lookup/{type}") ]
         public ActionResult GetLookup (string type)
         {
-            int id=0;
+            int N_FormID=0;
             switch(type){
-                case "VendorType": id=52;
+                case "VendorType": N_FormID=52;
+                break;
+                case "Stage": N_FormID=1310;
+                break;
+                case "Industry": N_FormID=1311;
+                break;
+                case "LeadSource": N_FormID=1312;
+                break;
+                case "LeadStatus": N_FormID=1313;
+                break;
+                case "Ownership": N_FormID=1314;
                 break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_ReferId=@p1";
-            SortedList param = new SortedList(){{"@p1",id}};
+            SortedList param = new SortedList(){{"@p1",N_FormID}};
             
             DataTable dt=new DataTable();
             

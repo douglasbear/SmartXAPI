@@ -173,14 +173,15 @@ namespace SmartxAPI.Data
                             loginRes.I_CompanyLogo = "data:image/png;base64," + Convert.ToBase64String(loginRes.I_Logo, 0, loginRes.I_Logo.Length);
                         var MenuList = _context.VwUserMenus
                         .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                        .OrderBy(VwUserMenus => VwUserMenus.NOrder)
                         .ToList();
                         var Menu = _mapper.Map<List<MenuDto>>(MenuList);
 
                         List<MenuDto> PMList = new List<MenuDto>();
-                        foreach (var ParentMenu in Menu.Where(y => y.NParentMenuId == 0))
+                        foreach (var ParentMenu in Menu.Where(y => y.NParentMenuId == 0).OrderBy(VwUserMenus => VwUserMenus.NOrder))
                         {
                             List<ChildMenuDto> CMList = new List<ChildMenuDto>();
-                            foreach (var ChildMenu in Menu.Where(y => y.NParentMenuId == ParentMenu.NMenuId))
+                            foreach (var ChildMenu in Menu.Where(y => y.NParentMenuId == ParentMenu.NMenuId).OrderBy(VwUserMenus => VwUserMenus.NOrder))
                             {
                                 CMList.Add(_mapper.Map<ChildMenuDto>(ChildMenu));
                             }
@@ -203,14 +204,15 @@ namespace SmartxAPI.Data
                     case "menu":
                         var RMenuList = _context.VwUserMenus
                  .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                 .OrderBy(VwUserMenus => VwUserMenus.NOrder)
                  .ToList();
                         var RMenu = _mapper.Map<List<MenuDto>>(RMenuList);
 
                         List<MenuDto> RPMList = new List<MenuDto>();
-                        foreach (var ParentMenu in RMenu.Where(y => y.NParentMenuId == 0))
+                        foreach (var ParentMenu in RMenu.Where(y => y.NParentMenuId == 0).OrderBy(y => y.NOrder))
                         {
                             List<ChildMenuDto> CMList = new List<ChildMenuDto>();
-                            foreach (var ChildMenu in RMenu.Where(y => y.NParentMenuId == ParentMenu.NMenuId))
+                            foreach (var ChildMenu in RMenu.Where(y => y.NParentMenuId == ParentMenu.NMenuId).OrderBy(y => y.NOrder))
                             {
                                 CMList.Add(_mapper.Map<ChildMenuDto>(ChildMenu));
                             }

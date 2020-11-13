@@ -44,9 +44,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount="";
 
             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by [Order No] DESC";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId not in (select top("+ Count +") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId not in (select top("+ Count +") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by [Order No] DESC) order by [Order No] DESC";
            
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -80,7 +80,6 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID)
         {
-            bool B_PRSVisible = false;
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             DataTable MasterTable = new DataTable();
@@ -138,21 +137,20 @@ namespace SmartxAPI.Controllers
                     DetailParams.Add("n_LocationID", MasterRow["N_LocationID"]);
                     string Location = Convert.ToString(dLayer.ExecuteScalar("select X_LocationName from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@n_LocationID", DetailParams, connection));
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_LocationName", typeof(string), Location);
-                    bool B_Processed = false;
-                    object InSales = false, InDeliveryNote = false, CancelStatus = false;
+                    object InSales = null, InDeliveryNote = null, CancelStatus = null;
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         if (Convert.ToBoolean(MasterRow["N_Processed"]))
                         {
-                            B_Processed = true;
-                            InSales = dLayer.ExecuteScalar("select 1 from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                            InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             InDeliveryNote = dLayer.ExecuteScalar("select 1 from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             CancelStatus = dLayer.ExecuteScalar("select 1 from Inv_SalesOrder where B_CancelOrder=1 and N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
 
                         }
                     }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(string), InSales);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(string), InDeliveryNote);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(int), InSales!=null?1:0);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(int), InSales);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote!=null?1:0);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderCanceled", typeof(string), CancelStatus);
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);

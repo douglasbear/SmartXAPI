@@ -83,6 +83,26 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
+                string ReffType =  MasterTable.Rows[0]["n_ReferId"].ToString();
+                int N_FormID =0;
+                switch(ReffType){
+                case "VendorType": N_FormID=52;
+                break;
+                case "Stage": N_FormID=1310;
+                break;
+                case "Industry": N_FormID=1311;
+                break;
+                case "LeadSource": N_FormID=1312;
+                break;
+                case "LeadStatus": N_FormID=1313;
+                break;
+                case "Ownership": N_FormID=1314;
+                break;
+                default: return Ok(api.Warning("Invalid Type"));
+            }
+
+            MasterTable.Rows[0]["n_ReferId"] = N_FormID;
+            MasterTable.AcceptChanges();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -96,7 +116,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
-                        Params.Add("N_FormID", 1305);
+                        Params.Add("N_FormID", N_FormID);
                         PkeyCode = dLayer.GetAutoNumber("Gen_LookupTable", "X_PkeyCode", Params, connection, transaction);
                         if (PkeyCode == "") { return Ok(api.Error("Unable to generate PkeyCode Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
@@ -105,10 +125,8 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("N_PkeyId");
-                    MasterTable.AcceptChanges();
 
-                    nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", nPkeyId, MasterTable, connection, transaction);
+                    nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
                     if (nPkeyId <= 0)
                     {
                         transaction.Rollback();
@@ -117,7 +135,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return OpportunityListDetails( nFnYearId, nPkeyId);
+                        return Ok(api.Success("Successfully saved"));
                     }
                 }
             }
