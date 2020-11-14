@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult ActivityList(int nPage,int nSizeperpage)
         {
             int nCompanyId=myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -44,11 +44,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from CRM_Activity where N_CompanyID=@p1 ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from CRM_Activity where N_CompanyID=@p1 and N_ActivityID not in (select top("+ Count +") N_ActivityID from CRM_Activity where N_CompanyID=@p1)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 and N_ActivityID not in (select top("+ Count +") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1)";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
 
             SortedList OutPut = new SortedList();
 
@@ -60,7 +59,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from CRM_Activity where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -83,12 +82,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ActivityListDetails(int nFnYearId,string xActivityCode)
+        public ActionResult ActivityListDetails(string xActivityCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
+            string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
 
