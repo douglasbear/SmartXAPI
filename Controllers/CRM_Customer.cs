@@ -34,21 +34,20 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult LeadList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult LeadList(int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
             string sqlCommandCount = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2 ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2 and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1)";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
 
             SortedList OutPut = new SortedList();
 
@@ -60,7 +59,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -82,17 +81,16 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("listDetails")]
-        public ActionResult LeadListDetails(int nFnYearId,string xCustomerCode)
+        [HttpGet("details")]
+        public ActionResult LeadListDetails(string xCustomerCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2 and X_CustomerCode=@p3";
+            string sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1 and X_CustomerCode=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", xCustomerCode);
+            Params.Add("@p2", xCustomerCode);
 
 
             try
@@ -153,9 +151,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("N_CustomerID");
-                    MasterTable.AcceptChanges();
-
 
                     nCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerID",  MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
@@ -178,7 +173,7 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCustomerID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nCustomerID)
         {
 
              int Results = 0;
@@ -186,17 +181,12 @@ namespace SmartxAPI.Controllers
             {                        
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();                
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 1305);
                 QueryParams.Add("@nCustomerID", nCustomerID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Lead..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                     transaction.Commit();
@@ -215,7 +205,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete Customer"));
+                return Ok(api.Error(ex));
             }
 
 
