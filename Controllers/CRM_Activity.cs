@@ -34,19 +34,19 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult ActivityList(int nFnYearId,int nPage,int nSizeperpage)
         {
+            int nCompanyId=myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from CRM_Activity where N_CompanyID=@p1 and N_FnyearID=@p2 ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from CRM_Activity where N_CompanyID=@p1 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from CRM_Activity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_ActivityID not in (select top("+ Count +") N_ActivityID from CRM_Activity where N_CompanyID=@p1 and N_FnyearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from CRM_Activity where N_CompanyID=@p1 and N_ActivityID not in (select top("+ Count +") N_ActivityID from CRM_Activity where N_CompanyID=@p1)";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
 
@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from CRM_Activity where N_CompanyID=@p1 and N_FnyearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from CRM_Activity where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -82,17 +82,15 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("listDetails")]
-        public ActionResult ActivityListDetails(int? nCompanyId, int nFnYearId,int nActivityID)
+        [HttpGet("details")]
+        public ActionResult ActivityListDetails(int nFnYearId,string xActivityCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
-  
-            string sqlCommandText = "select * from CRM_Activity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_ActivityID=@p3";
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nActivityID);
+            Params.Add("@p3", xActivityCode);
 
 
             try
@@ -149,11 +147,6 @@ namespace SmartxAPI.Controllers
                         if (ActivityCode == "") { return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["X_ActivityCode"] = ActivityCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("CRM_Activity", "N_ActivityID", nActivityID, "", connection, transaction);
-                    }
-
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "N_ActivityID", MasterTable, connection, transaction);
                     if (nActivityID <= 0)
@@ -164,7 +157,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return ActivityListDetails(nCompanyID, nFnYearId, nActivityID);
+                        return Ok("Activity Created");
                     }
                 }
             }
@@ -213,7 +206,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete Activity"));
+                return Ok(api.Error(ex));
             }
 
 
