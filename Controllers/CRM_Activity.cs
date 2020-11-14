@@ -153,11 +153,9 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("CRM_Activity", "N_ActivityID", nActivityID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("N_ActivityID");
-                    MasterTable.AcceptChanges();
 
 
-                    nActivityID = dLayer.SaveData("CRM_Activity", "N_ActivityID", nActivityID, MasterTable, connection, transaction);
+                    nActivityID = dLayer.SaveData("CRM_Activity", "N_ActivityID", MasterTable, connection, transaction);
                     if (nActivityID <= 0)
                     {
                         transaction.Rollback();
