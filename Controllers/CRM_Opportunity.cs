@@ -38,7 +38,6 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
@@ -83,17 +82,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listDetails")]
-        public ActionResult OpportunityListDetails(int? nCompanyId, int nFnYearId,int nOpportunityID,int nBranchId)
+        public ActionResult OpportunityListDetails(string xOpportunityCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_OpportunityID=@p3 and N_BranchId=@p4";
+            string sqlCommandText = "select * from vw_CRMOpportunity where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nOpportunityID);
-            Params.Add("@p4", nBranchId);
+            Params.Add("@p2", xOpportunityCode);
 
             try
             {
@@ -154,11 +151,9 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("N_OpportunityID");
-                    MasterTable.AcceptChanges();
 
 
-                    nOpportunityID = dLayer.SaveData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, MasterTable, connection, transaction);
+                    nOpportunityID = dLayer.SaveData("CRM_Opportunity", "N_OpportunityID", MasterTable, connection, transaction);
                     if (nOpportunityID <= 0)
                     {
                         transaction.Rollback();
@@ -167,7 +162,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return OpportunityListDetails(nCompanyID, nFnYearId, nOpportunityID,nBranchId);
+                        return Ok(api.Success("Oppurtunity Created"));
                     }
                 }
             }
