@@ -34,21 +34,21 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult OpportunityList(int? nCompanyId, int nFnYearId,int nBranchId,int nPage,int nSizeperpage)
+        public ActionResult OpportunityList(int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3 and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1)";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nBranchId);
+
             SortedList OutPut = new SortedList();
 
 
@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnyearID=@p2 and N_BranchId=@p3";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("listDetails")]
+        [HttpGet("details")]
         public ActionResult OpportunityListDetails(string xOpportunityCode)
         {
             DataTable dt = new DataTable();
@@ -174,25 +174,17 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nOpportunityID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nOpportunityID)
         {
 
              int Results = 0;
             try
             {                        
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nFormID", 1302);
-                QueryParams.Add("@nOpportunityID", nOpportunityID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Opportunity..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
@@ -211,7 +203,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete Opportunity"));
+                return Ok(api.Error(ex));
             }
 
 

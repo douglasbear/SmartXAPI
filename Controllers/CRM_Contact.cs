@@ -34,21 +34,20 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ContactList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult ContactList(int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 and N_FnyearID=@p2 ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 and N_FnyearID=@p2 and N_ContactID not in (select top("+ Count +") N_ContactID from vw_CRMContact where N_CompanyID=@p1 and N_FnyearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 and N_ContactID not in (select top("+ Count +") N_ContactID from vw_CRMContact where N_CompanyID=@p1)";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
 
             SortedList OutPut = new SortedList();
 
@@ -60,7 +59,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1 and N_FnyearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -82,17 +81,16 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("listDetails")]
-        public ActionResult ContactListDetails(int? nCompanyId, int nFnYearId,int nContactID)
+        [HttpGet("details")]
+        public ActionResult ContactListDetails(int xContactCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from vw_CRMContact where N_CompanyID=@p1 and N_FnyearID=@p2 and N_ContactID=@p3";
+            string sqlCommandText = "select * from vw_CRMContact where N_CompanyID=@p1 and x_ContactCode=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nContactID);
+            Params.Add("@p2", xContactCode);
 
 
             try
@@ -153,11 +151,9 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("CRM_Contact", "N_ContactID", nContactID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("N_ContactID");
-                    MasterTable.AcceptChanges();
 
 
-                    nContactID = dLayer.SaveData("CRM_Contact", "N_ContactID", nContactID, MasterTable, connection, transaction);
+                    nContactID = dLayer.SaveData("CRM_Contact", "N_ContactID", MasterTable, connection, transaction);
                     if (nContactID <= 0)
                     {
                         transaction.Rollback();
@@ -166,7 +162,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return ContactListDetails(nCompanyID, nFnYearId, nContactID);
+                        return Ok(api.Success("Customer Created"));
                     }
                 }
             }
@@ -178,7 +174,7 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nContactID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nContactID)
         {
 
              int Results = 0;
@@ -186,17 +182,12 @@ namespace SmartxAPI.Controllers
             {                        
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();                
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nFormID", 1308);
                 QueryParams.Add("@nContactID", nContactID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Activity..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Contact", "N_ContactID", nContactID, "", connection, transaction);
                     transaction.Commit();
@@ -215,7 +206,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete Contact"));
+                return Ok(api.Error(ex));
             }
 
 
