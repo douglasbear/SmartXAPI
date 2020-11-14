@@ -183,9 +183,9 @@ namespace SmartxAPI.Controllers
                         if(!EligibleForLoan(dDateFrom,QueryParams,connection,transaction)){
                            return Ok(api.Warning("Not Eligible For Loan!"));  
                         }
-                        if(LoanCountLimitExceed(QueryParams,connection,transaction)){
-                           return Ok(api.Warning("Loan Limit Exceeded!"));  
-                        }
+                        // if(LoanCountLimitExceed(QueryParams,connection,transaction)){
+                        //    return Ok(api.Warning("Loan Limit Exceeded!"));  
+                        // }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
