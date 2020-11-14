@@ -83,16 +83,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listDetails")]
-        public ActionResult LeadListDetails(int? nCompanyId, int nFnYearId,int nCustomerID)
+        public ActionResult LeadListDetails(int nFnYearId,string xCustomerCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2 and N_CustomerID=@p3";
+            string sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnyearID=@p2 and X_CustomerCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nCustomerID);
+            Params.Add("@p3", xCustomerCode);
 
 
             try
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
 
 
-                    nCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerID", nCustomerID, MasterTable, connection, transaction);
+                    nCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerID",  MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return LeadListDetails(nCompanyID, nFnYearId, nCustomerID);
+                        return Ok(api.Success("Customer Created"));
                     }
                 }
             }
