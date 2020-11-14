@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_OpportunityID"].ToString());
+                int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -143,17 +143,13 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1302);
                         Params.Add("N_BranchID", nBranchId);
-                        OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "X_OpportunityCode", Params, connection, transaction);
+                        OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", Params, connection, transaction);
                         if (OpportunityCode == "") { return Ok(api.Error("Unable to generate Opportunity Code")); }
-                        MasterTable.Rows[0]["X_OpportunityCode"] = OpportunityCode;
-                    }
-                    else
-                    {
-                        dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                        MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
 
 
-                    nOpportunityID = dLayer.SaveData("CRM_Opportunity", "N_OpportunityID", MasterTable, connection, transaction);
+                    nOpportunityID = dLayer.SaveData("CRM_Opportunity", "n_OpportunityID", MasterTable, connection, transaction);
                     if (nOpportunityID <= 0)
                     {
                         transaction.Rollback();

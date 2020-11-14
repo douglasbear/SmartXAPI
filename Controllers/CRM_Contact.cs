@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
+                int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ContactID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -137,23 +137,19 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string ContactCode = "";
-                    var values = MasterTable.Rows[0]["X_ContactCode"].ToString();
+                    var values = MasterTable.Rows[0]["x_ContactCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1308);
-                        ContactCode = dLayer.GetAutoNumber("CRM_Contact", "X_ContactCode", Params, connection, transaction);
+                        ContactCode = dLayer.GetAutoNumber("CRM_Contact", "x_ContactCode", Params, connection, transaction);
                         if (ContactCode == "") { return Ok(api.Error("Unable to generate Contact Code")); }
-                        MasterTable.Rows[0]["X_ContactCode"] = ContactCode;
-                    }
-                    else
-                    {
-                        dLayer.DeleteData("CRM_Contact", "N_ContactID", nContactID, "", connection, transaction);
+                        MasterTable.Rows[0]["x_ContactCode"] = ContactCode;
                     }
 
 
-                    nContactID = dLayer.SaveData("CRM_Contact", "N_ContactID", MasterTable, connection, transaction);
+                    nContactID = dLayer.SaveData("CRM_Contact", "n_ContactID", MasterTable, connection, transaction);
                     if (nContactID <= 0)
                     {
                         transaction.Rollback();
@@ -162,7 +158,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Customer Created"));
+                        return Ok(api.Success("Contact Created"));
                     }
                 }
             }

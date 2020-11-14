@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
+                int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -137,22 +137,18 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string LeadCode = "";
-                    var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    var values = MasterTable.Rows[0]["x_CustomerCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1306);
-                        LeadCode = dLayer.GetAutoNumber("CRM_Customer", "X_CustomerCode", Params, connection, transaction);
+                        LeadCode = dLayer.GetAutoNumber("CRM_Customer", "x_CustomerCode", Params, connection, transaction);
                         if (LeadCode == "") { return Ok(api.Error("Unable to generate Customer Code")); }
-                        MasterTable.Rows[0]["X_CustomerCode"] = LeadCode;
-                    }
-                    else
-                    {
-                        dLayer.DeleteData("CRM_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                        MasterTable.Rows[0]["x_CustomerCode"] = LeadCode;
                     }
 
-                    nCustomerID = dLayer.SaveData("CRM_Customer", "N_CustomerID",  MasterTable, connection, transaction);
+                    nCustomerID = dLayer.SaveData("CRM_Customer", "n_CustomerID",  MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();

@@ -255,7 +255,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete Customer"));
+                return Ok(api.Error(ex));
             }
 
 

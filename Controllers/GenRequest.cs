@@ -50,9 +50,13 @@ namespace SmartxAPI.Controllers
                 break;
                 case "TravelType": id=56;
                 break;
-                case "StageType": id=56;
+                case "ActivityRelation": id=91;
                 break;
-                case "LeadSource": id=56;
+                case "ActivityType": id=92;
+                break;
+                case "CustomerType": id=93;
+                break;
+                case "TimeUnit": id=68;
                 break;
                 default: return Ok("Invalid Type");
             }
