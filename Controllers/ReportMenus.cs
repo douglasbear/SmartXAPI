@@ -28,6 +28,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly string reportApi;
         private readonly string reportPath;
+        private readonly string reportLocation;
 
         public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -37,6 +38,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
             reportApi = conf.GetConnectionString("ReportAPI");
             reportPath = conf.GetConnectionString("ReportPath");
+            reportLocation = conf.GetConnectionString("ReportLocation");
         }
         [HttpGet("list")]
         public ActionResult GetReportList(int? nMenuId, int? nLangId)
@@ -206,7 +208,7 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&con=&path="+reportPath ;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation+"printing/";//+ connectionString;
                 var path = client.GetAsync(URL);
                 path.Wait();
                 return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
