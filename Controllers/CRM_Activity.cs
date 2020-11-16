@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok("Activity Created");
+                        return Ok(api.Success("Activity Created"));
                     }
                 }
             }
