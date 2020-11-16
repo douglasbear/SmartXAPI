@@ -30,6 +30,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            FormID =1307;
         }
 
 
@@ -127,7 +128,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActivityID"].ToString());
+                int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActivityID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -136,18 +137,18 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string ActivityCode = "";
-                    var values = MasterTable.Rows[0]["X_ActivityCode"].ToString();
+                    var values = MasterTable.Rows[0]["x_ActivityCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
-                        Params.Add("N_FormID", 1307);
-                        ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "X_ActivityCode", Params, connection, transaction);
+                        Params.Add("N_FormID", this.FormID);
+                        ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
                         if (ActivityCode == "") { return Ok(api.Error("Unable to generate Activity Code")); }
-                        MasterTable.Rows[0]["X_ActivityCode"] = ActivityCode;
+                        MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
                     }
 
-                    nActivityID = dLayer.SaveData("CRM_Activity", "N_ActivityID", MasterTable, connection, transaction);
+                    nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
                     if (nActivityID <= 0)
                     {
                         transaction.Rollback();
