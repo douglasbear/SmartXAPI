@@ -284,7 +284,7 @@ namespace SmartxAPI.Controllers
                 };
                 var client = new HttpClient(handler);
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=&path="+reportPath ;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation ;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
