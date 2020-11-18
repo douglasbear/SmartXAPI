@@ -75,8 +75,6 @@ namespace SmartxAPI.Controllers
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     }
-
-
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -112,7 +110,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT     Pay_EmpBussinessTripRequest.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID FROM  Pay_EmpBussinessTripRequest LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID  where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID AS Expr1, Gen_Defaults.X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_Defaults ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_Defaults.N_TypeId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 

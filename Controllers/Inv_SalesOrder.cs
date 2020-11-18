@@ -35,14 +35,22 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId)
+        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
 
-            string sqlCommandText = "select * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by D_OrderDate DESC,[Order No]";
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by [Order No] DESC";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_SalesOrderId not in (select top("+ Count +") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 order by [Order No] DESC) order by [Order No] DESC";
+           
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -50,15 +58,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = _api.Format(dt);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",_api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(OutPut));
                 }
             }
             catch (Exception e)
@@ -69,7 +80,6 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID)
         {
-            bool B_PRSVisible = false;
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             DataTable MasterTable = new DataTable();
@@ -127,21 +137,20 @@ namespace SmartxAPI.Controllers
                     DetailParams.Add("n_LocationID", MasterRow["N_LocationID"]);
                     string Location = Convert.ToString(dLayer.ExecuteScalar("select X_LocationName from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@n_LocationID", DetailParams, connection));
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_LocationName", typeof(string), Location);
-                    bool B_Processed = false;
-                    object InSales = false, InDeliveryNote = false, CancelStatus = false;
+                    object InSales = null, InDeliveryNote = null, CancelStatus = null;
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         if (Convert.ToBoolean(MasterRow["N_Processed"]))
                         {
-                            B_Processed = true;
-                            InSales = dLayer.ExecuteScalar("select 1 from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                            InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             InDeliveryNote = dLayer.ExecuteScalar("select 1 from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             CancelStatus = dLayer.ExecuteScalar("select 1 from Inv_SalesOrder where B_CancelOrder=1 and N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
 
                         }
                     }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(string), InSales);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(string), InDeliveryNote);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(int), InSales!=null?1:0);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(int), InSales);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote!=null?1:0);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderCanceled", typeof(string), CancelStatus);
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
@@ -257,11 +266,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_OrderNo"] = x_OrderNo;
                     }
 
-                    MasterTable.Columns.Remove("n_SalesOrderId");
-                    MasterTable.AcceptChanges();
 
-
-                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", n_SalesOrderId, MasterTable, connection, transaction);
+                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", MasterTable, connection, transaction);
                     if (n_SalesOrderId <= 0)
                     {
                         transaction.Rollback();
@@ -272,7 +278,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_SalesOrderId"] = n_SalesOrderId;
                     }
-                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", 0, DetailTable, connection, transaction);
+                    int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
                     {
                         transaction.Rollback();
@@ -303,32 +309,33 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete sales order"));
+                        return Ok(_api.Error("Unable to delete sales order"));
                     }
                     else
                     {
-                        Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+
                     }
 
                     if (Results > 0)
                     {
                         transaction.Commit();
-                        return StatusCode(200, _api.Response(200, "Sales order deleted"));
+                        return Ok(_api.Error("Sales order deleted"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return StatusCode(409, _api.Response(409, "Unable to delete sales order"));
+                        return Ok(_api.Error("Unable to delete sales order"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return BadRequest(_api.Error(ex));
             }
 
 
@@ -385,8 +392,8 @@ namespace SmartxAPI.Controllers
             {
                 connection.Open();
                 int N_DefSPriceID = 0;
-                var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
-                N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID, myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
+                var UserCategoryID = myFunctions.GetUserCategory(User);
+                N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
                 int nSPriceID = N_DefSPriceID;
                 DateTime dateVal = myFunctions.GetFormatedDate(dDate.ToString());
                 SortedList paramList = new SortedList();

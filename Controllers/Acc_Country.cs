@@ -30,11 +30,11 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetCountryList(int? nCompanyId)
+        public ActionResult GetCountryList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
+            int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select X_CountryCode,X_CountryName,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1 order by N_CountryID";
             Params.Add("@p1", nCompanyId);
 
@@ -47,17 +47,17 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return BadRequest( _api.Error(e));
             }
         }
 

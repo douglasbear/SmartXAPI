@@ -20,36 +20,86 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int N_FormID;
         public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = fun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            N_FormID = 65;
         }
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        {
+            DataTable dt = new DataTable();
+            DataTable CountTable = new DataTable();
+            SortedList Params = new SortedList();
+            DataSet dataSet=new DataSet();
+            string sqlCommandText ="";
+            string sqlCommandCount ="";
+
+            int Count= (nPage - 1) * nSizeperpage;
+            if(Count==0)
+                 sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+            
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            SortedList OutPut = new SortedList();
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                connection.Open();
+                dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                
+                //dt = _api.Format(dt,"Details");
+                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                OutPut.Add("Details",_api.Format(dt));
+                OutPut.Add("TotalCount",TotalCount);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest( _api.Error(e));
+            }
+        }
+         [HttpGet("listOrder")]
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId,int nVendorId, bool showAllBranch)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
-            string sqlCommandText = "select N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            string sqlCommandText ="";
+            sqlCommandText = "select top(30) N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+  
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
-
+            
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return StatusCode(200, _api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -58,7 +108,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.Message));
+                return StatusCode(404, _api.Error(e.Message));
             }
         }
         [HttpGet("listdetails")]
@@ -93,13 +143,12 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-
                 connection.Open();
                 
                 dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params,connection);
                 if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(new { }); }
                 dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
-                dtPurchaseInvoice.Rows[0]["N_PurchaseID"] = N_PurchaseID;
+                N_PurchaseID =myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()) ;
                 dt.Tables.Add(dtPurchaseInvoice);
 
 
@@ -130,7 +179,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Response(404, e.Message));
+                return StatusCode(404, _api.Error(e.Message));
             }
         }
 
@@ -148,108 +197,163 @@ namespace SmartxAPI.Controllers
             string InvoiceNo = "";
             DataRow masterRow = MasterTable.Rows[0];
             var values = masterRow["x_InvoiceNo"].ToString();
+            int N_PurchaseID=0;
+            int N_SaveDraft = 0;
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
+               
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
-                SqlTransaction transaction=connection.BeginTransaction();
-            if (values == "@Auto")
-            {
-                Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
-                Params.Add("N_FormID", 80);
-                Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
-                if (InvoiceNo == "") { return StatusCode(409, _api.Response(409, "Unable to generate Invoice Number")); }
-                MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
-            }
-                int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", 0, MasterTable,connection,transaction);
-                if (N_InvoiceId <= 0)
-                {
-                    transaction.Rollback();
-                }
+                connection.Open();
+                SqlTransaction transaction;
+                transaction = connection.BeginTransaction();
+                    if (values == "@Auto")
+                    {
+                     N_PurchaseID = myFunctions.getIntVAL(masterRow["N_PurchaseID"].ToString());
+                     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                     if (N_PurchaseID > 0)
+                     {
+                        if (CheckProcessed(N_PurchaseID))
+                            return Ok(_api.Error("Transaction Started!"));
+                     }
+                    Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                    Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
+                    Params.Add("N_FormID", this.N_FormID);
+                    Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+
+                    InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params,connection,transaction);
+                    if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Invoice Number")); }
+                    MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
+                    }
+
+                    if (N_PurchaseID > 0)
+                        {
+                            SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
+                                {"X_TransType","PURCHASE"},
+                                {"N_VoucherID",N_PurchaseID}};
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        }
+
+                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable,connection,transaction);
+
+                    if (N_InvoiceId <= 0)
+                     {
+                        transaction.Rollback();
+                     }
                 for (int j = 0; j < DetailTable.Rows.Count; j++)
                 {
                     DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
                 }
-                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", 0, DetailTable,connection,transaction);
+                int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable,connection,transaction);
+                 if (N_InvoiceDetailId <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
+                    }
+                    if (N_SaveDraft == 0)
+                    {
+                            SortedList PostingMRNParam = new SortedList();
+                            PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                            PostingMRNParam.Add("N_PurchaseID", N_InvoiceId);
+                            PostingMRNParam.Add("N_UserID", nUserID);
+                            PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+                            PostingMRNParam.Add("X_UseMRN", "");
+                            PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+                            PostingMRNParam.Add("N_MRNID", 0);
+
+                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+                            
+                            
+                            SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                            PostingParam.Add("X_InventoryMode", "PURCHASE");
+                            PostingParam.Add("N_InternalID", N_InvoiceId);
+                            PostingParam.Add("N_UserID", nUserID);
+                            PostingParam.Add("X_SystemName", "ERP Cloud");
+
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
+                    }
                 transaction.Commit();
             }
-                return Ok("Data Saved");
+                return Ok(_api.Success("Purchase Invoice Saved :"+InvoiceNo));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, ex);
+                return Ok(_api.Error(ex));
             }
+        }
+        private bool CheckProcessed(int nPurchaseID)
+        {
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            object AdvancePRProcessed=null;
+            using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        string sqlCommand="Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=@p1 and N_TransID=@p2 and N_FormID=65";
+                        Params.Add("@p1", nCompanyID);
+                        Params.Add("@p2", nPurchaseID);
+                        AdvancePRProcessed = dLayer.ExecuteScalar(sqlCommand, Params, connection);
+                         
+                    }
+                    if (AdvancePRProcessed != null)
+                    {
+                        if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                        {
+                            return true;
+                        }
+                    }
+                     return false;
         }
         //Delete....
-        [HttpDelete()]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nPurchaseID)
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
+            if (CheckProcessed(nPurchaseID))
+                return Ok(_api.Error("Transaction Started"));
             try
             {
-                            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                SqlTransaction transaction=connection.BeginTransaction();
-                Results = dLayer.DeleteData("Inv_Purchase", "n_PurchaseID", nPurchaseID, "",connection,transaction);
-                if (Results <= 0)
-                {
-                    transaction.Rollback();
-                    return StatusCode(409, _api.Response(409, "Unable to Delete PurchaseInvoice"));
-                }
-                else
-                {
-                    Results = dLayer.DeleteData("Inv_PurchaseDetails", "n_PurchaseID", nPurchaseID, "",connection,transaction);
+
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                    SqlTransaction transaction=connection.BeginTransaction();
+                     SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","PURCHASE"},
+                                {"N_VoucherID",nPurchaseID},
+                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"},
+                                {"@B_MRNVisible","0"}};
+
+                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                    if (Results <= 0)
+                     {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to Delete PurchaseInvoice"));
+                     }
+
+                     transaction.Commit();
+                     return Ok(_api.Success("Purchase invoice deleted"));
+                   
                 }
 
-                if (Results > 0)
-                {
-                    transaction.Commit();
-                    return StatusCode(200, _api.Response(200, "Purchase Invoice deleted"));
-                }
-                else
-                {
-                    transaction.Rollback();
-                    return StatusCode(409, _api.Response(409, "Unable to delete Purchase Invoice"));
-                }
-            }
             }
             catch (Exception ex)
             {
-                return StatusCode(404, _api.Response(404, ex.Message));
+                return BadRequest(_api.Error(ex));
             }
 
 
         }
-        // [HttpGet("dummy")]
-        // public ActionResult GetPurchaseInvoiceDummy(int? Id)
-        // {
-        //     try
-        //     {
-        //         string sqlCommandText = "select * from Inv_Purchase where N_PurchaseId=@p1";
-        //         SortedList mParamList = new SortedList() { { "@p1", Id } };
-        //         DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList);
-        //         masterTable = _api.Format(masterTable, "master");
-
-        //         string sqlCommandText2 = "select * from Inv_PurchaseDetails where N_PurchaseId=@p1";
-        //         SortedList dParamList = new SortedList() { { "@p1", Id } };
-        //         DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList);
-        //         detailTable = _api.Format(detailTable, "details");
-
-        //         if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-        //         DataSet dataSet = new DataSet();
-        //         dataSet.Tables.Add(masterTable);
-        //         dataSet.Tables.Add(detailTable);
-
-        //         return Ok(dataSet);
-
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return StatusCode(403, _api.Error(e));
-        //     }
-        // }
+       
 
     }
 }

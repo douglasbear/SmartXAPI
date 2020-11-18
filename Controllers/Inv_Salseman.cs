@@ -157,17 +157,11 @@ namespace SmartxAPI.Controllers
                         SortedList nParams = new SortedList();
                         nParams.Add("@p1",nCompanyID);
                         nParams.Add("@p2",nFnYearID);
-                        nParams.Add("@p3",N_SalesmanID);
-                        string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
+                        string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 ";
                         DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
                         outputDt = _api.Format(outputDt, "NewSalesMan");
 
-                        if(outputDt.Rows.Count==0){
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
-                        }
-                        DataRow NewRow = outputDt.Rows[0];
-                        return Ok(_api.Success(NewRow.Table, "Salesman Saved"));
+                        return Ok(_api.Success(outputDt, "Salesman Saved"));
                     }
                 }
             }

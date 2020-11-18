@@ -33,8 +33,9 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetItemUnitList(int? nCompanyId)
+        public ActionResult GetItemUnitList()
         {
+            int nCompanyId= myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -55,12 +56,12 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+                return BadRequest(api.Error(e));
             }
         }
 
@@ -88,12 +89,12 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+                return BadRequest(api.Error(e));
             }
         }
 
@@ -112,11 +113,11 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", 0, MasterTable, connection, transaction);
+                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", MasterTable, connection, transaction);
                     if (N_ItemUnitID <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(409, api.Response(409, "Unable to save ItemUnit"));
+                        return Ok( api.Warning("Unable to save ItemUnit"));
                     }
                     else
                     {
@@ -130,14 +131,15 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ex)
             {
-                return StatusCode(403, api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
         }
 
 
         [HttpGet("itemwiselist")]
-        public ActionResult GetItemWiseUnitList(int? nCompanyId, string baseUnit, int itemId)
+        public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)
         {
+            int nCompanyId = myFunctions.GetCompanyID(User);
             if (baseUnit == null) { baseUnit = ""; }
             try
             {
@@ -175,17 +177,17 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    return StatusCode(200, api.Response(200, "Product Unit deleted"));
+                    return Ok(api.Success( "Product Unit deleted"));
                 }
                 else
                 {
-                    return StatusCode(409, api.Response(409, "Unable to delete product Unit"));
+                    return Ok(api.Warning("Unable to delete product Unit"));
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, api.Error(ex));
+                return BadRequest(api.Error(ex));
             }
 
 

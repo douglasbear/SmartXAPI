@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                     if (bShowAll)
                         sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_Branchid = @p3";
                     else
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 and N_Branchid = @p3";
+                        sqlCommandText = "select * from vw_App rovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 and N_Branchid = @p3";
                     Params.Add("@p3", N_Branchid);
                 }
             }

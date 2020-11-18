@@ -231,6 +231,14 @@ namespace SmartxAPI.GeneralFunctions
                 Result = obj.ToString();
             return Result;
         }
+        public string ReturnSettings(string Group, string Description, string ValueColumn, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction)
+        {
+            string Result = "";
+            object obj = dLayer.ExecuteScalar("select " + ValueColumn + " from Gen_Settings where X_Group='" + Group + "' and X_Description='" + Description + "' and N_CompanyID=" + nCompanyID + " ", Connection, transaction);
+            if (obj != null)
+                Result = obj.ToString();
+            return Result;
+        }
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction)
         {
             string Result = "";
@@ -255,6 +263,17 @@ namespace SmartxAPI.GeneralFunctions
             NewCol.DefaultValue = Value;
             MasterDt.Columns.Add(NewCol);
             return MasterDt;
+        }
+
+        public DataTable GetSettingsTable()
+        {
+            DataTable QList = new DataTable();
+            QList.Columns.Add(new DataColumn("X_Group", typeof(string)));
+            QList.Columns.Add(new DataColumn("X_Description", typeof(string)));
+            DataColumn NewCol = new DataColumn("N_UserCategoryID", typeof(int));
+            NewCol.DefaultValue = 0;
+            QList.Columns.Add(NewCol);
+            return QList;
         }
 
         public string getDateVAL(DateTime val)
@@ -366,7 +385,11 @@ namespace SmartxAPI.GeneralFunctions
                     Response["btnSaveText"] = "Save";
                     Response["btnDeleteText"] = "Delete";
                     Response["saveEnabled"] = true;
-                    Response["deleteEnabled"] = true;
+                    if (nTransID == 0)
+                    { Response["deleteEnabled"] = false; }
+                    else
+                    { Response["deleteEnabled"] = true; }
+
                     Response["saveTag"] = 0;
                     Response["deleteTag"] = 0;
                     Response["isApprovalSystem"] = 0;
@@ -724,7 +747,16 @@ namespace SmartxAPI.GeneralFunctions
             int N_IsApprovalSystem = this.getIntVAL(ApprovalRow["isApprovalSystem"].ToString());
             int N_ApprovalID = this.getIntVAL(ApprovalRow["approvalID"].ToString());
             int N_FormID = this.getIntVAL(ApprovalRow["formID"].ToString());
-            string Comments = ApprovalRow["comments"].ToString();
+            string Comments = "";
+            DataColumnCollection columns = Approvals.Columns;
+            if (columns.Contains("comments"))
+            {
+                Comments = ApprovalRow["comments"].ToString();
+            }
+            if (Comments == null)
+            {
+                Comments = "";
+            }
 
             int N_GroupID = 1, N_NxtUserID = 0;
             N_GroupID = GroupID;
@@ -745,10 +777,11 @@ namespace SmartxAPI.GeneralFunctions
             LogParams.Add("@xAction", X_Action);
             LogParams.Add("@nEmpID", EmpID);
             LogParams.Add("@xDepLevel", DepLevel);
+            LogParams.Add("@dTransDate", DateTime.Now.ToString("dd/MMM/yyyy"));
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel", LogParams, connection, transaction);
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0", LogParams, connection, transaction);
 
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
@@ -759,7 +792,6 @@ namespace SmartxAPI.GeneralFunctions
                 LogParams.Add("@nApprovalUserCatID", N_ApprovalUserCatID);
                 LogParams.Add("@xSystemName", "WebRequest");
                 LogParams.Add("@xTransCode", X_TransCode);
-                LogParams.Add("@dTransDate", DateTime.Now.ToString("dd/MMM/yyyy"));
                 LogParams.Add("@xComments", Comments);
                 LogParams.Add("@xPartyName", PartyName);
                 LogParams.Add("@nNxtUserID", N_NxtUserID);
@@ -1047,7 +1079,7 @@ namespace SmartxAPI.GeneralFunctions
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, SortedList Params, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);
         public string ReturnSettings(string Group, string Description, string ValueColumn, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection);
-
+        public string ReturnSettings(string Group, string Description, string ValueColumn, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnSettings(string Group, string Description, string ValueColumn, string ConditionColumn, string Value, int nCompanyID, IDataAccessLayer dLayer, SqlConnection Connection, SqlTransaction transaction);
         public string ReturnValue(string TableName, string ColumnReturn, string Condition, SortedList Params, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable AddNewColumnToDataTable(DataTable MasterDt, string ColName, Type dataType, object Value);
@@ -1062,6 +1094,7 @@ namespace SmartxAPI.GeneralFunctions
         public int GetUserID(ClaimsPrincipal User);
         public int GetCompanyID(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+        public DataTable GetSettingsTable();
 
     }
 }

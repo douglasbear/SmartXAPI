@@ -33,15 +33,24 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType)
+        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3)";
+
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", voucherType);
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -49,15 +58,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details",api.Format(dt));
+                    OutPut.Add("TotalCount",TotalCount);
                 }
-                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Notice("No Results Found"));
+                    return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(OutPut));
                 }
             }
             catch (Exception e)
@@ -187,13 +199,9 @@ namespace SmartxAPI.Controllers
                         if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
 
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
-
-                        MasterTable.Columns.Remove("N_VoucherId");
-                        DetailTable.Columns.Remove("N_VoucherDetailsID");
-                        DetailTable.AcceptChanges();
                     }
 
-                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", N_VoucherID, MasterTable, connection, transaction);
+                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
                         SortedList LogParams = new SortedList();
@@ -214,10 +222,11 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
                         }
-                        int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", 0, DetailTable, connection, transaction);
+                        int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
                         transaction.Commit();
                     }
-                    return Ok(api.Success("Data Saved"));
+                    //return Ok(api.Success("Data Saved"));
+                    return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
                 }
                 }
             catch (Exception ex)
@@ -240,7 +249,7 @@ namespace SmartxAPI.Controllers
                 if (Results <= 0)
                 {
                     transaction.Rollback();
-                    return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
+                    return Ok(api.Error("Unable to delete sales quotation"));
                 }
                 else
                 {
@@ -250,23 +259,61 @@ namespace SmartxAPI.Controllers
                 if (Results > 0)
                 {
                     transaction.Commit();
-                    return StatusCode(200, api.Response(200, "Sales quotation deleted"));
+                    return Ok(api.Success("Sales quotation deleted"));
                 }
                 else
                 {
                      transaction.Rollback();
-                    return StatusCode(409, api.Response(409, "Unable to delete sales quotation"));
+                    return Ok(api.Error("Unable to delete sales quotation"));
                 }
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(404, api.Response(404, ex.Message));
+                return BadRequest(api.Error(ex));
             }
 
 
         }
+    [HttpGet("dummy")]
+        public ActionResult GetVoucherDummy(int? nVoucherID)
+        {
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    string sqlCommandText = "select * from Acc_VoucherMaster where N_VoucherID=@p1";
+                    SortedList mParamList = new SortedList() { { "@p1", nVoucherID } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
+                    masterTable = api.Format(masterTable, "master");
+
+                    string sqlCommandText2 = "select * from Acc_VoucherMaster_Details where N_VoucherID=@p1";
+                    SortedList dParamList = new SortedList() { { "@p1", nVoucherID } };
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
+                    detailTable = api.Format(detailTable, "details");
+
+                    // string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
+                    // DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
+                    // dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
+
+                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    dataSet.Tables.Add(detailTable);
+                    //dataSet.Tables.Add(dtAmountDetails);
+
+                    return Ok(dataSet);
+
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, api.Error(e));
+            }
+        }
+
 
     }
 }

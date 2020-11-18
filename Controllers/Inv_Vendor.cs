@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                 qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
                 Params.Add("@qry", "%" + qry + "%");
             }
-            string sqlCommandText = "select * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
+            string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
             Params.Add("@bInactive", 0);
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);
@@ -99,6 +99,55 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("listWithCurrency")]
+        public ActionResult GetVendorDispList(int? nCompanyId, int nFnYearId, bool bAllBranchesData, string vendorId, string qry)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string criteria = "";
+            int nVendorId = 0;
+            if (vendorId != "" && vendorId != null)
+            {
+                criteria = " and N_VendorID =@nVendorID ";
+                nVendorId = myFunctions.getIntVAL(vendorId.ToString());
+            }
+            Params.Add("@nVendorID", nVendorId);
+
+            string qryCriteria = "";
+            if (qry != "" && qry != null)
+            {
+                qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
+                Params.Add("@qry", "%" + qry + "%");
+            }
+            string sqlCommandText = "SELECT Top 20 X_VendorCode, X_VendorName, X_ContactName, X_PhoneNo1, X_PhoneNo2, N_LedgerID, N_InvDueDays, N_FnYearID, N_CurrencyID, B_DirPosting, N_TypeID,X_CountryCode, X_ReminderMsg, X_CurrencyCode, X_CurrencyName, N_ExchangeRate, N_CountryID, B_AllowCashPay, X_TaxRegistrationNo, X_Country, N_VendorID, N_CompanyID FROM vw_Inv_VendorCurrency_Disp where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
+            Params.Add("@bInactive", 0);
+            Params.Add("@nCompanyID", nCompanyId);
+            Params.Add("@nFnYearID", nFnYearId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                        return Ok(_api.Success(dt));
+                }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
+        }
+
+
 
         //Save....
         [HttpPost("save")]
@@ -135,7 +184,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
-                        if (VendorCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Vendor Code")); }
+                        if (VendorCode == "") { return Ok(_api.Error("Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
                     else
