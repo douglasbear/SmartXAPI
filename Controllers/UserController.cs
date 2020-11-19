@@ -56,14 +56,14 @@ namespace SmartxAPI.Controllers
 
         //GET api/User/list?....
         [HttpGet("list")]
-        public ActionResult GetUserList(int? nCompanyId, bool bAllBranchesData, string userid, string qry)
+        public ActionResult GetUserList(int? nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);
-            Params.Add("N_UserId", userid);
+            // Params.Add("N_UserId", userid);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -73,12 +73,12 @@ namespace SmartxAPI.Controllers
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
-                    return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" });
+                    return Ok(_api.Warning("No Results Found"));
                 else
                 {
                     dt.Columns.Remove("X_Password");
                     dt.AcceptChanges();
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
@@ -110,11 +110,11 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return StatusCode(403, "Error");
+                         return Ok(_api.Error("Unable to save"));
                     }
                     transaction.Commit();
                 }
-                return Ok("User Saved");
+                 return Ok(_api.Success("User Saved"));
             }
             catch (Exception ex)
             {
@@ -131,20 +131,20 @@ namespace SmartxAPI.Controllers
             
 
             try{
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                      if(dt.Rows.Count==0)
                     {
-                       return StatusCode(200,new { StatusCode = 200 , Message= "No Results Found" });
+                       return Ok(_api.Warning("No Results Found"));
                     }else{
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
 
                     }
                 }catch(Exception e){
-                    return StatusCode(403,_api.Error(e));
+                    return BadRequest(_api.Error(e));
                 }
         }
     }

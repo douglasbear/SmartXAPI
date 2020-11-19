@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage,int nSizeperpage)
+        public ActionResult ActivityList(int nPage,int nSizeperpage,string xSearchkey)
         {
             int nCompanyId=myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -43,11 +43,14 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+            string Searchkey="";
+            if(xSearchkey!="")
+                Searchkey = "and x_subject like '%"+ xSearchkey +"%'";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 "+ Searchkey +" order by n_activityid desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 and N_ActivityID not in (select top("+ Count +") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 "+ Searchkey +" and N_ActivityID not in (select top("+ Count +") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 order by n_activityid desc) order by n_activityid desc";
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();

@@ -44,9 +44,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 order by X_ProjectCode DESC ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 order by order by n_projectid desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_CRM_Project where N_CompanyID=@p1 order by X_ProjectCode DESC) order by X_ProjectCode DESC";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_CRM_Project where N_CompanyID=@p1 order by n_projectid desc) order by n_projectid desc";
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
