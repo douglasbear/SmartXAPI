@@ -169,25 +169,17 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nActivityID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nActivityID)
         {
 
              int Results = 0;
             try
-            {                        
-                SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nFormID", 1307);
-                QueryParams.Add("@nActivityID", nActivityID);
+            {                       
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Activity..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Activity", "N_ActivityID", nActivityID, "", connection, transaction);
                     transaction.Commit();

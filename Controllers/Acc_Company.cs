@@ -161,28 +161,31 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        SortedList proParams1 = new SortedList(){
-                                {"N_CompanyID",N_CompanyId},
-                                {"X_ModuleCode","500"},
-                                {"N_UserID",0},
-                                {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
-                                {"X_AdminPwd",GeneralTable.Rows[0]["x_AdminPwd"].ToString()},
-                                {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
-                        dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
+                            if (values != "@Auto")
+                            {
+                                SortedList proParams1 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"X_ModuleCode","500"},
+                                        {"N_UserID",0},
+                                        {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
+                                        {"X_AdminPwd",GeneralTable.Rows[0]["x_AdminPwd"].ToString()},
+                                        {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
+                                dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 
-                        object N_FnYearId = 0;
-     
-                        SortedList proParams2 = new SortedList(){
-                                {"N_CompanyID",N_CompanyId},
-                                {"N_FnYearID",N_FnYearId},
-                                {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
-                                {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
-                        N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
+                                object N_FnYearId = 0;
+            
+                                SortedList proParams2 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"N_FnYearID",N_FnYearId},
+                                        {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
+                                        {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
+                                N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
 
-                        SortedList proParams3 = new SortedList(){
-                                {"N_CompanyID",N_CompanyId},
-                                {"N_FnYearID",N_FnYearId}};
-                        dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
+                                SortedList proParams3 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"N_FnYearID",N_FnYearId}};
+                                dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
+                            }
 
                         transaction.Commit();
                         
