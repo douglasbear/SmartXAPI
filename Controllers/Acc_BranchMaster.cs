@@ -51,10 +51,10 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(_api.Notice("No Results Found" ));
                         }else{
-                            return Ok(dt);
+                            return Ok(_api.Success(dt));
                         }
             }catch(Exception e){
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
           
         }
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 

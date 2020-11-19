@@ -46,16 +46,16 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" });
+                    return Ok(_api.Warning("No Results Found" ));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(_api.Format(dt)));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
 
@@ -80,16 +80,16 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" });
+                    return Ok(_api.Warning("No Results Found" ));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(_api.Format(dt)));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
 
@@ -120,17 +120,17 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 450);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
-                        if (LocationCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Location Code")); }
+                        if (LocationCode == "") { return Ok( _api.Error( "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
 
                     MasterTable.Columns.Remove("n_FnYearId");
 
-                    int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", 0, MasterTable, connection, transaction);
+                    int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
                     if (N_LocationID <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(404, _api.Response(404, "Unable to save"));
+                        return Ok(_api.Warning("Unable to save"));
                     }
                     else
                     {
@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -158,17 +158,17 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    return StatusCode(200, _api.Response(200, "Location deleted"));
+                    return Ok(_api.Success("Location deleted"));
                 }
                 else
                 {
-                    return StatusCode(409, _api.Response(409, "Unable to delete Location"));
+                    return Ok( _api.Error("Unable to delete Location"));
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

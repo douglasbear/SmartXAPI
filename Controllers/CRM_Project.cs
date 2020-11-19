@@ -77,19 +77,19 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult LeadListDetails(string xLeadNo)
+        public ActionResult LeadListDetails(string xProjectNo)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRM_Project where N_CompanyID=@p1 and X_ProjectCode=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", xLeadNo);
+            Params.Add("@p3", xProjectNo);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nLeadID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LeadID"].ToString());
+                int nLeadID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ProjectID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -134,19 +134,19 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string LeadCode = "";
-                    var values = MasterTable.Rows[0]["X_ProjectCode"].ToString();
+                    var values = MasterTable.Rows[0]["x_ProjectCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        LeadCode = dLayer.GetAutoNumber("CRM_Project", "X_ProjectCode", Params, connection, transaction);
+                        LeadCode = dLayer.GetAutoNumber("CRM_Project", "x_ProjectCode", Params, connection, transaction);
                         if (LeadCode == "") { return Ok(api.Error("Unable to generate Lead Code")); }
-                        MasterTable.Rows[0]["X_ProjectCode"] = LeadCode;
+                        MasterTable.Rows[0]["x_ProjectCode"] = LeadCode;
                     }
 
 
-                    nLeadID = dLayer.SaveData("CRM_Project", "N_ProjectID", MasterTable, connection, transaction);
+                    nLeadID = dLayer.SaveData("CRM_Project", "n_ProjectID", MasterTable, connection, transaction);
                     if (nLeadID <= 0)
                     {
                         transaction.Rollback();
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
