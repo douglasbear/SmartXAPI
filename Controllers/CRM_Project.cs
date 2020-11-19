@@ -77,19 +77,19 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult LeadListDetails(string xLeadNo)
+        public ActionResult LeadListDetails(string xProjectNo)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRM_Project where N_CompanyID=@p1 and X_ProjectCode=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", xLeadNo);
+            Params.Add("@p3", xProjectNo);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 

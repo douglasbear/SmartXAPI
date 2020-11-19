@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(OutPut));
                 }     
                   }catch(Exception e){
-                     return BadRequest(_api.Error(e));
+                     return Ok(_api.Error(e));
                 }
         }
 
@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(OutPut));
                 }     
                   }catch(Exception e){
-                     return BadRequest(_api.Error(e));
+                     return Ok(_api.Error(e));
                 }
         }
 
@@ -183,11 +183,11 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
-                return Ok(dt);
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(_api.Error(ex));
+                    return Ok(_api.Error(ex));
                 }
         }
        
@@ -263,7 +263,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

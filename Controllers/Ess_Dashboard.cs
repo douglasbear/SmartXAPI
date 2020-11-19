@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         public string GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID)
