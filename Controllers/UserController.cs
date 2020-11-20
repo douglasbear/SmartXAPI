@@ -147,5 +147,44 @@ namespace SmartxAPI.Controllers
                     return BadRequest(_api.Error(e));
                 }
         }
+         [HttpGet("details")]
+        public ActionResult GetUserListDetails(int? nCompanyId,string xUser)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            
+            string sqlCommandText = "Sp_UserList";
+            Params.Add("N_CompanyID", nCompanyId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
+                }
+                foreach (DataRow dtRow in dt.Rows)
+                    {
+                        if(dtRow["x_UserID"].ToString()!=xUser)
+                        {
+                            dtRow.Delete();
+                        }
+                    }
+
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                    return Ok(_api.Warning("No Results Found"));
+                else
+                {
+                    dt.Columns.Remove("X_Password");
+                    dt.AcceptChanges();
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(e));
+            }
+        }
     }
 }
