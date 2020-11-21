@@ -129,9 +129,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_Customer", "n_CustomerID", nCustomerID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("n_CustomerId");
-                    MasterTable.AcceptChanges();
-
 
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
