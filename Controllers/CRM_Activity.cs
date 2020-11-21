@@ -50,21 +50,12 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by n_activityid desc";
             else
-<<<<<<< HEAD
-            {
-                if(xSearchkey=="")
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 and N_ActivityID not in (select top("+ Count +") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 order by n_activityid desc) order by n_activityid desc";
-                else
-                    sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 "+ Searchkey +" order by n_activityid desc";
-            }
-=======
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
->>>>>>> 201cd2fb4c762ad51abc75a6c794e15f72f3fd3b
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
