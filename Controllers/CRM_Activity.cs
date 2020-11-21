@@ -30,27 +30,32 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID =1307;
+            FormID = 1307;
         }
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage,int nSizeperpage,string xSearchkey)
+        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string Searchkey="";
-            if(xSearchkey!="")
-                Searchkey = "and x_subject like '%"+ xSearchkey +"%'";
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 "+ Searchkey +" order by n_activityid desc";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and x_subject like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by n_activityid desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 "+ Searchkey +" and N_ActivityID not in (select top("+ Count +") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 order by n_activityid desc) order by n_activityid desc";
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -61,7 +66,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -77,7 +82,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -90,7 +95,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
@@ -101,7 +106,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -170,14 +175,14 @@ namespace SmartxAPI.Controllers
             }
         }
 
-      
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nActivityID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                       
+            {
 
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -189,9 +194,9 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_ActivityID",nActivityID.ToString());
-                    return Ok(api.Success(res,"Activity deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_ActivityID", nActivityID.ToString());
+                    return Ok(api.Success(res, "Activity deleted"));
                 }
                 else
                 {
