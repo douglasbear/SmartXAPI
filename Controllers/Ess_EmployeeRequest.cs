@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
                         SortedList Params = new SortedList();
                         Params.Add("@nCompanyID", nCompanyID);
                         xReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpAnyRequest where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
-                        if(xReqCode==null){xReqCode="1";}
+                        if(xReqCode==null || xReqCode==""){xReqCode="1";}
                         MasterTable.Rows[0]["X_RequestCode"] = xReqCode;
                     }
 
