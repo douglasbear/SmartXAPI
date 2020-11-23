@@ -631,11 +631,6 @@ namespace SmartxAPI.GeneralFunctions
 
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
 
-        /* Deprecated Method Don't Use */
-        [Obsolete("IApiFunctions.SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction) is deprecated \n please use IApiFunctions.SaveData.(string TableName, string IDFieldName , DataTable DataTable, SqlConnection connection, SqlTransaction transaction) instead. \n\n Deprecate note added by Ratheesh KS-\n\n")]
-        public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
-        /* End Of Deprecated Method */
-
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);

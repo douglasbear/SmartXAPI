@@ -147,6 +147,7 @@ namespace SmartxAPI.Controllers
                     return BadRequest(_api.Error(e));
                 }
         }
+
          [HttpGet("details")]
         public ActionResult GetUserListDetails(int? nCompanyId,string xUser)
         {

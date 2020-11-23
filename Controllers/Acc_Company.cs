@@ -141,8 +141,6 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    // Auto Gen
-                    //var values = MasterTable.Rows[0]["X_CompanyCode"].ToString();
                     SortedList Params = new SortedList();
                     // Auto Gen
                     object CompanyCode = "";
@@ -161,7 +159,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                            if (values != "@Auto")
+                            if (values == "@Auto")
                             {
                                 SortedList proParams1 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
@@ -189,7 +187,7 @@ namespace SmartxAPI.Controllers
 
                         transaction.Commit();
                         
-                        return Ok(api.Success("Company created successfully"));
+                        return Ok(api.Success("Company successfully saved"));
                     }
                 }
             }

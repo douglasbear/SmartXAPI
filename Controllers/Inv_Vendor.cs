@@ -192,11 +192,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
                     }
 
-                    MasterTable.Columns.Remove("n_VendorID");
-                    MasterTable.AcceptChanges();
-
-
-                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", nVendorID, MasterTable, connection, transaction);
+                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", MasterTable, connection, transaction);
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
