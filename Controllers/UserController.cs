@@ -7,10 +7,12 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.AspNetCore.Authorization;
+using Microsoft.AspNetCore.Authentication.JwtBearer;
 
 namespace SmartxAPI.Controllers
 {
-
+    
     [Route("user")]
     [ApiController]
     public class UserController : ControllerBase
@@ -186,5 +188,59 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.Error(e));
             }
         }
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nUserId)
+            {
+                int Results = 0;
+                SortedList Params = new SortedList();
+                
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                string sqlCategory="Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
+                string sqlTrans="select COUNT(*) from vw_UserTransaction where n_userid=@p2";
+                string sqlUser="select X_UserID from sec_user where n_userid=@p2";
+                Params.Add("@p1", nCompanyID);
+                Params.Add("@p2", nUserId);
+                try
+                {
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                    connection.Open();
+                    object User = dLayer.ExecuteScalar(sqlUser, Params, connection);
+                    Params.Add("@p3", User.ToString());
+                    object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
+                    if(Category==null)
+                        return Ok(_api.Error("Unable to delete User"));
+                    else if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
+                        return Ok(_api.Error("Unable to delete User"));
+                    else
+                        {
+                            int N_CountTransUser=0;
+                            object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
+                            N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
+                            if (N_CountTransUser > 0)
+                                return Ok(_api.Error("Unable to delete User"));
+                        }
+
+                    Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "",connection);
+            
+                    if (Results > 0)
+                    {
+                        return Ok(_api.Success("User deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete User"));
+                    }
+
+                }
+                }
+                catch (Exception ex)
+                {
+                    return Ok(_api.Error(ex));
+                }
+
+
+            }
     }
 }
