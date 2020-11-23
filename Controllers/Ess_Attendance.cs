@@ -185,6 +185,27 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@PayText",payText);
                     QueryParams.Add("@EmployeeID",nEmployeeID);
 
+                    string qry1 = "Select * from vw_TimeSheetMaster_Disp where N_EmpID=@EmployeeID and X_PayrunText=@PayText";
+                    DataTable dtAttend = dLayer.ExecuteDataTable(qry1,QueryParams, connection);
+                    double ExtraHour=0,N_WorkHours=0,N_WorkdHrs=0,N_Deduction=0,Uncompensated=0,Addition=0,NetDeduction=0;
+                    foreach (DataRow var in dtAttend.Rows)
+                    {
+                         N_WorkHours = HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_TotalWorkingDays"].ToString()));
+                         N_WorkdHrs = HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_TotalWorkedDays"].ToString()));
+                         N_Deduction = HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_GridDedTotal"].ToString()));
+                         Uncompensated = HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_CompMinutes"].ToString()));
+
+                        Addition = HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_ot"].ToString()));
+                        ExtraHour += HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_TotalWorkedDays"].ToString())) - HoursToMinutes(Convert.ToDouble(dtAttend.Rows[0]["N_TotalWorkingDays"].ToString()));
+                     
+                    }
+
+                    Master.Add("N_WorkHours", MinutesToHours(N_WorkHours).ToString("0.00"));
+                    Master.Add("N_WorkdHrs", MinutesToHours(N_WorkdHrs).ToString("0.00"));
+                    Master.Add("Uncompensated", MinutesToHours(Uncompensated).ToString("0.00"));
+                    Master.Add("NetDeduction", MinutesToHours(NetDeduction).ToString("0.00"));
+                    Master.Add("ExtraHour", MinutesToHours(ExtraHour).ToString("0.00"));
+                    Master.Add("N_Deduction", MinutesToHours(N_Deduction).ToString("0.00"));
 
 
                     string qry = "SELECT     Pay_TimeSheetMaster.N_TimeSheetID, Pay_TimeSheetMaster.N_EmpID, Pay_TimeSheetMaster.X_PayrunText, Pay_TimeSheetMaster.D_DateFrom, "+
@@ -261,5 +282,20 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+                public double MinutesToHours(double Minutes)
+        {
+            double Hours = 0;
+            //Minutes = Round(Minutes, 2);
+            Hours = (((int)Minutes / 60) + (Minutes % 60) / 100);
+            return Hours;
+        }
+        public double HoursToMinutes(double Hours)
+        {
+            double Minutes = 0;
+            Minutes = (((int)Hours * 60) + (Hours % 1) % .60 * 100);
+            return Minutes;
+        }
+
     }
 }

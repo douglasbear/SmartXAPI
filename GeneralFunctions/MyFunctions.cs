@@ -334,6 +334,7 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nTransStatus", nTransStatus);
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
+            ApprovalParams.Add("@loggedInUserCategory", this.GetUserCategory(User));
 
 
             if (nApprovalID == 0)
@@ -548,7 +549,19 @@ namespace SmartxAPI.GeneralFunctions
                 else if (nTransID == 0)
                 {
                     nActionLevelID = 0;
+
+                    int nUsrCatID=0;
+                    object UsrCatID = null;
+                    UsrCatID = dLayer.ExecuteScalar("Select N_UserCategoryID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID  and N_ApprovalID=@nApprovalID and N_level=1 ",ApprovalParams,connection);
+                    if (UsrCatID != null)
+                        nUsrCatID = this.getIntVAL(UsrCatID.ToString());
+
+                    if (nUsrCatID==0)
                     SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
+                    else
+                    SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID=@loggedInUserCategory", ApprovalParams, connection);
+                    
+                    
                     if (SecUserLevel.Rows.Count > 0)
                     {
                         nNextApprovalLevel = 1;
@@ -562,6 +575,8 @@ namespace SmartxAPI.GeneralFunctions
                         ApprovalParams["@nTransStatus"] = nTransStatus;
                     }
                 }
+
+
 
                 object NextApprovalUser = null;
 
