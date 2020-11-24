@@ -955,74 +955,78 @@ namespace SmartxAPI.GeneralFunctions
 
                 X_Action = "Delete";
                 X_Message = "Deleted";
+                int DeleteStatus=0;
                 switch (FormID)
                 {
                     case 82:
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
                     case 212://loan issue
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
                     case 198://Salary Payment
-                        dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeePayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeePayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 586://Paycode Adjustment
-                        dLayer.ExecuteNonQuery("SP_Pay_EndOfServiceBatchPosting_Del @nCompanyID,@nFnYearID,'EOS',@xTransCode", DeleteParams, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQuery("SP_Pay_EndOfServiceBatchPosting_Del @nCompanyID,@nFnYearID,'EOS',@xTransCode", DeleteParams, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 578://Gosi Payment
-                        dLayer.DeleteData("Pay_GOSIPaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_GOSIPayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_GOSIPaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_GOSIPayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 208://addition Dedution
-                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 1032://Employee Clearance
-                        dLayer.DeleteData("Pay_EmployeeClearanceDetails", "N_ClearanceID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeeClearance", "N_ClearanceID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeeClearanceDetails", "N_ClearanceID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeeClearance", "N_ClearanceID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 1068://Employee Evaluation
-                        dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 684://Material Dispatch
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 81://Sales Order
                     case 1045://BOM
-                        dLayer.ExecuteNonQuery("UPDATE Prj_BOMDetails SET B_BOMProcessed=0 where N_BOMDetailID in (select N_BOMDetailID from Inv_SalesOrderDetails where N_SalesOrderID=@nTransID and N_CompanyID=@nFnYearID and N_FnYearId=@nFnYearID)", DeleteParams, connection, transaction);
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQuery("UPDATE Prj_BOMDetails SET B_BOMProcessed=0 where N_BOMDetailID in (select N_BOMDetailID from Inv_SalesOrderDetails where N_SalesOrderID=@nTransID and N_CompanyID=@nFnYearID and N_FnYearId=@nFnYearID)", DeleteParams, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 1015://PROJECT TRANSFER
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 44:
                     case 45:
                     case 46:
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
                     default:
-                        dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
 
+                }
+                if(DeleteStatus==0){
+                    X_Message = "Error";
                 }
             }
 
