@@ -450,6 +450,11 @@ namespace SmartxAPI.GeneralFunctions
                 else
                     nSubmitter = nMaxLevel;
 
+                object RewCheck = null;
+                RewCheck = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID  and N_UserID=@loggedInUserID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=110",ApprovalParams,connection);
+                if (RewCheck!=null)
+                    nActionLevelID = this.getIntVAL(RewCheck.ToString());
+
 
                 if (nTransID > 0)
                 {
@@ -671,7 +676,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         Response["saveEnabled"] = false;
                         Response["deleteEnabled"] = true;
-                        Response["btnDeleteText"] = "OK";
+                        Response["btnDeleteText"] = "Review";
                         Response["deleteTag"] = 7;
                     }
 
@@ -941,6 +946,12 @@ namespace SmartxAPI.GeneralFunctions
                 X_Action = "Revoke";
                 B_IsDelete = false;
                 X_Message = "Revoked";
+            }else if (ButtonTag == "7")
+            {
+                //dLayer.ExecuteNonQuery("UPDATE " + X_ScreenTable + " SET N_ApprovalLevelId=@nApprovalLevelID,N_ProcStatus=@xButtonTag,N_UserID=@nApprovalUserID,B_IssaveDraft=1 where " + X_Criteria, UpdateParams, connection, transaction);
+                X_Action = "Review";
+                B_IsDelete = false;
+                X_Message = "Reviewed";
             }
             else if (ButtonTag == "6" || ButtonTag == "0")
             {

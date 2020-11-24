@@ -33,21 +33,21 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReceipt(int nFnYearId,int nListID,int nPage,int nSizeperpage)
+        public ActionResult GetSalesReceipt(int nFnYearId, int nListID, int nPage, int nSizeperpage)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
 
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and (X_type='SR' OR X_type='SA') ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and n_PayReceiptId not in (select top("+ Count +") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId)";
-            
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR' OR X_type='SA')  and n_PayReceiptId not in (select top(" + Count + ") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and (X_type='SR' OR X_type='SA') )";
+
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -60,17 +60,17 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count  from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 if (dt.Rows.Count == 0)
-                    {
-                   return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
                     return Ok(api.Success(OutPut));
-                    }
+                }
             }
             catch (Exception e)
             {
@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataSet ds = new DataSet();
-            int nCompanyId =myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
 
@@ -114,8 +114,8 @@ namespace SmartxAPI.Controllers
                             nCustomerId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
                         }
 
-                        
-                    SortedList mParamsList = new SortedList()
+
+                        SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
                         {"X_VoucherNo",xInvoiceNo},
@@ -203,6 +203,35 @@ namespace SmartxAPI.Controllers
                         DetailTable = dLayer.ExecuteDataTablePro("SP_InvReceivables", detailParams, connection);
                     }
                     DetailTable = api.Format(DetailTable, "Details");
+
+
+
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                        double N_AdvanceAmount = 0, N_InvoiceDueAmt = 0, N_TotalDueAmt = 0;
+                        foreach (DataRow dr in DetailTable.Rows)
+                        {
+                            if (myFunctions.getIntVAL(dr["N_SalesID"].ToString()) == 0)
+                            {
+                                // if (n_PayReceiptId > 0)
+                                // {
+                                //     txtAdvanceAmount.Text = myFunctions.getVAL(dr["N_Amount"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace));
+                                // }
+                                dr.Delete();
+                                DetailTable.AcceptChanges();
+                                continue;
+                            }
+
+                            N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
+                            N_TotalDueAmt += N_InvoiceDueAmt;
+
+                            if (N_InvoiceDueAmt == 0)
+                            {
+                                dr.Delete();
+                                DetailTable.AcceptChanges();
+                            }
+                        }
+                    }
 
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
@@ -394,7 +423,7 @@ namespace SmartxAPI.Controllers
         [HttpDelete()]
         public ActionResult DeleteData(int nPayReceiptId, string xType)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

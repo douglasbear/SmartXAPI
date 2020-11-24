@@ -85,6 +85,49 @@ namespace SmartxAPI.Controllers
 
         }
 
+
+
+        
+
+         [HttpGet("details")]
+        public ActionResult GetItemDetails(string xItemCode)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@xItemCode", xItemCode);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string _sqlQuery = "SELECT * from vw_InvItemMaster where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+
+                    dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
