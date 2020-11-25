@@ -127,9 +127,9 @@ namespace SmartxAPI.Controllers
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("all")]
-        public ActionResult GetCustomer(int? nCompanyId,int nFnYearId)
+        public ActionResult GetCustomer(int nFnYearId)
         {
-            int 
+            int nCompanyId=myFunctions.GetCompanyID(User);
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
