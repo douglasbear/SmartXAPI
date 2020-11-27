@@ -56,13 +56,14 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //GET api/User/list?....
+        //GET api/User/list?...
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("list")]
-        public ActionResult GetUserList(int? nCompanyId)
+        public ActionResult GetUserList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            
+            int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);
             // Params.Add("N_UserId", userid);
@@ -123,9 +124,12 @@ namespace SmartxAPI.Controllers
                 return StatusCode(403, _api.Error(ex));
             }
         }
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("all")]
         public ActionResult GetCustomer(int? nCompanyId,int nFnYearId)
         {
+            int 
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
@@ -149,13 +153,13 @@ namespace SmartxAPI.Controllers
                     return BadRequest(_api.Error(e));
                 }
         }
-
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
          [HttpGet("details")]
-        public ActionResult GetUserListDetails(int? nCompanyId,string xUser)
+        public ActionResult GetUserListDetails(string xUser)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            
+            int  nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);
             try
@@ -186,7 +190,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
