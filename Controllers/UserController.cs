@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("all")]
         public ActionResult GetCustomer(int? nCompanyId,int nFnYearId)
         {
-            int 
+
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             
