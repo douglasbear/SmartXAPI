@@ -354,14 +354,16 @@ namespace SmartxAPI.Controllers
            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                {
+                {connection.Open();
+                    
                     if (nPayReceiptId > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",myFunctions.GetCompanyID(User)},
                                 {"X_TransType",xTransType},
                                 {"N_VoucherID",nPayReceiptId}};
-                        if(myFunctions.getBoolVAL(dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection).ToString())){
+                                int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection);
+                        if(result>0){
                             return Ok(api.Success("Vendor Payment Deleted"));
                         }
                     }
