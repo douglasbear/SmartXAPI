@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReceipt(int nFnYearId, int nListID, int nPage, int nSizeperpage)
+        public ActionResult GetSalesReceipt(int nFnYearId, int nListID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -42,11 +42,20 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and Memo like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_PayReceiptId desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and (X_type='SR' OR X_type='SA') ";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and (X_type='SR' OR X_type='SA') " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR' OR X_type='SA')  and n_PayReceiptId not in (select top(" + Count + ") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and (X_type='SR' OR X_type='SA') )";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and (X_type='SR' OR X_type='SA') " + Searchkey + " and n_PayReceiptId not in (select top(" + Count + ") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and (X_type='SR' OR X_type='SA') " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);

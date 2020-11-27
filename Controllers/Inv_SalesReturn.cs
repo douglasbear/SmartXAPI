@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -40,11 +40,20 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string sqlCommandCount="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_DebitNoteNo like '%" + xSearchkey + "%' or X_CustomerName like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_DebitNoteId desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DebitNoteId not in(select top("+ Count +")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DebitNoteId not in(select top("+ Count +")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);

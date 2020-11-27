@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage)
+        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -41,10 +41,21 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string sqlCommandCount="";
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and [Voucher No] like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_VoucherID desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3)";
+                xSortBy = " order by " + xSortBy;
+
+
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
 
 
             Params.Add("@p1", nCompanyId);
