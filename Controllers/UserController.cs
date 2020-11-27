@@ -98,6 +98,8 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
+                
+               
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -105,6 +107,11 @@ namespace SmartxAPI.Controllers
 
 
                     transaction = connection.BeginTransaction();
+                    MasterTable.Columns.Add("x_Password", typeof(System.String));
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    string Password =MasterRow["x_UserID"].ToString();
+                    Password=myFunctions.EncryptString(Password);
+                    MasterTable.Rows[0]["x_Password"] = Password;
                     int Result = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                     if (Result > 0)
                     {
@@ -113,7 +120,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                         return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error("Unable to save"));
                     }
                     transaction.Commit();
                 }
