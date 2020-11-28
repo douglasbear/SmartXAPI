@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Text;
 
 namespace SmartxAPI.Controllers
 {
@@ -69,6 +70,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            SortedList Output =new SortedList();
 
             string sqlCommandText = "select * from Acc_Company where B_Inactive =@p1 and N_CompanyID=@p2";
             Params.Add("@p1", 0);
@@ -79,6 +81,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+
+
+
+            DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2",Params,connection);
+
+            DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction' from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params,connection);
+            if (FnYearInfo.Rows.Count == 0)
+            {
+                FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction' from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params,connection);
+            }
+
+            Output.Add("CompanyInfo",dt);
+            Output.Add("AdminInfo",AdminInfo);
+            Output.Add("FnYearInfo",FnYearInfo);
+
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -86,7 +104,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(Output));
                 }
 
             }
@@ -151,6 +169,14 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
+                    string base64= MasterTable.Rows[0]["i_Logo"].ToString();// load base 64 code to this variable from js 
+                    Byte[] bitmapData = new Byte[base64.Length];
+                    bitmapData = Convert.FromBase64String(base64);
+                                      MasterTable.Columns.Remove("i_Logo");
+                        MasterTable.AcceptChanges();
+                    //     MasterTable =myFunctions.AddNewColumnToDataTable(MasterTable,"i_Logo",typeof(byte[]),bitmapData);
+                    // MasterTable.AcceptChanges();
+
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
                     {
@@ -159,6 +185,12 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(base64.Length>0){
+                        int res= dLayer.SaveImage("Acc_Company","I_Logo",bitmapData,"N_CompanyID",N_CompanyId,connection,transaction);
+                        if(myFunctions.getIntVAL(res.ToString())<=0){
+                        transaction.Rollback();
+                        return Ok(api.Warning("Unable to save"));
+                        }}
                             if (values == "@Auto")
                             {
                                 SortedList proParams1 = new SortedList(){
@@ -166,7 +198,7 @@ namespace SmartxAPI.Controllers
                                         {"X_ModuleCode","500"},
                                         {"N_UserID",0},
                                         {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
-                                        {"X_AdminPwd",GeneralTable.Rows[0]["x_AdminPwd"].ToString()},
+                                        {"X_AdminPwd",myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())},
                                         {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
                                 dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 
@@ -197,6 +229,14 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
         }
+
+        public static string FixBase64ForImage(string image) {
+    StringBuilder sbText = new StringBuilder(image, image.Length);
+    //sbText.Replace("\r\n", String.Empty);
+    //sbText.Replace(" ", String.Empty);
+    return sbText.ToString();
+}
+
 
     }
 }

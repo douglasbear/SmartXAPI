@@ -382,6 +382,29 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
+        public int SaveImage(string TableName,string FieldName,byte[] image,string keyFeild,int KeyValue,  SqlConnection connection,SqlTransaction transaction)
+        {
+            try
+            {
+                SqlCommand sqlCommand = new SqlCommand("Update "+TableName+" set "+FieldName+"=@image where "+keyFeild+"="+KeyValue, connection);
+                sqlCommand.CommandTimeout = 0;
+                sqlCommand.CommandType = CommandType.Text;
+
+                SqlParameter picparameter = new SqlParameter();
+                picparameter.SqlDbType = SqlDbType.Image;
+                picparameter.ParameterName = "image";
+                picparameter.Value = image;
+                sqlCommand.Parameters.Add(picparameter);
+                sqlCommand.Transaction = transaction;
+                return sqlCommand.ExecuteNonQuery();
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
+        }
+
+
         public DataTable ExecuteSettingsPro(string sqlCommandText, DataTable paramTable,int nCompanyID,int nFnYearID, SqlConnection connection)
         {
             try
@@ -417,42 +440,6 @@ namespace SmartxAPI.GeneralFunctions
 
 
 
-
-
-        public int SaveData(string TableName, string IDFieldName, int IDFieldValue, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
-        {
-            string FieldList = "";
-            string FieldValues = "";
-            int Result = 0;
-            for (int i = 0; i < DataTable.Columns.Count; i++)
-            {
-                FieldList = FieldList + "," + DataTable.Columns[i].ColumnName.ToString();
-            }
-            FieldList = FieldList.Substring(1);
-
-            for (int j = 0; j < DataTable.Rows.Count; j++)
-            {
-                for (int k = 0; k < DataTable.Columns.Count; k++)
-                {
-                    var values = DataTable.Rows[j][k].ToString();
-                    values = values.Replace("|", " ");
-                    FieldValues = FieldValues + "|" + values;
-
-                }
-                FieldValues = FieldValues.Substring(1);
-                FieldValues = ValidateString(FieldValues);
-                SortedList paramList = new SortedList();
-                paramList.Add("X_TableName", TableName);
-                paramList.Add("X_IDFieldName", IDFieldName);
-                paramList.Add("N_IDFieldValue", IDFieldValue);
-                paramList.Add("X_FieldList", FieldList);
-                paramList.Add("X_FieldValue", FieldValues);
-                Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
-                FieldValues = "";
-            }
-
-            return Result;
-        }
 
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
@@ -634,6 +621,7 @@ namespace SmartxAPI.GeneralFunctions
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);
+        public int SaveImage(string TableName,string FieldName,byte[] image,string keyFeild,int KeyValue,  SqlConnection connection,SqlTransaction transaction);
 
 
     }
