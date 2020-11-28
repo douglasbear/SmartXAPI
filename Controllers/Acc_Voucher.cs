@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int N_VoucherID)
+        public ActionResult DeleteData(int nVoucherID,string xTransType)
         {
             int Results = 0;
             try
@@ -256,26 +256,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                Results = dLayer.DeleteData("Inv_SalesVoucher", "n_quotationID", N_VoucherID, "",connection,transaction);
-                if (Results <= 0)
-                {
-                    transaction.Rollback();
-                    return Ok(api.Error("Unable to delete sales quotation"));
-                }
-                else
-                {
-                    dLayer.DeleteData("Inv_SalesVoucherDetails", "n_quotationID", N_VoucherID, "",connection,transaction);
-                }
+                  
+            SortedList Params =new SortedList();
+             Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
+                        Params.Add("X_TransType", xTransType);
+                        Params.Add("N_VoucherID", nVoucherID);
+            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts",Params,connection,transaction);
 
                 if (Results > 0)
                 {
                     transaction.Commit();
-                    return Ok(api.Success("Sales quotation deleted"));
+                    return Ok(api.Success("Voucher deleted"));
                 }
                 else
                 {
                      transaction.Rollback();
-                    return Ok(api.Error("Unable to delete sales quotation"));
+                    return Ok(api.Error("Unable to delete Voucher"));
                 }
                 }
 

@@ -121,8 +121,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    string ExecutiveCode = MasterTable.Rows[0]["X_SalesmanCode"].ToString();
-                    string SalesmanName = MasterTable.Rows[0]["X_SalesmanName"].ToString();
+                    string ExecutiveCode = MasterTable.Rows[0]["x_SalesmanCode"].ToString();
+                    string SalesmanName = MasterTable.Rows[0]["x_SalesmanName"].ToString();
                     string nCompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     string nFnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
                     int N_SalesmanID= myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());

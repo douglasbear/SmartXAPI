@@ -92,6 +92,8 @@ namespace SmartxAPI.Controllers
         {
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
+            SortedList general = new SortedList();
+
             DataSet ds = new DataSet();
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -152,7 +154,7 @@ namespace SmartxAPI.Controllers
                     balanceParams.Add("@BranchID", nBranchId);
                     object balance = dLayer.ExecuteScalar(balanceSql, balanceParams, connection);
 
-                    string balanceAmt = "0.00";
+                    string balanceAmt = "0";
                     if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) < 0)
                     {
                         balanceAmt = Convert.ToDouble(-1 * myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString())).ToString(myFunctions.decimalPlaceString(2));
@@ -227,7 +229,7 @@ namespace SmartxAPI.Controllers
                                 //     txtAdvanceAmount.Text = myFunctions.getVAL(dr["N_Amount"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace));
                                 // }
                                 dr.Delete();
-                                DetailTable.AcceptChanges();
+                                
                                 continue;
                             }
 
@@ -237,15 +239,16 @@ namespace SmartxAPI.Controllers
                             if (N_InvoiceDueAmt == 0)
                             {
                                 dr.Delete();
-                                DetailTable.AcceptChanges();
                             }
                         }
                     }
+                    general.Add("balance",balanceAmt);
+                    DetailTable.AcceptChanges();
 
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
-                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable } }));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "general",general } }));
                 //return Ok(api.Success(ds));
             }
             catch (Exception e)

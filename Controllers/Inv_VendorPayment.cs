@@ -20,6 +20,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
+        private readonly int N_FormID;
 
 
         public Inv_VendorPayment(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
@@ -28,7 +29,7 @@ namespace SmartxAPI.Controllers
             api = apiFun;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-
+            N_FormID = 67;
         }
 
 
@@ -85,45 +86,56 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("details")]
-        public ActionResult GetVendorPaymentDetails(int? nCompanyId, int nQuotationId, int nFnYearId)
-        {
-            DataSet dt = new DataSet();
-            SortedList Params = new SortedList();
+        // [HttpGet("defaults")]
+        // public ActionResult GetScreenDefaults(int nFnYearId)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
+        //     int nCompanyId =myFunctions.GetCompanyID(User);
+        //     string sqlCommandText ="";
+        //     string sqlCommandCount="";
 
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nQuotationId);
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", nFnYearId);
+        //     SortedList OutPut = new SortedList();
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    DataTable Quotation = new DataTable();
+        //     txtPaymentType.Text = dLayer.ExecuteScalar("Select X_PayMethod,N_PaymentMethodID,N_TypeID,B_IsCheque from Acc_PaymentMethodMaster where B_IsDefault=1 and N_CompanyID=@nCompanyID");
+        //     txtDefaultAccount.Text = GetDefaultAccount(txtPaymentType.Text.Trim(), N_BehID);
+        //     txtDefaultAccName.Text = GetDefaultAccountName(txtPaymentType.Text.Trim(), N_BehID);
+        //     N_DefAccountLedgerID = myFunctions.getIntVAL(dba.ExecuteSclar("Select N_LedgerID from Acc_MastLedger where X_LedgerCode='" + txtDefaultAccount.Text  + "' and N_CompanyID=" + myCompanyID._CompanyID + "and N_FnYearID="+ myCompanyID._FnYearID , "TEXT", new DataTable()).ToString());
 
-                    Quotation = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    Quotation = api.Format(Quotation, "Master");
-                    dt.Tables.Add(Quotation);
 
-                    //Quotation Details
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+        //             OutPut.Add("Details",api.Format(dt));
+        //             OutPut.Add("TotalCount",TotalCount);
+        //         }
+        //         // dt = api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(api.Warning("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Success(OutPut));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return StatusCode(403, api.Error(e));
+        //     }
+        // }
 
-                    string sqlCommandText2 = "select * from vw_InvQuotationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_QuotationID=@p3";
 
-                    DataTable QuotationDetails = new DataTable();
-                    QuotationDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
-                    QuotationDetails = api.Format(QuotationDetails, "Details");
-                    dt.Tables.Add(QuotationDetails);
-                }
-                return Ok(dt);
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, api.Error(e));
-            }
-        }
+
+      
         [HttpGet("payDetails")]
         public ActionResult GetVendorPayDetails(int nVendorID, int nFnYearId, string dTransDate, int nBranchID, bool bShowAllbranch, string xInvoiceNo, string xTransType)
         {
@@ -291,7 +303,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", Master["n_FnYearID"].ToString());
-                        Params.Add("N_FormID", 80);
+                        Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PorderNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
@@ -351,14 +363,16 @@ namespace SmartxAPI.Controllers
            try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                {
+                {connection.Open();
+                    
                     if (nPayReceiptId > 0)
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",myFunctions.GetCompanyID(User)},
                                 {"X_TransType",xTransType},
                                 {"N_VoucherID",nPayReceiptId}};
-                        if(myFunctions.getBoolVAL(dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection).ToString())){
+                                int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection);
+                        if(result>0){
                             return Ok(api.Success("Vendor Payment Deleted"));
                         }
                     }

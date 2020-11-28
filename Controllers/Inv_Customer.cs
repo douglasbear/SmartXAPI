@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("paymentmethod")]
+        [HttpGet("customerType")]
         public ActionResult GetPayMethod()
         {
             DataTable dt = new DataTable();
@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
 
             }
