@@ -29,7 +29,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(string type)
+        public ActionResult GetPayMethodList(string type)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -41,6 +41,10 @@ namespace SmartxAPI.Controllers
                 case "vendorpayment":
                     crieteria = crieteria + " and B_VenderPayment='True'";
                     feild = feild + ",B_VenderPayment";
+                    break;
+                case "customerpayment":
+                    crieteria = crieteria + " and B_CustomerReceipt='True'";
+                    feild = feild + ",B_CustomerReceipt";
                     break;
                 case "paymentvoucher":
                     crieteria = crieteria + " and B_PaymentVoucher='True'";
