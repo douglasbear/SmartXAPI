@@ -158,7 +158,6 @@ namespace SmartxAPI.Controllers
                 if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                 dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
                 N_PurchaseID =myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()) ;
-                dt.Tables.Add(dtPurchaseInvoice);
 
 
                 //PURCHASE INVOICE DETAILS
@@ -179,6 +178,19 @@ namespace SmartxAPI.Controllers
                         X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID="+N_PurchaseID+" and vw_InvPurchaseDetails.N_BranchId=@BranchID ";
                 }
                 dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql,Params,connection);
+
+                 object RetQty = dLayer.ExecuteScalar("select X_CreditNoteNo from Inv_PurchaseReturnMaster where N_PurchaseId =" + N_PurchaseID + " and N_CompanyID=@CompanyID and N_FnYearID=@YearID",Params,connection);
+                    if (RetQty != null)
+                    {
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"IsReturnDone",typeof(bool),true);
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"X_ReturnCode",typeof(string),RetQty.ToString());
+                    }else{
+                                                dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"IsReturnDone",typeof(bool),false);
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"X_ReturnCode",typeof(string),"");
+                    }
+
+                dt.Tables.Add(dtPurchaseInvoice);
+
                 dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
                 dt.Tables.Add(dtPurchaseInvoiceDetails);
                 }
