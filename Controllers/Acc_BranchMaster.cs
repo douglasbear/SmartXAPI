@@ -34,12 +34,12 @@ namespace SmartxAPI.Controllers
 
        
        [HttpGet("list")]
-        public ActionResult GetAllBranches(int? nCompanyId)
+        public ActionResult GetAllBranches()
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
-            
-            string sqlCommandText="select * from Acc_BranchMaster where N_CompanyId=@p1";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select N_BranchID,N_CompanyId,X_BranchName,X_BranchCode,Active from Acc_BranchMaster where N_CompanyId=@p1";
             Params.Add("@p1",nCompanyId);
             try{
                         using (SqlConnection connection = new SqlConnection(connectionString))

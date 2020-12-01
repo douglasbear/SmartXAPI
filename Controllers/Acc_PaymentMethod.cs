@@ -51,6 +51,10 @@ namespace SmartxAPI.Controllers
                     feild = feild + ",B_PaymentVoucher";
                     break;
                 case "receiptvoucher":
+                    crieteria = crieteria + " and B_SalaryPayment='True'";
+                    feild = feild + ",B_SalaryPayment";
+                    break;
+                case "salarypayment":
                     crieteria = crieteria + " and B_ReceiptVoucher='True'";
                     feild = feild + ",B_ReceiptVoucher";
                     break;
