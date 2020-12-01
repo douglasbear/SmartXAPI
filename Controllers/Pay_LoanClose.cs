@@ -79,6 +79,8 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nLoanCloseID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LoanCloseID"].ToString());
+                int nLoanTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LoanTransID"].ToString());
+                var dDateFrom = MasterTable.Rows[0]["D_PaidDate"].ToString();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -99,40 +101,82 @@ namespace SmartxAPI.Controllers
                         if (LoanCloseCode == "") { return Ok(api.Error("Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["X_LoanClosingCode"] = LoanCloseCode;
                     }
-                    if (nLoanCloseID > 0)
-                        {
-                            SortedList DeleteParams = new SortedList(){
+                    SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-                                {"N_YearID", nFnYearId},
+                                {"N_FnYearID", nFnYearId},
                                 {"X_TransType","ELC"},
                                 {"X_ReferenceNo",values},
                                 };
-                            object N_LoanTransID= dLayer.ExecuteScalar("Select N_LoanTransID from vw_PayLoanClose where N_CompanyID=N_CompanyID and N_LoanCloseID=N_LoanCloseID", Params, connection);
+                    
+                    if (nLoanCloseID > 0)
+                        {
+                            
+                             object N_LoanTransID= dLayer.ExecuteScalar("Select N_LoanTransID from vw_PayLoanClose where N_CompanyID=N_CompanyID and N_LoanCloseID=N_LoanCloseID", Params, connection);
                              Params.Add("N_LoanTransID", N_LoanTransID);
                             
                             dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
                             dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  where N_LoanTransID= N_LoanTransID and N_CompanyID=N_CompanyID and B_IsLoanClose=1 and N_TransDetailsID=N_LoanCloseID",Params, connection, transaction);
-                            dLayer.ExecuteNonQuery("Delete from Pay_LoanClose where N_LoanCloseID=@p2 and N_CompanyID=@p1", Params, connection, transaction);
+                            dLayer.ExecuteNonQuery("Delete from Pay_LoanClose where N_LoanCloseID=N_LoanCloseID and N_CompanyID=N_CompanyID", Params, connection, transaction);
                         }
 
 
-                    nLoanCloseID = dLayer.SaveData("Pay_LoanClose", "nLoanCloseID", MasterTable, connection, transaction);
+                    nLoanCloseID = dLayer.SaveData("Pay_LoanClose", "N_LoanCloseID", MasterTable, connection, transaction);
                     if (nLoanCloseID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set B_IsLoanClose =1,N_TransDetailsID=N_LoanCloseID  Where N_CompanyID =N_CompanyID and N_LoanTransID=N_LoanTransID and (N_RefundAmount=0 OR N_RefundAmount IS Null)",Params, connection, transaction);
-                    int nLoanIsueDetailsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", MasterTable, connection, transaction);
-                    if (nLoanIsueDetailsID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok("Unable to Save");
-                    }
-                    else
-                    {
+                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set B_IsLoanClose =1,N_TransDetailsID="+nLoanCloseID+"  Where N_CompanyID =N_CompanyID and N_LoanTransID=N_LoanTransID and (N_RefundAmount=0 OR N_RefundAmount IS Null)",Params, connection, transaction);
+                    
+                        DataTable dt = new DataTable();
+                        dt.Clear();
+                        dt.Columns.Add("N_LoanTransDetailsID");
+                        dt.Columns.Add("N_CompanyID");
+                        dt.Columns.Add("N_LoanTransID");
+                        dt.Columns.Add("D_DateFrom");
+                        dt.Columns.Add("D_DateTo");
+                        dt.Columns.Add("D_RefundDate");
+                        dt.Columns.Add("B_IsLoanClose");
+                        dt.Columns.Add("N_TransDetailsID");
+
+                        DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
+
+
+                        // for (int i = 1; i <= nInstNos; i++)
+                        // {
+                            DateTime End = new DateTime(Start.AddMonths(1).Year, Start.AddMonths(1).Month, 1).AddDays(-1);
+                            DataRow row = dt.NewRow();
+                            row["N_LoanTransDetailsID"] = 0;
+                            row["N_CompanyID"] = nCompanyID;
+                            row["N_LoanTransID"] = nLoanTransID;
+                            row["D_DateFrom"] = myFunctions.getDateVAL(Start);
+                            row["D_DateTo"] = myFunctions.getDateVAL(End);
+                            row["D_RefundDate"] = myFunctions.getDateVAL(End);
+                            row["B_IsLoanClose"] = "1";
+                            row["N_TransDetailsID"] = nLoanCloseID;
+                            dt.Rows.Add(row);
+                            Start = Start.AddMonths(1);
+                        // }
+
+                        int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", dt, connection, transaction);
+                        if (N_LoanTransDeatilsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save Loan Request"));
+                        }
+                        SortedList ClosingParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"N_TransID", nLoanCloseID},
+                                {"N_UserID","2"},
+                                {"X_SystemName","Online"},
+                                {"X_EntryFrom","Online"},
+                                };
+
+                        dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
+                        
                         transaction.Commit();
-                    }
+
 
                     return Ok(api.Success("Loan Closed"));
                 }
