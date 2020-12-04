@@ -31,6 +31,36 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
+        [HttpGet("list")]
+        public ActionResult GetLoanAdjustment()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status] from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
 
         [HttpGet("details")]
         public ActionResult LoanAdjustmentDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
