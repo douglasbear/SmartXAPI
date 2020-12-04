@@ -14,17 +14,17 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("loanClose")]
+    [Route("aaa")]
     [ApiController]
-    public class Pay_LoanClose : ControllerBase
+    public class Pay_LoanAdjustments : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int N_FormID = 553;
+        private readonly int N_FormID = 470;
 
-        public Pay_LoanClose(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Pay_LoanAdjustments(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -32,37 +32,67 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpGet("details")]
-        public ActionResult LoanCloseDetails(string xLoanCode)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xLoanCode);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(e));
-            }
-        }
+        // [HttpGet("details")]
+        // public ActionResult LoanAdjustmentDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
+        // {
+        //     DataTable dtAdjustment = new DataTable();
+        //     DataTable dtLoan = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId=myFunctions.GetCompanyID(User);
+        //     string xCondition="";
+        //     string sqlCommandLoan="";
+        //     if(nFnYearId==0)
+        //     {
+        //         if(bAllBranchData==true)    
+        //             xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) and dbo.Pay_LoanIssue.N_LoanStatus=0";
+        //         else
+        //             xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) AND (dbo.Pay_LoanIssue.N_BranchID = @p4) and dbo.Pay_LoanIssue.N_LoanStatus=0";
+
+        //         //sqlCommandText="SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM         dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + xCondition+"";
+        //     }
+        //     else
+        //     {
+        //         if(bAllBranchData==true) 
+        //             xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) and dbo.Pay_LoanIssue.N_LoanStatus=0";
+        //         else
+        //             xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) AND (dbo.Pay_LoanIssue.N_BranchID = @p4) and dbo.Pay_LoanIssue.N_LoanStatus=0";
+
+        //         //sqlCommandText="SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM         dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + xCondition+"";
+
+        //     }
+        //     if(bAllBranchData==true) 
+        //     {
+        //         "Select [Loan ID],N_FnyearID  from vw_PayLoanIssue_Disp Where  N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID= " + myCompanyID._FnYearID + " and N_LoanStatus=0"
+        //     } 
+
+            
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", nFnYearId);
+        //     Params.Add("@p3", nLoanID);
+        //     Params.Add("@p4", nBranchID);
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //            // dtAdjustment = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+        //            // dtLoan = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+        //         }
+        //         dtAdjustment = api.Format(dtAdjustment);
+        //         if (dtAdjustment.Rows.Count == 0)
+        //         {
+        //             return Ok(api.Warning("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(e));
+        //     }
+        // }
 
 
 
@@ -173,7 +203,7 @@ namespace SmartxAPI.Controllers
                                 };
 
                         dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
-                        //dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
+                        dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
                         
                         transaction.Commit();
 
