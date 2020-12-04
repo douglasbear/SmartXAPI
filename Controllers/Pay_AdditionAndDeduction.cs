@@ -212,20 +212,20 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-
-                    foreach (DataRow mstVar in DetailsTable.Rows)
+                    for (int i = DetailsTable.Rows.Count - 1; i >= 0; i--) 
                     {
-
+                        DataRow mstVar = DetailsTable.Rows[i];
                             // if (var["N_SaveChanges"].ToString().Trim() == "" && (var["n_TransDetailsID"].ToString()).Trim() != "") 
                             //     continue;
 
                             
                             double Amount = myFunctions.getVAL(mstVar["n_PayRate"].ToString());
 
-                            if (Amount == 0 && myFunctions.getVAL(mstVar["n_Value"].ToString()) == 0)
+                            if (Amount == 0 )
                             {
                                 if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0)
-                                    dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()), "N_CompanyID = " +nCompanyID ,connection,transaction);
+                                    {dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()), "N_CompanyID = " +nCompanyID ,connection,transaction);}
+                                DetailsTable.Rows[i].Delete();
                                 continue;
                             }
                             else if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0 && mstVar["n_FormID"].ToString().Trim() != "")
@@ -236,8 +236,6 @@ namespace SmartxAPI.Controllers
                             else if (mstVar["n_FormID"].ToString().Trim() == "" || myFunctions.getIntVAL(mstVar["n_FormID"].ToString()) == 0)
                                 FormID = this.FormID;
 
-                            if (Amount == 0)
-                                Amount = myFunctions.getVAL(mstVar["n_Value"].ToString());
 
                             if (Amount < 0)
                                 Amount = Amount * -1;
@@ -248,13 +246,12 @@ namespace SmartxAPI.Controllers
                             {
                                 N_IsAuto = 1;
                             }
-                        mstVar["n_TransID"] = N_TransID;
-                        mstVar["n_PayRate"] = Amount;
-                        mstVar["b_TimeSheetEntry"] = N_IsAuto;
-                        mstVar["n_FormID"] = FormID;
-                        
+                        DetailsTable.Rows[i]["n_TransID"] = N_TransID;
+                        DetailsTable.Rows[i]["n_PayRate"] = Amount;
+                        DetailsTable.Rows[i]["b_TimeSheetEntry"] = N_IsAuto;
+                        DetailsTable.Rows[i]["n_FormID"] = FormID;
                     }
-
+                    DetailsTable.AcceptChanges();
                     N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID",DetailsTable,connection,transaction).ToString());
                     if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
                     {
@@ -264,7 +261,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(_api.Success("Unable to save"));
+                        return Ok(_api.Success("Saved"));
                     }
 
                     }
