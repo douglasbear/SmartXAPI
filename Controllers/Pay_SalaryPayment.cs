@@ -180,271 +180,271 @@ namespace SmartxAPI.Controllers
 
         }
 
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable MasterTable;
-                DataTable DetailTable;
-                MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
-                SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();
+        // [HttpPost("save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         DataTable MasterTable;
+        //         DataTable DetailTable;
+        //         MasterTable = ds.Tables["master"];
+        //         DetailTable = ds.Tables["details"];
+        //         SortedList Params = new SortedList();
+        //         SortedList QueryParams = new SortedList();
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction;
-                    DataRow MasterRow = MasterTable.Rows[0];
-                    transaction = connection.BeginTransaction();
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction;
+        //             DataRow MasterRow = MasterTable.Rows[0];
+        //             transaction = connection.BeginTransaction();
 
 
-                    int N_ReceiptID = myFunctions.getIntVAL(MasterRow["n_ReceiptID"].ToString());
-                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
-                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+        //             int N_ReceiptID = myFunctions.getIntVAL(MasterRow["n_ReceiptID"].ToString());
+        //             int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+        //             int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+        //             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
 
-                    QueryParams.Add("@nCompanyID", N_CompanyID);
-                    QueryParams.Add("@nFnYearID", N_FnYearID);
-                    QueryParams.Add("@nReceiptID", N_ReceiptID);
-                    QueryParams.Add("@nBranchID", N_BranchID);
+        //             QueryParams.Add("@nCompanyID", N_CompanyID);
+        //             QueryParams.Add("@nFnYearID", N_FnYearID);
+        //             QueryParams.Add("@nReceiptID", N_ReceiptID);
+        //             QueryParams.Add("@nBranchID", N_BranchID);
 
 
                
-                    // Auto Gen
-                    string x_QuotationNo = "";
-                    var values = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
-                    DataRow Master = MasterTable.Rows[0];
-                    if (values == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 198);
-                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
-                        x_QuotationNo = dLayer.GetAutoNumber("Pay_EmployeePayment", "X_ReceiptNo", Params, connection, transaction);
-                        if (x_QuotationNo == "") { return Ok(_api.Error("Unable to generate Receipt Number")); }
-                        MasterTable.Rows[0]["x_QuotationNo"] = x_QuotationNo;
+        //             // Auto Gen
+        //             string x_QuotationNo = "";
+        //             var values = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
+        //             DataRow Master = MasterTable.Rows[0];
+        //             if (values == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
+        //                 Params.Add("N_YearID", Master["n_FnYearId"].ToString());
+        //                 Params.Add("N_FormID", 198);
+        //                 Params.Add("N_BranchID", Master["n_BranchId"].ToString());
+        //                 x_QuotationNo = dLayer.GetAutoNumber("Pay_EmployeePayment", "X_ReceiptNo", Params, connection, transaction);
+        //                 if (x_QuotationNo == "") { return Ok(_api.Error("Unable to generate Receipt Number")); }
+        //                 MasterTable.Rows[0]["x_QuotationNo"] = x_QuotationNo;
 
-                    }
-                    else
-                    {
-                        if (N_ReceiptID > 0)
-                        {
-                            int res = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_ReceiptID, "", connection, transaction);
-                            if (res <= 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error("Unable to save Quotation"));
-                            }
-                        }
-                    }
+        //             }
+        //             else
+        //             {
+        //                 if (N_ReceiptID > 0)
+        //                 {
+        //                     int res = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_ReceiptID, "", connection, transaction);
+        //                     if (res <= 0)
+        //                     {
+        //                         transaction.Rollback();
+        //                         return Ok(_api.Error("Unable to save Quotation"));
+        //                     }
+        //                 }
+        //             }
 
 
-                    N_ReceiptID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", MasterTable, connection, transaction);
-                    if (N_ReceiptID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Salary Payment"));
-                    }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_ReceiptID"] = N_ReceiptID;
-                    }
+        //             N_ReceiptID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", MasterTable, connection, transaction);
+        //             if (N_ReceiptID <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error("Unable to save Salary Payment"));
+        //             }
+        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //             {
+        //                 DetailTable.Rows[j]["N_ReceiptID"] = N_ReceiptID;
+        //             }
 
-                    int N_QuotationDetailId = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
-                    if (N_QuotationDetailId <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Quotation"));
-                    }
-                    else
-                    {
+        //             int N_QuotationDetailId = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
+        //             if (N_QuotationDetailId <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error("Unable to save Quotation"));
+        //             }
+        //             else
+        //             {
                         
-                        for (int k = 0; k < DetailTable.Rows.Count; k++)
-                        {
-                                if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
-                                {
-                                    if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
-                                        dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ELI','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
-                                    else
-                                        dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ESP','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
-                                }
-                         }
-                        dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Ins " + myCompanyID._CompanyID.ToString() + "," + N_ReceiptID.ToString() + "," + myCompanyID._UserID.ToString() + ",'" + this.Text + "','" + System.Environment.MachineName + "'," + N_LoanFlag, "TEXT", new DataTable());
+        //                 for (int k = 0; k < DetailTable.Rows.Count; k++)
+        //                 {
+        //                         if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
+        //                         {
+        //                             if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
+        //                                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ELI','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
+        //                             else
+        //                                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ESP','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
+        //                         }
+        //                  }
+        //                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Ins " + myCompanyID._CompanyID.ToString() + "," + N_ReceiptID.ToString() + "," + myCompanyID._UserID.ToString() + ",'" + this.Text + "','" + System.Environment.MachineName + "'," + N_LoanFlag, "TEXT", new DataTable());
                         
-                        transaction.Commit();
-                    }
-                    return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
-                }
-            }
-            catch (Exception ex)
-            {
-                return Ok(_api.Error(ex));
-            }
-        }
+        //                 transaction.Commit();
+        //             }
+        //             return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(ex));
+        //     }
+        // }
 
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
+        // [HttpPost("save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
 
-            double N_TotalAmountPAid = 0;
-            string X_TotalAmountPAid = "";
-
-
-
-            N_TotalAmountPAid = ReturnTotal();
-            ToWord toWord = new ToWord(Convert.ToDecimal(N_TotalAmountPAid.ToString(myCompanyID.DecimalPlaceString)), new CurrencyInfo(CurrencyInfo.Currencies.SaudiArabia));
-            X_TotalAmountPAid = toWord.ConvertToArabic();
-
-            bool B_Completed = true;
-            N_BranchId = myCompanyID._BranchID;
-            dba.SetTransaction();
-            try
-            {
-                if (txtReference.Text == "@Auto")
-                {
-                    if (!B_AutoInvoice)
-                    {
-                        dba.Rollback();
-                        msg.msgInformation(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "AutoInvoice"));
-                        return;
-                    }
-                    while (true)
-                    {
-                        txtReference.Text = dba.ExecuteSclarNoErrorCatch("SP_AutoNumberGenerate " + myCompanyID._CompanyID + "," + myCompanyID._FnYearID + "," + MYG.ReturnFormID(this.Text), "TEXT", new DataTable()).ToString();
-                        object N_Result = dba.ExecuteSclarNoErrorCatch("Select 1 from Pay_EmployeePayment Where N_CompanyID = " + myCompanyID._CompanyID + " and X_ReceiptNo = '" + txtReference.Text.Trim() + "' and N_AcYearID=" + myCompanyID._AcYearID.ToString(), "TEXT", new DataTable());
-                        if (N_Result == null)
-                            break;
-                    }
-                    if (txtReference.Text == "")
-                    {
-                        dba.Rollback();
-                        msg.msgInformation(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "AutoInvoice"));
-                        return;
-                    }
-                }
-                if (txtRemarks.Text.ToString() == "Notes" || txtRemarks.Text.ToString() == "�������")
-                    txtRemarks.Text = "";
+        //     double N_TotalAmountPAid = 0;
+        //     string X_TotalAmountPAid = "";
 
 
-                {
-                    if (!dba.DeleteDataNoTry("Pay_EmployeePaymentDetails", "N_ReceiptID", N_ReceiptID.ToString(), "N_CompanyID=" + myCompanyID._CompanyID)) { dba.Rollback(); return; }
-                }
 
-                string PaymentMethod = "", BankName = "";
-                string ChequeNo = "", CheQueDate = "";
-                if (N_PaymentModeID == 4) PaymentMethod = "Cash";
-                else if (N_PaymentModeID == 6) PaymentMethod = "Credit Card";
-                else
-                {
-                    PaymentMethod = "Bank";
-                }
-                BankName = txtDefaultAccount.Text;
+        //     N_TotalAmountPAid = ReturnTotal();
+        //     ToWord toWord = new ToWord(Convert.ToDecimal(N_TotalAmountPAid.ToString(myCompanyID.DecimalPlaceString)), new CurrencyInfo(CurrencyInfo.Currencies.SaudiArabia));
+        //     X_TotalAmountPAid = toWord.ConvertToArabic();
 
-                if (txtChequeNo.Text.Trim() == "Cheque No.")
-                    ChequeNo = "";
-                else
-                    ChequeNo = txtChequeNo.Text.Trim();
-                CheQueDate = myFunctions.getDateVAL(dtpChequeDate.Value);
+        //     bool B_Completed = true;
+        //     N_BranchId = myCompanyID._BranchID;
+        //     dba.SetTransaction();
+        //     try
+        //     {
+        //         if (txtReference.Text == "@Auto")
+        //         {
+        //             if (!B_AutoInvoice)
+        //             {
+        //                 dba.Rollback();
+        //                 msg.msgInformation(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "AutoInvoice"));
+        //                 return;
+        //             }
+        //             while (true)
+        //             {
+        //                 txtReference.Text = dba.ExecuteSclarNoErrorCatch("SP_AutoNumberGenerate " + myCompanyID._CompanyID + "," + myCompanyID._FnYearID + "," + MYG.ReturnFormID(this.Text), "TEXT", new DataTable()).ToString();
+        //                 object N_Result = dba.ExecuteSclarNoErrorCatch("Select 1 from Pay_EmployeePayment Where N_CompanyID = " + myCompanyID._CompanyID + " and X_ReceiptNo = '" + txtReference.Text.Trim() + "' and N_AcYearID=" + myCompanyID._AcYearID.ToString(), "TEXT", new DataTable());
+        //                 if (N_Result == null)
+        //                     break;
+        //             }
+        //             if (txtReference.Text == "")
+        //             {
+        //                 dba.Rollback();
+        //                 msg.msgInformation(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "AutoInvoice"));
+        //                 return;
+        //             }
+        //         }
+        //         if (txtRemarks.Text.ToString() == "Notes" || txtRemarks.Text.ToString() == "�������")
+        //             txtRemarks.Text = "";
 
-                X_BtnAction = "Save";
-                if (N_ReceiptID > 0)
-                {
-                    X_BtnAction = "Update";
-                }
 
-                object Result = 0;
+        //         {
+        //             if (!dba.DeleteDataNoTry("Pay_EmployeePaymentDetails", "N_ReceiptID", N_ReceiptID.ToString(), "N_CompanyID=" + myCompanyID._CompanyID)) { dba.Rollback(); return; }
+        //         }
 
-                string FieldList = "N_CompanyID,N_AcYearID,X_ReceiptNo,D_ReceiptDate,N_AdmissionID,N_userID,X_PaymentMethod,X_ChequeNo,D_ChequeDate,X_BankName,X_Remarks,N_TotalAmount,X_TotalAmount_Ar,N_BranchID,N_TransID";
-                string FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID.ToString() + "|'" + txtReference.Text + "'|'" + myFunctions.getDateVAL(dtpDate.Value) + "'|" + N_AdmissionID.ToString() + "|" + myCompanyID._UserID + "|'" + txtPaymentMode.Text.Trim() + "'|'" + ChequeNo + "'|'" + CheQueDate + "'|'" + BankName + "'|'" + txtRemarks.Text + "'|" + N_TotalAmountPAid + "|'" + X_TotalAmountPAid + "'|" + N_BranchId + "|" + N_BatchId;
+        //         string PaymentMethod = "", BankName = "";
+        //         string ChequeNo = "", CheQueDate = "";
+        //         if (N_PaymentModeID == 4) PaymentMethod = "Cash";
+        //         else if (N_PaymentModeID == 6) PaymentMethod = "Credit Card";
+        //         else
+        //         {
+        //             PaymentMethod = "Bank";
+        //         }
+        //         BankName = txtDefaultAccount.Text;
 
-                myFunctions.saveApprovals(ref dba, ref FieldList, ref FieldValues, N_NextApprovalLevel, myFunctions.getIntVAL(btnSave.Tag.ToString()), N_SaveDraft, N_IsApprovalSystem, myFunctions.getIntVAL(MYG.ReturnFormID(this.Text)), 0);
+        //         if (txtChequeNo.Text.Trim() == "Cheque No.")
+        //             ChequeNo = "";
+        //         else
+        //             ChequeNo = txtChequeNo.Text.Trim();
+        //         CheQueDate = myFunctions.getDateVAL(dtpChequeDate.Value);
 
-                string DupCriteria = "N_CompanyID = " + myCompanyID._CompanyID + " and X_ReceiptNo = '" + txtReference.Text.Trim() + "' and N_AcYearID=" + myCompanyID._AcYearID.ToString();
+        //         X_BtnAction = "Save";
+        //         if (N_ReceiptID > 0)
+        //         {
+        //             X_BtnAction = "Update";
+        //         }
 
-                string RefFieldList = "N_DefLedgerID,N_PaymentMethodID";
-                string RefFileldDescr = "Acc_MastLedger|N_LedgerID|X_LedgerCode='" + X_DefLedgerCode + "' and N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID + "|Acc_PaymentMethodMaster|N_PaymentMethodID|X_PayMethod  ='" + txtPaymentMode.Text.Trim() + "' and N_CompanyID=" + myCompanyID._CompanyID;
+        //         object Result = 0;
 
-                dba.SaveData(ref Result, "Pay_EmployeePayment", "N_ReceiptID", N_ReceiptID.ToString(), FieldList, FieldValues, RefFieldList, RefFileldDescr, DupCriteria, "");
-                double N_Amount = 0;
-                int N_LoanFlag = 0;
-                if (myFunctions.getIntVAL(Result.ToString()) > 0)
-                {
-                    N_ReceiptID = myFunctions.getIntVAL(Result.ToString());
+        //         string FieldList = "N_CompanyID,N_AcYearID,X_ReceiptNo,D_ReceiptDate,N_AdmissionID,N_userID,X_PaymentMethod,X_ChequeNo,D_ChequeDate,X_BankName,X_Remarks,N_TotalAmount,X_TotalAmount_Ar,N_BranchID,N_TransID";
+        //         string FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID.ToString() + "|'" + txtReference.Text + "'|'" + myFunctions.getDateVAL(dtpDate.Value) + "'|" + N_AdmissionID.ToString() + "|" + myCompanyID._UserID + "|'" + txtPaymentMode.Text.Trim() + "'|'" + ChequeNo + "'|'" + CheQueDate + "'|'" + BankName + "'|'" + txtRemarks.Text + "'|" + N_TotalAmountPAid + "|'" + X_TotalAmountPAid + "'|" + N_BranchId + "|" + N_BatchId;
 
-                    myFunctions.logApprovals(ref dba, X_TransType, N_ReceiptID, myFunctions.getIntVAL(MYG.ReturnFormID(this.Text)), X_Action, txtReference.Text, DateTime.Now, N_NextApprovalLevel, myCompanyID._UserID, myFunctions.getIntVAL(btnSave.Tag.ToString()), N_IsApprovalSystem, "", 0);
+        //         myFunctions.saveApprovals(ref dba, ref FieldList, ref FieldValues, N_NextApprovalLevel, myFunctions.getIntVAL(btnSave.Tag.ToString()), N_SaveDraft, N_IsApprovalSystem, myFunctions.getIntVAL(MYG.ReturnFormID(this.Text)), 0);
 
-                    N_SaveDraft = myFunctions.getIntVAL(dba.ExecuteSclarNoErrorCatch("select CAST(B_IsSaveDraft as INT) from Pay_EmployeePayment where N_CompanyID=" + myCompanyID._CompanyID + " and N_ReceiptID=" + N_ReceiptID, "TEXT", new DataTable()).ToString());
+        //         string DupCriteria = "N_CompanyID = " + myCompanyID._CompanyID + " and X_ReceiptNo = '" + txtReference.Text.Trim() + "' and N_AcYearID=" + myCompanyID._AcYearID.ToString();
 
-                    dba.ExecuteNonQuery("SP_Log_SysActivity " + myCompanyID._CompanyID.ToString() + "," + myCompanyID._FnYearID.ToString() + "," + N_ReceiptID + "," + myFunctions.getIntVAL(MYG.ReturnFormID(this.Text).ToString()) + "," + myCompanyID._UserID + ",'" + X_BtnAction + "','" + myCompanyID._SystemName + "','" + Dns.GetHostByName(Dns.GetHostName()).AddressList[0].ToString() + "','" + txtReference.Text.Trim() + "',''", "TEXT", new DataTable());
-                    X_BtnAction = "";
-                    for (int i = 1; i < flxPurchase.Rows; i++)
-                    {
-                        if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
-                        {
-                            Result = 0;
+        //         string RefFieldList = "N_DefLedgerID,N_PaymentMethodID";
+        //         string RefFileldDescr = "Acc_MastLedger|N_LedgerID|X_LedgerCode='" + X_DefLedgerCode + "' and N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID + "|Acc_PaymentMethodMaster|N_PaymentMethodID|X_PayMethod  ='" + txtPaymentMode.Text.Trim() + "' and N_CompanyID=" + myCompanyID._CompanyID;
 
-                            FieldList = "N_CompanyID,N_AcYearID,N_ReceiptID,N_SalesID,N_amount,N_Discount,N_BranchID,N_Entryfrom,N_PayTypeID,N_PaymentID,N_EmpId,X_Description";
-                            FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID.ToString() + "|" + N_ReceiptID + "|" + flxPurchase.get_TextMatrix(i, mcPayrunID) + "|" + myFunctions.getVAL(flxPurchase.get_TextMatrix(i, mcAmount)).ToString() + "|" + myFunctions.getVAL(flxPurchase.get_TextMatrix(i, mcDisount)).ToString() + "|" + N_BranchId + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcPayTypeID)) + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcPaymentID)) + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEmpId)) + "|'" + flxPurchase.get_TextMatrix(i, mcDescription).ToString() + "'";
-                            DupCriteria = "";
+        //         dba.SaveData(ref Result, "Pay_EmployeePayment", "N_ReceiptID", N_ReceiptID.ToString(), FieldList, FieldValues, RefFieldList, RefFileldDescr, DupCriteria, "");
+        //         double N_Amount = 0;
+        //         int N_LoanFlag = 0;
+        //         if (myFunctions.getIntVAL(Result.ToString()) > 0)
+        //         {
+        //             N_ReceiptID = myFunctions.getIntVAL(Result.ToString());
 
-                            RefFieldList = "";
-                            RefFileldDescr = "";
-                            dba.SaveData(ref Result, "Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", "0", FieldList, FieldValues, RefFieldList, RefFileldDescr, DupCriteria, "", "N_CompanyID=" + myCompanyID._CompanyID + " and N_AcYearID=" + myCompanyID._FnYearID.ToString());
+        //             myFunctions.logApprovals(ref dba, X_TransType, N_ReceiptID, myFunctions.getIntVAL(MYG.ReturnFormID(this.Text)), X_Action, txtReference.Text, DateTime.Now, N_NextApprovalLevel, myCompanyID._UserID, myFunctions.getIntVAL(btnSave.Tag.ToString()), N_IsApprovalSystem, "", 0);
 
-                            if (myFunctions.getIntVAL(Result.ToString()) <= 0)
-                            {
-                                B_Completed = false;
-                                break;
-                            }
-                            if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
-                                N_LoanFlag = 1;
-                        }
-                    }
-                    if (B_Completed)
-                    {
-                        if (N_SaveDraft == 0)
-                        {
-                            for (int i = 1; i < flxPurchase.Rows; i++)
-                            {
-                                if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
-                                {
-                                    if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
-                                        dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ELI','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
-                                    else
-                                        dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ESP','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
-                                }
-                            }
+        //             N_SaveDraft = myFunctions.getIntVAL(dba.ExecuteSclarNoErrorCatch("select CAST(B_IsSaveDraft as INT) from Pay_EmployeePayment where N_CompanyID=" + myCompanyID._CompanyID + " and N_ReceiptID=" + N_ReceiptID, "TEXT", new DataTable()).ToString());
 
-                            dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Ins " + myCompanyID._CompanyID.ToString() + "," + N_ReceiptID.ToString() + "," + myCompanyID._UserID.ToString() + ",'" + this.Text + "','" + System.Environment.MachineName + "'," + N_LoanFlag, "TEXT", new DataTable());
-                        }
-                        dba.Commit();
-                        PrintCheque();
-                        PrintVoucher();
-                        InvoiceSearchSettings();
+        //             dba.ExecuteNonQuery("SP_Log_SysActivity " + myCompanyID._CompanyID.ToString() + "," + myCompanyID._FnYearID.ToString() + "," + N_ReceiptID + "," + myFunctions.getIntVAL(MYG.ReturnFormID(this.Text).ToString()) + "," + myCompanyID._UserID + ",'" + X_BtnAction + "','" + myCompanyID._SystemName + "','" + Dns.GetHostByName(Dns.GetHostName()).AddressList[0].ToString() + "','" + txtReference.Text.Trim() + "',''", "TEXT", new DataTable());
+        //             X_BtnAction = "";
+        //             for (int i = 1; i < flxPurchase.Rows; i++)
+        //             {
+        //                 if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
+        //                 {
+        //                     Result = 0;
 
-                    }
-                    else
-                    {
-                        dba.Rollback();
-                        MYG.ResultMessage(lblResult, lblResultDescr, "Error!", MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "UnExpectedErr"));
-                    }
-                }
-                else
-                {
-                    dba.Rollback();
-                    MYG.ResultMessage(lblResult, lblResultDescr, "Alert!", MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Duplicatememo"));
-                }
-                Cursor.Current = Cursors.Default;
+        //                     FieldList = "N_CompanyID,N_AcYearID,N_ReceiptID,N_SalesID,N_amount,N_Discount,N_BranchID,N_Entryfrom,N_PayTypeID,N_PaymentID,N_EmpId,X_Description";
+        //                     FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID.ToString() + "|" + N_ReceiptID + "|" + flxPurchase.get_TextMatrix(i, mcPayrunID) + "|" + myFunctions.getVAL(flxPurchase.get_TextMatrix(i, mcAmount)).ToString() + "|" + myFunctions.getVAL(flxPurchase.get_TextMatrix(i, mcDisount)).ToString() + "|" + N_BranchId + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcPayTypeID)) + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcPaymentID)) + "|" + myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEmpId)) + "|'" + flxPurchase.get_TextMatrix(i, mcDescription).ToString() + "'";
+        //                     DupCriteria = "";
 
-            }
-            catch (Exception ex)
-            {
-                dba.Rollback();
-                MYG.ResultMessage(lblResult, lblResultDescr, "Error!", ex.Message);
-            }
-        }
+        //                     RefFieldList = "";
+        //                     RefFileldDescr = "";
+        //                     dba.SaveData(ref Result, "Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", "0", FieldList, FieldValues, RefFieldList, RefFileldDescr, DupCriteria, "", "N_CompanyID=" + myCompanyID._CompanyID + " and N_AcYearID=" + myCompanyID._FnYearID.ToString());
+
+        //                     if (myFunctions.getIntVAL(Result.ToString()) <= 0)
+        //                     {
+        //                         B_Completed = false;
+        //                         break;
+        //                     }
+        //                     if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
+        //                         N_LoanFlag = 1;
+        //                 }
+        //             }
+        //             if (B_Completed)
+        //             {
+        //                 if (N_SaveDraft == 0)
+        //                 {
+        //                     for (int i = 1; i < flxPurchase.Rows; i++)
+        //                     {
+        //                         if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
+        //                         {
+        //                             if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
+        //                                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ELI','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
+        //                             else
+        //                                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ESP','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
+        //                         }
+        //                     }
+
+        //                     dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Ins " + myCompanyID._CompanyID.ToString() + "," + N_ReceiptID.ToString() + "," + myCompanyID._UserID.ToString() + ",'" + this.Text + "','" + System.Environment.MachineName + "'," + N_LoanFlag, "TEXT", new DataTable());
+        //                 }
+        //                 dba.Commit();
+        //                 PrintCheque();
+        //                 PrintVoucher();
+        //                 InvoiceSearchSettings();
+
+        //             }
+        //             else
+        //             {
+        //                 dba.Rollback();
+        //                 MYG.ResultMessage(lblResult, lblResultDescr, "Error!", MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "UnExpectedErr"));
+        //             }
+        //         }
+        //         else
+        //         {
+        //             dba.Rollback();
+        //             MYG.ResultMessage(lblResult, lblResultDescr, "Alert!", MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Duplicatememo"));
+        //         }
+        //         Cursor.Current = Cursors.Default;
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         dba.Rollback();
+        //         MYG.ResultMessage(lblResult, lblResultDescr, "Error!", ex.Message);
+        //     }
+        // }
 
 
     }

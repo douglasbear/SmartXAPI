@@ -30,7 +30,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 0;
+            FormID = 188;
         }
 
         [HttpGet("list")]
@@ -139,6 +139,61 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
+          //Save....
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["pay_Employee"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                string xEmpCode = MasterTable.Rows[0]["x_EmpCode"].ToString();
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    // Auto Gen
+                    if (xEmpCode == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+                        xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
+                        if (xEmpCode == "") { return Ok(_api.Error("Unable to generate Employee Code")); }
+                        MasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
+                    }
+                    else
+                    {
+                        dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
+                    }
+
+
+                    nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", MasterTable, connection, transaction);
+                    if (nEmpID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Employee Information Saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
 
         [HttpGet("managerList")]
         public ActionResult GetManagerList(int nFnYearID)
