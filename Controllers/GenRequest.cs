@@ -44,6 +44,8 @@ namespace SmartxAPI.Controllers
             switch(type.ToLower()){
                 case "locationtype": id=1;
                 break;
+                case "salarytype": id=2;
+                break;
                 case "partnertype": id=25;
                 break;
                 case "producttype": id=36;
