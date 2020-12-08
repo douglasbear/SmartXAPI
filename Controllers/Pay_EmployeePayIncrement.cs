@@ -14,17 +14,17 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("loanAdjustment")]
+    [Route("endofservice")]
     [ApiController]
-    public class Pay_LoanAdjustments : ControllerBase
+    public class Pay_EmployeePayIncrement : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int N_FormID = 470;
+        private readonly int N_FormID = 455;
 
-        public Pay_LoanAdjustments(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Pay_EmployeePayIncrement(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -32,13 +32,13 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLoanAdjustment()
+        public ActionResult GetEndOfService()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status] from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
+            string sqlCommandText="Select X_ServiceEndCode,X_EmpCode,X_EmpName,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult LoanAdjustmentDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
+        public ActionResult EndOfServiceDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
         {
             DataTable dtAdjustment = new DataTable();
             DataTable dtLoan = new DataTable();
@@ -131,49 +131,8 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-
-
-
-        //Save....
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable DetailTable;
-                DetailTable = ds.Tables["details"];
-                int nCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_CompanyId"].ToString());
-                //int nFnYearId = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearId"].ToString());
-                int nLoanTransID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_LoanTransID"].ToString());
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList Params = new SortedList();
-                   
-                    
-                    if (nLoanTransID > 0)
-                        {
-                        foreach (DataRow var in DetailTable.Rows)
-                         {
-                             int nLoanTransDetailsID = dLayer.SaveData("Pay_LoanIssueDetails", "N_LoanTransDetailsID", DetailTable, connection, transaction);
-                             if (nLoanTransDetailsID <= 0)
-                             {
-                                  transaction.Rollback();
-                                  return Ok(api.Error("Unable to save"));
-                             }
-                         }
-                            
-                        transaction.Commit();
-                        }
-                return Ok(api.Success("Adjustment Saved"));
-                }
-            }
-            catch (Exception ex)
-            {
-                return Ok(api.Error(ex));
-            }
-        }
     }
 }
+
+
+
