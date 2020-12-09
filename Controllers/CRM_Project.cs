@@ -88,6 +88,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+         [HttpGet("listDetails")]
+        public ActionResult ProjectListInner()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+           
+            string sqlCommandText = "select  * from vw_CRM_Project where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
 
         [HttpGet("details")]
         public ActionResult LeadListDetails(string xProjectNo)
