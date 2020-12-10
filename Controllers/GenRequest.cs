@@ -62,6 +62,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "hiretype": id=56;
                 break;
+                case "closingstatus": id=94;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
