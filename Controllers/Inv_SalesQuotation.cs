@@ -481,8 +481,6 @@ namespace SmartxAPI.Controllers
         public ActionResult GetItem(int nCompanyID, int nLocationID, int nBranchID, string dDate, string InputVal, int nCustomerID, bool bSelected)
         {
             string  ItemCondition = "";
-            object subItemPrice, subPprice, subMrp;
-            string sql = "";
 
             using (SqlConnection connection = new SqlConnection(connectionString))
             {
@@ -530,7 +528,7 @@ namespace SmartxAPI.Controllers
                 }
 
 
-                sql = "Select * ,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,'','Location') As N_AvlStock,  dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock, dbo.SP_GetQuotationCount(@nCompanyID,vw_InvItem_Search.N_ItemID,@date) As QuotedQty, dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
+                string sql = "Select * ,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,'','Location') As N_AvlStock,  dbo.SP_Stock(vw_InvItem_Search.N_ItemID) as T_Stock, dbo.SP_GetQuotationCount(@nCompanyID,vw_InvItem_Search.N_ItemID,@date) As QuotedQty, dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
 
                 if (B_SPRiceType)
                 {

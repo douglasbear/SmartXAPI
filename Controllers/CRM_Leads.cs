@@ -264,7 +264,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // Auto Gen
-                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1,N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource,X_Referredby,X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID' From CRM_Leads where N_LeadID=@nLeadID";
+                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID' From CRM_Leads where N_LeadID=@nLeadID";
                     OprTbl = dLayer.ExecuteDataTable(OprSql, Params, connection, transaction);
                     if (OprTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Opportunity")); }
                     string OpportunityCode = "";
@@ -290,7 +290,8 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Oppurtunity Created"));
+                        SortedList output=new SortedList(){{"x_OpportunityCode",OpportunityCode},{"n_OpportunityID",nOpportunityID}};
+                        return Ok(api.Success(output,"Opportunity Created"));
                     }
                 }
             }

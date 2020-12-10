@@ -63,6 +63,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = result });
         }
+        public object Success(SortedList result,String message)
+        {
+            return (new { type = "success", Message = message, Data = result });
+        }
         public object Success(DataSet dataSet, String message)
         {
             return (new { type = "success", Message = message, Data = dataSet });
@@ -192,6 +196,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(Dictionary<string, string> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary);
         public object Success(SortedList data);
+        public object Success(SortedList result,String message);
         public object Success(DataSet dataSet);
         public object Success(string[] json);
         public object Success(string message);

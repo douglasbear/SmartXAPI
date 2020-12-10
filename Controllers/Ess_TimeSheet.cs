@@ -23,7 +23,6 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
 
         public Ess_TimeSheet(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
@@ -32,7 +31,6 @@ namespace SmartxAPI.Controllers
             api = apiFun;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1229;
         }
 
         // [HttpGet("details")]

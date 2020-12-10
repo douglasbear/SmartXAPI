@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
-                    bool B_AllBranchData = false, B_AllowCashPay = false, B_POS = false, B_DirectPosting = false;
+                    bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
 
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -772,7 +772,6 @@ namespace SmartxAPI.Controllers
                 var UserCategoryID = myFunctions.GetUserCategory(User);
                 N_DefSPriceID = myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "DefSPriceTypeID", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection));
                 int nSPriceID = N_DefSPriceID;
-                bool IsSerial = false;
                 string ItemClass = "", ItemCondition = "";
 
                 ItemCondition = "([Item Code] =@xItemCode)";

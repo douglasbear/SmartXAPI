@@ -24,7 +24,6 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
 
         public Inv_StatusManager(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -33,7 +32,6 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 82;
         }
 
         [HttpGet]
@@ -62,10 +60,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     bool B_PartNo = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("82", "PartNo_InGrid", "N_Value",myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     object N_LocationCount = dLayer.ExecuteScalar("Select count(1) from inv_Location where  N_CompanyID=@nCompanyID",Params,connection);
-                    string X_HideFieldList,X_TableName,X_VisibleFieldList,X_Crieteria,X_OrderByField;
+                    string X_TableName,X_VisibleFieldList,X_Crieteria,X_OrderByField;
                     if (myFunctions.getIntVAL(N_LocationCount.ToString()) > 1)
                     {
-                        X_HideFieldList = "N_CompanyID,N_CategoryID,N_LocationID,N_CurrStock,N_MinQty,N_ReOrderQty";
+                        // X_HideFieldList = "N_CompanyID,N_CategoryID,N_LocationID,N_CurrStock,N_MinQty,N_ReOrderQty";
                         X_OrderByField = "X_ItemCode ASC";
                         X_TableName = "vw_stockstatusbylocation";
                         if (B_PartNo)
@@ -103,7 +101,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        X_HideFieldList = "N_CompanyID,N_CategoryID,N_LocationID,N_CurrStock,N_MinQty,N_ReOrderQty";
+                        //X_HideFieldList = "N_CompanyID,N_CategoryID,N_LocationID,N_CurrStock,N_MinQty,N_ReOrderQty";
                         X_OrderByField = "X_ItemCode ASC";
                         X_TableName = "vw_stockstatusbylocation";
 

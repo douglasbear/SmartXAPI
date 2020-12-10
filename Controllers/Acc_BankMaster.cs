@@ -21,7 +21,6 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
 
         public Acc_BankMaster(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -30,7 +29,6 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 0;
         }
 
         [HttpGet("list")]

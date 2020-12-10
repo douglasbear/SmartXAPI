@@ -229,7 +229,7 @@ namespace SmartxAPI.Controllers
 
                     if (DetailTable.Rows.Count > 0)
                     {
-                        double N_AdvanceAmount = 0, N_InvoiceDueAmt = 0, N_TotalDueAmt = 0;
+                        double  N_InvoiceDueAmt = 0, N_TotalDueAmt = 0;
                         foreach (DataRow dr in DetailTable.Rows)
                         {
                             if (myFunctions.getIntVAL(dr["N_SalesID"].ToString()) == 0)

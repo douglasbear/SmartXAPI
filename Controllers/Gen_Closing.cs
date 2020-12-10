@@ -14,16 +14,16 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("genlookup")]
+    [Route("genClosing")]
     [ApiController]
-    public class Gen_Lookup : ControllerBase
+    public class Gen_Closing : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        public Gen_Lookup(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Gen_Closing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -33,17 +33,17 @@ namespace SmartxAPI.Controllers
 
 
         
-        [HttpGet("listDetails")]
-        public ActionResult OpportunityListDetails(int nFnYearId,int nPkeyId)
+        [HttpGet("reasonList")]
+        public ActionResult ReasonList(int nFormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+
             int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from Gen_LookupTable where N_CompanyID=@p1 and N_FnyearID=@p2 and N_PkeyId=@p3";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nPkeyId);
+            string sqlCommandText = "select * from vw_Inv_QuotationclosingStatus where N_CompanyID=@nCompanyID and N_FormID=@nFormID";
+            Params.Add("@nCompanyID", nCompanyId);
+            Params.Add("@nFormID", nFormID);
 
             try
             {
@@ -69,8 +69,6 @@ namespace SmartxAPI.Controllers
         }
 
 
-
-        //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -115,16 +113,16 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", N_FormID);
-                        PkeyCode = dLayer.GetAutoNumber("Gen_LookupTable", "X_PkeyCode", Params, connection, transaction);
+                        PkeyCode = dLayer.GetAutoNumber("Gen_ClosingTable", "X_PkeyCode", Params, connection, transaction);
                         if (PkeyCode == "") { return Ok(api.Error("Unable to generate PkeyCode Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
                     }
                     else
                     {
-                        dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
+                        dLayer.DeleteData("Gen_ClosingTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     }
 
-                    nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
+                    nPkeyId = dLayer.SaveData("Gen_ClosiTable", "N_PkeyId", MasterTable, connection, transaction);
                     if (nPkeyId <= 0)
                     {
                         transaction.Rollback();
@@ -141,52 +139,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(ex));
             }
-        }
-
-      
-        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPkeyId,int nCompanyID, int nFnYearID)
-        {
-
-             int Results = 0;
-            try
-            {                        
-                SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nFormID", 1305);
-                QueryParams.Add("@nPkeyId", nPkeyId);
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Entry..."));
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
-                    transaction.Commit();
-                }
-                if (Results > 0)
-                {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_PkeyId",nPkeyId.ToString());
-                    return Ok(api.Success(res,"Entry deleted"));
-                }
-                else
-                {
-                    return Ok(api.Error("Unable to delete Entry"));
-                }
-
-            }
-            catch (Exception ex)
-            {
-                return Ok(api.Error(ex));
-            }
-
-
-
         }
     }
 }
