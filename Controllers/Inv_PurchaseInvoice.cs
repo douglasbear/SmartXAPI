@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             DataTable CountTable = new DataTable();
@@ -40,12 +40,21 @@ namespace SmartxAPI.Controllers
             DataSet dataSet=new DataSet();
             string sqlCommandText ="";
             string sqlCommandCount ="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and [Vendor Code] like '%" + xSearchkey + "%' or Vendor like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_PurchaseID desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
             int Count= (nPage - 1) * nSizeperpage;
             if(Count==0)
-                 sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                 sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top("+ Count +") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -75,7 +84,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest( _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
          [HttpGet("listOrder")]
@@ -146,10 +155,9 @@ namespace SmartxAPI.Controllers
                 connection.Open();
                 
                 dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params,connection);
-                if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(new { }); }
+                if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                 dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
                 N_PurchaseID =myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()) ;
-                dt.Tables.Add(dtPurchaseInvoice);
 
 
                 //PURCHASE INVOICE DETAILS
@@ -158,9 +166,9 @@ namespace SmartxAPI.Controllers
                 if (B_MRNVisible)
                 {
                     if (showAllBranch == true)
-                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompnayID and vw_InvPurchaseDetails.N_PurchaseID="+ N_PurchaseID;
+                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID="+ N_PurchaseID;
                     else
-                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID Where vw_InvPurchaseDetails.N_CompanyID=@CompnayID and vw_InvPurchaseDetails.N_PurchaseID="+ N_PurchaseID +" and vw_InvPurchaseDetails.N_BranchId=@BranchID";
+                        X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID="+ N_PurchaseID +" and vw_InvPurchaseDetails.N_BranchId=@BranchID";
                 }
                 else
                 {
@@ -170,16 +178,29 @@ namespace SmartxAPI.Controllers
                         X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID="+N_PurchaseID+" and vw_InvPurchaseDetails.N_BranchId=@BranchID ";
                 }
                 dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql,Params,connection);
+
+                 object RetQty = dLayer.ExecuteScalar("select X_CreditNoteNo from Inv_PurchaseReturnMaster where N_PurchaseId =" + N_PurchaseID + " and N_CompanyID=@CompanyID and N_FnYearID=@YearID",Params,connection);
+                    if (RetQty != null)
+                    {
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"IsReturnDone",typeof(bool),true);
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"X_ReturnCode",typeof(string),RetQty.ToString());
+                    }else{
+                                                dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"IsReturnDone",typeof(bool),false);
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice,"X_ReturnCode",typeof(string),"");
+                    }
+
+                dt.Tables.Add(dtPurchaseInvoice);
+
                 dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
                 dt.Tables.Add(dtPurchaseInvoiceDetails);
                 }
 
-                return Ok(dt);
+                return Ok(_api.Success(dt));
 
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Error(e.Message));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -348,7 +369,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

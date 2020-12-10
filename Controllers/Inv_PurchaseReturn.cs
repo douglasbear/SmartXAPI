@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseReturnList(int? nCompanyId,int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetPurchaseReturnList(int? nCompanyId,int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
@@ -40,11 +40,21 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string sqlCommandCount="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_CreditNoteNo like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_CreditNoteId desc";
+            else
+                xSortBy = " order by " + xSortBy;
+            
             
             if(Count==0)
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
@@ -69,7 +79,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(OutPut));
                 }     
                   }catch(Exception e){
-                     return BadRequest(_api.Error(e));
+                     return Ok(_api.Error(e));
                 }
         }
 
@@ -113,7 +123,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(OutPut));
                 }     
                   }catch(Exception e){
-                     return BadRequest(_api.Error(e));
+                     return Ok(_api.Error(e));
                 }
         }
 
@@ -183,11 +193,11 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
-                return Ok(dt);
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -233,7 +243,7 @@ namespace SmartxAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(_api.Error(ex));
+                    return Ok(_api.Error(ex));
                 }
         }
        
@@ -263,7 +273,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

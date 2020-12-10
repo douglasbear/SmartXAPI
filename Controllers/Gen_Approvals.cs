@@ -99,6 +99,17 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p3", N_Branchid);
                 }
 
+            }else if (nApprovalType == 4)
+            {
+                DateCol = "X_RequestDate";
+                if (bShowAllBranch)
+                    sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2";
+                else
+                {
+                    sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2 and N_Branchid = @p3";
+                    Params.Add("@p3", N_Branchid);
+                }
+
             }
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -126,7 +137,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -148,7 +159,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
 
         }

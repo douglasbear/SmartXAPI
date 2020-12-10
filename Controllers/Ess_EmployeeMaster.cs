@@ -13,12 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("statementofaccounts")]
+    [Route("essemployee")]
     [ApiController]
-
-
-
-    public class Acc_StatementOfAccounts : ControllerBase
+    public class Ess_EmployeeMaster : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -27,45 +24,35 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
 
 
-        public Acc_StatementOfAccounts(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Ess_EmployeeMaster(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 82;
+            FormID = 0;
         }
 
         [HttpGet("list")]
-        public ActionResult GetStatementOfAccounts(int? nCompanyID,string xQuery)
+        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID,int nEmpID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
             Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@xQuery", "%"+xQuery+"%");
-
-
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@bAllBranchData", bAllBranchData);
+            Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nEmpID", nEmpID);
+            string sqlCommandText = "";
+            if (bAllBranchData == true)
+                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=@nEmpID  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+            else
+                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID N_ReportToID=@nEmpID and (N_BranchID=0 or N_BranchID=@nBranchID)  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    bool B_PartNo = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("82", "PartNo_InGrid", "N_Value",myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
-                    object N_LocationCount = dLayer.ExecuteScalar("Select count(1) from inv_Location where  N_CompanyID=@nCompanyID",Params,connection);
-                    string X_HideFieldList="",X_TableName="",X_VisibleFieldList="",X_Crieteria="";
-                    if (myFunctions.getIntVAL(N_LocationCount.ToString()) > 1)
-                    {
-
-                            X_HideFieldList = "N_CompanyID,N_LedgerID";
-                            X_TableName = "vw_StatementsOfAccounts";
-                            X_VisibleFieldList = "X_LedgerCode,X_LedgerName,N_Debit,N_Credit,N_Balance";
-                            X_Crieteria = "X_LedgerCode  LIKE @xQuery OR X_LedgerName LIKE @xQuery OR N_Debit LIKE @xQuery OR N_Credit LIKE @xQuery OR N_Balance LIKE @xQuery";
-
-                    }else{
-                        return Ok(_api.Notice("No Results Found"));
-                    }
-                    string sqlCommandText = "Select " + X_VisibleFieldList +","+X_HideFieldList+ " from " + X_TableName + " where " + X_Crieteria ;
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
@@ -77,18 +64,15 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(_api.Success(dt));
                 }
-
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
-    
 
+       
 
-
-
-        }
     }
+}

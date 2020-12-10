@@ -14,16 +14,16 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("EssDashboard")]
+    [Route("crmDashboard")]
     [ApiController]
-    public class EssDashboard : ControllerBase
+    public class CrmDashboard : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        public EssDashboard(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public CrmDashboard(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -101,19 +101,6 @@ namespace SmartxAPI.Controllers
                     DataRow row = DashboardDetails.NewRow();
                     DashboardDetails.Rows.Add(row);
                     DashboardDetails.AcceptChanges();
-                    if(EnableLeaveData.ToString()=="1")
-                    {
-                        LeaveDetails = dLayer.ExecuteDataTable(sqlCommandLeave, Params, connection);
-                          int i = 0;
-                        foreach (DataRow dtRow in LeaveDetails.Rows)
-                        {
-                        String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, double.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
-                        //String Avail = CalculateGridEstDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, float.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
-                        dtRow["x_Days"] = Avail;
-                        i++;
-                        }
-                         LeaveDetails.AcceptChanges();
-                    }
                     LeaveDetails = api.Format(LeaveDetails, "EmployeeLeaves");
 
 
@@ -144,94 +131,5 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-        public string GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID)
-        {
-            DateTime toDate;
-            int days = 0;
-            double totalDays = 0;
-            int nVacationGroupID = 0;
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
-
-                    SortedList paramList = new SortedList();
-                    paramList.Add("@nCompanyID", nCompanyID);
-                    paramList.Add("@nEmpID", nEmpID);
-                    paramList.Add("@nVacTypeID", nVacTypeID);
-                    paramList.Add("@nVacationGroupID", nVacationGroupID);
-
-                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 and ISNULL(B_IsSaveDraft,0) = 0", paramList, connection).ToString());
-                    if (toDate < dDateFrom)
-                    {
-                        string daySql = "select  DATEDIFF(day,'" + toDate.ToString("yyyy-MM-dd") + "','" + dDateFrom.ToString("yyyy-MM-dd") + "')";
-                        days = Convert.ToInt32(dLayer.ExecuteScalar(daySql, connection).ToString());
-                    }
-                    else
-                    { days = 0; }
-                    if (nVacTypeID == 6)
-                    {
-                        totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
-                    }
-                    else
-                        totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
-                }
-
-                return totalDays.ToString();
-            }
-            catch (Exception)
-            {
-                return "0";
-            }
-        }
-        private String CalculateGridAnnualDays(int VacTypeID, int empID, int compID, int nVacationGroupID, SqlConnection connection)
-        {
-            double vacation;
-            const double tolerance = 8e-14;
-            SortedList paramList = new SortedList();
-            paramList.Add("@nCompanyID", compID);
-            paramList.Add("@nEmpID", empID);
-            paramList.Add("@nVacTypeID", VacTypeID);
-            paramList.Add("@nVacationGroupID", nVacationGroupID);
-
-
-            DateTime toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacDays>0 ", paramList, connection).ToString());
-
-            if (nVacationGroupID == 0)
-                vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID", paramList, connection).ToString());
-            else
-                vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and isnull(N_VacationGroupID,0) < @nVacationGroupID", paramList, connection).ToString());
-
-            String AvlDays = RoundApproximate(vacation, 0, tolerance, MidpointRounding.AwayFromZero).ToString();
-
-
-            return AvlDays;
-        }
-
-        private static double RoundApproximate(double dbl, int digits, double margin, MidpointRounding mode)
-        {
-            double fraction = dbl * Math.Pow(10, digits);
-            double value = Math.Truncate(fraction);
-            fraction = fraction - value;
-            if (fraction == 0)
-                return dbl;
-
-            double tolerance = margin * dbl;
-            // Any remaining fractional value greater than .5 is not a midpoint value. 
-            if (fraction > .5)
-                return (value + 0.5) / Math.Pow(10, digits);
-            else if (fraction < -(0.5))
-                return (value + 0.5) / Math.Pow(10, digits);
-            else if (fraction == .5)
-                return Math.Round(dbl, 1);
-            else
-                return value / Math.Pow(10, digits);
-        }
-
-
-
     }
 }

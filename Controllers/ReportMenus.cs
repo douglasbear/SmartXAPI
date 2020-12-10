@@ -18,6 +18,7 @@ using System.Threading.Tasks;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("report")]
     [ApiController]
     public class ReportMenus : ControllerBase
@@ -99,7 +100,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -160,7 +161,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -208,14 +209,76 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation;
                 var path = client.GetAsync(URL);
                 path.Wait();
                 return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("getscreenprint")]
+        public  IActionResult GetModulePrint(int nFormID, int nPkeyID)
+        {
+            string RPTLocation=reportLocation;
+            string ReportName="";
+            string critiria="";
+            SortedList QueryParams = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    QueryParams.Add("@p1", nCompanyId);
+                    QueryParams.Add("@p2", nFormID);
+
+                    var handler = new HttpClientHandler
+                     {
+                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                     };
+                    if(nFormID==64)
+                    {
+                        critiria="{Inv_Sales.N_SalesId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/salesinvoice/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null || Template.ToString()!="")
+                        {
+                            
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="SalesInvoice";
+                    }
+                    if(nFormID==65)
+                    {
+                        RPTLocation=reportLocation+"printing/PurchaseInvoice/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null || Template.ToString()!="")
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="PurchaseEntry_invoice";
+                    }
+
+                var client = new HttpClient(handler);
+                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation;
+                var path = client.GetAsync(URL);
+                path.Wait();
+                return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + ".pdf"}}));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
             }
         }
 
@@ -284,7 +347,7 @@ namespace SmartxAPI.Controllers
                 };
                 var client = new HttpClient(handler);
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=&path="+reportPath ;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation ;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
@@ -301,7 +364,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 

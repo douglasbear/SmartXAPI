@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return BadRequest(_api.Error(ex));
+        //         return Ok(_api.Error(ex));
         //     }
         // }
 
@@ -121,8 +121,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    string ExecutiveCode = MasterTable.Rows[0]["X_SalesmanCode"].ToString();
-                    string SalesmanName = MasterTable.Rows[0]["X_SalesmanName"].ToString();
+                    string ExecutiveCode = MasterTable.Rows[0]["x_SalesmanCode"].ToString();
+                    string SalesmanName = MasterTable.Rows[0]["x_SalesmanName"].ToString();
                     string nCompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     string nFnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
                     int N_SalesmanID= myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());
@@ -141,11 +141,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("inv_salesman", "N_SalesmanID", N_SalesmanID, "", connection, transaction);
                     }
 
-                        MasterTable.Columns.Remove("n_SalesmanID");
-                        MasterTable.AcceptChanges();
-
-
-                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", N_SalesmanID, MasterTable, connection, transaction);
+                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", MasterTable, connection, transaction);
                     if (N_SalesmanID <= 0)
                     {
                         transaction.Rollback();
@@ -167,7 +163,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -196,7 +192,7 @@ namespace SmartxAPI.Controllers
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(_api.Error(ex));
+                    return Ok(_api.Error(ex));
                 }
 
 

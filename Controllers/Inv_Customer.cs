@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -129,9 +129,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Inv_Customer", "n_CustomerID", nCustomerID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("n_CustomerId");
-                    MasterTable.AcceptChanges();
-
 
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
@@ -148,11 +145,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
-        [HttpGet("paymentmethod")]
+        [HttpGet("customerType")]
         public ActionResult GetPayMethod()
         {
             DataTable dt = new DataTable();
@@ -174,13 +171,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpGet("getdetails")]
@@ -214,7 +211,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpDelete("delete")]

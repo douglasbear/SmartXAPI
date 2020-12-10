@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -124,12 +124,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 73);
                         CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Category Code")); }
+                        if (CategoryCode == "") { return Ok(_api.Error("Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
-                    MasterTable.Columns.Remove("N_CategoryID");
-                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", N_CategoryID, MasterTable, connection, transaction);
+                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
@@ -144,7 +143,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest( _api.Error(ex));
+                return Ok( _api.Error(ex));
             }
         }
 
@@ -160,17 +159,17 @@ namespace SmartxAPI.Controllers
                 Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "",connection);
                 if (Results > 0)
                 {
-                    return StatusCode(200, _api.Response(200, "Product category deleted"));
+                    return Ok(_api.Success("Product category deleted"));
                 }
                 else
                 {
-                    return StatusCode(409, _api.Response(409, "Unable to delete product category"));
+                    return Ok(_api.Error( "Unable to delete product category"));
                 }
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

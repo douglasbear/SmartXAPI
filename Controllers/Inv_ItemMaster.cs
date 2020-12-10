@@ -80,9 +80,113 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
 
+        }
+
+        [HttpGet("dashboardList")]
+        public ActionResult GetDashboardList(int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyID =myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and Description like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by [Item Code] desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top("+ Count +") [Item Code] from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
+
+
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", 0);
+            Params.Add("@p3", "001");
+            Params.Add("@p4", 1);
+
+            SortedList OutPut = new SortedList();
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    string sqlCommandCount = "select count(*) as N_Count  from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+        }
+
+
+
+        
+
+         [HttpGet("details")]
+        public ActionResult GetItemDetails(string xItemCode)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@xItemCode", xItemCode);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string _sqlQuery = "SELECT * from vw_InvItemMaster where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+
+                    dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
         }
 
         //Save....
@@ -143,7 +247,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest( _api.Error(ex));
+                return Ok( _api.Error(ex));
             }
         }
 
@@ -176,7 +280,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest( _api.Error(e));
+                return Ok( _api.Error(e));
             }
 
         }
@@ -210,7 +314,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest( _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
 

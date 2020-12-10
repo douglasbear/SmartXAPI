@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage)
+        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -41,10 +41,21 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string sqlCommandCount="";
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and [Voucher No] like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_VoucherID desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3)";
+                xSortBy = " order by " + xSortBy;
+
+
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
 
 
             Params.Add("@p1", nCompanyId);
@@ -74,7 +85,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpGet("details")]
@@ -133,7 +144,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -231,12 +242,12 @@ namespace SmartxAPI.Controllers
                 }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int N_VoucherID)
+        public ActionResult DeleteData(int nVoucherID,string xTransType)
         {
             int Results = 0;
             try
@@ -245,33 +256,29 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                Results = dLayer.DeleteData("Inv_SalesVoucher", "n_quotationID", N_VoucherID, "",connection,transaction);
-                if (Results <= 0)
-                {
-                    transaction.Rollback();
-                    return Ok(api.Error("Unable to delete sales quotation"));
-                }
-                else
-                {
-                    dLayer.DeleteData("Inv_SalesVoucherDetails", "n_quotationID", N_VoucherID, "",connection,transaction);
-                }
+                  
+            SortedList Params =new SortedList();
+             Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
+                        Params.Add("X_TransType", xTransType);
+                        Params.Add("N_VoucherID", nVoucherID);
+            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts",Params,connection,transaction);
 
                 if (Results > 0)
                 {
                     transaction.Commit();
-                    return Ok(api.Success("Sales quotation deleted"));
+                    return Ok(api.Success("Voucher deleted"));
                 }
                 else
                 {
                      transaction.Rollback();
-                    return Ok(api.Error("Unable to delete sales quotation"));
+                    return Ok(api.Error("Unable to delete Voucher"));
                 }
                 }
 
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
 
 

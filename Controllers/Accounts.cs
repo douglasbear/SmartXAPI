@@ -11,7 +11,7 @@ using Microsoft.Data.SqlClient;
 namespace SmartxAPI.Controllers
 
 {
-    [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("accounts")]
     [ApiController]
     public class Accounts : ControllerBase
@@ -20,53 +20,98 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        
-        
-        public Accounts(IApiFunctions api,IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+
+
+        public Accounts(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
-            dLayer=dl;
+            dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
         [HttpGet("glaccount/list")]
-        public ActionResult GetGLAccountList(int? nFnYearId,string xType)
+        public ActionResult GetGLAccountList(int? nFnYearId, string xType, int nCashBahavID)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText="";                       
-            if(nFnYearId==null){return Ok(_api.Notice("FnYear ID Required"));}                       
-                
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nFnYearId);
-            Params.Add("@p3",xType);
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            if (nFnYearId == null) { return Ok(_api.Notice("FnYear ID Required")); }
 
-            if(xType.ToLower() !="all")
-                sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            if (nCashBahavID > 0)
+            {
+                Params.Add("@nCashBahavID", nCashBahavID);
+
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+            }
             else
-                sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
+            if (xType.ToLower() != "all")
+            {
+                Params.Add("@p3", xType);
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type =@p3 and B_Inactive = 0  order by [Account Code]";
+            }
+            else
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive = 0  order by [Account Code]";
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                connection.Open();
-                dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                dt=_api.Format(dt);
-                if(dt.Rows.Count==0)
-                    {
-                        return Ok(_api.Warning("No Results Found" ));
-                    }else{
-                        return Ok(_api.Success(dt));
-                    }
-                
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
             }
-            catch(Exception e){
-                return BadRequest(_api.Error(e));
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
             }
-        }       
+        }
+
+
+        [HttpGet("defaultAccounts")]
+        public ActionResult GetDefultAccounts(int nFnYearID, int nLangID, int AccountTypeID)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    DataTable QList = myFunctions.GetSettingsTable();
+
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "V " + AccountTypeID);
+
+                    QList.AcceptChanges();
+
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
+
+
+                    SortedList OutPut = new SortedList(){
+                            {"DefaultAccounts",_api.Format(Details)}
+                        };
+                    return Ok(_api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
     }
 }

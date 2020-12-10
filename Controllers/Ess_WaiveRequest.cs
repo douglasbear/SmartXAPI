@@ -61,12 +61,12 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         QueryParams.Add("@xStatus", xReqType);
                         if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select * From vw_AnytimeRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
+                            sqlCommandText = "Select * From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
                         else
                         if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select * from vw_AnytimeRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
+                            sqlCommandText = "select * from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
                         else
-                            sqlCommandText = "Select * From vw_AnytimeRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_RequestDate Desc";
+                            sqlCommandText = "Select * From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsSaveDraft=0 order by X_RequestDate Desc";
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     }
@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -159,7 +159,8 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_AnytimeRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName,Pay_Employee.X_EmpNameLocale, Pay_Position.X_Position FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_AnytimeRequest ON Pay_Employee.N_EmpID = Pay_AnytimeRequest.N_EmpID AND Pay_Employee.N_CompanyID = Pay_AnytimeRequest.N_CompanyID  where Pay_AnytimeRequest.X_RequestCode=@xRequestCode and  Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
+                    //string _sqlQuery = "SELECT Pay_AnytimeRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName,Pay_Employee.X_EmpNameLocale, Pay_Position.X_Position FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_AnytimeRequest ON Pay_Employee.N_EmpID = Pay_AnytimeRequest.N_EmpID AND Pay_Employee.N_CompanyID = Pay_AnytimeRequest.N_CompanyID  where Pay_AnytimeRequest.X_RequestCode=@xRequestCode and  Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
+                     string _sqlQuery = "SELECT * from vw_Anytimerequest where vw_Anytimerequest.X_RequestCode=@xRequestCode and  vw_Anytimerequest.N_CompanyID=@nCompanyID";
                 
                         dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                  }
@@ -176,7 +177,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -260,7 +261,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
@@ -312,7 +313,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 

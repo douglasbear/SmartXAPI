@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -143,7 +143,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -192,11 +192,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
                     }
 
-                    MasterTable.Columns.Remove("n_VendorID");
-                    MasterTable.AcceptChanges();
-
-
-                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", nVendorID, MasterTable, connection, transaction);
+                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", MasterTable, connection, transaction);
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
@@ -226,7 +222,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -268,7 +264,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

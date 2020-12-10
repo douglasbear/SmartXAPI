@@ -41,22 +41,26 @@ namespace SmartxAPI.Controllers
         public ActionResult GetDefults (string type)
         {
             int id=0;
-            switch(type){
-                case "LocationType": id=1;
+            switch(type.ToLower()){
+                case "locationtype": id=1;
                 break;
-                case "PartnerType": id=25;
+                case "salarytype": id=2;
                 break;
-                case "ProductType": id=36;
+                case "partnertype": id=25;
                 break;
-                case "TravelType": id=56;
+                case "producttype": id=36;
                 break;
-                case "ActivityRelation": id=91;
+                case "traveltype": id=56;
                 break;
-                case "ActivityType": id=92;
+                case "activityrelation": id=91;
                 break;
-                case "CustomerType": id=93;
+                case "activitytype": id=92;
                 break;
-                case "TimeUnit": id=68;
+                case "customertype": id=93;
+                break;
+                case "timeunit": id=68;
+                break;
+                case "hiretype": id=56;
                 break;
                 default: return Ok("Invalid Type");
             }
@@ -81,7 +85,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }   
         }
 
@@ -125,7 +129,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }   
         }
 
@@ -152,7 +156,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
        path = path + filename;
   
