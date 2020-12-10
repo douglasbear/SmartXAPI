@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
             string Searchkey = "";
             string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=@nEmpID ";
-            string groupBy = "  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName ";
+            string groupBy = "  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_Nationality,X_EmailID,X_ProjectName ";
             if (bAllBranchData == false)
             {
                 Criteria = Criteria + " and N_BranchID=@nBranchID ";
@@ -65,9 +65,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +")  N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp " + Criteria + Searchkey + groupBy + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +")  N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_Nationality,X_EmailID,X_ProjectName from vw_PayEmployee_Disp " + Criteria + Searchkey + groupBy + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +")  N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp " + Criteria + Searchkey + " and N_EmpID not in (select top("+ Count +") N_EmpID from vw_PayEmployee_Disp " + Criteria + Searchkey + groupBy + xSortBy + " ) "  + groupBy + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +")  N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_Nationality,X_EmailID,X_ProjectName from vw_PayEmployee_Disp " + Criteria + Searchkey + " and N_EmpID not in (select top("+ Count +") N_EmpID from vw_PayEmployee_Disp " + Criteria + Searchkey + groupBy + xSortBy + " ) "  + groupBy + xSortBy;
             SortedList OutPut = new SortedList();
 
             try
@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string Searchkey = "";
-            string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ManagerID=@nEmpID and N_EmpID<>@nEmpID ";
+            string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID ";
             if (bAllBranchData == false)
             {
                 Criteria = Criteria + " and N_BranchID=@nBranchID ";

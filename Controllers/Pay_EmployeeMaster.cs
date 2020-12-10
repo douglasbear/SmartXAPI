@@ -71,6 +71,45 @@ namespace SmartxAPI.Controllers
         }
 
 
+        //  [HttpGet("details")]
+        // public ActionResult GetEmployeeDetails(string xEmpCode)
+        // {
+        //     int nCompanyID=myFunctions.GetCompanyID(User);
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     Params.Add("@nCompanyID", nCompanyID);
+        //     Params.Add("@nFnYearID", nFnYearID);
+        //     Params.Add("@bAllBranchData", bAllBranchData);
+        //     Params.Add("@nBranchID", nBranchID);
+        //     string sqlCommandText = "";
+        //     if (bAllBranchData == true)
+        //         sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+        //     else
+        //         sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         dt = _api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(e));
+        //     }
+        // }
+
+
         [HttpGet("dashboardList")]
         public ActionResult GetEmployeeDashboardList(int nFnYearID, bool bAllBranchData, int nBranchID, int EmpStatus, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
