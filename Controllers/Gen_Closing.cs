@@ -69,76 +69,56 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
-                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
-                string ReffType =  MasterTable.Rows[0]["n_ReferId"].ToString();
-                int N_FormID =0;
-                switch(ReffType){
-                case "VendorType": N_FormID=52;
-                break;
-                case "Stage": N_FormID=1310;
-                break;
-                case "Industry": N_FormID=1311;
-                break;
-                case "LeadSource": N_FormID=1312;
-                break;
-                case "LeadStatus": N_FormID=1313;
-                break;
-                case "Ownership": N_FormID=1314;
-                break;
-                default: return Ok(api.Warning("Invalid Type"));
-            }
+//         [HttpPost("save")]
+//         public ActionResult SaveData([FromBody] DataSet ds)
+//         {
 
-            MasterTable.Rows[0]["n_ReferId"] = N_FormID;
-            MasterTable.AcceptChanges();
+// try{
+//                 DataTable MasterTable;
+//                 MasterTable = ds.Tables["master"];
+//                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+//                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
+//                 int N_FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
+//                 int N_closingStatus = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClosingStatusID"].ToString());
+//                 string X_ClosingDescription = MasterTable.Rows[0]["X_ClosingDescription"].ToString();
+//                 SortedList Params=new SortedList();
+//                 Params.Add("@Desc",X_ClosingDescription);
+//                 Params.Add("@ClosingID",N_closingStatus);
+//                 Params.Add("@nCompanyID",nCompanyID);
+//                 Params.Add("@nPkey",nPkeyId);
+//                 string sql="";
+//                 switch(N_FormID){
+//                 case 1302: 
+//                         sql="Update CRM_Opportunity set X_ClosingDescription=@Desc and N_ClosingStatusID=@ClosingID where N_OpportunityID=@nPkey and n_CompanyId=@nCompanyID";
+//                 break;
+//                 default: return Ok(api.Warning("Invalid Form"));
+//                 }
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+//                     SqlTransaction transaction = connection.BeginTransaction();
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList Params = new SortedList();
-                    // Auto Gen
-                    string PkeyCode = "";
-                    var values = MasterTable.Rows[0]["X_PkeyCode"].ToString();
-                    if (values == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearId);
-                        Params.Add("N_FormID", N_FormID);
-                        PkeyCode = dLayer.GetAutoNumber("Gen_ClosingTable", "X_PkeyCode", Params, connection, transaction);
-                        if (PkeyCode == "") { return Ok(api.Error("Unable to generate PkeyCode Code")); }
-                        MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
-                    }
-                    else
-                    {
-                        dLayer.DeleteData("Gen_ClosingTable", "N_PkeyId", nPkeyId, "", connection, transaction);
-                    }
+//                     object saved = dLayer.ExecuteScalar(sql, connection).ToString();
+//                     if (myFunctions.getIntVAL(sa) <= 0)
+//                     {
+//                         transaction.Rollback();
+//                         return Ok(api.Error("Unable to save"));
+//                     }
+//                     else
+//                     {
+//                         transaction.Commit();
+//                         return Ok(api.Success("Successfully saved"));
+//                     }
+//                 }
+//         }
+//             catch (Exception ex)
+//             {
+//                 return Ok(api.Error(ex));
+//             }
+//         }
 
-                    nPkeyId = dLayer.SaveData("Gen_ClosiTable", "N_PkeyId", MasterTable, connection, transaction);
-                    if (nPkeyId <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
-                    }
-                    else
-                    {
-                        transaction.Commit();
-                        return Ok(api.Success("Successfully saved"));
-                    }
-                }
-            }
-            catch (Exception ex)
-            {
-                return Ok(api.Error(ex));
-            }
-        }
+       
+
+       
     }
 }
