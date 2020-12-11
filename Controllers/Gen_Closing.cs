@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int FormID;
 
         public Gen_Closing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -29,6 +30,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            FormID = 1318;
         }
 
 
@@ -116,6 +118,50 @@ namespace SmartxAPI.Controllers
 //                 return Ok(api.Error(ex));
 //             }
 //         }
+
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nStatusID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_StatusID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                string xStatusCode = MasterTable.Rows[0]["x_StatusCode"].ToString();
+                MasterTable.Columns.Remove("n_FnYearID");
+                MasterTable.AcceptChanges();
+                 if (xStatusCode == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+                        xStatusCode = dLayer.GetAutoNumber("Inv_QuotationclosingStatus", "x_StatusCode", Params, connection, transaction);
+                        if (xStatusCode == "") { return Ok(api.Error("Unable to generate Status Code")); }
+                        MasterTable.Rows[0]["x_StatusCode"] = xStatusCode;
+                    }
+                    else
+                    {
+                        dLayer.DeleteData("Inv_QuotationclosingStatus", "n_StatusID", nStatusID, "", connection, transaction);
+                    }
+                    
+                    nStatusID=dLayer.SaveData("Inv_QuotationclosingStatus","n_StatusID",MasterTable,connection,transaction);  
+                    transaction.Commit();
+                    return Ok(api.Success("Reason Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
 
        
 
