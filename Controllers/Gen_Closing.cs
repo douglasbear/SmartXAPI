@@ -71,53 +71,53 @@ namespace SmartxAPI.Controllers
         }
 
 
-//         [HttpPost("save")]
-//         public ActionResult SaveData([FromBody] DataSet ds)
-//         {
+        [HttpPost("saveReason")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
 
-// try{
-//                 DataTable MasterTable;
-//                 MasterTable = ds.Tables["master"];
-//                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
-//                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
-//                 int N_FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
-//                 int N_closingStatus = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClosingStatusID"].ToString());
-//                 string X_ClosingDescription = MasterTable.Rows[0]["X_ClosingDescription"].ToString();
-//                 SortedList Params=new SortedList();
-//                 Params.Add("@Desc",X_ClosingDescription);
-//                 Params.Add("@ClosingID",N_closingStatus);
-//                 Params.Add("@nCompanyID",nCompanyID);
-//                 Params.Add("@nPkey",nPkeyId);
-//                 string sql="";
-//                 switch(N_FormID){
-//                 case 1302: 
-//                         sql="Update CRM_Opportunity set X_ClosingDescription=@Desc and N_ClosingStatusID=@ClosingID where N_OpportunityID=@nPkey and n_CompanyId=@nCompanyID";
-//                 break;
-//                 default: return Ok(api.Warning("Invalid Form"));
-//                 }
-//                 using (SqlConnection connection = new SqlConnection(connectionString))
-//                 {
-//                     connection.Open();
-//                     SqlTransaction transaction = connection.BeginTransaction();
+try{
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
+                int N_FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
+                int N_closingStatus = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ClosingStatusID"].ToString());
+                string X_ClosingDescription = MasterTable.Rows[0]["x_ClosingDescription"].ToString();
+                SortedList Params=new SortedList();
+                Params.Add("@Desc",X_ClosingDescription);
+                Params.Add("@ClosingID",N_closingStatus);
+                Params.Add("@nCompanyID",nCompanyID);
+                Params.Add("@nPkey",nPkeyId);
+                string sql="";
+                switch(N_FormID){
+                case 1302: 
+                        sql="Update CRM_Opportunity set X_ClosingDescription=@Desc, N_ClosingStatusID=@ClosingID where N_OpportunityID=@nPkey and n_CompanyId=@nCompanyID";
+                break;
+                default: return Ok(api.Warning("Invalid Form"));
+                }
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
 
-//                     object saved = dLayer.ExecuteScalar(sql, connection).ToString();
-//                     if (myFunctions.getIntVAL(sa) <= 0)
-//                     {
-//                         transaction.Rollback();
-//                         return Ok(api.Error("Unable to save"));
-//                     }
-//                     else
-//                     {
-//                         transaction.Commit();
-//                         return Ok(api.Success("Successfully saved"));
-//                     }
-//                 }
-//         }
-//             catch (Exception ex)
-//             {
-//                 return Ok(api.Error(ex));
-//             }
-//         }
+                    object saved = dLayer.ExecuteScalar(sql,Params, connection,transaction);
+                    if (saved != null && myFunctions.getIntVAL(saved.ToString()) <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Successfully saved"));
+                    }
+                }
+        }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
 
 
         [HttpPost("save")]
@@ -147,11 +147,6 @@ namespace SmartxAPI.Controllers
                         if (xStatusCode == "") { return Ok(api.Error("Unable to generate Status Code")); }
                         MasterTable.Rows[0]["x_StatusCode"] = xStatusCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Inv_QuotationclosingStatus", "n_StatusID", nStatusID, "", connection, transaction);
-                    }
-                    
                     nStatusID=dLayer.SaveData("Inv_QuotationclosingStatus","n_StatusID",MasterTable,connection,transaction);  
                     transaction.Commit();
                     return Ok(api.Success("Reason Saved")) ;
@@ -165,6 +160,6 @@ namespace SmartxAPI.Controllers
 
        
 
-       
+
     }
 }
