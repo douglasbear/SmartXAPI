@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpPost("saveReason")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
 
@@ -120,8 +120,8 @@ try{
         }
 
 
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody]DataSet ds)
+        [HttpPost("saveReason")]
+        public ActionResult SaveReason([FromBody]DataSet ds)
         { 
             try
             {
