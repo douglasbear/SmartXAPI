@@ -38,9 +38,9 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
 
             string sqlCurrentLead = "SELECT COUNT(*) as N_ThisMonth FROM crm_leads WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
-            string sqlPreviousLead = "SELECT COUNT(*) as N_LastMonth FROM crm_leads WHERE D_Entrydate >= DATEADD(DAY, -30, GETDATE())";
+            string sqlPreviousLead = "SELECT COUNT(*) as N_LastMonth FROM crm_leads WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))";
             string sqlCurrentCustomer = "SELECT COUNT(*) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
-            string sqlPreviousCustomer = "SELECT COUNT(*) as N_LastMonth FROM CRM_Customer WHERE D_Entrydate >= DATEADD(DAY, -30, GETDATE())";
+            string sqlPreviousCustomer = "SELECT COUNT(*) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))";
             string sqlPerformance = "SELECT 'Leads Created' as X_Status,COUNT(*) as N_Count FROM crm_leads WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())union SELECT 'Opportunities Created' as X_Status,COUNT(*) as N_Count FROM CRM_Opportunity WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Customer Created' as X_Status,COUNT(*) as N_Count FROM CRM_Customer WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Contacts Created' as X_Status,COUNT(*) as N_Count FROM CRM_Contact WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Projects Created' as X_Status,COUNT(*) as N_Count FROM CRM_Project WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())";
             string sqlOpportunitiesStage = "select X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
             string sqlLeadsbySource = "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
@@ -73,8 +73,11 @@ namespace SmartxAPI.Controllers
                     LeadLastMonth = dLayer.ExecuteScalar(sqlPreviousLead, Params, connection);
                     CustomerLastMonth = dLayer.ExecuteScalar(sqlPreviousCustomer, Params, connection);
 
-                    LeadPercentage=((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString())/myFunctions.getVAL(LeadLastMonth.ToString()))*100).ToString();
-                    CustomerPercentage=((myFunctions.getVAL(CurrentCustomer.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(CustomerLastMonth.ToString())/myFunctions.getVAL(CustomerLastMonth.ToString()))*100).ToString();
+                    if(myFunctions.getVAL(LeadLastMonth.ToString())!=0)
+                        LeadPercentage=((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString()))/myFunctions.getVAL(LeadLastMonth.ToString())*100).ToString();
+                    if(myFunctions.getVAL(CustomerLastMonth.ToString())!=0)
+                        CustomerPercentage=((myFunctions.getVAL(CurrentCustomer.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(CustomerLastMonth.ToString()))/myFunctions.getVAL(CustomerLastMonth.ToString())*100).ToString();
+            
                     
                 }
                 // double N_TotalOppotunity=0;
