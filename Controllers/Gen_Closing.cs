@@ -120,8 +120,8 @@ try{
         }
 
 
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody]DataSet ds)
+        [HttpPost("saveReason")]
+        public ActionResult SaveReason([FromBody]DataSet ds)
         { 
             try
             {
