@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-         private void GetNextLevelPattern(int higerlevelid)
+        private void GetNextLevelPattern(int higerlevelid, ref int N_LevelPattern, ref string X_LevelPattern, SortedList QueryParams, SqlConnection connection)
         {
             try
             {
@@ -78,9 +78,9 @@ namespace SmartxAPI.Controllers
                 object ObjRowCount = null;
                 object ObjChildCount = null;
 
-                ObjRowCount = dba.ExecuteSclarNoErrorCatch("Select COUNT(*) FROM Acc_CostCentreMaster Where N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                ObjRowCount = dLayer.ExecuteScalar("Select COUNT(*) FROM Acc_CostCentreMaster Where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                 if (higerlevelid > 0)
-                    ObjChildCount = dba.ExecuteSclarNoErrorCatch("Select COUNT(*) FROM Acc_CostCentreMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                    ObjChildCount = dLayer.ExecuteScalar("Select COUNT(*) FROM Acc_CostCentreMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                 else
                     ObjChildCount = 0;
                 if (ObjRowCount != null)
@@ -92,12 +92,9 @@ namespace SmartxAPI.Controllers
                         if (higerlevelid == 0)
                         {
                             N_LevelPattern = 0;
-                            //object ObjLevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT MAX(X_LevelPattern)+1 FROM Acc_CostCentreMaster Where N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
-                            object ObjLevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT MAX(X_LevelPattern)+1 FROM Acc_CostCentreMaster Where N_LevelID=1 and N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                            object ObjLevelPattern = dLayer.ExecuteScalar("SELECT MAX(X_LevelPattern)+1 FROM Acc_CostCentreMaster Where N_LevelID=1 and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                             if (ObjLevelPattern != null)
-                            {
                                 X_LevelPattern = ObjLevelPattern.ToString();
-                            }
                         }
 
                         //child                        
@@ -107,32 +104,24 @@ namespace SmartxAPI.Controllers
                             {
                                 if (myFunctions.getIntVAL(ObjChildCount.ToString()) > 0)
                                 {
-                                    //ObjChildN_LevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT MAX(N_LevelPattern)+1 FROM Acc_CostCentreMaster Where N_GroupID=" + higerlevelid + " and N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
-                                    ObjChildN_LevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT MAX(N_LevelPattern)+1 FROM Acc_CostCentreMaster Where  N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
-                                    if (ObjChildN_LevelPattern != null)
-                                    {
-                                        N_LevelPattern = myFunctions.getIntVAL(ObjChildN_LevelPattern.ToString());
-                                    }
+                                    ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT MAX(N_LevelPattern)+1 FROM Acc_CostCentreMaster where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
+                                    N_LevelPattern = myFunctions.getIntVAL(ObjChildN_LevelPattern.ToString());
                                 }
                                 else
                                 {
-                                    object objN_level = dba.ExecuteSclarNoErrorCatch("SELECT N_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                                    object objN_level = dLayer.ExecuteScalar("SELECT N_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                                     if (myFunctions.getIntVAL(objN_level.ToString()) != 0)
-                                         ObjChildN_LevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT MAX(N_LevelPattern)+1 FROM Acc_CostCentreMaster Where  N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                                        ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT MAX(N_LevelPattern)+1 FROM Acc_CostCentreMaster Where N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                                     else
-                                        ObjChildN_LevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                                        ObjChildN_LevelPattern = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                                     if (ObjChildN_LevelPattern != null)
-                                    {
                                         N_LevelPattern = myFunctions.getIntVAL(ObjChildN_LevelPattern.ToString());
-                                    }
                                 }
                             }
 
-                            ObjChildX_LevelPattern = dba.ExecuteSclarNoErrorCatch("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= " + myCompanyID._CompanyID, "TEXT", new DataTable());
+                            ObjChildX_LevelPattern = dLayer.ExecuteScalar("SELECT X_LevelPattern FROM Acc_CostCentreMaster Where N_CostCentreID=" + higerlevelid + " and N_CompanyID= @nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection);
                             if (ObjChildX_LevelPattern != null)
-                            {
                                 X_LevelPattern = ObjChildX_LevelPattern.ToString() + N_LevelPattern.ToString();
-                            }
                         }
                     }
                     else
@@ -144,9 +133,9 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                msg.msgError(ex.Message);
+                //return Ok(_api.Error(ex.Message));
             }
-             
+
         }
         //Save....
         [HttpPost("save")]
@@ -167,8 +156,10 @@ namespace SmartxAPI.Controllers
                     string N_CompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     string N_FnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
                     int N_CostCentreID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CostCentreID"].ToString());
-                    int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GroupID"].ToString());
-                    int N_LevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LevelID"].ToString());
+                    int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
+                    int N_LevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LevelID"].ToString());
+                    int N_LevelPattern = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LevelPattern"].ToString());
+                    string X_LevelPattern = MasterTable.Rows[0]["x_LevelPattern"].ToString();
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nYearID", N_FnYearID);
@@ -189,6 +180,9 @@ namespace SmartxAPI.Controllers
                             else
                                 N_LevelID = myFunctions.getIntVAL(ObjNextLevelID.ToString());
                         }
+                        GetNextLevelPattern(N_GroupID, ref N_LevelPattern, ref X_LevelPattern, QueryParams, connection);
+                        MasterTable.Rows[0]["n_LevelPattern"] = N_LevelPattern;
+                        MasterTable.Rows[0]["x_LevelPattern"] = X_LevelPattern;
                     }
 
                     if (X_CostCentreCode == "@Auto")
