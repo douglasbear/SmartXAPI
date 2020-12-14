@@ -223,6 +223,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        // dLayer.ExecuteNonQuery("SP_Log_SysActivity " + myCompanyID._CompanyID.ToString() + "," + myCompanyID._FnYearID.ToString() + "," + N_SavedEmpID + "," + myFunctions.getIntVAL(MYG.ReturnFormID(this.Text).ToString()) + "," + myCompanyID._UserID + ",'" + X_BtnAction + "','" + myCompanyID._SystemName + "','" + Dns.GetHostByName(Dns.GetHostName()).AddressList[0].ToString() + "','" + txtEmpCode.Text.Trim() + "',''", "TEXT", new DataTable());
                         transaction.Commit();
                         return Ok(_api.Success("Employee Information Saved"));
                     }
