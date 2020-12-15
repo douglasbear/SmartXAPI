@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText="Select X_EmpCode,X_EmpName from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID=@nFnYearID";
+            string sqlCommandText="Select N_EmpID,X_EmpCode,X_EmpName from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID=@nFnYearID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select X_EndType from Pay_ServiceEndType";
+            string sqlCommandText="Select N_EndTypeID,X_EndType from Pay_ServiceEndType";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText="Select X_Name from Gen_LookupTable where N_ReferId = 455 order by N_ReferId asc";
+            string sqlCommandText="Select N_PkeyId,X_PkeyCode,X_Name from Gen_LookupTable where N_ReferId = 455 order by N_ReferId asc";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -346,6 +346,47 @@ namespace SmartxAPI.Controllers
             }
 
 
+        }
+
+        [HttpGet("listEmployeeDetails")]
+        public ActionResult ListEmployeeDetails(string xEmpCode,int nFnYearID,bool bAllBranchData,int nBranchID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string X_Crieteria = "";
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@bAllBranchData", bAllBranchData);
+            Params.Add("@nBranchID", nBranchID);
+            Params.Add("@xEmpCode", xEmpCode);
+            if (bAllBranchData == true)
+                    X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and X_EmpCode=@xEmpCode";
+                else
+                    X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and X_EmpCode=@xEmpCode and N_BranchID=@nBranchID";
+
+            string sqlCommandText="select X_EmpCode,X_EmpName,N_CompanyID,N_EmpID,X_Position,X_Department,D_HireDate,N_Status,N_FnyearID,N_BranchID from vw_PayEmployee where "+X_Crieteria;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
         }
     }
 
