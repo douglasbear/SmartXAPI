@@ -187,13 +187,34 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
+                
+                DataTable MasterTable,Pay_EmpAddlInfo,pay_EmployeeDependence,pay_EmployeeAlerts ,acc_OtherInformation ,pay_EmpAccruls ,pay_EmployeePayHistory, pay_PaySetup,pay_EmployeeSub;
+                // if(ds.Tables.Contains("pay_Employee"))
                 MasterTable = ds.Tables["pay_Employee"];
+                // if(ds.Tables.Contains("pay_EmpAddlInfo"))
+                Pay_EmpAddlInfo = ds.Tables["pay_EmpAddlInfo"];
+                // if(ds.Tables.Contains("pay_EmployeeDependence"))
+                pay_EmployeeDependence = ds.Tables["pay_EmployeeDependence"];
+                // if(ds.Tables.Contains("pay_EmployeeAlerts"))
+                pay_EmployeeAlerts= ds.Tables["pay_EmployeeAlerts"];
+                // if(ds.Tables.Contains("acc_OtherInformation"))
+                acc_OtherInformation= ds.Tables["acc_OtherInformation"];
+                // if(ds.Tables.Contains("pay_EmpAccruls"))
+                pay_EmpAccruls= ds.Tables["pay_EmpAccruls"];
+                // if(ds.Tables.Contains("pay_EmployeePayHistory"))
+                pay_EmployeePayHistory= ds.Tables["pay_EmployeePayHistory"];
+                // if(ds.Tables.Contains("pay_PaySetup"))
+                pay_PaySetup= ds.Tables["pay_PaySetup"];
+                // if(ds.Tables.Contains("pay_EmployeeSub"))
+                pay_EmployeeSub= ds.Tables["pay_EmployeeSub"];
+
+
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 string xEmpCode = MasterTable.Rows[0]["x_EmpCode"].ToString();
-
+                int nUserID=myFunctions.GetUserID(User);
+                string X_BtnAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -208,10 +229,13 @@ namespace SmartxAPI.Controllers
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
                         if (xEmpCode == "") { return Ok(_api.Error("Unable to generate Employee Code")); }
                         MasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
+                        X_BtnAction = "INSERT";
                     }
                     else
                     {
                         dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
+                        X_BtnAction = "UPDATE";
+
                     }
 
 
@@ -223,7 +247,28 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        // dLayer.ExecuteNonQuery("SP_Log_SysActivity " + myCompanyID._CompanyID.ToString() + "," + myCompanyID._FnYearID.ToString() + "," + N_SavedEmpID + "," + myFunctions.getIntVAL(MYG.ReturnFormID(this.Text).ToString()) + "," + myCompanyID._UserID + ",'" + X_BtnAction + "','" + myCompanyID._SystemName + "','" + Dns.GetHostByName(Dns.GetHostName()).AddressList[0].ToString() + "','" + txtEmpCode.Text.Trim() + "',''", "TEXT", new DataTable());
+                string ipAddress = "";
+                if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                    ipAddress = Request.Headers["X-Forwarded-For"];
+                else
+                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                        SortedList LogParams = new SortedList();
+                        LogParams.Add("N_CompanyID",nCompanyID);
+                        LogParams.Add("N_FnYearID",nFnYearID);
+                        LogParams.Add("N_TransID",nEmpID);
+                        LogParams.Add("N_FormID",this.FormID);
+                        LogParams.Add("N_UserId",nUserID);
+                        LogParams.Add("X_Action",X_BtnAction);
+                        LogParams.Add("X_SystemName","ERP Cloud");
+                        LogParams.Add("X_IP",ipAddress);
+                        LogParams.Add("X_TransCode",xEmpCode);
+                        LogParams.Add("X_Remark"," ");
+                        dLayer.ExecuteNonQueryPro("SP_Log_SysActivity",LogParams,connection,transaction);
+                        
+                        if(Pay_EmpAddlInfo.Rows.Count>0){
+                        int pay_EmpAddlInfoRes = dLayer.SaveData("Pay_EmpAddlInfo", "N_InfoID",Pay_EmpAddlInfo,connection,transaction);
+                        }
+
                         transaction.Commit();
                         return Ok(_api.Success("Employee Information Saved"));
                     }
@@ -339,10 +384,10 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
-                    string sqlCommandText = "select * from Pay_Employee where N_EmpID=@p1";
+                    string sqlCommandText = "select * from Pay_EmployeeEducation where N_EmpRefID=@p1";
                     SortedList mParamList = new SortedList() { { "@p1", id } };
                     DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
-                    masterTable = _api.Format(masterTable, "Pay_Employee");
+                    masterTable = _api.Format(masterTable, "Pay_EmployeeEducation");
 
                     // string sqlCommandText2 = "select * from Pay_EmpAddlInfo where N_EmpID=@p1";
                     // SortedList dParamList = new SortedList() { { "@p1", id } };
