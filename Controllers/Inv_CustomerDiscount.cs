@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetCustDiscountList(int? nCompanyId)
         {
-            if (nCompanyId == null) { return StatusCode(404, _api.Response(404, "Company ID Required")); }
+            if (nCompanyId == null) { return Ok( _api.Success("Company ID Required")); }
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -48,17 +48,17 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Success("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
