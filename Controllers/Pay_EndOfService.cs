@@ -349,7 +349,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listEmployeeDetails")]
-        public ActionResult ListEmployeeDetails(string xEmpCode,int nFnYearID,bool bAllBranchData,int nBranchID)
+        public ActionResult ListEmployeeDetails(int nFnYearID,bool bAllBranchData,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -359,11 +359,10 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@bAllBranchData", bAllBranchData);
             Params.Add("@nBranchID", nBranchID);
-            Params.Add("@xEmpCode", xEmpCode);
             if (bAllBranchData == true)
-                    X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and X_EmpCode=@xEmpCode";
+                    X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID";
                 else
-                    X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and X_EmpCode=@xEmpCode and N_BranchID=@nBranchID";
+                    X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and N_BranchID=@nBranchID";
 
             string sqlCommandText="select X_EmpCode,X_EmpName,N_CompanyID,N_EmpID,X_Position,X_Department,D_HireDate,N_Status,N_FnyearID,N_BranchID from vw_PayEmployee where "+X_Crieteria;
             try
