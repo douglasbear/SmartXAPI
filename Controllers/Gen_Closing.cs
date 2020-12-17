@@ -147,11 +147,6 @@ try{
                         if (xStatusCode == "") { return Ok(api.Error("Unable to generate Status Code")); }
                         MasterTable.Rows[0]["x_StatusCode"] = xStatusCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Inv_QuotationclosingStatus", "n_StatusID", nStatusID, "", connection, transaction);
-                    }
-                    
                     nStatusID=dLayer.SaveData("Inv_QuotationclosingStatus","n_StatusID",MasterTable,connection,transaction);  
                     transaction.Commit();
                     return Ok(api.Success("Reason Saved")) ;
