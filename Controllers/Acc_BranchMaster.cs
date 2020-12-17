@@ -89,6 +89,34 @@ namespace SmartxAPI.Controllers
           
         }
 
+          [HttpPost("change")]
+        public ActionResult ChangeData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                Params.Add("@nCompanyID",nCompanyID);
+                Params.Add("@nBranchID",nBranchID);
+
+                dLayer.ExecuteNonQuery("update Acc_BranchMaster set IsCurrent=0 where N_CompanyID=@nCompanyID", Params,connection);
+                dLayer.ExecuteNonQuery("update Acc_BranchMaster set IsCurrent=1 where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", Params,connection);
+
+                    return Ok(_api.Success("Branch Changed")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }        
+
           //Save....
        [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)
