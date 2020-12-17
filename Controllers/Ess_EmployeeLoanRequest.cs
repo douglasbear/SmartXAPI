@@ -355,6 +355,51 @@ namespace SmartxAPI.Controllers
             return true;
         }
 
+        [HttpGet("loanListAll")]
+        public ActionResult GetEmployeeAllLoanRequest(string xReqType)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nUserID", nUserID);
+            string sqlCommandText = "";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    if (nEmpID != null)
+                    {
+                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
+                        // QueryParams.Add("@xStatus", xReqType);
+                        sqlCommandText = "Select N_CompanyID,[Employee No],Name,Position,[Loan ID],[Loan Amount],N_LoanTransID,N_FnYearID,[Issue Date],N_PayTypeID,[Status],D_LoanIssueDate,B_OpeningBal,N_BranchID,N_NextApprovalID from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_LoanIssueDate Desc";
+
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    }
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
 
 
     }

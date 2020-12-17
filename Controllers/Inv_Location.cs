@@ -67,7 +67,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_LocationID=@p2 order by N_LocationID DESC";
+            string sqlCommandText = "select * from vw_InvLocation where N_CompanyID=@p1 and N_LocationID=@p2 order by N_LocationID DESC";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nLocationId);
 
@@ -94,7 +94,33 @@ namespace SmartxAPI.Controllers
         }
 
 
+[HttpPost("change")]
+        public ActionResult ChangeData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                Params.Add("@nCompanyID",nCompanyID);
+                Params.Add("@nLocationID",nLocationID);
 
+                dLayer.ExecuteNonQuery("update Inv_Location set B_IsCurrent=0 where N_CompanyID=@nCompanyID", Params,connection);
+                dLayer.ExecuteNonQuery("update Inv_Location set B_IsCurrent=1 where N_LocationID=@nLocationID and N_CompanyID=@nCompanyID", Params,connection);
+
+                    return Ok(_api.Success("Location Changed")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
 
         //Save....
         [HttpPost("save")]
