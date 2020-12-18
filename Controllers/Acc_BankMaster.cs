@@ -106,5 +106,31 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nBankID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok( _api.Success("Bank deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete Bank"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
         }
+
     }
+}
