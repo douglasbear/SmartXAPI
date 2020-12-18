@@ -74,11 +74,6 @@ namespace SmartxAPI.Controllers
                             " LEFT OUTER JOIN Pay_Department ON Pay_Employee.N_DepartmentID = Pay_Department.N_DepartmentID and Pay_Employee.N_FnYearID = Pay_Department.N_FnYearID " +
                             " WHERE Pay_Employee.N_EmpID = @nEmpID AND Pay_Employee.N_CompanyID = @nCompanyID and Pay_Employee.N_FnYearID = @nFnYearID";
 
-                    //string _Earnings = "select ISNULL(CONVERT(DECIMAL(10,2),N_Payrate),0) as N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
-                    //string _Deduction = "select ISNULL(CONVERT(DECIMAL(10,2),N_Payrate),0) as N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 1 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
-                    //string _GrossEarnings = "select ISNULL(sum(N_Payrate),0) as GrossEarnings from vw_Pay_EmployeePayments_RPT where N_Type = 0  and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
-                   // string _GrossDeduction = "select IsNull(sum(N_Payrate),0) as GrossDeductions from vw_Pay_EmployeePayments_RPT where N_Type = 1 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
-                    
                     string _Earnings="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
                     string _Deduction="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 1 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
 
@@ -87,8 +82,6 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nFnYearID", nFnYearID);
                     Params.Add("@nEmpID", nEmpID);
                     Params.Add("@xPayrun", xPayrun);
-
-
 
                     EmployeeDetails = dLayer.ExecuteDataTable(_EmployeDetails, Params, connection);
                     EmployeeDetails=api.Format(EmployeeDetails,"EmployeeDetails");
@@ -113,7 +106,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-
 
         //Save....
         [HttpPost("save")]
