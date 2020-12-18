@@ -1076,6 +1076,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.Sid)?.Value);
         }
+        public string GetCompanyName(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.StreetAddress)?.Value;
+        }
         public int GetUserCategory(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
@@ -1123,6 +1127,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable ListToTable(SortedList List);
         public int GetUserID(ClaimsPrincipal User);
         public int GetCompanyID(ClaimsPrincipal User);
+        public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
         public DataTable GetSettingsTable();
 
