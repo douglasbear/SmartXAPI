@@ -268,6 +268,19 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="PurchaseEntry_invoice";
                     }
+                    if(nFormID==81)
+                    {
+                        critiria="{vw_InvSalesOrderDetails.N_SalesOrderId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/SalesOrder/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        if(Template!=null || Template.ToString()!="")
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_order";
+                    }
 
                 var client = new HttpClient(handler);
                 string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation;
