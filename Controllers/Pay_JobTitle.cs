@@ -107,6 +107,33 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nPositionID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok( _api.Success("Job Title deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete Job Title"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
         }
+
+
+
     }
+}

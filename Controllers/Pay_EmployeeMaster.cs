@@ -75,7 +75,8 @@ namespace SmartxAPI.Controllers
         public ActionResult GetEmployeeDetails(string xEmpCode,int nFnYearID,bool bAllBranchData,int nBranchID)
         {
             int nCompanyID=myFunctions.GetCompanyID(User);
-            DataTable dt = new DataTable();
+            DataTable Pay_Employee,Pay_EmpAddlInfo,pay_EmployeeDependence,pay_EmployeeAlerts ,acc_OtherInformation ,pay_EmpAccruls ,pay_EmployeePayHistory, pay_PaySetup,pay_EmployeeSub;
+            
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
@@ -88,21 +89,24 @@ namespace SmartxAPI.Controllers
             else
                  sqlCommandText = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name], *,Pay_Employee.X_EmpName AS X_ReportTo,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status]  from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode and (vw_PayEmployee.N_BranchID=0 or vw_PayEmployee.N_BranchID=@nBranchID";
 
+            string contactSql="Select * from vw_ContactDetails where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    Pay_Employee = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                dt = _api.Format(dt,"Pay_Employee");
-                if (dt.Rows.Count == 0)
+                Pay_Employee = _api.Format(Pay_Employee);
+                if (Pay_Employee.Rows.Count == 0)
                 {
                     return Ok(_api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    Params.Add("@nEmpID", xEmpCode);
+
+                    return Ok(_api.Success(Pay_Employee));
                 }
             }
             catch (Exception e)
