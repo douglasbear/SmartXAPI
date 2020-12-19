@@ -13,9 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("banks")]
+    [Route("employmentType")]
     [ApiController]
-    public class Acc_BankMaster : ControllerBase
+    public class Pay_EmploymentType : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -24,45 +24,13 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
 
 
-        public Acc_BankMaster(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Pay_EmploymentType(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 217;
-        }
-
-        [HttpGet("list")]
-        public ActionResult GetBankList(int isCompany)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@isCompany",isCompany);
-            string sqlCommandText=" select N_CompanyID,N_BankID,X_BankCode,X_BankName,X_BankNameLocale from Acc_BankMaster where N_CompanyID=@nCompanyID  and B_isCompany =@isCompany order by X_BankCode";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
+            FormID = 1272;
         }
 
         [HttpPost("save")]
@@ -78,26 +46,26 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                int nBankID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BankID"].ToString());
+                int nEmploymentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmploymentID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                string xBankCode = MasterTable.Rows[0]["x_BankCode"].ToString();
-                 if (xBankCode == "@Auto")
+                string xEmploymentCode = MasterTable.Rows[0]["x_EmploymentCode"].ToString();
+                 if (xEmploymentCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                        if (xBankCode == "") { return Ok(_api.Error("Unable to generate Bank Code")); }
-                        MasterTable.Rows[0]["x_BankCode"] = xBankCode;
+                        xEmploymentCode = dLayer.GetAutoNumber("Pay_EmploymentType", "x_EmploymentCode", Params, connection, transaction);
+                        if (xEmploymentCode == "") { return Ok(_api.Error("Unable to generate Employment Type Code")); }
+                        MasterTable.Rows[0]["x_EmploymentCode"] = xEmploymentCode;
                     }
                     else
                     {
-                        dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmploymentType", "N_EmploymentID", nEmploymentID, "", connection, transaction);
                     }
                     
-                    nBankID=dLayer.SaveData("Acc_BankMaster","N_BankID",MasterTable,connection,transaction);  
+                    nEmploymentID=dLayer.SaveData("Pay_EmploymentType","N_EmploymentID",MasterTable,connection,transaction);  
                     transaction.Commit();
-                    return Ok(_api.Success("Bank Saved")) ;
+                    return Ok(_api.Success("Employment Type Saved")) ;
                 }
             }
             catch (Exception ex)
@@ -107,7 +75,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nBankID)
+        public ActionResult DeleteData(int nEmploymentID)
         {
             int Results = 0;
             try
@@ -115,14 +83,14 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Acc_BankMaster", "N_BankID", nBankID, "", connection);
+                    Results = dLayer.DeleteData("Pay_EmploymentType", "N_EmploymentID", nEmploymentID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("Bank deleted"));
+                        return Ok( _api.Success("Employment Type deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Bank"));
+                        return Ok(_api.Error("Unable to delete Employment Type"));
                     }
                 }
             }

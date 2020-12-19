@@ -64,6 +64,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "closingstatus": id=94;
                 break;
+                case "maritalstatus": id=26;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -107,6 +109,8 @@ namespace SmartxAPI.Controllers
                 case "LeadStatus": N_FormID=1313;
                 break;
                 case "Ownership": N_FormID=1314;
+                break;
+                case "BloodGroup": N_FormID=14;
                 break;
                 default: return Ok("Invalid Type");
             }
