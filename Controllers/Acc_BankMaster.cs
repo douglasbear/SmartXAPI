@@ -106,6 +106,33 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetBankDetails(int nBankID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select * from Acc_BankMaster where N_CompanyID=@nCompanyID and N_BankID=@nBankID";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nBankID",nBankID);
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(_api.Notice("No Results Found" ));
+                        }else{
+                            return Ok(_api.Success(dt));
+                        }
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }
+          
+        }
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nBankID)
         {
