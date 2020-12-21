@@ -13,9 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("medicalInsurance")]
+    [Route("airport")]
     [ApiController]
-    public class Pay_MedicalInsurance : ControllerBase
+    public class Pay_Airport : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
 
-        public Pay_MedicalInsurance(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Pay_Airport(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
@@ -32,13 +32,13 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetMedicalInsurance()
+        public ActionResult GetAirport()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select N_CompanyID, N_MedicalInsID, X_InsuranceCode, X_InsuranceName, D_StartDate, D_EndDate, X_CardNo, N_VendorID, D_Entrydate, X_PolicyDetails, N_PaycodeID from Pay_Medical_Insurance";
+            string sqlCommandText="Select N_AirportID, X_AirportCode, X_AirportName, X_Country, B_DefAir, N_ModeOfOperation, X_TypeOfContainer, N_NoOfContainer from Ffw_Airport";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
