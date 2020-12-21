@@ -113,5 +113,41 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        // [HttpPost("Save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         DataTable MasterTable;
+        //         MasterTable = ds.Tables["master"];
+
+        //         SortedList Params = new SortedList();
+
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", MasterTable, connection, transaction);
+        //             if (N_ItemUnitID <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok( api.Warning("Unable to save ItemUnit"));
+        //             }
+        //             else
+        //             {
+        //                 transaction.Commit();
+        //             }
+        //             return GetItemUnitListDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_ItemUnitID);
+        //         }
+                
+
+        //     }
+
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(api.Error(ex));
+        //     }
+        // }
+
     }
 }

@@ -19,31 +19,34 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
+        private readonly int FormID;
 
 
-        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             dLayer = dl;
             api = _api;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-
+            FormID = 82;
         }
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Order No] like '%" + xSearchkey + "%' or Vendor like '%"+ xSearchkey + "%'";
+                Searchkey = "and [Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_POrderID desc";
@@ -51,10 +54,10 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
 
-            if(Count==0)
-                sqlCommandText = "select  top("+ nSizeperpage +") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select  top("+ nSizeperpage +") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_POrderID not in(select top("+ Count +") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -67,8 +70,8 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -77,8 +80,8 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(api.Success(OutPut));
-                }     
-                  
+                }
+
             }
             catch (Exception e)
             {
@@ -105,11 +108,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@Type", type);
                     Params.Add("@CompanyID", nCompanyId);
                     Params.Add("@LocationID", nLocationID);
-                                    Params.Add("@PSize", PageSize);
-                Params.Add("@Offset", Page);
+                    Params.Add("@PSize", PageSize);
+                    Params.Add("@Offset", Page);
 
-                // string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
-                // string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
+                    // string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
+                    // string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
 
                     int N_POTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select ISNULL(N_TypeId,0) From Gen_Defaults Where X_TypeName=@Type and N_DefaultId=36", Params, connection).ToString());
                     X_VisibleFieldList = myFunctions.ReturnSettings("65", "Item Search List", "X_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection);
@@ -123,8 +126,8 @@ namespace SmartxAPI.Controllers
                         Feilds = "N_CompanyID,N_ItemID,[Item Class],B_Inactive,N_WarehouseID,N_BranchID,[Item Code],N_ItemTypeID";
                         X_Crieteria = "N_CompanyID=@CompanyID and B_Inactive=0 and [Item Code]<>'001' and ([Item Class]='Stock Item' Or [Item Class]='Non Stock Item' Or [Item Class]='Expense Item' Or [Item Class]='Assembly Item' ) and N_WarehouseID=@LocationID and N_ItemTypeID=1";
                     }
-                    
-                    sqlCommandText = "select "+Feilds+","+X_VisibleFieldList+" from vw_ItemDisplay where "+X_Crieteria + " Order by [Item Code]";
+
+                    sqlCommandText = "select " + Feilds + "," + X_VisibleFieldList + " from vw_ItemDisplay where " + X_Crieteria + " Order by [Item Code]";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
 
@@ -250,6 +253,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Attachment = ds.Tables["attachment"];
                 SortedList Params = new SortedList();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -269,7 +273,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
                     int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-
+                    int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
 
@@ -282,7 +286,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 80);
+                        Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
@@ -354,17 +358,31 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
-                    if (N_PurchaseOrderId <= 0)
+                    N_POrderID = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
+                    if (N_POrderID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Error"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_POrderID"] = N_PurchaseOrderId;
+                        DetailTable.Rows[j]["n_POrderID"] = N_POrderID;
                     }
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
+
+                    if (Attachment.Rows.Count > 0)
+                    {
+                        SortedList VendorParams = new SortedList();
+                        VendorParams.Add("@nVendorID", N_VendorID);
+                        string X_DMSMainFolder = "Vendor Document";
+                        DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
+                        if (VendorInfo.Rows.Count > 0)
+                        {
+                            string X_DMSSubFolder = this.FormID + "//" + VendorInfo.Rows[0]["X_VendorCode"].ToString() + "-" + VendorInfo.Rows[0]["X_VendorName"].ToString().Trim();
+                            string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+                            myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, X_folderName,User,connection,transaction);
+                        }
+                    }
                     transaction.Commit();
                 }
                 return Ok(api.Success("Purchase Order Saved"));
