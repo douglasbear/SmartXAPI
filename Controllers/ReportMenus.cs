@@ -242,6 +242,33 @@ namespace SmartxAPI.Controllers
                      {
                          ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                      };
+                      if(nFormID==80)
+                    {
+                        critiria="{Inv_SalesQuotation.N_QuotationId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/quotation/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        if(Template!=null || Template.ToString()!="")
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_Quatation";
+                    }
+                     if(nFormID==81)
+                    {
+                        critiria="{vw_InvSalesOrderDetails.N_SalesOrderId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/SalesOrder/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        if(Template!=null || Template.ToString()!="")
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_order";
+                    }
+                   
                     if(nFormID==64)
                     {
                         critiria="{Inv_Sales.N_SalesId}="+ nPkeyID;
@@ -256,8 +283,10 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="SalesInvoice";
                     }
+                    //Purchase Module
                     if(nFormID==65)
                     {
+                        critiria="{vw_InvPurchaseDetailsView_Rpt.N_PurchaseId}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/PurchaseInvoice/vat/";
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
                         if(Template!=null || Template.ToString()!="")
@@ -268,19 +297,39 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="PurchaseEntry_invoice";
                     }
-                    if(nFormID==81)
+                     if(nFormID==82)
                     {
-                        critiria="{vw_InvSalesOrderDetails.N_SalesOrderId}="+ nPkeyID;
-                        RPTLocation=reportLocation+"printing/SalesOrder/vat/";
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        critiria="{Inv_PurchaseOrder.N_POrderID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/PurchaseOrder/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
                         if(Template!=null || Template.ToString()!="")
                         {
                             ReportName=Template.ToString();
                             ReportName=ReportName.Remove(ReportName.Length-4);
                         }
                         else
-                            ReportName="Sales_order";
+                            ReportName="Purchase_order";
                     }
+                    //Finance Module
+                    if(nFormID==44)
+                    {
+                        critiria="{vw_AccVoucherJrnlCC.X_TransType}='PV' and {vw_AccVoucherJrnlCC.N_VoucherID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="PaymentVoucher_VAT";
+                    }
+                    if(nFormID==45)
+                    {
+                        critiria="{vw_AccVoucherJrnlCC.X_TransType}='RV' and {vw_AccVoucherJrnlCC.N_VoucherID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="ReceiptVoucher_VAT";
+                    }
+                    if(nFormID==46)
+                    {
+                        critiria="{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="JournalVoucher_VAT";
+                    }
+                    
 
                 var client = new HttpClient(handler);
                 string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation;
