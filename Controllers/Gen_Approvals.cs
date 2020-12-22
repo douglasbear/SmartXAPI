@@ -164,10 +164,34 @@ namespace SmartxAPI.Controllers
 
         }
 
-
-        
-
-
-
+        [HttpGet("list")]
+        public ActionResult GetApprovalCode ()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            
+            DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyId);
+            
+            sqlCommandText="Select * from Sec_ApprovalSettings_Employee where N_CompanyID=@p1";
+                
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
+                
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }   
+        }
     }
 }
