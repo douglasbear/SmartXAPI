@@ -30,7 +30,7 @@ namespace SmartxAPI.GeneralFunctions
             string path = "";
             string s = "";
             DataRow AttachmentRow = dsAttachment.Rows[0];
-            int FormID = myFunctions.getIntVAL(AttachmentRow["formID"].ToString());
+            int FormID = myFunctions.getIntVAL(AttachmentRow["n_FormID"].ToString());
             int FnYearID = myFunctions.getIntVAL(AttachmentRow["n_FnYearID"].ToString());
             int nCompanyID = myFunctions.GetCompanyID(User);
             string xCompanyName = myFunctions.GetCompanyName(User);
@@ -39,7 +39,7 @@ namespace SmartxAPI.GeneralFunctions
             int N_remCategory = 0;
             int N_FolderID = 0;
             object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-            string DocumentPath = obj != null && obj != "" ? obj.ToString() : this.reportPath;
+            string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
             if (dsAttachment.Rows.Count > 0)
             {
 
@@ -61,6 +61,8 @@ namespace SmartxAPI.GeneralFunctions
                     for (int i = 0; i <= dsAttachment.Rows.Count - 1; i++)
                     {
 
+
+                        dsAttachment.Rows[i]["N_TransID"] = payId;
                         // dLayer.SaveData(ref Result, "Inv_AttachmentCategory", "N_CategoryID", "0", "N_CompanyID,X_Category", nCompanyID + "|'" + dsAttachment.Rows[i]["X_Category"].ToString() + "'", "", "", "X_Category='" + dsAttachment.Rows[i]["X_Category"].ToString() + "'", "");
                         // Result = 0;
 
@@ -166,21 +168,15 @@ namespace SmartxAPI.GeneralFunctions
                         }
                         else
                         {
-                            if (ExpiryDate != "")
+                            if (ExpiryDate == "")
                             {
-                                FieldList = "N_CompanyID,N_FnyearID,N_PartyID,N_FormID,N_TransID,X_Subject,X_FileName,X_extension,X_File,X_refName,D_ExpiryDate,N_RemCategoryID";
-                                FieldValues = nCompanyID + "|" + myCompanyID._FnYearID + "|" + partyId + "|" + FormID + "|" + payId + "|'" + dsAttachment.Rows[i]["X_Subject"].ToString() + "'|'" + path + "\\" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_Extension"].ToString() + "'|'" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_refName"].ToString() + "','" + ExpiryDate + "'," + N_remCategory;
-                            }
-                            else
-                            {
-                                FieldList = "N_CompanyID,N_FnyearID,N_PartyID,N_FormID,N_TransID,X_Subject,X_FileName,X_extension,X_File,X_refName";
-                                FieldValues = nCompanyID + "|" + myCompanyID._FnYearID + "|" + partyId + "|" + FormID + "|" + payId + "|'" + dsAttachment.Rows[i]["X_Subject"].ToString() + "'|'" + path + "\\" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_Extension"].ToString() + "'|'" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_refName"].ToString() + "'";
-                            }
-                            string refField = "N_CategoryID";
-                            string refValue = "Inv_AttachmentCategory|N_CategoryID|X_Category='" + dsAttachment.Rows[i]["X_Category"].ToString() + "'";
-
-                            string DupCriteria = "";
-                            //dba1.SaveData(ref Result, "Dms_ScreenAttachments", "N_AttachmentID", N_AttachmentID.ToString(), FieldList, FieldValues, refField, refValue, DupCriteria, "");
+                            dsAttachment.Columns.Remove("D_ExpiryDate");
+                            dsAttachment.Columns.Remove("N_RemCategoryID");
+ }
+                          dsAttachment.Columns.Remove("FileData");
+                            dsAttachment.Columns.Remove("x_RemCategory");
+                            dsAttachment.Columns.Remove("x_Category");
+                            dsAttachment.AcceptChanges();
                             dLayer.SaveData("Dms_ScreenAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
                             if (myFunctions.getIntVAL(Result.ToString()) > 0)
                             {
@@ -240,7 +236,8 @@ namespace SmartxAPI.GeneralFunctions
             DMS_MasterFolder = myFunctions.AddNewColumnToDataTable(DMS_MasterFolder, "N_AttachmentID", typeof(int), attID);
             DMS_MasterFolder = myFunctions.AddNewColumnToDataTable(DMS_MasterFolder, "N_FormID", typeof(int), fId);
             DMS_MasterFolder = myFunctions.AddNewColumnToDataTable(DMS_MasterFolder, "N_FolderID", typeof(int), N_GroupID);
-
+            DMS_MasterFolder.Rows.Add();
+DMS_MasterFolder.AcceptChanges();
             try
             {
                 object Result = 0;
@@ -293,7 +290,8 @@ namespace SmartxAPI.GeneralFunctions
 
                 var base64Data = Regex.Match(fileData.ToString(), @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
                 byte[] FileBytes = Convert.FromBase64String(base64Data);
-                File.WriteAllBytes(destpath + refname, FileBytes);
+                File.WriteAllBytes(destpath + refname,
+                                   FileBytes);
 
             }
             catch (Exception ex)
@@ -340,6 +338,21 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
+        public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID ,int FnYearID,ClaimsPrincipal User,SqlConnection connection)
+        {
+                                                SortedList AttachmentParam = new SortedList(){
+                                    {"PartyID", PartyId},
+                                    {"PayID", TransID},
+                                    {"FormID", FormID},
+                                    {"CompanyID", myFunctions.GetCompanyID(User)},
+                                    {"FnyearID",FnYearID}
+                                    };
+
+            return dLayer.ExecuteDataTablePro( "SP_VendorAttachments",AttachmentParam,connection);
+    
+        }
+
+
 
 
     }
@@ -349,7 +362,7 @@ namespace SmartxAPI.GeneralFunctions
     public interface IMyAttachments
     {
         public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_folderName, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction);
-        
+        public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID ,int FnYearID,ClaimsPrincipal User,SqlConnection connection);
 
     }
 }

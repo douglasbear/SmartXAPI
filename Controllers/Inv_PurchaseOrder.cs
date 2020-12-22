@@ -24,7 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
 
 
-        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
+        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             api = _api;
@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
-                DataTable Attachment = ds.Tables["attachment"];
+                DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -380,7 +380,15 @@ namespace SmartxAPI.Controllers
                         {
                             string X_DMSSubFolder = this.FormID + "//" + VendorInfo.Rows[0]["X_VendorCode"].ToString() + "-" + VendorInfo.Rows[0]["X_VendorName"].ToString().Trim();
                             string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
-                            myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, X_folderName,User,connection,transaction);
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, X_folderName, User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error("Error"));
+                            }
                         }
                     }
                     transaction.Commit();
