@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
 
 
 
-
+        [AllowAnonymous]
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
