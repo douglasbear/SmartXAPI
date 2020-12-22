@@ -13,9 +13,9 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 namespace SmartxAPI.Controllers
 {
     
-    [Route("clientLogin")]
+    [Route("clients")]
     [ApiController]
-    public class ClientLogin : ControllerBase
+    public class Clients : ControllerBase
     {
         private readonly ISec_UserRepo _repository;
         private readonly IApiFunctions _api;
@@ -25,7 +25,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly string olivoClientConnectionString;
 
-        public ClientLogin(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
+        public Clients(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
             _repository = repository;
             _api = api;

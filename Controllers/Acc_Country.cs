@@ -11,7 +11,7 @@ using Microsoft.Extensions.Configuration;
 namespace SmartxAPI.Controllers
 
 {
-    // [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("country")]
     [ApiController]
     public class Acc_Country : ControllerBase
@@ -28,14 +28,12 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
-
+        [AllowAnonymous]
         [HttpGet("list")]
         public ActionResult GetCountryList(int nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            if(nCompanyId!=-1)
-            nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country  order by N_CountryID";
             Params.Add("@p1", nCompanyId);
 
