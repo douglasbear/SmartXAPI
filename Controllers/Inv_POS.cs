@@ -53,9 +53,9 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where and B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + System.DateTime.Now + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where and B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + System.DateTime.Now + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -67,7 +67,63 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+         [HttpGet("items")]
+        public ActionResult GetItems(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_ItemCode like '%" + xSearchkey + "%' or X_ItemName like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ItemID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_ItemPOS where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_ItemPOS where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -88,18 +144,13 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listallitems")]
-        public ActionResult GetAllItemDetails(int nTerminalID, int nTerminalLocationID,int nCategory)
+        public ActionResult GetAllItemDetails(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int nTerminalID, int nTerminalLocationID, int nCategory)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int companyid = myFunctions.GetCompanyID(User);
-
-            QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@nTerminalID", nTerminalID);
-            QueryParams.Add("@nTerminalLocationID", nTerminalLocationID);
-            //QueryParams.Add("@xItemCode", xItemCode);
+         
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -132,7 +183,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-      
+
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
