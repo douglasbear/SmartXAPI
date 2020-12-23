@@ -157,6 +157,7 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nEmpID", nEmpID);
+                int N_NextApproverID=0;
                 //QueryParams.Add("@nLoanTransID", nLoanTransID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -216,7 +217,7 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, xLoanID,1, objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, xLoanID,1, objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
 
                         DataTable dt = new DataTable();
                         dt.Clear();
@@ -252,6 +253,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nLoanTransID,this.xTransType,xLoanID,dLayer,connection,transaction,User);
                     }
                     return Ok(api.Success("Loan request saved" + ":" + xLoanID));
                 }

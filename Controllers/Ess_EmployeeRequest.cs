@@ -182,6 +182,7 @@ namespace SmartxAPI.Controllers
                 string xReqCode = MasterRow["x_RequestCode"].ToString();
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+                int N_NextApproverID=0;
 
 
 
@@ -200,7 +201,7 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID= myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
                         return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
                     }
@@ -230,7 +231,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID= myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
 
                         DataTable Files = ds.Tables["files"];
                         if (Files.Rows.Count > 0)
@@ -243,6 +244,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Employee Request",xReqCode,dLayer,connection,transaction,User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
                         return Ok(api.Success(res, "Employee Request successfully created with Request No" + "-" + xReqCode));
