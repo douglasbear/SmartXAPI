@@ -16,23 +16,23 @@ namespace SmartxAPI.GeneralFunctions
         {
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and "+FieldName+"=@p3", Params, connection));
             return Result;
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection, transaction));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  "+FieldName+"=@p3", Params, connection, transaction));
             return Result;
         }
         public int getIntVAL(string val)
@@ -1093,8 +1093,8 @@ namespace SmartxAPI.GeneralFunctions
 
     public interface IMyFunctions
     {
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection);
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public int getIntVAL(string val);
         public double getVAL(string val);
         public double Round(double val, int RoundDigit);
