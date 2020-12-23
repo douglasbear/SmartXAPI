@@ -177,6 +177,31 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("taxType")]
+        public ActionResult GetTaxType()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1",nCompanyId);
+            string sqlCommandText = "Select * from Acc_TaxType where N_CompanyID=@p1";
+
+            try{
+                using(SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                    if (dt.Rows.Count==0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }else{
+                        return Ok(_api.Success(dt));
+                    }
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }
+        }
 
 
 
