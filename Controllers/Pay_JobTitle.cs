@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int N_PositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
-                    int N_SupervisorID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_SupervisorID"].ToString());
+                    int N_SupervisorID = myFunctions.getIntVAL(dtSupervisor.Rows[0]["n_SupervisorID"].ToString());
                     bool B_IsSupervisor = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     //QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -103,6 +103,14 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         dLayer.DeleteData("Pay_Position", "n_positionID", N_PositionID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+
+                        if (B_IsSupervisor)
+                        {
+                            N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
+                             
+                        }
+                        else
+                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
                     }
                     N_PositionID = dLayer.SaveData("Pay_Position", "N_PositionID", MasterTable, connection, transaction);
                     if (N_PositionID <= 0)
@@ -112,10 +120,12 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if (B_IsSupervisor)
-                            N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", MasterTable, connection, transaction);
-                        else
-                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+                        // if (B_IsSupervisor)
+                        // {
+                        //     N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
+                        // }
+                        // else
+                        //     dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
                         transaction.Commit();
                     }
 
