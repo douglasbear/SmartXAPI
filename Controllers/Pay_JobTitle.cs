@@ -107,6 +107,32 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetJobTitleDetails(int nPositionID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select * from vw_PayPosition_DispAdvanced where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nPositionID",nPositionID);
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(_api.Notice("No Results Found" ));
+                        }else{
+                            return Ok(_api.Success(dt));
+                        }
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nPositionID)
         {
