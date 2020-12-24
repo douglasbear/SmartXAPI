@@ -70,6 +70,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "licencepaymentmode": id=59;
                 break;
+                case "licencetype": id=64;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
