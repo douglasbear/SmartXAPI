@@ -116,6 +116,31 @@ namespace SmartxAPI.Controllers
             }
         }
 
+ [HttpGet("checkScreenAccess")]
+        public ActionResult GetFormAccess(int nFormID)
+        {
+            bool Allowed=false;
+            SortedList Out =new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Allowed = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), nFormID, myFunctions.GetUserCategory(User).ToString(),"N_UserCategoryID", dLayer, connection);
+                    Out.Add("Allowed",Allowed);
+                    Out.Add("FormID",nFormID);
+                    return Ok(_api.Success(Out));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+        }
+       
+
 
 
         [HttpGet("settingsList")]

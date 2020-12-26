@@ -401,7 +401,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nLocationID", N_LocationID);
 
 
-                    bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", dLayer, connection, transaction);
+                    bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator","X_UserCategory", dLayer, connection, transaction);
 
 
                     // Auto Gen

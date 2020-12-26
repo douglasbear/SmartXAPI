@@ -102,9 +102,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    bool B_Project = myFunctions.CheckPermission(nCompanyId, 74, "Administrator", dLayer, connection);
-                    bool B_DeliveryNote = myFunctions.CheckPermission(nCompanyId, 729, "Administrator", dLayer, connection);
-                    bool B_SalesOrder = myFunctions.CheckPermission(nCompanyId, 81, "Administrator", dLayer, connection);
+                    bool B_Project = myFunctions.CheckPermission(nCompanyId, 74, "Administrator","X_UserCategory", dLayer, connection);
+                    bool B_DeliveryNote = myFunctions.CheckPermission(nCompanyId, 729, "Administrator","X_UserCategory", dLayer, connection);
+                    bool B_SalesOrder = myFunctions.CheckPermission(nCompanyId, 81, "Administrator","X_UserCategory", dLayer, connection);
 
 
                     if (B_DeliveryNote)
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     string qry = "";
-                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", dLayer, Con);
+                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator","X_UserCategory", dLayer, Con);
                     if (B_DeliveryDispatch)
                     {
                         DataTable dtDispatch = new DataTable();
@@ -461,7 +461,7 @@ namespace SmartxAPI.Controllers
 
                         // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
-                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
+                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator","X_UserCategory", dLayer, connection, transaction);
                         //Sales amount details/payment popup
                         for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
                             dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
@@ -627,8 +627,8 @@ namespace SmartxAPI.Controllers
                             // transaction.Rollback();
                             // return Ok(_api.Error("Unable to delete sales Invoice"));
                         }
-                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", dLayer, connection, transaction))
-                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory, dLayer, connection, transaction))
+                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator","X_UserCategory", dLayer, connection, transaction))
+                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory,"N_UserCategoryID", dLayer, connection, transaction))
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
                     }

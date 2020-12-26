@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
 
 
                 //PURCHASE INVOICE DETAILS
-                bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer,connection);
+                bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator","X_UserCategory", dLayer,connection);
 
                 if (B_MRNVisible)
                 {

@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.SqlClient;
+using System.Net.Mail;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -16,23 +17,23 @@ namespace SmartxAPI.GeneralFunctions
         {
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and "+FieldName+"=@p3", Params, connection));
             return Result;
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection, transaction));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  "+FieldName+"=@p3", Params, connection, transaction));
             return Result;
         }
         public int getIntVAL(string val)
@@ -757,8 +758,99 @@ namespace SmartxAPI.GeneralFunctions
             }
             return MasterTable;
         }
+        public bool SendApprovalMail(int N_NextApproverID,int FormID,int TransID,string TransType,string TransCode,IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction,ClaimsPrincipal User)
+        {
+            try
+            {
+                int companyid = GetCompanyID(User);
+                SortedList Params = new SortedList();
+                string Toemail="";
+                object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID, Params, connection, transaction);
+                Toemail=Email.ToString();
+                object CurrentStatus=dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID="+FormID+" and X_TransCode='"+TransCode+"' and N_TransID="+TransID+" and X_Type='"+TransType+"'", Params, connection, transaction);
+                object companyemail = "";
+                object companypassword = "";
 
-        public void LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+                companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid , Params, connection, transaction);
+                companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+                if (Toemail.ToString() != "")
+                {
+                    if (companyemail.ToString() != "")
+                    {
+                        object body = null;
+                        string MailBody;
+                        body = "Sir/Madam," + "<br/><br/>You have a new approval request on "+TransType+" of code "+TransCode+" which is "+CurrentStatus+".<br/><br/>";
+                        if (body != null)
+                        {
+                            body = body.ToString();
+                        }
+                        else
+                            body = "";
+
+
+                        string Sender = companyemail.ToString();
+                        MailBody = body.ToString();
+                        string Subject = "Request for Approval";
+
+
+
+                        SmtpClient client = new SmtpClient
+                        {
+                            Host = "smtp.gmail.com",
+                            Port = 587,
+                            EnableSsl = true,
+                            DeliveryMethod = SmtpDeliveryMethod.Network,
+                            Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                            Timeout = 10000,
+                        };
+
+                        MailMessage message = new MailMessage();
+                        message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                        message.From = new MailAddress(Sender);
+                        message.Subject = Subject;
+                        message.Body = MailBody;
+
+                        message.IsBodyHtml = true; //HTML email  
+                        string CC = GetCCMail(256,companyid,connection,transaction,dLayer);
+                        if (CC != "")
+                            message.CC.Add(CC);
+
+                        string Bcc = GetBCCMail(256,companyid,connection,transaction,dLayer);
+                        if (Bcc != "")
+                            message.Bcc.Add(Bcc);
+                        client.Send(message);
+                        
+                    }
+                }
+                return true;
+
+            }
+
+            catch (Exception ie)
+            {
+                return false;
+            }
+        }
+        public static string GetCCMail(int ID,int nCompanyID,SqlConnection connection, SqlTransaction transaction,IDataAccessLayer dLayer)
+        {
+            SortedList Params = new SortedList();
+            object CCMail = dLayer.ExecuteScalar("select X_CCMail from Gen_EmailAddresses where N_subjectID =" + ID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+            if (CCMail != null)
+                return CCMail.ToString();
+            else
+                return "";
+        }
+        public static string GetBCCMail(int ID,int nCompanyID,SqlConnection connection, SqlTransaction transaction,IDataAccessLayer dLayer)
+        {
+            SortedList Params = new SortedList();
+            object BCCMail = dLayer.ExecuteScalar("select X_BCCMail from Gen_EmailAddresses where N_subjectID =" + ID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+            if (BCCMail != null)
+                return BCCMail.ToString();
+            else
+                return "";
+        }
+
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -835,6 +927,7 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
             }
+            return N_NxtUserID;
         }
 
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
@@ -1093,8 +1186,8 @@ namespace SmartxAPI.GeneralFunctions
 
     public interface IMyFunctions
     {
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection);
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public int getIntVAL(string val);
         public double getVAL(string val);
         public double Round(double val, int RoundDigit);
@@ -1120,7 +1213,7 @@ namespace SmartxAPI.GeneralFunctions
         public string getDateVAL(DateTime val);
         public DateTime GetFormatedDate(string val);
         public DataTable SaveApprovals(DataTable MasterTable, DataTable Approvals, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public void LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public string UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection);
@@ -1130,6 +1223,7 @@ namespace SmartxAPI.GeneralFunctions
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
         public DataTable GetSettingsTable();
+        public bool SendApprovalMail(int N_NextApproverID,int FormID,int TransID,string TransType,string TransCode,IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction,ClaimsPrincipal User);
 
     }
 }
