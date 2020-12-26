@@ -122,6 +122,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "WorkLocation": N_FormID=1209;
                 break;
+                case "EducationType": N_FormID=28;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_ReferId=@p1";

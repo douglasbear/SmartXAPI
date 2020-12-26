@@ -390,10 +390,10 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
-                    string sqlCommandText = "select * from Dms_ScreenAttachments where N_AttachmentID=@p1";
+                    string sqlCommandText = "select * from Pay_EmploymentHistory";
                     SortedList mParamList = new SortedList() { { "@p1", id } };
                     DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
-                    masterTable = _api.Format(masterTable, "Dms_ScreenAttachments");
+                    masterTable = _api.Format(masterTable, "Pay_EmployeeEducation");
 
                     // string sqlCommandText2 = "select * from Pay_EmpAddlInfo where N_EmpID=@p1";
                     // SortedList dParamList = new SortedList() { { "@p1", id } };

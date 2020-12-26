@@ -102,39 +102,46 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //  [HttpGet("chart")]
-        // public ActionResult ChartOfAccountList(int nFnYearId)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId = myFunctions.GetCompanyID(User);
-        //     string sqlCommandText ="";
-        //     sqlCommandText = "Select * from Acc_MastGroup Where N_CompanyID= @p1 and N_FnYearID=@p2 and N_ParantGroup=0 Order By X_GroupCode";
-        //     Params.Add("@p1", nCompanyId);
-        //     Params.Add("@p2", nFnYearId);
+       [HttpPost("save")]
+        public ActionResult SaveAccountGroup([FromBody]DataSet ds)
+        { 
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Success(api.Format(dt)));
-        //             }
 
-        //         }
-                
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(e));
-        //     }
-        // }
+try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+
+
+
+                    int nGroupID = dLayer.SaveData("Acc_MastGroup", "N_GroupID", MasterTable, connection, transaction);
+                    if (nGroupID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Lead Created"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+        }
+
     }
 }
