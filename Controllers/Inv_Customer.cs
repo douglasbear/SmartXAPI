@@ -124,10 +124,6 @@ namespace SmartxAPI.Controllers
                         if (CustomerCode == "") { return Ok(api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Inv_Customer", "n_CustomerID", nCustomerID, "", connection, transaction);
-                    }
 
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
