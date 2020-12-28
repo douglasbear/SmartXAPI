@@ -169,13 +169,22 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
-                    string base64= MasterTable.Rows[0]["i_Logo"].ToString();// load base 64 code to this variable from js 
-                    Byte[] bitmapData = new Byte[base64.Length];
-                    bitmapData = Convert.FromBase64String(base64);
-                                      MasterTable.Columns.Remove("i_Logo");
+                    string logo= MasterTable.Rows[0]["i_Logo"].ToString();
+                    string footer= MasterTable.Rows[0]["i_Footer"].ToString();
+                    string header= MasterTable.Rows[0]["i_Header"].ToString();
+
+                    Byte[] logoBitmap = new Byte[logo.Length];
+                    Byte[] footerBitmap = new Byte[footer.Length];
+                    Byte[] headerBitmap = new Byte[header.Length];
+
+                    logoBitmap = Convert.FromBase64String(logo);
+                    footerBitmap = Convert.FromBase64String(footer);
+                    headerBitmap = Convert.FromBase64String(header);
+
+                        MasterTable.Columns.Remove("i_Logo");
+                        MasterTable.Columns.Remove("i_Footer");
+                        MasterTable.Columns.Remove("i_Header");
                         MasterTable.AcceptChanges();
-                    //     MasterTable =myFunctions.AddNewColumnToDataTable(MasterTable,"i_Logo",typeof(byte[]),bitmapData);
-                    // MasterTable.AcceptChanges();
 
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
@@ -185,12 +194,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if(base64.Length>0){
-                        int res= dLayer.SaveImage("Acc_Company","I_Logo",bitmapData,"N_CompanyID",N_CompanyId,connection,transaction);
-                        if(myFunctions.getIntVAL(res.ToString())<=0){
-                        transaction.Rollback();
-                        return Ok(api.Warning("Unable to save"));
-                        }}
+                        if(logo.Length>0)
+                        dLayer.SaveImage("Acc_Company","I_Logo",logoBitmap,"N_CompanyID",N_CompanyId,connection,transaction);
+                        if(footer.Length>0)
+                        dLayer.SaveImage("Acc_Company","i_Footer",footerBitmap,"N_CompanyID",N_CompanyId,connection,transaction);
+                        if(header.Length>0)
+                        dLayer.SaveImage("Acc_Company","i_Header",headerBitmap,"N_CompanyID",N_CompanyId,connection,transaction);
+
                             if (values == "@Auto")
                             {
                                 SortedList proParams1 = new SortedList(){
