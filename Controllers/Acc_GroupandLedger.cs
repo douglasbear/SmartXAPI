@@ -67,6 +67,37 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("transactionType")]
+        public ActionResult AccountTransactionType()
+        {
+            DataTable dt = new DataTable();
+            string sqlCommandText = "select N_CategoryID,N_GenTypeId,N_SubCategoryID,N_Order,X_Description from Acc_CashFlowCategory";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(api.Format(dt)));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        
+
         [HttpGet("account")]
         public ActionResult MasterAccountist(int nFnYearId)
         {
@@ -74,7 +105,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-            sqlCommandText = "Select * from Acc_MastLedger Where N_CompanyID= @p1 and N_FnYearID=@p2 Order By N_GroupID";
+            sqlCommandText = "Select *,[Account Code] as X_LedgerCode,[Account] as X_LedgerName from vw_AccMastLedger Where N_CompanyID= @p1 and N_FnYearID=@p2 Order By N_GroupID";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
 
@@ -101,6 +132,100 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+        [HttpPost("saveAccount")]
+        public ActionResult SaveAccount([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
+                int N_ParentGroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentGroup"].ToString());
+                string X_Operation = MasterTable.Rows[0]["x_Operation"].ToString();
+                string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
+                MasterTable.Columns.Remove("x_Operation");
+                string X_GroupCode = "";
+                MasterTable.AcceptChanges();
+                SortedList paramList = new SortedList();
+                paramList.Add("@nCompanyID", nCompanyID);
+                paramList.Add("@nFnYearID", nFnYearId);
+                paramList.Add("@nGroupLevelID", myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentGroup"].ToString()));
+
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+
+                    if (X_Operation == "Save")
+                    {
+                        MasterTable.Rows[0]["x_Level"] = ReturnNewLevel(paramList, connection, transaction).ToString();
+                        string level = "";
+
+                        if (x_Type == "A")
+                            level = "1";
+                        else if (x_Type == "L")
+                            level = "2";
+                        else if (x_Type == "I")
+                            level = "3";
+                        else if (x_Type == "E")
+                            level = "4";
+
+
+                        object GroupCodeCount = dLayer.ExecuteScalar("select COUNT(convert(numeric,X_GroupCode)) From Acc_MastGroup where X_Level like '" + level + "%' and N_CompanyID =" + nCompanyID + " and  N_ParentGroup =" + N_ParentGroupID + "  and N_FnYearID=" + nCompanyID, connection, transaction);
+                        if (GroupCodeCount == null)
+                            return Ok(api.Error("Error"));
+
+                        object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =" + N_ParentGroupID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction);
+
+                        int count = myFunctions.getIntVAL(GroupCodeCount.ToString());
+                        while (true)
+                        {
+                            count += 1;
+                            X_GroupCode = GroupCodeObj.ToString() + count.ToString("00");
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastGroup Where X_GroupCode ='" + X_GroupCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        MasterTable.Rows[0]["X_GroupCode"] = X_GroupCode;
+                    }
+                    MasterTable.AcceptChanges();
+                    int Result = dLayer.SaveData("Acc_MastGroup", "N_GroupID", MasterTable, connection, transaction);
+                    if (Result <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        if (N_GroupID == 0)
+                        {
+                            SortedList gruopsParam = new SortedList();
+                            gruopsParam.Add("N_GroupID", N_GroupID);
+                            gruopsParam.Add("N_FnyearID", nFnYearId);
+                            gruopsParam.Add("N_CompanyID", nCompanyID);
+                            dLayer.ExecuteScalarPro("SP_AccGruops_Create", gruopsParam, connection, transaction);
+                        }
+                        transaction.Commit();
+                        if (X_Operation == "Save")
+                            return Ok(api.Success("Group Created"));
+                        else
+                            return Ok(api.Success("Group Updated"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+        }
+
 
         [HttpPost("saveAccountGroup")]
         public ActionResult SaveAccountGroup([FromBody] DataSet ds)
