@@ -156,7 +156,7 @@ namespace SmartxAPI.Controllers
                         string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 ";
                         DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
                         outputDt = _api.Format(outputDt, "NewSalesMan");
-
+                        transaction.Commit();
                         return Ok(_api.Success(outputDt, "Salesman Saved"));
                     }
                 }
