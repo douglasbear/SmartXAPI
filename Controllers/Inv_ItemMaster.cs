@@ -231,6 +231,16 @@ namespace SmartxAPI.Controllers
                         var["n_ItemID"] = N_ItemID;
                     }
                     UnitTable.AcceptChanges();
+                    DataRow[] BaseUnitRow = UnitTable.Select("B_BaseUnit = 1 ");
+DataTable BaseUnitTable=BaseUnitRow.CopyToDataTable();
+UnitTable.Rows.RemoveAt(0);
+UnitTable.AcceptChanges();
+BaseUnitTable.AcceptChanges();
+                    int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", BaseUnitTable, connection, transaction);
+                    foreach (DataRow var in UnitTable.Rows)
+                    {
+                        var["n_BaseUnitID"] = BaseUnitID;
+                    }
                     int UnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", UnitTable, connection, transaction);
                     if (UnitID <= 0)
                     {
@@ -293,12 +303,12 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                string sqlCommandText = "select * from Inv_PayReceipt where N_PayReceiptId=@p1";
+                string sqlCommandText = "select * from Inv_ItemMaster where N_ItemID=@p1";
                 SortedList mParamList = new SortedList() { { "@p1", Id } };
                 DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
                 masterTable = _api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Inv_PayReceiptDetails where N_PayReceiptId=@p1";
+                string sqlCommandText2 = "select * from Inv_ItemMaster where N_ItemID=@p1";
                 SortedList dParamList = new SortedList() { { "@p1", Id } };
                 DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
                 detailTable = _api.Format(detailTable, "details");

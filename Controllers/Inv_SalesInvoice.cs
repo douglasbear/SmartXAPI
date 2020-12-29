@@ -282,7 +282,8 @@ namespace SmartxAPI.Controllers
                     SortedList dParamList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
-                        {"N_SalesID",masterTable.Rows[0]["n_SalesId"].ToString()}
+                        {"N_SalesID",masterTable.Rows[0]["n_SalesId"].ToString()},
+                        {"D_Date",Convert.ToDateTime(masterTable.Rows[0]["d_SalesDate"].ToString())}
                     };
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
