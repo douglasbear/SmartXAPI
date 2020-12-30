@@ -41,37 +41,48 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("leaveList")]
-        public ActionResult GetEmployeeLeaveRequest(string xReqType)
+        public ActionResult GetEmployeeLeaveRequest(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            string sqlCommandCount = "";
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_VacationGroupCode like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_VacationGroupCode desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status " + Searchkey + " and N_VacationGroupID not in (select top("+ Count +") N_VacationGroupID from vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status " + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus order by VacationRequestDate Desc";
-                        else
-                        if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus from vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus order by VacationRequestDate Desc ";
-                        else
-                            sqlCommandText = "Select x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus order by VacationRequestDate Desc";
-
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
                     }
 
 

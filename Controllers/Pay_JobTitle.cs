@@ -21,12 +21,8 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-<<<<<<< HEAD
-        private readonly int N_FormID;
-=======
         private readonly int FormID;
 
->>>>>>> 573a133d85caa517c258fbcaaaa8e797c3e1e284
 
         public Pay_JobTitle(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -34,11 +30,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-<<<<<<< HEAD
-            N_FormID = 195;//form id of job title
-=======
             FormID = 195;
->>>>>>> 573a133d85caa517c258fbcaaaa8e797c3e1e284
         }
 
         [HttpGet("list")]
@@ -101,7 +93,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", this.N_FormID);
+                        Params.Add("N_FormID", this.FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
                         if (X_PositionCode == "") { return Ok(_api.Error("Unable to generate Job title Code")); }
@@ -205,59 +197,55 @@ namespace SmartxAPI.Controllers
                     DataSet dataSet = new DataSet();
                     dataSet.Tables.Add(masterTable);
                     return Ok(dataSet);
-
-<<<<<<< HEAD
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.Error(e));
-            }
-        }
-
-=======
-        [HttpPost("save")]
-        public ActionResult SaveData([FromBody]DataSet ds)
-        { 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;
-                    MasterTable = ds.Tables["master"];
-                    SortedList Params = new SortedList();
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                int nPositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
-                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                string xPositionCode = MasterTable.Rows[0]["x_PositionCode"].ToString();
-                MasterTable.Columns.Remove("n_FnYearID");
-                MasterTable.AcceptChanges();
-                 if (xPositionCode == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", this.FormID);
-                        xPositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
-                        if (xPositionCode == "") { return Ok(_api.Error("Unable to generate Position Code")); }
-                        MasterTable.Rows[0]["x_PositionCode"] = xPositionCode;
-                    }
-                    else
-                    {
-                        dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection, transaction);
-                    }
-                    
-                    nPositionID=dLayer.SaveData("Pay_Position","N_PositionID",MasterTable,connection,transaction);  
-                    transaction.Commit();
-                    return Ok(_api.Success("Job Title Saved")) ;
-                }
+}
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
         }
+        // [HttpPost("save")]
+        // public ActionResult SaveData([FromBody]DataSet ds)
+        // { 
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             DataTable MasterTable;
+        //             MasterTable = ds.Tables["master"];
+        //             SortedList Params = new SortedList();
+        //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+        //         int nPositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
+        //         int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+        //         string xPositionCode = MasterTable.Rows[0]["x_PositionCode"].ToString();
+        //         MasterTable.Columns.Remove("n_FnYearID");
+        //         MasterTable.AcceptChanges();
+        //          if (xPositionCode == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", nCompanyID);
+        //                 Params.Add("N_YearID", nFnYearID);
+        //                 Params.Add("N_FormID", this.FormID);
+        //                 xPositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
+        //                 if (xPositionCode == "") { return Ok(_api.Error("Unable to generate Position Code")); }
+        //                 MasterTable.Rows[0]["x_PositionCode"] = xPositionCode;
+        //             }
+        //             else
+        //             {
+        //                 dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection, transaction);
+        //             }
+                    
+        //             nPositionID=dLayer.SaveData("Pay_Position","N_PositionID",MasterTable,connection,transaction);  
+        //             transaction.Commit();
+        //             return Ok(_api.Success("Job Title Saved")) ;
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(ex));
+        //     }
+        // }
 
         [HttpGet("details")]
         public ActionResult GetJobTitleDetails(int nPositionID)
@@ -313,6 +301,5 @@ namespace SmartxAPI.Controllers
 
 
 
->>>>>>> 573a133d85caa517c258fbcaaaa8e797c3e1e284
     }
 }

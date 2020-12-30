@@ -66,6 +66,68 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
+
+        [HttpGet("payCodeType")]
+        public ActionResult GetPayCodeType()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID order by N_PayTypeID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        [HttpGet("calculationMethod")]
+        public ActionResult GetCalculationMethod()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 order by N_SortOrder";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
     } 
      
 }

@@ -345,7 +345,7 @@ namespace SmartxAPI.Controllers
 
                         // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
-                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
+                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator","X_UserCategory", dLayer, connection, transaction);
                         //Sales amount details/payment popup
                         for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
                             dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
@@ -470,8 +470,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
-                    var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    int UserCategory = myFunctions.GetUserCategory(User);
+                    int nUserID = myFunctions.GetUserID(User);
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
@@ -511,8 +511,8 @@ namespace SmartxAPI.Controllers
                             // transaction.Rollback();
                             // return Ok(_api.Error("Unable to delete sales Invoice"));
                         }
-                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", dLayer, connection, transaction))
-                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory, dLayer, connection, transaction))
+                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator","X_UserCategory", dLayer, connection, transaction))
+                            if (myFunctions.CheckPermission(nCompanyID, 81, UserCategory.ToString(),"N_UserCategoryID", dLayer, connection, transaction))
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
                     }

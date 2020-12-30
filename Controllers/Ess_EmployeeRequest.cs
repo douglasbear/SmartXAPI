@@ -39,38 +39,48 @@ namespace SmartxAPI.Controllers
 
         //List
         [HttpGet("list")]
-        public ActionResult GetEmpReqList(string xReqType)
+        public ActionResult GetEmpReqList(string xReqType, int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            string sqlCommandCount = "";
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_RequestCode like'%" + xSearchkey + "%'or X_RequestTypeDesc like'%" + xSearchkey + "%'";
 
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_RequestCode desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpAnyRequestList where N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpAnyRequestList where N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Pay_EmpAnyRequestList where N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select * From vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
-                        else
-                        if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select * from vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
-                        else
-                            sqlCommandText = "Select * From vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_RequestDate Desc";
-
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count from vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
                     }
 
 
