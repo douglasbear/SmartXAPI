@@ -38,40 +38,49 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("loanList")]
-        public ActionResult GetEmployeeLoanRequest(string xReqType)
+        public ActionResult GetEmployeeLoanRequest(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            string sqlCommandCount = "";
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and N_LoanID like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_LoanID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " and N_LoanTransID not in (select top("+ Count +") N_LoanTransID from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select * From vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_LoanIssueDate Desc";
-                        else
-                        if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select * from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_LoanIssueDate Desc ";
-                        else
-                            sqlCommandText = "Select * From vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_LoanIssueDate Desc";
-
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count From vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
                     }
-
-
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

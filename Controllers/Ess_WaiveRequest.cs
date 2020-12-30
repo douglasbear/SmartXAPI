@@ -38,37 +38,48 @@ namespace SmartxAPI.Controllers
             FormID = 1232;
         }
          [HttpGet("list")]
-        public ActionResult GetWaiveRequestList(string xReqType)
+        public ActionResult GetWaiveRequestList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            string sqlCommandCount = "";
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_RequestCode like'%" + xSearchkey + "%'or X_Notes like'%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_RequestCode desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Anytimerequest where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Anytimerequest where N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Anytimerequest where N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID ", QueryParams, connection);
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select * From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
-                        else
-                        if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select * from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
-                        else
-                            sqlCommandText = "Select * From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsSaveDraft=0 order by X_RequestDate Desc";
-
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsSaveDraft=0";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
                     }
 
 
