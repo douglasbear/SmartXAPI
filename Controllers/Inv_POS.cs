@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
         }
          [HttpGet("items")]
-        public ActionResult GetItems(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,DateTime xDate)
+        public ActionResult GetItems(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string xDate)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
