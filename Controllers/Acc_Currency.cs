@@ -29,6 +29,7 @@ namespace SmartxAPI.Controllers
              myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
+        [AllowAnonymous]
          [HttpGet("list")]
         public ActionResult GetCurrencyList(int? nCompanyId)
         {
@@ -37,7 +38,6 @@ namespace SmartxAPI.Controllers
             
             string sqlCommandText="select * from Acc_CurrencyMaster where N_CompanyID=@p1 order by X_CurrencyCode";
             Params.Add("@p1",nCompanyId);
-
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -56,7 +56,6 @@ namespace SmartxAPI.Controllers
         }
 
        
-
         [HttpGet("listdetails")]
         public ActionResult GetCurrencyDetails(int? nCompanyId,int? nCurrencyId)
         {
@@ -81,7 +80,6 @@ namespace SmartxAPI.Controllers
                      return Ok(api.Error(e));
                      }
         }
-
         [HttpGet("currencyExchangeRate")]
         public ActionResult GetCurrencyExchangeRate(int nCurrencyCode)
         {
@@ -149,7 +147,6 @@ namespace SmartxAPI.Controllers
                     return Ok(api.Error(ex));
                 }
         }
-
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCurrencyId)
         {

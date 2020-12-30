@@ -64,6 +64,14 @@ namespace SmartxAPI.Controllers
                 break;
                 case "closingstatus": id=94;
                 break;
+                case "maritalstatus": id=26;
+                break;
+                case "workmode": id=82;
+                break;
+                case "licencepaymentmode": id=59;
+                break;
+                case "licencetype": id=64;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -107,6 +115,14 @@ namespace SmartxAPI.Controllers
                 case "LeadStatus": N_FormID=1313;
                 break;
                 case "Ownership": N_FormID=1314;
+                break;
+                case "BloodGroup": N_FormID=14;
+                break;
+                case "DrivingLicence": N_FormID=1208;
+                break;
+                case "WorkLocation": N_FormID=1209;
+                break;
+                case "EducationType": N_FormID=28;
                 break;
                 default: return Ok("Invalid Type");
             }

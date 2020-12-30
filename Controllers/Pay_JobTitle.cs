@@ -21,7 +21,12 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+<<<<<<< HEAD
         private readonly int N_FormID;
+=======
+        private readonly int FormID;
+
+>>>>>>> 573a133d85caa517c258fbcaaaa8e797c3e1e284
 
         public Pay_JobTitle(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -29,7 +34,11 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+<<<<<<< HEAD
             N_FormID = 195;//form id of job title
+=======
+            FormID = 195;
+>>>>>>> 573a133d85caa517c258fbcaaaa8e797c3e1e284
         }
 
         [HttpGet("list")]
@@ -197,6 +206,7 @@ namespace SmartxAPI.Controllers
                     dataSet.Tables.Add(masterTable);
                     return Ok(dataSet);
 
+<<<<<<< HEAD
                 }
             }
             catch (Exception e)
@@ -205,5 +215,104 @@ namespace SmartxAPI.Controllers
             }
         }
 
+=======
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nPositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                string xPositionCode = MasterTable.Rows[0]["x_PositionCode"].ToString();
+                MasterTable.Columns.Remove("n_FnYearID");
+                MasterTable.AcceptChanges();
+                 if (xPositionCode == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+                        xPositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
+                        if (xPositionCode == "") { return Ok(_api.Error("Unable to generate Position Code")); }
+                        MasterTable.Rows[0]["x_PositionCode"] = xPositionCode;
+                    }
+                    else
+                    {
+                        dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection, transaction);
+                    }
+                    
+                    nPositionID=dLayer.SaveData("Pay_Position","N_PositionID",MasterTable,connection,transaction);  
+                    transaction.Commit();
+                    return Ok(_api.Success("Job Title Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+        [HttpGet("details")]
+        public ActionResult GetJobTitleDetails(int nPositionID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select * from vw_PayPosition_DispAdvanced where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nPositionID",nPositionID);
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(_api.Notice("No Results Found" ));
+                        }else{
+                            return Ok(_api.Success(dt));
+                        }
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nPositionID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok( _api.Success("Job Title deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete Job Title"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+
+
+>>>>>>> 573a133d85caa517c258fbcaaaa8e797c3e1e284
     }
 }
