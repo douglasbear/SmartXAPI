@@ -187,12 +187,9 @@ namespace SmartxAPI.Controllers
                         if (VendorCode == "") { return Ok(_api.Error("Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
-                    }
-
-                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + xVendorCode + "'";
+                    string X_Crieteria="N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID",DupCriteria,X_Crieteria, MasterTable, connection, transaction);
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
@@ -272,5 +269,39 @@ namespace SmartxAPI.Controllers
 
 
         }
+  [HttpGet("details")]
+        public ActionResult ActivityListDetails(string xVendorCode,int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "Select X_LedgerName,X_LedgerName_Ar, * from vw_InvVendor Where N_CompanyID=@p1 and N_FnYearID=@nFnYearID and X_VendorCode=@xVendorCode";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@xVendorCode", xVendorCode);
+            Params.Add("@nFnYearID", nFnYearID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        
     }
 }
