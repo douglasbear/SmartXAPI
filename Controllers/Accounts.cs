@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("list/{type}") ]
+        [HttpGet("list") ]
         public ActionResult GetAccountList (int nFnYearId, string type,int vendorTypeID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             if (nFnYearId == 0) { return Ok(_api.Notice("FnYear ID Required")); }
 
             string criteria=null;
-            switch(type){
+            switch(type.ToLower()){
                 case "loan": criteria=" and X_Level like '1%' and B_Inactive=0 ";
                 break;
                 case "payable": criteria=" and X_Level like '2%' and B_Inactive=0 ";
