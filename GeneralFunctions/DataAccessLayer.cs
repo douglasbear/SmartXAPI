@@ -485,6 +485,52 @@ namespace SmartxAPI.GeneralFunctions
             return Result;
         }
 
+        public int SaveData(string TableName, string IDFieldName,string X_DupCritieria,string X_Critieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
+        {
+
+            int IDFieldValue = 0;
+            int Result = 0;
+
+
+            for (int j = 0; j < DataTable.Rows.Count; j++)
+            {
+                string FieldList = "";
+                string FieldValues = "";
+                for (int k = 0; k < DataTable.Columns.Count; k++)
+                {
+                    if (DataTable.Columns[k].ColumnName.ToString().ToLower() != IDFieldName.ToLower())
+                    {
+                        if (DataTable.Rows[j][k] == DBNull.Value) { continue; }
+                        var values = DataTable.Rows[j][k].ToString();
+                        values = values.Replace("|", " ");
+                        FieldValues = FieldValues + "|" + values;
+                        FieldList = FieldList + "," + DataTable.Columns[k].ColumnName.ToString();
+
+                    }
+                }
+                FieldList = FieldList.Substring(1);
+
+                IDFieldValue = myFunctions.getIntVAL(DataTable.Rows[j][IDFieldName].ToString());
+
+                FieldValues = FieldValues.Substring(1);
+                FieldValues = ValidateString(FieldValues);
+                SortedList paramList = new SortedList();
+                paramList.Add("X_TableName", TableName);
+                paramList.Add("X_IDFieldName", IDFieldName);
+                paramList.Add("N_IDFieldValue", IDFieldValue);
+                paramList.Add("X_FieldList", FieldList);
+                paramList.Add("X_FieldValue", FieldValues);
+                paramList.Add("X_DupCritieria", X_DupCritieria);
+                paramList.Add("X_Critieria", X_Critieria);
+
+                Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
+                FieldValues = "";
+                if (Result <= 0) return 0;
+            }
+
+            return Result;
+        }
+
         public string ValidateString(string InputString)
         {
             string OutputString = InputString.Replace("'", "''");
@@ -619,6 +665,8 @@ namespace SmartxAPI.GeneralFunctions
         public string GetAutoNumber(string TableName, String Coloumn, SortedList Params, SqlConnection connection, SqlTransaction transaction);
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
+
+        public int SaveData(string TableName, string IDFieldName,string X_DupCritieria,string X_Critieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);
         public int SaveImage(string TableName,string FieldName,byte[] image,string keyFeild,int KeyValue,  SqlConnection connection,SqlTransaction transaction);

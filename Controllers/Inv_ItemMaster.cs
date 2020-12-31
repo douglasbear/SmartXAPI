@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and Description like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by [Item Code] desc";
+                xSortBy = " order by N_ItemID ASC,[Item Code] desc";
             else
                 xSortBy = " order by " + xSortBy;
 

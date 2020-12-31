@@ -253,5 +253,32 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+        [HttpGet("details")]
+        public ActionResult GetCustomerDetails(int nCustomerID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select * from Inv_Customer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nCustomerID",nCustomerID);
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found" ));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }
+          
+        }
     }
 }
