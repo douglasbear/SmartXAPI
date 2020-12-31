@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log;
+                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log, dtInv_Salesman, dtVeh_Drivers;
                 // if(ds.Tables.Contains("pay_Employee"))
                 dtMasterTable = ds.Tables["pay_Employee"];
                 // if(ds.Tables.Contains("pay_EmpAddlInfo"))
@@ -221,6 +221,8 @@ namespace SmartxAPI.Controllers
                 // if(ds.Tables.Contains("pay_EmployeeSub"))
                 dtpay_EmployeeSub = ds.Tables["pay_EmployeeSub"];
                 dtPay_Employee_Log = ds.Tables["Pay_Employee_Log"];
+                dtInv_Salesman = ds.Tables["Inv_Salesman"];
+                dtVeh_Drivers = ds.Tables["Veh_Drivers"];
 
 
                 int nCompanyID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -262,7 +264,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    string DupCriteria = "N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID =" + myCompanyID._FnYearID + " and X_EmpCode='" + txtEmpCode.Text.Trim() + "'";
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + xEmpCode.Trim() + "'";
                     string X_Crieteria = "N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID =" + myCompanyID._FnYearID;
                     nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
                     if (nEmpID <= 0)
@@ -367,6 +369,21 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LoanLedgerID"].ToString()) == 0)
                             dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeLoanAccount", ParamsAccount, connection, transaction).ToString();
 
+                        bool B_EnableSalesExec = false;
+                        if (B_EnableSalesExec)
+                        {
+                            int Inv_SalesmanRes = 0;
+                            if (dtInv_Salesman.Rows.Count > 0)
+                                Inv_SalesmanRes = dLayer.SaveData("Inv_Salesman", "N_SalesmanID", dtInv_Salesman, connection, transaction);
+                        }
+
+                        bool B_CheckDriver = false;
+                        if (B_CheckDriver)
+                        {
+                            int Veh_DriversRes = 0;
+                            if (dtVeh_Drivers.Rows.Count > 0)
+                                Veh_DriversRes = dLayer.SaveData("Inv_Salesman", "N_SalesmanID", dtVeh_Drivers, connection, transaction);
+                        }
 
                         transaction.Commit();
                         return Ok(_api.Success("Employee Information Saved"));
