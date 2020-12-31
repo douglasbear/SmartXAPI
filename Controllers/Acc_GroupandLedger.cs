@@ -144,6 +144,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
                 string X_Operation = MasterTable.Rows[0]["x_Operation"].ToString();
+                string X_LedgerName= MasterTable.Rows[0]["X_LedgerName"].ToString();
                 MasterTable.Columns.Remove("x_Operation");
                 string X_LedgerCode = "";
                 MasterTable.AcceptChanges();
@@ -181,7 +182,9 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_LedgerCode"] = X_LedgerCode;
                     }
                     MasterTable.AcceptChanges();
-                    int Result = dLayer.SaveData("Acc_MastLedger", "N_LedgerID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and (X_LedgerCode='" + X_LedgerCode + "' OR X_LedgerName = '" + X_LedgerName + "')";
+                    string X_Crieteria="N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                    int Result = dLayer.SaveData("Acc_MastLedger", "N_LedgerID",DupCriteria,X_Crieteria, MasterTable, connection, transaction);
                     if (Result <= 0)
                     {
                         transaction.Rollback();
@@ -269,7 +272,8 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.AcceptChanges();
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and (X_GroupCode='" + X_GroupCode + "' OR X_GroupName='" + X_GroupName + "')";
-                    int Result = dLayer.SaveData("Acc_MastGroup", "N_GroupID",DupCriteria, MasterTable, connection, transaction);
+                    string Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                    int Result = dLayer.SaveData("Acc_MastGroup", "N_GroupID",DupCriteria,Criteria, MasterTable, connection, transaction);
                     if (Result <= 0)
                     {
                         transaction.Rollback();

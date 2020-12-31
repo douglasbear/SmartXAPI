@@ -485,7 +485,7 @@ namespace SmartxAPI.GeneralFunctions
             return Result;
         }
 
-        public int SaveData(string TableName, string IDFieldName,string X_DupCritieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
+        public int SaveData(string TableName, string IDFieldName,string X_DupCritieria,string X_Critieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
         {
 
             int IDFieldValue = 0;
@@ -521,6 +521,8 @@ namespace SmartxAPI.GeneralFunctions
                 paramList.Add("X_FieldList", FieldList);
                 paramList.Add("X_FieldValue", FieldValues);
                 paramList.Add("X_DupCritieria", X_DupCritieria);
+                paramList.Add("X_Critieria", X_Critieria);
+
                 Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
                 FieldValues = "";
                 if (Result <= 0) return 0;
@@ -664,7 +666,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public int SaveData(string TableName, string IDFieldName, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
-        public int SaveData(string TableName, string IDFieldName,string X_DupCritieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
+        public int SaveData(string TableName, string IDFieldName,string X_DupCritieria,string X_Critieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction);
 
         public bool SaveFiles(DataTable FilesTable, string TableName, string PkeyName, int PkeyVal, string PrependStr, int CompanyID, SqlConnection connection, SqlTransaction transaction);
         public int SaveImage(string TableName,string FieldName,byte[] image,string keyFeild,int KeyValue,  SqlConnection connection,SqlTransaction transaction);
