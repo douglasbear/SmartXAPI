@@ -61,11 +61,13 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by X_VacationGroupCode desc";
             else
                 xSortBy = " order by " + xSortBy;
-             
+
+             sqlCommandText = "Select x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus order by VacationRequestDate Desc";
+
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status='Approved' " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status " + Searchkey + " and N_VacationGroupID not in (select top("+ Count +") N_VacationGroupID from vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status='Approved' " + Searchkey + " and N_VacationGroupID not in (select top("+ Count +") N_VacationGroupID from vw_PayVacationList where N_CompanyID=@nCompanyID and X_Status='Approved'  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 

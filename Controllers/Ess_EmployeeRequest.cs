@@ -356,5 +356,41 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
         }
+
+
+
+          [HttpDelete("deleteReqType")]
+        public ActionResult DeleteReqType(int nRequestTypeID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nRequestTypeID", nRequestTypeID);
+                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    string Sql = "select count(1) from Pay_EmpAnyRequest where N_CompanyId=@nCompanyID and N_RequestType=@nRequestTypeID";
+                    object reqUsed  = dLayer.ExecuteScalar(Sql, ParamList, connection);
+                    if (myFunctions.getIntVAL(reqUsed.ToString()) > 0)
+                    {
+                        return Ok(api.Error("Request Type In Use"));
+                    }
+                    int res = dLayer.DeleteData("Pay_EmployeeRequestType","N_RequestTypeID",nRequestTypeID,"N_CompanyId="+myFunctions.GetCompanyID(User)+" and N_RequestTypeID="+nRequestTypeID,connection);
+                    
+                    if (res > 0)
+                        return Ok(api.Success("Request Type Deleted"));
+                    else
+                        return Ok(api.Error("Unable to delete Request Type"));
+
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
     }
 }

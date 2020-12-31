@@ -81,19 +81,24 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list/{type}") ]
-        public ActionResult GetAccountList (int? nFnYearId, string type)
+        public ActionResult GetAccountList (int nFnYearId, string type,int vendorTypeID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-            if (nFnYearId == null) { return Ok(_api.Notice("FnYear ID Required")); }
+            if (nFnYearId == 0) { return Ok(_api.Notice("FnYear ID Required")); }
 
             string criteria=null;
             switch(type){
-                case "loan": criteria="X_Level like '1%' and B_Inactive=0";
+                case "loan": criteria=" and X_Level like '1%' and B_Inactive=0 ";
                 break;
-                case "payable": criteria="X_Level like '2%' and B_Inactive=0";
+                case "payable": criteria=" and X_Level like '2%' and B_Inactive=0 ";
                 break;
-                
+                case "vendor": 
+                if(vendorTypeID==2)
+                criteria=" and ( X_Type ='A' or  X_Type ='L') ";
+                else
+                criteria=" and ( X_Type ='A' or  X_Type ='L') and (N_CashBahavID=4 or N_CashBahavID=5) ";
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria=criteria;
@@ -103,7 +108,7 @@ namespace SmartxAPI.Controllers
             
             DataTable dt=new DataTable();
             
-            sqlCommandText="select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and "+ X_Criteria +" order by [Account Code]";
+            sqlCommandText="select [Account Code] as x_LedgerCode,Account as x_LedgerName,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 "+ X_Criteria +" order by [Account Code]";
                 
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
@@ -111,12 +116,12 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(_api.Notice("No Results Found"));
-                        }else{
+                    // if(dt.Rows.Count==0)
+                    //     {
+                    //         return Ok(_api.Success(dt));
+                    //     }else{
                             return Ok(_api.Success(dt));
-                        }
+                        // }
                 
             }catch(Exception e){
                 return Ok(_api.Error(e));
