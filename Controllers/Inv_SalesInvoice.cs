@@ -524,24 +524,26 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error("Unable to save Sales Invoice!"));
                             }
                         }
+                        bool B_salesOrder = myFunctions.CheckPermission(N_CompanyID, 81, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
+                        bool B_ServiceSheet = myFunctions.CheckPermission(N_CompanyID, 1145, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
-                            /*if (B_salesOrder == true)
-                         {
-                             if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcSalesOrderID)) > 0)
-                             {
-                                 dba.ExecuteNonQuery("Update Inv_SalesOrder Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_SalesOrderID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-                                 if(B_ServiceSheet)
-                                     dba.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + flxSales.get_TextMatrix(i, mcSalesOrderID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-
-                             }
-
-                         }
-                         else
-                         {
-                             if (myFunctions.getIntVAL(flxSales.get_TextMatrix(i, mcQuotationID)) > 0)
-                                 dba.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + SalesId_Loc + ", N_Processed=1 Where N_QuotationID=" + flxSales.get_TextMatrix(i, mcQuotationID) + " and N_FnYearID=" + myCompanyID._FnYearID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-                         }*/
+                            if (B_salesOrder)
+                            {
+                                int nSalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
+                                if (nSalesOrderID > 0)
+                                {
+                                    dLayer.ExecuteNonQuery("Update Inv_SalesOrder Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_SalesOrderID=" + nSalesOrderID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                    if (B_ServiceSheet)
+                                        dLayer.ExecuteNonQuery("Update Inv_ServiceSheetMaster Set N_Processed=1  Where N_RefID=" + nSalesOrderID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                }
+                            }
+                            else
+                            {
+                                int nQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["N_SalesQuotationID"].ToString());
+                                if (nQuotationID > 0)
+                                    dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set N_SalesID=" + N_SalesID + ", N_Processed=1 Where N_QuotationID=" + nQuotationID + " and N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                            }
                         }
                         // Warranty Save Code here
                         //optical prescription saving here
@@ -597,8 +599,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
-                    var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
+                    var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
@@ -639,7 +641,7 @@ namespace SmartxAPI.Controllers
                             // return Ok(_api.Error("Unable to delete sales Invoice"));
                         }
                         if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
-                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory, "N_UserCategoryID", dLayer, connection, transaction))
+                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
                     }

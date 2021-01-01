@@ -35,17 +35,17 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetSalesOrderotationList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Order No] like '%" + xSearchkey + "%' or Customer like '%"+ xSearchkey + "%'";
+                Searchkey = "and [Order No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesOrderId desc";
@@ -53,11 +53,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
 
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesOrderId not in (select top("+ Count +") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
-           
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesOrderId not in (select top(" + Count + ") N_SalesOrderId from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -70,8 +70,8 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",_api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -158,9 +158,9 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(int), InSales!=null?1:0);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(int), InSales != null ? 1 : 0);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(string), InSales);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote!=null?1:0);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote != null ? 1 : 0);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DeliveryNoteNo", typeof(string), InDeliveryNote);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderCanceled", typeof(string), CancelStatus);
 
@@ -311,7 +311,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesOrderID)
+        public ActionResult DeleteData(int nSalesOrderID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -320,28 +320,63 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
-                    if (Results <= 0)
+                    var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
+                    var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+
+                    object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete sales order"));
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"N_UserID",nUserID},
+                                {"X_TransType","SALES ORDER"},
+                                {"X_SystemName","WebRequest"},
+                                {"N_VoucherID",nSalesOrderID}};
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete Sales Order"));
+                        }
+                        else
+                        {
+                            transaction.Commit();
+                            return Ok(_api.Success("Sales Order deleted"));
+
+                        }
                     }
                     else
                     {
-                    Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
-
-                    }
-
-                    if (Results > 0)
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Error("Sales order deleted"));
-                    }
-                    else
-                    {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete sales order"));
+                        return Ok(_api.Error("Sales invoice processed! Unable to delete Sales Order"));
+
                     }
+
+
+                    // connection.Open();
+                    // SqlTransaction transaction = connection.BeginTransaction();
+                    // Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+                    // if (Results <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error("Unable to delete sales order"));
+                    // }
+                    // else
+                    // {
+                    // Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+
+                    // }
+
+                    // if (Results > 0)
+                    // {
+                    //     transaction.Commit();
+                    //     return Ok(_api.Error("Sales order deleted"));
+                    // }
+                    // else
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error("Unable to delete sales order"));
+                    // }
                 }
             }
             catch (Exception ex)
