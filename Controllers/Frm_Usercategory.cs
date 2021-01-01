@@ -148,9 +148,29 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    SortedList QueryParams = new SortedList();
+                    QueryParams.Add("@nCompanyID", nCompanyID);
+                    QueryParams.Add("@nUsercategoryID", nUsercategoryId);
+                    object Category = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_UserCategory Where N_UserCategoryID=@nUsercategoryID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
+                    if(Category==null)
+                        return Ok(_api.Error("Invalid Category"));
+                    
+                    Results = dLayer.DeleteData("Sec_UserPrevileges", "N_UserCategoryID", nUsercategoryId, "", connection,transaction);
+                    if(Results<0)
+                        return Ok(_api.Error("Unable to delete Category"));
+
+                    object InUser = dLayer.ExecuteScalar("select N_UserID from Sec_User where N_UserCategoryID=@nUsercategoryID", QueryParams, connection,transaction);
+
+                    if(InUser!=null)
+                        return Ok(_api.Error("Unable to delete Category"));
+
                     Results = dLayer.DeleteData("sec_usercategory", "N_UserCategoryID", nUsercategoryId, "", connection);
                     if (Results > 0)
                     {
+                        dLayer.ExecuteNonQuery("DELETE FROM Gen_Settings where N_UserCategoryID=@nUsercategoryID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                         return Ok( _api.Success("Category deleted"));
                     }
                     else
