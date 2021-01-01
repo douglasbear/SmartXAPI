@@ -32,9 +32,9 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, int nSizeperpage , string xSearchkey, string xSortBy)
+        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
@@ -44,13 +44,13 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%"+ xSearchkey + "%'";
+                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesId desc";
             else
                 xSortBy = " order by " + xSortBy;
-            
+
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
@@ -67,7 +67,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 "+xSearchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -102,9 +102,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    bool B_Project = myFunctions.CheckPermission(nCompanyId, 74, "Administrator","X_UserCategory", dLayer, connection);
-                    bool B_DeliveryNote = myFunctions.CheckPermission(nCompanyId, 729, "Administrator","X_UserCategory", dLayer, connection);
-                    bool B_SalesOrder = myFunctions.CheckPermission(nCompanyId, 81, "Administrator","X_UserCategory", dLayer, connection);
+                    bool B_Project = myFunctions.CheckPermission(nCompanyId, 74, "Administrator", "X_UserCategory", dLayer, connection);
+                    bool B_DeliveryNote = myFunctions.CheckPermission(nCompanyId, 729, "Administrator", "X_UserCategory", dLayer, connection);
+                    bool B_SalesOrder = myFunctions.CheckPermission(nCompanyId, 81, "Administrator", "X_UserCategory", dLayer, connection);
 
 
                     if (B_DeliveryNote)
@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
 
                     //sales return count(draft and non draft)
                     object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-                    
+
 
                     myFunctions.AddNewColumnToDataTable(masterTable, "X_DebitNoteNo", typeof(string), objSalesReturn);
 
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     string qry = "";
-                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator","X_UserCategory", dLayer, Con);
+                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", "X_UserCategory", dLayer, Con);
                     if (B_DeliveryDispatch)
                     {
                         DataTable dtDispatch = new DataTable();
@@ -399,8 +399,18 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
-                        InvoiceNo = dLayer.GetAutoNumber("Inv_Sales", "x_ReceiptNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
+                        while (true)
+                        {
+                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerateBranch", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        if (InvoiceNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to generate Quotation Number"));
+                        }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
                     else
@@ -462,7 +472,7 @@ namespace SmartxAPI.Controllers
 
                         // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
-                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator","X_UserCategory", dLayer, connection, transaction);
+                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
                         //Sales amount details/payment popup
                         for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
                             dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
@@ -545,7 +555,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
@@ -628,8 +638,8 @@ namespace SmartxAPI.Controllers
                             // transaction.Rollback();
                             // return Ok(_api.Error("Unable to delete sales Invoice"));
                         }
-                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator","X_UserCategory", dLayer, connection, transaction))
-                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory,"N_UserCategoryID", dLayer, connection, transaction))
+                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
+                            if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory, "N_UserCategoryID", dLayer, connection, transaction))
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
                     }
@@ -840,7 +850,7 @@ namespace SmartxAPI.Controllers
                 // }
 
 
-            if (xBatch != "")
+                if (xBatch != "")
                     SQL = "Select *,dbo.SP_BatchStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch,NULL)As N_AvlStock ,0 As N_LPrice ,0 As N_SPrice,vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
                 else
                     SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock ,0 As N_LPrice ,0 As N_SPrice,vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";

@@ -287,7 +287,6 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
                         if (PorderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
