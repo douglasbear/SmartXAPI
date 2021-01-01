@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                         critiria="{Inv_SalesQuotation.N_QuotationId}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/quotation/vat/";
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
-                        if(Template!=null || Template.ToString()!="")
+                        if(Template!=null)
                         {
                             ReportName=Template.ToString();
                             ReportName=ReportName.Remove(ReportName.Length-4);
@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
                         critiria="{vw_InvSalesOrderDetails.N_SalesOrderId}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/SalesOrder/vat/";
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
-                        if(Template!=null || Template.ToString()!="")
+                        if(Template!=null)
                         {
                             ReportName=Template.ToString();
                             ReportName=ReportName.Remove(ReportName.Length-4);
@@ -274,7 +274,7 @@ namespace SmartxAPI.Controllers
                         critiria="{Inv_Sales.N_SalesId}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/salesinvoice/vat/";
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if(Template!=null || Template.ToString()!="")
+                        if(Template!=null)
                         {
                             
                             ReportName=Template.ToString();
@@ -289,7 +289,7 @@ namespace SmartxAPI.Controllers
                         critiria="{vw_InvPurchaseDetailsView_Rpt.N_PurchaseId}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/PurchaseInvoice/vat/";
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if(Template!=null || Template.ToString()!="")
+                        if(Template!=null)
                         {
                             ReportName=Template.ToString();
                             ReportName=ReportName.Remove(ReportName.Length-4);
@@ -302,7 +302,7 @@ namespace SmartxAPI.Controllers
                         critiria="{Inv_PurchaseOrder.N_POrderID}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/PurchaseOrder/vat/";
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if(Template!=null || Template.ToString()!="")
+                        if(Template!=null)
                         {
                             ReportName=Template.ToString();
                             ReportName=ReportName.Remove(ReportName.Length-4);
@@ -332,7 +332,8 @@ namespace SmartxAPI.Controllers
                     
 
                 var client = new HttpClient(handler);
-                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation;
+                var dbName = connection.Database;
+                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation +"&dbval="+dbName;
                 var path = client.GetAsync(URL);
                 path.Wait();
                 return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + ".pdf"}}));
@@ -357,6 +358,7 @@ namespace SmartxAPI.Controllers
             {
                 String Criteria = "";
                 String reportName = "";
+                var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -404,6 +406,7 @@ namespace SmartxAPI.Controllers
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
+                 dbName = connection.Database;
                 }
 
                 var handler = new HttpClientHandler
@@ -411,8 +414,9 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
+                
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation ;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();

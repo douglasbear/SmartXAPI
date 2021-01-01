@@ -199,6 +199,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 UnitTable = ds.Tables["itemunit"];
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
