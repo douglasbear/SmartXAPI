@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log, dtInv_Salesman, dtVeh_Drivers;
+                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log, dtInv_Salesman, dtVeh_Drivers,dtSch_Teacher,dtPay_EmployeeEducation,dtPay_EmploymentHistory;
                 // if(ds.Tables.Contains("pay_Employee"))
                 dtMasterTable = ds.Tables["pay_Employee"];
                 // if(ds.Tables.Contains("pay_EmpAddlInfo"))
@@ -223,6 +223,9 @@ namespace SmartxAPI.Controllers
                 dtPay_Employee_Log = ds.Tables["Pay_Employee_Log"];
                 dtInv_Salesman = ds.Tables["Inv_Salesman"];
                 dtVeh_Drivers = ds.Tables["Veh_Drivers"];
+                dtSch_Teacher = ds.Tables["Sch_Teacher"];
+                dtPay_EmployeeEducation = ds.Tables["Pay_EmployeeEducation"];
+                dtPay_EmploymentHistory = ds.Tables["Pay_EmploymentHistory"];
 
 
                 int nCompanyID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -369,7 +372,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LoanLedgerID"].ToString()) == 0)
                             dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeLoanAccount", ParamsAccount, connection, transaction).ToString();
 
-                        bool B_EnableSalesExec = false;
+                        bool B_EnableSalesExec = myFunctions.CheckPermission(nCompanyID, 290, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection);
                         if (B_EnableSalesExec)
                         {
                             int Inv_SalesmanRes = 0;
@@ -384,6 +387,21 @@ namespace SmartxAPI.Controllers
                             if (dtVeh_Drivers.Rows.Count > 0)
                                 Veh_DriversRes = dLayer.SaveData("Inv_Salesman", "N_SalesmanID", dtVeh_Drivers, connection, transaction);
                         }
+                        bool B_Teacher = myFunctions.CheckPermission(nCompanyID, 155, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection);
+                        if (B_Teacher)
+                        {
+                            int Sch_TeacherRes = 0;
+                            if (dtSch_Teacher.Rows.Count > 0)
+                                Sch_Teacher = dLayer.SaveData("Sch_Teacher", "N_TeacherID", dtSch_Teacher, connection, transaction);
+                        }
+                        int Pay_EmployeeEducationRes = 0;
+                        if (dtPay_EmployeeEducation.Rows.Count > 0)
+                            Pay_EmployeeEducationRes = dLayer.SaveData("Pay_EmployeeEducation", "N_EduID", dtPay_EmployeeEducation, connection, transaction);
+
+                        int Pay_EmploymentHistoryRes = 0;
+                        if (dtPay_EmploymentHistory.Rows.Count > 0)
+                            Pay_EmploymentHistoryRes = dLayer.SaveData("Pay_EmploymentHistory", "N_JobID", dtPay_EmploymentHistory, connection, transaction);
+
 
                         transaction.Commit();
                         return Ok(_api.Success("Employee Information Saved"));
