@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log;
+                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log, dtInv_Salesman, dtVeh_Drivers;
                 // if(ds.Tables.Contains("pay_Employee"))
                 dtMasterTable = ds.Tables["pay_Employee"];
                 // if(ds.Tables.Contains("pay_EmpAddlInfo"))
@@ -221,12 +221,17 @@ namespace SmartxAPI.Controllers
                 // if(ds.Tables.Contains("pay_EmployeeSub"))
                 dtpay_EmployeeSub = ds.Tables["pay_EmployeeSub"];
                 dtPay_Employee_Log = ds.Tables["Pay_Employee_Log"];
+                dtInv_Salesman = ds.Tables["Inv_Salesman"];
+                dtVeh_Drivers = ds.Tables["Veh_Drivers"];
 
 
                 int nCompanyID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nEmpID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_EmpID"].ToString());
+                int nSavedEmpID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_EmpID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nDepartmentID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_DepartmentID"].ToString());
                 string xEmpCode = dtMasterTable.Rows[0]["x_EmpCode"].ToString();
+                string xEmpName = dtMasterTable.Rows[0]["x_EmpName"].ToString();
                 int nUserID = myFunctions.GetUserID(User);
                 string X_BtnAction = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -254,13 +259,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
+                        //dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
                         X_BtnAction = "UPDATE";
 
                     }
 
-
-                    nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", dtMasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + xEmpCode.Trim() + "'";
+                    string X_Crieteria = "N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID =" + myCompanyID._FnYearID;
+                    nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
                     if (nEmpID <= 0)
                     {
                         transaction.Rollback();
@@ -268,6 +274,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        nSavedEmpID = nEmpID;
                         QueryParams.Add("@nSavedEmpID", nEmpID);
                         //inserting to [Log_ScreenActivity
                         string ipAddress = "";
@@ -308,6 +315,75 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nPositionID", QueryParams, connection);
                         else
                             dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = @nSavedEmpID Where N_CompanyID =@nCompanyID And N_PositionID =@nPositionID", QueryParams, connection);
+
+                        //SAving EMPLOYEE SALARY/BENEFITS
+                        int pay_PaySetupRes = 0;
+                        if (dtpay_PaySetup.Rows.Count > 0)
+                            pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "Pay_PaySetupID", dtpay_PaySetup, connection, transaction);
+                        if (pay_PaySetupRes > 0)
+                        {
+                            int Pay_EmployeePayHistoryRes = 0;
+                            if (dtpay_EmployeePayHistory.Rows.Count > 0)
+                                Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
+                        }
+                        int pay_EmpAccrulsRes = 0;
+                        if (dtpay_EmpAccruls.Rows.Count > 0)
+                            pay_EmpAccrulsRes = dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", dtpay_EmpAccruls, connection, transaction);
+
+                        int Acc_OtherInformationRes = 0;
+                        if (dtacc_OtherInformation.Rows.Count > 0)
+                            Acc_OtherInformationRes = dLayer.SaveData("Acc_OtherInformation", "N_OtherDtlsID", dtacc_OtherInformation, connection, transaction);
+
+                        //ATTACHMENT SAVING
+                        //REMINDER SAVING
+
+                        int Pay_EmployeeAlertsRes = 0;
+                        if (dtpay_EmployeeAlerts.Rows.Count > 0)
+                            Pay_EmployeeAlertsRes = dLayer.SaveData("Pay_EmployeeAlerts", "N_AlertID", dtpay_EmployeeAlerts, connection, transaction);
+
+                        int Pay_EmployeeDependenceRes = 0;
+                        if (dtpay_EmployeeDependence.Rows.Count > 0)
+                            Pay_EmployeeDependenceRes = dLayer.SaveData("Pay_EmployeeDependence", "N_DependenceID", dtpay_EmployeeDependence, connection, transaction);
+                        if (Pay_EmployeeDependenceRes > 0)
+                        {
+                            //SaveFamilyAttachements
+                            //DependenceReminderSave
+                        }
+
+                        string xDepartment = "";
+                        object objDept = dLayer.ExecuteScalar("Select X_Department from Pay_Department Where N_DepartmentID =" + nDepartmentID + " and N_CompanyID= " + nCompanyID + "and N_FnYearID =" + nFnYearID, connection, transaction);
+                        if (objDept != null)
+                            xDepartment = objDept.ToString();
+
+                        SortedList ParamsAccount = new SortedList();
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_EmpID", nSavedEmpID);
+                        Params.Add("X_EmpCode", xEmpCode);
+                        Params.Add("X_Department", xDepartment);
+                        Params.Add("X_EmpName", xEmpName);
+                        Params.Add("N_UserID", nUserID);
+                        Params.Add("X_Form", "Pay_EmployeeMaster");
+
+                        if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LedgerID"].ToString()) == 0)
+                            dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeAccount", ParamsAccount, connection, transaction).ToString();
+                        if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LoanLedgerID"].ToString()) == 0)
+                            dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeLoanAccount", ParamsAccount, connection, transaction).ToString();
+
+                        bool B_EnableSalesExec = false;
+                        if (B_EnableSalesExec)
+                        {
+                            int Inv_SalesmanRes = 0;
+                            if (dtInv_Salesman.Rows.Count > 0)
+                                Inv_SalesmanRes = dLayer.SaveData("Inv_Salesman", "N_SalesmanID", dtInv_Salesman, connection, transaction);
+                        }
+
+                        bool B_CheckDriver = false;
+                        if (B_CheckDriver)
+                        {
+                            int Veh_DriversRes = 0;
+                            if (dtVeh_Drivers.Rows.Count > 0)
+                                Veh_DriversRes = dLayer.SaveData("Inv_Salesman", "N_SalesmanID", dtVeh_Drivers, connection, transaction);
+                        }
 
                         transaction.Commit();
                         return Ok(_api.Success("Employee Information Saved"));
