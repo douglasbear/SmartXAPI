@@ -93,11 +93,17 @@ namespace SmartxAPI.Controllers
                 break;
                 case "payable": criteria=" and X_Level like '2%' and B_Inactive=0 ";
                 break;
-                case "vendor": 
-                if(vendorTypeID==2)
-                criteria=" and ( X_Type ='A' or  X_Type ='L') ";
-                else
-                criteria=" and ( X_Type ='A' or  X_Type ='L') and (N_CashBahavID=4 or N_CashBahavID=5) ";
+                case "vendor":
+                    if(vendorTypeID==2)
+                        criteria=" and ( X_Type ='A' or  X_Type ='L') ";
+                    else
+                        criteria=" and ( X_Type ='A' or  X_Type ='L') and (N_CashBahavID=4 or N_CashBahavID=5) ";
+                break;
+                case "inventory": criteria= " and X_Type ='A'";
+                break;
+                case "income": criteria= " and X_Type ='I'";
+                break;
+                case "cost": criteria= " and X_Type ='E'";
                 break;
                 default: return Ok("Invalid Type");
             }
