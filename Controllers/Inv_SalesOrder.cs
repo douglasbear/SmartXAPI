@@ -311,7 +311,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesOrderID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nSalesOrderID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {
