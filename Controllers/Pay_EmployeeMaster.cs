@@ -392,7 +392,7 @@ namespace SmartxAPI.Controllers
                         {
                             int Sch_TeacherRes = 0;
                             if (dtSch_Teacher.Rows.Count > 0)
-                                Sch_Teacher = dLayer.SaveData("Sch_Teacher", "N_TeacherID", dtSch_Teacher, connection, transaction);
+                                Sch_TeacherRes = dLayer.SaveData("Sch_Teacher", "N_TeacherID", dtSch_Teacher, connection, transaction);
                         }
                         int Pay_EmployeeEducationRes = 0;
                         if (dtPay_EmployeeEducation.Rows.Count > 0)

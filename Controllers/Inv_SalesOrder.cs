@@ -311,7 +311,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSalesOrderID, int nFnYearID)
+        public ActionResult DeleteData(int nSalesOrderID, int nBranchID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -328,11 +328,12 @@ namespace SmartxAPI.Controllers
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-                                {"N_UserID",nUserID},
                                 {"X_TransType","SALES ORDER"},
+                                {"N_VoucherID",nSalesOrderID},
+                                {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
-                                {"N_VoucherID",nSalesOrderID}};
-                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                                {"N_BranchID",nBranchID}};
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
                         {
                             transaction.Rollback();

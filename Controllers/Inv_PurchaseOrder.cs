@@ -18,6 +18,7 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
+
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
@@ -180,8 +181,8 @@ namespace SmartxAPI.Controllers
                     int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
 
                     string DetailSql = "";
-                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator","X_UserCategory", dLayer, connection);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator","X_UserCategory", dLayer, connection);
+                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
+                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection);
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;
@@ -312,8 +313,8 @@ namespace SmartxAPI.Controllers
                         {
 
                             bool B_PRSVisible = false;
-                            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator","X_UserCategory", dLayer, connection, transaction);
-                            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator","X_UserCategory", dLayer, connection, transaction);
+                            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection, transaction);
+                            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
                             if (MaterailRequestVisible || PurchaseRequestVisible)
                                 B_PRSVisible = true;
@@ -401,7 +402,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPOrderID)
+        public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -410,32 +411,73 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderID", nPOrderID, "", connection, transaction);
-                    if (Results <= 0)
+
+                    var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
+                    var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_POrderID=" + nPOrderID + " and B_IsSaveDraft = 0", connection, transaction);
+                    if (objPurchaseProcessed == null)
+                        objPurchaseProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
                     {
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to delete PurchaseOrder"));
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","PURCHASE ORDER"},
+                                {"N_VoucherID",nPOrderID},
+                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"},
+                                {"N_BranchID",nBranchID}};
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to delete Purchase Order"));
+                        }
+                        else
+                        {
+                            transaction.Commit();
+                            return Ok(api.Success("Purchase Order deleted"));
+
+                        }
                     }
                     else
                     {
-                        Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
-                    }
-
-
-                    if (Results > 0)
-                    {
-                        transaction.Commit();
-                        return Ok(api.Success("PurchaseOrder deleted"));
-                    }
-                    else
-                    {
                         transaction.Rollback();
+                        if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
+                            return Ok(api.Error("Purchase invoice processed! Unable to delete"));
+                        else
+                            return Ok(api.Error("Unable to delete!"));
+
                     }
+
+                    //     Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderID", nPOrderID, "", connection, transaction);
+                    //     if (Results <= 0)
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(api.Error("Unable to delete PurchaseOrder"));
+                    //     }
+                    //     else
+                    //     {
+                    //         Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
+                    //     }
+
+
+                    //     if (Results > 0)
+                    //     {
+                    //         transaction.Commit();
+                    //         return Ok(api.Success("PurchaseOrder deleted"));
+                    //     }
+                    //     else
+                    //     {
+                    //         transaction.Rollback();
+                    //     }
+                    // }
+
+                    // return Ok(api.Error("Unable to Delete PurchaseOrder"));
+
+
                 }
-
-                return Ok(api.Error("Unable to Delete PurchaseOrder"));
-
-
             }
             catch (Exception ex)
             {
