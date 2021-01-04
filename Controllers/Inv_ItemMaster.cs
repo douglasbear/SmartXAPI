@@ -233,10 +233,10 @@ namespace SmartxAPI.Controllers
                     }
                     UnitTable.AcceptChanges();
                     DataRow[] BaseUnitRow = UnitTable.Select("B_BaseUnit = 1 ");
-DataTable BaseUnitTable=BaseUnitRow.CopyToDataTable();
-UnitTable.Rows.RemoveAt(0);
-UnitTable.AcceptChanges();
-BaseUnitTable.AcceptChanges();
+                    DataTable BaseUnitTable=BaseUnitRow.CopyToDataTable();
+                    UnitTable.Rows.RemoveAt(0);
+                    UnitTable.AcceptChanges();
+                    BaseUnitTable.AcceptChanges();
                     int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", BaseUnitTable, connection, transaction);
                     foreach (DataRow var in UnitTable.Rows)
                     {
