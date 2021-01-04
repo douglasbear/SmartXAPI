@@ -222,6 +222,7 @@ namespace SmartxAPI.Controllers
             int N_SaveDraft = 0;
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int N_InvoiceId=0;
             try
             {
                
@@ -258,7 +259,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
 
-                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable,connection,transaction);
+                    N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable,connection,transaction);
 
                     if (N_InvoiceId <= 0)
                      {
@@ -299,7 +300,10 @@ namespace SmartxAPI.Controllers
                     }
                 transaction.Commit();
             }
-                return Ok(_api.Success("Purchase Invoice Saved :"+InvoiceNo));
+                SortedList Result = new SortedList();
+                Result.Add("n_InvoiceID",N_InvoiceId);
+                Result.Add("x_InvoiceNo",InvoiceNo);
+                return Ok(_api.Success(Result,"Purchase Invoice Saved"));
             }
             catch (Exception ex)
             {

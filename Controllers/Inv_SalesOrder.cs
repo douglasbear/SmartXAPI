@@ -299,8 +299,10 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Commit();
                     }
-
-                    return Ok(_api.Success("Sales Order Saved"));
+                    SortedList Result = new SortedList();
+                Result.Add("n_SalesOrderID",n_SalesOrderId);
+                Result.Add("x_SalesOrderNo",x_OrderNo);
+                return Ok(_api.Success(Result,"Sales Order Saved"));
                 }
             }
             catch (Exception ex)

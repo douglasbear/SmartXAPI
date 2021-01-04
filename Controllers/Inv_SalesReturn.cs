@@ -199,6 +199,7 @@ namespace SmartxAPI.Controllers
                 DataRow masterRow = MasterTable.Rows[0];
                 var values = masterRow["X_DebitNoteNo"].ToString();
                 int UserID = myFunctions.GetUserID(User);
+                int N_InvoiceId=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -217,7 +218,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // dLayer.setTransaction();
-                    int N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
+                    N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
                     if (N_InvoiceId <= 0)
                     {
                         transaction.Rollback();
@@ -227,21 +228,14 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_DebitNoteId"] = N_InvoiceId;
                     }
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
-                    // if (N_InvoiceDetailId > 0)
-                    // {
-                    //     SortedList PostingParam = new SortedList();
-                    //     PostingParam.Add("N_CompanyID",N_CompanyID );
-                    //     PostingParam.Add("X_InventoryMode", "SALES RETURN");
-                    //     PostingParam.Add("N_InternalID", N_SalesID);
-                    //     PostingParam.Add("N_UserID", N_UserID);
-                    //     PostingParam.Add("X_SystemName", "ERP Cloud");
-
-                    //     dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
-                    // }
 
                     transaction.Commit();
                 }
-                return Ok(_api.Success("Sales Return Saved"));
+                 SortedList Result = new SortedList();
+                Result.Add("n_SalesReturnID",N_InvoiceId);
+                Result.Add("x_SalesReturnNo",InvoiceNo);
+                return Ok(_api.Success(Result,"Sales Return Saved"));
+
             }
             catch (Exception ex)
             {

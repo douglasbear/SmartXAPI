@@ -467,7 +467,10 @@ namespace SmartxAPI.Controllers
                         }
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
+                SortedList Result = new SortedList();
+                Result.Add("n_QuotationID",N_QuotationID);
+                Result.Add("x_QuotationNo",QuotationNo);
+                return Ok(_api.Success(Result,"Sales quotation saved"));
                 }
             }
             catch (Exception ex)

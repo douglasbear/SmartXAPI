@@ -438,7 +438,13 @@ namespace SmartxAPI.Controllers
                     }
                     int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsId", DetailTable, connection, transaction);
                     transaction.Commit();
-                    if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { return Ok(api.Success("Customer Payment Saved")); }
+                    if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { 
+                    
+                SortedList Result = new SortedList();
+                Result.Add("n_SalesReceiptID",PayReceiptId);
+                Result.Add("x_SalesReceiptNo",xVoucherNo);
+                return Ok(api.Success(Result,"Customer Payment Saved"));
+                    }
                     else { return Ok(api.Error("Unable To Save Customer Payment")); }
                 }
 
