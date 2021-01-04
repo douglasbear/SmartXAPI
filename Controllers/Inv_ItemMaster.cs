@@ -238,9 +238,14 @@ namespace SmartxAPI.Controllers
                     UnitTable.AcceptChanges();
                     BaseUnitTable.AcceptChanges();
                     int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", BaseUnitTable, connection, transaction);
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                    int N_SalesUnit=0,N_PurchaseUnit=0;
+                    int i=0;
+
                     foreach (DataRow var in UnitTable.Rows)
                     {
                         var["n_BaseUnitID"] = BaseUnitID;
+                        i+=1; 
                     }
                     int UnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", UnitTable, connection, transaction);
                     if (UnitID <= 0)
