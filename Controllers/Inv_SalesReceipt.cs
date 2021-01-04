@@ -93,7 +93,11 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             SortedList general = new SortedList();
+            SortedList OutPut = new SortedList();
 
+            OutPut.Add("totalAmtDue", 0);
+            OutPut.Add("totalBalance", 0);
+            OutPut.Add("txnStarted", false);
             DataSet ds = new DataSet();
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -156,14 +160,15 @@ namespace SmartxAPI.Controllers
                     object balance = dLayer.ExecuteScalar(balanceSql, balanceParams, connection);
 
                     string balanceAmt = "0";
-                    if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) < 0)
-                    {
-                        balanceAmt = Convert.ToDouble(-1 * myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString())).ToString(myFunctions.decimalPlaceString(2));
-                    }
-                    else if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) > 0)
-                    {
-                        balanceAmt = myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()).ToString(myFunctions.decimalPlaceString(2));
-                    }
+
+                        OutPut["totalAmtDue"] = myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()).ToString(myFunctions.decimalPlaceString(2));
+                        if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) < 0)
+                            OutPut["totalBalance"] = Convert.ToDouble(-1 * myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()));
+                        else if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) > 0)
+                            OutPut["totalBalance"] = myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString());
+                        else
+                            OutPut["totalBalance"] = 0;
+
 
                     if (n_PayReceiptId > 0)
                     {
@@ -187,12 +192,11 @@ namespace SmartxAPI.Controllers
                             DetailTable = dLayer.ExecuteDataTable(DetailSql, detailParams, connection);
                             if (DetailTable.Rows.Count > 0)
                             {
-                                general.Add("balance", balanceAmt);
                                 DetailTable.AcceptChanges();
 
                                 ds.Tables.Add(MasterTable);
                                 ds.Tables.Add(DetailTable);
-                                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "general", general } }));
+                                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut } }));
                             }
                         }
                         else
@@ -252,13 +256,13 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                    general.Add("balance", balanceAmt);
+                    
                     DetailTable.AcceptChanges();
 
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
-                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "general", general } }));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut  } }));
                 //return Ok(api.Success(ds));
             }
             catch (Exception e)
@@ -266,6 +270,9 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+       
+
         [HttpGet("Receivables")]
         public ActionResult GetPendingDetails(int? nCompanyId, int nCustomerId, int nFnYearId, int nBranchId, bool bAllBranchData, string dTransDate, string xType)
         {
