@@ -277,6 +277,8 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
+                int n_PayReceiptID=0;
+                string PayReceiptNo = "";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -285,7 +287,7 @@ namespace SmartxAPI.Controllers
 
 
                     // Auto Gen
-                    string PorderNo = "";
+                    
                     if (MasterTable.Rows.Count > 0)
                     {
 
@@ -294,7 +296,7 @@ namespace SmartxAPI.Controllers
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
-                    int n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
+                    n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
                     string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
 
                     transaction = connection.BeginTransaction();
@@ -306,9 +308,9 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
-                        PorderNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
-                        if (PorderNo == "") { return Ok(api.Warning("Unable to generate Receipt Number")); }
-                        MasterTable.Rows[0]["x_VoucherNo"] = PorderNo;
+                        PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                        if (PayReceiptNo == "") { return Ok(api.Warning("Unable to generate Receipt Number")); }
+                        MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
                     else
                     {
@@ -350,7 +352,10 @@ namespace SmartxAPI.Controllers
                     int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID", DetailTable, connection, transaction);
                     transaction.Commit();
                 }
-                return Ok(api.Success("Vendor Payment Saved"));
+                SortedList Result = new SortedList();
+                Result.Add("n_VendorReceiptID",n_PayReceiptID);
+                Result.Add("x_VendorReceiptNo",PayReceiptNo);
+                return Ok(api.Success(Result,"Vendor Payment Saved"));
             }
             catch (Exception ex)
             {

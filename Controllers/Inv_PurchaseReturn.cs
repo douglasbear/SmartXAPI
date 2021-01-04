@@ -211,24 +211,25 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
+                    int N_CreditNoteID=0;
                     // Auto Gen
                                 try{
                  using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    string QuotationNo="";
+                    string ReturnNo="";
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
-                        if(QuotationNo==""){return Ok(_api.Warning("Unable to generate Quotation Number"));}
-                        MasterTable.Rows[0]["X_CreditNoteNo"] = QuotationNo;
+                        ReturnNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
+                        if(ReturnNo==""){return Ok(_api.Warning("Unable to generate Quotation Number"));}
+                        MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
                     }
-                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
+                    N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
                     if(N_CreditNoteID<=0){
                         transaction.Rollback();
                         }
@@ -238,7 +239,10 @@ namespace SmartxAPI.Controllers
                         }
                     int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
                     transaction.Commit();
-                    return Ok(_api.Success("Purchase Return Saved" ));
+                    SortedList Result = new SortedList();
+                Result.Add("n_PurchaseReturnID",N_CreditNoteID);
+                Result.Add("x_PurchaseReturnNo",ReturnNo);
+                return Ok(_api.Success(Result,"Purchase Return Saved"));
                     }
                 }
                 catch (Exception ex)
