@@ -275,7 +275,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Select X_LedgerName,X_LedgerName_Ar, * from vw_InvVendor Where N_CompanyID=@p1 and N_FnYearID=@nFnYearID and X_VendorCode=@xVendorCode";
+            string sqlCommandText = "Select * from vw_InvVendor Where N_CompanyID=@p1 and N_FnYearID=@nFnYearID and X_VendorCode=@xVendorCode";
             Params.Add("@p1", nCompanyId);
             Params.Add("@xVendorCode", xVendorCode);
             Params.Add("@nFnYearID", nFnYearID);
