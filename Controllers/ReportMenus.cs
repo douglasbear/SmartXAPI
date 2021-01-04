@@ -14,6 +14,7 @@ using System.Net.Http;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -333,10 +334,11 @@ namespace SmartxAPI.Controllers
 
                 var client = new HttpClient(handler);
                 var dbName = connection.Database;
-                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation +"&dbval="+dbName;
+                var random=RandomString();
+                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation +"&dbval="+dbName +"&random="+random;
                 var path = client.GetAsync(URL);
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + random + ".pdf"}}));
                 }
             }
             catch (Exception e)
@@ -414,13 +416,13 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                
+                var random=RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName+"&random="+random;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() +random+ ".pdf"}}));
                 //string RptPath = reportPath + reportName.Trim() + ".pdf";
                 // var memory = new MemoryStream();
 
@@ -436,6 +438,14 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+private static Random random = new Random();
+public string RandomString(int length=6)
+{
+    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    return new string(Enumerable.Repeat(chars, length)
+      .Select(s => s[random.Next(s.Length)]).ToArray());
+}
 
 
 
