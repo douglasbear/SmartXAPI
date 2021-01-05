@@ -195,10 +195,14 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, UnitTable;
+                DataTable MasterTable, GeneralTable, StockUnit,SalesUnit,PurchaseUnit,AddUnit1,AddUnit2;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
-                UnitTable = ds.Tables["itemunit"];
+                StockUnit = ds.Tables["stockUnit"];
+                SalesUnit = ds.Tables["salesUnit"];
+                PurchaseUnit = ds.Tables["purchaseUnit"];
+                AddUnit1 = ds.Tables["addUnit1"];
+                AddUnit2 = ds.Tables["addUnit2"];
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -227,28 +231,30 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    foreach (DataRow var in UnitTable.Rows)
-                    {
-                        var["n_ItemID"] = N_ItemID;
-                    }
-                    UnitTable.AcceptChanges();
-                    DataRow[] BaseUnitRow = UnitTable.Select("B_BaseUnit = 1 ");
-                    DataTable BaseUnitTable = BaseUnitRow.CopyToDataTable();
-                    UnitTable.Rows.RemoveAt(0);
-                    UnitTable.AcceptChanges();
-                    BaseUnitTable.AcceptChanges();
-                    int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", BaseUnitTable, connection, transaction);
+                    foreach (DataRow var in StockUnit.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in SalesUnit.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in PurchaseUnit.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in AddUnit1.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in AddUnit2.Rows)var["n_ItemID"] = N_ItemID;
+
+                    int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
                     dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
                     int N_SalesUnit=0,N_PurchaseUnit=0;
                     int i=0;
 
-                    foreach (DataRow var in UnitTable.Rows)
-                    {
-                        var["n_BaseUnitID"] = BaseUnitID;
-                        i+=1; 
-                    }
-                    int UnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", UnitTable, connection, transaction);
-                    if (UnitID <= 0)
+                    foreach (DataRow var in SalesUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in PurchaseUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in AddUnit1.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in AddUnit2.Rows)var["n_BaseUnitID"] = BaseUnitID;
+
+                    int N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
+                    int N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
+                    int N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
+                    int N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
+
+                        
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID="+N_PurchaseUnitID+" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                    if (N_SalesUnitID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Warning("Unable to save"));
