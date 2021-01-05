@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
                     string SalesmanName = MasterTable.Rows[0]["x_SalesmanName"].ToString();
                     string nCompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     string nFnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
-                    int N_SalesmanID= myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());
+                    int N_SalesmanID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());
                     if (ExecutiveCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -136,7 +136,8 @@ namespace SmartxAPI.Controllers
                         if (ExecutiveCode == "") { return Ok(_api.Error("Unable to generate Sales Executive Code")); }
                         MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
 
-                    }else
+                    }
+                    else
                     {
                         dLayer.DeleteData("inv_salesman", "N_SalesmanID", N_SalesmanID, "", connection, transaction);
                     }
@@ -151,10 +152,10 @@ namespace SmartxAPI.Controllers
                     {
 
                         SortedList nParams = new SortedList();
-                        nParams.Add("@p1",nCompanyID);
-                        nParams.Add("@p2",nFnYearID);
+                        nParams.Add("@p1", nCompanyID);
+                        nParams.Add("@p2", nFnYearID);
                         string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 ";
-                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
+                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection, transaction);
                         outputDt = _api.Format(outputDt, "NewSalesMan");
                         transaction.Commit();
                         return Ok(_api.Success(outputDt, "Salesman Saved"));
@@ -169,38 +170,38 @@ namespace SmartxAPI.Controllers
 
 
 
-                [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nSalesmanID)
+        {
+            int Results = 0;
+            try
             {
-                int Results = 0;
-                try
-                {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "",connection);
+                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "", connection);
                 }
-                    if (Results > 0)
-                    {
-                        return Ok(_api.Success("Sales Executive deleted"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error("Unable to delete Sales Executive"));
-                    }
-
-                }
-                catch (Exception ex)
+                if (Results > 0)
                 {
-                    return Ok(_api.Error(ex));
+                    return Ok(_api.Success("Sales Executive deleted"));
+                }
+                else
+                {
+                    return Ok(_api.Error("Unable to delete Sales Executive"));
                 }
 
-
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
 
 
-
-
-
         }
+
+
+
+
+
     }
+}
