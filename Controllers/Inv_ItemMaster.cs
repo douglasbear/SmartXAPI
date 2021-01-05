@@ -238,7 +238,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow var in AddUnit2.Rows)var["n_ItemID"] = N_ItemID;
 
                     int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
-                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID ="+ BaseUnitID  +" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
                     int N_SalesUnit=0,N_PurchaseUnit=0;
                     int i=0;
 
