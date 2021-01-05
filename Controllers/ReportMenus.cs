@@ -284,6 +284,26 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="SalesInvoice";
                     }
+                    if(nFormID==55)
+                    {
+                        critiria="{vw_InvSalesReturn_rpt.N_DebitNoteId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/SalesReturn/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_Return";
+                    }
+                    if(nFormID==66)
+                    {
+                        critiria="{vw_InvPartyBalance.N_AccType}=2 and {vw_InvCustomerPayment_rpt.N_PayReceiptId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="CustomerReceiptVoucher";
+                    }
                     //Purchase Module
                     if(nFormID==65)
                     {
@@ -310,6 +330,25 @@ namespace SmartxAPI.Controllers
                         }
                         else
                             ReportName="Purchase_order";
+                    }
+                    if(nFormID==68)
+                    {
+                        critiria="{Inv_PurchaseReturnMaster.N_CreditNoteId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/PurchaseReturn/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Purchase_Return";
+                    }
+                    if(nFormID==67)
+                    {
+                        critiria="{vw_InvVendorPayment_rpt.N_PayReceiptId}=1 and {vw_InvPartyBalance.N_AccType}=1="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="VendorPaymentVoucher";
                     }
                     //Finance Module
                     if(nFormID==44)
