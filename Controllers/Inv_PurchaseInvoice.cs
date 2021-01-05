@@ -231,15 +231,17 @@ namespace SmartxAPI.Controllers
                 connection.Open();
                 SqlTransaction transaction;
                 transaction = connection.BeginTransaction();
-                    if (values == "@Auto")
-                    {
-                     N_PurchaseID = myFunctions.getIntVAL(masterRow["N_PurchaseID"].ToString());
-                     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
+                
                      if (N_PurchaseID > 0)
                      {
                         if (CheckProcessed(N_PurchaseID))
                             return Ok(_api.Error("Transaction Started!"));
                      }
+                    if (values == "@Auto")
+                    {
+                        N_SaveDraft =myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+
                     Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                     Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
                     Params.Add("N_FormID", this.N_FormID);
