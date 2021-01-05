@@ -394,8 +394,8 @@ namespace SmartxAPI.Controllers
                     //     }
                     // }
                     //saving data
-                    var values = MasterRow["x_ReceiptNo"].ToString();
-                    if (values == "@Auto")
+                 InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
+                    if (InvoiceNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
@@ -415,8 +415,6 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
-                    else
-                    {
                         if (N_SalesID > 0)
                         {
                             SortedList DeleteParams = new SortedList(){
@@ -431,8 +429,8 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_BranchID=" + N_BranchID,connection,transaction);
 
                         }
-                    }
-                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" +N_CompanyID + " and X_ReceiptNo='" + InvoiceNo + "' and N_FnyearID=" + N_FnYearID;
+                    N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId",DupCriteria,"", MasterTable, connection, transaction);
                     if (N_SalesID <= 0)
                     {
                         transaction.Rollback();
