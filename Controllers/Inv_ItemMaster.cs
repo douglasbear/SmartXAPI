@@ -356,13 +356,13 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
-                    if (myFunctions.getIntVAL(N_Result.ToString()) == 1)
+                    if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
                     {
                         return Ok(_api.Error("Year Closed , Unable to delete product."));
                     }
 
                     dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", nItemID, "", connection, transaction);
-                    Results = dLayer.DeleteData("Inv_ItemDetails", "N_ItemID", nItemID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_ItemMaster", "N_ItemID", nItemID, "", connection, transaction);
                     if (Results > 0)
                     {
 
