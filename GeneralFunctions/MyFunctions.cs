@@ -8,13 +8,16 @@ using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.SqlClient;
 using System.Net.Mail;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.GeneralFunctions
 {
     public class MyFunctions : IMyFunctions
     {
-        public MyFunctions()
+        private readonly string ApprovalLink;
+        public MyFunctions(IConfiguration conf)
         {
+            ApprovalLink = conf.GetConnectionString("ApprovalLink");
         }
 
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin,string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
@@ -763,11 +766,13 @@ namespace SmartxAPI.GeneralFunctions
             try
             {
                 int companyid = GetCompanyID(User);
+                int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
                 string Toemail="";
                 object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID, Params, connection, transaction);
                 Toemail=Email.ToString();
                 object CurrentStatus=dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID="+FormID+" and X_TransCode='"+TransCode+"' and N_TransID="+TransID+" and X_Type='"+TransType+"'", Params, connection, transaction);
+                object EmployeeName=dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID="+ nUserID+" and N_CompanyID=" + companyid , Params, connection, transaction);
                 object companyemail = "";
                 object companypassword = "";
 
@@ -779,7 +784,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         object body = null;
                         string MailBody;
-                        body = "Sir/Madam," + "<br/><br/>You have a new approval request on "+TransType+" of code "+TransCode+" which is "+CurrentStatus+".<br/><br/>";
+                        body = "Greetings," + "<br/><br/>"+EmployeeName+" has requested for your approval on "+TransType+".To approve or reject this request, please click on the following link<br/>"+ApprovalLink;
                         if (body != null)
                         {
                             body = body.ToString();
