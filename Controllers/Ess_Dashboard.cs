@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandEmployeeDetails = "select CONVERT(VARCHAR,vw_PayEmployee.d_DOB, 106) as d_DOB1,CONVERT(VARCHAR,vw_PayEmployee.d_HireDate, 106) as d_HireDate1,* from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
+            string sqlCommandEmployeeDetails = "select * from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             // string sqlCommandLoan = "select SUM(N_LoanAmount) as N_LoanAmount from Pay_LoanIssue where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
             string sqlCommandLoan = "select ROUND(SUM(balance),2) from vw_LoanDetails where N_CompanyID =@p1 and N_EmpID =@p3";
             string sqlCommandVacation = "Select SUM(N_VacDays) as N_VacDays from Pay_VacationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
