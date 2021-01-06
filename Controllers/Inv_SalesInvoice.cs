@@ -611,7 +611,15 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    object objSalesReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_DebitNoteId,0) from Inv_SalesReturnMaster where N_CompanyID=" + nCompanyID + " and N_SalesID=" + nInvoiceID + " and B_IsSaveDraft = 0", connection, transaction);
+                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_CompanyID=" + nCompanyID + " and N_InventoryId=" + nInvoiceID+" and X_TransType='SALES'" , connection, transaction);
                     //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
+                    if (objSalesReturnProcessed == null)
+                        objSalesReturnProcessed = 0;
+                    if (objPaymentProcessed == null)
+                        objPaymentProcessed = 0;
+                    if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0 && myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0)
+                    {
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"N_UserID",nUserID},
@@ -654,6 +662,17 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
+                    }
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) > 0)
+                            return Ok(_api.Error("Sales Return processed! Unable to delete"));
+                        else if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) > 0)
+                            return Ok(_api.Error("Customer Payment processed! Unable to delete"));
+                        else
+                            return Ok(_api.Error("Unable to delete!"));
                     }
                     //Attachment delete code here
 
