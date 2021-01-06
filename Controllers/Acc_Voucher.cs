@@ -275,7 +275,11 @@ namespace SmartxAPI.Controllers
 
                     }
                     //return Ok(api.Success("Data Saved"));
-                    return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
+                    // return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
+                SortedList Result = new SortedList();
+                Result.Add("n_VoucherID",N_VoucherID);
+                Result.Add("x_POrderNo",xVoucherNo);
+                return Ok(api.Success(Result,"Data Saved"));
                 }
             }
             catch (Exception ex)
@@ -356,6 +360,52 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return StatusCode(403, api.Error(e));
+            }
+        }
+
+        [HttpGet("default")]
+        public ActionResult GetDefault(int nFnYearID,int nLangID,int nFormID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+
+            string X_Condn = "";
+            if (nFormID == 44)
+                X_Condn = " and N_CompanyID=@nCompanyID and B_PaymentVoucher='True'";
+            else if (nFormID == 45)
+                X_Condn = " and N_CompanyID=@nCompanyID and B_ReceiptVoucher='True'";
+
+            string PaymentType = dLayer.ExecuteScalar("Select X_PayMethod from Acc_PaymentMethodMaster  where  B_isDefault='True'" + X_Condn,Params,connection).ToString();
+            int N_BehID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_PaymentMethodID from Acc_PaymentMethodMaster where  B_isDefault='True'" + X_Condn,Params, connection).ToString());
+            string FieldName = "V " + N_BehID;
+
+                    DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", FieldName);
+
+                    QList.AcceptChanges();
+
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
+                        SortedList Default = new SortedList(){
+                            {"defultPaymentMethodID",N_BehID},
+                            {"defultPaymentMethod",PaymentType}
+                        };
+                        SortedList OutPut = new SortedList(){
+                            {"settings",api.Format(Details)},
+                            {"default",Default}
+                        };
+                    return Ok(api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
             }
         }
 
