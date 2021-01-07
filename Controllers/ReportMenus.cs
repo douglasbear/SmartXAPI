@@ -406,6 +406,7 @@ namespace SmartxAPI.Controllers
                     //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
+                    int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
 
                     SortedList Params1 = new SortedList();
                     Params1.Add("@nMenuID", MenuID);
@@ -416,6 +417,8 @@ namespace SmartxAPI.Controllers
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
 
                     reportName = reportName.Substring(0,reportName.Length-4);
+
+
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -428,6 +431,9 @@ namespace SmartxAPI.Controllers
                         Params.Add("@xType", type);
                         Params.Add("@nCompID", compID);
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+                        string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+
+                        
 
                         if(xFeild!="")
                         {
@@ -435,6 +441,21 @@ namespace SmartxAPI.Controllers
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
+                            if(xProCode!="")
+                            {
+                            SortedList mParamsList = new SortedList()
+                            {
+                            {"N_CompanyID",compID},
+                            {"N_FnYearID",FnYearID},
+                            {"N_Period",0},
+                            {"X_ProcName",xProCode},
+                            {"X_ProcParameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
+                            {"N_UserID",2},
+                            {"N_BranchID",0}
+                            };
+                            dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+                        
+                        }
 
                             string DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
                             Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
