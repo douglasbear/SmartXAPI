@@ -14,6 +14,7 @@ using System.Net.Http;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -283,6 +284,26 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="SalesInvoice";
                     }
+                    if(nFormID==55)
+                    {
+                        critiria="{vw_InvSalesReturn_rpt.N_DebitNoteId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/SalesReturn/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_Return";
+                    }
+                    if(nFormID==66)
+                    {
+                        critiria="{vw_InvPartyBalance.N_AccType}=2 and {vw_InvCustomerPayment_rpt.N_PayReceiptId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="CustomerReceiptVoucher";
+                    }
                     //Purchase Module
                     if(nFormID==65)
                     {
@@ -310,6 +331,25 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="Purchase_order";
                     }
+                    if(nFormID==68)
+                    {
+                        critiria="{Inv_PurchaseReturnMaster.N_CreditNoteId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/PurchaseReturn/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Purchase_Return";
+                    }
+                    if(nFormID==67)
+                    {
+                        critiria="{vw_InvVendorPayment_rpt.N_PayReceiptId}=1 and {vw_InvPartyBalance.N_AccType}=1="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="VendorPaymentVoucher";
+                    }
                     //Finance Module
                     if(nFormID==44)
                     {
@@ -333,10 +373,11 @@ namespace SmartxAPI.Controllers
 
                 var client = new HttpClient(handler);
                 var dbName = connection.Database;
-                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation +"&dbval="+dbName;
+                var random=RandomString();
+                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation +"&dbval="+dbName +"&random="+random;
                 var path = client.GetAsync(URL);
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + random + ".pdf"}}));
                 }
             }
             catch (Exception e)
@@ -414,13 +455,13 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                
+                var random=RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName+"&random="+random;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() +random+ ".pdf"}}));
                 //string RptPath = reportPath + reportName.Trim() + ".pdf";
                 // var memory = new MemoryStream();
 
@@ -436,6 +477,14 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+private static Random random = new Random();
+public string RandomString(int length=6)
+{
+    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    return new string(Enumerable.Repeat(chars, length)
+      .Select(s => s[random.Next(s.Length)]).ToArray());
+}
 
 
 

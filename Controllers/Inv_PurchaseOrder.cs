@@ -256,7 +256,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
-
+int N_POrderID=0; var X_POrderNo="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -269,11 +269,11 @@ namespace SmartxAPI.Controllers
                     {
 
                     }
-                    var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                    X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
-                    int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
@@ -283,15 +283,15 @@ namespace SmartxAPI.Controllers
 
                     transaction = connection.BeginTransaction();
 
-                    if (values == "@Auto")
+                    if (X_POrderNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.FormID);
 
-                        PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
-                        if (PorderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
-                        MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
+                        X_POrderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
+                        if (X_POrderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
+                        MasterTable.Rows[0]["x_POrderNo"] = X_POrderNo;
                     }
                     else
                     {
@@ -393,7 +393,10 @@ namespace SmartxAPI.Controllers
                     }
                     transaction.Commit();
                 }
-                return Ok(api.Success("Purchase Order Saved"));
+                SortedList Result = new SortedList();
+                Result.Add("n_POrderID",N_POrderID);
+                Result.Add("x_POrderNo",X_POrderNo);
+                return Ok(api.Success(Result,"Purchase Order Saved"));
             }
             catch (Exception ex)
             {

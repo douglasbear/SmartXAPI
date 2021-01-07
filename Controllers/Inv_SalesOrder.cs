@@ -264,6 +264,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
+                    int N_QuotationID= myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     string x_OrderNo = MasterRow["x_OrderNo"].ToString();
 
                     if (x_OrderNo == "@Auto")
@@ -277,13 +278,23 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_OrderNo"] = x_OrderNo;
                     }
 
+                      if (n_SalesOrderId > 0)
+                        {
+                            dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection,transaction);
+                            dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID,connection,transaction);
+                        }
 
-                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", MasterTable, connection, transaction);
+string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_OrderNo + "' and N_FnYearID=" + N_FnYearID+ "";
+
+
+                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID",DupCriteria,"", MasterTable, connection, transaction);
                     if (n_SalesOrderId <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save sales order");
                     }
+                    if (N_QuotationID > 0)
+                        dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(),connection,transaction);
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -299,8 +310,10 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Commit();
                     }
-
-                    return Ok(_api.Success("Sales Order Saved"));
+                    SortedList Result = new SortedList();
+                Result.Add("n_SalesOrderID",n_SalesOrderId);
+                Result.Add("x_SalesOrderNo",x_OrderNo);
+                return Ok(_api.Success(Result,"Sales Order Saved"));
                 }
             }
             catch (Exception ex)

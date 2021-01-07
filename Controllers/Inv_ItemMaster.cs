@@ -35,16 +35,16 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult GetAllItems(string query, int PageSize, int Page)
         {
-            int nCompanyID =myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string qry = "";
-                if (query != "" && query != null)
-                {
-                    qry = " and (Description like @query or [Item Code] like @query) ";
-                    Params.Add("@query", "%" + query + "%");
-                }
+            if (query != "" && query != null)
+            {
+                qry = " and (Description like @query or [Item Code] like @query) ";
+                Params.Add("@query", "%" + query + "%");
+            }
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by [Item Code],Description";
@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@PSize", PageSize);
             Params.Add("@Offset", Page);
 
-            
+
 
             try
             {
@@ -86,14 +86,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            int nCompanyID =myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and Description like '%" + xSearchkey + "%'";
@@ -103,10 +103,10 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top("+ Count +") [Item Code] from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
 
 
             Params.Add("@p1", nCompanyID);
@@ -115,13 +115,13 @@ namespace SmartxAPI.Controllers
             Params.Add("@p4", 1);
 
             SortedList OutPut = new SortedList();
-            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     string sqlCommandCount = "select count(*) as N_Count  from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -148,9 +148,9 @@ namespace SmartxAPI.Controllers
 
 
 
-        
 
-         [HttpGet("details")]
+
+        [HttpGet("details")]
         public ActionResult GetItemDetails(string xItemCode)
         {
             DataTable dt = new DataTable();
@@ -195,11 +195,15 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable,UnitTable;
+                DataTable MasterTable, GeneralTable, StockUnit,SalesUnit,PurchaseUnit,AddUnit1,AddUnit2;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
-                UnitTable = ds.Tables["itemunit"];
-                
+                StockUnit = ds.Tables["stockUnit"];
+                SalesUnit = ds.Tables["salesUnit"];
+                PurchaseUnit = ds.Tables["purchaseUnit"];
+                AddUnit1 = ds.Tables["addUnit1"];
+                AddUnit2 = ds.Tables["addUnit2"];
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -223,34 +227,41 @@ namespace SmartxAPI.Controllers
                     if (N_ItemID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Warning( "Unable to save"));
+                        return Ok(_api.Warning("Unable to save"));
                     }
 
 
-                     foreach (DataRow var in UnitTable.Rows)
-                    {
-                        var["n_ItemID"] = N_ItemID;
-                    }
-                    UnitTable.AcceptChanges();
-                    DataRow[] BaseUnitRow = UnitTable.Select("B_BaseUnit = 1 ");
-                    DataTable BaseUnitTable=BaseUnitRow.CopyToDataTable();
-                    UnitTable.Rows.RemoveAt(0);
-                    UnitTable.AcceptChanges();
-                    BaseUnitTable.AcceptChanges();
-                    int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", BaseUnitTable, connection, transaction);
-                    foreach (DataRow var in UnitTable.Rows)
-                    {
-                        var["n_BaseUnitID"] = BaseUnitID;
-                    }
-                    int UnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", UnitTable, connection, transaction);
-                    if (UnitID <= 0)
+                    foreach (DataRow var in StockUnit.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in SalesUnit.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in PurchaseUnit.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in AddUnit1.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in AddUnit2.Rows)var["n_ItemID"] = N_ItemID;
+
+                    int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID ="+ BaseUnitID  +" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                    int N_SalesUnit=0,N_PurchaseUnit=0;
+                    int i=0;
+
+                    foreach (DataRow var in SalesUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in PurchaseUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in AddUnit1.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in AddUnit2.Rows)var["n_BaseUnitID"] = BaseUnitID;
+
+                    int N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
+                    int N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
+                    int N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
+                    int N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
+
+                        
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID="+N_PurchaseUnitID+" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                    if (N_SalesUnitID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Warning( "Unable to save"));
+                        return Ok(_api.Warning("Unable to save"));
                     }
-                    
-                    
-                    
+
+
+
                     transaction.Commit();
                 }
                 return Ok(_api.Success("Product Saved"));
@@ -258,7 +269,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok( _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -291,10 +302,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
 
         }
+
+
 
         [HttpGet("dummy")]
         public ActionResult GetPurchaseInvoiceDummy(int? Id)
@@ -304,29 +317,73 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                string sqlCommandText = "select * from Inv_ItemMaster where N_ItemID=@p1";
-                SortedList mParamList = new SortedList() { { "@p1", Id } };
-                DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
-                masterTable = _api.Format(masterTable, "master");
+                    string sqlCommandText = "select * from Inv_ItemMaster where N_ItemID=@p1";
+                    SortedList mParamList = new SortedList() { { "@p1", Id } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, connection);
+                    masterTable = _api.Format(masterTable, "master");
 
-                string sqlCommandText2 = "select * from Inv_ItemMaster where N_ItemID=@p1";
-                SortedList dParamList = new SortedList() { { "@p1", Id } };
-                DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList,connection);
-                detailTable = _api.Format(detailTable, "details");
+                    string sqlCommandText2 = "select * from Inv_ItemMaster where N_ItemID=@p1";
+                    SortedList dParamList = new SortedList() { { "@p1", Id } };
+                    DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, connection);
+                    detailTable = _api.Format(detailTable, "details");
 
-                if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                DataSet dataSet = new DataSet();
-                dataSet.Tables.Add(masterTable);
-                dataSet.Tables.Add(detailTable);
+                    if (detailTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    dataSet.Tables.Add(detailTable);
 
-                return Ok(dataSet);
+                    return Ok(dataSet);
                 }
 
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
+        }
+
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nItemID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
+                    if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
+                    {
+                        return Ok(_api.Error("Year Closed , Unable to delete product."));
+                    }
+
+                    dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", nItemID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Inv_ItemMaster", "N_ItemID", nItemID, "", connection, transaction);
+                    if (Results > 0)
+                    {
+
+                        dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                        transaction.Commit();
+                        return Ok(_api.Success("Product deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+
+                        return Ok(_api.Error("Unable to delete product category"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+
+
         }
 
 

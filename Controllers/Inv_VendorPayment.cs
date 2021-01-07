@@ -52,9 +52,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if(Count==0)
-                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  " + Searchkey + " " + xSortBy;
             else
-                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and n_PayReceiptID not in (select top("+ Count +") n_PayReceiptID from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  " + Searchkey + " and n_PayReceiptID not in (select top("+ Count +") n_PayReceiptID from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details",api.Format(dt));
                     OutPut.Add("TotalCount",TotalCount);
@@ -161,9 +161,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     if (bShowAllbranch == true)
-                        sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
+                        sql = "SELECT  -1 * ISNULL( Sum(n_Amount),0)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
                     else
-                        sql = "SELECT  -1 * Sum(n_Amount)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";
+                        sql = "SELECT  -1 * ISNULL( Sum(n_Amount),0)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";
 
                     if (xInvoiceNo != null && myFunctions.getIntVAL(xInvoiceNo) > 0)
                     {
@@ -178,6 +178,7 @@ namespace SmartxAPI.Controllers
                             nPayReceiptID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
                             xTransType = PayInfo.Rows[0]["X_Type"].ToString();
                             nVendorID = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
+                            dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
                     }
 
@@ -277,6 +278,8 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
+                int n_PayReceiptID=0;
+                string PayReceiptNo = "";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -285,7 +288,7 @@ namespace SmartxAPI.Controllers
 
 
                     // Auto Gen
-                    string PorderNo = "";
+                    
                     if (MasterTable.Rows.Count > 0)
                     {
 
@@ -294,7 +297,7 @@ namespace SmartxAPI.Controllers
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
-                    int n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
+                    n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
                     string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
 
                     transaction = connection.BeginTransaction();
@@ -306,9 +309,9 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
-                        PorderNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
-                        if (PorderNo == "") { return Ok(api.Warning("Unable to generate Receipt Number")); }
-                        MasterTable.Rows[0]["x_VoucherNo"] = PorderNo;
+                        PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
+                        if (PayReceiptNo == "") { return Ok(api.Warning("Unable to generate Receipt Number")); }
+                        MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
                     else
                     {
@@ -350,7 +353,10 @@ namespace SmartxAPI.Controllers
                     int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID", DetailTable, connection, transaction);
                     transaction.Commit();
                 }
-                return Ok(api.Success("Vendor Payment Saved"));
+                SortedList Result = new SortedList();
+                Result.Add("n_VendorReceiptID",n_PayReceiptID);
+                Result.Add("x_VendorReceiptNo",PayReceiptNo);
+                return Ok(api.Success(Result,"Vendor Payment Saved"));
             }
             catch (Exception ex)
             {

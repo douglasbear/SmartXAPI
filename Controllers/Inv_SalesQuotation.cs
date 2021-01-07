@@ -405,10 +405,9 @@ namespace SmartxAPI.Controllers
 
 
                     // Auto Gen
-                    string QuotationNo = "";
-                    var values = MasterTable.Rows[0]["x_QuotationNo"].ToString();
+                    string QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
-                    if (values == "@Auto")
+                    if (QuotationNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
@@ -419,9 +418,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
 
                     }
-                    else
-                    {
-                        if (N_QuotationID > 0)
+                    
+                    if (N_QuotationID > 0)
                         {
                             SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",N_CompanyID},
@@ -429,10 +427,8 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",N_QuotationID}};
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
-                    }
-
-
-                    N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", MasterTable, connection, transaction);
+string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + QuotationNo + "'";
+                    N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", DupCriteria ,"",MasterTable, connection, transaction);
                     if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
@@ -467,7 +463,10 @@ namespace SmartxAPI.Controllers
                         }
                         transaction.Commit();
                     }
-                    return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
+                SortedList Result = new SortedList();
+                Result.Add("n_QuotationID",N_QuotationID);
+                Result.Add("x_QuotationNo",QuotationNo);
+                return Ok(_api.Success(Result,"Sales quotation saved"));
                 }
             }
             catch (Exception ex)

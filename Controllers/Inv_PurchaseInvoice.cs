@@ -222,6 +222,7 @@ namespace SmartxAPI.Controllers
             int N_SaveDraft = 0;
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int N_InvoiceId=0;
             try
             {
                
@@ -230,15 +231,17 @@ namespace SmartxAPI.Controllers
                 connection.Open();
                 SqlTransaction transaction;
                 transaction = connection.BeginTransaction();
-                    if (values == "@Auto")
-                    {
-                     N_PurchaseID = myFunctions.getIntVAL(masterRow["N_PurchaseID"].ToString());
-                     N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
+                
                      if (N_PurchaseID > 0)
                      {
                         if (CheckProcessed(N_PurchaseID))
                             return Ok(_api.Error("Transaction Started!"));
                      }
+                    if (values == "@Auto")
+                    {
+                        N_SaveDraft =myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+
                     Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                     Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
                     Params.Add("N_FormID", this.N_FormID);
@@ -258,7 +261,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                         }
 
-                    int N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable,connection,transaction);
+                    N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable,connection,transaction);
 
                     if (N_InvoiceId <= 0)
                      {
@@ -299,7 +302,10 @@ namespace SmartxAPI.Controllers
                     }
                 transaction.Commit();
             }
-                return Ok(_api.Success("Purchase Invoice Saved :"+InvoiceNo));
+                SortedList Result = new SortedList();
+                Result.Add("n_InvoiceID",N_InvoiceId);
+                Result.Add("x_InvoiceNo",InvoiceNo);
+                return Ok(_api.Success(Result,"Purchase Invoice Saved"));
             }
             catch (Exception ex)
             {
