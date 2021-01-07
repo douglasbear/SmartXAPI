@@ -784,7 +784,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         object body = null;
                         string MailBody;
-                        body = "Greetings," + "<br/><br/>"+EmployeeName+" has requested for your approval on "+TransType+".To approve or reject this request, please click on the following link<br/>"+ApprovalLink;
+                        body = "Greetings," + "<br/><br/>"+EmployeeName+" has requested for your approval on "+TransType+". To approve or reject this request, please click on the following link<br/>"+ApprovalLink;
                         if (body != null)
                         {
                             body = body.ToString();
