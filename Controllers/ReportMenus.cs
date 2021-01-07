@@ -430,10 +430,10 @@ namespace SmartxAPI.Controllers
                         Params.Add("@nMenuID", MenuID);
                         Params.Add("@xType", type);
                         Params.Add("@nCompID", compID);
-                        string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
-                        string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+                        Params.Add("@xMain", "MainForm");
+                        string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();                    
+                        string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
-                        
 
                         if(xFeild!="")
                         {
@@ -447,9 +447,9 @@ namespace SmartxAPI.Controllers
                             {
                             {"N_CompanyID",compID},
                             {"N_FnYearID",FnYearID},
-                            {"N_Period",0},
-                            {"X_ProcName",xProCode},
-                            {"X_ProcParameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
+                            {"N_PeriodID",0},
+                            {"X_Code",xProCode},
+                            {"X_Parameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
                             {"N_UserID",2},
                             {"N_BranchID",0}
                             };
