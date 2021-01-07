@@ -210,7 +210,8 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation;
+                var random=RandomString();
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation +"&random="+random;
                 var path = client.GetAsync(URL);
                 path.Wait();
                 return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
