@@ -64,9 +64,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Pay_EmpBussinessTripRequestList where N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -75,15 +75,17 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                     object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                         sqlCommandCount = "select count(*) as N_Count From vw_Pay_EmpBussinessTripRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
+                    }else{
+                    return Ok(api.Notice("No Results Found"));
                     }
                 }
                 dt = api.Format(dt);

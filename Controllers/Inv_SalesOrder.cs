@@ -337,6 +337,7 @@ string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_Order
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                    if(objProcessed==null)objProcessed=0;
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {
                         SortedList DeleteParams = new SortedList(){
