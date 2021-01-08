@@ -400,10 +400,10 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.N_FormID);
-                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                        // Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         while (true)
                         {
-                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerateBranch", Params, connection, transaction).ToString();
+                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;

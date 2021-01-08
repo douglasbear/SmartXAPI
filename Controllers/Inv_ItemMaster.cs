@@ -227,7 +227,7 @@ namespace SmartxAPI.Controllers
                     if (N_ItemID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Warning("Unable to save"));
+                        return Ok(_api.Error("Unable to save"));
                     }
 
 
@@ -254,10 +254,10 @@ namespace SmartxAPI.Controllers
 
                         
                     dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID="+N_PurchaseUnitID+" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
-                    if (N_SalesUnitID <= 0)
+                    if (BaseUnitID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Warning("Unable to save"));
+                        return Ok(_api.Error("Unable to save"));
                     }
 
 
