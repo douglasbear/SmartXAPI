@@ -209,12 +209,20 @@ namespace SmartxAPI.Controllers
                 {
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                   
                 var client = new HttpClient(handler);
                 var random=RandomString();
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation +"&random="+random;
+                var dbName = connection.Database;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName+"&random="+random;
                 var path = client.GetAsync(URL);
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim()  + random + ".pdf"}}));
+                }
             }
             catch (Exception e)
             {
@@ -395,6 +403,7 @@ namespace SmartxAPI.Controllers
 
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            int nCompanyID=myFunctions.GetCompanyID(User);
 
             try
             {
@@ -446,7 +455,7 @@ namespace SmartxAPI.Controllers
                             {
                             SortedList mParamsList = new SortedList()
                             {
-                            {"N_CompanyID",compID},
+                            {"N_CompanyID",nCompanyID},
                             {"N_FnYearID",FnYearID},
                             {"N_PeriodID",0},
                             {"X_Code",xProCode},
