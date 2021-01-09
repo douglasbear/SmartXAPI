@@ -43,23 +43,50 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
+            // if (xSearchkey != null && xSearchkey.Trim() != "")
+            //     Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%'";
+
+            // if (xSortBy == null || xSortBy.Trim() == "")
+            //     xSortBy = " order by  desc";
+            // else
+            //     xSortBy = " order by " + xSortBy;
+
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string sqlCommandCount = "";
-            if (Count == 0)
+            if (nPartyType == 1)
             {
-                if (nPartyID > 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
+                if (Count == 0)
+                {
+                    if (nPartyID > 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
+                }
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],[Customer Name],[Net Amount]";
+                {
+                    if (nPartyID > 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+                }
             }
             else
             {
-                if (nPartyID > 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+                if (Count == 0)
+                {
+                    if (nPartyID > 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt from vw_VendorBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],X_VendorName,Netamt";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt from vw_VendorBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 group by [Adjustment Date],[Invoice No],X_VendorName,Netamt";
+                }
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
-
+                {
+                    if (nPartyID > 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_CustomerID=@p3 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5)";
+                }
             }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p3", nPartyID);
@@ -73,7 +100,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5";
+                    if (nPartyType ==1)
+                        sqlCommandCount = "select count(*) as N_Count  from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5";
+                    else
+                        sqlCommandCount = "select count(*) as N_Count  from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

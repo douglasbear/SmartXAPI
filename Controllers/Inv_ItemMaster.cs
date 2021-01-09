@@ -96,7 +96,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and Description like '%" + xSearchkey + "%'";
+                Searchkey = "and Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID ASC,[Item Code] desc";
