@@ -403,6 +403,7 @@ namespace SmartxAPI.Controllers
 
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            int nCompanyID=myFunctions.GetCompanyID(User);
 
             try
             {
@@ -454,7 +455,7 @@ namespace SmartxAPI.Controllers
                             {
                             SortedList mParamsList = new SortedList()
                             {
-                            {"N_CompanyID",compID},
+                            {"N_CompanyID",nCompanyID},
                             {"N_FnYearID",FnYearID},
                             {"N_PeriodID",0},
                             {"X_Code",xProCode},
