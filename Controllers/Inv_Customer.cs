@@ -113,8 +113,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string CustomerCode = "";
-                    var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
-                    if (values == "@Auto")
+                 CustomerCode = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    if (CustomerCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
@@ -124,8 +124,9 @@ namespace SmartxAPI.Controllers
                         if (CustomerCode == "") { return Ok(api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
-
-                    nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                    nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria,X_Criteria,MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
