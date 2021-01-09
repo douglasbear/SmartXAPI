@@ -236,7 +236,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     if(image.Length>0)
-                        dLayer.SaveImage("Acc_Company","I_Logo",imageBitmap,"N_CompanyID",myFunctions.GetCompanyID(User),connection,transaction);
+                        dLayer.SaveImage("Inv_ItemMaster","i_Image",imageBitmap,"N_ItemID",N_ItemID,connection,transaction);
 
                     foreach (DataRow var in StockUnit.Rows)var["n_ItemID"] = N_ItemID;
                     foreach (DataRow var in SalesUnit.Rows)var["n_ItemID"] = N_ItemID;
