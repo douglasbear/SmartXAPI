@@ -211,8 +211,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string ItemCode = "";
-                    var values = MasterTable.Rows[0]["X_ItemCode"].ToString();
-                    if (values == "@Auto")
+                    ItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
+                    if (ItemCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID", GeneralTable.Rows[0]["N_FnYearId"].ToString());
@@ -221,15 +221,22 @@ namespace SmartxAPI.Controllers
                         if (ItemCode == "") { return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTable.Rows[0]["X_ItemCode"] = ItemCode;
                     }
+                    
+                    string image= MasterTable.Rows[0]["i_Image"].ToString();
+                    Byte[] imageBitmap = new Byte[image.Length];
+                    imageBitmap = Convert.FromBase64String(image);
+                    MasterTable.Columns.Remove("i_Image");
 
-
-                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemCode='" + ItemCode + "'";
+                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID",DupCriteria,"", MasterTable, connection, transaction);
                     if (N_ItemID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save"));
                     }
 
+                    if(image.Length>0)
+                        dLayer.SaveImage("Inv_ItemMaster","i_Image",imageBitmap,"N_ItemID",N_ItemID,connection,transaction);
 
                     foreach (DataRow var in StockUnit.Rows)var["n_ItemID"] = N_ItemID;
                     foreach (DataRow var in SalesUnit.Rows)var["n_ItemID"] = N_ItemID;
@@ -239,8 +246,6 @@ namespace SmartxAPI.Controllers
 
                     int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
                     dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID ="+ BaseUnitID  +" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
-                    int N_SalesUnit=0,N_PurchaseUnit=0;
-                    int i=0;
 
                     foreach (DataRow var in SalesUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
                     foreach (DataRow var in PurchaseUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;

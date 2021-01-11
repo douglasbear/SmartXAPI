@@ -66,6 +66,36 @@ namespace SmartxAPI.Controllers
             }
         }
 
+         [HttpGet("taxReportDescList")]
+        public ActionResult GetTaxReportDescList()
+        {
+            DataTable dt = new DataTable();
+
+            string sqlCommandText = "select * from Inv_TaxReportDescription ";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText,  connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(_api.Format(dt)));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         //List
         [HttpGet("listdetails")]
         public ActionResult GetAllTaxTypesDetails(int? nCompanyID, int? N_PkeyID)

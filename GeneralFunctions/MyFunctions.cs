@@ -493,7 +493,7 @@ namespace SmartxAPI.GeneralFunctions
                     else
                     {
 
-                        SecUserLevel = dLayer.ExecuteDataTable("SELECT TOP (1) N_FormID, N_TransID, Approved_User, N_ApprovalLevelId,D_ApprovedDate, N_BranchID, N_CompanyID, N_FnYearID, N_ProcStatus, N_UserID, N_IssaveDraft, N_NextApprovalLevelId, X_Status, N_CurrentApprover, N_NextApproverID FROM vw_ApprovalDashBoard WHERE (N_FormID = @nFormID ) AND (N_CompanyID = @nCompanyID) AND (N_TransID = @nTransID ) AND (N_NextApproverID = @loggedInUserID )", ApprovalParams, connection);
+                        SecUserLevel = dLayer.ExecuteDataTable("SELECT TOP (1) N_FormID, N_TransID, Approved_User, N_ApprovalLevelId,D_ApprovedDate, N_CompanyID, N_FnYearID, N_ProcStatus, N_UserID, N_IssaveDraft, N_NextApprovalLevelId, X_Status, N_CurrentApprover, N_NextApproverID FROM vw_ApprovalDashBoard WHERE (N_FormID = @nFormID ) AND (N_CompanyID = @nCompanyID) AND (N_TransID = @nTransID ) AND (N_NextApproverID = @loggedInUserID )", ApprovalParams, connection);
                         if (SecUserLevel.Rows.Count > 0)
                         {
                             DataRow Drow = SecUserLevel.Rows[0];
@@ -769,7 +769,7 @@ namespace SmartxAPI.GeneralFunctions
                 int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
                 string Toemail="";
-                object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID, Params, connection, transaction);
+                object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
                 Toemail=Email.ToString();
                 object CurrentStatus=dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID="+FormID+" and X_TransCode='"+TransCode+"' and N_TransID="+TransID+" and X_Type='"+TransType+"'", Params, connection, transaction);
                 object EmployeeName=dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID="+ nUserID+" and N_CompanyID=" + companyid , Params, connection, transaction);

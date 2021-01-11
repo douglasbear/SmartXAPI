@@ -48,9 +48,9 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     if (bShowAll)
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_Branchid = @p3";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 ";
                     else
-                        sqlCommandText = "select * from vw_App rovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 and N_Branchid = @p3";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_ReqUserID=@p2 ";
                     Params.Add("@p3", N_Branchid);
                 }
             }
@@ -69,9 +69,9 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     if (bShowAll)
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_Branchid = @p3";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 ";
                     else
-                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 and N_Branchid = @p3";
+                        sqlCommandText = "select * from vw_ApprovalPending where N_CompanyID=@p1 and N_NextApproverID=@p2 ";
                     Params.Add("@p3", N_Branchid);
                 }
     
@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6";
                 else
                 {
-                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 and N_Branchid = @p3";
+                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 ";
                     Params.Add("@p3", N_Branchid);
                 }
 
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
                     sqlCommandText = "select * from vw_ApprovalPastRqst where N_CompanyID=@p1 and N_ReqUserID=@p2 and N_ProcStatusID<>6";
                 else
                 {
-                    sqlCommandText = "select * from vw_ApprovalPastRqst where N_CompanyID=@p1 and N_ReqUserID=@p2 and N_ProcStatusID<>6 and N_Branchid = @p3";
+                    sqlCommandText = "select * from vw_ApprovalPastRqst where N_CompanyID=@p1 and N_ReqUserID=@p2 and N_ProcStatusID<>6 ";
                     Params.Add("@p3", N_Branchid);
                 }
 
@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
                     sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2";
                 else
                 {
-                    sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2 and N_Branchid = @p3";
+                    sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2 ";
                     Params.Add("@p3", N_Branchid);
                 }
 

@@ -119,6 +119,11 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = ex.Message.Substring(16, subString.IndexOf("'") + 1) + "' is not required or specified more than once";
                         break;
                     }
+                    if (ex.Message.Contains("Some accounts may not properly set. Please check the  Account Mapping !") == true)
+                    {
+                        Msg = "Some accounts may not properly set. Please check the  Account Mapping !";
+                        break;
+                    }
                     if (env.EnvironmentName == "Development")
                         Msg = ex.Message;
                     else
@@ -127,7 +132,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
 
-            return (new { type = "error", Message = ex.Message, Data = "" });
+            return (new { type = "error", Message = Msg, Data = "" });
 
 
         }
