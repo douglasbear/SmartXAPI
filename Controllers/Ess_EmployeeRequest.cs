@@ -215,6 +215,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID= myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Employee Request",xReqCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
                     }
 

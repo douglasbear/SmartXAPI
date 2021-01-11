@@ -234,6 +234,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_AnytimeRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Waive Request Approval updated" + "-" + x_RequestCode));
                     }
 
