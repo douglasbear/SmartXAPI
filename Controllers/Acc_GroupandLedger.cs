@@ -173,8 +173,8 @@ namespace SmartxAPI.Controllers
                         while (true)
                         {
                             count += 1;
-                            X_LedgerCode = LedgerCodeObj.ToString() + count.ToString("00");
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastLedger Where X_LedgerCode ='" + X_LedgerCode + "' and N_CompanyID= " + myCompanyID._CompanyID + " and N_FnYearID =" + myCompanyID._FnYearID, connection, transaction);
+                            X_LedgerCode = LedgerCodeObj.ToString() + count.ToString("000");
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastLedger Where X_LedgerCode ='" + X_LedgerCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
