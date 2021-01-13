@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Security.Claims;
+using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -14,11 +16,13 @@ namespace SmartxAPI.GeneralFunctions
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment env;
         private readonly IMyFunctions myFunctions;
-        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun)
+        private readonly string logPath;
+        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun, IConfiguration conf)
         {
             _mapper = mapper;
             env = envn;
             myFunctions = myFun;
+            logPath = conf.GetConnectionString("LogPath");
         }
 
         public object Response(int Code, string ResMessage)
@@ -131,8 +135,11 @@ namespace SmartxAPI.GeneralFunctions
                     break;
             }
 
-
-            return (new { type = "error", Message = ex.Message, Data = "" });
+            StringBuilder sb = new StringBuilder();
+            sb.Append(ex.Message);
+            File.AppendAllText(logPath+"log.txt", sb.ToString());
+            sb.Clear();
+            return (new { type = "error", Message = Msg, Data = "" });
 
 
         }
