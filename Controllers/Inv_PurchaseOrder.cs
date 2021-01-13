@@ -18,32 +18,47 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
+
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
+        private readonly int FormID;
 
 
-        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_PurchaseOrderController(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             api = _api;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-
+            FormID = 82;
         }
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
-            if(Count==0)
-                sqlCommandText = "select  top("+ nSizeperpage +") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and [Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_POrderID desc";
             else
-                sqlCommandText = "select  top("+ nSizeperpage +") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_POrderID not in(select top("+ Count +") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                xSortBy = " order by " + xSortBy;
+
+
+            if (Count == 0)
+                sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -56,8 +71,8 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -66,12 +81,12 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(api.Success(OutPut));
-                }     
-                  
+                }
+
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -94,11 +109,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@Type", type);
                     Params.Add("@CompanyID", nCompanyId);
                     Params.Add("@LocationID", nLocationID);
-                                    Params.Add("@PSize", PageSize);
-                Params.Add("@Offset", Page);
+                    Params.Add("@PSize", PageSize);
+                    Params.Add("@Offset", Page);
 
-                string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
-                string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
+                    // string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
+                    // string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
 
                     int N_POTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select ISNULL(N_TypeId,0) From Gen_Defaults Where X_TypeName=@Type and N_DefaultId=36", Params, connection).ToString());
                     X_VisibleFieldList = myFunctions.ReturnSettings("65", "Item Search List", "X_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection);
@@ -112,8 +127,8 @@ namespace SmartxAPI.Controllers
                         Feilds = "N_CompanyID,N_ItemID,[Item Class],B_Inactive,N_WarehouseID,N_BranchID,[Item Code],N_ItemTypeID";
                         X_Crieteria = "N_CompanyID=@CompanyID and B_Inactive=0 and [Item Code]<>'001' and ([Item Class]='Stock Item' Or [Item Class]='Non Stock Item' Or [Item Class]='Expense Item' Or [Item Class]='Assembly Item' ) and N_WarehouseID=@LocationID and N_ItemTypeID=1";
                     }
-                    
-                    sqlCommandText = "select "+Feilds+","+X_VisibleFieldList+" from vw_ItemDisplay where "+X_Crieteria + " Order by [Item Code]";
+
+                    sqlCommandText = "select " + Feilds + "," + X_VisibleFieldList + " from vw_ItemDisplay where " + X_Crieteria + " Order by [Item Code]";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
 
@@ -122,7 +137,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpGet("listDetails")]
@@ -166,8 +181,8 @@ namespace SmartxAPI.Controllers
                     int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
 
                     string DetailSql = "";
-                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer, connection);
-                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", dLayer, connection);
+                    bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
+                    bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection);
                     if (MaterailRequestVisible || PurchaseRequestVisible)
                     {
                         B_PRSVisible = true;
@@ -225,7 +240,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -239,8 +254,9 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
-
+int N_POrderID=0; var X_POrderNo="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -253,12 +269,12 @@ namespace SmartxAPI.Controllers
                     {
 
                     }
-                    var values = MasterTable.Rows[0]["x_POrderNo"].ToString();
+                    X_POrderNo = MasterTable.Rows[0]["x_POrderNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
-                    int N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-
+                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+                    int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
 
@@ -267,16 +283,15 @@ namespace SmartxAPI.Controllers
 
                     transaction = connection.BeginTransaction();
 
-                    if (values == "@Auto")
+                    if (X_POrderNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 80);
-                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
+                        Params.Add("N_FormID", this.FormID);
 
-                        PorderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
-                        if (PorderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
-                        MasterTable.Rows[0]["x_POrderNo"] = PorderNo;
+                        X_POrderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
+                        if (X_POrderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
+                        MasterTable.Rows[0]["x_POrderNo"] = X_POrderNo;
                     }
                     else
                     {
@@ -298,8 +313,8 @@ namespace SmartxAPI.Controllers
                         {
 
                             bool B_PRSVisible = false;
-                            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", dLayer, connection, transaction);
-                            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", dLayer, connection, transaction);
+                            bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection, transaction);
+                            bool PurchaseRequestVisible = myFunctions.CheckPermission(nCompanyId, 1049, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
                             if (MaterailRequestVisible || PurchaseRequestVisible)
                                 B_PRSVisible = true;
@@ -343,29 +358,54 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    int N_PurchaseOrderId = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
-                    if (N_PurchaseOrderId <= 0)
+                    N_POrderID = dLayer.SaveData("Inv_PurchaseOrder", "n_POrderID", MasterTable, connection, transaction);
+                    if (N_POrderID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Error"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_POrderID"] = N_PurchaseOrderId;
+                        DetailTable.Rows[j]["n_POrderID"] = N_POrderID;
                     }
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
+
+                    if (Attachment.Rows.Count > 0)
+                    {
+                        SortedList VendorParams = new SortedList();
+                        VendorParams.Add("@nVendorID", N_VendorID);
+                        string X_DMSMainFolder = "Vendor Document";
+                        DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
+                        if (VendorInfo.Rows.Count > 0)
+                        {
+                            string X_DMSSubFolder = this.FormID + "//" + VendorInfo.Rows[0]["X_VendorCode"].ToString() + "-" + VendorInfo.Rows[0]["X_VendorName"].ToString().Trim();
+                            string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, X_folderName, User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error("Error"));
+                            }
+                        }
+                    }
                     transaction.Commit();
                 }
-                return Ok(api.Success("Purchase Order Saved"));
+                SortedList Result = new SortedList();
+                Result.Add("n_POrderID",N_POrderID);
+                Result.Add("x_POrderNo",X_POrderNo);
+                return Ok(api.Success(Result,"Purchase Order Saved"));
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                return Ok(ex);
             }
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPOrderID)
+        public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -374,36 +414,77 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderID", nPOrderID, "", connection, transaction);
-                    if (Results <= 0)
+
+                    var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
+                    var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_POrderID=" + nPOrderID + " and B_IsSaveDraft = 0", connection, transaction);
+                    if (objPurchaseProcessed == null)
+                        objPurchaseProcessed = 0;
+
+                    if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) == 0)
                     {
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to delete PurchaseOrder"));
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","PURCHASE ORDER"},
+                                {"N_VoucherID",nPOrderID},
+                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"},
+                                {"N_BranchID",nBranchID}};
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to delete Purchase Order"));
+                        }
+                        else
+                        {
+                            transaction.Commit();
+                            return Ok(api.Success("Purchase Order deleted"));
+
+                        }
                     }
                     else
                     {
-                        Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
-                    }
-
-
-                    if (Results > 0)
-                    {
-                        transaction.Commit();
-                        return Ok(api.Success("PurchaseOrder deleted"));
-                    }
-                    else
-                    {
                         transaction.Rollback();
+                        if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
+                            return Ok(api.Error("Purchase invoice processed! Unable to delete"));
+                        else
+                            return Ok(api.Error("Unable to delete!"));
+
                     }
+
+                    //     Results = dLayer.DeleteData("Inv_PurchaseOrderDetails", "n_POrderID", nPOrderID, "", connection, transaction);
+                    //     if (Results <= 0)
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(api.Error("Unable to delete PurchaseOrder"));
+                    //     }
+                    //     else
+                    //     {
+                    //         Results = dLayer.DeleteData("Inv_PurchaseOrder", "n_POrderID", nPOrderID, "", connection, transaction);
+                    //     }
+
+
+                    //     if (Results > 0)
+                    //     {
+                    //         transaction.Commit();
+                    //         return Ok(api.Success("PurchaseOrder deleted"));
+                    //     }
+                    //     else
+                    //     {
+                    //         transaction.Rollback();
+                    //     }
+                    // }
+
+                    // return Ok(api.Error("Unable to Delete PurchaseOrder"));
+
+
                 }
-
-                return Ok(api.Error("Unable to Delete PurchaseOrder"));
-
-
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
 
 

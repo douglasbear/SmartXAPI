@@ -34,19 +34,27 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult LeadList(int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult LeadList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMLeads where N_CompanyID=@p1  ";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and x_lead like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_LeadID desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMLeads where N_CompanyID=@p1 and N_LeadID not in (select top("+ Count +") N_LeadID from vw_CRMLeads where N_CompanyID=@p1 )";
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMLeads where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMLeads where N_CompanyID=@p1 " + Searchkey + " and N_LeadID not in (select top(" + Count + ") N_LeadID from vw_CRMLeads where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -57,7 +65,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_CRMLeads where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -73,11 +81,11 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -86,7 +94,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRMLeads where N_CompanyID=@p1 and X_LeadCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xLeadNo);
@@ -95,7 +103,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -109,7 +117,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -161,18 +169,146 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
-      
+
+
+        [HttpPost("convertLead")]
+        public ActionResult ConvertLead([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                bool CreateCustomer = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewCustomer"].ToString());
+                bool CreateContact = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewContact"].ToString());
+                bool CreateProject = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewProject"].ToString());
+                int n_LeadID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LeadID"].ToString());
+                int n_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nCustomerID = 0, nContactId = 0, nProjectID = 0;
+                string CustomerSql = "", ContactSql = "", ProjectSql = "";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    DataTable CustomerTbl, ContactTbl, ProjectTbl, OprTbl;
+                    Params.Add("@nLeadID", n_LeadID);
+                    if (CreateCustomer == true)
+                    {
+                        CustomerSql = "select 0 as 'N_CustomerID',0 as 'X_CustomerCode',X_Company as X_Customer,X_Phone2 as X_Phone,X_Fax,X_Website,X_State,X_Street,X_City,N_CountryID,N_CompanyId,N_FnYearId,N_EmployeesCount as X_Employee,N_AnnRevenue From CRM_Leads where N_LeadID=@nLeadID";
+                        CustomerTbl = dLayer.ExecuteDataTable(CustomerSql, Params, connection, transaction);
+                        if (CustomerTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Customer ")); }
+
+                        SortedList CustParams = new SortedList();
+                        CustParams.Add("N_CompanyID", nCompanyID);
+                        CustParams.Add("N_YearID", n_FnYearID);
+                        CustParams.Add("N_FormID", 1306);
+                        string CustCode = dLayer.GetAutoNumber("CRM_Customer", "X_CustomerCode", CustParams, connection, transaction);
+                        if (CustCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Customer ")); }
+
+                        CustomerTbl.Rows[0]["X_CustomerCode"] = CustCode;
+                        nCustomerID = dLayer.SaveData("CRM_Customer", "n_CustomerID", CustomerTbl, connection, transaction);
+                        if (nCustomerID <= 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Customer ")); }
+
+                    }
+                    else
+                    {
+                        nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerID"].ToString());
+                    }
+                    if (CreateContact == true)
+                    {
+                        ContactSql = "select N_CompanyID,N_FnYearId,0 as 'N_ContactID',0 as 'X_ContactCode',X_ContactName as 'X_Contact',X_Title,X_Email,X_Phone1 as 'X_Phone' From CRM_Leads where N_LeadID=@nLeadID";
+                        ContactTbl = dLayer.ExecuteDataTable(ContactSql, Params, connection, transaction);
+                        if (ContactTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Contact")); }
+
+                        SortedList ContactParams = new SortedList();
+                        ContactParams.Add("N_CompanyID", nCompanyID);
+                        ContactParams.Add("N_YearID", n_FnYearID);
+                        ContactParams.Add("N_FormID", 1308);
+                        string ContactCode = dLayer.GetAutoNumber("CRM_Contact", "X_ContactCode", ContactParams, connection, transaction);
+                        if (ContactCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Contact")); }
+
+                        ContactTbl.Rows[0]["X_ContactCode"] = ContactCode;
+                        nContactId = dLayer.SaveData("CRM_Contact", "n_ContactID", ContactTbl, connection, transaction);
+                        if (nContactId <= 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Contact")); }
+                    }
+                    else
+                    {
+                        nContactId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ContactID"].ToString());
+                    }
+                    if (CreateProject == true)
+                    {
+                        ProjectSql = "select N_CompanyID,N_FnYearId,0 as 'N_ProjectID',0 as 'X_ProjectCode',X_ProjectName,X_ProjectLocation as 'X_Location',X_ProjectDescription as 'X_Description' From CRM_Leads where N_LeadID=@nLeadID";
+                        ProjectTbl = dLayer.ExecuteDataTable(ProjectSql, Params, connection, transaction);
+                        if (ProjectTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Project")); }
+
+                        SortedList ProjectParams = new SortedList();
+                        ProjectParams.Add("N_CompanyID", nCompanyID);
+                        ProjectParams.Add("N_YearID", n_FnYearID);
+                        ProjectParams.Add("N_FormID", 1303);
+                        string ProjectCode = dLayer.GetAutoNumber("CRM_Project", "X_ProjectCode", ProjectParams, connection, transaction);
+                        if (ProjectCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Project")); }
+
+                        ProjectTbl.Rows[0]["X_ProjectCode"] = ProjectCode;
+                        nProjectID = dLayer.SaveData("CRM_Project", "n_ProjectID", ProjectTbl, connection, transaction);
+                        if (nProjectID <= 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Project")); }
+                    }
+                    else
+                    {
+                        nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ProjectID"].ToString());
+                    }
+
+                    // Auto Gen
+                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID' From CRM_Leads where N_LeadID=@nLeadID";
+                    OprTbl = dLayer.ExecuteDataTable(OprSql, Params, connection, transaction);
+                    if (OprTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Opportunity")); }
+                    string OpportunityCode = "";
+                    SortedList OprParams = new SortedList();
+                    OprParams.Add("N_CompanyID", nCompanyID);
+                    OprParams.Add("N_YearID", n_FnYearID);
+                    OprParams.Add("N_FormID", 1302);
+                    OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", OprParams, connection, transaction);
+                    if (OpportunityCode == "") { return Ok(api.Error("Unable to Create Opportunity")); }
+                    OprTbl.Rows[0]["X_OpportunityCode"] = OpportunityCode;
+                    OprTbl.Rows[0]["N_CustomerID"] = nCustomerID;
+                    OprTbl.Rows[0]["N_ContactID"] = nContactId;
+                    OprTbl.Rows[0]["N_ProjectID"] = nProjectID;
+                    OprTbl.AcceptChanges();
+
+
+                    int nOpportunityID = dLayer.SaveData("CRM_Opportunity", "n_OpportunityID", OprTbl, connection, transaction);
+                    if (nOpportunityID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to Create Opportunity"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        SortedList output=new SortedList(){{"x_OpportunityCode",OpportunityCode},{"n_OpportunityID",nOpportunityID}};
+                        return Ok(api.Success(output,"Opportunity Created"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
+
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nLeadID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -183,9 +319,9 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_LeadID",nLeadID.ToString());
-                    return Ok(api.Success(res,"Lead deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_LeadID", nLeadID.ToString());
+                    return Ok(api.Success(res, "Lead deleted"));
                 }
                 else
                 {

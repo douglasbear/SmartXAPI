@@ -57,27 +57,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("ml-datasetold")]
-        public ActionResult GetControllsList()
-        {
-            try
-            {
-                var LanguageList = _repository.GetControllsListAsync();
-                if (!LanguageList.Any())
-                {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
-                }
-                else
-                {
-                    return Ok(LanguageList);
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.Error(e));
-            }
-        }
-
 
         [HttpGet("ml-dataset")]
         public ActionResult GetControllsListnew(int nLangId)
@@ -112,7 +91,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
     }

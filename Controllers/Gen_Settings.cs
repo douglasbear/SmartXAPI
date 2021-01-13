@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -112,9 +112,34 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
+
+ [HttpGet("checkScreenAccess")]
+        public ActionResult GetFormAccess(int nFormID)
+        {
+            bool Allowed=false;
+            SortedList Out =new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Allowed = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), nFormID, myFunctions.GetUserCategory(User).ToString(),"N_UserCategoryID", dLayer, connection);
+                    Out.Add("Allowed",Allowed);
+                    Out.Add("FormID",nFormID);
+                    return Ok(_api.Success(Out));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+        }
+       
 
 
 
@@ -152,10 +177,14 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
 
         }
+
+
+
+        
 
 
 

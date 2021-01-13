@@ -55,9 +55,17 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = dataSet });
         }
+        public object Success(string[] json)
+        {
+            return (new { type = "success", Message = "null", Data = json });
+        }
         public object Success(SortedList result)
         {
             return (new { type = "success", Message = "null", Data = result });
+        }
+        public object Success(SortedList result,String message)
+        {
+            return (new { type = "success", Message = message, Data = result });
         }
         public object Success(DataSet dataSet, String message)
         {
@@ -111,6 +119,11 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = ex.Message.Substring(16, subString.IndexOf("'") + 1) + "' is not required or specified more than once";
                         break;
                     }
+                    if (ex.Message.Contains("Some accounts may not properly set. Please check the  Account Mapping !") == true)
+                    {
+                        Msg = "Some accounts may not properly set. Please check the  Account Mapping !";
+                        break;
+                    }
                     if (env.EnvironmentName == "Development")
                         Msg = ex.Message;
                     else
@@ -119,7 +132,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
 
-            return (new { type = "error", Message = ex.Message, Data = "" });
+            return (new { type = "error", Message = Msg, Data = "" });
 
 
         }
@@ -188,7 +201,9 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(Dictionary<string, string> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary);
         public object Success(SortedList data);
+        public object Success(SortedList result,String message);
         public object Success(DataSet dataSet);
+        public object Success(string[] json);
         public object Success(string message);
         public object Success(DataSet dataSet, String message);
         public object Success(DataRow dataRow, String message);

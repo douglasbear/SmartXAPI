@@ -64,38 +64,38 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    if (nVendorId > 0)
+
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
                     {
-                        bool B_IsUsed = false;
-                        object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params,connection);
-                        if (objIsUsed != null)
-                            if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
-                                B_IsUsed = true;
-                        myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
-
-                        object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params,connection);
-                        if (objUsedCount != null)
-                            myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
+                        return Ok(_api.Warning("No Results Found"));
                     }
-
-                    if (msg == "")
-                        return Ok(_api.Success(dt));
                     else
-                        return Ok(_api.Success(dt, msg));
-                }
+                    {
+                        if (nVendorId > 0)
+                        {
+                            bool B_IsUsed = false;
+                            object objIsUsed = dLayer.ExecuteScalar("Select count(*) From Acc_VoucherDetails where N_AccID=@nVendorID and N_AccType=1", Params, connection);
+                            if (objIsUsed != null)
+                                if (myFunctions.getIntVAL(objIsUsed.ToString()) > 0)
+                                    B_IsUsed = true;
+                            myFunctions.AddNewColumnToDataTable(dt, "B_IsUsed", typeof(Boolean), B_IsUsed);
+
+                            object objUsedCount = dLayer.ExecuteScalar("Select Count(*) from vw_Inv_CheckVendor Where N_CompanyID=@nCompanyID and N_VendorID=@nVendorID", Params, connection);
+                            if (objUsedCount != null)
+                                myFunctions.AddNewColumnToDataTable(dt, "N_UsedCount", typeof(int), myFunctions.getIntVAL(objUsedCount.ToString()));
+                        }
+
+                        if (msg == "")
+                            return Ok(_api.Success(dt));
+                        else
+                            return Ok(_api.Success(dt, msg));
+                    }
                 }
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -129,21 +129,21 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
+
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
                         return Ok(_api.Success(dt));
-                }
+                    }
                 }
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -187,16 +187,9 @@ namespace SmartxAPI.Controllers
                         if (VendorCode == "") { return Ok(_api.Error("Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
-                    }
-
-                    MasterTable.Columns.Remove("n_VendorID");
-                    MasterTable.AcceptChanges();
-
-
-                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", nVendorID, MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + xVendorCode + "'";
+                    string X_Crieteria="N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID",DupCriteria,X_Crieteria, MasterTable, connection, transaction);
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
@@ -226,7 +219,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -255,10 +248,10 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                 }
                 if (Results > 0)
-                {                    
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("n_VendorID",nVendorID.ToString());
-                    return Ok(_api.Success(res,"Vendor deleted"));
+                {
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("n_VendorID", nVendorID.ToString());
+                    return Ok(_api.Success(res, "Vendor deleted"));
                 }
                 else
                 {
@@ -268,10 +261,47 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                if (ex.Message.Contains("REFERENCE constraint"))
+                    return Ok(_api.Error("Unable to delete vendor! It has been used."));
+                else
+                    return Ok(_api.Error(ex));
             }
 
 
         }
+  [HttpGet("details")]
+        public ActionResult ActivityListDetails(string xVendorCode,int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "Select * from vw_InvVendor Where N_CompanyID=@p1 and N_FnYearID=@nFnYearID and X_VendorCode=@xVendorCode";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@xVendorCode", xVendorCode);
+            Params.Add("@nFnYearID", nFnYearID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        
     }
 }

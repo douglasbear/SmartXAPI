@@ -14,10 +14,12 @@ using System.Net.Http;
 using System.IO;
 using System.Net;
 using System.Threading.Tasks;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("report")]
     [ApiController]
     public class ReportMenus : ControllerBase
@@ -46,10 +48,10 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID=@nUserCatID inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
+            string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID=@nUserCatID and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
             Params.Add("@nMenuId", nMenuId==0?318:nMenuId);
             Params.Add("@nLangId", nLangId);
-            Params.Add("@nUserCatID", 2);
+            Params.Add("@nUserCatID", myFunctions.GetUserCategory(User));
 
             try
             {
@@ -99,7 +101,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -160,7 +162,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -207,15 +209,189 @@ namespace SmartxAPI.Controllers
                 {
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                   
                 var client = new HttpClient(handler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation;//+ connectionString;
+                var random=RandomString();
+                var dbName = connection.Database;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName+"&random="+random;
                 var path = client.GetAsync(URL);
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim()  + random + ".pdf"}}));
+                }
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("getscreenprint")]
+        public  IActionResult GetModulePrint(int nFormID, int nPkeyID)
+        {
+            string RPTLocation=reportLocation;
+            string ReportName="";
+            string critiria="";
+            SortedList QueryParams = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    QueryParams.Add("@p1", nCompanyId);
+                    QueryParams.Add("@p2", nFormID);
+
+                    var handler = new HttpClientHandler
+                     {
+                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                     };
+                      if(nFormID==80)
+                    {
+                        critiria="{Inv_SalesQuotation.N_QuotationId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/quotation/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_Quatation";
+                    }
+                     if(nFormID==81)
+                    {
+                        critiria="{vw_InvSalesOrderDetails.N_SalesOrderId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/SalesOrder/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_order";
+                    }
+                   
+                    if(nFormID==64)
+                    {
+                        critiria="{Inv_Sales.N_SalesId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/salesinvoice/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="SalesInvoice";
+                    }
+                    if(nFormID==55)
+                    {
+                        critiria="{vw_InvSalesReturn_rpt.N_DebitNoteId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/SalesReturn/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_Return";
+                    }
+                    if(nFormID==66)
+                    {
+                        critiria="{vw_InvPartyBalance.N_AccType}=2 and {vw_InvCustomerPayment_rpt.N_PayReceiptId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="CustomerReceiptVoucher";
+                    }
+                    //Purchase Module
+                    if(nFormID==65)
+                    {
+                        critiria="{vw_InvPurchaseDetailsView_Rpt.N_PurchaseId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/PurchaseInvoice/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="PurchaseEntry_invoice";
+                    }
+                     if(nFormID==82)
+                    {
+                        critiria="{Inv_PurchaseOrder.N_POrderID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/PurchaseOrder/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Purchase_order";
+                    }
+                    if(nFormID==68)
+                    {
+                        critiria="{Inv_PurchaseReturnMaster.N_CreditNoteId}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/PurchaseReturn/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Purchase_Return";
+                    }
+                    if(nFormID==67)
+                    {
+                        critiria="{vw_InvVendorPayment_rpt.N_PayReceiptId}=1 and {vw_InvPartyBalance.N_AccType}=1="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="VendorPaymentVoucher";
+                    }
+                    //Finance Module
+                    if(nFormID==44)
+                    {
+                        critiria="{vw_AccVoucherJrnlCC.X_TransType}='PV' and {vw_AccVoucherJrnlCC.N_VoucherID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="PaymentVoucher_VAT";
+                    }
+                    if(nFormID==45)
+                    {
+                        critiria="{vw_AccVoucherJrnlCC.X_TransType}='RV' and {vw_AccVoucherJrnlCC.N_VoucherID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="ReceiptVoucher_VAT";
+                    }
+                    if(nFormID==46)
+                    {
+                        critiria="{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/";
+                        ReportName="JournalVoucher_VAT";
+                    }
+                    
+
+                var client = new HttpClient(handler);
+                var dbName = connection.Database;
+                var random=RandomString();
+                string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path="+reportPath + "&reportLocation=" + RPTLocation +"&dbval="+dbName +"&random="+random;
+                var path = client.GetAsync(URL);
+                path.Wait();
+                return Ok(_api.Success(new SortedList(){{"FileName",ReportName.Trim() + random + ".pdf"}}));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
             }
         }
 
@@ -227,17 +403,20 @@ namespace SmartxAPI.Controllers
 
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            int nCompanyID=myFunctions.GetCompanyID(User);
 
             try
             {
                 String Criteria = "";
                 String reportName = "";
+                var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
+                    int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
 
                     SortedList Params1 = new SortedList();
                     Params1.Add("@nMenuID", MenuID);
@@ -245,9 +424,11 @@ namespace SmartxAPI.Controllers
                     Params1.Add("@nCompID", ReportID);
 
                     
-                    reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params1, connection).ToString();
+                    reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
 
                     reportName = reportName.Substring(0,reportName.Length-4);
+
+
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -259,12 +440,32 @@ namespace SmartxAPI.Controllers
                         Params.Add("@nMenuID", MenuID);
                         Params.Add("@xType", type);
                         Params.Add("@nCompID", compID);
-                        string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+                        Params.Add("@xMain", "MainForm");
+                        string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();                    
+                        string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
+
+                        if(xFeild!="")
+                        {
                         if (type == "datepicker")
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
+                            if(xProCode!="")
+                            {
+                            SortedList mParamsList = new SortedList()
+                            {
+                            {"N_CompanyID",nCompanyID},
+                            {"N_FnYearID",FnYearID},
+                            {"N_PeriodID",0},
+                            {"X_Code",xProCode},
+                            {"X_Parameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
+                            {"N_UserID",2},
+                            {"N_BranchID",0}
+                            };
+                            dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+                        
+                        }
 
                             string DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
                             Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
@@ -273,9 +474,11 @@ namespace SmartxAPI.Controllers
                         {
                             Criteria = Criteria == "" ? xFeild + "='" + value + "' " : Criteria + " and " + xFeild + "='" + value + "' ";
                         }
+                        }
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
+                 dbName = connection.Database;
                 }
 
                 var handler = new HttpClientHandler
@@ -283,12 +486,13 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
+                var random=RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&con=&path="+reportPath ;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path="+ reportPath + "&reportLocation=" + reportLocation +"&dbval="+dbName+"&random="+random;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
-                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() + ".pdf"}}));
+                return Ok(_api.Success(new SortedList(){{"FileName",reportName.Trim() +random+ ".pdf"}}));
                 //string RptPath = reportPath + reportName.Trim() + ".pdf";
                 // var memory = new MemoryStream();
 
@@ -301,9 +505,17 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
+
+private static Random random = new Random();
+public string RandomString(int length=6)
+{
+    const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+    return new string(Enumerable.Repeat(chars, length)
+      .Select(s => s[random.Next(s.Length)]).ToArray());
+}
 
 
 

@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public Inv_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -87,7 +86,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -114,8 +113,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string CustomerCode = "";
-                    var values = MasterTable.Rows[0]["X_CustomerCode"].ToString();
-                    if (values == "@Auto")
+                 CustomerCode = MasterTable.Rows[0]["X_CustomerCode"].ToString();
+                    if (CustomerCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
@@ -125,15 +124,9 @@ namespace SmartxAPI.Controllers
                         if (CustomerCode == "") { return Ok(api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Inv_Customer", "n_CustomerID", nCustomerID, "", connection, transaction);
-                    }
-                    MasterTable.Columns.Remove("n_CustomerId");
-                    MasterTable.AcceptChanges();
-
-
-                    nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
+                    nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria,X_Criteria,MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
@@ -148,11 +141,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error("Can't Delete.Transaction For This customer Exist."));
             }
         }
 
-        [HttpGet("paymentmethod")]
+        [HttpGet("customerType")]
         public ActionResult GetPayMethod()
         {
             DataTable dt = new DataTable();
@@ -174,13 +167,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpGet("getdetails")]
@@ -214,7 +207,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpDelete("delete")]
@@ -260,6 +253,33 @@ namespace SmartxAPI.Controllers
 
 
 
+        }
+
+        [HttpGet("details")]
+        public ActionResult GetCustomerDetails(int nCustomerID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select * from vw_InvCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nCustomerID",nCustomerID);
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found" ));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }
+          
         }
     }
 }

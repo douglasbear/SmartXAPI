@@ -28,14 +28,13 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
-
+        [AllowAnonymous]
         [HttpGet("list")]
-        public ActionResult GetCountryList()
+        public ActionResult GetCountryList(int nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select X_CountryCode,X_CountryName,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1 order by N_CountryID";
+            string sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country  order by N_CountryID";
             Params.Add("@p1", nCompanyId);
 
             try
@@ -57,7 +56,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest( _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
 

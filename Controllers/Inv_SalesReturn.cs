@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -40,11 +40,20 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string sqlCommandCount="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_DebitNoteNo like '%" + xSearchkey + "%' or X_CustomerName like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_DebitNoteId desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DebitNoteId not in(select top("+ Count +")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DebitNoteId not in(select top("+ Count +")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -72,7 +81,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest( _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
         [HttpGet("listdetails")]
@@ -166,7 +175,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest( _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
 
@@ -190,6 +199,7 @@ namespace SmartxAPI.Controllers
                 DataRow masterRow = MasterTable.Rows[0];
                 var values = masterRow["X_DebitNoteNo"].ToString();
                 int UserID = myFunctions.GetUserID(User);
+                int N_InvoiceId=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -208,7 +218,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // dLayer.setTransaction();
-                    int N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
+                    N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
                     if (N_InvoiceId <= 0)
                     {
                         transaction.Rollback();
@@ -218,25 +228,18 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_DebitNoteId"] = N_InvoiceId;
                     }
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
-                    // if (N_InvoiceDetailId > 0)
-                    // {
-                    //     SortedList PostingParam = new SortedList();
-                    //     PostingParam.Add("N_CompanyID",N_CompanyID );
-                    //     PostingParam.Add("X_InventoryMode", "SALES RETURN");
-                    //     PostingParam.Add("N_InternalID", N_SalesID);
-                    //     PostingParam.Add("N_UserID", N_UserID);
-                    //     PostingParam.Add("X_SystemName", "ERP Cloud");
-
-                    //     dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
-                    // }
 
                     transaction.Commit();
                 }
-                return Ok(_api.Success("Sales Return Saved"));
+                 SortedList Result = new SortedList();
+                Result.Add("n_SalesReturnID",N_InvoiceId);
+                Result.Add("x_SalesReturnNo",InvoiceNo);
+                return Ok(_api.Success(Result,"Sales Return Saved"));
+
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                return Ok(ex);
             }
         }
         //Delete....
@@ -251,11 +254,19 @@ namespace SmartxAPI.Controllers
                 Params.Add("@N_CompanyId", nCompanyId);
 
                 Params.Add("@N_DebitNoteId", nDebitNoteId);
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nDebitNoteId +" and X_TransType='SALES RETURN'" , connection);
+                    if (objPaymentProcessed == null)
+                        objPaymentProcessed = 0;
+                        if(myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0 )
+                            dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                        else
+                            return Ok(_api.Error("Payment processed! Unable to delete"));
 
+                    
                 }
                 return Ok(_api.Success("Sales Return deleted"));
                 //return StatusCode(200, _api.Response(200, "Sales Return deleted"));
@@ -266,7 +277,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
         }
@@ -315,7 +326,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 

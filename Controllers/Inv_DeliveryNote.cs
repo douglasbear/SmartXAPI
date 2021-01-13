@@ -8,6 +8,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Security.Claims;
+using System.Text.RegularExpressions;
 
 namespace SmartxAPI.Controllers
 
@@ -30,17 +31,28 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetDeliveryNoteList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage)
+        public ActionResult GetDeliveryNoteList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string sqlCommandCount = "";
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_DeliveryNoteId desc";
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                xSortBy = " order by " + xSortBy;
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DeliveryNoteID not in (select top(" + Count + ") N_DeliveryNoteID from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -68,7 +80,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
         [HttpGet("details")]
@@ -121,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -161,8 +173,8 @@ namespace SmartxAPI.Controllers
                     //int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false;
-                    bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", dLayer, connection, transaction);
-                    bool B_SRS = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("729", "SRSinDeliveryNote", "N_Value",N_CompanyID,dLayer,connection,transaction)));
+                    bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator","X_UserCategory", dLayer, connection, transaction);
+                    bool B_SRS = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("729", "SRSinDeliveryNote", "N_Value", N_CompanyID, dLayer, connection, transaction)));
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nSalesID", N_DeliveryNoteID);
@@ -228,9 +240,7 @@ namespace SmartxAPI.Controllers
                             if (B_SRS)
                             {
                                 if (N_PRSID > 0)
-                                {
                                     dLayer.ExecuteNonQuery("update  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
-                                }
                             }
                             if (N_SalesOrderID > 0)
                                 dLayer.ExecuteNonQuery("update  Inv_SalesOrder set N_SalesID=" + N_DeliveryNoteID + ", N_Processed=1 where N_SalesOrderID=" + N_SalesOrderID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
@@ -278,9 +288,83 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
+        // private bool ValidateIMEIs(int row,DataSet ds,int nSalesID,string imeiFrom,string imeiTo,SortedList QueryParams,SqlConnection connection,SqlTransaction transaction)
+        // {
+        //     if (ds.Tables.Contains("ValidateIMEIs"))
+        //         ds.Tables.Remove("ValidateIMEIs");
+        //     if (nSalesID == 0)
+        //     {
+        //         if (Regex.Matches(imeiFrom, @"[a-zA-Z]").Count > 0)
+        //         dLayer.ExecuteScalar("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection, transaction);
+        //         ds.Tables["ValidateIMEIs"] = dLayer.ExecuteDataTable("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection);
+        //             dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialFrom) + "' and N_Status = 0 and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //         else
+        //             dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where ISNUMERIC(N_IMEI)>0  and convert(decimal(38),N_IMEI) between  " + flxSales.get_TextMatrix(row, mcSerialFrom) + " and  " + flxSales.get_TextMatrix(row, mcSerialTo) + " and N_Status = 0 and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //         if (ds.Tables["ValidateIMEIs"].Rows.Count != 0)
+        //         {
+        //             if (myFunctions.getLongIntVAL(ds.Tables["ValidateIMEIs"].Rows[0]["N_IMEICount"].ToString()) != myFunctions.getLongIntVAL(flxSales.get_TextMatrix(row, mcQuantity)))
+        //             {
+        //                 msg.msgInformation("Could not sale some items (Already sold out/Item not found) entered in row number " + row.ToString());
+        //                 return false;
+        //             }
+        //         }
+        //     }
+        //     else
+        //     {
+        //         if (Regex.Matches(imeiFrom, @"[a-zA-Z]").Count > 0)
+        //         {
+        //             if (imeiFrom != imeiTo)
+        //             {
+        //                 int N_Status = myFunctions.getIntVAL(dba.ExecuteSclar("Select N_Status from Inv_StockMaster_IMEI Where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialTo) + "' and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString());
+        //                 if (N_Status == 1)
+        //                 {
+        //                     msg.msgInformation("Could not sale some items (Already sold out/Item not found) entered in row number " + row.ToString());
+        //                     return false;
+        //                 }
+        //                 else
+        //                 {
+        //                     dba.FillDataSet(ref ds, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where N_IMEI='" + flxSales.get_TextMatrix(row, mcSerialFrom) + "' and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //                     if (ds.Tables["ValidateIMEIs"].Rows.Count != 0)
+        //                     {
+        //                         if (myFunctions.getLongIntVAL(ds.Tables["ValidateIMEIs"].Rows[0]["N_IMEICount"].ToString()) != myFunctions.getLongIntVAL(flxSales.get_TextMatrix(row, mcQuantity)))
+        //                         {
+        //                             msg.msgInformation("Could not sale some items (Already sold out/Item not found) entered in row number " + row.ToString());
+        //                             return false;
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         else
+        //         {
+        //             if (X_PrevImeito != myFunctions.getVAL(flxSales.get_TextMatrix(row, mcSerialTo)))
+        //             {
+        //                 int N_Status = myFunctions.getIntVAL(dba.ExecuteSclar("Select N_Status from Inv_StockMaster_IMEI Where N_IMEI ='" + flxSales.get_TextMatrix(row, mcSerialTo) + "' and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString());
+        //                 if (N_Status == 1)
+        //                 {
+        //                     msg.msgInformation("Could not sale some items (Already sold out/Item not found) entered in row number " + row.ToString());
+        //                     return false;
+        //                 }
+        //                 else
+        //                 {
+        //                     dba.FillDataSet(ref dsSales, "ValidateIMEIs", "select Isnull(Count(*),0) As N_IMEICount from Inv_StockMaster_IMEI where ISNUMERIC(N_IMEI)>0  and convert(decimal(38),N_IMEI) between  " + flxSales.get_TextMatrix(row, mcSerialFrom) + " and  " + flxSales.get_TextMatrix(row, mcSerialTo) + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
+        //                     if (dsSales.Tables["ValidateIMEIs"].Rows.Count != 0)
+        //                     {
+        //                         if (myFunctions.getLongIntVAL(dsSales.Tables["ValidateIMEIs"].Rows[0]["N_IMEICount"].ToString()) != myFunctions.getLongIntVAL(flxSales.get_TextMatrix(row, mcQuantity)))
+        //                         {
+        //                             msg.msgInformation("Could not sale some items (Already sold out/Item not found) entered in row number " + row.ToString());
+        //                             return false;
+        //                         }
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }         
+        //     return true;
+        // }
         //Delete....
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nDeliveryNoteID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID)
@@ -309,7 +393,7 @@ namespace SmartxAPI.Controllers
                                 {"@xTransType","DELIVERY"},
                                 {"@xSystemName","WebRequest"},
                                 {"@nDeliveryNoteID",nDeliveryNoteID},
-                                {"@nPartyID",nCustomerID},                                
+                                {"@nPartyID",nCustomerID},
                                 {"@nBranchID",nBranchID}};
 
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
@@ -320,7 +404,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);                        
+                        dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     }
                     //Attachment delete code here
 
@@ -330,7 +414,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 
@@ -379,7 +463,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
     }

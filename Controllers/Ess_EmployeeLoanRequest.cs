@@ -38,17 +38,33 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("loanList")]
-        public ActionResult GetEmployeeLoanRequest(string xReqType)
+        public ActionResult GetEmployeeLoanRequest(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            string sqlCommandCount = "";
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and N_LoanID like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_LoanID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " and N_LoanTransID not in (select top("+ Count +") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
@@ -59,19 +75,12 @@ namespace SmartxAPI.Controllers
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select * From vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_LoanIssueDate Desc";
-                        else
-                        if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select * from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_LoanIssueDate Desc ";
-                        else
-                            sqlCommandText = "Select * From vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_LoanIssueDate Desc";
-
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count From vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
                     }
-
-
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -86,7 +95,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -125,7 +134,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -153,9 +162,11 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 var dDateFrom = MasterRow["d_LoanPeriodFrom"].ToString();
+                var dLoanPeriodTo = MasterRow["d_LoanPeriodTo"].ToString();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
                 QueryParams.Add("@nEmpID", nEmpID);
+                int N_NextApproverID=0;
                 //QueryParams.Add("@nLoanTransID", nLoanTransID);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -174,6 +185,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_LoanIssue", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, N_PkeyID, xLoanID, 1,objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nLoanTransID,this.xTransType,xLoanID,dLayer,connection,transaction,User);
                         return Ok(api.Success("Loan Request Approved " + "-" + xLoanID));
                     }
 
@@ -195,6 +207,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        dLayer.DeleteData("Pay_LoanIssueDetails", "n_LoanTransID", nLoanTransID, "", connection, transaction);
                         dLayer.DeleteData("Pay_LoanIssue", "n_LoanTransID", nLoanTransID, "", connection, transaction);
                     }
 
@@ -214,7 +227,7 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, xLoanID,1, objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, this.xTransType, nLoanTransID, xLoanID,1, objEmpName.ToString(), 0, "",User, dLayer, connection, transaction);
 
                         DataTable dt = new DataTable();
                         dt.Clear();
@@ -226,6 +239,7 @@ namespace SmartxAPI.Controllers
                         dt.Columns.Add("N_InstAmount");
 
                         DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
+
 
                         for (int i = 1; i <= nInstNos; i++)
                         {
@@ -249,13 +263,14 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nLoanTransID,this.xTransType,xLoanID,dLayer,connection,transaction,User);
                     }
                     return Ok(api.Success("Loan request saved" + ":" + xLoanID));
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
@@ -305,7 +320,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
 
 
@@ -350,6 +365,51 @@ namespace SmartxAPI.Controllers
                     return false;
                 }
             return true;
+        }
+
+        [HttpGet("loanListAll")]
+        public ActionResult GetEmployeeAllLoanRequest(string xReqType)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nUserID", nUserID);
+            string sqlCommandText = "";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    if (nEmpID != null)
+                    {
+                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
+                        // QueryParams.Add("@xStatus", xReqType);
+                        sqlCommandText = "Select N_CompanyID,[Employee No],Name,Position,[Loan ID],[Loan Amount],N_LoanTransID,N_FnYearID,[Issue Date],N_PayTypeID,[Status],D_LoanIssueDate,B_OpeningBal,N_BranchID,N_NextApprovalID from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_LoanIssueDate Desc";
+
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    }
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
         }
 
 

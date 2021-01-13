@@ -52,17 +52,47 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(_api.Format(dt)));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
+            }
+        }
+
+         [HttpGet("taxReportDescList")]
+        public ActionResult GetTaxReportDescList()
+        {
+            DataTable dt = new DataTable();
+
+            string sqlCommandText = "select * from Inv_TaxReportDescription ";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText,  connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(_api.Format(dt)));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
             }
         }
 
@@ -86,17 +116,17 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -123,17 +153,17 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 852);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         CategoryCode = dLayer.GetAutoNumber("Acc_TaxCategory", "X_PkeyCode", Params, connection, transaction);
-                        if (CategoryCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Customer Code")); }
+                        if (CategoryCode == "") { return Ok( _api.Warning("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = CategoryCode;
 
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
-                    int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID", 0, MasterTable, connection, transaction);
+                    int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID", MasterTable, connection, transaction);
                     if (N_TaxCategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(404, _api.Response(404, "Unable to save"));
+                        return Ok(_api.Warning("Unable to save"));
                     }
                     else
                         transaction.Commit();
@@ -144,7 +174,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok( _api.Error(ex));
             }
         }
 
@@ -161,22 +191,47 @@ namespace SmartxAPI.Controllers
 
                     if (Results > 0)
                     {
-                        return StatusCode(200, _api.Response(200, "Tax category deleted"));
+                        return Ok(_api.Success( "Tax category deleted"));
                     }
                     else
                     {
-                        return StatusCode(409, _api.Response(409, "Unable to delete Tax category"));
+                        return Ok(_api.Error("Unable to delete Tax category"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 
         }
 
+        [HttpGet("taxType")]
+        public ActionResult GetTaxType()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1",nCompanyId);
+            string sqlCommandText = "Select * from Acc_TaxType where N_CompanyID=@p1";
+
+            try{
+                using(SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                    if (dt.Rows.Count==0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }else{
+                        return Ok(_api.Success(dt));
+                    }
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }
+        }
 
 
 
