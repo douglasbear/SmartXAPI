@@ -234,6 +234,10 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
+                    DataTable Attachements = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()),myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()),this.FormID,myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    Attachements = api.Format(Attachements, "attachments");
+                    
+                    dt.Tables.Add(Attachements);
                     dt.Tables.Add(DetailTable);
                 }
                 return Ok(api.Success(dt));

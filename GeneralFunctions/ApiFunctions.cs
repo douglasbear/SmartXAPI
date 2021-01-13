@@ -132,7 +132,7 @@ namespace SmartxAPI.GeneralFunctions
             }
 
 
-            return (new { type = "error", Message = Msg, Data = "" });
+            return (new { type = "error", Message = ex.Message, Data = "" });
 
 
         }
