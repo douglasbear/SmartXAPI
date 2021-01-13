@@ -280,7 +280,7 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 int n_PayReceiptID=0;
                 string PayReceiptNo = "";
-
+int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -334,6 +334,14 @@ namespace SmartxAPI.Controllers
 
                             // }
 
+                    //          if (B_PaymentDetails)
+                    // {
+
+                    //     dLayer.DeleteData("Inv_PurchasePaymentStatus", "N_PaymentID", n_PayReceiptID, "N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearID,connection,transaction);
+                    //     dLayer.DeleteData("Inv_PaymentDetails", "N_PaymentID", n_PayReceiptID, "N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearID,connection,transaction);
+
+                    // }
+
 
 
                         }
@@ -351,6 +359,18 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["n_PayReceiptID"] = n_PayReceiptID;
                     }
                     int n_PayReceiptDetailId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsID", DetailTable, connection, transaction);
+
+if(n_PayReceiptID>0)
+{
+    SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", x_Type);
+                            PostingParams.Add("N_InternalID", n_PayReceiptID);
+                            PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+
+}
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
