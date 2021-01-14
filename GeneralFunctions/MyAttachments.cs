@@ -16,9 +16,11 @@ namespace SmartxAPI.GeneralFunctions
     {
         private readonly IMyFunctions myFunctions;
         private readonly string reportPath;
+        private readonly IApiFunctions api;
         private readonly string startupPath;
-        public MyAttachments(IMyFunctions myFun, IConfiguration conf)
+        public MyAttachments(IApiFunctions apifun, IMyFunctions myFun, IConfiguration conf)
         {
+            api = apifun;
             myFunctions = myFun;
             reportPath = conf.GetConnectionString("ReportPath");
             startupPath = conf.GetConnectionString("StartupPath");
@@ -43,7 +45,7 @@ namespace SmartxAPI.GeneralFunctions
             if (dsAttachment.Rows.Count > 0)
             {
 
-                N_FolderID = DocFolderInsert(dLayer, xCompanyName + "//" + X_folderName + "//" + payCode + "//", 1, 0, FormID,User, connection, transaction);
+                N_FolderID = DocFolderInsert(dLayer, xCompanyName + "//" + X_folderName + "//" + payCode + "//", 1, 0, FormID, User, connection, transaction);
                 if (DocumentPath != "")
                 {
                     if (!Directory.Exists(DocumentPath + myCompanyID._DocumtFolder))
@@ -63,6 +65,7 @@ namespace SmartxAPI.GeneralFunctions
 
 
                         dsAttachment.Rows[i]["N_TransID"] = payId;
+                        dsAttachment.Rows[i]["N_PartyID"] = partyId;
                         // dLayer.SaveData(ref Result, "Inv_AttachmentCategory", "N_CategoryID", "0", "N_CompanyID,X_Category", nCompanyID + "|'" + dsAttachment.Rows[i]["X_Category"].ToString() + "'", "", "", "X_Category='" + dsAttachment.Rows[i]["X_Category"].ToString() + "'", "");
                         // Result = 0;
 
@@ -97,7 +100,7 @@ namespace SmartxAPI.GeneralFunctions
                         {
                             if (dsAttachment.Rows[i]["X_Category"].ToString() != "")
                             {
-                                N_FolderID = DocFolderInsert(dLayer, xCompanyName + "//" + X_folderName + "//" + payCode + "//" + dsAttachment.Rows[i]["X_Category"].ToString() + "//", 0, N_AttachmentID, FormID,User, connection, transaction);
+                                N_FolderID = DocFolderInsert(dLayer, xCompanyName + "//" + X_folderName + "//" + payCode + "//" + dsAttachment.Rows[i]["X_Category"].ToString() + "//", 0, N_AttachmentID, FormID, User, connection, transaction);
 
                             }
 
@@ -113,7 +116,7 @@ namespace SmartxAPI.GeneralFunctions
                                     };
                                     string fileCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate ", AutoParam, connection, transaction).ToString();
                                     string extension = System.IO.Path.GetExtension(dsAttachment.Rows[i]["X_File"].ToString());
-                                    CopyFiles(dLayer, dsAttachment.Rows[i]["X_File"].ToString(), dsAttachment.Rows[i]["X_Subject"].ToString(), N_FolderID, true, dsAttachment.Rows[i]["X_Category"].ToString(), dsAttachment.Rows[i]["FileData"].ToString(), s, fileCode, N_AttachmentID, FormID, ExpiryDate, N_remCategory, payId, partyId, 0,User, transaction, connection);
+                                    CopyFiles(dLayer, dsAttachment.Rows[i]["X_File"].ToString(), dsAttachment.Rows[i]["X_Subject"].ToString(), N_FolderID, true, dsAttachment.Rows[i]["X_Category"].ToString(), dsAttachment.Rows[i]["FileData"].ToString(), s, fileCode, N_AttachmentID, FormID, ExpiryDate, N_remCategory, payId, partyId, 0, User, transaction, connection);
                                     dsAttachment.Rows[i]["X_refName"] = s + fileCode + extension;
                                 }
                                 catch (Exception ex)
@@ -139,7 +142,8 @@ namespace SmartxAPI.GeneralFunctions
                                 }
                             }
                         }
-                        string FieldList = "";
+
+                         string FieldList = "";
                         string FieldValues = "";
                         if (FormID == 113)
                         {
@@ -166,14 +170,16 @@ namespace SmartxAPI.GeneralFunctions
                             }
 
                         }
-                        else
+                    }
+                       
+                        if (FormID != 113)
                         {
                             if (ExpiryDate == "")
                             {
-                            dsAttachment.Columns.Remove("D_ExpiryDate");
-                            dsAttachment.Columns.Remove("N_RemCategoryID");
- }
-                          dsAttachment.Columns.Remove("FileData");
+                                dsAttachment.Columns.Remove("D_ExpiryDate");
+                                dsAttachment.Columns.Remove("N_RemCategoryID");
+                            }
+                            dsAttachment.Columns.Remove("FileData");
                             dsAttachment.Columns.Remove("x_RemCategory");
                             dsAttachment.Columns.Remove("x_Category");
                             dsAttachment.AcceptChanges();
@@ -183,7 +189,7 @@ namespace SmartxAPI.GeneralFunctions
 
                             }
                         }
-                    }
+                    
                 }
 
             }
@@ -191,7 +197,7 @@ namespace SmartxAPI.GeneralFunctions
 
 
 
-        private int DocFolderInsert(IDataAccessLayer dLayer, string Path, int type, int AttachID, int FormID,ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
+        private int DocFolderInsert(IDataAccessLayer dLayer, string Path, int type, int AttachID, int FormID, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
         {
             int i = 0, k = 0, pid = 0;
             string x_path = "";
@@ -204,7 +210,7 @@ namespace SmartxAPI.GeneralFunctions
                 object N_Result = dLayer.ExecuteScalar("Select 1 from DMS_MasterFolder Where X_Path ='" + x_path + "' and X_Name='" + subFolders[i] + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                 if (N_Result == null)
                 {
-                    pid = InsertFolder(dLayer, subFolders[i], pid, x_path, type, AttachID, FormID,User, connection, transaction);
+                    pid = InsertFolder(dLayer, subFolders[i], pid, x_path, type, AttachID, FormID, User, connection, transaction);
                     x_path = x_path + subFolders[i] + "//";
                 }
                 else
@@ -220,7 +226,7 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        private int InsertFolder(IDataAccessLayer dLayer, string Name, int ParentID, string Path, int foldertype, int attID, int fId,ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
+        private int InsertFolder(IDataAccessLayer dLayer, string Name, int ParentID, string Path, int foldertype, int attID, int fId, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
         {
             int N_GroupID = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -237,7 +243,7 @@ namespace SmartxAPI.GeneralFunctions
             DMS_MasterFolder = myFunctions.AddNewColumnToDataTable(DMS_MasterFolder, "N_FormID", typeof(int), fId);
             DMS_MasterFolder = myFunctions.AddNewColumnToDataTable(DMS_MasterFolder, "N_FolderID", typeof(int), N_GroupID);
             DMS_MasterFolder.Rows.Add();
-DMS_MasterFolder.AcceptChanges();
+            DMS_MasterFolder.AcceptChanges();
             try
             {
                 object Result = 0;
@@ -261,7 +267,7 @@ DMS_MasterFolder.AcceptChanges();
             }
         }
 
-        public void CopyFiles(IDataAccessLayer dLayer, string filename, string subject, int folderId, bool overwriteexisting, string category, string fileData, string destpath, string filecode, int attachID, int FormID, string strExpireDate, int remCategoryId, int transId, int partyID, int settingsId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
+        public void CopyFiles(IDataAccessLayer dLayer, string filename, string subject, int folderId, bool overwriteexisting, string category, string fileData, string destpath, string filecode, int attachID, int FormID, string strExpireDate, int remCategoryId, int transId, int partyID, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         {
             try
             {
@@ -281,7 +287,7 @@ DMS_MasterFolder.AcceptChanges();
                 if (strExpireDate != "")
                 {
                     dLayer.ExecuteNonQuery("insert into DMS_MasterFiles(N_CompanyID,N_FileID,X_FileCode,X_Name,X_Title,X_Contents,N_FolderID,N_UserID,X_refName,N_AttachmentID,N_FormID,D_ExpiryDate,N_CategoryID,N_TransID)values(" + nCompanyID + "," + FileID + ",'" + filecode + "','" + filename + "','" + category + "','" + subject + "'," + folderId + "," + nUserID + ",'" + refname + "'," + attachID + "," + FormID + ",'" + dtExpire.ToString("dd/MMM/yyyy") + "'," + remCategoryId + "," + transId + ")", connection, transaction);
-                    int ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId,User, transaction, connection);
+                    int ReminderId = ReminderSave(dLayer, FormID, partyID, strExpireDate, subject, filename, remCategoryId, 1, settingsId, User, transaction, connection);
                     dLayer.ExecuteNonQuery("update DMS_MasterFiles set N_ReminderID=" + ReminderId + " where N_FileID=" + FileID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                 }
                 else
@@ -301,7 +307,7 @@ DMS_MasterFolder.AcceptChanges();
 
         }
 
-        public int ReminderSave(IDataAccessLayer dLayer, int N_FormID, int partyId, string dateval, string strSubject, string Title, int CategoryID, int Isattachment, int settingsId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
+        public int ReminderSave(IDataAccessLayer dLayer, int N_FormID, int partyId, string dateval, string strSubject, string Title, int CategoryID, int Isattachment, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         {
             string FieldList = "";
             string FieldValues = "";
@@ -338,9 +344,9 @@ DMS_MasterFolder.AcceptChanges();
         }
 
 
-        public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID ,int FnYearID,ClaimsPrincipal User,SqlConnection connection)
+        public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID, int FnYearID, ClaimsPrincipal User, SqlConnection connection)
         {
-                                                SortedList AttachmentParam = new SortedList(){
+            SortedList AttachmentParam = new SortedList(){
                                     {"PartyID", PartyId},
                                     {"PayID", TransID},
                                     {"FormID", FormID},
@@ -348,8 +354,21 @@ DMS_MasterFolder.AcceptChanges();
                                     {"FnyearID",FnYearID}
                                     };
 
-            return dLayer.ExecuteDataTablePro( "SP_VendorAttachments",AttachmentParam,connection);
-    
+            DataTable ImageData = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection);
+            ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "FileData", typeof(string), null);
+            foreach (DataRow var in ImageData.Rows)
+            {
+                if (var["x_refName"] != null)
+                {
+                    var path = var["x_refName"].ToString();
+                    Byte[] bytes = File.ReadAllBytes(path);
+                    var["FileData"] = "data:" + api.GetContentType(path) + ";base64,"  + Convert.ToBase64String(bytes);
+                }
+            }
+            ImageData.AcceptChanges();
+
+            return ImageData;
+
         }
 
 
@@ -362,7 +381,7 @@ DMS_MasterFolder.AcceptChanges();
     public interface IMyAttachments
     {
         public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_folderName, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction);
-        public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID ,int FnYearID,ClaimsPrincipal User,SqlConnection connection);
+        public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID, int FnYearID, ClaimsPrincipal User, SqlConnection connection);
 
     }
 }
