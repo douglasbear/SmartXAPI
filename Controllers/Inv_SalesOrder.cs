@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID,int nQuotationID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -97,6 +97,9 @@ namespace SmartxAPI.Controllers
             DataTable DataTable = new DataTable();
 
             string Mastersql = "";
+            if(nQuotationID>0)
+                 Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+
 
             if (bAllBranchData == true)
             {
@@ -111,6 +114,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@xOrderNo", xOrderNo);
+            Params.Add("@nQuotationID", nQuotationID);
             try
             {
 
