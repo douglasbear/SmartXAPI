@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID,string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, string xQuotationNo)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -97,10 +97,18 @@ namespace SmartxAPI.Controllers
             DataTable DataTable = new DataTable();
 
             string Mastersql = "";
+            Params.Add("@xQuotationNo",xQuotationNo);
 
             if (bAllBranchData == true)
             {
-                Mastersql = "SP_InvSalesOrder_Disp @nCompanyID,@xOrderNo,1,0,@nFnYearID";
+                if (xQuotationNo != null)
+                {
+                    Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where X_QuotationNo=@xQuotationNo and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                }
+                else
+                {
+                    Mastersql = "SP_InvSalesOrder_Disp @nCompanyID,@xOrderNo,1,0,@nFnYearID";
+                }
             }
             else
             {
@@ -200,12 +208,19 @@ namespace SmartxAPI.Controllers
 
 
                     string DetailSql = "";
-                    DetailSql = "SP_InvSalesOrderDtls_Disp @nCompanyID,@nSOrderID,@nFnYearID,1,@nLocationID";
                     SortedList NewParams = new SortedList();
+                    NewParams.Add("@xQuotationNo",xQuotationNo);
+                    if (xQuotationNo != null)
+                    {
+                        DetailSql = "select * from vw_Inv_SalesQuotationDetails_Disp where X_QuotationNo=@xQuotationNo and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID N_BranchID=@nBranchID and N_FnYearID=@nFnYearID";
+                    }
+                    else
+                    {
+                        DetailSql = "SP_InvSalesOrderDtls_Disp @nCompanyID,@nSOrderID,@nFnYearID,1,@nLocationID";
+                    }
                     NewParams.Add("@nLocationID", nLocationID);
                     NewParams.Add("@nFnYearID", nFnYearID);
                     NewParams.Add("@nCompanyID", nCompanyID);
-                    NewParams.Add("@nSOrderID", N_SOrderID);
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
