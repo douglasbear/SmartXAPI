@@ -97,9 +97,7 @@ namespace SmartxAPI.Controllers
             DataTable DataTable = new DataTable();
 
             string Mastersql = "";
-            if(nQuotationID>0)
-                 Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
-
+            string DetailSql = "";
 
             if (bAllBranchData == true)
             {
@@ -115,12 +113,30 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@xOrderNo", xOrderNo);
             Params.Add("@nQuotationID", nQuotationID);
+
+            
+
             try
             {
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    if(nQuotationID>0)
+                    {
+                        Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        DetailSql = "";
+                        DetailSql = "select * from vw_Inv_SalesQuotationDetails_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dt.Tables.Add(MasterTable);
+                        dt.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dt));
+                
+                    }
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -203,7 +219,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    string DetailSql = "";
+
                     DetailSql = "SP_InvSalesOrderDtls_Disp @nCompanyID,@nSOrderID,@nFnYearID,1,@nLocationID";
                     SortedList NewParams = new SortedList();
                     NewParams.Add("@nLocationID", nLocationID);
