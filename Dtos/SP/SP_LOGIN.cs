@@ -39,6 +39,7 @@ namespace SmartxAPI.Dtos.SP
         public bool B_AllBranchesData { get; set; }
         public int N_TaxType { get; set; }
         public string X_UserFullName { get; set; }
+        public string X_UserCategoryIDList { get; set; }
         [NotMapped]
         public string Token { get; set; }
         [NotMapped]
