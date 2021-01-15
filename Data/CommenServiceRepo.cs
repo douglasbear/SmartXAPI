@@ -172,8 +172,9 @@ namespace SmartxAPI.Data
                         object abc = dLayer.ExecuteScalar("Update Sec_User set X_Token='" + loginRes.RefreshToken + "' where N_UserID=" + loginRes.N_UserID + " and N_CompanyID=" + loginRes.N_CompanyID, connection);
                         if (loginRes.I_Logo != null)
                             loginRes.I_CompanyLogo = "data:image/png;base64," + Convert.ToBase64String(loginRes.I_Logo, 0, loginRes.I_Logo.Length);
+                        
                         var MenuList = _context.VwUserMenus
-                        .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                        .Where(VwUserMenus =>  loginRes.X_UserCategoryIDList.Contains(VwUserMenus.NUserCategoryId.ToString() ) && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
                         .OrderBy(VwUserMenus => VwUserMenus.NOrder)
                         .ToList();
                         var Menu = _mapper.Map<List<MenuDto>>(MenuList);
@@ -204,7 +205,7 @@ namespace SmartxAPI.Data
 
                     case "menu":
                         var RMenuList = _context.VwUserMenus
-                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                 .Where(VwUserMenus => loginRes.X_UserCategoryIDList.Contains(VwUserMenus.NUserCategoryId.ToString() ) && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
                  .OrderBy(VwUserMenus => VwUserMenus.NOrder)
                  .ToList();
                         var RMenu = _mapper.Map<List<MenuDto>>(RMenuList);
