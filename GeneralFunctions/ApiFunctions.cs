@@ -135,10 +135,10 @@ namespace SmartxAPI.GeneralFunctions
                     break;
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.Append(ex.Message);
-            File.AppendAllText(logPath+"log.txt", sb.ToString());
-            sb.Clear();
+            // StringBuilder sb = new StringBuilder();
+            // sb.Append(ex.Message);
+            // File.AppendAllText(logPath+"log.txt", sb.ToString());
+            // sb.Clear();
             return (new { type = "error", Message = Msg, Data = "" });
 
 
