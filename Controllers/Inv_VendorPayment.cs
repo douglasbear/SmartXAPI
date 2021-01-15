@@ -47,7 +47,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%"+ xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PayReceiptId desc";
+                xSortBy = " order by N_PayReceiptId,[Vendor Name] desc";
             else
                 xSortBy = " order by " + xSortBy;
 
