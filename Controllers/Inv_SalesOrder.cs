@@ -88,11 +88,8 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-<<<<<<< HEAD
         public ActionResult GetSalesOrderDetails(int? nCompanyID,string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, string xQuotationNo)
-=======
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID,int nQuotationID)
->>>>>>> b551efed1768aa1307bcf9a37429a3077351cefa
+        // public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID,int nQuotationID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -101,13 +98,10 @@ namespace SmartxAPI.Controllers
             DataTable DataTable = new DataTable();
 
             string Mastersql = "";
-<<<<<<< HEAD
             Params.Add("@xQuotationNo",xQuotationNo);
-=======
-            if(nQuotationID>0)
-                 Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+            // if(nQuotationID>0)
+            //      Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
 
->>>>>>> b551efed1768aa1307bcf9a37429a3077351cefa
 
             if (bAllBranchData == true)
             {
@@ -129,7 +123,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@xOrderNo", xOrderNo);
-            Params.Add("@nQuotationID", nQuotationID);
+            // Params.Add("@nQuotationID", nQuotationID);
             try
             {
 
