@@ -47,9 +47,17 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%"+ xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PayReceiptId,[Vendor Name] desc";
+                xSortBy = " order by N_PayReceiptId,[Vendor Name],Amount desc";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "vendorName" : xSortBy ="[Vendor Name] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
+                
 
             if(Count==0)
                  sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null " + Searchkey + " " + xSortBy;
