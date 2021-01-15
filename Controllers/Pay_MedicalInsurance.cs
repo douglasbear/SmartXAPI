@@ -21,6 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int FormID;
 
 
         public Pay_MedicalInsurance(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -29,6 +30,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            FormID = 1105;
         }
 
         [HttpGet("list")]
@@ -61,6 +63,107 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nInsuranceID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                string xInsuranceCode = MasterTable.Rows[0]["x_InsuranceCode"].ToString();
+
+                if(xInsuranceCode== "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+                        xInsuranceCode = dLayer.GetAutoNumber("Pay_Medical_Insurance", "x_InsuranceCode", Params, connection, transaction);
+                        if (xInsuranceCode == "") { return Ok(_api.Error("Unable to generate Insurance Code")); }
+                        MasterTable.Rows[0]["x_InsuranceCode"] = xInsuranceCode;
+                    }
+                    else
+                    {
+                        dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", nInsuranceID, "", connection, transaction);
+                        
+                    }
+                    MasterTable.Columns.Remove("n_FnYearID");
+                     
+                  nInsuranceID = dLayer.SaveData("Pay_Medical_Insurance", "n_MedicalInsID", MasterTable, connection, transaction);
+                    
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Medical Insurance Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+
+         [HttpDelete("delete")]
+        public ActionResult DeleteData(int InsuranceID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Results = dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", InsuranceID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok( _api.Success("Medical Insurances deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete "));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+        [HttpGet("details")]
+        public ActionResult GetDetails(int nMedicalInsID)
+        {
+            DataTable dt=new DataTable();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="select * from Pay_Medical_Insurance where N_CompanyID=@nCompanyID and N_MedicalInsID=@nMedicalInsID";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nMedicalInsID",nMedicalInsID);
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(_api.Notice("No Results Found" ));
+                        }else{
+                            return Ok(_api.Success(dt));
+                        }
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }
+        }
+
 
     }
 }
