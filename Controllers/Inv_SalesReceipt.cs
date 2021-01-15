@@ -437,6 +437,19 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["n_PayReceiptId"] = PayReceiptId;
                     }
                     int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsId", DetailTable, connection, transaction);
+
+                    if(PayReceiptId>0)
+{
+    SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", xType);
+                            PostingParams.Add("N_InternalID", PayReceiptId);
+                            PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+
+}
+
                     transaction.Commit();
                     if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { 
                     
