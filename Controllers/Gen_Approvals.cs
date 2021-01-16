@@ -194,5 +194,50 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
+
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
+                int N_NextApproverID = 0;
+
+
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
+                        int N_PkeyID = nRequestID;
+                        string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        string tableName=""
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+
+                        switch(ApprovalRow["n_FormID"].ToString()){
+                            case "80":X_Criteria=....
+                            tableName="Inv_Sale"
+                        }
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
+                    }
+
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
     }
 }
