@@ -217,14 +217,44 @@ namespace SmartxAPI.Controllers
                     
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
                     {
-                        int N_PkeyID = nRequestID;
-                        string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
-                        string tableName=""
+                        int N_PkeyID = myFunctions.getIntVAL(ApprovalRow["nRequestID"].ToString());
+                        int nCompanyID = myFunctions.getIntVAL(ApprovalRow["n_CompanyID"].ToString());
+                        int nFnYearID = myFunctions.getIntVAL(ApprovalRow["n_FnYearID"].ToString());
+                        // string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        string X_Criteria = "";
+                        string tableName="";
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
 
                         switch(ApprovalRow["n_FormID"].ToString()){
-                            case "80":X_Criteria=....
-                            tableName="Inv_Sale"
+                            case "82":
+                            X_Criteria="N_POrderID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_PurchaseOrder";
+                            break;
+                            case "65":
+                            X_Criteria="N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_Purchase";
+                            break;
+                            case "68":
+                            X_Criteria="N_CreditNoteId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_PurchaseReturnMaster";
+                            break;
+                            case "80":
+                            X_Criteria="N_QuotationId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_SalesQuotation";
+                            break;
+                            case "81":
+                            X_Criteria="N_SalesOrderId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_SalesOrder";
+                            break;
+                            case "64":
+                            X_Criteria="N_SalesId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_Sales";
+                            break;
+                            case "55":
+                            X_Criteria="N_DebitNoteId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_SalesReturnMaster";
+                            break;
+
                         }
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
