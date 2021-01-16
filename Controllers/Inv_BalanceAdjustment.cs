@@ -43,12 +43,23 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
+            
+
             // if (xSearchkey != null && xSearchkey.Trim() != "")
             //     Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%'";
 
             // if (xSortBy == null || xSortBy.Trim() == "")
             //     xSortBy = " order by  desc";
             // else
+            // {
+            //  switch (xSortBy.Split(" ")[0]){
+                //    case "AdjustmentDate" : xSortBy =" [Adjustment Date] " + xSortBy.Split(" ")[1] ;
+                //    break;
+                 // case "netAmount" : xSortBy =" [Net Amount] " + xSortBy.Split(" ")[1] ;
+                //    break;
+                //    default : break;
+              //  }
+               //}
             //     xSortBy = " order by " + xSortBy;
 
             int Count = (nPage - 1) * nSizeperpage;

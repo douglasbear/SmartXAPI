@@ -50,7 +50,17 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PayReceiptId desc";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+               
+                switch (xSortBy.Split(" ")[0]){
+                  
+                    case "CustomerName" : xSortBy ="[Customer Name] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                    }
+               xSortBy = " order by " + xSortBy;
+            }
+               
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and B_YearEndProcess =0   and (X_type='SR' OR X_type='SA') " + Searchkey + " " + xSortBy;

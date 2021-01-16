@@ -50,7 +50,17 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesOrderId desc";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    
+                    case "OrderNo" : xSortBy ="[Order No] " + xSortBy.Split(" ")[1] ;
+                    break;
+                   
+                    default : break;
+                }
+                 xSortBy = " order by " + xSortBy;
+            }
+               
 
 
             if (Count == 0)

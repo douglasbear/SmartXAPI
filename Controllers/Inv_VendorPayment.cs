@@ -55,6 +55,7 @@ namespace SmartxAPI.Controllers
                     break;
                     default : break;
                 }
+                
             xSortBy = " order by " + xSortBy;
             }
                 
