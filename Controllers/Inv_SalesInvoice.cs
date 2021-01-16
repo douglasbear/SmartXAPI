@@ -192,9 +192,6 @@ namespace SmartxAPI.Controllers
                         objPlateNo = dLayer.ExecuteScalar("Select X_PlateNumber from Inv_TruckMaster where N_TruckID=@nTruckID and N_companyID=@nCompanyID", QueryParamsList, Con);
                         if (objPlateNo != null)
                             masterTable.Rows[0]["X_PlateNo"] = objPlateNo.ToString();
-
-
-
                     }
 
                     if (masterTable.Rows[0]["X_TandC"].ToString() == "")

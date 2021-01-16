@@ -111,8 +111,6 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@xOrderNo", xOrderNo);
-            Params.Add("@nQuotationID", nQuotationID);
 
             
 
@@ -124,6 +122,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     if(nQuotationID>0)
                     {
+                        Params.Add("@nQuotationID", nQuotationID);
                         Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -137,6 +136,8 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dt));
                 
                     }
+                    
+                    Params.Add("@xOrderNo", xOrderNo);
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
