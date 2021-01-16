@@ -220,12 +220,13 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         string tableName=""
-                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-
+                        
                         switch(ApprovalRow["n_FormID"].ToString()){
                             case "80":X_Criteria=....
                             tableName="Inv_Sale"
                         }
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
                         return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
