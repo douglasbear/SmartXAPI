@@ -106,7 +106,8 @@ namespace SmartxAPI.Data
                 I_Logo = (byte [])dr["I_Logo"],
                 B_AllBranchesData = (bool)dr["B_AllBranchesData"],  
                 N_TaxType = myFunctions.getIntVAL(dr["N_TaxType"].ToString()) ,
-                X_UserFullName = dr["X_UserFullName"].ToString()
+                X_UserFullName = dr["X_UserFullName"].ToString(),
+                X_UserCategoryIDList =  dr["X_UserCategoryIDList"].ToString(),
             }).ToList()
             .FirstOrDefault();  
             
@@ -173,11 +174,42 @@ namespace SmartxAPI.Data
                         if (loginRes.I_Logo != null)
                             loginRes.I_CompanyLogo = "data:image/png;base64," + Convert.ToBase64String(loginRes.I_Logo, 0, loginRes.I_Logo.Length);
                         
-                        var MenuList = _context.VwUserMenus
-                        .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
-                        .OrderBy(VwUserMenus => VwUserMenus.NOrder)
-                        .ToList();
-                        var Menu = _mapper.Map<List<MenuDto>>(MenuList);
+                    //     var MenuList = _context.VwUserMenus
+                    //     // .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                    //   .Where(VwUserMenus => loginRes.X_UserCategoryIDList.Contains(VwUserMenus.NUserCategoryId.ToString() ) && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                 
+                    //     .OrderBy(VwUserMenus => VwUserMenus.NOrder)
+                    //     .ToList();
+
+                    string MenuSql ="select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,"+
+"N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline from VwUserMenus where N_UserCategoryId in ( "+ loginRes.X_UserCategoryIDList +" ) and  N_CompanyId="+loginRes.N_CompanyID+" and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,"+
+"B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline order by N_Order ";
+
+                        DataTable MenusDTB = dLayer.ExecuteDataTable(MenuSql,connection);
+
+    var Menu = (from DataRow dr in MenusDTB.Rows  
+                        select new MenuDto()  
+            {  
+        NMenuId = Convert .ToInt32 (dr["N_MenuId"]),
+         XMenuName = dr["X_MenuName"].ToString(),
+         XCaption = dr["X_Caption"].ToString(),
+         NParentMenuId = Convert .ToInt32 (dr["N_ParentMenuId"]), 
+         NOrder = Convert .ToInt32 (dr["N_Order"]), 
+         NHasChild = (bool) (dr["N_HasChild"]==System.DBNull.Value?false:dr["N_HasChild"]), 
+         BVisible = (bool) (dr["B_Visible"]==System.DBNull.Value?false:dr["B_Visible"]), 
+         BEdit = (bool)(dr["B_Edit"]==System.DBNull.Value?false:dr["B_Edit"]), 
+         BDelete = (bool)(dr["B_Delete"]==System.DBNull.Value?false:dr["B_Delete"]), 
+         BSave = (bool)(dr["B_Save"]==System.DBNull.Value?false:dr["B_Save"]), 
+         BView = (bool)(dr["B_View"]==System.DBNull.Value?false:dr["B_View"]), 
+         XShortcutKey = dr["X_ShortcutKey"].ToString(), 
+         XCaptionAr = dr["X_CaptionAr"].ToString(), 
+         XFormNameWithTag = dr["X_FormNameWithTag"].ToString(), 
+         NIsStartup = (bool)(dr["N_IsStartup"]==System.DBNull.Value?false:dr["N_IsStartup"]), 
+         BShow = (bool)(dr["B_Show"]==System.DBNull.Value?false:dr["B_Show"]), 
+         XRouteName = dr["X_RouteName"].ToString(), 
+         BShowOnline = (bool)(dr["B_ShowOnline"]==System.DBNull.Value?false:dr["B_ShowOnline"]), 
+            }).ToList(); 
+                       
 
                         List<MenuDto> PMList = new List<MenuDto>();
                         foreach (var ParentMenu in Menu.Where(y => y.NParentMenuId == 0).OrderBy(VwUserMenus => VwUserMenus.NOrder))
@@ -204,11 +236,38 @@ namespace SmartxAPI.Data
                         return (Company);
 
                     case "menu":
-                        var RMenuList = _context.VwUserMenus
-                 .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
-                        .OrderBy(VwUserMenus => VwUserMenus.NOrder)
-                 .ToList();
-                        var RMenu = _mapper.Map<List<MenuDto>>(RMenuList);
+                //         var RMenuList = _context.VwUserMenus
+                // .Where(VwUserMenus => loginRes.X_UserCategoryIDList.Contains(VwUserMenus.NUserCategoryId.ToString() ) && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                // //  .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
+                //         .OrderBy(VwUserMenus => VwUserMenus.NOrder)
+                //  .ToList();
+                string NewMenuSql ="select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,"+
+"N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline from VwUserMenus where N_UserCategoryId in ( "+ loginRes.X_UserCategoryIDList +" ) and  N_CompanyId="+loginRes.N_CompanyID+" and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,"+
+"B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline order by N_Order ";
+                DataTable MenusDT = dLayer.ExecuteDataTable(NewMenuSql,connection);
+                        
+                        var RMenu = (from DataRow dr in MenusDT.Rows  
+            select new MenuDto()  
+            {  
+        NMenuId = Convert .ToInt32 (dr["N_MenuId"]),
+         XMenuName = dr["X_MenuName"].ToString(),
+         XCaption = dr["X_Caption"].ToString(),
+         NParentMenuId = Convert .ToInt32 (dr["N_ParentMenuId"]), 
+         NOrder = Convert .ToInt32 (dr["N_Order"]), 
+         NHasChild = (bool) (dr["N_HasChild"]==System.DBNull.Value?false:dr["N_HasChild"]), 
+         BVisible = (bool) (dr["B_Visible"]==System.DBNull.Value?false:dr["B_Visible"]), 
+         BEdit = (bool)(dr["B_Edit"]==System.DBNull.Value?false:dr["B_Edit"]), 
+         BDelete = (bool)(dr["B_Delete"]==System.DBNull.Value?false:dr["B_Delete"]), 
+         BSave = (bool)(dr["B_Save"]==System.DBNull.Value?false:dr["B_Save"]), 
+         BView = (bool)(dr["B_View"]==System.DBNull.Value?false:dr["B_View"]), 
+         XShortcutKey = dr["X_ShortcutKey"].ToString(), 
+         XCaptionAr = dr["X_CaptionAr"].ToString(), 
+         XFormNameWithTag = dr["X_FormNameWithTag"].ToString(), 
+         NIsStartup = (bool)(dr["N_IsStartup"]==System.DBNull.Value?false:dr["N_IsStartup"]), 
+         BShow = (bool)(dr["B_Show"]==System.DBNull.Value?false:dr["B_Show"]), 
+         XRouteName = dr["X_RouteName"].ToString(), 
+         BShowOnline = (bool)(dr["B_ShowOnline"]==System.DBNull.Value?false:dr["B_ShowOnline"]), 
+            }).ToList();  
 
                         List<MenuDto> RPMList = new List<MenuDto>();
                         foreach (var ParentMenu in RMenu.Where(y => y.NParentMenuId == 0).OrderBy(y => y.NOrder))
