@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_PayReceiptId,[Vendor Name],Amount desc";
             else
             {
-                switch (xSortBy.Split(" ")[0]){
+                switch (xSortBy.Split(" ")[0]){ 
                     case "vendorName" : xSortBy ="[Vendor Name] " + xSortBy.Split(" ")[1] ;
                     break;
                     default : break;

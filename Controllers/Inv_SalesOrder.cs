@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             {
                 switch (xSortBy.Split(" ")[0]){
                     
-                    case "OrderNo" : xSortBy ="[Order No] " + xSortBy.Split(" ")[1] ;
+                    case "orderNo" : xSortBy ="[Order No] " + xSortBy.Split(" ")[1] ;
                     break;
                    
                     default : break;
