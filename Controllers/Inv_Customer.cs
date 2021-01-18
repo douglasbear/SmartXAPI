@@ -135,7 +135,8 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
+                        // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
+                        return Ok(api.Success("Customer Saved") );
                     }
                 }
             }
