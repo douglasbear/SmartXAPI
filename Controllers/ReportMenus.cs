@@ -355,7 +355,7 @@ namespace SmartxAPI.Controllers
                     }
                     if(nFormID==67)
                     {
-                        critiria="{vw_InvVendorPayment_rpt.N_PayReceiptId}=1 and {vw_InvPartyBalance.N_AccType}=1="+ nPkeyID;
+                        critiria="{vw_InvVendorPayment_rpt.N_PayReceiptId}="+ nPkeyID +" and {vw_InvPartyBalance.N_AccType}=1";
                         RPTLocation=reportLocation+"printing/";
                         ReportName="VendorPaymentVoucher";
                     }
