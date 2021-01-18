@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Can't Delete.Transaction For This customer Exist."));
+                return Ok(api.Error(ex));
             }
         }
 
