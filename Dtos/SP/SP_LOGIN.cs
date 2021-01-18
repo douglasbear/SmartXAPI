@@ -64,6 +64,8 @@ namespace SmartxAPI.Dtos.SP
         public string X_Position { get; set; }
          [NotMapped]
         public string X_EmpNameLocale { get; set; }
+        [NotMapped]
+        public int N_CountryID { get; set; }
 
 
     }
