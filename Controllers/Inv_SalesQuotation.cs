@@ -50,16 +50,16 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_QuotationId desc";
             else
-            {
-            switch (xSortBy.Split(" ")[0]){
+            
+            // switch (xSortBy.Split(" ")[0]){
                    
-                    case "QuotationDate" : xSortBy ="[Quotation Date] " + xSortBy.Split(" ")[1] ;
-                    break;
+            //         case "quotationDate" : xSortBy ="[Quotation Date] " + xSortBy.Split(" ")[1] ;
+            //         break;
                  
-                    default : break;
-                }
+            //         default : break;
+            //     }
                 xSortBy = " order by " + xSortBy;
-            }
+            
             if (Count == 0)
             
                 sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
