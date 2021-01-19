@@ -48,7 +48,10 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PurchaseID desc";
             else
-                xSortBy = " order by " + xSortBy;
+            
+              xSortBy = " order by " + xSortBy;  
+            
+                
 
             int Count= (nPage - 1) * nSizeperpage;
             if(Count==0)
