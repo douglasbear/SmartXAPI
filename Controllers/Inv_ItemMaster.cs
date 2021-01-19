@@ -101,8 +101,16 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID ASC,[Item Code] desc";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+              switch (xSortBy.Split(" ")[0]){ 
+                    case "itemClass" : xSortBy ="[Item Class] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+             xSortBy = " order by " + xSortBy;
 
+            }
+              
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
             else

@@ -50,7 +50,17 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesOrderId desc";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    
+                    case "orderNo" : xSortBy ="[Order No] " + xSortBy.Split(" ")[1] ;
+                    break;
+                   
+                    default : break;
+                }
+                 xSortBy = " order by " + xSortBy;
+            }
+               
 
 
             if (Count == 0)
@@ -68,7 +78,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

@@ -48,7 +48,10 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_DebitNoteId desc";
             else
-                xSortBy = " order by " + xSortBy;
+            
+             xSortBy = " order by " + xSortBy;
+     
+               
 
             if(Count==0)
                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
@@ -65,7 +68,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details",_api.Format(dt));
                     OutPut.Add("TotalCount",TotalCount);

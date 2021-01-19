@@ -95,6 +95,7 @@ namespace SmartxAPI.Data
                 X_UserCategory = dr["X_UserCategory"].ToString(),  
                 N_UserCategoryID = myFunctions.getIntVAL(dr["N_UserCategoryID"].ToString()) ,
                 X_Country = dr["X_Country"].ToString(),  
+                N_CountryID = Convert .ToInt32 (dr["N_CountryID"]),  
                 N_CurrencyID = myFunctions.getIntVAL(dr["N_CurrencyID"].ToString()) ,
                 D_LoginDate = Convert.ToDateTime(dr["D_LoginDate"].ToString()),
                 X_Language = dr["X_Language"].ToString(),  
@@ -129,6 +130,7 @@ namespace SmartxAPI.Data
 
                 loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1",Params, connection).ToString());
                     Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
+                
                 
                 DataTable EmplData= dLayer.ExecuteDataTable("SELECT Pay_Employee.N_EmpID, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName,Pay_Employee.X_EmpNameLocale, Sec_User.N_UserID, Pay_Position.X_Position, Pay_Position.N_PositionID FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Sec_User ON Pay_Employee.N_CompanyID = Sec_User.N_CompanyID AND Pay_Employee.N_EmpID = Sec_User.N_EmpID where Sec_User.N_CompanyID=@nCompanyID  and Sec_User.N_UserID=@nUserID",Params, connection);
                 if(EmplData.Rows.Count>0){

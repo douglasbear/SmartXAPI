@@ -52,7 +52,11 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_POrderID desc";
             else
-                xSortBy = " order by " + xSortBy;
+           
+             xSortBy = " order by " + xSortBy;
+
+          
+                
 
 
             if (Count == 0)

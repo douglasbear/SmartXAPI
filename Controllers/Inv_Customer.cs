@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Can't Delete.Transaction For This customer Exist."));
+                return Ok(api.Error(ex));
             }
         }
 
@@ -280,6 +280,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
           
+        }
+
+
+         [HttpGet("default")]
+        public ActionResult GetDefault(int nFnYearID,int nLangID,int nFormID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+
+                    DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "DEBTOR_ACCOUNT");
+
+                    QList.AcceptChanges();
+
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
+
+                        SortedList OutPut = new SortedList(){
+                            {"settings",api.Format(Details)}
+                        };
+                    return Ok(api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
         }
     }
 }
