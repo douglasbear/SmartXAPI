@@ -343,7 +343,7 @@ namespace SmartxAPI.GeneralFunctions
 
             if (nApprovalID == 0)
             {
-                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "")
+                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
                 {
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);

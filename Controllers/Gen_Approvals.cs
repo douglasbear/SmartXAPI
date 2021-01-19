@@ -123,6 +123,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
+                    // dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -192,6 +193,97 @@ namespace SmartxAPI.Controllers
             }catch(Exception e){
                 return Ok(api.Error(e));
             }   
+        }
+
+
+        [HttpPost("updateApproval")]
+        public ActionResult UpdateApproval([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
+                int N_NextApproverID = 0;
+
+string status="";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
+                        int N_PkeyID = myFunctions.getIntVAL(ApprovalRow["n_TransID"].ToString());
+                        int nCompanyID = myFunctions.getIntVAL(ApprovalRow["n_CompanyID"].ToString());
+                        int nFnYearID = myFunctions.getIntVAL(ApprovalRow["n_FnYearID"].ToString());
+                        string type = ApprovalRow["type"].ToString();
+                        // string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        string X_Criteria = "";
+                        string tableName="";
+                        
+                        switch(ApprovalRow["n_FormID"].ToString()){
+                            case "82":
+                            X_Criteria=" N_POrderID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_PurchaseOrder";
+                            break;
+                            case "65":
+                            X_Criteria=" N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_Purchase";
+                            break;
+                            case "68":
+                            X_Criteria=" N_CreditNoteId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_PurchaseReturnMaster";
+                            break;
+                            case "80":
+                            X_Criteria=" N_QuotationId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_SalesQuotation";
+                            break;
+                            case "81":
+                            X_Criteria=" N_SalesOrderId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_SalesOrder";
+                            break;
+                            case "64":
+                            X_Criteria=" N_SalesId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_Sales";
+                            break;
+                            case "55":
+                            X_Criteria=" N_DebitNoteId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                            tableName="Inv_SalesReturnMaster";
+                            break;
+                            default:
+                            return Ok(api.Error("Invalid Form"));
+                            
+
+                        }
+                        if(type=="approve")
+                        {myFunctions.UpdateApproverEntry(Approvals, tableName, X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        status="Approved";}
+                        else
+                        {
+                            string ButtonTag = ApprovalRow["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                     status = myFunctions.UpdateApprovals(Approvals, nFnYearID, ApprovalRow["x_EntryForm"].ToString(), N_PkeyID,ApprovalRow["x_TransCode"].ToString(), ProcStatus, tableName, X_Criteria, "", User, dLayer, connection, transaction);
+                   
+                        }
+
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, "", 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        
+                    }
+                    return Ok(api.Success(status));
+
+                    
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
         }
     }
 }
