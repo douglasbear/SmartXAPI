@@ -315,7 +315,8 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
 
                     DataTable QList = myFunctions.GetSettingsTable();
-                    QList.Rows.Add("DEFAULT_ACCOUNTS", "DEBTOR_ACCOUNT");
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "Creditor Account");
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "S Cash Account");
 
                     QList.AcceptChanges();
 
