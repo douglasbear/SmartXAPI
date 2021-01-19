@@ -302,6 +302,38 @@ namespace SmartxAPI.Controllers
             }
         }
 
+          [HttpGet("default")]
+        public ActionResult GetDefault(int nFnYearID,int nLangID,int nFormID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+
+                    DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "DEBTOR_ACCOUNT");
+
+                    QList.AcceptChanges();
+
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
+
+                        SortedList OutPut = new SortedList(){
+                            {"settings",_api.Format(Details)}
+                        };
+                    return Ok(_api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         
     }
 }
