@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo,int nSalesOrderID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo,int nSalesOrderID,int nDeliveryNoteId)
         {
 
             try
@@ -168,10 +168,27 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xTransType", "SALES");
+                    if(nDeliveryNoteId>0)
+                    {
+                        
+                        QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
+                        string Mastersql = "select * from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=@nDeliveryNoteID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        string DetailSql = "";
+                        DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteId=@nDeliveryNoteID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                
+                    }
                     if(nSalesOrderID>0)
                     {
                         
-                    QueryParamsList.Add("@nOrderID", nSalesOrderID);
+                        QueryParamsList.Add("@nOrderID", nSalesOrderID);
                         string Mastersql = "select * from vw_Salesorder_Disp where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -184,8 +201,10 @@ namespace SmartxAPI.Controllers
                         dsSalesInvoice.Tables.Add(DetailTable);
                         return Ok(_api.Success(dsSalesInvoice));
                 
-                    }else{
-                    QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
+                    }
+                    else
+                    {
+                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
 
 

@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId, int nBranchId, string xInvoiceNo)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId, int nBranchId, string xInvoiceNo,int nSalesOrderID)
         {
                 int nCompanyId= myFunctions.GetCompanyID(User);
             try
@@ -92,6 +92,8 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
+
+                    
                     DataSet dsSalesInvoice = new DataSet();
                     SortedList QueryParamsList = new SortedList();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
@@ -108,6 +110,21 @@ namespace SmartxAPI.Controllers
                         {"N_FnYearID",nFnYearId},
                         {"N_BranchId",nBranchId}
                     };
+                    if(nSalesOrderID>0)
+                    {
+                        QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
+                        string Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        string DetailSql = "";
+                        DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                    }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNote_Disp", mParamsList, Con);
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
