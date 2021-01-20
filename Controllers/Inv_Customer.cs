@@ -291,12 +291,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    SortedList Params = new SortedList();
-                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
-
-                    DataTable QList = myFunctions.GetSettingsTable();
-                    QList.Rows.Add("DEFAULT_ACCOUNTS", "DEBTOR_ACCOUNT");
+DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "Debtor Account");
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "S Cash Account");
 
                     QList.AcceptChanges();
 
