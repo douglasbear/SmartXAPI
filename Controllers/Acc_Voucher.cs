@@ -49,29 +49,18 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VoucherID desc";
             else
-<<<<<<< HEAD
-                {
-                switch (xSortBy.Split(" ")[0]){
-=======
             {
              switch (xSortBy.Split(" ")[0]){ 
                     case "voucherNo" : xSortBy ="[Voucher No] " + xSortBy.Split(" ")[1] ;
                     break;
->>>>>>> 9c46520812da47697268b5b05791f3e725629d40
                     case "voucherDate" : xSortBy ="[Voucher Date] " + xSortBy.Split(" ")[1] ;
                     break;
                     default : break;
                 }
-<<<<<<< HEAD
             xSortBy = " order by " + xSortBy;
             }
 
 
-=======
-             xSortBy = " order by " + xSortBy;
-            }
-               
->>>>>>> 9c46520812da47697268b5b05791f3e725629d40
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + " " + xSortBy;
             else
