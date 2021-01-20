@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                 qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
                 Params.Add("@qry", "%" + qry + "%");
             }
-            string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
+            string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by N_VendorID DESC";
             Params.Add("@bInactive", 0);
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);

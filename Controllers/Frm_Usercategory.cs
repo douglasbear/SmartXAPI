@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_UserRole_Disp where N_CompanyID=@p1 order by Category DESC";
+            string sqlCommandText = "select * from vw_UserRole_Disp where N_CompanyID=@p1 order by Code DESC";
             Params.Add("@p1", nCompanyId);
 
             try

@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p4", 0);
                 Params.Add("@p5", nBranchId);
             }
-            string sqlCommandText = "select * from vw_InvCustomer " + X_Crieteria + " " + criteria + " " + qryCriteria + " order by x_CustomerName,x_CustomerCode";
+            string sqlCommandText = "select * from vw_InvCustomer " + X_Crieteria + " " + criteria + " " + qryCriteria + " order by N_CustomerID DESC";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyId);
             Params.Add("@p3", nFnYearId);
