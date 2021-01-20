@@ -49,8 +49,10 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VoucherID desc";
             else
-                {
-                switch (xSortBy.Split(" ")[0]){
+            {
+             switch (xSortBy.Split(" ")[0]){ 
+                    case "voucherNo" : xSortBy ="[Voucher No] " + xSortBy.Split(" ")[1] ;
+                    break;
                     case "voucherDate" : xSortBy ="[Voucher Date] " + xSortBy.Split(" ")[1] ;
                     break;
                     default : break;
