@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p4", 0);
                 Params.Add("@p5", nBranchId);
             }
-            string sqlCommandText = "select * from vw_InvCustomer " + X_Crieteria + " " + criteria + " " + qryCriteria + " order by x_CustomerName,x_CustomerCode";
+            string sqlCommandText = "select * from vw_InvCustomer " + X_Crieteria + " " + criteria + " " + qryCriteria + " order by N_CustomerID DESC";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyId);
             Params.Add("@p3", nFnYearId);
@@ -135,7 +135,8 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
+                        // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
+                        return Ok(api.Success("Customer Saved") );
                     }
                 }
             }
@@ -291,12 +292,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    SortedList Params = new SortedList();
-                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
-
-                    DataTable QList = myFunctions.GetSettingsTable();
-                    QList.Rows.Add("DEFAULT_ACCOUNTS", "DEBTOR_ACCOUNT");
+DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "Debtor Account");
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "S Cash Account");
 
                     QList.AcceptChanges();
 
