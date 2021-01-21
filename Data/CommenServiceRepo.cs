@@ -116,6 +116,7 @@ namespace SmartxAPI.Data
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", loginRes.N_CompanyID);
                     Params.Add("@nUserID", loginRes.N_UserID);
+                    Params.Add("@nFnYearID", loginRes.N_FnYearID);
 
                 if (loginRes.N_BranchID == null || loginRes.N_BranchID == "")
                 {
@@ -141,6 +142,14 @@ namespace SmartxAPI.Data
                 loginRes.X_Position = EmplData.Rows[0]["X_Position"].ToString();
                 loginRes.N_PositionID = myFunctions.getIntVAL(EmplData.Rows[0]["N_PositionID"].ToString());
                 }
+
+                DataTable SalesExecutiveData = dLayer.ExecuteDataTable("select N_SalesmanID,X_SalesmanCode,X_SalesmanName from vw_InvSalesman where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_UserID=@nUserID",Params,connection);
+                if(SalesExecutiveData.Rows.Count>0){
+                loginRes.N_SalesmanID = myFunctions.getIntVAL(SalesExecutiveData.Rows[0]["N_SalesmanID"].ToString());
+                loginRes.X_SalesmanCode = SalesExecutiveData.Rows[0]["X_SalesmanCode"].ToString();
+                loginRes.X_SalesmanName = SalesExecutiveData.Rows[0]["X_SalesmanName"].ToString();
+                }
+
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID",Params, connection).ToString();
 
 
