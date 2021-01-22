@@ -57,9 +57,10 @@ namespace SmartxAPI.Controllers
                     break;
                     default : break;
                 }
-             xSortBy = " order by " + xSortBy;
+            xSortBy = " order by " + xSortBy;
             }
-               
+
+
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + " " + xSortBy;
             else

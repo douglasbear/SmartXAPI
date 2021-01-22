@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                 qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
                 Params.Add("@qry", "%" + qry + "%");
             }
-            string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by X_VendorName,X_VendorCode";
+            string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by N_VendorID DESC";
             Params.Add("@bInactive", 0);
             Params.Add("@nCompanyID", nCompanyId);
             Params.Add("@nFnYearID", nFnYearId);
@@ -295,6 +295,39 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(_api.Success(dt));
                 }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+          [HttpGet("default")]
+        public ActionResult GetDefault(int nFnYearID,int nLangID,int nFormID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+
+                    DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "Creditor Account");
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", "S Cash Account");
+
+                    QList.AcceptChanges();
+
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
+
+                        SortedList OutPut = new SortedList(){
+                            {"settings",_api.Format(Details)}
+                        };
+                    return Ok(_api.Success(OutPut));
+                }
+
             }
             catch (Exception e)
             {

@@ -11,6 +11,7 @@ using System.Collections.Generic;
 using System.IO;
 using System.Threading.Tasks;
 using System.Net.Http;
+using System.Security.Claims;
 
 namespace SmartxAPI.Controllers
 {
@@ -27,13 +28,14 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
+private readonly IMyAttachments myAttachments;
 
-
-        public Ess_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
+        public Ess_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             api = apiFun;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 210;
         }
@@ -190,6 +192,11 @@ namespace SmartxAPI.Controllers
 
                         ds.Tables.Add(api.Format(benifits, "benifits"));
                         ds.Tables.Add(Detail);
+
+
+                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachements = api.Format(Attachements, "attachments");
+                        ds.Tables.Add(Attachements);
 
                         return Ok(api.Success(ds));
                     }
@@ -386,6 +393,7 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
+                DataTable Attachment = ds.Tables["attachments"];
 
                 DataTable Benifits = ds.Tables["benifits"];
 
@@ -405,9 +413,15 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
+
+                    if(vacationalreadygiven(DetailTable,connection,transaction)){
+                        return Ok(api.Warning("Vacation already requested in this date range."));
+                    }
+
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nEmpID", nEmpID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
+object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
                     {
@@ -415,6 +429,7 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_VacationGroupID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", N_PkeyID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
@@ -422,6 +437,8 @@ namespace SmartxAPI.Controllers
 
                     if (x_VacationGroupCode == "@Auto")
                     {
+
+
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", "210");
@@ -505,15 +522,17 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error("Unable to save"));
                     }
 
-                    DataTable Files = ds.Tables["files"];
-                    if (Files.Rows.Count > 0)
-                    {
-                        if (!dLayer.SaveFiles(Files, "Pay_VacationMaster", "N_VacationGroupID", n_VacationGroupID, nEmpID.ToString(), nCompanyID, connection, transaction))
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error("Unable to save"));
-                        }
-                    }
+                    // DataTable Files = ds.Tables["files"];
+                    // if (Files.Rows.Count > 0)
+                    // {
+                    //     if (!dLayer.SaveFiles(Files, "Pay_VacationMaster", "N_VacationGroupID", n_VacationGroupID, nEmpID.ToString(), nCompanyID, connection, transaction))
+                    //     {
+                    //         transaction.Rollback();
+                    //         return Ok(api.Error("Unable to save"));
+                    //     }
+                    // }
+
+                    SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
 
                     transaction.Commit();
                     myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
@@ -526,6 +545,31 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(ex));
             }
+        }
+
+
+        private bool vacationalreadygiven(DataTable Details,SqlConnection connection,SqlTransaction transaction)
+        {
+            foreach (DataRow var in Details.Rows)
+            {
+                if (myFunctions.getVAL(var["b_IsAdjustEntry"].ToString()) != 0) {continue; }
+                if (myFunctions.getVAL(var["n_VacationGroupID"].ToString()) != 0) {continue; }
+                SortedList Params = new SortedList();
+                 Params.Add("N_CompanyID",myFunctions.getVAL(var["n_CompanyID"].ToString()));
+                 Params.Add("N_FnYearID",myFunctions.getVAL(var["n_FnYearID"].ToString()));
+                 Params.Add("N_EmpID",myFunctions.getVAL(var["n_EmpID"].ToString()));
+                 Params.Add("D_VacDateFrom",var["d_VacDateFrom"].ToString());
+                 Params.Add("D_VacDateTo",var["d_VacDateFrom"].ToString());
+                 Params.Add("N_VacationID",myFunctions.getVAL(var["n_VacationGroupID"].ToString()));
+
+                DataTable Validation = dLayer.ExecuteDataTablePro("SP_Pay_VacationEntryDateValidation",Params,connection,transaction);
+                if (Validation.Rows.Count > 0)
+                {
+                    return true;
+                }
+            }
+            return false;
+
         }
 
 
@@ -625,6 +669,24 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(api.Error(ex));
+            }
+        }
+
+                        private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
+        {
+            if (Attachment.Rows.Count > 0)
+            {
+                string X_DMSMainFolder = "Employee";
+                string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
+                string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+                try
+                {
+                    myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
+                }
+                catch (Exception ex)
+                {
+                    transaction.Rollback();
+                }
             }
         }
 

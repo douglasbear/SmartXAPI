@@ -69,14 +69,14 @@ namespace SmartxAPI.Controllers
                 if (nPartyType ==1)
                     sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1  and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + Searchkey + " " + xSortBy;
             }
             else
             {
                 if (nPartyType ==1)
                     sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],[Customer Name],[Net Amount] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 " + Searchkey + " and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_CustomerBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt from vw_VendorBalanceAdjustment where N_CompanyID=@p1 " + Searchkey + " and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Adjustment Date],[Invoice No],X_VendorName,Netamt as netAmount from vw_VendorBalanceAdjustment where N_CompanyID=@p1 " + Searchkey + " and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 and [Invoice No] not in (select top(" + Count + ") [Invoice No] from vw_VendorBalanceAdjustment where N_CompanyID=@p1 and N_TransType=@p4 and B_YearEndProcess=0 and N_PartyType=@p5 " + xSortBy + " ) " + xSortBy;
             }
             Params.Add("@p1", nCompanyID);
             Params.Add("@p4", N_TransType);
