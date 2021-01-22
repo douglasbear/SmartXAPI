@@ -143,7 +143,7 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
 
-                         string FieldList = "";
+                        string FieldList = "";
                         string FieldValues = "";
                         if (FormID == 113)
                         {
@@ -171,25 +171,25 @@ namespace SmartxAPI.GeneralFunctions
 
                         }
                     }
-                       
-                        if (FormID != 113)
-                        {
-                            if (ExpiryDate == "")
-                            {
-                                dsAttachment.Columns.Remove("D_ExpiryDate");
-                                dsAttachment.Columns.Remove("N_RemCategoryID");
-                            }
-                            dsAttachment.Columns.Remove("FileData");
-                            dsAttachment.Columns.Remove("x_RemCategory");
-                            dsAttachment.Columns.Remove("x_Category");
-                            dsAttachment.AcceptChanges();
-                            dLayer.SaveData("Dms_ScreenAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
-                            if (myFunctions.getIntVAL(Result.ToString()) > 0)
-                            {
 
-                            }
+                    if (FormID != 113)
+                    {
+                        if (ExpiryDate == "")
+                        {
+                            dsAttachment.Columns.Remove("D_ExpiryDate");
+                            dsAttachment.Columns.Remove("N_RemCategoryID");
                         }
-                    
+                        dsAttachment.Columns.Remove("FileData");
+                        dsAttachment.Columns.Remove("x_RemCategory");
+                        dsAttachment.Columns.Remove("x_Category");
+                        dsAttachment.AcceptChanges();
+                        dLayer.SaveData("Dms_ScreenAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
+                        if (myFunctions.getIntVAL(Result.ToString()) > 0)
+                        {
+
+                        }
+                    }
+
                 }
 
             }
@@ -356,14 +356,23 @@ namespace SmartxAPI.GeneralFunctions
 
             DataTable ImageData = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection);
             ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "FileData", typeof(string), null);
+
+            if (ImageData.Rows.Count > 0)
+            {
+                ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
+                ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "n_FnYearID", typeof(int), FnYearID);
+                ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "n_TransID", typeof(int), TransID);
+            }
+
             foreach (DataRow var in ImageData.Rows)
             {
                 if (var["x_refName"] != null)
                 {
                     var path = var["x_refName"].ToString();
                     Byte[] bytes = File.ReadAllBytes(path);
-                    var["FileData"] = "data:" + api.GetContentType(path) + ";base64,"  + Convert.ToBase64String(bytes);
+                    var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
                 }
+
             }
             ImageData.AcceptChanges();
 

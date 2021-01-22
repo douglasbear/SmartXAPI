@@ -99,7 +99,6 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
-                    QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     QueryParamsList.Add("@xTransType", "DELIVERY");
 
                     SortedList mParamsList = new SortedList()
@@ -124,6 +123,10 @@ namespace SmartxAPI.Controllers
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
                         return Ok(_api.Success(dsSalesInvoice));
+                    }
+                    else
+                    {
+                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNote_Disp", mParamsList, Con);
                     masterTable = _api.Format(masterTable, "Master");
