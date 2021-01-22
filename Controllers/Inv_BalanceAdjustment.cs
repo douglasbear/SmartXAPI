@@ -16,7 +16,7 @@ namespace SmartxAPI.Controllers
     [Route("BalanceAdjustment")]
     [ApiController]
 
-
+ 
 
     public class Inv_BalanceAdjustment : ControllerBase
     {
