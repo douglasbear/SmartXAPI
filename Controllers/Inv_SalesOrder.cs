@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(cast(n_Amount as numeric(10,2))) as TotalAmount  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count,sum(cast(n_Amount as numeric(10,2))) as TotalAmount  from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount="0";
                     string TotalSum="0";
