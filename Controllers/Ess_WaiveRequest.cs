@@ -58,11 +58,13 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by X_RequestCode desc";
             else
                 xSortBy = " order by " + xSortBy;
+
+                string groupBy=" group by N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes ";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_UserID=@nUserID  and B_IsSaveDraft=0 " + Searchkey+ groupBy + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_UserID=@nUserID  and B_IsSaveDraft=0 " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsSaveDraft=0 and N_UserID=@nUserID " + groupBy  + xSortBy + " ) " + groupBy + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -76,7 +78,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsSaveDraft=0";
+                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_UserID=@nUserID and B_IsSaveDraft=0";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);

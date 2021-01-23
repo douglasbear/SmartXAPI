@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
         // }
 
          [HttpGet("details")]
-        public ActionResult GetAttendanceDetails(int nEmployeeID,int nFnYear,DateTime payDate)
+        public ActionResult GetAttendanceDetails(int nEmployeeID,int nFnYear,DateTime payDate,DateTime dDateFrom,DateTime dDateTo)
         {
             DataTable Details = new DataTable();
             SortedList Params = new SortedList();
@@ -107,25 +107,29 @@ namespace SmartxAPI.Controllers
             object PeriodType = dLayer.ExecuteScalar("Select X_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + companyid + " and X_Group='Payroll'",connection);
             object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + companyid + " and X_Group='Payroll'",connection);
             if (Periodvalue == null) return Ok(api.Notice("No Results Found"));
-            DateTime fromDate=new DateTime();
-            DateTime toDate=new DateTime();
+            // DateTime fromDate=new DateTime();
+            // DateTime toDate=new DateTime();
+
+            DateTime fromDate=dDateFrom;
+            DateTime toDate=dDateTo;
+
             DateTime dtStartDate = new DateTime(payDate.Year, payDate.Month, 1);
 
             int days =0;
-            if (PeriodType != null && PeriodType.ToString() == "M")
-            {
-                days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
-                toDate = dtStartDate.AddDays(myFunctions.getIntVAL(Periodvalue.ToString()) - 2);
-                int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
-                fromDate = dtStartDate.AddMonths(-1).AddDays(lastdays - 1);
-            }
-            else
-            {
-                days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
-                toDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
-                int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
-                fromDate = dtStartDate.AddDays(-lastdays); 
-            }
+            // if (PeriodType != null && PeriodType.ToString() == "M")
+            // {
+            //     days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+            //     toDate = dtStartDate.AddDays(myFunctions.getIntVAL(Periodvalue.ToString()) - 2);
+            //     int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+            //     fromDate = dtStartDate.AddMonths(-1).AddDays(lastdays - 1);
+            // }
+            // else
+            // {
+            //     days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+            //     toDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+            //     int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+            //     fromDate = dtStartDate.AddDays(-lastdays); 
+            // }
 
             QueryParams.Add("N_CompanyID", companyid);
             QueryParams.Add("N_FnYear", nFnYear);
