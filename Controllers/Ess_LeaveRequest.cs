@@ -683,7 +683,7 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
                 {
                     myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
                 }
-                catch (Exception ex)
+                catch (Exception  ex)
                 {
                     transaction.Rollback();
                 }
