@@ -386,8 +386,6 @@ int N_POrderID=0; var X_POrderNo="";
                     }
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
 
-                    if (Attachment.Rows.Count > 0)
-                    {
                         SortedList VendorParams = new SortedList();
                         VendorParams.Add("@nVendorID", N_VendorID);
                         DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
@@ -403,7 +401,7 @@ int N_POrderID=0; var X_POrderNo="";
                                 return Ok(api.Error(ex));
                             }
                         }
-                    }
+
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
