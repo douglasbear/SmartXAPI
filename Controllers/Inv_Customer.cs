@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
                 {
                     Dictionary<string,string> res=new Dictionary<string, string>();
                     res.Add("n_CustomerID",nCustomerID.ToString());
-                    return Ok(api.Success(res,"Customer deleted"));
+                    return Ok(api.Error("Customer deleted"));
                 }
                 else
                 {

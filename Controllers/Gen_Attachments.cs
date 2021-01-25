@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("GetAttachments")]
-        public ActionResult ViewAttachment(int nFnYearID,int nTransID,int nPartyID,int nFormID)
+        public ActionResult ViewAttachment(int nFnYearID, int nTransID, int nPartyID, int nFormID)
         {
 
             DataTable dt = new DataTable();
@@ -121,8 +121,8 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                            connection.Open();
-                                SortedList AttachmentParam = new SortedList(){
+                    connection.Open();
+                    SortedList AttachmentParam = new SortedList(){
                                     {"PartyID", nPartyID},
                                     {"PayID", nTransID},
                                     {"FormID", nFormID},
@@ -130,7 +130,15 @@ namespace SmartxAPI.Controllers
                                     {"FnyearID",nFnYearID}
                                     };
 
-            dt = dLayer.ExecuteDataTablePro( "SP_VendorAttachments",AttachmentParam,connection);
+                    dt = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection);
+                    // if (dt.Rows.Count > 0)
+                    // {
+                    //     dt = myFunctions.AddNewColumnToDataTable(dt, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
+                    //     dt = myFunctions.AddNewColumnToDataTable(dt, "n_FnYearID", typeof(int), nFnYearID);
+                    //     dt = myFunctions.AddNewColumnToDataTable(dt, "n_TransID", typeof(int), nTransID);
+                    //     dt.AcceptChanges();
+                    // }
+
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -149,7 +157,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        
+
 
 
 

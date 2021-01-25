@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
                     if (N_SaveDraft == 0) 
                     {
                         dLayer.ExecuteNonQuery("Update Pay_Employee Set N_Status = " + N_Status + ",D_StatusDate='" + dEndDate.ToString() + "' Where N_CompanyID =" + nCompanyID + " And N_EmpID =" + nEmpID.ToString(), QueryParams, connection, transaction);
-                        dLayer.ExecuteNonQuery("Update Pay_SuperVisorSet N_EmpID = 0  Where N_CompanyID =" + nCompanyID + " And N_PositionID =" + PositionID.ToString(), QueryParams, connection, transaction);
+                        dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0  Where N_CompanyID =" + nCompanyID + " And N_PositionID =" + PositionID.ToString(), QueryParams, connection, transaction);
                     }
                     dLayer.DeleteData("pay_EndOfServiceSDetails", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
@@ -296,7 +296,7 @@ namespace SmartxAPI.Controllers
                           nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
                     }
                     transaction.Commit();
-                    return Ok(api.Success("Tranaction Saved"));
+                    return Ok(api.Success("Terminated"));
                 }
             }
             catch (Exception ex)
