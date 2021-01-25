@@ -26,7 +26,7 @@ namespace SmartxAPI.GeneralFunctions
             startupPath = conf.GetConnectionString("StartupPath");
         }
 
-        public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_folderName, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
+        public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_DMSMainFolder, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
         {
             object Result = 0;
             string path = "";
@@ -44,6 +44,9 @@ namespace SmartxAPI.GeneralFunctions
             string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
             if (dsAttachment.Rows.Count > 0)
             {
+
+                            string X_DMSSubFolder = FormID + "//" + partycode + "-" + partyname;
+                            string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
 
                 N_FolderID = DocFolderInsert(dLayer, xCompanyName + "//" + X_folderName + "//" + payCode + "//", 1, 0, FormID, User, connection, transaction);
                 if (DocumentPath != "")

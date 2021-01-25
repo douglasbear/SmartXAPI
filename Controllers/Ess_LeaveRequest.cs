@@ -430,7 +430,8 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
                         string X_Criteria = "N_VacationGroupID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", N_PkeyID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                        // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
@@ -533,7 +534,9 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
                     //     }
                     // }
 
-                    SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                    // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+
 
                     transaction.Commit();
                     myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
@@ -682,23 +685,23 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
             }
         }
 
-                        private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
-        {
-            if (Attachment.Rows.Count > 0)
-            {
-                string X_DMSMainFolder = "Employee";
-                string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
-                string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
-                try
-                {
-                    myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                }
-            }
-        }
+        //                 private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
+        // {
+        //     if (Attachment.Rows.Count > 0)
+        //     {
+        //         string X_DMSMainFolder = "Employee";
+        //         string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
+        //         string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+        //         try
+        //         {
+        //             myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             transaction.Rollback();
+        //         }
+        //     }
+        // }
 
 
 

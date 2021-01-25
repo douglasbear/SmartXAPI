@@ -230,7 +230,7 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, xReqCode, nRequestID,User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
@@ -274,7 +274,7 @@ namespace SmartxAPI.Controllers
                         // }
 
 
-                        SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, xReqCode, nRequestID,User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
@@ -392,23 +392,23 @@ namespace SmartxAPI.Controllers
 
 
 
-                private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
-                    {
-                        if (Attachment.Rows.Count > 0)
-                        {
-                            string X_DMSMainFolder = "Employee";
-                            string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
-                            string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
-                            try
-                            {
-                                myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                            }
-                        }
-                    }
+                // private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
+                //     {
+                //         if (Attachment.Rows.Count > 0)
+                //         {
+                //             string X_DMSMainFolder = "Employee";
+                //             string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
+                //             string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+                //             try
+                //             {
+                //                 myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
+                //             }
+                //             catch (Exception ex)
+                //             {
+                //                 transaction.Rollback();
+                //             }
+                //         }
+                //     }
 
 
 
