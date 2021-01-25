@@ -103,10 +103,18 @@ namespace SmartxAPI.Controllers
             {
                 DateCol = "X_RequestDate";
                 if (bShowAllBranch)
-                    sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2";
+                    //sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2";
+                    sqlCommandText = "SELECT     vw_ApprovalReview_Disp.*, Log_ApprovalProcess.N_ActionUserID FROM         vw_ApprovalReview_Disp LEFT OUTER JOIN Log_ApprovalProcess ON vw_ApprovalReview_Disp.N_FormID = Log_ApprovalProcess.N_FormID AND "
+                     + "vw_ApprovalReview_Disp.N_TransID = Log_ApprovalProcess.N_TransID AND vw_ApprovalReview_Disp.N_CompanyID = Log_ApprovalProcess.N_CompanyID AND "
+                      + "vw_ApprovalReview_Disp.N_FnYearID = Log_ApprovalProcess.N_FnYearID AND vw_ApprovalReview_Disp.X_TransCode = Log_ApprovalProcess.X_TransCode AND " 
+                      + "vw_ApprovalReview_Disp.N_NextApproverID = Log_ApprovalProcess.N_ActionUserID where vw_ApprovalReview_Disp.N_NextApproverID=@p2 and Log_ApprovalProcess.N_ActionUserID is null";
                 else
                 {
-                    sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2 ";
+                    // sqlCommandText = "select * from vw_ApprovalReview_Disp where N_CompanyID=@p1 and N_NextApproverID=@p2 ";
+                    sqlCommandText = "SELECT     vw_ApprovalReview_Disp.*, Log_ApprovalProcess.N_ActionUserID FROM         vw_ApprovalReview_Disp LEFT OUTER JOIN Log_ApprovalProcess ON vw_ApprovalReview_Disp.N_FormID = Log_ApprovalProcess.N_FormID AND "
+                     + "vw_ApprovalReview_Disp.N_TransID = Log_ApprovalProcess.N_TransID AND vw_ApprovalReview_Disp.N_CompanyID = Log_ApprovalProcess.N_CompanyID AND "
+                      + "vw_ApprovalReview_Disp.N_FnYearID = Log_ApprovalProcess.N_FnYearID AND vw_ApprovalReview_Disp.X_TransCode = Log_ApprovalProcess.X_TransCode AND " 
+                      + "vw_ApprovalReview_Disp.N_NextApproverID = Log_ApprovalProcess.N_ActionUserID where vw_ApprovalReview_Disp.N_NextApproverID=@p2 and Log_ApprovalProcess.N_ActionUserID is null";
                     Params.Add("@p3", N_Branchid);
                 }
 
@@ -122,8 +130,8 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                //    dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
-                      dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
+                   dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
+                    //   dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
