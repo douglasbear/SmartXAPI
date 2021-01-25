@@ -46,10 +46,8 @@ namespace SmartxAPI.Controllers
             
             SortedList OutPut=new SortedList();
 
-           // sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID from prj_timesheet where N_CompanyId=@p1";
-          
-           
-            sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID,D_Date,X_Description,N_Hours,X_ProjectName from vw_prj_timesheet where N_CompanyId=@p1";
+         
+            sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID,D_Date,X_Description,N_Hours,X_ProjectName,X_Name from vw_prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
 
             try
             {
