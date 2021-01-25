@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn from vw_WebReportMenus where N_LanguageId=@nLangId";
+                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -131,6 +131,9 @@ namespace SmartxAPI.Controllers
                         SortedList ListSqlParams = new SortedList();
                         string fields = QueryString["X_FieldList"].ToString();
                         string table = QueryString["X_TableName"].ToString();
+                        // if(table=="Acc_VoucherDetails"){
+                        //     string a=table;
+                        // }
                         string Criteria = QueryString["X_Criteria"].ToString();
                         if (Criteria != "")
                             Criteria = " Where " + QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal ").Replace("'BVal'", "@BVal ").Replace("'FVal'", "@FVal ");
