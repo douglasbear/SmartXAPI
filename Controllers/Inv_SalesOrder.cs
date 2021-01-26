@@ -136,7 +136,6 @@ namespace SmartxAPI.Controllers
 
             try
             {
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -270,7 +269,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(MasterTable.Rows[0]["N_QuotationId"].ToString()),this.FormID,myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
                     Attachments = _api.Format(Attachments, "attachments");
