@@ -14,9 +14,7 @@ namespace SmartxAPI.Controllers
     [Route("projectTimesheetEntry")]
     [ApiController]
     
-    
-    
-    public class Pay_ProjectTimesheetEntry : ControllerBase
+        public class Pay_ProjectTimesheetEntry : ControllerBase
     {
          private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -36,29 +34,50 @@ namespace SmartxAPI.Controllers
 
        
        [HttpGet("list")]
-        public ActionResult GetAllProjectTimesheet()
+        public ActionResult GetAllProjectTimesheet(int  nComapanyId,int nFnYearId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select N_CompanyId,N_ProjectTimeSheetID,N_ProjectID from Pay_ProjectTimesheetEntry where N_CompanyId=@p1";
-            Params.Add("@p1",nCompanyId);
-            try{
+            Params.Add("@p1",nCompanyId); 
+            Params.Add("@p2",nFnYearId); 
+            string sqlCommandCount="";
+            string sqlCommandText="";
+            
+            SortedList OutPut=new SortedList();
+
+         
+            sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID,D_Date,X_Description,N_Hours,X_ProjectName,X_Name from vw_prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
+
+            try
+            {
                         using (SqlConnection connection = new SqlConnection(connectionString))
-                            {
+                            {                               
                                 connection.Open();
-                                dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
-                            }
+                               // dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                                dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                                sqlCommandCount="select count(*) as N_Count from prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
+          
+                                object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection); 
+                               // myFunctions.AddNewColumnToDataTable(dt, "Count", typeof(string), TotalCount); 
+                                  OutPut.Add("Details", _api.Format(dt));
+                                // OutPut.Add("TotalCount", TotalCount);  
+                                OutPut.Add("TotalCount", TotalCount);
+                                // dt.AcceptChanges();
+                                
+                            } 
+                     dt=_api.Format(dt);
+
                     if(dt.Rows.Count==0)
                         {
                             return Ok(_api.Notice("No Results Found" ));
                         }else{
-                            return Ok(_api.Success(dt));
+                            return Ok(_api.Success(OutPut)); 
                         }
             }catch(Exception e){
                 return Ok(_api.Error(e));
             }
-          
+           
         }
         
           //Save....
@@ -74,28 +93,10 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                int nProjectTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ProjectTimeSheetID"].ToString());
+                  int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                 int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
                 
-
-                // if(xProjectCode== "@Auto")
-                //     {
-                //         Params.Add("N_CompanyID", nCompanyID);
-                //         Params.Add("N_YearID", nFnYearID);
-                //         Params.Add("N_FormID", this.FormID);
-                //         xProjectCode = dLayer.GetAutoNumber("Pay_ProjectTimesheetEntry", "x_ProjectCode", Params, connection, transaction);
-                //         if (xProjectCode == "") { return Ok(_api.Error("Unable to generate Project Code")); }
-                //         MasterTable.Rows[0]["x_ProjectCode"] = xProjectCode;
-                //     }
-                //     else
-                //     {
-                //         dLayer.DeleteData("Pay_ProjectTimesheetEntry", "n_ProjectTimeSheetID", nProjectTimeSheetID, "", connection, transaction);
-                        
-                //     }
-                    
-                     
-                    nProjectTimeSheetID = dLayer.SaveData("Pay_ProjectTimesheetEntry", "n_ProjectTimeSheetID", MasterTable, connection, transaction);
-                    
+                    nTimeSheetID = dLayer.SaveData("prj_timesheet", "n_TimeSheetID", MasterTable, connection, transaction);
                     
                     transaction.Commit();
                     return Ok(_api.Success("Project Timesheet Saved")) ;
@@ -109,7 +110,7 @@ namespace SmartxAPI.Controllers
 
 
          [HttpDelete("delete")]
-        public ActionResult DeleteData(int nProjectTimeSheetID)
+        public ActionResult DeleteData(int nTimeSheetID)
         {
             int Results = 0;
             try
@@ -117,7 +118,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_ProjectTimesheetEntry", "n_ProjectTimeSheetID", nProjectTimeSheetID, "", connection);
+                    Results = dLayer.DeleteData("prj_timesheet", "n_TimeSheetID", nTimeSheetID, "", connection);
                     if (Results > 0)
                     {
                         return Ok( _api.Success("deleted"));
@@ -135,14 +136,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetDetails(int nProjectTimeSheetID)
+        public ActionResult GetDetails(int nTimeSheetID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Pay_ProjectTimesheetEntry where N_CompanyID=@nCompanyID and N_ProjectTimeSheetID=@nProjectTimeSheetID";
+            string sqlCommandText="select * from prj_timesheet where N_CompanyID=@nCompanyID and N_TimeSheetID=@nTimeSheetID";
             Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nProjectTimeSheetID",nProjectTimeSheetID);
+            Params.Add("@nTimeSheetID",nTimeSheetID);
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
