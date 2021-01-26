@@ -135,6 +135,26 @@ namespace SmartxAPI.Controllers
 
                     QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
 
+
+                    
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNo", typeof(string), "");
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
+                        myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
+
+
+                    if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
+                    {
+                        QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
+                      
+                        DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                        if (SalesData.Rows.Count>0)
+                            {
+                                masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
+                                masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
+                                masterTable.Rows[0]["isSalesDone"] = true;
+                            }
+                    }
+
                     //Details
                     SortedList dParamList = new SortedList()
                     {
