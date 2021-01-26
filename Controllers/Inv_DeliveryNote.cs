@@ -129,9 +129,15 @@ namespace SmartxAPI.Controllers
                          QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNote_Disp", mParamsList, Con);
+
+                   
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
+                    int N_DelID = myFunctions.getIntVAL(MasterRow["N_deliverynoteid"].ToString());
+                    QueryParamsList.Add("@nDelID", nCompanyId);
+                    object InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID", QueryParamsList, Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_SalesReceiptNo", typeof(string), InSales);
 
                     QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
 
