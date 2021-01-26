@@ -31,6 +31,9 @@ namespace SmartxAPI.GeneralFunctions
             object Result = 0;
             string path = "";
             string s = "";
+            if(dsAttachment.Rows.Count==0){
+                return;
+            }
             DataRow AttachmentRow = dsAttachment.Rows[0];
             int FormID = myFunctions.getIntVAL(AttachmentRow["n_FormID"].ToString());
             int FnYearID = myFunctions.getIntVAL(AttachmentRow["n_FnYearID"].ToString());
