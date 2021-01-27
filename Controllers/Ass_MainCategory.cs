@@ -83,13 +83,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult AssetMainDetails(string xAssetMainNo)
+        public ActionResult AssetMainDetails(string xAssetMainNo,int n_FnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 and X_MainCategoryCode=@p3";
+            string sqlCommandText = "select * from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 and n_FnYearID=@p2 and Code=@p3";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", n_FnYearID);
             Params.Add("@p3", xAssetMainNo);
             try
             {
@@ -147,7 +148,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    nAssetMainId = dLayer.SaveData("Ass_MainCategory", "N_MainCategoryId", MasterTable, connection, transaction);
+                    nAssetMainId = dLayer.SaveData("Ass_AssetMainCategory", "N_MainCategoryId", MasterTable, connection, transaction);
                     if (nAssetMainId <= 0)
                     {
                         transaction.Rollback();
@@ -179,7 +180,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Ass_MainCategory ", "N_MainCategoryId", nAssetMainId, "", connection, transaction);
+                    Results = dLayer.DeleteData("Ass_AssetMainCategory ", "N_MainCategoryId", nAssetMainId, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
@@ -190,7 +191,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Lead"));
+                    return Ok(api.Error("Unable to delete Asset"));
                 }
 
             }
