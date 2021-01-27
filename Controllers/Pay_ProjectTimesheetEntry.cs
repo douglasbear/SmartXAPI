@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from prj_timesheet where N_CompanyID=@nCompanyID and N_TimeSheetID=@nTimeSheetID";
+            string sqlCommandText="select * from vw_prj_timesheet where N_CompanyID=@nCompanyID and N_TimeSheetID=@nTimeSheetID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nTimeSheetID",nTimeSheetID);
             try{

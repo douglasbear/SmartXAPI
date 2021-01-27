@@ -434,7 +434,7 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
-                        return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
+                        return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
                     }
 
                     if (x_VacationGroupCode == "@Auto")
