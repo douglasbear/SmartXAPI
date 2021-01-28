@@ -54,16 +54,16 @@ namespace SmartxAPI.Controllers
                         using (SqlConnection connection = new SqlConnection(connectionString))
                             {                               
                                 connection.Open();
-                               // dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                             
                                 dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                                 sqlCommandCount="select count(*) as N_Count from prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
           
                                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection); 
-                               // myFunctions.AddNewColumnToDataTable(dt, "Count", typeof(string), TotalCount); 
+                              
                                   OutPut.Add("Details", _api.Format(dt));
-                                // OutPut.Add("TotalCount", TotalCount);  
+                                
                                 OutPut.Add("TotalCount", TotalCount);
-                                // dt.AcceptChanges();
+                                
                                 
                             } 
                      dt=_api.Format(dt);
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                   int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                 int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
+                  int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
                 
                     nTimeSheetID = dLayer.SaveData("prj_timesheet", "n_TimeSheetID", MasterTable, connection, transaction);
                     
