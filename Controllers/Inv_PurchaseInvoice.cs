@@ -27,6 +27,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             dLayer = dl;
             myFunctions = fun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 65;
         }
