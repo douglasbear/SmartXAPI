@@ -339,7 +339,7 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(masterTable.Rows[0]["N_DebitNoteId"].ToString()),this.N_FormID,myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()),User,Con);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesId"].ToString()),this.N_FormID,myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()),User,Con);
                     Attachments = _api.Format(Attachments, "attachments");
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
