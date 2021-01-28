@@ -129,9 +129,13 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    string Col="n_FormID";
+                    if(nApprovalType==4){
+                        Col="vw_ApprovalReview_Disp.n_FormID";
+                    }
                     connection.Open();
-                //   dt = dLayer.ExecuteDataTable(sqlCommandText + " and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
-                dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
+                  dt = dLayer.ExecuteDataTable(sqlCommandText + " and " + Col + " in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
+                // dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

@@ -92,6 +92,36 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+        [HttpGet("allSettings")]
+        public ActionResult GetAllSettingsDetails(int nFnYearID,int nBranchID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList mParamsList = new SortedList()
+                    {
+                        {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                        {"N_FnYearID",nFnYearID},
+                        {"N_BranchID",nBranchID},
+                        {"N_UserCategoryID",myFunctions.GetUserCategory(User)}
+                    };
+                    DataTable Details = dLayer.ExecuteDataTablePro("SP_GenSettings_Disp_All", mParamsList, connection);
+                    return Ok(_api.Success(_api.Format(Details)));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        
+
                 //Save....
         [HttpPost("saveInventorySettings")]
         public ActionResult SaveData([FromBody] DataSet ds)

@@ -386,27 +386,22 @@ int N_POrderID=0; var X_POrderNo="";
                     }
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
 
-                    if (Attachment.Rows.Count > 0)
-                    {
                         SortedList VendorParams = new SortedList();
                         VendorParams.Add("@nVendorID", N_VendorID);
-                        string X_DMSMainFolder = "Vendor Document";
                         DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
                         if (VendorInfo.Rows.Count > 0)
                         {
-                            string X_DMSSubFolder = this.FormID + "//" + VendorInfo.Rows[0]["X_VendorCode"].ToString() + "-" + VendorInfo.Rows[0]["X_VendorName"].ToString().Trim();
-                            string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
                             try
                             {
-                                myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, X_folderName, User, connection, transaction);
+                                myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID,  "Vendor Document", User, connection, transaction);
                             }
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error("Error"));
+                                return Ok(api.Error(ex));
                             }
                         }
-                    }
+
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();

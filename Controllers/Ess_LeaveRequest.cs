@@ -67,9 +67,9 @@ private readonly IMyAttachments myAttachments;
             //  sqlCommandText = "Select x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus order by VacationRequestDate Desc";
 
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and X_Status='Approved' " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and X_CurrentStatus='Approved' and B_IsAdjustEntry<>1  " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and X_Status='Approved' " + Searchkey + " and N_VacationGroupID not in (select top("+ Count +") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and X_CurrentStatus='Approved' and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top("+ Count +") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved' and B_IsAdjustEntry<>1   group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -83,7 +83,7 @@ private readonly IMyAttachments myAttachments;
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'";
+                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved' and B_IsAdjustEntry<>1  ";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -422,18 +422,19 @@ private readonly IMyAttachments myAttachments;
                     EmpParams.Add("@nEmpID", nEmpID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
-object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
+                    object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
                     {
                         int N_PkeyID = n_VacationGroupID;
                         string X_Criteria = "N_VacationGroupID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", N_PkeyID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", N_PkeyID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
-                        return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
+                        return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
                     }
 
                     if (x_VacationGroupCode == "@Auto")
@@ -533,7 +534,9 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
                     //     }
                     // }
 
-                    SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                    // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+
 
                     transaction.Commit();
                     myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
@@ -682,23 +685,23 @@ object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee whe
             }
         }
 
-                        private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
-        {
-            if (Attachment.Rows.Count > 0)
-            {
-                string X_DMSMainFolder = "Employee";
-                string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
-                string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
-                try
-                {
-                    myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
-                }
-                catch (Exception ex)
-                {
-                    transaction.Rollback();
-                }
-            }
-        }
+        //                 private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
+        // {
+        //     if (Attachment.Rows.Count > 0)
+        //     {
+        //         string X_DMSMainFolder = "Employee";
+        //         string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
+        //         string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+        //         try
+        //         {
+        //             myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
+        //         }
+        //         catch (Exception ex)
+        //         {
+        //             transaction.Rollback();
+        //         }
+        //     }
+        // }
 
 
 

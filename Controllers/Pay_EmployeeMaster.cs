@@ -509,13 +509,13 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-
+        [AllowAnonymous]
         [HttpGet("dummy")]
         public ActionResult GetVoucherDummy(int? id)
         {
             try
             {
-                return Ok(myFunctions.DecryptString("LX0VwFSjf0s="));
+                return Ok(myFunctions.DecryptString("faIocQ+Wry4="));
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
