@@ -19,14 +19,18 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
+        private readonly int FormID;
 
-        public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_SalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            FormID = 55;
 
         }
 
@@ -179,7 +183,11 @@ namespace SmartxAPI.Controllers
                     DataTable SalesReturnDetails = new DataTable();
                     SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
                     SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()),this.FormID,myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+
                     dt.Tables.Add(SalesReturnDetails);
+                    dt.Tables.Add(Attachments);
 
                 }
                 return Ok(_api.Success(dt));
@@ -204,6 +212,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
                 // Auto Gen
                 string InvoiceNo = "";
@@ -217,11 +226,13 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
+                    int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
+                    int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 80);
+                        Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
                         if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Return Number")); }
@@ -240,6 +251,21 @@ namespace SmartxAPI.Controllers
                     }
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesReturnDetails", "N_DebitnoteDetailsID", DetailTable, connection, transaction);
 
+                    SortedList CustomerParams = new SortedList();
+                    CustomerParams.Add("@nCustomerID", N_CustomerID);
+                    DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+                    if (CustomerInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DebitNoteId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID,  "Customer Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
+                        }
                     transaction.Commit();
                 }
                  SortedList Result = new SortedList();

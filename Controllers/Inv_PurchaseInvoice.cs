@@ -19,13 +19,15 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
+        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = fun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 65;
         }
@@ -200,9 +202,13 @@ namespace SmartxAPI.Controllers
                             dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), "");
                         }
                     }
-                    dt.Tables.Add(dtPurchaseInvoice);
 
                     dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_VendorID"].ToString()),myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()),this.N_FormID,myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+                    
+                    dt.Tables.Add(dtPurchaseInvoice);
+                    dt.Tables.Add(Attachments);
                     dt.Tables.Add(dtPurchaseInvoiceDetails);
                 }
 
@@ -224,6 +230,7 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            DataTable Attachment = ds.Tables["attachments"];
             SortedList Params = new SortedList();
             // Auto Gen
             string InvoiceNo = "";
@@ -236,13 +243,13 @@ namespace SmartxAPI.Controllers
             int N_InvoiceId = 0;
             try
             {
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
                     N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
+                    int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
 
                     if (N_PurchaseID > 0)
                     {
@@ -311,6 +318,21 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostingParam, connection, transaction);
                     }
+                    SortedList VendorParams = new SortedList();
+                        VendorParams.Add("@nVendorID", N_VendorID);
+                        DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
+                        if (VendorInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_PurchaseID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID,  "Vendor Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
+                        }
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
