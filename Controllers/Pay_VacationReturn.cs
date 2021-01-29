@@ -21,7 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-private readonly int FormID;
+        private readonly int FormID;
 
         public Pay_VacationReturn(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -29,26 +29,47 @@ private readonly int FormID;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID= 463;
+            FormID = 463;
         }
 
         [HttpGet("vacationList")]
-        public ActionResult GetVacationList(int nBranchID,bool bAllBranchData,int nEmpID)
+        public ActionResult GetVacationList(int nBranchID, bool bAllBranchData, int nEmpID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nBranchID",nBranchID);
-            Params.Add("@nEmpID",nEmpID);
-            string strBranch=(bAllBranchData==false)?" and N_BranchID=@nBranchID ":"";
-            string sqlCommandText="select X_VacationGroupCode,VacationREquestDate,X_VacType,N_CompanyID,N_EmpID,N_BranchID,N_VacationGroupID,N_Transtype,N_VacTypeID,B_IsSaveDraft from vw_PayVacationMaster_Disp where N_CompanyID=@nCompanyID And N_Transtype =1 and N_EmpID=@nEmpID and B_IsSaveDraft=0 "+strBranch;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nEmpID", nEmpID);
+            string strBranch = (bAllBranchData == false) ? " and vw_PayVacationMaster_Disp.N_BranchID=@nBranchID " : "";
+            string sqlCommandText = "SELECT    vw_PayVacationEmployee.[Employee Code] AS X_EmpCode, vw_PayVacationEmployee.Name AS X_Emp_Name, " +
+            "vw_PayVacationEmployee.N_VacationGroupID, vw_PayVacationEmployee.X_VacationGroupCode, vw_PayVacationEmployee.X_VacType, " +
+            "vw_PayVacationEmployee.N_EmpID, vw_PayVacationEmployee.N_Status " +
+"FROM         vw_PayVacationEmployee RIGHT OUTER JOIN " +
+                      "vw_PayVacationMaster_Disp ON vw_PayVacationEmployee.N_EmpID = vw_PayVacationMaster_Disp.N_EmpID AND " +
+                      "vw_PayVacationEmployee.X_VacationGroupCode = vw_PayVacationMaster_Disp.X_VacationGroupCode AND " +
+                      "vw_PayVacationEmployee.N_CompanyID = vw_PayVacationMaster_Disp.N_CompanyID AND " +
+                      "vw_PayVacationEmployee.N_VacationGroupID = vw_PayVacationMaster_Disp.N_VacationGroupID " +
+"WHERE     (vw_PayVacationEmployee.N_VacationStatus = 0) and vw_PayVacationMaster_Disp.N_CompanyID=@nCompanyID And vw_PayVacationMaster_Disp.N_Transtype =1 and vw_PayVacationMaster_Disp.N_EmpID=@nEmpID and vw_PayVacationMaster_Disp.B_IsSaveDraft=0 " + strBranch;
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt=myFunctions.AddNewColumnToDataTable(dt,"D_VacDateFrom",typeof(DateTime),null);
+                    dt=myFunctions.AddNewColumnToDataTable(dt,"D_VacDateTo",typeof(DateTime),null);
+                    dt=myFunctions.AddNewColumnToDataTable(dt,"D_ReturnDate",typeof(DateTime),null);
+                    foreach (DataRow var in dt.Rows)
+                    {
+                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate from Pay_VacationDetails Where N_VacationGroupID ="+var["N_VacationGroupID"].ToString()+"", connection);
+                   if(VacDate.Rows.Count>0){
+                    var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
+                    var["D_VacDateTo"] =Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString());
+                    var["D_ReturnDate"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());}
+                    }
+                    dt.AcceptChanges();
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -67,7 +88,8 @@ private readonly int FormID;
         }
 
 
-         [HttpPost("Save")]
+
+        [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -110,9 +132,9 @@ private readonly int FormID;
                         MasterTable.Rows[0]["X_VacationReturnCode"] = X_VacationReturnCode;
 
                     }
-                    
 
-                    N_VacationReturnID = dLayer.SaveData("Pay_VacationReturn", "n_VacationReturnID",MasterTable, connection, transaction);
+
+                    N_VacationReturnID = dLayer.SaveData("Pay_VacationReturn", "n_VacationReturnID", MasterTable, connection, transaction);
                     if (N_VacationReturnID <= 0)
                     {
                         transaction.Rollback();
@@ -127,10 +149,10 @@ private readonly int FormID;
                         return Ok(_api.Error("Unable to save Vacation Return"));
                     }
 
-                SortedList Result = new SortedList();
-                Result.Add("N_VacationReturnID",N_VacationReturnID);
-                Result.Add("X_VacationReturnCode",X_VacationReturnCode);
-                return Ok(_api.Success(Result,"Vacation Return saved"));
+                    SortedList Result = new SortedList();
+                    Result.Add("N_VacationReturnID", N_VacationReturnID);
+                    Result.Add("X_VacationReturnCode", X_VacationReturnCode);
+                    return Ok(_api.Success(Result, "Vacation Return saved"));
                 }
             }
             catch (Exception ex)
@@ -142,5 +164,5 @@ private readonly int FormID;
 
 
 
-        }
     }
+}
