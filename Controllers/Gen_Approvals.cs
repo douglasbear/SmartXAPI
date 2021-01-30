@@ -134,8 +134,8 @@ namespace SmartxAPI.Controllers
                         Col="vw_ApprovalReview_Disp.n_FormID";
                     }
                     connection.Open();
-                  dt = dLayer.ExecuteDataTable(sqlCommandText + " and " + Col + " in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
-                // dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
+                 // dt = dLayer.ExecuteDataTable(sqlCommandText + " and " + Col + " in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291) order by "+ DateCol +" desc", Params, connection);
+                 dt = dLayer.ExecuteDataTable(sqlCommandText + " order by "+ DateCol +" desc", Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -227,8 +227,8 @@ string status="";
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
-                    {
+                    // if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    // {
                         int N_PkeyID = myFunctions.getIntVAL(ApprovalRow["n_TransID"].ToString());
                         int nCompanyID = myFunctions.getIntVAL(ApprovalRow["n_CompanyID"].ToString());
                         int nFnYearID = myFunctions.getIntVAL(ApprovalRow["n_FnYearID"].ToString());
@@ -286,7 +286,7 @@ string status="";
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, "", 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
                         
-                    }
+               
                     return Ok(api.Success(status));
 
                     
