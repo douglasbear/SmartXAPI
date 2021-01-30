@@ -50,11 +50,14 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PurchaseID desc";
             else
-            
-              xSortBy = " order by " + xSortBy;  
-            
-                
-
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "invoiceNo" : xSortBy ="N_PurchaseID " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
             int Count= (nPage - 1) * nSizeperpage;
             if(Count==0)
                  sqlCommandText = "select top("+ nSizeperpage +") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;

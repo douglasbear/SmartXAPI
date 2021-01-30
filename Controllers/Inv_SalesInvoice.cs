@@ -51,8 +51,14 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesId desc";
             else
-            
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "invoiceNo" : xSortBy ="N_SalesId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
             xSortBy = " order by " + xSortBy;
+            }
           
 
             if (Count == 0)

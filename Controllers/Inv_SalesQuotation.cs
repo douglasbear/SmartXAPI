@@ -57,7 +57,8 @@ namespace SmartxAPI.Controllers
                     
                     case "quotationDate" : xSortBy ="[Quotation Date] " + xSortBy.Split(" ")[1] ;
                     break;
-                   
+                    case "quotationNo" : xSortBy ="N_QuotationId " + xSortBy.Split(" ")[1] ;
+                    break;
                     default : break;
                 }
                  xSortBy = " order by " + xSortBy;

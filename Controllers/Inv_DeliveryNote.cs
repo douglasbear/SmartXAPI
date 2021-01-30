@@ -45,8 +45,19 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_DeliveryNoteId desc";
+            // if (xSortBy.Split(" ")[0] == "invoiceDate")
+            //     xSortBy = "order by Cast(invoiceDate) as DateTime()";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "invoiceNo" : xSortBy ="N_DeliveryNoteId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    case "invoiceDate" : xSortBy ="[Invoice Date] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
 
 
             if (Count == 0)

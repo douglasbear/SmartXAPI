@@ -52,13 +52,14 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_POrderID desc";
             else
-           
-             xSortBy = " order by " + xSortBy;
-
-          
-                
-
-
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "orderNo" : xSortBy ="N_POrderID " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
             if (Count == 0)
                 sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else

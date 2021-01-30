@@ -48,8 +48,14 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_CreditNoteId desc";
             else
-                xSortBy = " order by " + xSortBy;
-            
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "x_CreditNoteNo" : xSortBy ="N_CreditNoteId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
             
             if(Count==0)
                 sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
