@@ -236,35 +236,47 @@ string status="";
                         // string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         string X_Criteria = "";
                         string tableName="";
+                        object partyId =null;
                         
                         switch(ApprovalRow["n_FormID"].ToString()){
                             case "82":
                             X_Criteria=" N_POrderID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_PurchaseOrder";
+                            partyId = dLayer.ExecuteScalar("Select N_VendorID from Inv_PurchaseOrder where "+X_Criteria,connection, transaction);
                             break;
                             case "65":
                             X_Criteria=" N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_Purchase";
+                            partyId = dLayer.ExecuteScalar("Select N_VendorID from Inv_Purchase where "+X_Criteria,connection, transaction);
                             break;
                             case "68":
                             X_Criteria=" N_CreditNoteId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_PurchaseReturnMaster";
+                            partyId = dLayer.ExecuteScalar("Select N_VendorID from Inv_PurchaseReturnMaster where "+X_Criteria,connection, transaction);
                             break;
                             case "80":
                             X_Criteria=" N_QuotationId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_SalesQuotation";
+                            partyId = dLayer.ExecuteScalar("Select N_CustomerID from Inv_SalesQuotation where "+X_Criteria,connection, transaction);
+
                             break;
                             case "81":
                             X_Criteria=" N_SalesOrderId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_SalesOrder";
+                            partyId = dLayer.ExecuteScalar("Select N_CustomerID from Inv_SalesOrder where "+X_Criteria,connection, transaction);
+
                             break;
                             case "64":
                             X_Criteria=" N_SalesId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_Sales";
+                            partyId = dLayer.ExecuteScalar("Select N_CustomerID from Inv_Sales where "+X_Criteria,connection, transaction);
+
                             break;
                             case "55":
                             X_Criteria=" N_DebitNoteId=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                             tableName="Inv_SalesReturnMaster";
+                            partyId = dLayer.ExecuteScalar("Select N_CustomerID from Inv_SalesReturnMaster where "+X_Criteria,connection, transaction);
+
                             break;
                             default:
                             return Ok(api.Error("Invalid Form"));
@@ -282,8 +294,10 @@ string status="";
                      status = myFunctions.UpdateApprovals(Approvals, nFnYearID, ApprovalRow["x_EntryForm"].ToString(), N_PkeyID,ApprovalRow["x_TransCode"].ToString(), ProcStatus, tableName, X_Criteria, "", User, dLayer, connection, transaction);
                    
                         }
-
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, "", 0, "", User, dLayer, connection, transaction);
+if(partyId==null){
+    partyId=0;
+}
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID,  ApprovalRow["x_EntryForm"].ToString(), N_PkeyID, ApprovalRow["x_TransCode"].ToString(), 1, ApprovalRow["x_PartyName"].ToString(), myFunctions.getIntVAL(partyId.ToString()), "", User, dLayer, connection, transaction);
                         transaction.Commit();
                         
                
