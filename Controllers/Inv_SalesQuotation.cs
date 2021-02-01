@@ -20,14 +20,16 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int FormID;
 
-        public Inv_SalesQuotation(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_SalesQuotation(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 80;
         }
@@ -55,7 +57,8 @@ namespace SmartxAPI.Controllers
                     
                     case "quotationDate" : xSortBy ="[Quotation Date] " + xSortBy.Split(" ")[1] ;
                     break;
-                   
+                    case "quotationNo" : xSortBy ="N_QuotationId " + xSortBy.Split(" ")[1] ;
+                    break;
                     default : break;
                 }
                  xSortBy = " order by " + xSortBy;
@@ -345,6 +348,12 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Notice("No data found"));
                     }
+                    Details = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                    Details = _api.Format(Details, "Details");
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(Master.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(Master.Rows[0]["N_QuotationId"].ToString()),this.FormID,myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+
+                    dsQuotation.Tables.Add(Attachments);
                     dsQuotation.Tables.Add(Master);
                     dsQuotation.Tables.Add(Details);
 
@@ -397,6 +406,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
 
@@ -413,6 +423,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
+                    int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -480,6 +491,22 @@ string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + Quo
                                 dLayer.ExecuteNonQuery("Update Inv_ItemMaster Set N_PurchaseCost=@nPurchaseCost Where N_ItemID=@nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                             if (myFunctions.getIntVAL(QueryParams["@nCRMID"].ToString()) > 0)
                                 dLayer.ExecuteNonQuery("Update Inv_CRMDetails Set B_Processed=1 Where N_CRMID=@nCRMID and N_ItemID=@nItemID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                        }
+                    
+                        SortedList CustomerParams = new SortedList();
+                        CustomerParams.Add("@nCustomerID", N_CustomerID);
+                        DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+                        if (CustomerInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, QuotationNo, N_QuotationID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID,  "Customer Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
                         }
                         transaction.Commit();
                     }

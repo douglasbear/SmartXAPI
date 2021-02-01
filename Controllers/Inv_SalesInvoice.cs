@@ -20,13 +20,15 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_SalesInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_SalesInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 64;
         }
@@ -49,8 +51,14 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesId desc";
             else
-            
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "invoiceNo" : xSortBy ="N_SalesId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
             xSortBy = " order by " + xSortBy;
+            }
           
 
             if (Count == 0)
@@ -337,8 +345,11 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesId"].ToString()),this.N_FormID,myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()),User,Con);
+                    Attachments = _api.Format(Attachments, "attachments");
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
+                    dsSalesInvoice.Tables.Add(Attachments);
 
                     return Ok(_api.Success(dsSalesInvoice));
 
@@ -361,6 +372,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
+                DataTable Attachment = ds.Tables["attachments"];
 
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
@@ -627,6 +639,21 @@ namespace SmartxAPI.Controllers
                                     }
                                 }
 
+                            }
+                        }
+                        SortedList CustomerParams = new SortedList();
+                        CustomerParams.Add("@nCustomerID", N_CustomerID);
+                        DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+                        if (CustomerInfo.Rows.Count > 0)
+                        {
+                            try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID,  "Customer Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
                             }
                         }
                         //dispatch saving here

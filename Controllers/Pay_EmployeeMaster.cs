@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetEmployeeDetails(string xEmpCode, int nFnYearID, bool bAllBranchData, int nBranchID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable Pay_Employee, Pay_EmpAddlInfo, pay_EmployeeDependence, pay_EmployeeAlerts, acc_OtherInformation, pay_EmpAccruls, pay_EmployeePayHistory, pay_PaySetup, pay_EmployeeSub;
+            DataTable Pay_Employee, Pay_EmpAddlInfo, pay_EmployeeDependence, pay_EmployeeAlerts, acc_OtherInformation, pay_EmpAccruls, pay_EmployeePayHistory, pay_PaySetup, pay_EmployeeSub,pay_Getsalary;
 
             SortedList Result = new SortedList();
             SortedList Params = new SortedList();
@@ -95,6 +95,8 @@ namespace SmartxAPI.Controllers
             string branchSql = bAllBranchData == false ? " and (vw_PayEmployee.N_BranchID=0 or vw_PayEmployee.N_BranchID=@nBranchID" : "";
             string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name], *,Pay_Employee.X_EmpName AS X_ReportTo,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status]  from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
             string contactSql = "Select * from vw_ContactDetails where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
+            string salarySql = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformation.N_CompanyID AND N_EmpID = vw_EmpPayInformation.N_EmpID AND N_PayID = vw_EmpPayInformation.N_PayID AND N_Value = vw_EmpPayInformation.N_value ) AS N_NoEdit from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID";
+            string accrualSql = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@nCompanyID  and N_EmpID=@nEmpID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -111,10 +113,64 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nEmpID", Pay_Employee.Rows[0]["N_EmpID"].ToString());
                         pay_EmployeeSub = dLayer.ExecuteDataTable(contactSql, Params, connection);
+                        pay_Getsalary = dLayer.ExecuteDataTable(salarySql, Params, connection);
+                        pay_EmpAccruls = dLayer.ExecuteDataTable(accrualSql, Params, connection);
+                        
                         Result.Add("pay_Employee", Pay_Employee);
                         Result.Add("pay_EmployeeSub", pay_EmployeeSub);
+                        Result.Add("pay_Getsalary", pay_Getsalary);
+                        Result.Add("pay_EmpAccruls", pay_EmpAccruls);
                         return Ok(_api.Success(Result));
                     }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("default")]
+        public ActionResult GetEmployeeDefault(int nFnYearID, int nBranchID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable pay_Codes, pay_benifits, pay_EmpAccruls, pay_OtherInfo, pay_PaySetup;
+
+            SortedList Result = new SortedList();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nBranchID", nBranchID);
+
+
+            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID order by X_Type desc";
+            string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3) and B_InActive=0";
+            string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
+            string PayCodeSql ="Select * From [vw_Pay_Sal4perPaycodes] Where N_CompanyID=@nCompanyID and N_FnyearID =@nFnYearID";
+            string payOthInfoSql = "Select N_OtherCode,X_subject from Acc_OtherInformationMaster Where  N_CompanyID=@nCompanyID and  N_FormID=188";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    pay_PaySetup = dLayer.ExecuteDataTable(paySetupSql, Params, connection);
+                    pay_EmpAccruls = dLayer.ExecuteDataTable(accrualSql, Params, connection);
+                    pay_benifits  = dLayer.ExecuteDataTable(payBenifitsSql, Params, connection);
+                    pay_Codes = dLayer.ExecuteDataTable(PayCodeSql, Params, connection);
+                    pay_OtherInfo = dLayer.ExecuteDataTable(payOthInfoSql, Params, connection);
+                    pay_PaySetup = _api.Format(pay_PaySetup);
+                    pay_EmpAccruls = _api.Format(pay_EmpAccruls);
+                    pay_benifits = _api.Format(pay_benifits);
+                    pay_Codes = _api.Format(pay_Codes);
+                    pay_OtherInfo = _api.Format(pay_OtherInfo);
+                    Result.Add("pay_PaySetup", pay_PaySetup);
+                        Result.Add("pay_EmpAccruls", pay_EmpAccruls);
+                        Result.Add("pay_benifits", pay_benifits);
+                        Result.Add("pay_Codes", pay_Codes);
+                        Result.Add("pay_OtherInfo", pay_OtherInfo);
+
+                        return Ok(_api.Success(Result));
+                   
                 }
             }
             catch (Exception e)
@@ -515,7 +571,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                return Ok(myFunctions.DecryptString("qZM+x0/w9ElGlfB87hJ8OQ=="));
+                return Ok(myFunctions.DecryptString("faIocQ+Wry4="));
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
