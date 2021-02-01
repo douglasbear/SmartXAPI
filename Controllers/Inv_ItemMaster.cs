@@ -105,6 +105,8 @@ namespace SmartxAPI.Controllers
               switch (xSortBy.Split(" ")[0]){ 
                     case "itemClass" : xSortBy ="[Item Class] " + xSortBy.Split(" ")[1] ;
                     break;
+                    case "itemCode" : xSortBy ="N_ItemID " + xSortBy.Split(" ")[1] ;
+                    break;
                     default : break;
                 }
              xSortBy = " order by " + xSortBy;

@@ -380,16 +380,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("loanListAll")]
-        public ActionResult GetEmployeeAllLoanRequest(string xReqType)
+        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-            int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
-            QueryParams.Add("@nUserID", nUserID);
+            QueryParams.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
 
             try
@@ -397,15 +396,8 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
-                    if (nEmpID != null)
-                    {
-                        QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        // QueryParams.Add("@xStatus", xReqType);
-                        sqlCommandText = "Select N_CompanyID,[Employee No],Name,Position,[Loan ID],[Loan Amount],N_LoanTransID,N_FnYearID,[Issue Date],N_PayTypeID,[Status],D_LoanIssueDate,B_OpeningBal,N_BranchID,N_NextApprovalID from vw_Pay_LoanIssueList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_LoanIssueDate Desc";
-
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    }
+                    sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsSaveDraft=0 order by D_LoanIssueDate Desc";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
