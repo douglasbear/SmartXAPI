@@ -116,28 +116,33 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("list/{type}") ]
+        [HttpGet("list") ]
         public ActionResult GetPayCodeList (string type)
         {
             int id=0;
             switch(type){
                 case "Gosi": id=14;
                 break;
+                case "All":id=0;
+                break;
                 
                 default: return Ok("Invalid Type");
             }
-            string X_Criteria="N_PayTypeID=@p1";
+            string X_Criteria="";
+            if(id>0)
+                 X_Criteria="where N_PayTypeID=@p1";
+
             SortedList param = new SortedList(){{"@p1",id}};
             
             DataTable dt=new DataTable();
             
-            string sqlCommandText="select * from Pay_PayMaster where "+X_Criteria;
+            string sqlCommandText="select * from Pay_PayMaster "+X_Criteria;
                 
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    
+
                     dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
                 }
                     if(dt.Rows.Count==0)
@@ -151,6 +156,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
+
 
         [HttpGet("payCodeType")]
         public ActionResult GetPayCodeType()
@@ -196,7 +202,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_SummaryPercentage ", "N_PerCalcID", nPayCodeId, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
