@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
           
                                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection); 
                               
-                                  OutPut.Add("Details", _api.Format(dt));
+                                OutPut.Add("Details", _api.Format(dt));
                                 
                                 OutPut.Add("TotalCount", TotalCount);
                                 
