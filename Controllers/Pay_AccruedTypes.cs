@@ -170,6 +170,7 @@ namespace SmartxAPI.Controllers
       
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nVacTypeID)
+        
         {
 
              int Results = 0;
@@ -180,7 +181,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("X_VacCode", "N_VacTypeID", nVacTypeID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", nVacTypeID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
