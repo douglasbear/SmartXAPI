@@ -567,11 +567,11 @@ namespace SmartxAPI.Controllers
         }
         [AllowAnonymous]
         [HttpGet("dummy")]
-        public ActionResult GetVoucherDummy(int? id)
+        public ActionResult GetVoucherDummy(string id)
         {
             try
             {
-                return Ok(myFunctions.DecryptString("faIocQ+Wry4="));
+                return Ok(myFunctions.DecryptString("wbQgkm+DI/k="));
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
