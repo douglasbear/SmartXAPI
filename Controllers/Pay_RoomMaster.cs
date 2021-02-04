@@ -62,5 +62,69 @@ namespace SmartxAPI.Controllers
             }
         }
 
+          [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                  int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                  int nRoomId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RoomId"].ToString());
+                
+                    nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Room Information Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nRoomId)
+        {
+
+            int Results = 0;
+            try
+            {
+                SortedList Params = new SortedList();
+               
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Pay_RoomMaster", "n_RoomId", nRoomId, "", connection, transaction);
+                    transaction.Commit();
+                }
+                if (Results > 0)
+                {
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("n_RoomId", nRoomId.ToString());
+                    return Ok(api.Success(res, "Item deleted"));
+                }
+                else
+                {
+                    return Ok(api.Error("Unable to delete Lead"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
+             
+       
+
+     
     }
 }
