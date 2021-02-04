@@ -89,39 +89,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRoomId)
-        {
-
-            int Results = 0;
-            try
-            {
-                SortedList Params = new SortedList();
-               
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_RoomMaster", "n_RoomId", nRoomId, "", connection, transaction);
-                    transaction.Commit();
-                }
-                if (Results > 0)
-                {
-                    Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("n_RoomId", nRoomId.ToString());
-                    return Ok(api.Success(res, "Item deleted"));
-                }
-                else
-                {
-                    return Ok(api.Error("Unable to delete Lead"));
-                }
-
-            }
-            catch (Exception ex)
-            {
-                return Ok(api.Error(ex));
-            }
-        }
+      
              
        
 
