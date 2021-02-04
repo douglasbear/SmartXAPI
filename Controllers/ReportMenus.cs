@@ -281,7 +281,7 @@ namespace SmartxAPI.Controllers
                         else
                             ReportName="Sales_order";
                     }
-                    if(nFormID==729)
+                    if(nFormID==884)
                     {
                         critiria="{vw_InvDeliveryNoteDetails.N_DeliveryNoteID}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/deliverynote/vat/";

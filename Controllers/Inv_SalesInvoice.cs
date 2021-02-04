@@ -393,6 +393,7 @@ namespace SmartxAPI.Controllers
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
+                    int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
@@ -513,6 +514,15 @@ namespace SmartxAPI.Controllers
                     {
 
 
+
+                                SortedList StockPostingParams = new SortedList();
+                            StockPostingParams.Add("N_CompanyID", N_CompanyID);
+                            StockPostingParams.Add("N_SalesID", N_SalesID);
+                            StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
+                            StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
+
+                            dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
@@ -622,7 +632,7 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
@@ -669,7 +679,21 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                 if (ex.Message == "50")
+                                    return Ok(_api.Error("Day Closed"));
+                                else if (ex.Message == "51")
+                                    return Ok(_api.Error("Year Closed"));
+                                else if (ex.Message == "52")
+                                    return Ok(_api.Error("Year Exists"));
+                                else if (ex.Message == "53")
+                                    return Ok(_api.Error("Period Closed"));
+                                else if (ex.Message == "54")
+                                    return Ok(_api.Error("Txn Date"));
+                                else if (ex.Message == "55")                                
+                                    return Ok(_api.Error("Quantity exceeds!"));   
+                                else
+                                    return Ok(_api.Error(ex));
+             
             }
         }
         //Delete....

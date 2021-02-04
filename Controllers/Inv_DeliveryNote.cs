@@ -361,7 +361,7 @@ namespace SmartxAPI.Controllers
                                 else if (ex.Message == "54")
                                     return Ok(_api.Error("Txn Date"));
                                 else if (ex.Message == "55")                                
-                                    return Ok(_api.Error("Invalid Delivery Qty"));   
+                                    return Ok(_api.Error("Product is not available for delivery"));   
                                 else
                                     return Ok(_api.Error(ex));
             }
