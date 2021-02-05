@@ -13,9 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("roomMaster")]
+    [Route("villaMaster")]
     [ApiController]
-    public class Pay_RoomMaster : ControllerBase
+    public class Pay_VillaMaster : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
 
-        public Pay_RoomMaster(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Pay_VillaMaster(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
@@ -32,13 +32,13 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetRoomMaster()
+        public ActionResult GetVillaMaster()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select N_CompanyID, N_RoomId, X_RoomCode, X_RoomName, N_VillaID, X_Location, N_RentAmount, X_Remarks, D_Entrydate, N_Electricity, N_Water, N_Internet, N_Capasity from Pay_RoomMaster Where N_CompanyID=@nCompanyID order by X_RoomCode";
+            string sqlCommandText="Select * from Pay_VillaMaster Where N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -75,12 +75,12 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                   int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                  int nRoomId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RoomId"].ToString());
+                  int nVillaId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_VillaId"].ToString());
                 
-                    nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
+                    nVillaId = dLayer.SaveData("Pay_VillaMaster", "n_VillaId", MasterTable, connection, transaction);
                     
                     transaction.Commit();
-                    return Ok(_api.Success("Room Information Saved")) ;
+                    return Ok(_api.Success("Villa Information Saved")) ;
                 }
             }
             catch (Exception ex)
@@ -92,14 +92,14 @@ namespace SmartxAPI.Controllers
       
              
         [HttpGet("details")]
-        public ActionResult GetDetails(int nRoomID)
+        public ActionResult GetDetails(int nVillaID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Pay_RoomMaster where N_CompanyID=@nCompanyID and N_RoomID=@nRoomID";
+            string sqlCommandText="select * from Pay_VillaMaster where N_CompanyID=@nCompanyID and N_VillaID=@nVillaID";
             Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nRoomID",nRoomID);
+            Params.Add("@nVillaID",nVillaID);
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
         }
 
           [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRoomID)
+        public ActionResult DeleteData(int nVillaID)
         {
             int Results = 0;
             try
@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_RoomMaster", "n_RoomID", nRoomID, "", connection);
+                    Results = dLayer.DeleteData("Pay_VillaMaster", "n_VillaID", nVillaID, "", connection);
                     if (Results > 0)
                     {
                         return Ok( _api.Success("deleted"));

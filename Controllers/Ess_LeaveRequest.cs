@@ -244,8 +244,8 @@ private readonly IMyAttachments myAttachments;
             }
         }
 
-        [HttpGet("getAvailable")]
-        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID, int nVacationGroupID)
+        [HttpGet("getAvailable_Old")]
+        public ActionResult GetAvailableDays_Old(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID, int nVacationGroupID)
         {
             DateTime toDate;
             int days = 0;
@@ -280,6 +280,78 @@ private readonly IMyAttachments myAttachments;
                     }
                     else
                         totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+                }
+                Dictionary<string, string> res = new Dictionary<string, string>();
+                res.Add("availableDays", totalDays.ToString());
+
+                return Ok(api.Success(res));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
+        [HttpGet("getAvailable")]
+        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID, int nVacationGroupID)
+        {
+            DateTime toDate;
+            int days = 0;
+            double totalDays = 0;
+            object Date = null;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
+                    
+                     Date = dLayer.ExecuteScalar("Select MAX(Pay_VacationDetails.D_VacDateTo) as D_Date from Pay_VacationDetails Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + " and N_VacTypeID =" + nVacTypeID + " and N_VacationStatus = 0 and N_VacDays>0 ",connection);
+            if (Date.ToString().Trim() != "")
+            {
+                if (Date.ToString() != "")
+                    toDate = Convert.ToDateTime(Date.ToString());
+                else
+                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select D_HireDate from Pay_Employee Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + "",connection).ToString());
+
+                if (toDate < dDateFrom)
+                    days = myFunctions.getIntVAL(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + myFunctions.getDateVAL(toDate) + "','" + myFunctions.getDateVAL(dDateFrom) + "')", connection).ToString());
+                else
+                    days = 0;
+            }
+            else
+            {
+                toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select D_HireDate from Pay_Employee Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + "",connection).ToString());
+                if (toDate < dDateFrom)
+                    days = myFunctions.getIntVAL(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + myFunctions.getDateVAL(toDate) + "','" + myFunctions.getDateVAL(dDateFrom) + "')", connection).ToString());
+                else
+                    days = 0;
+            }
+            if (nVacTypeID == 6)
+            {
+                totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
+            }
+            else
+                totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+
+            double N_MaxDays = 0;
+            object MaxDays = dLayer.ExecuteScalar("select N_MaxAccrued from Pay_VacationType where N_VacTypeID=" + nVacTypeID + " and N_CompanyID=" + nCompanyID,connection);
+            if (MaxDays != null)
+                N_MaxDays = myFunctions.getVAL(MaxDays.ToString());
+            double N_Acrued = 0;
+            object Acrued = dLayer.ExecuteScalar("select sum(N_VacDays) from  Pay_VacationDetails INNER JOIN  Pay_VacationType ON Pay_VacationDetails.N_VacTypeID = Pay_VacationType.N_VacTypeID where Pay_VacationDetails.N_EmpID =" + nEmpID + " and Pay_VacationType.N_VacTypeID= " + nVacTypeID + " and Pay_VacationDetails.N_CompanyID=" + nCompanyID,connection);
+
+            if (Acrued != null)
+                N_Acrued = myFunctions.getVAL(Acrued.ToString());
+
+
+            if (totalDays > myFunctions.getVAL(MaxDays.ToString()))
+            {
+                    totalDays = myFunctions.getVAL(MaxDays.ToString());
+            }
+                    
                 }
                 Dictionary<string, string> res = new Dictionary<string, string>();
                 res.Add("availableDays", totalDays.ToString());
