@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         LeadCode = dLayer.GetAutoNumber("CRM_Leads", "X_LeadCode", Params, connection, transaction);
-                        if (LeadCode == "") { return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LeadCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["X_LeadCode"] = LeadCode;
                     }
 
@@ -273,7 +273,7 @@ namespace SmartxAPI.Controllers
                     OprParams.Add("N_YearID", n_FnYearID);
                     OprParams.Add("N_FormID", 1302);
                     OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", OprParams, connection, transaction);
-                    if (OpportunityCode == "") { return Ok(api.Error("Unable to Create Opportunity")); }
+                    if (OpportunityCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to Create Opportunity")); }
                     OprTbl.Rows[0]["X_OpportunityCode"] = OpportunityCode;
                     OprTbl.Rows[0]["N_CustomerID"] = nCustomerID;
                     OprTbl.Rows[0]["N_ContactID"] = nContactId;

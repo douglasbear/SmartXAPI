@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xBranchCode = dLayer.GetAutoNumber("Acc_BranchMaster", "x_BranchCode", Params, connection, transaction);
-                        if (xBranchCode == "") { return Ok(_api.Error("Unable to generate Employee Code")); }
+                        if (xBranchCode == "") {transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
                         MasterTable.Rows[0]["x_BranchCode"] = xBranchCode;
                     }
                     else

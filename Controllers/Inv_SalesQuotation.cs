@@ -445,7 +445,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
-                        if (QuotationNo == "") { return Ok(_api.Error("Unable to generate Quotation Number")); }
+                        if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
 
                     }

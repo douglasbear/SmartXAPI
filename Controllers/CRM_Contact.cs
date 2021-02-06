@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1308);
                         ContactCode = dLayer.GetAutoNumber("CRM_Contact", "x_ContactCode", Params, connection, transaction);
-                        if (ContactCode == "") { return Ok(api.Error("Unable to generate Contact Code")); }
+                        if (ContactCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Contact Code")); }
                         MasterTable.Rows[0]["x_ContactCode"] = ContactCode;
                     }
 

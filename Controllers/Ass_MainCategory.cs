@@ -143,7 +143,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         AssetMainCode = dLayer.GetAutoNumber("Ass_AssetMainCategory", "X_MainCategoryCode", Params, connection, transaction);
-                        if (AssetMainCode == "") { return Ok(api.Error("Unable to generate Asset Code")); }
+                        if (AssetMainCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Asset Code")); }
                         MasterTable.Rows[0]["X_MainCategoryCode"] = AssetMainCode;
                     }
 

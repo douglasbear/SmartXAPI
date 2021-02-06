@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
-                        if (ActivityCode == "") { return Ok(api.Error("Unable to generate Activity Code")); }
+                        if (ActivityCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
                     }
 

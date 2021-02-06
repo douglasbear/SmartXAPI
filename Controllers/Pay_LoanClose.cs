@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_LoanCloseID", nLoanCloseID);
                         LoanCloseCode = dLayer.GetAutoNumber("Pay_LoanClose", "X_LoanClosingCode", Params, connection, transaction);
-                        if (LoanCloseCode == "") { return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LoanCloseCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["X_LoanClosingCode"] = LoanCloseCode;
                     }
                     SortedList DeleteParams = new SortedList(){

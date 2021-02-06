@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_ServiceEndID", nServiceEndID);
                         ServiceEndCode = dLayer.GetAutoNumber("pay_EndOFService", "X_ServiceEndCode", Params, connection, transaction);
-                        if (ServiceEndCode == "") { return Ok(api.Error("Unable to generate Service End Code")); }
+                        if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Service End Code")); }
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");

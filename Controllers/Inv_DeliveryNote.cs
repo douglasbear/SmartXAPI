@@ -273,7 +273,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 884);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { return Ok(_api.Error("Unable to generate Delivery Number")); }
+                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Delivery Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
                     else

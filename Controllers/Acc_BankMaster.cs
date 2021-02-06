@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                        if (xBankCode == "") { return Ok(_api.Error("Unable to generate Bank Code")); }
+                        if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error("Unable to generate Bank Code")); }
                         MasterTable.Rows[0]["x_BankCode"] = xBankCode;
                     }
                     else
