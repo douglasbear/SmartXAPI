@@ -521,7 +521,7 @@ namespace SmartxAPI.Controllers
                             StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
                             StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
 
-                            dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                           // dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
 
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
