@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xInsuranceCode = dLayer.GetAutoNumber("Pay_Medical_Insurance", "x_InsuranceCode", Params, connection, transaction);
-                        if (xInsuranceCode == "") { return Ok(_api.Error("Unable to generate Insurance Code")); }
+                        if (xInsuranceCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Insurance Code")); }
                         MasterTable.Rows[0]["x_InsuranceCode"] = xInsuranceCode;
                     }
                     else

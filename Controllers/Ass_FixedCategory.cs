@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         CategoryCode = dLayer.GetAutoNumber("Ass_AssetCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { return Ok(api.Error("Unable to generate Category Code")); }
+                        if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
 

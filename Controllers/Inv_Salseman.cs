@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         ExecutiveCode = dLayer.GetAutoNumber("inv_salesman", "X_SalesmanCode", Params, connection, transaction);
-                        if (ExecutiveCode == "") { return Ok(_api.Error("Unable to generate Sales Executive Code")); }
+                        if (ExecutiveCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Sales Executive Code")); }
                         MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
 
                     }

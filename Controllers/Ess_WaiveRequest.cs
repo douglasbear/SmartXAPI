@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", nBranchID);
 
                         x_RequestCode = dLayer.GetAutoNumber("Pay_AnytimeRequest", "x_RequestCode", Params, connection, transaction);
-                        if (x_RequestCode == "") { return Ok(api.Error("Unable to generate Waive Request Number")); }
+                        if (x_RequestCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Waive Request Number")); }
                             MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
                     }
                     else

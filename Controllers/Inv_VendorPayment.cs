@@ -336,7 +336,7 @@ int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString
                         Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
-                        if (PayReceiptNo == "") { return Ok(api.Warning("Unable to generate Receipt Number")); }
+                        if (PayReceiptNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }
                         MasterTable.Rows[0]["x_VoucherNo"] = PayReceiptNo;
                     }
                     else

@@ -291,6 +291,11 @@ int N_POrderID=0; var X_POrderNo="";
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
                      N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+                     if (N_POrderID > 0)
+                    {
+                        if (CheckProcessed(N_POrderID))
+                            return Ok(api.Error("Transaction Started!"));
+                    }
                     int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
                         MasterTable.Rows[0]["n_POTypeID"] = 174;
@@ -307,7 +312,7 @@ int N_POrderID=0; var X_POrderNo="";
                         Params.Add("N_FormID", this.FormID);
 
                         X_POrderNo = dLayer.GetAutoNumber("Inv_PurchaseOrder", "x_POrderNo", Params, connection, transaction);
-                        if (X_POrderNo == "") { return Ok(api.Warning("Unable to generate Quotation Number")); }
+                        if (X_POrderNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_POrderNo"] = X_POrderNo;
                     }
                     else
@@ -414,6 +419,24 @@ int N_POrderID=0; var X_POrderNo="";
             {
                 return Ok(ex);
             }
+        }
+
+        private bool CheckProcessed(int nPOrderID)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+                        using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+            object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=" + nCompanyId + " and N_TransID=" + nPOrderID + " and N_FormID=82",connection);
+            if (AdvancePRProcessed != null)
+            {
+                if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                {
+                    return true;
+                }
+            }
+            }
+            return false;
         }
 
         [HttpDelete("delete")]

@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xLoanID = dLayer.GetAutoNumber("Pay_LoanIssue", "n_LoanID", Params, connection, transaction);
-                        if (xLoanID == "") { return Ok(api.Error("Unable to generate Loan ID")); }
+                        if (xLoanID == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Loan ID")); }
                         MasterTable.Rows[0]["n_LoanID"] = xLoanID;
                     }
                     else

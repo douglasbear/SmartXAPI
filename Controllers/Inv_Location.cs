@@ -146,7 +146,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 450);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
-                        if (LocationCode == "") { return Ok( _api.Error( "Unable to generate Location Code")); }
+                        if (LocationCode == "") { transaction.Rollback(); return Ok( _api.Error( "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
 
