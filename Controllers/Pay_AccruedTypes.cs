@@ -14,17 +14,17 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("fixedassetcategory")]
+    [Route("accruedtypes")]
     [ApiController]
-    public class Ass_FixedCategory : ControllerBase
+    public class Pay_AccruedTypes : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int N_FormID = 128;
+        private readonly int N_FormID = 587;
 
-        public Ass_FixedCategory(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Pay_AccruedTypes(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult PayAccruedList(int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -44,9 +44,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1  ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayAccruedCode_List where N_CompanyID=@p1";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayAccruedCode_List where N_CompanyID=@p1 and N_VacTypeID not in (select top("+ Count +")N_VacTypeID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvAssetCategory_Disp where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -82,14 +82,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult FixedAssetListDetails(string xFixedAssetNo)
+        public ActionResult PayAccruedListDetails(string xVacCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and Code=@p3";
+            string sqlCommandText = "select * from vw_PayAccruedCode_List  where N_CompanyID=@p1 and X_VacCode=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3",xFixedAssetNo );
+    
+            Params.Add("@p3",xVacCode );
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -125,7 +126,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nCategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CategoryID"].ToString());
+                int nVacTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_VacTypeID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -133,21 +134,22 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string CategoryCode = "";
-                    var values = MasterTable.Rows[0]["X_CategoryCode"].ToString();
+                    string VacCode = "";
+                    var values = MasterTable.Rows[0]["X_VacCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        CategoryCode = dLayer.GetAutoNumber("Ass_AssetCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { return Ok(api.Error("Unable to generate Category Code")); }
-                        MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
+                        VacCode = dLayer.GetAutoNumber("Pay_VacationType", "X_VacCode", Params, connection, transaction);
+                        if (VacCode == "") { return Ok(api.Error("Unable to generate Accrual Code")); }
+                        MasterTable.Rows[0]["X_VacCode"] = VacCode;
+                        MasterTable.Columns.Remove("n_FnYearId");
                     }
 
 
-                    nCategoryID = dLayer.SaveData("Ass_AssetCategory", "N_CategoryID", MasterTable, connection, transaction);
-                    if (nCategoryID <= 0)
+                    nVacTypeID  = dLayer.SaveData("Pay_VacationType", "N_VacTypeID", MasterTable, connection, transaction);
+                    if (nVacTypeID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
@@ -155,7 +157,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Fixed Asset Created"));
+                        return Ok(api.Success("Accrual Code Created"));
                     }
                 }
             }
@@ -167,7 +169,8 @@ namespace SmartxAPI.Controllers
 
       
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCategoryID)
+        public ActionResult DeleteData(int nVacTypeID)
+        
         {
 
              int Results = 0;
@@ -178,18 +181,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("X_Category", "N_CategoryID", nCategoryID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", nVacTypeID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
                     Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_CategoryID",nCategoryID.ToString());
-                    return Ok(api.Success(res,"Fixed Asset deleted"));
+                    res.Add("N_VacTypeID",nVacTypeID.ToString());
+                    return Ok(api.Success(res,"Accrual Code deleted"));
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Fixed Asset"));
+                    return Ok(api.Error("Unable to delete Accrual Code"));
                 }
 
             }

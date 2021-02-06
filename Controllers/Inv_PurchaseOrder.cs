@@ -52,13 +52,14 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_POrderID desc";
             else
-           
-             xSortBy = " order by " + xSortBy;
-
-          
-                
-
-
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "orderNo" : xSortBy ="N_POrderID " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
             if (Count == 0)
                 sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
@@ -246,10 +247,10 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
-                    DataTable Attachements = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()),myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()),this.FormID,myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
-                    Attachements = api.Format(Attachements, "attachments");
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()),myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()),this.FormID,myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    Attachments = api.Format(Attachments, "attachments");
                     
-                    dt.Tables.Add(Attachements);
+                    dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);
                 }
                 return Ok(api.Success(dt));

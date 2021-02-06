@@ -45,8 +45,19 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_DeliveryNoteId desc";
+            // if (xSortBy.Split(" ")[0] == "invoiceDate")
+            //     xSortBy = "order by Cast(invoiceDate) as DateTime()";
             else
-                xSortBy = " order by " + xSortBy;
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "invoiceNo" : xSortBy ="N_DeliveryNoteId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    case "invoiceDate" : xSortBy ="[Invoice Date] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
 
 
             if (Count == 0)
@@ -135,17 +146,23 @@ namespace SmartxAPI.Controllers
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
                     int N_DelID = myFunctions.getIntVAL(MasterRow["N_deliverynoteid"].ToString());
+                    int N_SalesOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderID"].ToString());
                     QueryParamsList.Add("@nDelID", nCompanyId);
-                    object InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID", QueryParamsList, Con);
+                    QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
+                    object InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_SalesReceiptNo", typeof(string), InSales);
+
+                    object InSalesOrder = dLayer.ExecuteScalar("select x_OrderNo from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSaleOrderID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_OrderNo", typeof(string), InSalesOrder);
+
 
                     QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
 
 
                     
-                        myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNo", typeof(string), "");
-                        myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
-                        myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
+      
+                        masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
+                        masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
 
 
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
@@ -333,7 +350,20 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                                if (ex.Message == "50")
+                                    return Ok(_api.Error("Day Closed"));
+                                else if (ex.Message == "51")
+                                    return Ok(_api.Error("Year Closed"));
+                                else if (ex.Message == "52")
+                                    return Ok(_api.Error("Year Exists"));
+                                else if (ex.Message == "53")
+                                    return Ok(_api.Error("Period Closed"));
+                                else if (ex.Message == "54")
+                                    return Ok(_api.Error("Txn Date"));
+                                else if (ex.Message == "55")                                
+                                    return Ok(_api.Error("Product is not available for delivery"));   
+                                else
+                                    return Ok(_api.Error(ex));
             }
         }
         // private bool ValidateIMEIs(int row,DataSet ds,int nSalesID,string imeiFrom,string imeiTo,SortedList QueryParams,SqlConnection connection,SqlTransaction transaction)

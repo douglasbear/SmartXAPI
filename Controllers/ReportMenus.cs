@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn";
+                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -255,7 +255,7 @@ namespace SmartxAPI.Controllers
                      {
                          ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                      };
-                      if(nFormID==80)
+                    if(nFormID==80)
                     {
                         critiria="{Inv_SalesQuotation.N_QuotationId}="+ nPkeyID;
                         RPTLocation=reportLocation+"printing/quotation/vat/";
@@ -280,6 +280,19 @@ namespace SmartxAPI.Controllers
                         }
                         else
                             ReportName="Sales_order";
+                    }
+                    if(nFormID==884)
+                    {
+                        critiria="{vw_InvDeliveryNoteDetails.N_DeliveryNoteID}="+ nPkeyID;
+                        RPTLocation=reportLocation+"printing/deliverynote/vat/";
+                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
+                        if(Template!=null)
+                        {
+                            ReportName=Template.ToString();
+                            ReportName=ReportName.Remove(ReportName.Length-4);
+                        }
+                        else
+                            ReportName="Sales_DeliveryNote";
                     }
                    
                     if(nFormID==64)
