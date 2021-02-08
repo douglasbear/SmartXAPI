@@ -63,9 +63,9 @@ namespace SmartxAPI.Controllers
                 
 
             if(Count==0)
-                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null " + Searchkey + " " + xSortBy;
+                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0    and (X_type='PP' OR X_type='PA')  and amount is not null " + Searchkey + " " + xSortBy;
             else
-                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null  " + Searchkey + " and n_PayReceiptID not in (select top("+ Count +") n_PayReceiptID from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null " + xSortBy + " ) " + xSortBy;
+                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0    and (X_type='PP' OR X_type='PA')  and amount is not null  " + Searchkey + " and n_PayReceiptID not in (select top("+ Count +") n_PayReceiptID from vw_InvPayment_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and B_YearEndProcess=0  and amount is not null " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();

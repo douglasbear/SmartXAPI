@@ -243,7 +243,8 @@ namespace SmartxAPI.Controllers
             int N_SaveDraft = 0;
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
-            int N_InvoiceId = 0;
+            int nFnYearID =myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
+            int n_POrderID =myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -263,8 +264,8 @@ namespace SmartxAPI.Controllers
                     {
                         N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
 
-                        Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
@@ -284,15 +285,15 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                     }
 
-                    N_InvoiceId = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
+                    N_PurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
 
-                    if (N_InvoiceId <= 0)
+                    if (N_PurchaseID <= 0)
                     {
                         transaction.Rollback();
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["N_PurchaseID"] = N_InvoiceId;
+                        DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
                     }
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)
@@ -300,11 +301,20 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
+
+                        if (N_PurchaseID > 0)
+                        {
+                            dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1 , N_PurchaseID=" + N_PurchaseID + " Where N_POrderID=" + n_POrderID + " and N_CompanyID=" +nCompanyID,connection,transaction);
+                            // if (B_ServiceSheet)
+                            //     dba.ExecuteNonQuery("Update Inv_VendorServiceSheet Set N_Processed=1  Where N_RefID=" + n_POrderID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID,connection,transaction);
+
+                        }
+
                     if (N_SaveDraft == 0)
                     {
                         SortedList PostingMRNParam = new SortedList();
                         PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                        PostingMRNParam.Add("N_PurchaseID", N_InvoiceId);
+                        PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
                         PostingMRNParam.Add("N_UserID", nUserID);
                         PostingMRNParam.Add("X_SystemName", "ERP Cloud");
                         PostingMRNParam.Add("X_UseMRN", "");
@@ -317,7 +327,7 @@ namespace SmartxAPI.Controllers
                         SortedList PostingParam = new SortedList();
                         PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                         PostingParam.Add("X_InventoryMode", "PURCHASE");
-                        PostingParam.Add("N_InternalID", N_InvoiceId);
+                        PostingParam.Add("N_InternalID", N_PurchaseID);
                         PostingParam.Add("N_UserID", nUserID);
                         PostingParam.Add("X_SystemName", "ERP Cloud");
 
@@ -341,7 +351,7 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
-                Result.Add("n_InvoiceID", N_InvoiceId);
+                Result.Add("n_InvoiceID", N_PurchaseID);
                 Result.Add("x_InvoiceNo", InvoiceNo);
                 return Ok(_api.Success(Result, "Purchase Invoice Saved"));
             }
