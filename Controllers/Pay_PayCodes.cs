@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID order by N_PayTypeID";
+            string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and n_PerPayPayment=5 order by N_PayTypeID";
 
             try
             {
