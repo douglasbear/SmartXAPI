@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select N_CompanyID, N_RoomId, X_RoomCode, X_RoomName, N_VillaID, X_Location, N_RentAmount, X_Remarks, D_Entrydate, N_Electricity, N_Water, N_Internet, N_Capasity from Pay_RoomMaster Where N_CompanyID=@nCompanyID order by X_RoomCode";
+            string sqlCommandText="Select N_CompanyID, N_RoomId, X_RoomCode, X_RoomName, N_VillaID, X_Location, N_RentAmount, X_Remarks, D_Entrydate, N_Electricity, N_Water, N_Internet, N_Capasity from vw_Pay_RoomMaster Where N_CompanyID=@nCompanyID order by X_RoomCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -63,32 +63,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //   [HttpPost("save")]
-        // public ActionResult SaveData([FromBody]DataSet ds)
-        // { 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             DataTable MasterTable;
-        //             MasterTable = ds.Tables["master"];
-        //             SortedList Params = new SortedList();
-        //           int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                  
-        //           nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
-                    
-        //           transaction.Commit();
-        //           return Ok(_api.Success("Room Information Saved")) ;
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(ex));
-        //     }
-        // }
-         
+      
 
 
           [HttpPost("save")]
@@ -155,7 +130,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Pay_RoomMaster where N_CompanyID=@nCompanyID and N_RoomID=@nRoomID";
+            string sqlCommandText="select * from vw_Pay_RoomMaster where N_CompanyID=@nCompanyID and N_RoomID=@nRoomID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nRoomID",nRoomID);
             try{
