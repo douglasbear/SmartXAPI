@@ -67,7 +67,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = result });
         }
-        public object Success(SortedList result,String message)
+        public object Success(SortedList result, String message)
         {
             return (new { type = "success", Message = message, Data = result });
         }
@@ -128,11 +128,21 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = "Some accounts may not properly set. Please check the  Account Mapping !";
                         break;
                     }
-                    if (env.EnvironmentName == "Development")
+                    if (ex.Message.Contains("Transaction Processed"))
+                    {
                         Msg = ex.Message;
+                        break;
+                    }
+                    if (env.EnvironmentName == "Development")
+                    {
+                        Msg = ex.Message;
+                        break;
+                    }
                     else
+                    {
                         Msg = "Internal Server Error";
-                    break;
+                        break;
+                    }
             }
 
             // StringBuilder sb = new StringBuilder();
@@ -208,7 +218,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(Dictionary<string, string> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary);
         public object Success(SortedList data);
-        public object Success(SortedList result,String message);
+        public object Success(SortedList result, String message);
         public object Success(DataSet dataSet);
         public object Success(string[] json);
         public object Success(string message);
