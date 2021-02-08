@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_PayAccruedCode_List  where N_CompanyID=@p1 and X_VacCode=@p3";
+            string sqlCommandText = "select * from Pay_VacationType  where N_CompanyID=@p1 and X_VacCode=@p3";
             Params.Add("@p1", nCompanyId);
     
             Params.Add("@p3",xVacCode );
