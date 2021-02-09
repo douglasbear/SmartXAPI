@@ -571,7 +571,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                return Ok(myFunctions.DecryptString("wbQgkm+DI/k="));
+                return Ok(myFunctions.DecryptString("qZM+x0/w9ElGlfB87hJ8OQ=="));
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();

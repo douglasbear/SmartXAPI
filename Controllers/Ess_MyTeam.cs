@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
             string Searchkey = "";
             // string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID "; //OST
-            string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ManagerID=@nEmpID and N_EmpID<>@nEmpID ";
+            string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_EmpID<>@nEmpID and (N_ManagerID=@nEmpID or N_SupervisorID=@nEmpID)";
             if (bAllBranchData == false)
             {
                 Criteria = Criteria + " and N_BranchID=@nBranchID ";
