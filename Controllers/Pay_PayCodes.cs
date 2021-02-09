@@ -159,7 +159,54 @@ namespace SmartxAPI.Controllers
             }   
         }
 
-         
+          [HttpGet("Dashboardlist")]
+        public ActionResult PayCodeDashboardList(int nFnYearId,int nPage,int nSizeperpage)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1  ";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_PayID not in (select top("+ Count +") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 )";
+            Params.Add("@p1", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_PayMaster where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
 
 
         [HttpGet("payCodeType")]
