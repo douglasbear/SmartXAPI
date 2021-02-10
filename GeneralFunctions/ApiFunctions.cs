@@ -133,16 +133,17 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = ex.Message;
                         break;
                     }
-                    if (env.EnvironmentName == "Development")
-                    {
-                        Msg = ex.Message;
-                        break;
-                    }
-                    else
-                    {
-                        Msg = "Internal Server Error";
-                        break;
-                    }
+                    break;
+                    // if (env.EnvironmentName == "Development")
+                    // {
+                    //     Msg = ex.Message;
+                    //     break;
+                    // }
+                    // else
+                    // {
+                    //     Msg = "Internal Server Error";
+                    //     break;
+                    // }
             }
 
             // StringBuilder sb = new StringBuilder();

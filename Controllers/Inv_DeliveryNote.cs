@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%"+ xSearchkey + "%' or x_Notes like '%"+ xSearchkey + "%' or X_OrderNo like '%"+ xSearchkey + "%'";
+                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_DeliveryNoteId desc";
@@ -53,14 +53,17 @@ namespace SmartxAPI.Controllers
             //     xSortBy = "order by Cast(invoiceDate) as DateTime()";
             else
             {
-                switch (xSortBy.Split(" ")[0]){
-                    case "invoiceNo" : xSortBy ="N_DeliveryNoteId " + xSortBy.Split(" ")[1] ;
-                    break;
-                    case "invoiceDate" : xSortBy ="[Invoice Date] " + xSortBy.Split(" ")[1] ;
-                    break;
-                    default : break;
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "invoiceNo":
+                        xSortBy = "N_DeliveryNoteId " + xSortBy.Split(" ")[1];
+                        break;
+                    case "invoiceDate":
+                        xSortBy = "[Invoice Date] " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
                 }
-            xSortBy = " order by " + xSortBy;
+                xSortBy = " order by " + xSortBy;
             }
 
 
@@ -79,7 +82,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -99,16 +102,16 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId, int nBranchId, string xInvoiceNo,int nSalesOrderID)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID)
         {
-                int nCompanyId= myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
 
-                    
+
                     DataSet dsSalesInvoice = new DataSet();
                     SortedList QueryParamsList = new SortedList();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
@@ -124,7 +127,7 @@ namespace SmartxAPI.Controllers
                         {"N_FnYearID",nFnYearId},
                         {"N_BranchId",nBranchId}
                     };
-                    if(nSalesOrderID>0)
+                    if (nSalesOrderID > 0)
                     {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
                         string Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
@@ -141,11 +144,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
+                        QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNote_Disp", mParamsList, Con);
 
-                   
+
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
@@ -164,23 +167,23 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
 
 
-                    
-      
-                        masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
-                        masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
+
+
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
 
 
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
                     {
                         QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-                      
+
                         DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-                        if (SalesData.Rows.Count>0)
-                            {
-                                masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
-                                masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
-                                masterTable.Rows[0]["isSalesDone"] = true;
-                            }
+                        if (SalesData.Rows.Count > 0)
+                        {
+                            masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
+                            masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
+                            masterTable.Rows[0]["isSalesDone"] = true;
+                        }
                     }
 
                     //Details
@@ -191,7 +194,7 @@ namespace SmartxAPI.Controllers
                     };
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNoteDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(masterTable.Rows[0]["n_DeliveryNoteId"].ToString()),this.FormID,myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()),User,Con);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["n_DeliveryNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
                     Attachments = _api.Format(Attachments, "attachments");
 
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
@@ -244,7 +247,7 @@ namespace SmartxAPI.Controllers
                     //int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false;
-                    bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator","X_UserCategory", dLayer, connection, transaction);
+                    bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
                     bool B_SRS = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("729", "SRSinDeliveryNote", "N_Value", N_CompanyID, dLayer, connection, transaction)));
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -270,7 +273,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 884);
+                        Params.Add("N_FormID", 729);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
                         if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Delivery Number")); }
@@ -284,7 +287,15 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_TransType","DELIVERY"},
                                 {"N_VoucherID",N_DeliveryNoteID}};
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
                         }
                     }
                     N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
@@ -346,34 +357,14 @@ namespace SmartxAPI.Controllers
                             ParamSales_Posting.Add("N_InternalID", N_DeliveryNoteID);
                             ParamSales_Posting.Add("N_UserID", N_UserID);
                             ParamSales_Posting.Add("X_SystemName", "ERP Cloud");
-
-                            dLayer.ExecuteNonQueryPro("SP_DeliveryNoteDetails_InsNew", ParamInsNew, connection, transaction);
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", ParamSales_Posting, connection, transaction);
-                        }
-                        SortedList CustomerParams = new SortedList();
-                        CustomerParams.Add("@nCustomerID", N_CustomerID);
-                        DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
-                        if (CustomerInfo.Rows.Count > 0)
-                        {
                             try
                             {
-                                myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DeliveryNoteID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID,  "Customer Document", User, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_DeliveryNoteDetails_InsNew", ParamInsNew, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", ParamSales_Posting, connection, transaction);
                             }
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
-                            }
-                        }
-                        //dispatch saving here
-                        transaction.Commit();
-                    }
-                    //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
-                    return Ok(_api.Success("Delivery Note saved" + ":" + InvoiceNo));
-                }
-            }
-            catch (Exception ex)
-            {
                                 if (ex.Message == "50")
                                     return Ok(_api.Error("Day Closed"));
                                 else if (ex.Message == "51")
@@ -384,10 +375,34 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error("Period Closed"));
                                 else if (ex.Message == "54")
                                     return Ok(_api.Error("Txn Date"));
-                                else if (ex.Message == "55")                                
-                                    return Ok(_api.Error("Product is not available for delivery"));   
-                                else
+                                else if (ex.Message == "55")
+                                    return Ok(_api.Error("Product is not available for delivery"));
+                                else return Ok(_api.Error(ex));
+                            }
+                            SortedList CustomerParams = new SortedList();
+                            CustomerParams.Add("@nCustomerID", N_CustomerID);
+                            DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
+                            if (CustomerInfo.Rows.Count > 0)
+                            {
+                                try
+                                {
+                                    myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DeliveryNoteID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+                                }
+                                catch (Exception ex)
+                                {
+                                    transaction.Rollback();
                                     return Ok(_api.Error(ex));
+                                }
+                            }
+                        }
+                        transaction.Commit();
+                        return Ok(_api.Success("Delivery Note saved" + ":" + InvoiceNo));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
         }
         // private bool ValidateIMEIs(int row,DataSet ds,int nSalesID,string imeiFrom,string imeiTo,SortedList QueryParams,SqlConnection connection,SqlTransaction transaction)

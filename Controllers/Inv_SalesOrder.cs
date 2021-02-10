@@ -322,15 +322,26 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", N_BranchID);
                         x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
-                        if (x_OrderNo == "") { transaction.Rollback();
-                        return Ok("Unable to generate Sales Order Number"); }
+                        if (x_OrderNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to generate Sales Order Number");
+                        }
                         MasterTable.Rows[0]["X_OrderNo"] = x_OrderNo;
                     }
 
                     if (n_SalesOrderId > 0)
                     {
-                        dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection, transaction);
-                        dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                        try
+                        {
+                            dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
                     }
 
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_OrderNo + "' and N_FnYearID=" + N_FnYearID + "";
@@ -372,7 +383,7 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(ex));
                             }
                         }
-                        
+
                     }
                     transaction.Commit();
                     SortedList Result = new SortedList();
