@@ -130,22 +130,51 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Pay_RoomMaster where N_CompanyID=@nCompanyID and N_RoomID=@nRoomID";
+            string sqlCommandText="select * from vw_Pay_RoomMaster where N_CompanyID=@nCompanyID and N_RoomID=@nRoomID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nRoomID",nRoomID);
-            try{
+
+
+              
+
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                         connection.Open();
                         dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                         object OccupiedRooms = dLayer.ExecuteScalar("select count(N_RoomID) from Pay_Employee where N_AccEndDate>'" + myFunctions.getDateVAL(System.DateTime.Now) + "' and  N_CompanyID=@nCompanyID and N_RoomID=@nRoomID", Params,connection);
+                if (OccupiedRooms != null)
+                {
+                    int  N_OccupiedRooms= myFunctions.getIntVAL(OccupiedRooms.ToString());
+                    int AvailableSpace = myFunctions.getIntVAL(dt.Rows[0]["N_Capasity"].ToString()) - myFunctions.getIntVAL(OccupiedRooms.ToString());
+                   
+                    if (AvailableSpace < 0)
+                    {
+                        AvailableSpace = 0;
+                    }
+                    dt.Columns.Add("N_OccupiedRooms",typeof(System.Int32));
+                    foreach(DataRow row in dt.Rows)
+{
+    //need to set value to NewColumn column
+    row["N_OccupiedRooms"] = AvailableSpace;   // or set it to some other value
+}
+
+                }
+
                     }
                     if(dt.Rows.Count==0)
                         {
                             return Ok(_api.Notice("No Results Found" ));
-                        }else{
+                        } 
+                        else
+                        {
                             return Ok(_api.Success(dt));
                         }
-            }catch(Exception e){
+            }
+            catch(Exception e)
+            {
+
                 return Ok(_api.Error(e));
             }
         }
