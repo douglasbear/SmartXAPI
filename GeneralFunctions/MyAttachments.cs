@@ -375,8 +375,10 @@ namespace SmartxAPI.GeneralFunctions
                 if (var["x_refName"] != null)
                 {
                     var path = var["x_refName"].ToString();
+                    if(Directory.Exists(path)){
                     Byte[] bytes = File.ReadAllBytes(path);
                     var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
+                    }
                 }
 
             }

@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 1302);
                         Params.Add("N_BranchID", nBranchId);
                         OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", Params, connection, transaction);
-                        if (OpportunityCode == "") { return Ok(api.Error("Unable to generate Opportunity Code")); }
+                        if (OpportunityCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Opportunity Code")); }
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
 

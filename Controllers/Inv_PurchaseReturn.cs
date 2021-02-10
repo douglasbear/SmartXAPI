@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         ReturnNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
-                        if(ReturnNo==""){return Ok(_api.Warning("Unable to generate Quotation Number"));}
+                        if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Quotation Number"));}
                         MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
                     }
                     N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    

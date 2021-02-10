@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xEmploymentCode = dLayer.GetAutoNumber("Pay_EmploymentType", "x_EmploymentCode", Params, connection, transaction);
-                        if (xEmploymentCode == "") { return Ok(_api.Error("Unable to generate Employment Type Code")); }
+                        if (xEmploymentCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employment Type Code")); }
                         MasterTable.Rows[0]["x_EmploymentCode"] = xEmploymentCode;
                     }
                     else

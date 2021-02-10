@@ -144,7 +144,7 @@ try{
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xStatusCode = dLayer.GetAutoNumber("Inv_QuotationclosingStatus", "x_StatusCode", Params, connection, transaction);
-                        if (xStatusCode == "") { return Ok(api.Error("Unable to generate Status Code")); }
+                        if (xStatusCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Status Code")); }
                         MasterTable.Rows[0]["x_StatusCode"] = xStatusCode;
                     }
                     nStatusID=dLayer.SaveData("Inv_QuotationclosingStatus","n_StatusID",MasterTable,connection,transaction);  

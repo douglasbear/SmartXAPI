@@ -153,7 +153,9 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 852);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         CategoryCode = dLayer.GetAutoNumber("Acc_TaxCategory", "X_PkeyCode", Params, connection, transaction);
-                        if (CategoryCode == "") { return Ok( _api.Warning("Unable to generate Customer Code")); }
+                        if (CategoryCode == "") {
+                            transaction.Rollback();
+                             return Ok( _api.Warning("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = CategoryCode;
 
                     }

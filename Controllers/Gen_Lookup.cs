@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", N_FormID);
                         PkeyCode = dLayer.GetAutoNumber("Gen_LookupTable", "X_PkeyCode", Params, connection, transaction);
-                        if (PkeyCode == "") { return Ok(api.Error("Unable to generate PkeyCode Code")); }
+                        if (PkeyCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate PkeyCode Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
                     }
                     else

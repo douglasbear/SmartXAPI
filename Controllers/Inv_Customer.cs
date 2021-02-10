@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 51);
                         Params.Add("N_BranchID", nBranchId);
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
-                        if (CustomerCode == "") { return Ok(api.Error("Unable to generate Customer Code")); }
+                        if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";

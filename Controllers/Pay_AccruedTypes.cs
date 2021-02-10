@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         VacCode = dLayer.GetAutoNumber("Pay_VacationType", "X_VacCode", Params, connection, transaction);
-                        if (VacCode == "") { return Ok(api.Error("Unable to generate Accrual Code")); }
+                        if (VacCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Accrual Code")); }
                         MasterTable.Rows[0]["X_VacCode"] = VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }

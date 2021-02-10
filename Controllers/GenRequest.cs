@@ -46,6 +46,12 @@ namespace SmartxAPI.Controllers
                 break;
                 case "salarytype": id=2;
                 break;
+                case "accrualtype": id=3;
+                break;
+                case "accrualfrequency": id=4;
+                break;
+                case "accrualstartfrom": id=5;
+                break;
                 case "partnertype": id=25;
                 break;
                 case "producttype": id=36;
