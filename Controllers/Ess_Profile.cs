@@ -40,6 +40,8 @@ namespace SmartxAPI.Controllers
 
             string sqlEmployeeDetails = "select CONVERT(VARCHAR,vw_PayEmployee.d_DOB, 106) as d_DOB1,CONVERT(VARCHAR,vw_PayEmployee.d_HireDate, 106) as d_HireDate1,* from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             string sqlSalary = " Select X_Description AS X_SalaryName,CONVERT(varchar, CAST(N_Value AS money), 1) as N_Amount from vw_EmpPayInformation  WHERE N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 and N_PayMethod in (0,3) ";
+            string sqlEducation = "Select * from Pay_EmployeeEducation where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlExperience = "Select * from Pay_EmploymentHistory where N_CompanyID=@p1 and N_EmpID=@p3";
 
 
             Params.Add("@p1", nCompanyID);
@@ -49,6 +51,9 @@ namespace SmartxAPI.Controllers
 
             DataTable EmployeeDetails = new DataTable();
             DataTable SalaryDetails = new DataTable();
+            DataTable EducationDetails = new DataTable();
+            DataTable ExperienceDetails = new DataTable();
+
 
             try
             {
@@ -75,9 +80,17 @@ namespace SmartxAPI.Controllers
                     
                     SalaryDetails = dLayer.ExecuteDataTable(sqlSalary, Params, connection);
                     SalaryDetails = api.Format(SalaryDetails, "SalaryDetails");
+
+                    EducationDetails = dLayer.ExecuteDataTable(sqlEducation, Params, connection);
+                    EducationDetails = api.Format(EducationDetails, "EducationDetails");
+
+                    ExperienceDetails = dLayer.ExecuteDataTable(sqlExperience, Params, connection);
+                    ExperienceDetails = api.Format(ExperienceDetails, "ExperienceDetails");
                 }
                 dt.Tables.Add(EmployeeDetails);
                 dt.Tables.Add(SalaryDetails);
+                dt.Tables.Add(EducationDetails);
+                dt.Tables.Add(ExperienceDetails);
 
                 return Ok(api.Success(dt));
 
