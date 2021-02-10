@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Pay Created"));
+                        return Ok(api.Success("Paycode Created"));
                     }
                 }
             }
@@ -170,10 +170,11 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1  ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_FnYearID=@p2 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_PayID not in (select top("+ Count +") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 )";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PayID not in (select top("+ Count +") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
 
             SortedList OutPut = new SortedList();
 
