@@ -204,6 +204,8 @@ namespace SmartxAPI.Controllers
                             dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "IsReturnDone", typeof(bool), false);
                             dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), "");
                         }
+
+                        // int nPaymentMethod = mastr
                     }
 
                     dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
@@ -223,6 +225,195 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+   private SortedList StatusSetup(int nSalesID, int nFnYearID, SqlConnection connection)
+        {
+
+            object objInvoiceRecievable = null, objBal = null;
+            double InvoiceRecievable = 0, BalanceAmt = 0;
+            SortedList TxnStatus = new SortedList();
+            TxnStatus.Add("Label", "");
+            TxnStatus.Add("LabelColor", "");
+            TxnStatus.Add("Alert", "");
+            TxnStatus.Add("DeleteEnabled", true);
+            TxnStatus.Add("SaveEnabled", true);
+            TxnStatus.Add("ReceiptNumbers", "");
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=" + nSalesID + " and Inv_Sales.N_CompanyID=" + nCompanyID, connection);
+            objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + nSalesID + " and X_Type='SALES' and N_CompanyID=" + nCompanyID, connection);
+
+
+            object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
+            object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
+
+
+            if (objInvoiceRecievable != null)
+                InvoiceRecievable = myFunctions.getVAL(objInvoiceRecievable.ToString());
+            if (objBal != null)
+                BalanceAmt = myFunctions.getVAL(objBal.ToString());
+
+            if ((InvoiceRecievable == BalanceAmt) && (InvoiceRecievable > 0 && BalanceAmt > 0))
+            {
+                TxnStatus["Label"] = "NotPaid";
+                TxnStatus["LabelColor"] = "Red";
+                TxnStatus["Alert"] = "";
+            }
+            else
+            {
+                if (BalanceAmt == 0)
+                {
+                    //IF PAYMENT DONE
+                    TxnStatus["Label"] = "Paid";
+                    TxnStatus["LabelColor"] = "Green";
+                    TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
+
+
+                    //IF PAYMENT DONE AND HAVING RETURN
+                    if (RetQty != null && myFunctions.getIntVAL(RetQty.ToString()) > 0)
+                    {
+                        TxnStatus["SaveEnabled"] = false;
+                        TxnStatus["DeleteEnabled"] = false;
+                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
+                        TxnStatus["Label"] = "Paid(Return)";
+                        TxnStatus["LabelColor"] = "Green";
+                    }
+                    else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
+                    {
+                        TxnStatus["SaveEnabled"] = true;
+                        TxnStatus["DeleteEnabled"] = false;
+                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
+                        TxnStatus["Label"] = "Paid(Return)";
+                        TxnStatus["LabelColor"] = "Green";
+                    }
+                }
+                else
+                {
+                    //IF HAVING BALANCE AMOUNT
+                    TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
+                    TxnStatus["Label"] = "ParPaid";
+                    TxnStatus["LabelColor"] = "Green";
+
+                    //IF HAVING BALANCE AMOUNT AND HAVING RETURN
+                    if (RetQty != null && myFunctions.getIntVAL(RetQty.ToString()) > 0)
+                    {
+                        TxnStatus["SaveEnabled"] = false;
+                        TxnStatus["DeleteEnabled"] = false;
+                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
+                        TxnStatus["Label"] = "Partially Paid(Return)";
+                        TxnStatus["LabelColor"] = "Green";
+                    }
+                    else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
+                    {
+                        TxnStatus["SaveEnabled"] = true;
+                        TxnStatus["DeleteEnabled"] = false;
+                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
+                        TxnStatus["Label"] = "Partially Paid(Return)";
+                        TxnStatus["LabelColor"] = "Green";
+                    }
+                }
+
+
+                //PAYMENT NO DISPLAY IN TOP LABEL ON MOUSE HOVER
+                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID, connection);
+                string InvoiceNos = "";
+                foreach (DataRow var in Receipts.Rows)
+                {
+                    InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                }
+                char[] trim = { ',', ' ' };
+                if (InvoiceNos != "")
+                    TxnStatus["ReceiptNumbers"] = InvoiceNos.ToString().TrimEnd(trim);
+
+            }
+
+            return TxnStatus;
+        }
+ 
+//  private SortedList StatusSetup(int PurchaseID, int nFnYearID,int nPaymentMethod, SqlConnection connection)
+//         {
+
+//             object objPaid = null, objBal = null;
+//             double InvoicePaidAmt = 0, BalanceAmt = 0;
+//             SortedList TxnStatus = new SortedList();
+//             TxnStatus.Add("Label", "");
+//             TxnStatus.Add("LabelColor", "");
+//             TxnStatus.Add("Alert", "");
+//             TxnStatus.Add("DeleteEnabled", true);
+//             TxnStatus.Add("SaveEnabled", true);
+//             TxnStatus.Add("ReceiptNumbers", "");
+//             int nCompanyID = myFunctions.GetCompanyID(User);
+
+//             if (nPaymentMethod == 2)
+//                 objPaid = dba.ExecuteSclar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + PurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", "TEXT", new DataTable());
+//             else
+//             {
+//                 if (myCompanyID._B_AllBranchData == true && B_LocationChange)
+//                     objPaid = dba.ExecuteSclar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + txtInvNo.Text.Trim() + "' and N_FnYearID=" + N_FnYearID + " and X_TransType='" + X_TransType + "'", "TEXT", new DataTable());
+//                 else
+//                     objPaid = dba.ExecuteSclar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + txtInvNo.Text.Trim() + "' and N_FnYearID=" + N_FnYearID + " and N_BranchId=" + myCompanyID._BranchID + " and N_LocationID =" + myCompanyID._LocationID + "  and X_TransType='" + X_TransType + "'", "TEXT", new DataTable());
+//             }
+
+
+//             objBal = dba.ExecuteSclar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + N_VendorID + " and N_CompanyID=1 and N_PurchaseID = " + N_PurchaseId, "TEXT", new DataTable());
+//             object RetQty = dba.ExecuteSclar("select Isnull(Count(N_CreditNoteId),0) from Inv_PurchaseReturnMaster where  N_PurchaseId=" + N_PurchaseId + " and N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID=" + N_FnYearID, "TEXT", new DataTable());
+
+
+
+//             if (objPaid != null)
+//                 InvoicePaidAmt = myFunctions.getVAL(objPaid.ToString());
+//             if (objBal != null)
+//                 BalanceAmt = myFunctions.getVAL(objBal.ToString());
+
+//             if (InvoicePaidAmt == 0)
+//             {
+//                 if (myFunctions.getIntVAL(RetQty.ToString()) > 0)
+//                 {
+//                     if (BalanceAmt == 0)
+//                     {
+
+//                         StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Paid"), Color.SeaGreen);
+//                     }
+//                     else
+//                     {
+//                         StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "ParPaid"), Color.SeaGreen);
+//                     }
+
+//                 }
+//                 else
+//                 {
+//                     if (B_AllowCashPay && N_VendorTypeID == 2)
+//                     {
+//                         grpPaymentMethod.Visible = true;
+//                         if (N_PaymentMethod == 1)
+//                             rbCash.Checked = true;
+//                         else
+//                             rbCredit.Checked = true;
+//                     }
+//                     StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "NotPaid"), Color.Red);
+//                     toolTip1.SetToolTip(this.lblstatus, "");
+//                 }
+//             }
+//             else
+//             {
+//                 if (BalanceAmt == 0)
+//                     StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Paid"), Color.SeaGreen);
+//                 else
+//                     StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "ParPaid"), Color.SeaGreen);
+
+//                 dba.FillDataSet(ref dsPurchase, "Inv_ReciptNos", "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + N_PurchaseId, "TEXT", new DataTable());
+//                 string InvoiceNos = "";
+//                 foreach (DataRow var in dsPurchase.Tables["Inv_ReciptNos"].Rows)
+//                 {
+//                     InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+//                 }
+//                 char[] trim = { ',', ' ' };
+//                 toolTip1.SetToolTip(this.lblstatus, "Payment No: " + InvoiceNos.ToString().TrimEnd(trim));
+
+//             }
+//         }
+
+
 
         //Save....
         [HttpPost("Save")]
