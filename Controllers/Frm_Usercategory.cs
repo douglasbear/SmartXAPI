@@ -112,7 +112,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 40);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_UserCategoryCode = dLayer.GetAutoNumber("sec_usercategory", "X_UserCategoryCode", Params, connection, transaction);
-                        if (X_UserCategoryCode == "") { return Ok( _api.Error( "Unable to generate Category Code")); }
+                        if (X_UserCategoryCode == "") { transaction.Rollback();return Ok( _api.Error( "Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_UserCategoryCode"] = X_UserCategoryCode;
                     }
 

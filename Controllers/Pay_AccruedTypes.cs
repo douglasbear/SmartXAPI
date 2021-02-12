@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_PayAccruedCode_List  where N_CompanyID=@p1 and X_VacCode=@p3";
+            string sqlCommandText = "select * from Pay_VacationType  where N_CompanyID=@p1 and X_VacCode=@p3";
             Params.Add("@p1", nCompanyId);
     
             Params.Add("@p3",xVacCode );
@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         VacCode = dLayer.GetAutoNumber("Pay_VacationType", "X_VacCode", Params, connection, transaction);
-                        if (VacCode == "") { return Ok(api.Error("Unable to generate Accrual Code")); }
+                        if (VacCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Accrual Code")); }
                         MasterTable.Rows[0]["X_VacCode"] = VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }

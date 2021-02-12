@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         LeadCode = dLayer.GetAutoNumber("CRM_Project", "x_ProjectCode", Params, connection, transaction);
-                        if (LeadCode == "") { return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LeadCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["x_ProjectCode"] = LeadCode;
                     }
 

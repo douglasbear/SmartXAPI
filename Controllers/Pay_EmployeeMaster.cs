@@ -311,7 +311,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
-                        if (xEmpCode == "") { return Ok(_api.Error("Unable to generate Employee Code")); }
+                        if (xEmpCode == "") { transaction.Rollback();return Ok(_api.Error("Unable to generate Employee Code")); }
                         dtMasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
                         X_BtnAction = "INSERT";
                     }
@@ -570,7 +570,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                return Ok(myFunctions.DecryptString("wbQgkm+DI/k="));
+                return Ok(myFunctions.DecryptString("qZM+x0/w9ElGlfB87hJ8OQ=="));
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();

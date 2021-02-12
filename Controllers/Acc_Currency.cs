@@ -123,6 +123,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_CurrencyCode =  dLayer.GetAutoNumber("Acc_CurrencyMaster","X_CurrencyCode", Params,connection,transaction);
                         if(X_CurrencyCode==""){
+                            transaction.Rollback();
                             return Ok(api.Warning("Unable to generate Category Code"));
                             }
                         MasterTable.Rows[0]["X_CurrencyCode"] = X_CurrencyCode;

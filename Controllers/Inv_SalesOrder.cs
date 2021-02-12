@@ -53,14 +53,16 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_SalesOrderId desc";
             else
             {
-                switch (xSortBy.Split(" ")[0]){
-                    case "orderNo" : xSortBy ="N_SalesOrderId " + xSortBy.Split(" ")[1] ;
-                    break;
-                    default : break;
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "orderNo":
+                        xSortBy = "N_SalesOrderId " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
                 }
-            xSortBy = " order by " + xSortBy;
+                xSortBy = " order by " + xSortBy;
             }
-               
+
 
 
             if (Count == 0)
@@ -80,12 +82,13 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    string TotalCount="0";
-                    string TotalSum="0";
-                    if(Summary.Rows.Count>0){
-                    DataRow drow = Summary.Rows[0];
-                    TotalCount = drow["N_Count"].ToString();
-                    TotalSum = drow["TotalAmount"].ToString();
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
                     }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -106,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID,int nQuotationID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -130,14 +133,14 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            
+
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    if(nQuotationID>0)
+                    if (nQuotationID > 0)
                     {
                         Params.Add("@nQuotationID", nQuotationID);
                         Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
@@ -151,9 +154,9 @@ namespace SmartxAPI.Controllers
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
                         return Ok(_api.Success(dt));
-                
+
                     }
-                    
+
                     Params.Add("@xOrderNo", xOrderNo);
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
@@ -269,7 +272,7 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString()),this.FormID,myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
                     dt.Tables.Add(Attachments);
@@ -308,7 +311,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
-                    int N_QuotationID= myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
+                    int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     string x_OrderNo = MasterRow["x_OrderNo"].ToString();
                     int N_CustomerId = myFunctions.getIntVAL(MasterRow["n_CustomerId"].ToString());
 
@@ -319,27 +322,39 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", N_BranchID);
                         x_OrderNo = dLayer.GetAutoNumber("Inv_SalesOrder", "X_OrderNo", Params, connection, transaction);
-                        if (x_OrderNo == "") { return Ok("Unable to generate Sales Order Number"); }
+                        if (x_OrderNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to generate Sales Order Number");
+                        }
                         MasterTable.Rows[0]["X_OrderNo"] = x_OrderNo;
                     }
 
-                      if (n_SalesOrderId > 0)
+                    if (n_SalesOrderId > 0)
+                    {
+                        try
                         {
-                            dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection,transaction);
-                            dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID,connection,transaction);
+                            dLayer.ExecuteScalar("SP_Delete_Trans_With_Accounts " + N_CompanyID + ",'Sales Order'," + n_SalesOrderId.ToString(), connection, transaction);
+                            dLayer.ExecuteScalar("delete from Inv_DeliveryDispatch where N_SOrderID=" + n_SalesOrderId.ToString() + " and N_CompanyID=" + N_CompanyID, connection, transaction);
                         }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
 
-string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_OrderNo + "' and N_FnYearID=" + N_FnYearID+ "";
+                    string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_OrderNo + "' and N_FnYearID=" + N_FnYearID + "";
 
 
-                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID",DupCriteria,"", MasterTable, connection, transaction);
+                    n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", DupCriteria, "", MasterTable, connection, transaction);
                     if (n_SalesOrderId <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save sales order");
                     }
                     if (N_QuotationID > 0)
-                        dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(),connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_SalesQuotation Set  N_Processed=1 Where N_QuotationID=" + N_QuotationID + " and N_FnYearID=" + N_FnYearID + " and N_CompanyID=" + N_CompanyID.ToString(), connection, transaction);
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -360,7 +375,7 @@ string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_Order
                         {
                             try
                             {
-                                myAttachments.SaveAttachment(dLayer, Attachment, x_OrderNo, n_SalesOrderId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerId,  "Customer Document", User, connection, transaction);
+                                myAttachments.SaveAttachment(dLayer, Attachment, x_OrderNo, n_SalesOrderId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerId, "Customer Document", User, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -368,17 +383,17 @@ string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_Order
                                 return Ok(_api.Error(ex));
                             }
                         }
-                        transaction.Commit();
+
                     }
+                    transaction.Commit();
                     SortedList Result = new SortedList();
-                Result.Add("n_SalesOrderID",n_SalesOrderId);
-                Result.Add("x_SalesOrderNo",x_OrderNo);
-                return Ok(_api.Success(Result,"Sales Order Saved"));
+                    Result.Add("n_SalesOrderID", n_SalesOrderId);
+                    Result.Add("x_SalesOrderNo", x_OrderNo);
+                    return Ok(_api.Success(Result, "Sales Order Saved"));
                 }
             }
             catch (Exception ex)
             {
-
                 return Ok(_api.Error(ex));
             }
         }
@@ -397,7 +412,7 @@ string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_Order
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
-                    if(objProcessed==null)objProcessed=0;
+                    if (objProcessed == null) objProcessed = 0;
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
                     {
                         SortedList DeleteParams = new SortedList(){

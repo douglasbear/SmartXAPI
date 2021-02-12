@@ -518,7 +518,7 @@ private readonly IMyAttachments myAttachments;
                         Params.Add("N_FormID", "210");
                         Params.Add("N_BranchID", nBranchID);
                         x_VacationGroupCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_VacationGroupCode", Params, connection, transaction);
-                        if (x_VacationGroupCode == "") { return Ok(api.Error("Unable to generate leave Request Code")); }
+                        if (x_VacationGroupCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate leave Request Code")); }
                         MasterTable.Rows[0]["x_VacationGroupCode"] = x_VacationGroupCode;
                     }
                     else

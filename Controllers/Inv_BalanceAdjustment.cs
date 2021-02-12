@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         AdjustmentNo = dLayer.GetAutoNumber("Inv_BalanceAdjustmentMaster", "X_VoucherNo", Params, connection, transaction);
-                        if (AdjustmentNo == "") { return Ok(_api.Error("Unable to generate Adjustment Number")); }
+                        if (AdjustmentNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Adjustment Number")); }
                         MasterTable.Rows[0]["X_VoucherNo"] = AdjustmentNo;
 
                     }

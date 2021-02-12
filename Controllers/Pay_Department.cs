@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_CostCentreCode = dLayer.GetAutoNumber("Acc_CostCentreMaster", "x_CostCentreCode", Params, connection, transaction);
-                        if (X_CostCentreCode == "") { return Ok(_api.Error("Unable to generate Department/Cost Centre Code")); }
+                        if (X_CostCentreCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Department/Cost Centre Code")); }
                         MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
 
 
