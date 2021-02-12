@@ -77,7 +77,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
         [HttpGet("details")]
         public ActionResult GetEmployeeDetails(string xEmpCode, int nFnYearID, bool bAllBranchData, int nBranchID)
         {
