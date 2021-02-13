@@ -23,6 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly int N_FormID = 1305;
 
 
         public Ess_TimeSheet(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf)
@@ -162,5 +163,55 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+       
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    int nTimesheetID=0;
+                    // // Auto Gen
+                    // string LocationCode = "";
+                    // var values = MasterTable.Rows[0]["X_LocationCode"].ToString();
+                    // if (values == "@Auto")
+                    // {
+                    //     Params.Add("N_CompanyID", nCompanyID);
+                    //     Params.Add("N_YearID", nFnYearId);
+                    //     Params.Add("N_FormID", this.N_FormID);
+                    //     LocationCode = dLayer.GetAutoNumber("Pay_WorkLocation", "X_LocationCode", Params, connection, transaction);
+                    //     if (LocationCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Location Code")); }
+                    //     MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
+                    // }
+
+
+                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
+                    if (nTimesheetID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Timesheet Saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
     }
+    
 }
