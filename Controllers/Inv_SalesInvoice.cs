@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%'";
+                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesId desc";
@@ -353,8 +353,8 @@ namespace SmartxAPI.Controllers
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesId"].ToString()), this.N_FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
                     Attachments = _api.Format(Attachments, "attachments");
 
-                    SortedList Status = StatusSetup(nSalesID,nFnYearId,Con);
-                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable,"TxnStatus",typeof(SortedList),Status);
+                    SortedList Status = StatusSetup(nSalesID, nFnYearId, Con);
+                    masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "TxnStatus", typeof(SortedList), Status);
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(Attachments);
@@ -594,8 +594,15 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_TransType","SALES"},
                                 {"N_VoucherID",N_SalesID}};
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
 
                         dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
                         dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where N_TransID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_PartyId=" + N_CustomerID, connection, transaction);
@@ -764,8 +771,15 @@ namespace SmartxAPI.Controllers
                             PostingParam.Add("N_InternalID", N_SalesID);
                             PostingParam.Add("N_UserID", N_UserID);
                             PostingParam.Add("X_SystemName", "ERP Cloud");
-
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {
@@ -778,7 +792,15 @@ namespace SmartxAPI.Controllers
                                         ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
                                         ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
                                         ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
-                                        dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                                        try
+                                        {
+                                            dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                        }
                                     }
                                 }
 
@@ -800,33 +822,20 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         //dispatch saving here
-                        transaction.Commit();
+
                     }
                     //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
                     SortedList Result = new SortedList();
                     Result.Add("n_SalesID", N_SalesID);
                     Result.Add("x_SalesNo", InvoiceNo);
+                    transaction.Commit();
                     return Ok(_api.Success(Result, "Sales invoice saved"));
 
                 }
             }
             catch (Exception ex)
             {
-                if (ex.Message == "50")
-                    return Ok(_api.Error("Day Closed"));
-                else if (ex.Message == "51")
-                    return Ok(_api.Error("Year Closed"));
-                else if (ex.Message == "52")
-                    return Ok(_api.Error("Year Exists"));
-                else if (ex.Message == "53")
-                    return Ok(_api.Error("Period Closed"));
-                else if (ex.Message == "54")
-                    return Ok(_api.Error("Txn Date"));
-                else if (ex.Message == "55")
-                    return Ok(_api.Error("Quantity exceeds!"));
-                else
                     return Ok(_api.Error(ex));
-
             }
         }
         //Delete....
