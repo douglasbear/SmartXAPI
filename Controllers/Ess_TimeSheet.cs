@@ -303,7 +303,6 @@ namespace SmartxAPI.Controllers
                 int n_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                 string x_LocationCode = MasterRow["x_LocationCode"].ToString();
-                int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -312,7 +311,6 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
-                    EmpParams.Add("@nFnYearID", nFnYearID);
                     
 
                     if (x_LocationCode == "@Auto")
@@ -398,7 +396,7 @@ namespace SmartxAPI.Controllers
                            if(dRow["x_GeoLocation"].ToString()!="" && dRow["x_GeoLocation"].ToString()!=null) {
                             JObject o = JObject.Parse(dRow["x_GeoLocation"].ToString());
 
-                            dRow["longitude"] = (string)o["lon"];
+                            dRow["longitude"] = (string)o["lng"];
                             dRow["latitude"] = (string)o["lat"];
                             dRow["radius"] = (string)o["radius"];
                             }
