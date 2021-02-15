@@ -56,38 +56,64 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //GET api/User/list?...
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("list")]
-        public ActionResult GetUserList()
+        public ActionResult GetUserList(int? nCompanyId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Sp_UserList";
-            Params.Add("N_CompanyID", nCompanyId);
-            // Params.Add("N_UserId", userid);
+
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string sqlCommandCount="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_UserID like '%" + xSearchkey + "%' or X_UserCategory like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_UserID desc";
+            else
+            xSortBy = " order by " + xSortBy;
+
+            if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1" + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1" + Searchkey + " and N_UserID not in(select top("+ Count +")  N_UserID from vw_UserList where N_CompanyID=@p1" + xSortBy + " ) " + xSortBy;
+            
+            Params.Add("@p1", nCompanyId);
+            SortedList OutPut = new SortedList();
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1" + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount="0";
+                    if(Summary.Rows.Count>0){
+                    DataRow drow = Summary.Rows[0];
+                    TotalCount = drow["N_Count"].ToString();
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
+                {
                     return Ok(_api.Warning("No Results Found"));
+                }
                 else
                 {
                     dt.Columns.Remove("X_Password");
                     dt.AcceptChanges();
                     return Ok(_api.Success(dt));
-                }
-
+                }  
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
         //Save....
