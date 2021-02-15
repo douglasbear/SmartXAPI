@@ -8,6 +8,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Collections.Generic;
+using Newtonsoft.Json.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -287,6 +288,146 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+
+
+          [HttpPost("saveWorkLocation")]
+        public ActionResult SaveWorkLocation([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                DataRow MasterRow = MasterTable.Rows[0];
+
+                int n_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
+                int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                string x_LocationCode = MasterRow["x_LocationCode"].ToString();
+                int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+                    
+
+                    if (x_LocationCode == "@Auto")
+                    {
+                        SortedList Params = new SortedList();
+                        Params.Add("@nCompanyID", nCompanyID);
+                        x_LocationCode = dLayer.ExecuteScalar("Select max(isnull(x_LocationCode,0))+1 as x_LocationCode from Pay_workLocation where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
+                        if (x_LocationCode == null || x_LocationCode == "") { x_LocationCode = "1"; }
+                        MasterTable.Rows[0]["x_LocationCode"] = x_LocationCode;
+                    }
+
+
+                    if (n_LocationID > 0)
+                    {
+                        dLayer.DeleteData("Pay_workLocation", "n_LocationID", n_LocationID, "", connection, transaction);
+                    }
+
+                    n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
+                    if (n_LocationID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Work Location Saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
+
+
+           [HttpGet("workLocationList")]
+        public ActionResult GetEmpReqList(string xLocationCode, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+            string sqlCommandCount = "";
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nUserID", nUserID);
+            string sqlCommandText = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (x_LocationCode like'%" + xSearchkey + "%'or x_LocationName like'%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by x_LocationCode desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_workLocation where   N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_workLocation where  N_CompanyID=@nCompanyID " + Searchkey + " and n_LocationID not in (select top(" + Count + ") n_LocationID from Pay_workLocation where N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count from Pay_workLocation where N_CompanyID=@nCompanyID " + Searchkey + "";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+
+                        if(dt.Rows.Count>0){
+                            dt=myFunctions.AddNewColumnToDataTable(dt,"longitude",typeof(string),"");
+                            dt=myFunctions.AddNewColumnToDataTable(dt,"latitude",typeof(string),"");
+                            dt=myFunctions.AddNewColumnToDataTable(dt,"radius",typeof(string),"");
+                        foreach (DataRow dRow in dt.Rows)
+                        {
+                            JObject o = JObject.Parse(dRow["x_GeoLocation"].ToString());
+
+                            dRow["longitude"] = (string)o["lon"];
+                            dRow["latitude"] = (string)o["lat"];
+                            dRow["radius"] = (string)o["radius"];
+                        }
+                        }
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
+
+
+
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
+
+
     }
 
 }
