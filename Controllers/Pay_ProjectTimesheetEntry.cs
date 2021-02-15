@@ -31,54 +31,120 @@ namespace SmartxAPI.Controllers
             // FormID = 370;
 
         }
-
-       
-       [HttpGet("list")]
-        public ActionResult GetAllProjectTimesheet(int  nComapanyId,int nFnYearId)
+ [HttpGet("list")]
+        public ActionResult GetAllProjectTimesheet(int nFnYearId,int nComapanyId, int nEmpId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            Params.Add("@p1",nCompanyId); 
-            Params.Add("@p2",nFnYearId); 
-            string sqlCommandCount="";
-            string sqlCommandText="";
-            
-            SortedList OutPut=new SortedList();
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
 
-         
-            sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID,D_Date,X_Description,N_Hours,X_ProjectName,X_Name from vw_prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and N_TimeSheetID like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_TimeSheetID desc";
+            else
+            
+             xSortBy = " order by " + xSortBy;
+            
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3" + Searchkey + " and N_TimeSheetID not in (select top(" + Count + ") N_TimeSheetID from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nEmpId);
+            SortedList OutPut = new SortedList();
 
             try
             {
-                        using (SqlConnection connection = new SqlConnection(connectionString))
-                            {                               
-                                connection.Open();
-                             
-                                dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-                                sqlCommandCount="select count(*) as N_Count from prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
-          
-                                object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection); 
-                              
-                                OutPut.Add("Details", _api.Format(dt));
-                                
-                                OutPut.Add("TotalCount", TotalCount);
-                                
-                                
-                            } 
-                     dt=_api.Format(dt);
-
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(_api.Notice("No Results Found" ));
-                        }else{
-                            return Ok(_api.Success(OutPut)); 
-                        }
-            }catch(Exception e){
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount="select count(*) as N_Count from vw_Prj_TimeSheet where N_CompanyId=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 ";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+                   
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                      
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                   
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
                 return Ok(_api.Error(e));
             }
-           
         }
+       
+    //    [HttpGet("list")]
+    //     public ActionResult GetAllProjectTimesheet(int  nComapanyId,int nFnYearId)
+    //     {
+    //         DataTable dt=new DataTable();
+    //         SortedList Params=new SortedList();
+    //         int nCompanyId = myFunctions.GetCompanyID(User);
+    //         Params.Add("@p1",nCompanyId); 
+    //         Params.Add("@p2",nFnYearId); 
+    //         string sqlCommandCount="";
+    //         string sqlCommandText="";
+            
+    //         SortedList OutPut=new SortedList();
+
+         
+    //         sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID,D_Date,X_Description,N_Hours,X_ProjectName,X_Name from vw_prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
+
+    //         try
+    //         {
+    //                     using (SqlConnection connection = new SqlConnection(connectionString))
+    //                         {                               
+    //                             connection.Open();
+                             
+    //                             dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+    //                             sqlCommandCount="select count(*) as N_Count from prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
+          
+    //                             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection); 
+                              
+    //                             OutPut.Add("Details", _api.Format(dt));
+                                
+    //                             OutPut.Add("TotalCount", TotalCount);
+                                
+                                
+    //                         } 
+    //                  dt=_api.Format(dt);
+
+    //                 if(dt.Rows.Count==0)
+    //                     {
+    //                         return Ok(_api.Notice("No Results Found" ));
+    //                     }else{
+    //                         return Ok(_api.Success(OutPut)); 
+    //                     }
+    //         }catch(Exception e){
+    //             return Ok(_api.Error(e));
+    //         }
+           
+    //     }
         
           //Save....
         [HttpPost("save")]
