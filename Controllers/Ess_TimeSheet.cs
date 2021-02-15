@@ -395,11 +395,13 @@ namespace SmartxAPI.Controllers
                             dt=myFunctions.AddNewColumnToDataTable(dt,"radius",typeof(string),"");
                         foreach (DataRow dRow in dt.Rows)
                         {
+                           if(dRow["x_GeoLocation"].ToString()!="" && dRow["x_GeoLocation"].ToString()!=null) {
                             JObject o = JObject.Parse(dRow["x_GeoLocation"].ToString());
 
                             dRow["longitude"] = (string)o["lon"];
                             dRow["latitude"] = (string)o["lat"];
                             dRow["radius"] = (string)o["radius"];
+                            }
                         }
                         }
                         OutPut.Add("Details", api.Format(dt));
