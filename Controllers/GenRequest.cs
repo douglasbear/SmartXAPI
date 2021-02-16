@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
                 break;
                 case "EducationType": N_FormID=28;
                 break;
-                case "WorkType": N_FormID=1287;
+                case "WorkType": N_FormID=1121;
                 break;
                 default: return Ok("Invalid Type");
             }
