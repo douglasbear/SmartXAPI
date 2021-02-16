@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and N_TimeSheetID like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%'";
+                Searchkey = "and N_TimeSheetID like '%" + xSearchkey + "%'or D_Date like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_TimeSheetID desc";
@@ -161,6 +161,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                   int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                   int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
+                  //int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
                 
                     nTimeSheetID = dLayer.SaveData("prj_timesheet", "n_TimeSheetID", MasterTable, connection, transaction);
                     
