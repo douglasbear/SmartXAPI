@@ -39,7 +39,9 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
 
             string sqlEmployeeDetails = "select CONVERT(VARCHAR,vw_PayEmployee.d_DOB, 106) as d_DOB1,CONVERT(VARCHAR,vw_PayEmployee.d_HireDate, 106) as d_HireDate1,* from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
-            string sqlSalary = " Select X_Description AS X_SalaryName,CONVERT(varchar, CAST(N_Value AS money), 1) as N_Amount from vw_EmpPayInformation  WHERE N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 and N_PayMethod in (0,3) ";
+            // string sqlSalary = " Select X_Description AS X_SalaryName,CONVERT(varchar, CAST(N_Value AS money), 1) as N_Amount from vw_EmpPayInformation  WHERE N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 and N_PayMethod in (0,3) ";
+            
+            string sqlSalary ="SELECT ROW_NUMBER() OVER (ORDER BY vw_PayEmployeePayHistory.N_PayID) As Srl,vw_PayEmployeePayHistory.* FROM         dbo.vw_PayEmployeePayHistory WHERE  (dbo.vw_PayEmployeePayHistory.N_CompanyID =@p1) AND (dbo.vw_PayEmployeePayHistory.N_EmpID =@p3) AND (dbo.vw_PayEmployeePayHistory.N_FnYearID =@p2) Order by D_EffectiveDate Desc,vw_PayEmployeePayHistory.N_PayTypeID";
             string sqlEducation = "Select * from Pay_EmployeeEducation where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlExperience = "Select * from Pay_EmploymentHistory where N_CompanyID=@p1 and N_EmpID=@p3";
 
