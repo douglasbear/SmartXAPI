@@ -90,14 +90,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1" + Searchkey + "";
-                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    string TotalCount="0";
-                    if(Summary.Rows.Count>0){
-                    DataRow drow = Summary.Rows[0];
-                    TotalCount = drow["N_Count"].ToString();
-                    }
-                    OutPut.Add("Details", _api.Format(dt));
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+                    if(dt.Rows.Count>0){
+                    }
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
