@@ -120,54 +120,69 @@ namespace SmartxAPI.Controllers
             }
         }
 
- [HttpGet("list")]
-        public ActionResult PrjFdtList(int nPage,int nSizeperpage)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_ProjectSOR where N_CompanyID=@p1 ";
-            else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_ProjectSOR where N_CompanyID=@p1 and N_FDTID not in (select top("+ Count +") N_FDTID from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 )";
-            Params.Add("@p1", nCompanyID);
+
+
+
+
+        [HttpGet("Projectslist") ]
+        public ActionResult ProjectUnitList ()
+        {    int nCompanyID=myFunctions.GetCompanyID(User);
+  
+            SortedList param = new SortedList(){{"@p1",nCompanyID}};
             
-
-            SortedList OutPut = new SortedList();
-
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="select x_FDTName,n_FDTID from prj_FDT where N_CompanyID=@p1";
+                
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_ProjectSOR where N_CompanyID=@p1 ";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(OutPut));
-                    }
-
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
                 }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
                 
-            }
-            catch (Exception e)
-            {
-                return BadRequest(api.Error(e));
-            }
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }   
         }
+        
+      
+      [HttpGet("sor") ]
+        public ActionResult sorList ()
+        {    int nCompanyID=myFunctions.GetCompanyID(User);
+  
+            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+            
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="select * from vw_ProjectSOR where N_CompanyID=@p1";
+                
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
+                
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }   
+        }
+        
       
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nFDTid)

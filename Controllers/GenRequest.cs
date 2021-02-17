@@ -133,6 +133,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "serviceType": N_FormID=1151;
                 break;
+                case "WorkType": N_FormID=1121;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_ReferId=@p1";
