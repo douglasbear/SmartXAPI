@@ -91,22 +91,20 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1" + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                     OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                    if(dt.Rows.Count>0){
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
                     }
+                    else
+                    {
+                        dt.Columns.Remove("X_Password");
+                        dt.AcceptChanges();
+                        return Ok(_api.Success(OutPut));
+                    }  
                 }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    dt.Columns.Remove("X_Password");
-                    dt.AcceptChanges();
-                    return Ok(_api.Success(dt));
-                }  
             }
             catch (Exception e)
             {
