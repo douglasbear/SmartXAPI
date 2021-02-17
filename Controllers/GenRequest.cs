@@ -78,6 +78,7 @@ namespace SmartxAPI.Controllers
                 break;
                 case "licencetype": id=64;
                 break;
+               
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -129,6 +130,8 @@ namespace SmartxAPI.Controllers
                 case "WorkLocation": N_FormID=1209;
                 break;
                 case "EducationType": N_FormID=28;
+                break;
+                case "serviceType": N_FormID=1151;
                 break;
                 default: return Ok("Invalid Type");
             }

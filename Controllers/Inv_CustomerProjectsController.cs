@@ -56,13 +56,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                   return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+               return Ok(api.Error(e));
             }
 
 
