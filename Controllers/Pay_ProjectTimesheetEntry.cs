@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and N_TimeSheetID like '%" + xSearchkey + "%'or D_Date like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%'";
+                Searchkey = "and (N_TimeSheetID like '%" + xSearchkey + "%'or D_Date like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_TimeSheetID desc";
@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount="select count(*) as N_Count from vw_Prj_TimeSheet where N_CompanyId=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 ";
+                    sqlCommandCount="select count(*) as N_Count from vw_Prj_TimeSheet where N_CompanyId=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 "+ Searchkey +" ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                    
@@ -99,52 +99,7 @@ namespace SmartxAPI.Controllers
             }
         }
        
-    //    [HttpGet("list")]
-    //     public ActionResult GetAllProjectTimesheet(int  nComapanyId,int nFnYearId)
-    //     {
-    //         DataTable dt=new DataTable();
-    //         SortedList Params=new SortedList();
-    //         int nCompanyId = myFunctions.GetCompanyID(User);
-    //         Params.Add("@p1",nCompanyId); 
-    //         Params.Add("@p2",nFnYearId); 
-    //         string sqlCommandCount="";
-    //         string sqlCommandText="";
-            
-    //         SortedList OutPut=new SortedList();
-
-         
-    //         sqlCommandText="select N_CompanyId,N_TimeSheetID,N_ProjectID,D_Date,X_Description,N_Hours,X_ProjectName,X_Name from vw_prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
-
-    //         try
-    //         {
-    //                     using (SqlConnection connection = new SqlConnection(connectionString))
-    //                         {                               
-    //                             connection.Open();
-                             
-    //                             dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-    //                             sqlCommandCount="select count(*) as N_Count from prj_timesheet where N_CompanyId=@p1 and N_FnYearID=@p2 ";
-          
-    //                             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection); 
-                              
-    //                             OutPut.Add("Details", _api.Format(dt));
-                                
-    //                             OutPut.Add("TotalCount", TotalCount);
-                                
-                                
-    //                         } 
-    //                  dt=_api.Format(dt);
-
-    //                 if(dt.Rows.Count==0)
-    //                     {
-    //                         return Ok(_api.Notice("No Results Found" ));
-    //                     }else{
-    //                         return Ok(_api.Success(OutPut)); 
-    //                     }
-    //         }catch(Exception e){
-    //             return Ok(_api.Error(e));
-    //         }
-           
-    //     }
+   
         
           //Save....
         [HttpPost("save")]
@@ -161,7 +116,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                   int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                   int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
-                  //int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
+                  int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
                 
                     nTimeSheetID = dLayer.SaveData("prj_timesheet", "n_TimeSheetID", MasterTable, connection, transaction);
                     
