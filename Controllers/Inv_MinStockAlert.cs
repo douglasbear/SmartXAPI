@@ -16,15 +16,15 @@ using Microsoft.Extensions.Configuration;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("projects")]
+    [Route("invminstockalert")]
     [ApiController]
-    public class InvCustomerProjectsController : ControllerBase
+    public class InvMinStockAlert : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly string connectionString;
 
-        public InvCustomerProjectsController(IDataAccessLayer dl, IApiFunctions apiFun, IConfiguration conf)
+        public InvMinStockAlert(IDataAccessLayer dl, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
             api = apiFun;
@@ -33,14 +33,14 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllProjects(int? nCompanyID, int? nFnYearID)
+        public ActionResult GetAllProjects(int? nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by X_ProjectCode";
+            string sqlCommandText = "select * from vw_stockstatusbylocation where N_CompanyID=@p1 order by X_ItemCode";
             Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nFnYearID);
+        
 
             try
             {
