@@ -117,6 +117,21 @@ namespace SmartxAPI.Controllers
                   int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                   int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
                   int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
+                  string hours = MasterTable.Rows[0]["n_Hours"].ToString();
+
+                  string[] splitTime = hours.Split(".");
+
+                  string TimeSpanFormat="00:00:00";
+                  if(splitTime.Length==2)
+                   TimeSpanFormat = splitTime[0]+":"+splitTime[1]+":00";
+                   else
+                   if(splitTime.Length==1)
+                   TimeSpanFormat = splitTime[0]+":00:00";
+
+                   MasterTable=myFunctions.AddNewColumnToDataTable(MasterTable,"D_Hours",typeof(string),TimeSpanFormat);
+                   MasterTable.AcceptChanges();
+
+
                 
                     nTimeSheetID = dLayer.SaveData("prj_timesheet", "n_TimeSheetID", MasterTable, connection, transaction);
                     
@@ -126,6 +141,9 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
+                if(ex.Message.Contains("Conversion failed when converting date and/or time from character string"))
+                return Ok(_api.Error("Invalid Time Value"));
+else
                 return Ok(_api.Error(ex));
             }
         }
