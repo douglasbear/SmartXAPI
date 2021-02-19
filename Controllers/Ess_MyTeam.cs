@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
         }
 
 [HttpGet("list")]
-        public ActionResult GetEmployeeList(int nFnYearID, bool bAllBranchData, int nBranchID,int nEmpID,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEmployeeList(int nFnYearID, bool bAllBranchData, int nBranchID,int nEmpID,int nPage,int nSizeperpage, string xSearchkey, string xSortBy,string listType)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -109,13 +109,31 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string Searchkey = "";
-            // string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID "; //OST
-            string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_EmpID<>@nEmpID and (N_ManagerID=@nEmpID or N_SupervisorID=@nEmpID)";
-            if (bAllBranchData == false)
+           
+            // string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID "; //and N_EmpID<>@nEmpID and (N_ManagerID=@nEmpID or N_SupervisorID=@nEmpID)
+            string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ";
+
+         if(listType=="department")
+            {
+               
+                Criteria = Criteria + " and N_ManagerID=@nEmpID";
+            }
+            else if(listType=="team")
+            {
+            Criteria = Criteria + " and N_SupervisorID=@nEmpID ";
+              
+            }
+            else if(listType =="people")
+            {
+                 Criteria = Criteria ;
+            }
+
+           if (bAllBranchData == false)
             {
                 Criteria = Criteria + " and N_BranchID=@nBranchID ";
                 Params.Add("@nBranchID", nBranchID);
             }
+
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = " and ( X_EmpName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' )";
