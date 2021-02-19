@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-       // GET api/Projects/list    
+       // GET api/invminstockalert/list    
         [HttpGet("list")]
         public ActionResult GetAllStocks(int? nCompanyID,string xcriteria)
         {
