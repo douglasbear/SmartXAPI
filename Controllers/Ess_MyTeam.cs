@@ -113,19 +113,14 @@ namespace SmartxAPI.Controllers
             // string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID "; //and N_EmpID<>@nEmpID and (N_ManagerID=@nEmpID or N_SupervisorID=@nEmpID)
             string Criteria = " Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ";
 
-         if(listType=="department")
+         if(listType=="myDepartment")
             {
-               
                 Criteria = Criteria + " and N_ManagerID=@nEmpID";
             }
-            else if(listType=="team")
+            else if(listType=="myTeam")
             {
             Criteria = Criteria + " and N_SupervisorID=@nEmpID ";
               
-            }
-            else if(listType =="people")
-            {
-                 Criteria = Criteria ;
             }
 
            if (bAllBranchData == false)
