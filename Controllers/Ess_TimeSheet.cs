@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("details")]
-        public ActionResult GetAttendanceDetails(int nEmployeeID, int nFnYear, DateTime payDate, DateTime dDateFrom, DateTime dDateTo)
+        public ActionResult GetAttendanceDetails(int nEmployeeID, int nFnYear, string payText, DateTime payDate, DateTime dDateFrom, DateTime dDateTo)
         {
             DataTable Details = new DataTable();
             SortedList Params = new SortedList();
@@ -106,9 +106,6 @@ namespace SmartxAPI.Controllers
                     // _sqlQuery = "SELECT  case when Pay_TimeSheet.n_TotalWorkHour > 0 then 'P' else 'A' end as X_Status,Pay_TimeSheetMaster.N_TimeSheetID, Pay_TimeSheetMaster.N_EmpID, Pay_TimeSheetMaster.X_PayrunText, Pay_TimeSheetMaster.D_DateFrom, Pay_TimeSheetMaster.D_DateTo, Pay_TimeSheetMaster.N_TotalDutyHours, Pay_TimeSheetMaster.N_TotalWorkedDays, Pay_TimeSheet.D_In,Pay_TimeSheet.D_Out, Pay_TimeSheet.D_Shift2_In, Pay_TimeSheet.D_Shift2_Out, Pay_TimeSheet.N_Status, Pay_TimeSheet.N_DutyHours,Pay_TimeSheet.N_diff,CONVERT(VARCHAR ,Pay_TimeSheet.D_Date, 106) as D_Date,round(Pay_TimeSheet.N_TotalWorkHour,2) as N_TotalWorkHour,* FROM Pay_TimeSheetMaster INNER JOIN Pay_TimeSheet ON Pay_TimeSheetMaster.N_TimeSheetID = Pay_TimeSheet.N_TimeSheetID AND Pay_TimeSheetMaster.N_CompanyID = Pay_TimeSheet.N_CompanyID Where " + Condition + "";
 
 
-                    object PeriodType = dLayer.ExecuteScalar("Select X_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + companyid + " and X_Group='Payroll'", connection);
-                    object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + companyid + " and X_Group='Payroll'", connection);
-                    if (Periodvalue == null) return Ok(api.Notice("No Results Found"));
                     // DateTime fromDate=new DateTime();
                     // DateTime toDate=new DateTime();
 
@@ -118,20 +115,27 @@ namespace SmartxAPI.Controllers
                     DateTime dtStartDate = new DateTime(payDate.Year, payDate.Month, 1);
 
                     int days = 0;
-                    // if (PeriodType != null && PeriodType.ToString() == "M")
-                    // {
-                    //     days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
-                    //     toDate = dtStartDate.AddDays(myFunctions.getIntVAL(Periodvalue.ToString()) - 2);
-                    //     int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
-                    //     fromDate = dtStartDate.AddMonths(-1).AddDays(lastdays - 1);
-                    // }
-                    // else
-                    // {
-                    //     days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
-                    //     toDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
-                    //     int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
-                    //     fromDate = dtStartDate.AddDays(-lastdays); 
-                    // }
+                    if (payText != null && payText != "")
+                    {
+                        object PeriodType = dLayer.ExecuteScalar("Select X_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + companyid + " and X_Group='Payroll'", connection);
+                        object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + companyid + " and X_Group='Payroll'", connection);
+                        if (Periodvalue == null) return Ok(api.Notice("No Results Found"));
+
+                        if (PeriodType != null && PeriodType.ToString() == "M")
+                        {
+                            days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+                            toDate = dtStartDate.AddDays(myFunctions.getIntVAL(Periodvalue.ToString()) - 2);
+                            int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+                            fromDate = dtStartDate.AddMonths(-1).AddDays(lastdays - 1);
+                        }
+                        else
+                        {
+                            days = DateTime.DaysInMonth(payDate.Year, payDate.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+                            toDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+                            int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+                            fromDate = dtStartDate.AddDays(-lastdays);
+                        }
+                    }
 
                     QueryParams.Add("N_CompanyID", companyid);
                     QueryParams.Add("N_FnYear", nFnYear);
@@ -185,14 +189,14 @@ namespace SmartxAPI.Controllers
                     int nTimesheetID = 0;
                     string defultTime = "00:00:00";
                     string currentTime = DateTime.Now.ToString("HH:mm:ss");
-            DateTime date = DateTime.Today;
+                    DateTime date = DateTime.Today;
 
 
                     string d_in = Convert.ToDateTime(masterRow["d_In"].ToString()).ToString("HH:mm:ss");
                     string d_out = Convert.ToDateTime(masterRow["d_Out"].ToString()).ToString("HH:mm:ss");
                     string d_Shift2_In = Convert.ToDateTime(masterRow["d_Shift2_In"].ToString()).ToString("HH:mm:ss");
                     string d_Shift2_Out = Convert.ToDateTime(masterRow["d_Shift2_Out"].ToString()).ToString("HH:mm:ss");
-                    
+
                     if (d_in == defultTime)
                     {
                         masterRow["d_In"] = currentTime;
@@ -221,24 +225,24 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         SortedList QueryParams = new SortedList();
-            
-                    QueryParams.Add("@nCompanyID", nCompanyID);
-                    QueryParams.Add("@nFnYear", nFnYearId);
-                    QueryParams.Add("@nDate", date);
-                    QueryParams.Add("@nEmpID", nEmpID);
 
-                    DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection,transaction);
-                    if (Details.Rows.Count == 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
-                    }
-                    else
-                    {
-                        transaction.Commit();
-                        Details = api.Format(Details, "master");
-                        return Ok(api.Success(Details,"Your Attendance Marked"));
-                    }
+                        QueryParams.Add("@nCompanyID", nCompanyID);
+                        QueryParams.Add("@nFnYear", nFnYearId);
+                        QueryParams.Add("@nDate", date);
+                        QueryParams.Add("@nEmpID", nEmpID);
+
+                        DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection, transaction);
+                        if (Details.Rows.Count == 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save"));
+                        }
+                        else
+                        {
+                            transaction.Commit();
+                            Details = api.Format(Details, "master");
+                            return Ok(api.Success(Details, "Your Attendance Marked"));
+                        }
 
                     }
                 }
@@ -264,7 +268,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     SortedList QueryParams = new SortedList();
-            
+
                     QueryParams.Add("@nCompanyID", companyid);
                     QueryParams.Add("@nFnYear", nFnYear);
                     QueryParams.Add("@nDate", date);
@@ -291,7 +295,7 @@ namespace SmartxAPI.Controllers
 
 
 
-          [HttpPost("saveWorkLocation")]
+        [HttpPost("saveWorkLocation")]
         public ActionResult SaveWorkLocation([FromBody] DataSet ds)
         {
             try
@@ -311,7 +315,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
-                    
+
 
                     if (x_LocationCode == "@Auto")
                     {
@@ -348,7 +352,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-           [HttpGet("workLocationList")]
+        [HttpGet("workLocationList")]
         public ActionResult GetEmpReqList(string xLocationCode, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -383,27 +387,29 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                        dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count from Pay_workLocation where N_CompanyID=@nCompanyID " + Searchkey + "";
-                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    sqlCommandCount = "select count(*) as N_Count from Pay_workLocation where N_CompanyID=@nCompanyID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
 
-                        if(dt.Rows.Count>0){
-                            dt=myFunctions.AddNewColumnToDataTable(dt,"longitude",typeof(string),"");
-                            dt=myFunctions.AddNewColumnToDataTable(dt,"latitude",typeof(string),"");
-                            dt=myFunctions.AddNewColumnToDataTable(dt,"radius",typeof(string),"");
+                    if (dt.Rows.Count > 0)
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "longitude", typeof(string), "");
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "latitude", typeof(string), "");
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "radius", typeof(string), "");
                         foreach (DataRow dRow in dt.Rows)
                         {
-                           if(dRow["x_GeoLocation"].ToString()!="" && dRow["x_GeoLocation"].ToString()!=null) {
-                            JObject o = JObject.Parse(dRow["x_GeoLocation"].ToString());
+                            if (dRow["x_GeoLocation"].ToString() != "" && dRow["x_GeoLocation"].ToString() != null)
+                            {
+                                JObject o = JObject.Parse(dRow["x_GeoLocation"].ToString());
 
-                            dRow["longitude"] = (string)o["lng"];
-                            dRow["latitude"] = (string)o["lat"];
-                            dRow["radius"] = (string)o["radius"];
+                                dRow["longitude"] = (string)o["lng"];
+                                dRow["latitude"] = (string)o["lat"];
+                                dRow["radius"] = (string)o["radius"];
                             }
                         }
-                        }
-                        OutPut.Add("Details", api.Format(dt));
-                        OutPut.Add("TotalCount", TotalCount);
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
 
 
 
