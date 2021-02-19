@@ -75,17 +75,21 @@ namespace SmartxAPI.Controllers
     //         {
     //              DataTable DetailTable;
     //              DetailTable = ds.Tables["details"];
-    //                SortedList Params = new SortedList();
-    //             SortedList QueryParams = new SortedList();
+    //              SortedList Params = new SortedList();
+    //              SortedList QueryParams = new SortedList();
+                 
 
     //              using (SqlConnection connection = new SqlConnection(connectionString))
     //             {
     //                 connection.Open();
-    //                   DataRow Detailss = DetailTable.Rows[0];
+    //                 DataRow Detailss = DetailTable.Rows[0];
+    //                 SqlTransaction transaction;
+    //                 transaction = connection.BeginTransaction();
 
     //               int n_LedgerID = myFunctions.getIntVAL(Detailss["n_LedgerID"].ToString());
     //                int N_FnYearID = myFunctions.getIntVAL(Detailss["n_FnYearID"].ToString());
     //                 int N_CompanyID = myFunctions.getIntVAL(Detailss["n_CompanyID"].ToString());
+    //                 int  N_CashBahavID, N_TransBehavID, N_PostingBehavID;
 
     //                SortedList QueryParamsList = new SortedList();
     //                  QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -95,12 +99,32 @@ namespace SmartxAPI.Controllers
                     
     //                  for (int j = 0; j < DetailTable.Rows.Count; j++)
     //                     {
+    //                          //dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '',N_CashBahavID=0,N_TransBehavID=0 Where N_LedgerID= @nLedgerID And N_CompanyID = @nCompanyID and N_FnYearID=@nFnYearID",Params,connection, transaction);
+                        
+    //                      int  N_CashBahavID, N_TransBehavID, N_PostingBehavID;
+    //                      string x_behaviour="",x_Dr="";
+    //                      x_behaviour=DetailTable.Rows[j]["x_behaviour"];
+    //                      DetailTable.Rows[j]["N_LedgerBehaviourID"]
+                         
 
-    //                 dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '',N_CashBahavID=0,N_TransBehavID=0 Where N_LedgerID= " + myFunctions.getIntVAL(flxPayTransactions.get_TextMatrix(i, mcLedgerID)).ToString() + " And N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, "TEXT", new DataTable());
+    //                      if(DetailTable.Rows[j]["N_LedgerBehaviourID"]==0)
+    //                         N_CashBahavID=0;
+    //                     else
+    //                         N_CashBahavID =myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT N_LedgerBehaviourID FROM Acc_LedgerBehaviour where  X_Description="+x_behaviour,Params,connection, transaction));
+    //                     if (x_Dr == "")
+    //                         N_TransBehavID = 0;
+    //                     else
+    //                     N_TransBehavID = myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT N_LedgerBehaviourID FROM Acc_LedgerBehaviour where X_Description="++x_behaviour,Params,connection, transaction));
+
+    //                     if (flxPayTransactions.get_TextMatrix(i, mcBehaviour) == "")
+    //                         X_CashTypeBehaviour = "";
+    //                     else
+    //                         X_CashTypeBehaviour = dba.ExecuteSclar("SELECT  X_Description FROM Acc_LedgerBehaviour where  N_LedgerBehaviourID=" + N_CashBahavID, "TEXT", new DataTable()).ToString();
+    //                         dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '" + X_CashTypeBehaviour + "',N_CashBahavID=" + N_CashBahavID + ",N_TransBehavID=" + N_TransBehavID + " Where N_LedgerID= " + myFunctions.getIntVAL(flxPayTransactions.get_TextMatrix(i, mcLedgerID)).ToString() + " And N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, "TEXT", new DataTable());
+                    
+    //                     }
+    //     }
     //         }
-    //     }
-
-    //     }
     //     }
     
 
