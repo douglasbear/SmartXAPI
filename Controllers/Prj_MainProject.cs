@@ -125,6 +125,64 @@ namespace SmartxAPI.Controllers
             }   
         }
 
+         [HttpGet("Dashboardlist")]
+        public ActionResult ContractDashboardList(int nPage,int nSizeperpage,string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (N_MainProjectID like '%" + xSearchkey + "%'or X_MainProjectCode like '%" + xSearchkey + "%' or  X_MainProjectName like '%" + xSearchkey + "%' or N_ContractAmt like '%" + xSearchkey + "%' or N_EstimateCost like '%" + xSearchkey + "%' or ActualBudget like '%" + xSearchkey + "%' or RemainingBudget like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_MainProjectID desc";
+            else
+            
+             xSortBy = " order by " + xSortBy;
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +")  X_MainProjectCode,X_MainProjectName,N_ContractAmt,N_EstimateCost,ActualBudget,RemainingBudget from vw_InvMainProjectDashBoard where N_CompanyID=@p1 ";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +")  X_MainProjectCode,X_MainProjectName,N_ContractAmt,N_EstimateCost,ActualBudget,RemainingBudget from vw_InvMainProjectDashBoard where N_CompanyID=@p1  and N_MainProjectID not in (select top("+ Count +") N_MainProjectID from vw_InvMainProjectDashBoard where N_CompanyID=@p1 )";
+            Params.Add("@p1", nCompanyId);
+         
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvMainProjectDashBoard where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
