@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 ";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -640,7 +640,7 @@ namespace SmartxAPI.Controllers
                         StockPostingParams.Add("N_SalesID", N_SalesID);
                         StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
                         StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
-                        try
+                       if(N_DeliveryNoteID==0 ){ try
                         {
                             dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
                         }
@@ -661,7 +661,7 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error("Quantity exceeds!"));
                             else
                                 return Ok(_api.Error(ex));
-                        }
+                        }}
 
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];

@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ItemID ASC,[Item Code] desc";
+                xSortBy = " order by N_ItemID desc,[Item Code] desc";
             else
             {
               switch (xSortBy.Split(" ")[0]){ 
@@ -394,7 +394,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error("Can't be delete,It has been used!"));
             }
 
 

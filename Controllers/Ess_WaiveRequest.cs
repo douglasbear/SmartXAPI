@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and X_RequestCode like'%" + xSearchkey + "%'or X_Notes like'%" + xSearchkey + "%'";
+                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%'or X_Notes like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_RequestCode desc";
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID and B_IsSaveDraft=0";
+                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID and B_IsSaveDraft=0 " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);

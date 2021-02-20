@@ -23,11 +23,13 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly string connectionString;
+         private readonly IMyFunctions myFunctions;
 
-        public InvCustomerProjectsController(IDataAccessLayer dl, IApiFunctions apiFun, IConfiguration conf)
+        public InvCustomerProjectsController(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
             api = apiFun;
+            
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -56,18 +58,72 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                   return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+               return Ok(api.Error(e));
             }
 
 
         }
 
+//         [HttpGet("dashboardlist")]
+//         public ActionResult ProjectList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+//         {
+            
+//             DataTable dt = new DataTable();
+//             SortedList Params = new SortedList();
+//              int nCompanyId=myFunctions.GetCompanyID(User);
+//             int Count= (nPage - 1) * nSizeperpage;
+//             string sqlCommandText ="";
+//             string Searchkey = "";
+//             if (xSearchkey != null && xSearchkey.Trim() != "")
+//                 Searchkey = "and x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%'";
 
-    }
-}
+//             if (xSortBy == null || xSortBy.Trim() == "")
+//                 xSortBy = " order by n_ProjectID desc";
+//             else
+//                 xSortBy = " order by " + xSortBy;
+             
+//              if(Count==0)
+//                 sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_ProjectID,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+//             else
+//                 sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_ProjectID,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+//             Params.Add("@p1", nCompanyId);
+
+//             SortedList OutPut = new SortedList();
+
+
+//             try
+//             {
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+//                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+//                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvProjectDashBoard where N_CompanyID=@p1 ";
+//                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+//                     OutPut.Add("Details", api.Format(dt));
+//                     OutPut.Add("TotalCount", TotalCount);
+//                     if (dt.Rows.Count == 0)
+//                     {
+//                         return Ok(api.Warning("No Results Found"));
+//                     }
+//                     else
+//                     {
+//                         return Ok(api.Success(OutPut));
+//                     }
+
+//                 }
+                
+//             }
+//             catch (Exception e)
+//             {
+//                 return Ok(api.Error(e));
+//             }
+//         }
+//     }
+// }
