@@ -131,7 +131,7 @@ namespace SmartxAPI.Controllers
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and ( X_EmpName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' )";
+                Searchkey = " and ( X_EmpName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_Sex like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or D_HireDate like '%" + xSearchkey + "%' or X_Nationality like '%" + xSearchkey + "%' or X_EmailID like '%" + xSearchkey + "%' or X_IqamaNo like '%" + xSearchkey + "%' or D_IqamaExpiry like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_EmpCode desc";
