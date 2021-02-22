@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
             }
             else if(listType=="myTeam")
             {
-            Criteria = Criteria + " and N_SupervisorID=@nEmpID ";
+            Criteria = Criteria + " and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID ";
               
             }
 
