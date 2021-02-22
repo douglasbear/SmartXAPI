@@ -1,17 +1,15 @@
-using System.Collections.Generic;
 using AutoMapper;
 using SmartxAPI.Data;
-using SmartxAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System;
-using System.Linq;
 using SmartxAPI.GeneralFunctions;
 using System.Data;
 using System.Collections;
-using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -29,7 +27,7 @@ namespace SmartxAPI.Controllers
         {
             dLayer = dl;
             api = apiFun;
-            
+            myFunctions=myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -70,60 +68,59 @@ namespace SmartxAPI.Controllers
 
         }
 
-//         [HttpGet("dashboardlist")]
-//         public ActionResult ProjectList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
-//         {
-            
-//             DataTable dt = new DataTable();
-//             SortedList Params = new SortedList();
-//              int nCompanyId=myFunctions.GetCompanyID(User);
-//             int Count= (nPage - 1) * nSizeperpage;
-//             string sqlCommandText ="";
-//             string Searchkey = "";
-//             if (xSearchkey != null && xSearchkey.Trim() != "")
-//                 Searchkey = "and x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%'";
+        [HttpGet("dashboardlist")]
+        public ActionResult ProjectList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%' or x_CustomerName like '%" + xSearchkey + "%' or x_District like '%" + xSearchkey + "%' or d_StartDate like '%" + xSearchkey + "%' or n_ContractAmt like '%" + xSearchkey + "%'";
 
-//             if (xSortBy == null || xSortBy.Trim() == "")
-//                 xSortBy = " order by n_ProjectID desc";
-//             else
-//                 xSortBy = " order by " + xSortBy;
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ProjectID desc";
+            else
+                xSortBy = " order by " + xSortBy;
              
-//              if(Count==0)
-//                 sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_ProjectID,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
-//             else
-//                 sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_ProjectID,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
-//             Params.Add("@p1", nCompanyId);
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+            Params.Add("@p1", nCompanyId);
 
-//             SortedList OutPut = new SortedList();
+            SortedList OutPut = new SortedList();
 
 
-//             try
-//             {
-//                 using (SqlConnection connection = new SqlConnection(connectionString))
-//                 {
-//                     connection.Open();
-//                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-//                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvProjectDashBoard where N_CompanyID=@p1 ";
-//                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-//                     OutPut.Add("Details", api.Format(dt));
-//                     OutPut.Add("TotalCount", TotalCount);
-//                     if (dt.Rows.Count == 0)
-//                     {
-//                         return Ok(api.Warning("No Results Found"));
-//                     }
-//                     else
-//                     {
-//                         return Ok(api.Success(OutPut));
-//                     }
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvProjectDashBoard where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
 
-//                 }
+                }
                 
-//             }
-//             catch (Exception e)
-//             {
-//                 return Ok(api.Error(e));
-//             }
-//         }
-//     }
-// }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+    }
+}
