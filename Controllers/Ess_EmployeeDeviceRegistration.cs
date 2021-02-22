@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetTravelOrderDetails(string xRequestCode)
+        public ActionResult GetDeviceDetails(string xDeviceCode,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -49,18 +49,16 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
-            QueryParams.Add("@xRequestCode", xRequestCode);
+            QueryParams.Add("@xDeviceCode", xDeviceCode);
+            QueryParams.Add("@nFnYearID", nFnYearID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_EmpBussinessTripRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Employee.N_EmpID AS Expr1, Gen_Defaults.X_TypeName FROM Pay_EmpBussinessTripRequest LEFT OUTER JOIN Gen_Defaults ON Pay_EmpBussinessTripRequest.N_TravelTypeID = Gen_Defaults.N_TypeId LEFT OUTER JOIN Pay_Employee ON Pay_EmpBussinessTripRequest.N_EmpID = Pay_Employee.N_EmpID AND  Pay_EmpBussinessTripRequest.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpBussinessTripRequest.X_RequestCode=@xRequestCode and Pay_EmpBussinessTripRequest.N_CompanyID=@nCompanyID";
-
+                    string _sqlQuery = "SELECT Pay_EmpDeviceIDRegistration.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName FROM Pay_EmpDeviceIDRegistration LEFT OUTER JOIN Pay_Employee ON Pay_EmpDeviceIDRegistration.N_EmpID = Pay_Employee.N_EmpID AND Pay_EmpDeviceIDRegistration.N_CompanyID = Pay_Employee.N_CompanyID where Pay_EmpDeviceIDRegistration.N_CompanyID=@nCompanyID and Pay_EmpDeviceIDRegistration.x_DeviceCode=@xDeviceCode and Pay_Employee.N_FnYearID=@nFnYearID";
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
-
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -136,7 +134,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Pay_EmpDeviceIDRegistration", "n_DeviceID", nDeviceID, "", connection, transaction);
                     }
-                    MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     nDeviceID = dLayer.SaveData("Pay_EmpDeviceIDRegistration", "n_DeviceID", MasterTable, connection, transaction);
