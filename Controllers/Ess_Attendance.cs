@@ -221,9 +221,8 @@ namespace SmartxAPI.Controllers
                         Master.Add("NetDeduction", MinutesToHours(NetDeduction).ToString("0.00"));
                         Master.Add("ExtraHour", MinutesToHours(ExtraHour).ToString("0.00"));
                         Master.Add("N_Deduction", MinutesToHours(N_Deduction).ToString("0.00"));
-                        OutPut.Add("master", Master);
                     }
-
+                        OutPut.Add("master", Master);
                     Details = dLayer.ExecuteDataTable(sqlDetails, QueryParams, connection);
 
                     if (Details.Rows.Count == 0)
