@@ -304,8 +304,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nFnYear", nFnYear);
                     QueryParams.Add("@nDate", date);
                     QueryParams.Add("@nEmpID", nEmpID);
+string sqlCommandDailyLogin = "SELECT MAX(D_In) as D_In,MAX(D_Out) as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
-                    Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection);
+                    Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
+                    // Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection);
+                    Details= myFunctions.AddNewColumnToDataTable(Details,"workHours",typeof(string),"00:00:00");
+            
                     if (Details.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
