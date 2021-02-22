@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
                     Master.Add("days", days);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
-                     Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0; 
+                    Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0;
                     if (Details.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
@@ -159,20 +159,19 @@ namespace SmartxAPI.Controllers
                     {
                         foreach (DataRow row in Details.Rows)
                         {
-                            if (row["Attnd"].ToString() != "")
-                                {
+                            
 
-                                    // Summary
-                                    N_WorkHours += HoursToMinutes(Convert.ToDouble(row["N_Workhours"].ToString()));
-                                    N_WorkdHrs += HoursToMinutes(Convert.ToDouble(row["N_Tothours"].ToString()));
-                                    N_compensated += HoursToMinutes(Convert.ToDouble(row["CompMinutes"].ToString()));
-                                    N_Deduction += HoursToMinutes(Convert.ToDouble(row["Deduction"].ToString()));
-                                }
+                                // Summary
+                                N_WorkHours += HoursToMinutes(Convert.ToDouble(row["N_Workhours"].ToString()));
+                                N_WorkdHrs += HoursToMinutes(Convert.ToDouble(row["N_Tothours"].ToString()));
+                                N_compensated += HoursToMinutes(Convert.ToDouble(row["CompMinutes"].ToString()));
+                                N_Deduction += HoursToMinutes(Convert.ToDouble(row["Deduction"].ToString()));
+                        
                         }
-                        Master.Add("TotalWorkingHours",MinutesToHours(N_WorkHours).ToString("0.00"));
-                    Master.Add("TotalWorkedHours",MinutesToHours(N_WorkdHrs).ToString("0.00"));
-                    Master.Add("Compensated",MinutesToHours(N_compensated).ToString("0.00"));
-                    Master.Add("DirectDeduction",MinutesToHours(N_Deduction).ToString("0.00"));
+                        Master.Add("TotalWorkingHours", MinutesToHours(N_WorkHours).ToString("0.00"));
+                        Master.Add("TotalWorkedHours", MinutesToHours(N_WorkdHrs).ToString("0.00"));
+                        Master.Add("Compensated", MinutesToHours(N_compensated).ToString("0.00"));
+                        Master.Add("DirectDeduction", MinutesToHours(N_Deduction).ToString("0.00"));
                         Details = api.Format(Details, "master");
                         OutPut.Add("master", Master);
                         OutPut.Add("details", Details);
@@ -187,7 +186,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-                public double MinutesToHours(double Minutes)
+        public double MinutesToHours(double Minutes)
         {
             double Hours = 0;
             //Minutes = Round(Minutes, 2);
