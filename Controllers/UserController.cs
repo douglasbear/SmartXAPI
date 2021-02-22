@@ -56,7 +56,42 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("list")]
+        public ActionResult GetUserList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "Sp_UserList";
+            Params.Add("N_CompanyID", nCompanyId);
+            // Params.Add("N_UserId", userid);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                    return Ok(_api.Warning("No Results Found"));
+                else
+                {
+                    dt.Columns.Remove("X_Password");
+                    dt.AcceptChanges();
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(e));
+            }
+        }
+
+        [HttpGet("dashboardList")]
         public ActionResult GetUserList(int? nCompanyId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
