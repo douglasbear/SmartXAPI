@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%'";
+                Searchkey = "and([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [invoiceDate] like '%" + xSearchkey + "%' or d_DeliveryDate like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_DeliveryNoteId desc";
