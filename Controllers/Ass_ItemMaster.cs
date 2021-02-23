@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (AssetLedgerID like '%" + xSearchkey + "%' or x_Category like '%" + xSearchkey + "%' or x_ItemName like '%" + xSearchkey + "%' or x_Model like '%" + xSearchkey + "%' or d_PurchaseDate like '%" + xSearchkey + "%' or n_LifePeriod like '%" + xSearchkey + "%' or n_BookValue like '%" + xSearchkey + "%' or x_PlateNumber like '%" + xSearchkey + "%' or x_SerialNo like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or x_EmpCode like '%" + xSearchkey + "%' or x_EmpName like '%" + xSearchkey + "%' or x_Department like '%" + xSearchkey + "%' or status like '%" + xSearchkey + "%')";
+                Searchkey = "and (AssetLedgerID like '%" + xSearchkey + "%' or X_Category like '%" + xSearchkey + "%' or X_ItemName like '%" + xSearchkey + "%' or D_PurchaseDate like '%" + xSearchkey + "%' or N_LifePeriod like '%" + xSearchkey + "%' or N_BookValue like '%" + xSearchkey + "%' or X_PlateNumber like '%" + xSearchkey + "%' or X_SerialNo like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or Status like '%" + xSearchkey + "%' or X_MainCategory like '%" + xSearchkey + "%' or X_make like '%" + xSearchkey + "%' or N_Price like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by AssetLedgerID desc";
