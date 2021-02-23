@@ -193,8 +193,8 @@ namespace SmartxAPI.Data
                     //     .ToList();
 
                     string MenuSql ="select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,"+
-"N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline from VwUserMenus where N_UserCategoryId in ( "+ loginRes.X_UserCategoryIDList +" ) and  N_CompanyId="+loginRes.N_CompanyID+" and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,"+
-"B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline order by N_Order ";
+"N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( "+ loginRes.X_UserCategoryIDList +" ) and  N_CompanyId="+loginRes.N_CompanyID+" and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,"+
+"B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow order by N_Order ";
 
                         DataTable MenusDTB = dLayer.ExecuteDataTable(MenuSql,connection);
 
@@ -219,6 +219,7 @@ namespace SmartxAPI.Data
          BShow = (bool)(dr["B_Show"]==System.DBNull.Value?false:dr["B_Show"]), 
          XRouteName = dr["X_RouteName"].ToString(), 
          BShowOnline = (bool)(dr["B_ShowOnline"]==System.DBNull.Value?false:dr["B_ShowOnline"]), 
+         BWShow = (bool)(dr["B_WShow"]==System.DBNull.Value?false:dr["B_WShow"]), 
             }).ToList(); 
                        
 
@@ -253,8 +254,8 @@ namespace SmartxAPI.Data
                 //         .OrderBy(VwUserMenus => VwUserMenus.NOrder)
                 //  .ToList();
                 string NewMenuSql ="select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,"+
-"N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline from VwUserMenus where N_UserCategoryId in ( "+ loginRes.X_UserCategoryIDList +" ) and  N_CompanyId="+loginRes.N_CompanyID+" and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,"+
-"B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline order by N_Order ";
+"N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( "+ loginRes.X_UserCategoryIDList +" ) and  N_CompanyId="+loginRes.N_CompanyID+" and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,"+
+"B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow order by N_Order ";
                 DataTable MenusDT = dLayer.ExecuteDataTable(NewMenuSql,connection);
                         
                         var RMenu = (from DataRow dr in MenusDT.Rows  
@@ -278,6 +279,7 @@ namespace SmartxAPI.Data
          BShow = (bool)(dr["B_Show"]==System.DBNull.Value?false:dr["B_Show"]), 
          XRouteName = dr["X_RouteName"].ToString(), 
          BShowOnline = (bool)(dr["B_ShowOnline"]==System.DBNull.Value?false:dr["B_ShowOnline"]), 
+         BWShow = (bool)(dr["B_WShow"]==System.DBNull.Value?false:dr["B_WShow"]), 
             }).ToList();  
 
                         List<MenuDto> RPMList = new List<MenuDto>();

@@ -19,6 +19,7 @@ namespace SmartxAPI.Dtos.Login
         public bool? NIsStartup { get; set; }
         public bool? BShow { get; set; }
         public bool? BShowOnline { get; set; }
+        public bool? BWShow { get; set; }
         public string XRouteName { get; set; }
     }
 }
