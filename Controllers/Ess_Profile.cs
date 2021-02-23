@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string sqlEducation = "Select * from Pay_EmployeeEducation where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlExperience = "Select * from Pay_EmploymentHistory where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlAsset = "Select X_ItemCode,X_ItemName,X_Category from vw_AssetMaster where N_CompanyID=@p1 and N_EmpID=@p3 and N_Status<2";
-            string sqlFamily = "select X_DName,X_DLName,X_FGender,X_Relation,D_DDOB from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependence.N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlFamily = "select N_DependenceID,X_DName,X_DLName,X_FGender,X_Relation,D_DDOB from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependence.N_CompanyID=@p1 and N_EmpID=@p3";
 
 
             Params.Add("@p1", nCompanyID);
