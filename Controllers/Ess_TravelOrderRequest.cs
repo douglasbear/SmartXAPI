@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
 
         //List
 
-        [HttpGet("list")]
+      [HttpGet("list")]
         public ActionResult GetTravelOrderList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();

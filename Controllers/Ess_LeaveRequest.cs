@@ -83,7 +83,7 @@ private readonly IMyAttachments myAttachments;
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved' and B_IsAdjustEntry<>1 " + Searchkey + " ";
+                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1 " + Searchkey + " ";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);

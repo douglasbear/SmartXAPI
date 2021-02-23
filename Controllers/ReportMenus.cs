@@ -425,6 +425,9 @@ namespace SmartxAPI.Controllers
             {
                 String Criteria = "";
                 String reportName = "";
+                String CompanyData = "";
+                String YearData = "";
+
                 var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -441,7 +444,7 @@ namespace SmartxAPI.Controllers
 
 
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
-
+                    
                     reportName = reportName.Substring(0, reportName.Length - 4);
 
 
@@ -459,6 +462,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("@xMain", "MainForm");
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
 
 
@@ -499,6 +504,7 @@ namespace SmartxAPI.Controllers
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
+                    Criteria=Criteria + CompanyData +"="+nCompanyID+" and "+YearData+"="+FnYearID;
                     dbName = connection.Database;
                 }
 

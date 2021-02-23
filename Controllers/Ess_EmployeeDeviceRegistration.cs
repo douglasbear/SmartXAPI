@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
                     }
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_DeviceCode", x_DeviceCode.ToString());
-                    return Ok(api.Success(res, "Device Registration saved"));
+                    return Ok(api.Success(res, "Request submitted for device registration"));
                 }
             }
             catch (Exception ex)
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nRequestID, int nFnYearID)
+        public ActionResult DeleteData(int nDeviceID, int nFnYearID)
         {
             try
             {
@@ -170,10 +170,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable TransData = new DataTable();
                     SortedList ParamList = new SortedList();
-                    ParamList.Add("@nTransID", nRequestID);
+                    ParamList.Add("@nTransID", nDeviceID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode from Pay_EmpBussinessTripRequest where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,x_DeviceCode from Pay_EmpDeviceIDRegistration where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and n_DeviceID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -188,15 +188,15 @@ namespace SmartxAPI.Controllers
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
 
 
-                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2004, User, dLayer, connection));
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nDeviceID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2004, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
-                    string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    string X_Criteria = "n_DeviceID=" + nDeviceID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Device Registration", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpBussinessTripRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Device Registration", nDeviceID, TransRow["x_DeviceCode"].ToString(), ProcStatus, "Pay_EmpDeviceIDRegistration", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
                         transaction.Commit();
