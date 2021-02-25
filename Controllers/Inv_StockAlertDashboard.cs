@@ -31,14 +31,23 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        //GET api/Projects/list
+       // GET api/invminstockalert/list    
         [HttpGet("list")]
-        public ActionResult GetAllProjects(int? nCompanyID)
+        public ActionResult GetAllStocks(int? nCompanyID,string xcriteria)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string criteria="";
 
-            string sqlCommandText = "select * from vw_stockstatusbylocation where N_CompanyID=@p1 order by X_ItemCode";
+            if(xcriteria=="All")
+                criteria="N_CompanyID=@p1";
+            else if(xcriteria=="No Stock")
+                criteria="N_CompanyID=@p1 and N_CurrStock=0" ;
+            else if(xcriteria=="N_MinQty")
+                criteria="N_CompanyID=@p1 and N_CurrStock < = "+xcriteria ;
+
+
+            string sqlCommandText = "select * from vw_stockstatusbylocation where "+criteria;
             Params.Add("@p1", nCompanyID);
         
 
@@ -62,12 +71,8 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-               return Ok(api.Error(e));
+                return BadRequest(api.Error(e));
             }
-
-
         }
-
-
     }
 }
