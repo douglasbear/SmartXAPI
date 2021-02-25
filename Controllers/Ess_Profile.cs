@@ -45,6 +45,7 @@ namespace SmartxAPI.Controllers
             string sqlEducation = "Select * from Pay_EmployeeEducation where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlExperience = "Select * from Pay_EmploymentHistory where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlAsset = "Select X_ItemCode,X_ItemName,X_Category from vw_AssetMaster where N_CompanyID=@p1 and N_EmpID=@p3 and N_Status<2";
+            string sqlFamily = "select X_DName,X_DLName,X_FGender,X_Relation,D_DDOB from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependence.N_CompanyID=@p1 and N_EmpID=@p3";
 
 
             Params.Add("@p1", nCompanyID);
@@ -57,6 +58,7 @@ namespace SmartxAPI.Controllers
             DataTable EducationDetails = new DataTable();
             DataTable ExperienceDetails = new DataTable();
             DataTable AssetDetails = new DataTable();
+            DataTable FamilyDetails = new DataTable();
 
 
             try
@@ -93,12 +95,16 @@ namespace SmartxAPI.Controllers
 
                     AssetDetails = dLayer.ExecuteDataTable(sqlAsset, Params, connection);
                     AssetDetails = api.Format(AssetDetails, "AssetDetails");
+
+                    FamilyDetails = dLayer.ExecuteDataTable(sqlFamily, Params, connection);
+                    FamilyDetails = api.Format(FamilyDetails, "FamilyDetails");
                 }
                 dt.Tables.Add(EmployeeDetails);
                 dt.Tables.Add(SalaryDetails);
                 dt.Tables.Add(EducationDetails);
                 dt.Tables.Add(ExperienceDetails);
                 dt.Tables.Add(AssetDetails);
+                dt.Tables.Add(FamilyDetails);
 
                 return Ok(api.Success(dt));
 

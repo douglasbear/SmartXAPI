@@ -47,11 +47,11 @@ namespace SmartxAPI.Controllers
 
             if (bShowAllBranch)
             {
-                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291)";
+                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID ";
             }
             else
             {
-                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID  and n_FormID in (212,210,1226,1229,1232,1234,1235,1236,1239,2001,2002,2003,2004,2005,1289,1291)";
+                sqlCommandText = "select count(*) from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_NextApproverID=@nUserID and N_Branchid = @nBranchID ";
                 Params.Add("@nBranchID", nBranchID);
             }
 

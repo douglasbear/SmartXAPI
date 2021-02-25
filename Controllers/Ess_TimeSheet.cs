@@ -149,12 +149,29 @@ namespace SmartxAPI.Controllers
                     Master.Add("toDate", toDate);
                     Master.Add("days", days);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
+
+                    Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0;
                     if (Details.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));
                     }
                     else
                     {
+                        foreach (DataRow row in Details.Rows)
+                        {
+                            
+
+                                // Summary
+                                N_WorkHours += HoursToMinutes(Convert.ToDouble(row["N_Workhours"].ToString()));
+                                N_WorkdHrs += HoursToMinutes(Convert.ToDouble(row["N_Tothours"].ToString()));
+                                N_compensated += HoursToMinutes(Convert.ToDouble(row["CompMinutes"].ToString()));
+                                N_Deduction += HoursToMinutes(Convert.ToDouble(row["Deduction"].ToString()));
+                        
+                        }
+                        Master.Add("TotalWorkingHours", MinutesToHours(N_WorkHours).ToString("0.00"));
+                        Master.Add("TotalWorkedHours", MinutesToHours(N_WorkdHrs).ToString("0.00"));
+                        Master.Add("Compensated", MinutesToHours(N_compensated).ToString("0.00"));
+                        Master.Add("DirectDeduction", MinutesToHours(N_Deduction).ToString("0.00"));
                         Details = api.Format(Details, "master");
                         OutPut.Add("master", Master);
                         OutPut.Add("details", Details);
@@ -167,6 +184,20 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(e));
             }
+        }
+
+        public double MinutesToHours(double Minutes)
+        {
+            double Hours = 0;
+            //Minutes = Round(Minutes, 2);
+            Hours = (((int)Minutes / 60) + (Minutes % 60) / 100);
+            return Hours;
+        }
+        public double HoursToMinutes(double Hours)
+        {
+            double Minutes = 0;
+            Minutes = (((int)Hours * 60) + (Hours % 1) % .60 * 100);
+            return Minutes;
         }
 
         [HttpPost("save")]
@@ -273,8 +304,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nFnYear", nFnYear);
                     QueryParams.Add("@nDate", date);
                     QueryParams.Add("@nEmpID", nEmpID);
+string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
-                    Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection);
+                    Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
+                    // Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection);
+                    Details= myFunctions.AddNewColumnToDataTable(Details,"workHours",typeof(string),"00:00:00");
+            
                     if (Details.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));

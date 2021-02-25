@@ -46,10 +46,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and x_lead like '%" + xSearchkey + "%'";
+                Searchkey = "and (AssetLedgerID like '%" + xSearchkey + "%' or X_Category like '%" + xSearchkey + "%' or X_ItemName like '%" + xSearchkey + "%' or D_PurchaseDate like '%" + xSearchkey + "%' or N_LifePeriod like '%" + xSearchkey + "%' or N_BookValue like '%" + xSearchkey + "%' or X_PlateNumber like '%" + xSearchkey + "%' or X_SerialNo like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or Status like '%" + xSearchkey + "%' or X_MainCategory like '%" + xSearchkey + "%' or X_make like '%" + xSearchkey + "%' or N_Price like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ItemID desc";
+                xSortBy = " order by AssetLedgerID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
