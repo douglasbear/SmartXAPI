@@ -504,7 +504,10 @@ namespace SmartxAPI.Controllers
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
-                    Criteria=Criteria + CompanyData +"="+nCompanyID+" and "+YearData+"="+FnYearID;
+                    if(Criteria=="")
+                        Criteria=Criteria + CompanyData +"="+nCompanyID+" and "+YearData+"="+FnYearID;
+                    else
+                        Criteria= Criteria +" and "+ CompanyData +"="+nCompanyID+" and "+YearData+"="+FnYearID;
                     dbName = connection.Database;
                 }
 
