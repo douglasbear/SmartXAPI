@@ -635,7 +635,7 @@ private readonly IMyAttachments myAttachments;
                  Params.Add("N_FnYearID",myFunctions.getVAL(var["n_FnYearID"].ToString()));
                  Params.Add("N_EmpID",myFunctions.getVAL(var["n_EmpID"].ToString()));
                  Params.Add("D_VacDateFrom",var["d_VacDateFrom"].ToString());
-                 Params.Add("D_VacDateTo",var["d_VacDateFrom"].ToString());
+                 Params.Add("D_VacDateTo",var["d_VacDateTo"].ToString());
                  Params.Add("N_VacationID",myFunctions.getVAL(var["n_VacationGroupID"].ToString()));
 
                 DataTable Validation = dLayer.ExecuteDataTablePro("SP_Pay_VacationEntryDateValidation",Params,connection,transaction);

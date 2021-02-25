@@ -477,10 +477,14 @@ namespace SmartxAPI.Controllers
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
                                 {"X_TransType","PURCHASE"},
-                                {"N_VoucherID",N_PurchaseID}};
+                                {"N_VoucherID",N_PurchaseID},
+                                                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"},
+                                {"B_MRNVisible","0"}};
+
                         try
                         {
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         }
                         catch (Exception ex)
                         {

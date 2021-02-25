@@ -261,8 +261,10 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@nFnYear", nFnYearId);
                         QueryParams.Add("@nDate", date);
                         QueryParams.Add("@nEmpID", nEmpID);
+string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
-                        DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection, transaction);
+                        // DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection, transaction);
+                        DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
                         if (Details.Rows.Count == 0)
                         {
                             transaction.Rollback();
