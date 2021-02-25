@@ -43,20 +43,18 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
-
+            
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%'";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_DeliveryNoteId desc";
-            // if (xSortBy.Split(" ")[0] == "invoiceDate")
-            //     xSortBy = "order by Cast(invoiceDate) as DateTime()";
+                xSortBy = " order by [Invoice No] desc";   
             else
             {
-                switch (xSortBy.Split(" ")[0])
+             switch (xSortBy.Split(" ")[0])
                 {
                     case "invoiceNo":
-                        xSortBy = "N_DeliveryNoteId " + xSortBy.Split(" ")[1];
+                        xSortBy = "[Invoice No] " + xSortBy.Split(" ")[1];
                         break;
                     case "invoiceDate":
                         xSortBy = "[Invoice Date] " + xSortBy.Split(" ")[1];
@@ -65,8 +63,6 @@ namespace SmartxAPI.Controllers
                 }
                 xSortBy = " order by " + xSortBy;
             }
-
-
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDeliveryNoteNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
