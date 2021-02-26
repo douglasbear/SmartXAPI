@@ -402,7 +402,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID as N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsSaveDraft=0 order by D_LoanIssueDate Desc";
+                    sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsSaveDraft=0 order by D_LoanIssueDate Desc";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                 }
                 dt = api.Format(dt);

@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult LoanCloseDetails(string xLoanCode)
+        public ActionResult LoanCloseDetails(string xLoanCode, int nLoanTransID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -41,12 +41,15 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xLoanCode);
+            Params.Add("@p3", nLoanTransID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-myFunctions.getVAL(dt.Rows[0]["Paid Amount"].ToString());
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "x_Balance", typeof(string), balance);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
