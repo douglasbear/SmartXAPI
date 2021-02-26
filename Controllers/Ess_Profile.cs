@@ -43,9 +43,9 @@ namespace SmartxAPI.Controllers
             
             string sqlSalary ="SELECT ROW_NUMBER() OVER (ORDER BY vw_PayEmployeePayHistory.N_PayID) As Srl,vw_PayEmployeePayHistory.* FROM         dbo.vw_PayEmployeePayHistory WHERE  (dbo.vw_PayEmployeePayHistory.N_CompanyID =@p1) AND (dbo.vw_PayEmployeePayHistory.N_EmpID =@p3) AND (dbo.vw_PayEmployeePayHistory.N_FnYearID =@p2) Order by D_EffectiveDate Desc,vw_PayEmployeePayHistory.N_PayTypeID";
             string sqlEducation = "Select * from Pay_EmployeeEducation where N_CompanyID=@p1 and N_EmpID=@p3";
-            string sqlExperience = "Select * from Pay_EmploymentHistory where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlExperience = "Select N_CompanyID,N_JobID,N_EmpID,X_Position,X_Company,X_Year,X_Country,X_Industry,CONVERT(VARCHAR,D_From,106) as D_From,CONVERT(VARCHAR,D_To,106) as D_To,X_Department from Pay_EmploymentHistory where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlAsset = "Select X_ItemCode,X_ItemName,X_Category from vw_AssetMaster where N_CompanyID=@p1 and N_EmpID=@p3 and N_Status<2";
-            string sqlFamily = "select X_DName,X_DLName,X_FGender,X_Relation,D_DDOB from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependence.N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlFamily = "select N_DependenceID,X_DName,X_DLName,X_FGender,X_Relation,D_DDOB from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependence.N_CompanyID=@p1 and N_EmpID=@p3";
 
 
             Params.Add("@p1", nCompanyID);
