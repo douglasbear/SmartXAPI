@@ -101,6 +101,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
             string sqlCommandCount="";
             string Searchkey = "";
+            string exclude=" and X_UserID<>'Olivo' ";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_UserID like '%" + xSearchkey + "%' or X_UserCategory like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
@@ -111,9 +112,9 @@ namespace SmartxAPI.Controllers
             xSortBy = " order by " + xSortBy;
 
             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1" + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1 "+ exclude + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1" + Searchkey + " and N_UserID not in(select top("+ Count +")  N_UserID from vw_UserList where N_CompanyID=@p1" + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1 "+ exclude  + Searchkey + " and N_UserID not in(select top("+ Count +")  N_UserID from vw_UserList where N_CompanyID=@p1 "+ exclude  + xSortBy + " ) " + xSortBy;
             
             Params.Add("@p1", nCompanyId);
             SortedList OutPut = new SortedList();
@@ -124,7 +125,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  "+ exclude  + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
