@@ -183,6 +183,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
+
+         [HttpGet("AccountList") ]
+        public ActionResult GetAccountList ()
+        {    int nCompanyID=myFunctions.GetCompanyID(User);
+  
+            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+            
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="select * from prj_AccountSettings where N_CompanyID=@p1";
+                
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
+                
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }   
+        }
+    
+    
+
+
     
     
 
