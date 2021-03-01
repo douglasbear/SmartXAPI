@@ -87,34 +87,54 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        [HttpGet("listcategory")]
+        public ActionResult GetDepartmentList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
          [HttpGet("items")]
-        public ActionResult GetItems(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,string xDate)
+        public ActionResult GetItems(int nCategoryID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string sqlCommandCount = "";
-            string Searchkey = "";
-
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and X_ItemCode like '%" + xSearchkey + "%' or X_ItemName like '%" + xSearchkey + "%'";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ItemID desc";
-            else
-                xSortBy = " order by " + xSortBy;
-
-
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_ItemPOS where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_ItemPOS where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+            // if (Count == 0)
+            sqlCommandText = "select * from vw_ItemPOS where N_CompanyID=@p1 and X_ItemCode<>'001' and N_CategoryID=@p2";
+            // else
+            //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_ItemPOS where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
+            Params.Add("@p2", nCategoryID);
             SortedList OutPut = new SortedList();
 
             try
@@ -123,7 +143,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
+                    sqlCommandCount = "select count(*) from vw_ItemPOS where N_CompanyID=@p1 and X_ItemCode<>'001' and N_CategoryID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

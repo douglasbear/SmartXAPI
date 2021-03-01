@@ -420,11 +420,15 @@ namespace SmartxAPI.Controllers
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             int nCompanyID = myFunctions.GetCompanyID(User);
+            string x_comments="";
 
             try
             {
                 String Criteria = "";
                 String reportName = "";
+                String CompanyData = "";
+                String YearData = "";
+
                 var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -441,7 +445,7 @@ namespace SmartxAPI.Controllers
 
 
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
-
+                    
                     reportName = reportName.Substring(0, reportName.Length - 4);
 
 
@@ -459,6 +463,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("@xMain", "MainForm");
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
 
 
@@ -468,6 +474,13 @@ namespace SmartxAPI.Controllers
                             DateTime dateTo = Convert.ToDateTime(valueTo);
                             if (xProCode != "")
                             {
+                                if(dateFrom!=null && dateTo!=null)
+                                    x_comments=dateFrom.ToString("dd-MMM-yyyy") + "to" + dateTo.ToString("dd-MMM-yyyy");
+                                else if(dateFrom!=null)
+                                    x_comments=dateFrom.ToString("dd-MMM-yyyy");
+                                else if(dateFrom!=null)
+                                    x_comments=dateTo.ToString("dd-MMM-yyyy");
+                                
                                 SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
@@ -475,7 +488,7 @@ namespace SmartxAPI.Controllers
                             {"N_PeriodID",0},
                             {"X_Code",xProCode},
                             {"X_Parameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
-                            {"N_UserID",2},
+                            {"N_UserID",myFunctions.GetUserID(User)},
                             {"N_BranchID",0}
                             };
                                 dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
@@ -499,8 +512,13 @@ namespace SmartxAPI.Controllers
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
+                    if(Criteria=="")
+                        Criteria=Criteria + CompanyData +"="+nCompanyID+" and "+YearData+"="+FnYearID;
+                    else
+                        Criteria= Criteria +" and "+ CompanyData +"="+nCompanyID+" and "+YearData+"="+FnYearID;
                     dbName = connection.Database;
                 }
+                
 
                 var handler = new HttpClientHandler
                 {
@@ -509,7 +527,7 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random+"&x_comments="+x_comments;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
@@ -529,6 +547,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        
 
         private static Random random = new Random();
         public string RandomString(int length = 6)
