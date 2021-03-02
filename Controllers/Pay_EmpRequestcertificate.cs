@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetEmpReqCertificateList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEmpReqCertificateList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -50,10 +50,10 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%'or X_RequestTypeDesc like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%' or X_Notes like'%" + xSearchkey + "%' or X_Remarks like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_RequestCode desc";
+                xSortBy = " order by N_RequestID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -149,6 +149,7 @@ namespace SmartxAPI.Controllers
                     string _sqlQuery = "select * from vw_Pay_EmpReqCertificate where X_RequestCode=@xRequestCode and N_CompanyID=@nCompanyID";
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                     dt = api.Format(dt, "master");
+                    Result.Tables.Add(dt);
                 }
                 if (dt.Rows.Count == 0)
                 {
