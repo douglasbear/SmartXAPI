@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetAllProjectTimesheet(int nFnYearId,int nComapanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAllDisciplinaryAction(int nFnYearId,int nComapanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -109,8 +109,8 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nActionId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionID"].ToString());
-
+                int nActionId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActionId"].ToString());
+ 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -124,6 +124,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
+                        
                         ActionCode = dLayer.GetAutoNumber("Pay_disciplinaryAction", "X_ActionCode", Params, connection, transaction);
                         if (ActionCode == "") { return Ok(_api.Error("Unable to generate Action Code")); }
                         MasterTable.Rows[0]["X_ActionCode"] = ActionCode;
@@ -205,8 +206,40 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         
+        [HttpGet("Tablelist")]
+        public ActionResult GetDisciplinarylist(int nEmpId)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+
+            Params.Add("@nEmpID",nEmpId);
+            string sqlCommandText="Select N_CompanyID,X_ActionCode,X_Reason,X_Investigation,X_TypeName,N_Penalty,N_EmpID from vw_Pay_RoomMaster Where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID order by X_ActionCode";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+      
     }
 }
