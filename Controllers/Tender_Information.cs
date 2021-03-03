@@ -53,9 +53,9 @@ namespace SmartxAPI.Controllers
             
              xSortBy = " order by " + xSortBy;
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Prj_Tender where N_CompanyID=@p1 ";
+                sqlCommandText = "select top("+ nSizeperpage +") X_TenderCode,X_CustomerName,X_ProjectName,X_ProjectType,X_ProjectPlace,X_EnquiryType,N_ProposedAmt,X_Type from vw_Prj_Tender where N_CompanyID=@p1 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Prj_Tender where N_CompanyID=@p1  and N_TenderID not in (select top("+ Count +") N_TenderID from vw_Prj_Tender where N_CompanyID=@p1 )";
+                sqlCommandText = "select top("+ nSizeperpage +") X_TenderCode,X_CustomerName,X_ProjectName,X_ProjectType,X_ProjectPlace,X_EnquiryType,N_ProposedAmt,X_Type from vw_Prj_Tender where N_CompanyID=@p1  and N_TenderID not in (select top("+ Count +") N_TenderID from vw_Prj_Tender where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);
          
 
@@ -174,6 +174,41 @@ namespace SmartxAPI.Controllers
             {
                 return BadRequest(api.Error(e));
             }
+        }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTenderid)
+        {
+
+             int Results = 0;
+            try
+            {                        
+                SortedList Params = new SortedList();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Prj_Tender ", "N_TenderID", nTenderid, "", connection, transaction);
+                    transaction.Commit();
+                }
+                if (Results > 0)
+                {
+                    Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("N_TenderID",nTenderid.ToString());
+                    return Ok(api.Success(res,"Tender Information deleted"));
+                }
+                else
+                {
+                    return Ok(api.Error("Unable to delete Tender Information"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+
         }
     }
 }
