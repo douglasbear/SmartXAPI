@@ -61,6 +61,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_VacationGroupCode desc";
+            else if(xSortBy.Contains("vacationRequestDate"))
+                xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
