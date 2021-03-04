@@ -207,16 +207,20 @@ namespace SmartxAPI.Controllers
         }
 
         
-        [HttpGet("Tablelist")]
-        public ActionResult GetDisciplinarylist(int nEmpId)
+        [HttpGet("Datalist")]
+        public ActionResult GetDisciplinarylist(int nEmpID,int nPage,int nSizeperpage)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+
+            int Count = (nPage - 1) * nSizeperpage;
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nEmpID",nEmpID);
 
-            Params.Add("@nEmpID",nEmpId);
-            string sqlCommandText="Select N_CompanyID,X_ActionCode,X_Reason,X_Investigation,X_TypeName,N_Penalty,N_EmpID from vw_Pay_RoomMaster Where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID order by X_ActionCode";
+          
+
+            string sqlCommandText="Select N_CompanyID,X_ActionCode,X_Reason,X_Investigation,X_TypeName,N_Penalty,N_EmpID,x_WarningDecision from Vw_Pay_displinaryAction Where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -239,6 +243,79 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
+
+  [HttpGet("Tablelist")]
+        public ActionResult GetAllDisciplinary(int nEmpId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (N_ActionID like '%" + xSearchkey + "%'or D_Date like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ActionID desc";
+            else
+            
+             xSortBy = " order by " + xSortBy;
+            
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_displinaryAction where N_CompanyID=@p1  " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_displinaryAction where N_CompanyID=@p1 " + Searchkey + " and N_ActionID not in (select top(" + Count + ") N_ActionID from Vw_Pay_displinaryAction where N_CompanyID=@p1 and N_EmpID=@p2" + xSearchkey + xSortBy + " ) " + xSortBy;
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nEmpId);
+           
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount="select count(*) as N_Count from Vw_Pay_displinaryAction where N_CompanyId=@p1 and N_EmpID=@p2 "+ Searchkey +" ";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+                   
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                      
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                   
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+       
+
+
 
       
     }
