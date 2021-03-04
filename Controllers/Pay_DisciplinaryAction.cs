@@ -259,10 +259,10 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_ActionID like '%" + xSearchkey + "%'or D_Date like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_ActionCode like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ActionID desc";
+                xSortBy = " order by X_ActionCode desc";
             else
             
              xSortBy = " order by " + xSortBy;
@@ -270,7 +270,7 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_displinaryAction where N_CompanyID=@p1  " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_displinaryAction where N_CompanyID=@p1 and N_EmpID=@p2 " + Searchkey + " " + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Pay_displinaryAction where N_CompanyID=@p1 " + Searchkey + " and N_ActionID not in (select top(" + Count + ") N_ActionID from Vw_Pay_displinaryAction where N_CompanyID=@p1 and N_EmpID=@p2" + xSearchkey + xSortBy + " ) " + xSortBy;
 
