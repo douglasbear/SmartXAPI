@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandLoan = "select ROUND(SUM(balance),2) from vw_LoanDetails where N_CompanyID =@p1 and N_EmpID =@p3";
             string sqlCommandVacation = "Select SUM(N_VacDays) as N_VacDays from Pay_VacationDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 group by N_CompanyID,N_EmpID";
             //string sqlCommandLeave = "SELECT Pay_VacationType.X_VacType,SUM(Pay_VacationDetails.N_VacDays) AS N_VacDays FROM  Pay_VacationDetails INNER JOIN Pay_EmpAccruls ON Pay_VacationDetails.N_CompanyID = Pay_EmpAccruls.N_CompanyID AND Pay_VacationDetails.N_EmpID = Pay_EmpAccruls.N_EmpId AND Pay_VacationDetails.N_VacTypeID = Pay_EmpAccruls.N_VacTypeID INNER JOIN Pay_VacationType ON Pay_EmpAccruls.N_VacTypeID = Pay_VacationType.N_VacTypeID AND Pay_EmpAccruls.N_CompanyID = Pay_VacationType.N_CompanyID WHERE     (Pay_VacationDetails.N_VacDays <> 0) and Pay_VacationDetails.N_CompanyID=@p1 and Pay_VacationDetails.N_FnYearID=@p2 and Pay_VacationDetails.N_EmpID=@p3 Group by Pay_VacationType.X_VacType";
-            string sqlCommandLeave = "Select N_VacTypeID ,N_Accrued ,N_MaxAvailDays, B_HolidayFlag ,X_VacType, 0 as X_Days ,X_Description, cast(N_Accrued as varchar)+case when N_Accrued =1 then ' Day/' else ' Days/'end + case when X_Period = 'M' then 'Month'  when X_Period ='Y' then 'Year' end as X_Accrued  from vw_pay_Vacation_List where X_Type='B' and N_EmpId = @p3 and N_CompanyID=@p1 and N_Accrued <>0 group by N_VacTypeID,X_VacType,N_Accrued,N_MaxAvailDays,B_HolidayFlag,X_Description,X_Period";
+            string sqlCommandLeave = "Select N_VacTypeID ,N_Accrued ,N_MaxAvailDays, B_HolidayFlag ,X_VacType, 0.00 as X_Days ,X_Description, cast(N_Accrued as varchar)+case when N_Accrued =1 then ' Day/' else ' Days/'end + case when X_Period = 'M' then 'Month'  when X_Period ='Y' then 'Year' end as X_Accrued  from vw_pay_Vacation_List where X_Type='B' and N_EmpId = @p3 and N_CompanyID=@p1 and N_Accrued <>0 group by N_VacTypeID,X_VacType,N_Accrued,N_MaxAvailDays,B_HolidayFlag,X_Description,X_Period";
             // string sqlCommandPendingVacation = "Select SUM(N_VacDays) from Pay_VacationDetails where N_VacDays < 0 and ISNULL(B_IsSaveDraft,0)<>0 and N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
             string sqlCommandPendingVacation = "select COUNT(*) AS N_LeaveRequest from vw_WebApprovalDashboard where N_NextApproverID =@p4 and N_CompanyID=@p1 and N_EmpID <> @p3 and N_VacationStatus not in (2,4)";
             //string sqlCommandNextLeave = "SELECT CONVERT(VARCHAR,Pay_VacationDetails.D_VacDateFrom, 106) as D_VacDateFrom,CONVERT(VARCHAR, Pay_VacationDetails.D_VacDateTo, 106) as D_VacDateTo, Pay_VacationDetails.N_VacDays,( 24 * Pay_VacationDetails.N_VacDays) as N_hours,Pay_VacationType.X_VacType FROM  Pay_VacationDetails INNER JOIN Pay_VacationType ON Pay_VacationDetails.N_VacTypeID = Pay_VacationType.N_VacTypeID AND  Pay_VacationDetails.N_CompanyID = Pay_VacationType.N_CompanyID WHERE  (Pay_VacationDetails.N_CompanyID = @p1) AND (N_FnYearID = @p2) AND (N_EmpID = @p3) and   (Pay_VacationDetails.N_VacationID = (SELECT     MAX(N_VacationID) AS Expr1 FROM         Pay_VacationDetails AS Pay_VacationDetails_1 WHERE     (N_CompanyID = @p1) AND (N_FnYearID = @p2) AND (N_EmpID = @p3) and  n_vacdays<0 ))";
@@ -108,7 +108,7 @@ DateTime date = DateTime.Today;
                           int i = 0;
                         foreach (DataRow dtRow in LeaveDetails.Rows)
                         {
-                        String Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, double.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
+                        string Avail = GetAvailableDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, nEmpID);
                         //String Avail = CalculateGridEstDays(myFunctions.getIntVAL(LeaveDetails.Rows[i]["N_VacTypeID"].ToString()), DateTime.Now, float.Parse(LeaveDetails.Rows[0]["N_Accrued"].ToString()), nEmpID);
                         dtRow["x_Days"] = Avail;
                         i++;
@@ -145,91 +145,127 @@ DateTime date = DateTime.Today;
                 return Ok(api.Error(e));
             }
         }
-        public string GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID)
+        // public string GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID)
+        // {
+        //     DateTime toDate;
+        //     int days = 0;
+        //     double totalDays = 0;
+        //     int nVacationGroupID = 0;
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
+
+        //             SortedList paramList = new SortedList();
+        //             paramList.Add("@nCompanyID", nCompanyID);
+        //             paramList.Add("@nEmpID", nEmpID);
+        //             paramList.Add("@nVacTypeID", nVacTypeID);
+        //             paramList.Add("@nVacationGroupID", nVacationGroupID);
+
+        //             toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 and ISNULL(B_IsSaveDraft,0) = 0", paramList, connection).ToString());
+        //             if (toDate < dDateFrom)
+        //             {
+        //                 string daySql = "select  DATEDIFF(day,'" + toDate.ToString("yyyy-MM-dd") + "','" + dDateFrom.ToString("yyyy-MM-dd") + "')";
+        //                 days = Convert.ToInt32(dLayer.ExecuteScalar(daySql, connection).ToString());
+        //             }
+        //             else
+        //             { days = 0; }
+        //             if (nVacTypeID == 6)
+        //             {
+        //                 totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
+        //             }
+        //             else
+        //                 totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+        //         }
+
+        //         return totalDays.ToString();
+        //     }
+        //     catch (Exception)
+        //     {
+        //         return "0";
+        //     }
+        // }
+
+
+        // private String CalculateGridAnnualDays(int VacTypeID, int empID, int compID, int nVacationGroupID, SqlConnection connection)
+        // {
+        //     double vacation;
+        //     const double tolerance = 8e-14;
+        //     SortedList paramList = new SortedList();
+        //     paramList.Add("@nCompanyID", compID);
+        //     paramList.Add("@nEmpID", empID);
+        //     paramList.Add("@nVacTypeID", VacTypeID);
+        //     paramList.Add("@nVacationGroupID", nVacationGroupID);
+
+
+        //     DateTime toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacDays>0 ", paramList, connection).ToString());
+
+        //     if (nVacationGroupID == 0)
+        //         vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID", paramList, connection).ToString());
+        //     else
+        //         vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and isnull(N_VacationGroupID,0) < @nVacationGroupID", paramList, connection).ToString());
+
+        //     String AvlDays = RoundApproximate(vacation, 0, tolerance, MidpointRounding.AwayFromZero).ToString();
+
+
+        //     return AvlDays;
+        // }
+
+        // private static double RoundApproximate(double dbl, int digits, double margin, MidpointRounding mode)
+        // {
+        //     double fraction = dbl * Math.Pow(10, digits);
+        //     double value = Math.Truncate(fraction);
+        //     fraction = fraction - value;
+        //     if (fraction == 0)
+        //         return dbl;
+
+        //     double tolerance = margin * dbl;
+        //     // Any remaining fractional value greater than .5 is not a midpoint value. 
+        //     if (fraction > .5)
+        //         return (value + 0.5) / Math.Pow(10, digits);
+        //     else if (fraction < -(0.5))
+        //         return (value + 0.5) / Math.Pow(10, digits);
+        //     else if (fraction == .5)
+        //         return Math.Round(dbl, 1);
+        //     else
+        //         return value / Math.Pow(10, digits);
+        // }
+
+
+        public string GetAvailableDays(int nVacTypeID, DateTime dDateFrom,int nEmpID)
         {
-            DateTime toDate;
-            int days = 0;
-            double totalDays = 0;
-            int nVacationGroupID = 0;
+            DataTable dt = new DataTable();
+            SortedList output = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList QueryParams = new SortedList();
+
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nEmpID", nEmpID);
+            QueryParams.Add("@nVacationGroupID", 0);
+            QueryParams.Add("@today", dDateFrom);
+            QueryParams.Add("@nVacTypeID", nVacTypeID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
-
-                    SortedList paramList = new SortedList();
-                    paramList.Add("@nCompanyID", nCompanyID);
-                    paramList.Add("@nEmpID", nEmpID);
-                    paramList.Add("@nVacTypeID", nVacTypeID);
-                    paramList.Add("@nVacationGroupID", nVacationGroupID);
-
-                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacationStatus = 0 and N_VacDays>0 and ISNULL(B_IsSaveDraft,0) = 0", paramList, connection).ToString());
-                    if (toDate < dDateFrom)
-                    {
-                        string daySql = "select  DATEDIFF(day,'" + toDate.ToString("yyyy-MM-dd") + "','" + dDateFrom.ToString("yyyy-MM-dd") + "')";
-                        days = Convert.ToInt32(dLayer.ExecuteScalar(daySql, connection).ToString());
-                    }
-                    else
-                    { days = 0; }
-                    if (nVacTypeID == 6)
-                    {
-                        totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
-                    }
-                    else
-                        totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+                    dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,1) As Accrude", QueryParams, connection);
+                }
+                if (dt.Rows.Count > 0)
+                {
+                    return dt.Rows[0]["AvlDays"].ToString();
                 }
 
-                return totalDays.ToString();
+                    return "0";
+
             }
-            catch (Exception)
+            catch (Exception e)
             {
                 return "0";
             }
-        }
-        private String CalculateGridAnnualDays(int VacTypeID, int empID, int compID, int nVacationGroupID, SqlConnection connection)
-        {
-            double vacation;
-            const double tolerance = 8e-14;
-            SortedList paramList = new SortedList();
-            paramList.Add("@nCompanyID", compID);
-            paramList.Add("@nEmpID", empID);
-            paramList.Add("@nVacTypeID", VacTypeID);
-            paramList.Add("@nVacationGroupID", nVacationGroupID);
-
-
-            DateTime toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select isnull(Max(D_VacDateTo),getdate()) from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and N_VacDays>0 ", paramList, connection).ToString());
-
-            if (nVacationGroupID == 0)
-                vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID", paramList, connection).ToString());
-            else
-                vacation = Convert.ToDouble(dLayer.ExecuteScalar("Select isnull(SUM(N_VacDays),0) as N_VacDays from Pay_VacationDetails Where N_CompanyID =@nCompanyID and  N_EmpID  =@nEmpID and N_VacTypeID =@nVacTypeID and isnull(N_VacationGroupID,0) < @nVacationGroupID", paramList, connection).ToString());
-
-            String AvlDays = RoundApproximate(vacation, 0, tolerance, MidpointRounding.AwayFromZero).ToString();
-
-
-            return AvlDays;
-        }
-
-        private static double RoundApproximate(double dbl, int digits, double margin, MidpointRounding mode)
-        {
-            double fraction = dbl * Math.Pow(10, digits);
-            double value = Math.Truncate(fraction);
-            fraction = fraction - value;
-            if (fraction == 0)
-                return dbl;
-
-            double tolerance = margin * dbl;
-            // Any remaining fractional value greater than .5 is not a midpoint value. 
-            if (fraction > .5)
-                return (value + 0.5) / Math.Pow(10, digits);
-            else if (fraction < -(0.5))
-                return (value + 0.5) / Math.Pow(10, digits);
-            else if (fraction == .5)
-                return Math.Round(dbl, 1);
-            else
-                return value / Math.Pow(10, digits);
         }
 
 

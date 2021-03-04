@@ -301,7 +301,7 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DataRow MasterRow = MasterTable.Rows[0];
 
-                int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestTypeID"].ToString());
+                int N_RequestTypeID = myFunctions.getIntVAL(MasterRow["n_RequestTypeID"].ToString());
 
 
 
@@ -310,9 +310,19 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     SqlTransaction transaction = connection.BeginTransaction();
-
-                    nRequestID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
-                    if (nRequestID <= 0)
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    if(N_RequestTypeID==0){
+                    N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0)) as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
+                    if(N_RequestTypeID==0)
+                        {
+                            N_RequestTypeID=3000;// Employee Request Type ID Starts From 3000
+                            MasterTable.Rows[0]["n_RequestTypeID"]=N_RequestTypeID;
+                            MasterTable.AcceptChanges();
+                        }
+                    }    
+                    N_RequestTypeID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
+                    if (N_RequestTypeID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));

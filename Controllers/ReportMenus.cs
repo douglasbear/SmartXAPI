@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         private readonly string reportApi;
         private readonly string reportPath;
         private readonly string reportLocation;
-// private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
+        // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
         public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             reportApi = conf.GetConnectionString("ReportAPI");
             reportPath = conf.GetConnectionString("ReportPath");
             reportLocation = conf.GetConnectionString("ReportLocation");
-            }
+        }
         [HttpGet("list")]
         public ActionResult GetReportList(int? nMenuId, int? nLangId)
         {
@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField order by N_ListOrder";
+                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range order by N_ListOrder";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -114,9 +114,9 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
 
             string sqlCommandText = "select TOP 1 X_TableName,X_FieldList,X_Criteria from vw_WebReportMenus where N_MenuID=@p1 and N_LanguageId=@p2 and N_CompID=@p3 and X_CompType=@p4";
-//             string sqlCommandText = "Select Sec_ReportsComponents.*, Lan_Multilingual.X_Text from Sec_ReportsComponents Left Outer Join Lan_Multilingual on " +
-//  " Sec_ReportsComponents.N_MenuID = Lan_Multilingual.N_FormID and  Sec_ReportsComponents.X_LangControlNo = Lan_Multilingual.X_ControlNo and  " +
-// " Lan_Multilingual.N_LanguageID=@p2  Where Sec_ReportsComponents.N_MenuID=@p1 AND Sec_ReportsComponents.B_Active =1 and N_CompID=@p3 and X_CompType=@p4 ";
+            //             string sqlCommandText = "Select Sec_ReportsComponents.*, Lan_Multilingual.X_Text from Sec_ReportsComponents Left Outer Join Lan_Multilingual on " +
+            //  " Sec_ReportsComponents.N_MenuID = Lan_Multilingual.N_FormID and  Sec_ReportsComponents.X_LangControlNo = Lan_Multilingual.X_ControlNo and  " +
+            // " Lan_Multilingual.N_LanguageID=@p2  Where Sec_ReportsComponents.N_MenuID=@p1 AND Sec_ReportsComponents.B_Active =1 and N_CompID=@p3 and X_CompType=@p4 ";
 
             Params.Add("@p1", nMenuId);
             Params.Add("@p2", nLangId);
@@ -156,7 +156,7 @@ namespace SmartxAPI.Controllers
                         ListSqlParams.Add("@BVal", bval);
                         ListSqlParams.Add("@CVal", cval);
                         ListSqlParams.Add("@FVal", fval);
-                        string ListSql = "select " + fields + " from " + table + " " + Criteria + " group by " + fields + " order by "+fields;
+                        string ListSql = "select " + fields + " from " + table + " " + Criteria + " group by " + fields + " order by " + fields;
 
                         outTable = dLayer.ExecuteDataTable(ListSql, ListSqlParams, connection);
                     }
@@ -478,24 +478,38 @@ namespace SmartxAPI.Controllers
                         Params.Add("@nCompID", compID);
                         Params.Add("@xMain", "MainForm");
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+                        bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
+                        string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
-
+                        if (xOperator == null || xOperator == "")
+                            xOperator = "=";
 
                         if (type.ToLower() == "datepicker")
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
+
                             if (xProCode != "")
                             {
-                                if (dateFrom != null && dateTo != null)
+                                string procParam = "";
+                                if (dateFrom != null && (bRange && dateTo != null))
+                                {
                                     x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
+                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
+                                }
                                 else if (dateFrom != null)
+                                {
                                     x_comments = dateFrom.ToString("dd-MMM-yyyy");
-                                else if (dateFrom != null)
+                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|";
+                                }
+                                else if (bRange && dateTo != null)
+                                {
                                     x_comments = dateTo.ToString("dd-MMM-yyyy");
+                                    procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
+                                }
 
                                 SortedList mParamsList = new SortedList()
                             {
@@ -503,7 +517,7 @@ namespace SmartxAPI.Controllers
                             {"N_FnYearID",FnYearID},
                             {"N_PeriodID",0},
                             {"X_Code",xProCode},
-                            {"X_Parameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
+                            {"X_Parameter", procParam },
                             {"N_UserID",myFunctions.GetUserID(User)},
                             {"N_BranchID",0}
                             };
@@ -513,24 +527,25 @@ namespace SmartxAPI.Controllers
                             string DateCrt = "";
                             if (xFeild != "")
                             {
-                                DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
+                                if (bRange)
+                                {
+                                    DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
+                                }
+                                else
+                                {
+                                    DateCrt = xFeild + " " + xOperator + " Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') ";
+                                }
                                 Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
                             }
                         }
-                        else if(type.ToLower() == "textbox")
+                        else
                         {
                             if (xFeild != "")
                             {
-                                Criteria = Criteria == "" ? xFeild.Replace("#",value)  : Criteria + " and " +  xFeild.Replace("#",value);
-                            }
-                        } else 
-                        {
-                            if (xFeild != "")
-                            {
-                                if(xFeild.Contains("#"))
-                                Criteria = Criteria == "" ? xFeild.Replace("#",value)  : Criteria + " and " +  xFeild.Replace("#",value);
+                                if (xFeild.Contains("#"))
+                                    Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
                                 else
-                                Criteria = Criteria == "" ? xFeild + "='" + value + "' " : Criteria + " and " + xFeild + "='" + value + "' ";
+                                    Criteria = Criteria == "" ? xFeild + " "+xOperator+" '" + value + "' " : Criteria + " and " + xFeild + " "+xOperator+" '" + value + "' ";
                             }
                         }
 
@@ -538,9 +553,17 @@ namespace SmartxAPI.Controllers
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
                     if (Criteria == "")
-                        Criteria = Criteria + CompanyData + "=" + nCompanyID + " and " + YearData + "=" + FnYearID;
+                    {
+                        Criteria = Criteria + CompanyData + "=" + nCompanyID;
+                        if (YearData != "")
+                            Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                    }
                     else
-                        Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID + " and " + YearData + "=" + FnYearID;
+                    {
+                        Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
+                        if (YearData != "")
+                            Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                    }
                     dbName = connection.Database;
                 }
 
@@ -576,7 +599,7 @@ namespace SmartxAPI.Controllers
 
         // private void LoadSelectionFormulae(int nFnYearID,int nBranchID,bool bAllBranchData)
         // {
-            
+
         //     X_SelectionFormula = "";
         //     if (myFunctions.GetCompanyID(User) != 0)
         //     {
@@ -615,7 +638,7 @@ namespace SmartxAPI.Controllers
         //                         {
         //                             X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|";
         //                             X_Rptcomments = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1));
-                                    
+
         //                         }
         //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter2) == "")
         //                             X_ProcParameter = X_ProcParameter + " |";
@@ -651,7 +674,7 @@ namespace SmartxAPI.Controllers
         //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator2) + " Date('" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Year.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Month.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Day.ToString() + "') ";
         //                             if (myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) != myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)))
         //                                 X_Rptcomments = X_Rptcomments + " to " + myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2));
-                                   
+
         //                         }
 
         //                        // //X_ProcParameter = myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture) + "|" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture) + "|";

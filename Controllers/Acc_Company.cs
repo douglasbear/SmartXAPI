@@ -169,9 +169,9 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
-                    string logo= MasterTable.Rows[0]["i_Logo"].ToString();
-                    string footer= MasterTable.Rows[0]["i_Footer"].ToString();
-                    string header= MasterTable.Rows[0]["i_Header"].ToString();
+                    string logo= myFunctions.ContainColumn("i_Logo",MasterTable)?MasterTable.Rows[0]["i_Logo"].ToString():"";
+                    string footer= myFunctions.ContainColumn("i_Footer",MasterTable)?MasterTable.Rows[0]["i_Footer"].ToString():"";
+                    string header= myFunctions.ContainColumn("i_Header",MasterTable)?MasterTable.Rows[0]["i_Header"].ToString():"";
 
                     Byte[] logoBitmap = new Byte[logo.Length];
                     Byte[] footerBitmap = new Byte[footer.Length];
@@ -181,8 +181,11 @@ namespace SmartxAPI.Controllers
                     footerBitmap = Convert.FromBase64String(footer);
                     headerBitmap = Convert.FromBase64String(header);
 
+                        if(myFunctions.ContainColumn("i_Logo",MasterTable))
                         MasterTable.Columns.Remove("i_Logo");
+                        if(myFunctions.ContainColumn("i_Footer",MasterTable))
                         MasterTable.Columns.Remove("i_Footer");
+                        if(myFunctions.ContainColumn("i_Header",MasterTable))
                         MasterTable.Columns.Remove("i_Header");
                         MasterTable.AcceptChanges();
 
