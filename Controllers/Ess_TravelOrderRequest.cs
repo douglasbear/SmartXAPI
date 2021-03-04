@@ -60,6 +60,12 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_RequestCode desc";
+            else if(xSortBy.Contains("d_RequestDate"))
+                xSortBy =" order by cast(D_RequestDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if(xSortBy.Contains("d_DateFrom"))
+                xSortBy =" order by cast(D_DateFrom as DateTime) " + xSortBy.Split(" ")[1];
+            else if(xSortBy.Contains("d_DateTo"))
+                xSortBy =" order by cast(D_DateTo as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
              
