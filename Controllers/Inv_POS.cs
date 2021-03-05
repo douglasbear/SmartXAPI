@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             }
         }
          [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID)
+        public ActionResult GetItems(int nCategoryID,string xSearchkey)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -128,10 +128,14 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             string sqlCommandCount = "";
-            // if (Count == 0)
-            sqlCommandText = "select * from vw_ItemPOS where N_CompanyID=@p1 and X_ItemCode<>'001' and N_CategoryID=@p2";
-            // else
-            //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_ItemPOS where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+            string Searchkey="";
+            if(xSearchkey!=null)
+                Searchkey = "and X_ItemName like '%" + xSearchkey + "%'";
+
+            if(nCategoryID>0)
+                sqlCommandText = "select N_CompanyID, N_ItemID, X_ItemCode, X_ItemName, X_PartNo, B_InActive, N_LocationID, X_Category, X_ClassName, N_BranchID, N_SPrice, N_CategoryID, X_Barcode,X_ItemName_a, N_ItemTypeID, N_TaxCategoryID, X_DisplayName, X_CategoryName, N_Amount, X_ItemUnit,'' as I_Image from vw_ItemPOSCloud where N_CompanyID=@p1 and X_ItemCode<>'001' and N_CategoryID=@p2"+ Searchkey;
+            else
+                sqlCommandText = "select N_CompanyID, N_ItemID, X_ItemCode, X_ItemName, X_PartNo, B_InActive, N_LocationID, X_Category, X_ClassName, N_BranchID, N_SPrice, N_CategoryID, X_Barcode,X_ItemName_a, N_ItemTypeID, N_TaxCategoryID, X_DisplayName, X_CategoryName, N_Amount, X_ItemUnit,'' as I_Image from vw_ItemPOSCloud where N_CompanyID=@p1 and X_ItemCode<>'001'"+ Searchkey;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nCategoryID);
@@ -147,6 +151,94 @@ namespace SmartxAPI.Controllers
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+         [HttpGet("barcode")]
+        public ActionResult GetItemsUsingBarcode(string xBarcode)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "";
+            sqlCommandText = "select N_CompanyID, N_ItemID, X_ItemCode, X_ItemName, X_PartNo, B_InActive, N_LocationID, X_Category, X_ClassName, N_BranchID, N_SPrice, N_CategoryID, X_Barcode,X_ItemName_a, N_ItemTypeID, N_TaxCategoryID, X_DisplayName, X_CategoryName, N_Amount, X_ItemUnit,'' as I_Image from vw_ItemPOSCloud where N_CompanyID=@p1 and X_ItemCode<>'001' and x_barcode=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", xBarcode);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                  
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+        [HttpGet("images")]
+        public ActionResult GetImages(int nItemID)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "";
+            sqlCommandText = "select X_ItemCode,I_Image from vw_ItemPOSCloud where N_CompanyID=@p1 and X_ItemCode<>'001' and N_ItemID=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nItemID);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    if (dt.Rows[0]["I_Image"] != null)
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "Image", typeof(string), "");
+                        DataRow dataRow = dt.Rows[0];
+                        string ImageData = dataRow["I_Image"].ToString();
+                        if (ImageData != "" || ImageData != "0x"  || ImageData != null)
+                        {
+                            byte[] Image = (byte[])dataRow["I_Image"];
+                            if(Image.Length>0)
+                            dt.Rows[0]["Image"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
+                           
+                        }
+                         dt.Columns.Remove("I_Image");
+                        dt.AcceptChanges();
+                    }
+                    OutPut.Add("image",dt.Rows[0]["Image"]);
+                    OutPut.Add("x_ItemCode",dt.Rows[0]["X_ItemCode"]);
 
                     if (dt.Rows.Count == 0)
                     {
@@ -179,9 +271,9 @@ namespace SmartxAPI.Controllers
                     string _sqlQuery = "";
 
                     if (nTerminalID > 0 && nTerminalLocationID > 0)
-                        _sqlQuery = "SELECT * from vw_ItemPOS where X_ItemCode<>'001' and N_LocationID=@nTerminalLocationID and N_CompanyID=@nCompanyID";
+                        _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_LocationID=@nTerminalLocationID and N_CompanyID=@nCompanyID";
                     else
-                        _sqlQuery = "SELECT * from vw_ItemPOS where X_ItemCode<>'001' and N_CompanyID=@nCompanyID";
+                        _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_CompanyID=@nCompanyID";
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
 
@@ -248,8 +340,9 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
-
-                    B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
+                    object DirectPosting=dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                    if(DirectPosting!=null)
+                        B_DirectPosting = myFunctions.getBoolVAL(DirectPosting.ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (objAllBranchData != null)
                         B_AllBranchData = myFunctions.getBoolVAL(objAllBranchData.ToString());
