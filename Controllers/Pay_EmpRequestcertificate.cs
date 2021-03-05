@@ -201,10 +201,10 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpRequestcertificate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Certificate Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Certificate Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Certificate Request", xReqCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Employee Certificate Request Approved" + "-" + xReqCode));
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Certificate Request", xReqCode, dLayer, connection, transaction, User);
+                        return Ok(api.Success("Certificate Request Approved" + "-" + xReqCode));
                     }
                     if (xReqCode == "@Auto")
                     {
@@ -229,12 +229,12 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Certificate Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Certificate Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Certificate Request", xReqCode, dLayer, connection, transaction, User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Certificate Request", xReqCode, dLayer, connection, transaction, User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
-                        return Ok(api.Success(res, "Employee Certificate Request successfully created with Request No" + "-" + xReqCode));
+                        return Ok(api.Success(res, "Certificate Request successfully created with Request No" + "-" + xReqCode));
                     }
                 }
             }
@@ -317,16 +317,16 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Certificate Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpRequestcertificate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Certificate Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpRequestcertificate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Employee Certificate Request " + status + " Successfully"));
+                        return Ok(api.Success("Certificate Request " + status + " Successfully"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Employee Certificate Request"));
+                        return Ok(api.Error("Unable to delete Certificate Request"));
                     }
                 }
             }
