@@ -14,36 +14,29 @@ using System.Security.Claims;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("employeerequest")]
+    [Route("empcertificaterequest")]
     [ApiController]
 
-
-
-    public class Ess_EmployeeRequest : ControllerBase
+    public class Pay_EmpRequestCertificate : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-
-        private readonly IMyAttachments myAttachments;
         private readonly int FormID;
 
 
-        public Ess_EmployeeRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Pay_EmpRequestCertificate(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             api = _api;
             myFunctions = myFun;
-            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1234;
+            FormID = 1337;
         }
 
-
-        //List
-       [HttpGet("list")]
-        public ActionResult GetEmpReqList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("list")]
+        public ActionResult GetEmpReqCertificateList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -57,18 +50,17 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%'or X_RequestTypeDesc like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%' or X_Notes like'%" + xSearchkey + "%' or X_Remarks like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_RequestCode desc";
+                xSortBy = " order by N_RequestID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_EmpAnyRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_EmpRequestcertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_EmpAnyRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top(" + Count + ") N_RequestID from vw_Pay_EmpAnyRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
-
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_EmpRequestcertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top(" + Count + ") N_RequestID from Pay_EmpRequestcertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
             SortedList OutPut = new SortedList();
 
             try
@@ -81,7 +73,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count from vw_Pay_EmpAnyRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved' " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count from Pay_EmpRequestcertificate where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -90,8 +82,6 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(api.Notice("No Results Found"));
                     }
-
-
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -102,7 +92,6 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(api.Success(dt));
                 }
-
             }
             catch (Exception e)
             {
@@ -110,14 +99,13 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-        [HttpGet("requesttypes")]
-        public ActionResult GetEmployeeRequestTypes(int? nCompanyID)
+        [HttpGet("requestcertificatetype")]
+        public ActionResult GetEmpReqCertificateType(int? nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select N_RequestTypeID,X_RequestTypeDesc from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
+            string sqlCommandText = "select * from Pay_EmpRequestCertificateType where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -134,7 +122,6 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(api.Success(dt));
                 }
-
             }
             catch (Exception e)
             {
@@ -142,9 +129,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
         [HttpGet("details")]
-        public ActionResult GetEmployeeLoanDetails(string xRequestCode)
+        public ActionResult GetEmpReqCertificateDetails(string xRequestCode)
         {
             DataSet Result = new DataSet();
             DataTable dt = new DataTable();
@@ -160,17 +146,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT     Pay_EmpAnyRequest.N_CompanyID, Pay_EmpAnyRequest.N_BranchID, Pay_EmpAnyRequest.N_FnYearID, Pay_EmpAnyRequest.N_RequestID, Pay_EmpAnyRequest.N_RequestType, Pay_EmpAnyRequest.N_EmpID, Pay_EmpAnyRequest.D_RequestDate, Pay_EmpAnyRequest.D_EntryDate, Pay_EmpAnyRequest.D_DateFrom, Pay_EmpAnyRequest.D_DateTo, Pay_EmpAnyRequest.X_Notes, Pay_EmpAnyRequest.X_Remarks, Pay_EmpAnyRequest.N_ApprovalLevelID, Pay_EmpAnyRequest.N_ProcStatus, Pay_EmpAnyRequest.B_IsSaveDraft, Pay_EmpAnyRequest.N_UserID, Pay_EmpAnyRequest.X_FileName, Pay_EmpAnyRequest.B_IsAttach, Pay_EmpAnyRequest.X_Comments, Pay_EmpAnyRequest.N_RequestStatus, Pay_EmpAnyRequest.N_EntryUserID, Pay_EmpAnyRequest.X_RequestCode, Pay_Employee.X_EmpName, Pay_Employee.X_EmpCode, Pay_EmployeeRequestType.X_RequestTypeDesc FROM         Pay_EmpAnyRequest INNER JOIN Pay_EmployeeRequestType ON Pay_EmpAnyRequest.N_CompanyID = Pay_EmployeeRequestType.N_CompanyID AND  Pay_EmpAnyRequest.N_RequestType = Pay_EmployeeRequestType.N_RequestTypeID LEFT OUTER JOIN Pay_Employee ON Pay_EmpAnyRequest.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_EmpAnyRequest.N_EmpID = Pay_Employee.N_EmpID  where Pay_EmpAnyRequest.X_RequestCode=@xRequestCode and Pay_EmpAnyRequest.N_CompanyID=@nCompanyID";
-
+                    string _sqlQuery = "select * from vw_Pay_EmpReqCertificate where X_RequestCode=@xRequestCode and N_CompanyID=@nCompanyID";
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
-
-
                     dt = api.Format(dt, "master");
-
-                    DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_RequestID"].ToString()), this.FormID, myFunctions.getIntVAL(dt.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    Attachements = api.Format(Attachements, "attachments");
-                    Result.Tables.Add(Attachements);
                     Result.Tables.Add(dt);
                 }
                 if (dt.Rows.Count == 0)
@@ -181,14 +159,12 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(api.Success(Result));
                 }
-
             }
             catch (Exception e)
             {
                 return Ok(api.Error(e));
             }
         }
-
 
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -201,7 +177,6 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
-                DataTable Attachment = ds.Tables["attachments"];
 
                 int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
@@ -210,12 +185,9 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int N_NextApproverID = 0;
 
-
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
@@ -228,32 +200,28 @@ namespace SmartxAPI.Controllers
                     {
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
-                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpAnyRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpRequestcertificate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Certificate Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Employee Request Approved" + "-" + xReqCode));
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Certificate Request", xReqCode, dLayer, connection, transaction, User);
+                        return Ok(api.Success("Employee Certificate Request Approved" + "-" + xReqCode));
                     }
-
                     if (xReqCode == "@Auto")
                     {
                         SortedList Params = new SortedList();
                         Params.Add("@nCompanyID", nCompanyID);
-                        xReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpAnyRequest where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
+                        xReqCode = dLayer.ExecuteScalar("Select max(isnull(N_RequestID,0))+1 as N_RequestID from Pay_EmpRequestcertificate where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString();
                         if (xReqCode == null || xReqCode == "") { xReqCode = "1"; }
                         MasterTable.Rows[0]["X_RequestCode"] = xReqCode;
                     }
-
-
                     if (nRequestID > 0)
                     {
-                        dLayer.DeleteData("Pay_EmpAnyRequest", "N_RequestID", nRequestID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmpRequestcertificate", "N_RequestID", nRequestID, "", connection, transaction);
                     }
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
-                    nRequestID = dLayer.SaveData("Pay_EmpAnyRequest", "N_RequestID", MasterTable, connection, transaction);
+                    nRequestID = dLayer.SaveData("Pay_EmpRequestcertificate", "N_RequestID", MasterTable, connection, transaction);
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
@@ -261,25 +229,12 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-
-                        // DataTable Files = ds.Tables["files"];
-                        // if (Files.Rows.Count > 0)
-                        // {
-                        //     if (!dLayer.SaveFiles(Files, "Pay_EmpAnyRequest", "N_RequestID", nRequestID, nEmpID.ToString(), nCompanyID, connection, transaction))
-                        //     {
-                        //         transaction.Rollback();
-                        //         return Ok(api.Error("Unable to save"));
-                        //     }
-                        // }
-
-
-                        myAttachments.SaveAttachment(dLayer, Attachment, xReqCode, nRequestID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Certificate Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Request", xReqCode, dLayer, connection, transaction, User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Certificate Request", xReqCode, dLayer, connection, transaction, User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
-                        return Ok(api.Success(res, "Employee Request successfully created with Request No" + "-" + xReqCode));
+                        return Ok(api.Success(res, "Employee Certificate Request successfully created with Request No" + "-" + xReqCode));
                     }
                 }
             }
@@ -289,10 +244,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
-
-        [HttpPost("saveRequestType")]
+        [HttpPost("saveCertificateReqType")]
         public ActionResult SaveReqType([FromBody] DataSet ds)
         {
             try
@@ -300,29 +252,16 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 DataRow MasterRow = MasterTable.Rows[0];
-
-                int N_RequestTypeID = myFunctions.getIntVAL(MasterRow["n_RequestTypeID"].ToString());
-
-
+                int nRequestID = myFunctions.getIntVAL(MasterRow["n_RequestTypeID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
                     SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList Params = new SortedList();
-                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    if(N_RequestTypeID==0){
-                    N_RequestTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select max(isnull(N_RequestTypeID,0)) as N_RequestTypeID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID", Params, connection, transaction).ToString());
-                    if(N_RequestTypeID==0)
-                        {
-                            N_RequestTypeID=3000;// Employee Request Type ID Starts From 3000
-                            MasterTable.Rows[0]["n_RequestTypeID"]=N_RequestTypeID;
-                            MasterTable.AcceptChanges();
-                        }
-                    }    
-                    N_RequestTypeID = dLayer.SaveData("Pay_EmployeeRequestType", "N_RequestTypeID", MasterTable, connection, transaction);
-                    if (N_RequestTypeID <= 0)
+
+                    nRequestID = dLayer.SaveData("Pay_EmpRequestCertificateType", "N_RequestTypeID", MasterTable, connection, transaction);
+                    if (nRequestID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
@@ -330,7 +269,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Request Type Successfully Created"));
+                        return Ok(api.Success("Certificate Request Type Successfully Created"));
                     }
                 }
             }
@@ -353,7 +292,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nRequestID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode,N_RequestType from Pay_EmpAnyRequest where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_RequestCode,N_RequestType from Pay_EmpRequestcertificate where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_RequestID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -377,21 +316,18 @@ namespace SmartxAPI.Controllers
 
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
-                    //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpAnyRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Certificate Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpRequestcertificate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Employee Request " + status + " Successfully"));
+                        return Ok(api.Success("Employee Certificate Request " + status + " Successfully"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Employee Request"));
+                        return Ok(api.Error("Unable to delete Employee Certificate Request"));
                     }
-
-
                 }
             }
             catch (Exception ex)
@@ -400,30 +336,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
-                // private void SaveDocs(DataTable Attachment, string EmpCode, string EmpName, int nEmpID, string xRequestCode, int nRequestID,ClaimsPrincipal user, SqlConnection connection, SqlTransaction transaction)
-                //     {
-                //         if (Attachment.Rows.Count > 0)
-                //         {
-                //             string X_DMSMainFolder = "Employee";
-                //             string X_DMSSubFolder = this.FormID + "//" + EmpCode + "-" + EmpName;
-                //             string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
-                //             try
-                //             {
-                //                 myAttachments.SaveAttachment(dLayer, Attachment, xRequestCode, nRequestID, EmpName, EmpCode, nEmpID, X_folderName, user, connection, transaction);
-                //             }
-                //             catch (Exception ex)
-                //             {
-                //                 transaction.Rollback();
-                //             }
-                //         }
-                //     }
-
-
-
-
-        [HttpDelete("deleteReqType")]
+        [HttpDelete("deleteCertificateReqType")]
         public ActionResult DeleteReqType(int nRequestTypeID)
         {
             try
@@ -434,21 +347,18 @@ namespace SmartxAPI.Controllers
                     SortedList ParamList = new SortedList();
                     ParamList.Add("@nRequestTypeID", nRequestTypeID);
                     ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    string Sql = "select count(1) from Pay_EmpAnyRequest where N_CompanyId=@nCompanyID and N_RequestType=@nRequestTypeID";
+                    string Sql = "select count(1) from Pay_EmpRequestcertificate where N_CompanyId=@nCompanyID and N_RequestType=@nRequestTypeID";
                     object reqUsed = dLayer.ExecuteScalar(Sql, ParamList, connection);
                     if (myFunctions.getIntVAL(reqUsed.ToString()) > 0)
                     {
                         return Ok(api.Error("Request Type In Use"));
                     }
-                    int res = dLayer.DeleteData("Pay_EmployeeRequestType", "N_RequestTypeID", nRequestTypeID, "N_CompanyId=" + myFunctions.GetCompanyID(User) + " and N_RequestTypeID=" + nRequestTypeID, connection);
+                    int res = dLayer.DeleteData("Pay_EmpRequestCertificateType", "N_RequestTypeID", nRequestTypeID, "N_CompanyId=" + myFunctions.GetCompanyID(User) + " and N_RequestTypeID=" + nRequestTypeID, connection);
 
                     if (res > 0)
-                        return Ok(api.Success("Request Type Deleted"));
+                        return Ok(api.Success("Certificate Request Type Deleted"));
                     else
-                        return Ok(api.Error("Unable to delete Request Type"));
-
-
-
+                        return Ok(api.Error("Unable to delete Certificate Request Type"));
                 }
             }
             catch (Exception ex)

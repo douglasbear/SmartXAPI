@@ -159,14 +159,27 @@ namespace SmartxAPI.Controllers
                     {
                         foreach (DataRow row in Details.Rows)
                         {
-                            
 
+                            if (row["d_shift2_Out"].ToString() != "00:00:00" || row["d_out"].ToString() != "00:00:00")
+                            {
                                 // Summary
                                 N_WorkHours += HoursToMinutes(Convert.ToDouble(row["N_Workhours"].ToString()));
                                 N_WorkdHrs += HoursToMinutes(Convert.ToDouble(row["N_Tothours"].ToString()));
                                 N_compensated += HoursToMinutes(Convert.ToDouble(row["CompMinutes"].ToString()));
                                 N_Deduction += HoursToMinutes(Convert.ToDouble(row["Deduction"].ToString()));
-                        
+                            }
+                            else
+                            {
+
+                                row["N_CompAdd"] = 0;
+                                row["N_CompLess"] = 0;
+                                row["N_Diff"] = 0;
+                                row["N_DutyHours"] = 0;
+                                row["N_TotHours"] = 0;
+                                 row["deduction"] = 0;
+                                 row["compMinutes"] = 0;
+                            }
+
                         }
                         Master.Add("TotalWorkingHours", MinutesToHours(N_WorkHours).ToString("0.00"));
                         Master.Add("TotalWorkedHours", MinutesToHours(N_WorkdHrs).ToString("0.00"));
@@ -261,7 +274,7 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@nFnYear", nFnYearId);
                         QueryParams.Add("@nDate", date);
                         QueryParams.Add("@nEmpID", nEmpID);
-string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                        string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
                         // DataTable Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection, transaction);
                         DataTable Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection, transaction);
@@ -306,12 +319,34 @@ string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNul
                     QueryParams.Add("@nFnYear", nFnYear);
                     QueryParams.Add("@nDate", date);
                     QueryParams.Add("@nEmpID", nEmpID);
-string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+                    string sqlCommandDailyLogin = "SELECT isNull(MAX(D_In),'00:00:00') as D_In,isNull(MAX(D_Out),'00:00:00') as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,MAX(D_In),case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
                     Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
                     // Details = dLayer.ExecuteDataTable("select * from Pay_TimeSheetImport where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID", QueryParams, connection);
-                    Details= myFunctions.AddNewColumnToDataTable(Details,"workHours",typeof(string),"00:00:00");
-            
+
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "workHours", typeof(string), "00:00:00");
+
+                    // object workHours = dLayer.ExecuteScalar("Select N_Workhours from Pay_EmpShiftDetails  Where N_CompanyID=" + companyid + " and N_EmpID=" + nEmpID + " and D_Date='" + date + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + companyid + " and N_EmpID=" + nEmpID + " and D_Date='" + date + "')",connection);
+                    //     if (workHours != 0)
+                    //     {
+                    //         DataRow drow3 = dsShiftTime.Tables["Inv_ShiftTime"].Rows[0];
+                    //         N_CatID = myFunctions.getIntVAL(drow3["N_GroupID"].ToString());
+
+                    //         D_In1 = drow3["D_In1"].ToString();
+                    //         D_Out1 = drow3["D_Out1"].ToString();
+                    //         D_In2 = drow3["D_In2"].ToString();
+                    //         D_Out2 = drow3["D_Out2"].ToString();
+                    //     }
+                    //     else
+                    //     {
+                    //         N_CatID = CategoryID;
+
+                    //         D_In1 = pObjCon.ExecuteSclar("select D_In1 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
+                    //         D_Out1 = pObjCon.ExecuteSclar("select D_Out1 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
+                    //         D_In2 = pObjCon.ExecuteSclar("select D_In2 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
+                    //         D_Out2 = pObjCon.ExecuteSclar("select D_Out2 from Pay_WorkingHours where DATEPART(DW, '" + DateString + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + N_CatID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable()).ToString();
+                    //     }
+
                     if (Details.Rows.Count == 0)
                     {
                         return Ok(api.Notice("No Results Found"));

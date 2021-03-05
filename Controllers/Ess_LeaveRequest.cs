@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-private readonly IMyAttachments myAttachments;
+        private readonly IMyAttachments myAttachments;
 
         public Ess_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -43,7 +43,7 @@ private readonly IMyAttachments myAttachments;
 
 
         [HttpGet("leaveList")]
-        public ActionResult GetEmployeeLeaveRequest(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEmployeeLeaveRequest(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -54,22 +54,24 @@ private readonly IMyAttachments myAttachments;
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
-            int Count= (nPage - 1) * nSizeperpage;
+            int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_VacationGroupCode desc";
+            else if(xSortBy.Contains("vacationRequestDate"))
+                xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
             //  sqlCommandText = "Select x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus From vw_PayVacationList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus order by VacationRequestDate Desc";
 
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays  From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID and X_CurrentStatus='Approved' and B_IsAdjustEntry<>1  " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays  From vw_PayVacationList where N_CompanyID=@nCompanyID and  N_EmpID=@nEmpID   and B_IsAdjustEntry<>1  " + Searchkey + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and X_CurrentStatus='Approved' and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top("+ Count +") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved' and B_IsAdjustEntry<>1   group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays From vw_PayVacationList where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID   and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1   group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -87,8 +89,10 @@ private readonly IMyAttachments myAttachments;
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
-                    }else{
-                    return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Notice("No Results Found"));
                     }
 
 
@@ -152,26 +156,9 @@ private readonly IMyAttachments myAttachments;
                     else
                     {
                         QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
-                        object FileName = dLayer.ExecuteScalar("Select X_FileName from Pay_VacationMaster where X_VacationGroupCode=@xVacationGroupCode and N_TransType=1", QueryParams, connection);
-                       // Master = myFunctions.AddNewColumnToDataTable(Master, "X_FileName", typeof(string), FileName);
-
-                        object filePath = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", QueryParams, connection);
-                        string fileData = "";
-                        if (FileName.ToString() != "")
-                        {
-                            // try
-                            // {
-                            //     string fullfilePath = filePath.ToString() + FileName.ToString();
-                            //     Byte[] bytes = System.IO.File.ReadAllBytes(fullfilePath);
-                            //     fileData = Convert.ToBase64String(bytes);
-                            // }
-                            // catch (Exception)
-                            // {
-                            // }
-                        }
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "X_FileName", typeof(string), FileName);
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "File_Data", typeof(string), fileData);
-
+                        QueryParams.Add("@nEmpID", Master.Rows[0]["N_EmpID"].ToString());
+                        
+                        
                         ds.Tables.Add(Master);
                         Condition = "";
                         if (bShowAllBranchData == true)
@@ -179,7 +166,7 @@ private readonly IMyAttachments myAttachments;
                         else
                             Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_BranchID=@nBranchID  and N_TransType=1 and X_Type='B'";
 
-                        _sqlQuery = "Select * from vw_PayVacationDetails_Disp Where " + Condition + "";
+                        _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,1) As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                         Detail = api.Format(Detail, "details");
@@ -211,7 +198,7 @@ private readonly IMyAttachments myAttachments;
                 return Ok(api.Error(e));
             }
         }
-   
+
 
         //List
         [HttpGet("vacationList")]
@@ -223,12 +210,13 @@ private readonly IMyAttachments myAttachments;
 
             QueryParams.Add("@nCompanyID", companyid);
             QueryParams.Add("@nEmpID", nEmpID);
+            QueryParams.Add("@today", DateTime.Today);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable("Select * from vw_pay_Vacation_List where X_Type='B' and N_EmpId=@nEmpID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable("Select *,dbo.Fn_CalcAvailDays(@nCompanyID,N_VacTypeID,@nEmpID,@today,0,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,N_VacTypeID,@nEmpID,@today,0,1) As Accrude from vw_pay_Vacation_List where X_Type='B' and N_EmpId=@nEmpID and N_CompanyID=@nCompanyID", QueryParams, connection);
 
                 }
                 dt = api.Format(dt);
@@ -293,8 +281,8 @@ private readonly IMyAttachments myAttachments;
         }
 
 
-        [HttpGet("getAvailable")]
-        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID, int nVacationGroupID)
+        [HttpGet("getAvailable_Old2")]
+        public ActionResult GetAvailableDays_2(int nVacTypeID, DateTime dDateFrom, double nAccrued, int nEmpID, int nVacationGroupID)
         {
             DateTime toDate;
             int days = 0;
@@ -307,56 +295,99 @@ private readonly IMyAttachments myAttachments;
                 {
                     connection.Open();
                     double AvlDays = Convert.ToDouble(CalculateGridAnnualDays(nVacTypeID, nEmpID, nCompanyID, nVacationGroupID, connection));
-                    
-                     Date = dLayer.ExecuteScalar("Select MAX(Pay_VacationDetails.D_VacDateTo) as D_Date from Pay_VacationDetails Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + " and N_VacTypeID =" + nVacTypeID + " and N_VacationStatus = 0 and N_VacDays>0 ",connection);
-            if (Date.ToString().Trim() != "")
-            {
-                if (Date.ToString() != "")
-                    toDate = Convert.ToDateTime(Date.ToString());
-                else
-                    toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select D_HireDate from Pay_Employee Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + "",connection).ToString());
 
-                if (toDate < dDateFrom)
-                    days = myFunctions.getIntVAL(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + myFunctions.getDateVAL(toDate) + "','" + myFunctions.getDateVAL(dDateFrom) + "')", connection).ToString());
-                else
-                    days = 0;
-            }
-            else
-            {
-                toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select D_HireDate from Pay_Employee Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + "",connection).ToString());
-                if (toDate < dDateFrom)
-                    days = myFunctions.getIntVAL(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + myFunctions.getDateVAL(toDate) + "','" + myFunctions.getDateVAL(dDateFrom) + "')", connection).ToString());
-                else
-                    days = 0;
-            }
-            if (nVacTypeID == 6)
-            {
-                totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
-            }
-            else
-                totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
+                    Date = dLayer.ExecuteScalar("Select MAX(Pay_VacationDetails.D_VacDateTo) as D_Date from Pay_VacationDetails Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + " and N_VacTypeID =" + nVacTypeID + " and N_VacationStatus = 0 and N_VacDays>0 ", connection);
+                    if (Date.ToString().Trim() != "")
+                    {
+                        if (Date.ToString() != "")
+                            toDate = Convert.ToDateTime(Date.ToString());
+                        else
+                            toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select D_HireDate from Pay_Employee Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + "", connection).ToString());
 
-            double N_MaxDays = 0;
-            object MaxDays = dLayer.ExecuteScalar("select N_MaxAccrued from Pay_VacationType where N_VacTypeID=" + nVacTypeID + " and N_CompanyID=" + nCompanyID,connection);
-            if (MaxDays != null)
-                N_MaxDays = myFunctions.getVAL(MaxDays.ToString());
-            double N_Acrued = 0;
-            object Acrued = dLayer.ExecuteScalar("select sum(N_VacDays) from  Pay_VacationDetails INNER JOIN  Pay_VacationType ON Pay_VacationDetails.N_VacTypeID = Pay_VacationType.N_VacTypeID where Pay_VacationDetails.N_EmpID =" + nEmpID + " and Pay_VacationType.N_VacTypeID= " + nVacTypeID + " and Pay_VacationDetails.N_CompanyID=" + nCompanyID,connection);
+                        if (toDate < dDateFrom)
+                            days = myFunctions.getIntVAL(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + myFunctions.getDateVAL(toDate) + "','" + myFunctions.getDateVAL(dDateFrom) + "')", connection).ToString());
+                        else
+                            days = 0;
+                    }
+                    else
+                    {
+                        toDate = Convert.ToDateTime(dLayer.ExecuteScalar("Select D_HireDate from Pay_Employee Where N_CompanyID =" + nCompanyID + " and  N_EmpID  =" + nEmpID.ToString() + "", connection).ToString());
+                        if (toDate < dDateFrom)
+                            days = myFunctions.getIntVAL(dLayer.ExecuteScalar("select  DATEDIFF(day,'" + myFunctions.getDateVAL(toDate) + "','" + myFunctions.getDateVAL(dDateFrom) + "')", connection).ToString());
+                        else
+                            days = 0;
+                    }
+                    if (nVacTypeID == 6)
+                    {
+                        totalDays = Math.Round(AvlDays + ((days / 30.458) * nAccrued), 0);
+                    }
+                    else
+                        totalDays = Math.Round(AvlDays + ((days / 30.458)), 0);
 
-            if (Acrued != null)
-                N_Acrued = myFunctions.getVAL(Acrued.ToString());
+                    double N_MaxDays = 0;
+                    object MaxDays = dLayer.ExecuteScalar("select N_MaxAccrued from Pay_VacationType where N_VacTypeID=" + nVacTypeID + " and N_CompanyID=" + nCompanyID, connection);
+                    if (MaxDays != null)
+                        N_MaxDays = myFunctions.getVAL(MaxDays.ToString());
+                    double N_Acrued = 0;
+                    object Acrued = dLayer.ExecuteScalar("select sum(N_VacDays) from  Pay_VacationDetails INNER JOIN  Pay_VacationType ON Pay_VacationDetails.N_VacTypeID = Pay_VacationType.N_VacTypeID where Pay_VacationDetails.N_EmpID =" + nEmpID + " and Pay_VacationType.N_VacTypeID= " + nVacTypeID + " and Pay_VacationDetails.N_CompanyID=" + nCompanyID, connection);
+
+                    if (Acrued != null)
+                        N_Acrued = myFunctions.getVAL(Acrued.ToString());
 
 
-            if (totalDays > myFunctions.getVAL(MaxDays.ToString()))
-            {
-                    totalDays = myFunctions.getVAL(MaxDays.ToString());
-            }
-                    
+                    if (totalDays > myFunctions.getVAL(MaxDays.ToString()))
+                    {
+                        totalDays = myFunctions.getVAL(MaxDays.ToString());
+                    }
+
                 }
                 Dictionary<string, string> res = new Dictionary<string, string>();
                 res.Add("availableDays", totalDays.ToString());
 
                 return Ok(api.Success(res));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        [HttpGet("getAvailable")]
+        public ActionResult GetAvailableDays(int nVacTypeID, DateTime dDateFrom,int nEmpID, int nVacationGroupID)
+        {
+            DataTable dt = new DataTable();
+            SortedList output = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            SortedList QueryParams = new SortedList();
+
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            QueryParams.Add("@nEmpID", nEmpID);
+            QueryParams.Add("@nVacationGroupID", nVacationGroupID);
+            QueryParams.Add("@today", dDateFrom);
+            QueryParams.Add("@nVacTypeID", nVacTypeID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable("Select dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,2) As AvlDays,dbo.Fn_CalcAvailDays(@nCompanyID,@nVacTypeID,@nEmpID,@today,@nVacationGroupID,1) As Accrude", QueryParams, connection);
+
+
+                }
+                if (dt.Rows.Count > 0)
+                {
+                    output.Add("accrude", myFunctions.getDecimalVAL(dt.Rows[0]["Accrude"].ToString()));
+                    output.Add("avlDays", myFunctions.getDecimalVAL(dt.Rows[0]["AvlDays"].ToString()));
+                    output.Add("nEmpID", nEmpID);
+                    output.Add("nVacTypeID", nVacTypeID);
+                }
+                else
+                {
+                    output.Add("accrude", 0);
+                    output.Add("avlDays", 0);
+                }
+
+                return Ok(api.Success(output));
             }
             catch (Exception e)
             {
@@ -478,7 +509,7 @@ private readonly IMyAttachments myAttachments;
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
-                int N_NextApproverID=0;
+                int N_NextApproverID = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -486,7 +517,8 @@ private readonly IMyAttachments myAttachments;
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList EmpParams = new SortedList();
 
-                    if(vacationalreadygiven(DetailTable,connection,transaction)){
+                    if (vacationalreadygiven(DetailTable, connection, transaction))
+                    {
                         return Ok(api.Warning("Vacation already requested in this date range."));
                     }
 
@@ -505,7 +537,7 @@ private readonly IMyAttachments myAttachments;
                         // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
                         return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
                     }
 
@@ -518,7 +550,7 @@ private readonly IMyAttachments myAttachments;
                         Params.Add("N_FormID", "210");
                         Params.Add("N_BranchID", nBranchID);
                         x_VacationGroupCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_VacationGroupCode", Params, connection, transaction);
-                        if (x_VacationGroupCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate leave Request Code")); }
+                        if (x_VacationGroupCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate leave Request Code")); }
                         MasterTable.Rows[0]["x_VacationGroupCode"] = x_VacationGroupCode;
                     }
                     else
@@ -607,11 +639,11 @@ private readonly IMyAttachments myAttachments;
                     // }
 
                     // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
-                        myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
+                    myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
 
 
                     transaction.Commit();
-                    myFunctions.SendApprovalMail(N_NextApproverID,FormID,n_VacationGroupID,"LEAVE REQUEST",x_VacationGroupCode,dLayer,connection,transaction,User);
+                    myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_RequestCode", x_VacationGroupCode.ToString());
                     return Ok(api.Success(res, "Leave Request saved"));
@@ -624,21 +656,21 @@ private readonly IMyAttachments myAttachments;
         }
 
 
-        private bool vacationalreadygiven(DataTable Details,SqlConnection connection,SqlTransaction transaction)
+        private bool vacationalreadygiven(DataTable Details, SqlConnection connection, SqlTransaction transaction)
         {
             foreach (DataRow var in Details.Rows)
             {
-                if (myFunctions.getVAL(var["b_IsAdjustEntry"].ToString()) != 0) {continue; }
-                if (myFunctions.getVAL(var["n_VacationGroupID"].ToString()) != 0) {continue; }
+                if (myFunctions.getVAL(var["b_IsAdjustEntry"].ToString()) != 0) { continue; }
+                if (myFunctions.getVAL(var["n_VacationGroupID"].ToString()) != 0) { continue; }
                 SortedList Params = new SortedList();
-                 Params.Add("N_CompanyID",myFunctions.getVAL(var["n_CompanyID"].ToString()));
-                 Params.Add("N_FnYearID",myFunctions.getVAL(var["n_FnYearID"].ToString()));
-                 Params.Add("N_EmpID",myFunctions.getVAL(var["n_EmpID"].ToString()));
-                 Params.Add("D_VacDateFrom",var["d_VacDateFrom"].ToString());
-                 Params.Add("D_VacDateTo",var["d_VacDateTo"].ToString());
-                 Params.Add("N_VacationID",myFunctions.getVAL(var["n_VacationGroupID"].ToString()));
+                Params.Add("N_CompanyID", myFunctions.getVAL(var["n_CompanyID"].ToString()));
+                Params.Add("N_FnYearID", myFunctions.getVAL(var["n_FnYearID"].ToString()));
+                Params.Add("N_EmpID", myFunctions.getVAL(var["n_EmpID"].ToString()));
+                Params.Add("D_VacDateFrom", var["d_VacDateFrom"].ToString());
+                Params.Add("D_VacDateTo", var["d_VacDateTo"].ToString());
+                Params.Add("N_VacationID", myFunctions.getVAL(var["n_VacationGroupID"].ToString()));
 
-                DataTable Validation = dLayer.ExecuteDataTablePro("SP_Pay_VacationEntryDateValidation",Params,connection,transaction);
+                DataTable Validation = dLayer.ExecuteDataTablePro("SP_Pay_VacationEntryDateValidation", Params, connection, transaction);
                 if (Validation.Rows.Count > 0)
                 {
                     return true;
@@ -689,12 +721,13 @@ private readonly IMyAttachments myAttachments;
         }
 
         [HttpDelete()]
-        public ActionResult DeleteData(int n_VacationGroupID, int nFnYearID,string comments)
+        public ActionResult DeleteData(int n_VacationGroupID, int nFnYearID, string comments)
         {
-            if(comments==null){
-                comments="";
+            if (comments == null)
+            {
+                comments = "";
             }
-            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

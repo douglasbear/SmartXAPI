@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         private readonly string reportApi;
         private readonly string reportPath;
         private readonly string reportLocation;
-
+        // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
         public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     DataTable dt1 = new DataTable();
 
-                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator";
+                    string sqlCommandText1 = "select n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_LinkCompID,X_LinkField,B_Range from vw_WebReportMenus where N_LanguageId=@nLangId group by n_CompID,n_LanguageId,n_MenuID,x_CompType,x_FieldList,x_FieldType,x_Text,X_FieldtoReturn,X_DefVal1,X_DefVal2,X_Operator,N_ListOrder,N_LinkCompID,X_LinkField,B_Range order by N_ListOrder";
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
                     dt.Columns.Add("ChildMenus", typeof(DataTable));
@@ -107,13 +107,17 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("dynamiclist")]
-        public ActionResult GetDynamicList(int nMenuId, int nCompId, int nLangId, string cval, string bval, string fval)
+        public ActionResult GetDynamicList(int nMenuId, int nCompId, int nLangId, string cval, string bval, string fval, string qry)
         {
             DataTable dt = new DataTable();
             DataTable outTable = new DataTable();
             SortedList Params = new SortedList();
 
             string sqlCommandText = "select TOP 1 X_TableName,X_FieldList,X_Criteria from vw_WebReportMenus where N_MenuID=@p1 and N_LanguageId=@p2 and N_CompID=@p3 and X_CompType=@p4";
+            //             string sqlCommandText = "Select Sec_ReportsComponents.*, Lan_Multilingual.X_Text from Sec_ReportsComponents Left Outer Join Lan_Multilingual on " +
+            //  " Sec_ReportsComponents.N_MenuID = Lan_Multilingual.N_FormID and  Sec_ReportsComponents.X_LangControlNo = Lan_Multilingual.X_ControlNo and  " +
+            // " Lan_Multilingual.N_LanguageID=@p2  Where Sec_ReportsComponents.N_MenuID=@p1 AND Sec_ReportsComponents.B_Active =1 and N_CompID=@p3 and X_CompType=@p4 ";
+
             Params.Add("@p1", nMenuId);
             Params.Add("@p2", nLangId);
             Params.Add("@p3", nCompId);
@@ -137,10 +141,22 @@ namespace SmartxAPI.Controllers
                         string Criteria = QueryString["X_Criteria"].ToString();
                         if (Criteria != "")
                             Criteria = " Where " + QueryString["X_Criteria"].ToString().Replace("'CVal'", "@CVal ").Replace("'BVal'", "@BVal ").Replace("'FVal'", "@FVal ");
+
+                        if (qry != null)
+                        {
+                            if (Criteria != "")
+                            {
+                                Criteria = Criteria + " and " + qry;
+                            }
+                            else
+                            {
+                                Criteria = " Where " + qry;
+                            }
+                        }
                         ListSqlParams.Add("@BVal", bval);
                         ListSqlParams.Add("@CVal", cval);
                         ListSqlParams.Add("@FVal", fval);
-                        string ListSql = "select " + fields + " from " + table + " " + Criteria;
+                        string ListSql = "select " + fields + " from " + table + " " + Criteria + " group by " + fields + " order by " + fields;
 
                         outTable = dLayer.ExecuteDataTable(ListSql, ListSqlParams, connection);
                     }
@@ -420,11 +436,15 @@ namespace SmartxAPI.Controllers
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             int nCompanyID = myFunctions.GetCompanyID(User);
+            string x_comments = "";
 
             try
             {
                 String Criteria = "";
                 String reportName = "";
+                String CompanyData = "";
+                String YearData = "";
+
                 var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -454,28 +474,51 @@ namespace SmartxAPI.Controllers
 
                         SortedList Params = new SortedList();
                         Params.Add("@nMenuID", MenuID);
-                        Params.Add("@xType", type);
+                        Params.Add("@xType", type.ToLower());
                         Params.Add("@nCompID", compID);
                         Params.Add("@xMain", "MainForm");
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+                        bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
+                        string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
+                        if (xOperator == null || xOperator == "")
+                            xOperator = "=";
 
-
-                        if (type == "datepicker")
+                        if (type.ToLower() == "datepicker")
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
+
                             if (xProCode != "")
                             {
+                                string procParam = "";
+                                if (dateFrom != null && (bRange && dateTo != null))
+                                {
+                                    x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
+                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
+                                }
+                                else if (dateFrom != null)
+                                {
+                                    x_comments = dateFrom.ToString("dd-MMM-yyyy");
+                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|";
+                                }
+                                else if (bRange && dateTo != null)
+                                {
+                                    x_comments = dateTo.ToString("dd-MMM-yyyy");
+                                    procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
+                                }
+
                                 SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
                             {"N_FnYearID",FnYearID},
                             {"N_PeriodID",0},
                             {"X_Code",xProCode},
-                            {"X_Parameter", dateFrom.ToString("dd-MMM-yyyy")+"|"+dateTo.ToString("dd-MMM-yyyy")+"|"},
-                            {"N_UserID",2},
+                            {"X_Parameter", procParam },
+                            {"N_UserID",myFunctions.GetUserID(User)},
                             {"N_BranchID",0}
                             };
                                 dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
@@ -484,7 +527,14 @@ namespace SmartxAPI.Controllers
                             string DateCrt = "";
                             if (xFeild != "")
                             {
-                                DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
+                                if (bRange)
+                                {
+                                    DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
+                                }
+                                else
+                                {
+                                    DateCrt = xFeild + " " + xOperator + " Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') ";
+                                }
                                 Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
                             }
                         }
@@ -492,15 +542,31 @@ namespace SmartxAPI.Controllers
                         {
                             if (xFeild != "")
                             {
-                                Criteria = Criteria == "" ? xFeild + "='" + value + "' " : Criteria + " and " + xFeild + "='" + value + "' ";
+                                if (xFeild.Contains("#"))
+                                    Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
+                                else
+                                    Criteria = Criteria == "" ? xFeild + " "+xOperator+" '" + value + "' " : Criteria + " and " + xFeild + " "+xOperator+" '" + value + "' ";
                             }
                         }
 
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
+                    if (Criteria == "")
+                    {
+                        Criteria = Criteria + CompanyData + "=" + nCompanyID;
+                        if (YearData != "")
+                            Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                    }
+                    else
+                    {
+                        Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
+                        if (YearData != "")
+                            Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                    }
                     dbName = connection.Database;
                 }
+
 
                 var handler = new HttpClientHandler
                 {
@@ -509,7 +575,7 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
@@ -529,6 +595,170 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
+        // private void LoadSelectionFormulae(int nFnYearID,int nBranchID,bool bAllBranchData)
+        // {
+
+        //     X_SelectionFormula = "";
+        //     if (myFunctions.GetCompanyID(User) != 0)
+        //     {
+        //         X_SelectionFormula = X_CompanyField + " = " + myFunctions.GetCompanyID(User);
+        //         if (X_YearField != "")
+        //             X_SelectionFormula += " and (" + X_YearField + " = " + nFnYearID + ")";
+        //         if (X_UserField != "")
+        //             X_SelectionFormula += " and (" + X_UserField + " = " + myFunctions.GetUserID(User) + ")";
+        //         if (X_BranchField != "")
+        //         {
+        //             if (bAllBranchData == false)
+        //                 X_SelectionFormula += " and (" + X_BranchField  + " = " + nBranchID + ")";
+        //         }
+
+
+        //     }
+        //     else if (X_YearField != "")
+        //         X_SelectionFormula = "(" + X_YearField + " = " + nFnYearID + ")";
+
+        //     if (flxListFilter.Rows >= 2)
+        //     {
+        //         for (int i = 1; i < flxListFilter.Rows; i++)
+        //         {
+        //             if (flxListFilter.get_TextMatrix(i, mcF_BRange).ToLower() == "true")
+        //             {
+        //                 if ((flxListFilter.get_TextMatrix(i, mcF_Filter1) == "" && flxListFilter.get_TextMatrix(i, mcF_Filter2) == "") || flxListFilter.get_TextMatrix(i, mcF_DataField) == "")
+        //                 {
+        //                     if (flxListFilter.get_TextMatrix(i, mcF_FieldType) == "Date")
+        //                     {
+        //                         ////X_ProcParameter = MYG.DateToDB(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|" + MYG.DateToDB(flxListFilter.get_TextMatrix(i, mcF_Filter2)) + "|";
+        //                         ////X_ProcParameter =  myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture) + "|" +  myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture) + "|";
+        //                         //X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|" + myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) + "|";
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter1) == "")
+        //                             X_ProcParameter = " |";
+        //                         else
+        //                         {
+        //                             X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|";
+        //                             X_Rptcomments = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1));
+
+        //                         }
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter2) == "")
+        //                             X_ProcParameter = X_ProcParameter + " |";
+        //                         else
+        //                         {
+        //                             X_ProcParameter = X_ProcParameter + myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) + "|";
+        //                             if (myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) != myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)))
+        //                             X_Rptcomments = X_Rptcomments + " to " + myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2));
+        //                         }
+        //                     }
+        //                     continue;
+        //                 }
+        //                 else
+        //                 {
+        //                     //if (X_SelectionFormula != "")
+        //                     //    X_SelectionFormula += " And ";
+        //                     if (flxListFilter.get_TextMatrix(i, mcF_FieldType) == "Date")
+        //                     {
+        //                         // //X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + " Date('" + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Year.ToString() + "," + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Month.ToString() + "," + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Day.ToString() + "') And " + flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator2) + " Date('" + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Year.ToString() + "," + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Month.ToString() + "," + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Day.ToString() + "') ";
+        //                         // //X_ProcParameter = MYG.DateToDB(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|" + MYG.DateToDB(flxListFilter.get_TextMatrix(i, mcF_Filter2)) + "|";
+        //                         //X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + " Date('" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Year.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Month.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Day.ToString() + "') And " + flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator2) + " Date('" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Year.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Month.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Day.ToString() + "') ";
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter1) != "")
+        //                         {
+        //                             if (X_SelectionFormula != "")
+        //                                 X_SelectionFormula += " And ";
+        //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + " Date('" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Year.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Month.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Day.ToString() + "')";
+        //                             X_Rptcomments = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1));
+        //                         }
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter2) != "")
+        //                         {
+        //                             if (X_SelectionFormula != "")
+        //                                 X_SelectionFormula += " And ";
+        //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator2) + " Date('" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Year.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Month.ToString() + "," + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).Day.ToString() + "') ";
+        //                             if (myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) != myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)))
+        //                                 X_Rptcomments = X_Rptcomments + " to " + myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2));
+
+        //                         }
+
+        //                        // //X_ProcParameter = myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture) + "|" + myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter2)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture) + "|";
+        //                         //X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|" + myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) + "|";
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter1) != "")
+        //                             X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1)) + "|";
+        //                         else
+        //                             X_ProcParameter = " |";
+
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter2) != "")
+        //                             X_ProcParameter += myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter2)) + "|";
+        //                         else
+        //                             X_ProcParameter +=  " |";
+        //                     }
+        //                     else if (flxListFilter.get_TextMatrix(i, mcF_FieldType) == "Text")
+        //                     {
+        //                         if (X_SelectionFormula != "")
+        //                             X_SelectionFormula += " And ";
+        //                         X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + "'" + flxListFilter.get_TextMatrix(i, mcF_Filter1) + "' And " + flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator2) + " '" + flxListFilter.get_TextMatrix(i, mcF_Filter2) + "' ";
+        //                     }
+        //                     else
+        //                     {
+        //                         if (X_SelectionFormula != "")
+        //                             X_SelectionFormula += " And ";
+        //                         X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + flxListFilter.get_TextMatrix(i, mcF_Operator1) + flxListFilter.get_TextMatrix(i, mcF_Filter1) + " And " + flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator2) + " " + flxListFilter.get_TextMatrix(i, mcF_Filter2) + " ";
+        //                     }
+        //                 }
+        //             }
+        //             else
+        //             {
+        //                 if (flxListFilter.get_TextMatrix(i, mcF_Filter1) == "" || flxListFilter.get_TextMatrix(i, mcF_DataField) == "")
+        //                 {
+        //                     if (flxListFilter.get_TextMatrix(i, mcF_FieldType) == "Date")
+        //                     {
+        //                         ////X_ProcParameter = MYG.DateToDB(flxListFilter.get_TextMatrix(i, mcF_Filter1));
+        //                         ////X_ProcParameter = myFunctions.GetFormatedDate(flxListFilter.get_TextMatrix(i, mcF_Filter1)).ToString(myCompanyID._SystemDateFormat, myCompanyID._EnglishCulture);                                
+        //                         //X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1));
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_Filter1) != "")
+        //                             X_ProcParameter = myFunctions.GetFormatedDate_Ret_string(flxListFilter.get_TextMatrix(i, mcF_Filter1));
+        //                     }
+        //                     continue;
+        //                 }
+        //                 else
+        //                 {
+        //                     if (X_SelectionFormula != "")
+        //                         X_SelectionFormula += " And ";
+        //                     if (flxListFilter.get_TextMatrix(i, mcF_FieldType) == "Date")
+        //                     {
+        //                         if(flxListFilter.get_TextMatrix(i, mcF_Filter1)!="")
+        //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + " Date('" + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Year.ToString() + "," + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Month.ToString() + "," + Convert.ToDateTime(flxListFilter.get_TextMatrix(i, mcF_Filter1)).Day.ToString() + "') ";
+        //                     }
+        //                     else if (flxListFilter.get_TextMatrix(i, mcF_FieldType) == "Text")
+        //                     {
+        //                         if (myFunctions.getBoolVAL(flxListFilter.get_TextMatrix(i, mcF_EnableMultiselect)))
+        //                         {
+        //                             string[] temp = flxListFilter.get_TextMatrix(i, mcF_Filter1).Split(',');
+        //                             X_SelectionFormula += " (";
+        //                             for (int w = 0; w < temp.Length; w++)
+        //                             {
+        //                                 if (w != 0)
+        //                                     X_SelectionFormula += " OR ";
+        //                                 X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + "'" + temp[w] + "' ";
+        //                             }
+        //                             X_SelectionFormula += " )";
+        //                         }
+        //                         else
+        //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + " " + flxListFilter.get_TextMatrix(i, mcF_Operator1) + "'" + flxListFilter.get_TextMatrix(i, mcF_Filter1) + "' ";
+        //                     }
+        //                     else
+        //                     {
+        //                         if (flxListFilter.get_TextMatrix(i, mcF_DataField).Contains("#"))
+        //                         {
+        //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField).Replace("#", flxListFilter.get_TextMatrix(i, mcF_Filter1));
+        //                         }
+        //                         else
+        //                             X_SelectionFormula += flxListFilter.get_TextMatrix(i, mcF_DataField) + flxListFilter.get_TextMatrix(i, mcF_Operator1) + flxListFilter.get_TextMatrix(i, mcF_Filter1) + " ";
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //     }
+
+        // }
+
 
         private static Random random = new Random();
         public string RandomString(int length = 6)

@@ -150,7 +150,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool getBoolVAL(string val)
         {
-            if (val.Trim() == "")
+            if (val==null || val.Trim() == "")
                 return false;
             else
                 return Convert.ToBoolean(val);
@@ -338,7 +338,10 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nTransStatus", nTransStatus);
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
-            ApprovalParams.Add("@loggedInUserCategory", this.GetUserCategory(User));
+
+            object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID="+nCompanyID+" and N_UserID="+loggedInUserID, ApprovalParams, connection);
+                    
+            objUserCategory = objUserCategory !=null?objUserCategory:0;
 
 
             if (nApprovalID == 0)
@@ -631,7 +634,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (nUsrCatID == 0)
                         SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
                     else
-                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID=@loggedInUserCategory", ApprovalParams, connection);
+                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in ("+objUserCategory+")", ApprovalParams, connection);
 
 
                     if (SecUserLevel.Rows.Count > 0)
@@ -1214,6 +1217,15 @@ namespace SmartxAPI.GeneralFunctions
             return X_Message;
         }
 
+public bool ContainColumn(string columnName, DataTable table)
+{
+    DataColumnCollection columns = table.Columns;        
+    if (columns.Contains(columnName))
+    {
+      return true;
+    }
+      return false;
+}
         public DataTable ListToTable(SortedList List)
         {
             DataTable ResultTable = new DataTable();
@@ -1292,6 +1304,8 @@ namespace SmartxAPI.GeneralFunctions
         public int GetCompanyID(ClaimsPrincipal User);
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+
+        public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
 
