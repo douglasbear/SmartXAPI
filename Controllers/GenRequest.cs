@@ -123,6 +123,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "LeadStatus": N_FormID=1313;
                 break;
+                 case "District": N_FormID=1273;
+                break;
                 case "Ownership": N_FormID=1314;
                 break;
                 case "BloodGroup": N_FormID=14;
