@@ -56,6 +56,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_LoanID desc";
+            else if(xSortBy.Contains("d_LoanIssueDate"))
+                xSortBy =" order by cast(D_LoanIssueDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
