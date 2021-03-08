@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%' or X_Notes like'%" + xSearchkey + "%' or X_Remarks like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%' or X_Notes like'%" + xSearchkey + "%' or X_Remarks like'%" + xSearchkey + "%' or X_RequestTypeDesc like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_RequestID desc";
@@ -58,9 +58,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_EmpRequestcertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_EmpReqCertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_EmpRequestcertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top(" + Count + ") N_RequestID from Pay_EmpRequestcertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_EmpReqCertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top(" + Count + ") N_RequestID from vw_Pay_EmpReqCertificate where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
             SortedList OutPut = new SortedList();
 
             try
@@ -73,7 +73,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count from Pay_EmpRequestcertificate where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count from vw_Pay_EmpReqCertificate where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -201,10 +201,10 @@ namespace SmartxAPI.Controllers
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmpRequestcertificate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Certificate Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Certificate Request", N_PkeyID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Certificate Request", xReqCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Employee Certificate Request Approved" + "-" + xReqCode));
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Certificate Request", xReqCode, dLayer, connection, transaction, User);
+                        return Ok(api.Success("Certificate Request Approved" + "-" + xReqCode));
                     }
                     if (xReqCode == "@Auto")
                     {
@@ -229,12 +229,12 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Employee Certificate Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Certificate Request", nRequestID, xReqCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Employee Certificate Request", xReqCode, dLayer, connection, transaction, User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nRequestID, "Certificate Request", xReqCode, dLayer, connection, transaction, User);
                         Dictionary<string, string> res = new Dictionary<string, string>();
                         res.Add("x_RequestCode", xReqCode.ToString());
-                        return Ok(api.Success(res, "Employee Certificate Request successfully created with Request No" + "-" + xReqCode));
+                        return Ok(api.Success(res, "Certificate Request successfully created with Request No" + "-" + xReqCode));
                     }
                 }
             }
@@ -317,16 +317,16 @@ namespace SmartxAPI.Controllers
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Certificate Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpRequestcertificate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Certificate Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpRequestcertificate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Employee Certificate Request " + status + " Successfully"));
+                        return Ok(api.Success("Certificate Request " + status + " Successfully"));
                     }
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Employee Certificate Request"));
+                        return Ok(api.Error("Unable to delete Certificate Request"));
                     }
                 }
             }
