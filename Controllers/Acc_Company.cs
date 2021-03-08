@@ -87,10 +87,10 @@ namespace SmartxAPI.Controllers
 
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
 
-                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction' from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params, connection);
+                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
                     {
-                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction' from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params, connection);
+                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params, connection);
                     }
 
                     Output.Add("CompanyInfo", dt);
