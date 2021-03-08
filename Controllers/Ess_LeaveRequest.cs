@@ -482,8 +482,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         //Save....
         [HttpPost("save")]
         public ActionResult SaveTORequest([FromBody] DataSet ds)
@@ -510,6 +508,8 @@ namespace SmartxAPI.Controllers
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int N_NextApproverID = 0;
+
+                
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
