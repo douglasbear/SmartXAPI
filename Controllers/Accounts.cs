@@ -202,5 +202,35 @@ namespace SmartxAPI.Controllers
         //     }
         // }
 
+        [HttpGet("balance") ]
+        public ActionResult GetBalance (int nFnYearId, string xLedgerCode)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            if (nFnYearId == 0) { return Ok(_api.Notice("FnYear ID Required")); }
+            
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", xLedgerCode);
+            
+            DataTable dt=new DataTable();
+            
+            sqlCommandText="Select isnull(Sum(Acc_VoucherDetails.N_Amount),0) as X_Balance,Acc_MastLedger.X_LedgerCode,isnull(Acc_MastLedger.X_LedgerName,'') as X_LedgerName from Acc_MastLedger left outer  join Acc_VoucherDetails on Acc_VoucherDetails.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherDetails.N_CompanyID=Acc_MastLedger.N_CompanyID and Acc_MastLedger.N_FnYearID=Acc_VoucherDetails.N_FnYearID Where Acc_MastLedger.N_CompanyID=@p1 and Acc_MastLedger.X_LedgerCode=@p3 AND Acc_MastLedger.N_FnYearID=@p2 group by Acc_MastLedger.X_LedgerName,Acc_MastLedger.X_LedgerCode";
+                
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                    
+                    return Ok(_api.Success(dt));
+                
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }   
+        }
+
     }
 }

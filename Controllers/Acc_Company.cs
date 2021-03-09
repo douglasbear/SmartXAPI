@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
                             dLayer.SaveImage("Acc_Company", "i_Footer", footerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         if (header.Length > 0)
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
-                        object N_FnYearId = 0;
+                        object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
                         if (values == "@Auto")
                         {
                             SortedList proParams1 = new SortedList(){
