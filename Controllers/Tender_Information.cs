@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
             
              xSortBy = " order by " + xSortBy;
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") X_TenderCode,X_CustomerName,X_ProjectName,X_ProjectType,X_ProjectPlace,X_EnquiryType,N_ProposedAmt,X_Type from vw_Prj_Tender where N_CompanyID=@p1 and N_ ";
+                sqlCommandText = "select top("+ nSizeperpage +") X_TenderCode,X_CustomerName,X_ProjectName,X_ProjectType,X_ProjectPlace,X_EnquiryType,N_ProposedAmt,X_Type from vw_Prj_Tender where N_CompanyID=@p1  ";
             else
                 sqlCommandText = "select top("+ nSizeperpage +") X_TenderCode,X_CustomerName,X_ProjectName,X_ProjectType,X_ProjectPlace,X_EnquiryType,N_ProposedAmt,X_Type from vw_Prj_Tender where N_CompanyID=@p1  and N_TenderID not in (select top("+ Count +") N_TenderID from vw_Prj_Tender where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);

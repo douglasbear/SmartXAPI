@@ -1,13 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\linju scaria\\.nuget\\packages"
-=======
-      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\USER\\.nuget\\packages"
->>>>>>> 618a1a80c23eefa3d84c850baf67a8872f81b9d1
+      "C:\\Users\\Kuttu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Kuttu\\.nuget\\packages"
     ]
   }
 }
