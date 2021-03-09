@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
                         if (RequestCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Training Request")); }
                         MasterTable.Rows[0]["X_RequestCode"] = RequestCode;
                     }
-                     MasterTable.Columns.Remove("n_FnYearId");
+                    
 
 
                     nRequestID = dLayer.SaveData("Pay_TrainingRequest", "N_RequestID", MasterTable, connection, transaction);
@@ -80,6 +80,36 @@ namespace SmartxAPI.Controllers
                 return BadRequest(api.Error(ex));
             }
         }
+
+        [HttpGet("Details") ]
+        public ActionResult GetTrainingRequestList ()
+        {    int nCompanyID=myFunctions.GetCompanyID(User);
+  
+            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+            
+            DataTable dt=new DataTable();
+            
+            string sqlCommandText="select * from vw_TrainingRequest where N_CompanyID=@p1";
+                
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }else{
+                            return Ok(api.Success(dt));
+                        }
+                
+            }catch(Exception e){
+                return Ok(api.Error(e));
+            }   
+        }
+
 
          [HttpDelete("delete")]
         public ActionResult DeleteData(int nRequestID)
