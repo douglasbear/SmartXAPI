@@ -39,54 +39,18 @@ namespace SmartxAPI.Controllers
 
 
 
-        [HttpGet("AttachmentCategory")]
-        public ActionResult CategoryList(int nFormID)
+        [HttpGet("chart")]
+        public ActionResult CategoryList()
         {
-            DataTable dt = new DataTable();
+            DataTable dtMasterFolder = new DataTable();
+            DataTable dtMasterFiles = new DataTable();
             SortedList Params = new SortedList();
 
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "";
-            if (nFormID > 0)
-                sqlCommandText = "Select N_CategoryID,X_Category From Inv_AttachmentCategory where N_CompanyID=@nCompanyID and ( N_FormID=@nFormID or N_FormID is null )";
-            else
-                sqlCommandText = "Select N_CategoryID,X_Category From Inv_AttachmentCategory where N_CompanyID=@nCompanyID and N_FormID is null";
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFormID", nFormID);
+            string sqlMasterFolder = "Select * from DMS_MasterFolder Where N_CompanyID=@nCompanyID Order By X_Name";
+            string sqlMasterFiles = "Select * From DMS_MasterFiles Where  N_CompanyID=@nCompanyID Order By N_FolderID,X_FileCode";
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(e));
-            }
-        }
-
-        [HttpGet("ReminderCategory")]
-        public ActionResult ReminderCategoryList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-
-            int nCompanyID = myFunctions.GetCompanyID(User);
-
-            string sqlCommandText = "Select N_CategoryID,X_Category From Dms_ReminderCategory where N_CompanyID=@nCompanyID";
             Params.Add("@nCompanyID", nCompanyID);
 
             try
@@ -94,74 +58,23 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dtMasterFolder = dLayer.ExecuteDataTable(sqlMasterFolder, Params, connection);
+                    dtMasterFiles = dLayer.ExecuteDataTable(sqlMasterFiles, Params, connection);
                 }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                dtMasterFolder = api.Format(dtMasterFolder);
+                dtMasterFiles = api.Format(dtMasterFiles);
+                SortedList OutPut = new SortedList();
+                OutPut.Add("MasterFolder", dtMasterFolder);
+                OutPut.Add("MasterFiles", dtMasterFiles);
+
+                return Ok(api.Success(OutPut));
+
             }
             catch (Exception e)
             {
                 return Ok(api.Error(e));
             }
         }
-
-        [HttpGet("GetAttachments")]
-        public ActionResult ViewAttachment(int nFnYearID, int nTransID, int nPartyID, int nFormID)
-        {
-
-            DataTable dt = new DataTable();
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SortedList AttachmentParam = new SortedList(){
-                                    {"PartyID", nPartyID},
-                                    {"PayID", nTransID},
-                                    {"FormID", nFormID},
-                                    {"CompanyID", myFunctions.GetCompanyID(User)},
-                                    {"FnyearID",nFnYearID}
-                                    };
-
-                    dt = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection);
-                    // if (dt.Rows.Count > 0)
-                    // {
-                    //     dt = myFunctions.AddNewColumnToDataTable(dt, "n_CompanyID", typeof(int), myFunctions.GetCompanyID(User));
-                    //     dt = myFunctions.AddNewColumnToDataTable(dt, "n_FnYearID", typeof(int), nFnYearID);
-                    //     dt = myFunctions.AddNewColumnToDataTable(dt, "n_TransID", typeof(int), nTransID);
-                    //     dt.AcceptChanges();
-                    // }
-
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(e));
-            }
-        }
-
-
-
-
-
-
-
 
 
     }
