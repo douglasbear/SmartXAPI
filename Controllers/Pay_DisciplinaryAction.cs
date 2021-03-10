@@ -155,14 +155,16 @@ namespace SmartxAPI.Controllers
         }
 
      [HttpGet("details")]
-        public ActionResult GetDetails(int nActionID)
+        public ActionResult GetDetails(int xActionCode,int nFnYearId)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Vw_Pay_displinaryAction where N_CompanyID=@nCompanyID and N_ActionID=@nActionID";
+            string sqlCommandText="select * from Vw_Pay_displinaryAction where N_CompanyID=@nCompanyID and X_ActionCode=@xActionCode and N_FnYearID=@p2";
             Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nActionID",nActionID);
+            Params.Add("@xActionCode",xActionCode);
+            Params.Add("@p2", nFnYearId);
+
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
@@ -192,7 +194,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Pay_DisciplinaryAction", "n_ActionID", nActionID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("deleted"));
+                        return Ok( _api.Success("Deleted Successfully"));
                     }
                     else
                     {
