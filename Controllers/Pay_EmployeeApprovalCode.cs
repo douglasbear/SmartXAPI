@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID",nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText="select N_CompanyID,N_PositionID,N_EmpID,X_EmpName,X_EmpCode,X_Position from vw_PayApprEmployee_Disp where N_CompanyID=@nComapnyID";
+            string sqlCommandText="select N_CompanyID,N_ApprovalID,X_ApprovalCode,X_ApprovalDescription from vw_PayApprovalCodeDisp where N_CompanyID=@nComapnyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //Delete....
+        // Delete....
         // [HttpDelete("delete")]
         // public ActionResult DeleteData(int nApprovalID,  int nFnYearID)
         // {
@@ -246,17 +246,17 @@ namespace SmartxAPI.Controllers
         //             var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
         //             var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
         //             int nCompanyID = myFunctions.GetCompanyID(User);
-        //             object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+        //             object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
         //             if (objProcessed == null) objProcessed = 0;
         //             if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
         //             {
         //                 SortedList DeleteParams = new SortedList(){
         //                         {"N_CompanyID",nCompanyID},
-        //                         {"X_TransType","SALES ORDER"},
-        //                         {"N_VoucherID",nSalesOrderID},
-        //                         {"N_UserID",nUserID},
-        //                         {"X_SystemName","WebRequest"},
-        //                         {"N_BranchID",nBranchID}};
+        //                         // {"X_TransType","SALES ORDER"},
+        //                         // {"N_VoucherID",nSalesOrderID},
+        //                         // {"N_UserID",nUserID},
+        //                         // {"X_SystemName","WebRequest"},
+        //                         // {"N_BranchID",nBranchID}};
         //                 Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
         //                 if (Results <= 0)
         //                 {
@@ -278,38 +278,37 @@ namespace SmartxAPI.Controllers
         //             }
 
 
-        //             // connection.Open();
-        //             // SqlTransaction transaction = connection.BeginTransaction();
-        //             // Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
-        //             // if (Results <= 0)
-        //             // {
-        //             //     transaction.Rollback();
-        //             //     return Ok(_api.Error("Unable to delete sales order"));
-        //             // }
-        //             // else
-        //             // {
-        //             // Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+        //             if (Results <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error("Unable to delete sales order"));
+        //             }
+        //             else
+        //             {
+        //             Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
 
-        //             // }
+        //             }
 
-        //             // if (Results > 0)
-        //             // {
-        //             //     transaction.Commit();
-        //             //     return Ok(_api.Error("Sales order deleted"));
-        //             // }
-        //             // else
-        //             // {
-        //             //     transaction.Rollback();
-        //             //     return Ok(_api.Error("Unable to delete sales order"));
-        //             // }
+        //             if (Results > 0)
+        //             {
+        //                 transaction.Commit();
+        //                 return Ok(_api.Error("Sales order deleted"));
+        //             }
+        //             else
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error("Unable to delete sales order"));
+        //             }
         //         }
         //     }
         //     catch (Exception ex)
         //     {
         //         return Ok(_api.Error(ex));
         //     }
+    
 
-
-        // }
+        }
     }
-}
