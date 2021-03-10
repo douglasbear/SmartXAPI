@@ -234,6 +234,43 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+        [HttpGet("paymentType")]
+        public ActionResult getPaymentType(int nFnyearID,int nBranchID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            string sqlCommandText = "select X_CustomerName,X_CustomerCode,N_CustomerID,N_ServiceCharge,N_TaxCategoryID,0 as N_Amount  from Inv_Customer where N_CompanyID=@p1 and N_FnYearID=@p2 and (N_BranchID=@p3 or N_BranchID = @p4)  and N_EnablePopup=1 ";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnyearID);
+            Params.Add("@p3", nBranchID);
+            Params.Add("@p4",0);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
         [HttpGet("getdetails")]
         public ActionResult GetCustomerDetails(int nCustomerID, int nCompanyID, int nFnyearID)
         {
