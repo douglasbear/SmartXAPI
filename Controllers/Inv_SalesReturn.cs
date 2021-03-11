@@ -36,36 +36,38 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetSalesReturn(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and X_DebitNoteNo like '%" + xSearchkey + "%' or X_CustomerName like '%"+ xSearchkey + "%'";
+                Searchkey = "and X_DebitNoteNo like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_DebitNoteId desc";
             else
             {
-                switch (xSortBy.Split(" ")[0]){
-                    case "x_DebitNoteNo" : xSortBy ="N_DebitNoteId " + xSortBy.Split(" ")[1] ;
-                    break;
-                    default : break;
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "x_DebitNoteNo":
+                        xSortBy = "N_DebitNoteId " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
                 }
-            xSortBy = " order by " + xSortBy;
+                xSortBy = " order by " + xSortBy;
             }
 
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DebitNoteId not in(select top("+ Count +")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
-            
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_DebitNoteId not in(select top(" + Count + ")  N_DebitNoteId from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -78,12 +80,13 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalAmount  from vw_InvDebitNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    string TotalCount="0";
-                    string TotalSum="0";
-                    if(Summary.Rows.Count>0){
-                    DataRow drow = Summary.Rows[0];
-                    TotalCount = drow["N_Count"].ToString();
-                    TotalSum = drow["TotalAmount"].ToString();
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
                     }
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -96,15 +99,15 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(_api.Success(OutPut));
-                }  
+                }
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetSalesReturnDetails(int? nCompanyId, string xDebitNoteNo, string xReceiptNo, int nFnYearId, bool bAllBranchData, int nBranchId, bool bDeliveryNote = false)
+        public ActionResult GetSalesReturnDetails(int nCompanyId, string xDebitNoteNo, string xReceiptNo, int nFnYearId, bool bAllBranchData, int nBranchId, bool bDeliveryNote = false)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -113,41 +116,10 @@ namespace SmartxAPI.Controllers
 
 
 
-            if (bDeliveryNote)
-                X_type = "DELIVERY";
-            else
-                X_type = "SALES";
-            if (bAllBranchData == true)
-            {
-                if (xReceiptNo != "" && xReceiptNo != null)
-                {
-                    sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,0,@FnYearID";
-                    Params.Add("@RcptNo", xReceiptNo);
-                }
-                else
-                {
-                    sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
-                    Params.Add("@RcptNo", xDebitNoteNo);
-                }
-            }
-            else
-            {
-                if (xReceiptNo != "" && xReceiptNo != null)
-                {
-                    sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,@BranchID,@FnYearID";
-                    Params.Add("@RcptNo", xReceiptNo);
-                }
-                else
-                {
-                    sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
-                    Params.Add("@RcptNo", xDebitNoteNo);
-                }
-            }
 
             Params.Add("@CompanyID", nCompanyId);
             Params.Add("@FnYearID", nFnYearId);
             Params.Add("@BranchID", nBranchId);
-            Params.Add("@Xtype", X_type);
 
             try
             {
@@ -157,18 +129,59 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     //SqlTransaction transaction;
 
-                    object Res = dLayer.ExecuteScalar("Select B_Invoice from Inv_SalesReturnMaster where X_DebitNoteNo=" + xDebitNoteNo + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Params, connection);
-                    if (myFunctions.getBoolVAL(Res.ToString()) == false)
+                    // bDeliveryNote = myFunctions.CheckPermission(nCompanyId, 729, "Administrator", "X_UserCategory", dLayer, connection);
+
+                    if (bDeliveryNote)
+                        X_type = "DELIVERY";
+                    else
+                        X_type = "SALES";
+
+                    Params.Add("@Xtype", X_type);
+
+
+                    object Res = true;
+                    if (xDebitNoteNo != "" && xDebitNoteNo != null)
                     {
-                        if (bAllBranchData == true)
+                        Res = dLayer.ExecuteScalar("Select B_Invoice from Inv_SalesReturnMaster where X_DebitNoteNo=" + xDebitNoteNo + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, Params, connection);
+                        if (myFunctions.getBoolVAL(Res.ToString()) == false)
                         {
-                            sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                            if (bAllBranchData == true)
+                            {
+                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                            }
+                            else
+                            {
+                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                            }
+
+                        }
+                    }
+
+                    if (bAllBranchData == true)
+                    {
+                        if (xReceiptNo != "" && xReceiptNo != null)
+                        {
+                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,0,@FnYearID";
+                            Params.Add("@RcptNo", xReceiptNo);
                         }
                         else
                         {
-                            sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
+                            Params.Add("@RcptNo", xDebitNoteNo);
                         }
-
+                    }
+                    else
+                    {
+                        if (xReceiptNo != "" && xReceiptNo != null)
+                        {
+                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,@BranchID,@FnYearID";
+                            Params.Add("@RcptNo", xReceiptNo);
+                        }
+                        else
+                        {
+                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
+                            Params.Add("@RcptNo", xDebitNoteNo);
+                        }
                     }
 
 
@@ -177,17 +190,41 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(SalesReturn);
 
                     int N_DebitNoteId = myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString());
+                    if (N_DebitNoteId == 0)
+                    {
+                        SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
+                        SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
+                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn,"B_Invoice",typeof(int),1);
+                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn,"N_UserID",typeof(int),myFunctions.GetUserID(User));
+                        SalesReturn.AcceptChanges();
+                    }
                     Params.Add("@DebitNoteID", N_DebitNoteId);
 
-                    string sqlCommandText2 = "Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
+                    string sqlCommandText2 = "";
                     if (myFunctions.getBoolVAL(Res.ToString()) == false)
                     {
-                        sqlCommandText2 = "SELECT   * from vw_SalesReturnWithoutSale_Disp Where N_DebitNoteId=" + N_DebitNoteId + " and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+                        sqlCommandText2 = "SELECT   * from vw_SalesReturnWithoutSale_Disp Where N_DebitNoteId=@DebitNoteID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+                    }
+                    else
+                    if (xReceiptNo != "" && xReceiptNo != null)
+                    {
+                        Params.Add("@nSalesID", myFunctions.getIntVAL(SalesReturn.Rows[0]["N_SalesID"].ToString()));
+                        if (!bDeliveryNote)
+                            sqlCommandText2 = "Select * from vw_InvSalesReturn_Disp Where N_CompanyID=@CompanyID and N_SalesID=@nSalesID";
+                        else
+                            sqlCommandText2 = "Select * from vw_InvDeliveryReturn_Disp Where N_CompanyID=@CompanyID and N_DeliveryNoteId=@nSalesID";
+                    }
+                    else
+                    {
+                        if (!bDeliveryNote)
+                            sqlCommandText2 = "Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
+                        else
+                            sqlCommandText2 = "Select * from vw_InvDeliveryRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
                     }
                     DataTable SalesReturnDetails = new DataTable();
                     SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
                     SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()),myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()),this.FormID,myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
                     dt.Tables.Add(SalesReturnDetails);
@@ -198,7 +235,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -223,7 +260,7 @@ namespace SmartxAPI.Controllers
                 DataRow masterRow = MasterTable.Rows[0];
                 var values = masterRow["X_DebitNoteNo"].ToString();
                 int UserID = myFunctions.GetUserID(User);
-                int N_InvoiceId=0;
+                int N_InvoiceId = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -259,23 +296,23 @@ namespace SmartxAPI.Controllers
                     CustomerParams.Add("@nCustomerID", N_CustomerID);
                     DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
                     if (CustomerInfo.Rows.Count > 0)
+                    {
+                        try
                         {
-                            try
-                            {
-                                myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DebitNoteId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID,  "Customer Document", User, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(ex));
-                            }
+                            myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DebitNoteId, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
                         }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
                     transaction.Commit();
                 }
-                 SortedList Result = new SortedList();
-                Result.Add("n_SalesReturnID",N_InvoiceId);
-                Result.Add("x_SalesReturnNo",InvoiceNo);
-                return Ok(_api.Success(Result,"Sales Return Saved"));
+                SortedList Result = new SortedList();
+                Result.Add("n_SalesReturnID", N_InvoiceId);
+                Result.Add("x_SalesReturnNo", InvoiceNo);
+                return Ok(_api.Success(Result, "Sales Return Saved"));
 
             }
             catch (Exception ex)
@@ -295,19 +332,19 @@ namespace SmartxAPI.Controllers
                 Params.Add("@N_CompanyId", nCompanyId);
 
                 Params.Add("@N_DebitNoteId", nDebitNoteId);
-                
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nDebitNoteId +" and X_TransType='SALES RETURN'" , connection);
+                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nDebitNoteId + " and X_TransType='SALES RETURN'", connection);
                     if (objPaymentProcessed == null)
                         objPaymentProcessed = 0;
-                        if(myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0 )
-                            dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        else
-                            return Ok(_api.Error("Payment processed! Unable to delete"));
+                    if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
+                        dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    else
+                        return Ok(_api.Error("Payment processed! Unable to delete"));
 
-                    
+
                 }
                 return Ok(_api.Success("Sales Return deleted"));
                 //return StatusCode(200, _api.Response(200, "Sales Return deleted"));
