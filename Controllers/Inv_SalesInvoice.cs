@@ -340,6 +340,9 @@ namespace SmartxAPI.Controllers
                         InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
                     myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNos", typeof(string), InvoiceNos);
 
+
+                    dLayer.ExecuteDataTable( "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchId Or N_BranchId=0)",QueryParamsList,Con);
+
                     //Details
                     SortedList dParamList = new SortedList()
                     {
