@@ -33,18 +33,38 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType,int nPage,int nSizeperpage)
+        public ActionResult GetPaymentVoucherList(int? nCompanyId, int nFnYearId, string voucherType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" +xSearchkey+ "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_VoucherID desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 and N_VoucherId not in (select top("+ Count +") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3)";
+            {
+             switch (xSortBy.Split(" ")[0]){ 
+                    case "voucherNo" : xSortBy ="N_VoucherID " + xSortBy.Split(" ")[1] ;
+                    break;
+                    case "voucherDate" : xSortBy ="[Voucher Date] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and X_TransType=@p3 and N_VoucherId not in (select top(" + Count + ") N_VoucherId from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + xSortBy + " ) " + xSortBy;
 
 
             Params.Add("@p1", nCompanyId);
@@ -58,10 +78,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_AccVoucher_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and X_TransType=@p3 " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount="0";
+                    string TotalSum="0";
+                    if(Summary.Rows.Count>0){
+                    DataRow drow = Summary.Rows[0];
+                    TotalCount = drow["N_Count"].ToString();
+                    TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -74,7 +102,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpGet("details")]
@@ -133,7 +161,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -192,13 +220,34 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", nFormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-
-
-
-                        xVoucherNo = dLayer.GetAutoNumber("Acc_VoucherMaster", "x_VoucherNo", Params, connection, transaction);
-                        if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
+                        while (true)
+                        {
+                            xVoucherNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerateBranch", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "' and N_FnYearID =" + nFnYearId, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        if (xVoucherNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to generate Invoice Number"));
+                        }
+                        // xVoucherNo = dLayer.GetAutoNumber("Acc_VoucherMaster", "x_VoucherNo", Params, connection, transaction);
+                        // if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
 
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
+                    }
+                    else
+                    {
+                        if (N_VoucherID > 0)
+                        {   int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error("Unable to Update"));}
+                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", N_VoucherID , "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearId,connection,transaction);
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error("Unable to Update"));}
+                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId,connection,transaction);
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error("Unable to Update"));}
+                             
+                        }
                     }
 
                     N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", MasterTable, connection, transaction);
@@ -223,60 +272,77 @@ namespace SmartxAPI.Controllers
                             DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
                         }
                         int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
-                        transaction.Commit();
+
+                        if (N_InvoiceDetailId > 0)
+                        {
+                            SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", xTransType);
+                            PostingParams.Add("N_InternalID", N_VoucherID);
+                            PostingParams.Add("N_UserID", nUserId);
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            transaction.Commit();
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to Save"));
+                        }
+
                     }
                     //return Ok(api.Success("Data Saved"));
-                    return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
+                    // return Ok(api.Success("Data Saved" + ":" + xVoucherNo));
+                SortedList Result = new SortedList();
+                Result.Add("n_VoucherID",N_VoucherID);
+                Result.Add("x_POrderNo",xVoucherNo);
+                return Ok(api.Success(Result,"Data Saved"));
                 }
-                }
+            }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int N_VoucherID)
+        public ActionResult DeleteData(int nVoucherID, string xTransType)
         {
             int Results = 0;
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                Results = dLayer.DeleteData("Inv_SalesVoucher", "n_quotationID", N_VoucherID, "",connection,transaction);
-                if (Results <= 0)
-                {
-                    transaction.Rollback();
-                    return Ok(api.Error("Unable to delete sales quotation"));
-                }
-                else
-                {
-                    dLayer.DeleteData("Inv_SalesVoucherDetails", "n_quotationID", N_VoucherID, "",connection,transaction);
-                }
 
-                if (Results > 0)
-                {
-                    transaction.Commit();
-                    return Ok(api.Success("Sales quotation deleted"));
-                }
-                else
-                {
-                     transaction.Rollback();
-                    return Ok(api.Error("Unable to delete sales quotation"));
-                }
+                    SortedList Params = new SortedList();
+                    Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("X_TransType", xTransType);
+                    Params.Add("N_VoucherID", nVoucherID);
+                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", Params, connection, transaction);
+
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success("Voucher deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to delete Voucher"));
+                    }
                 }
 
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
 
 
         }
-    [HttpGet("dummy")]
+        [HttpGet("dummy")]
         public ActionResult GetVoucherDummy(int? nVoucherID)
         {
             try
@@ -311,6 +377,52 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return StatusCode(403, api.Error(e));
+            }
+        }
+
+        [HttpGet("default")]
+        public ActionResult GetDefault(int nFnYearID,int nLangID,int nFormID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+
+            string X_Condn = "";
+            if (nFormID == 44)
+                X_Condn = " and N_CompanyID=@nCompanyID and B_PaymentVoucher='True'";
+            else if (nFormID == 45)
+                X_Condn = " and N_CompanyID=@nCompanyID and B_ReceiptVoucher='True'";
+
+            string PaymentType = dLayer.ExecuteScalar("Select X_PayMethod from Acc_PaymentMethodMaster  where  B_isDefault='True'" + X_Condn,Params,connection).ToString();
+            int N_BehID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_PaymentMethodID from Acc_PaymentMethodMaster where  B_isDefault='True'" + X_Condn,Params, connection).ToString());
+            string FieldName = "V " + N_BehID;
+
+                    DataTable QList = myFunctions.GetSettingsTable();
+                    QList.Rows.Add("DEFAULT_ACCOUNTS", FieldName);
+
+                    QList.AcceptChanges();
+
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
+                        SortedList Default = new SortedList(){
+                            {"defultPaymentMethodID",N_BehID},
+                            {"defultPaymentMethod",PaymentType}
+                        };
+                        SortedList OutPut = new SortedList(){
+                            {"settings",api.Format(Details)},
+                            {"default",Default}
+                        };
+                    return Ok(api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
             }
         }
 

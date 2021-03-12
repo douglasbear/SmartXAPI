@@ -41,23 +41,46 @@ namespace SmartxAPI.Controllers
         public ActionResult GetDefults (string type)
         {
             int id=0;
-            switch(type){
-                case "LocationType": id=1;
+            switch(type.ToLower()){
+                case "locationtype": id=1;
                 break;
-                case "PartnerType": id=25;
+                case "salarytype": id=2;
                 break;
-                case "ProductType": id=36;
+                case "accrualtype": id=3;
                 break;
-                case "TravelType": id=56;
+                case "accrualfrequency": id=4;
                 break;
-                case "ActivityRelation": id=91;
+                case "accrualstartfrom": id=5;
                 break;
-                case "ActivityType": id=92;
+                case "partnertype": id=25;
                 break;
-                case "CustomerType": id=93;
+                case "producttype": id=36;
                 break;
-                case "TimeUnit": id=68;
+                case "traveltype": id=56;
                 break;
+                case "activityrelation": id=91;
+                break;
+                case "activitytype": id=92;
+                break;
+                case "customertype": id=93;
+                break;
+                case "timeunit": id=68;
+                break;
+                case "hiretype": id=56;
+                break;
+                case "closingstatus": id=94;
+                break;
+                case "maritalstatus": id=26;
+                break;
+                case "workmode": id=82;
+                break;
+                case "licencepaymentmode": id=59;
+                break;
+                case "licencetype": id=64;
+                break;
+                case "decision": id=31;
+                break;
+               
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -81,7 +104,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }   
         }
 
@@ -100,7 +123,27 @@ namespace SmartxAPI.Controllers
                 break;
                 case "LeadStatus": N_FormID=1313;
                 break;
+                 case "District": N_FormID=1273;
+                break;
                 case "Ownership": N_FormID=1314;
+                break;
+                case "BloodGroup": N_FormID=14;
+                break;
+                case "DrivingLicence": N_FormID=1208;
+                break;
+                case "WorkLocation": N_FormID=1209;
+                break;
+                case "EducationType": N_FormID=28;
+                break;
+                case "serviceType": N_FormID=1151;
+                break;
+                case "WorkType": N_FormID=1121;
+                break;
+                case "ProjectType": N_FormID=1048;
+                break;
+                case "EnquiryType": N_FormID=1100;
+                break;
+                case "SubmissionType": N_FormID=1123;
                 break;
                 default: return Ok("Invalid Type");
             }
@@ -125,7 +168,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }   
         }
 
@@ -152,7 +195,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
        path = path + filename;
   

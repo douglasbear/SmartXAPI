@@ -18,32 +18,36 @@ using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
 using Microsoft.Data.SqlClient;
+using System.Net.Mail;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.GeneralFunctions
 {
     public class MyFunctions : IMyFunctions
     {
-        public MyFunctions()
+        private readonly string ApprovalLink;
+        public MyFunctions(IConfiguration conf)
         {
+            ApprovalLink = conf.GetConnectionString("ApprovalLink");
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and " + FieldName + "=@p3", Params, connection));
             return Result;
         }
 
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             SortedList Params = new SortedList();
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and X_UserCategory=@p3", Params, connection, transaction));
+            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  " + FieldName + "=@p3", Params, connection, transaction));
             return Result;
         }
         public int getIntVAL(string val)
@@ -157,7 +161,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool getBoolVAL(string val)
         {
-            if (val.Trim() == "")
+            if (val==null || val.Trim() == "")
                 return false;
             else
                 return Convert.ToBoolean(val);
@@ -346,10 +350,14 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
 
+            object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID="+nCompanyID+" and N_UserID="+loggedInUserID, ApprovalParams, connection);
+                    
+            objUserCategory = objUserCategory !=null?objUserCategory:0;
+
 
             if (nApprovalID == 0)
             {
-                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "")
+                if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
                 {
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
@@ -460,6 +468,17 @@ namespace SmartxAPI.GeneralFunctions
                 else
                     nSubmitter = nMaxLevel;
 
+                object RewCheck = null;
+                RewCheck = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID  and N_UserID=@loggedInUserID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=110", ApprovalParams, connection);
+                if (RewCheck != null)
+                    nActionLevelID = this.getIntVAL(RewCheck.ToString());
+
+                int nNextActionLevelID = 0;
+                object NextRewChec = null;
+                NextRewChec = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);//+ " and N_ActionTypeID=110"
+                if (NextRewChec != null)
+                    nNextActionLevelID = this.getIntVAL(NextRewChec.ToString());
+
 
                 if (nTransID > 0)
                 {
@@ -469,13 +488,44 @@ namespace SmartxAPI.GeneralFunctions
                         {
                             if (nMinLevel == nTransApprovalLevel)
                             {
-                                nTransStatus = 911;
-                                ApprovalParams["@nTransStatus"] = nTransStatus;
+                                if (nNextActionLevelID == 327)
+                                {
+                                    nTransStatus = 926;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                                else
+                                {
+                                    nTransStatus = 911;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
                             }
                             else
                             {
-                                nTransStatus = 912;
-                                ApprovalParams["@nTransStatus"] = nTransStatus;
+
+                                if (nNextActionLevelID == 327)
+                                {
+                                    nTransStatus = 927;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                                else
+                                {
+                                    nTransStatus = 912;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                            }
+
+                            if (nActionLevelID == 327)
+                            {
+                                if (nNextActionLevelID == 327)
+                                {
+                                    nTransStatus = 928;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                                else
+                                {
+                                    nTransStatus = 925;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
                             }
                         }
                         else if (nTransStatus == 3)
@@ -494,7 +544,7 @@ namespace SmartxAPI.GeneralFunctions
                     else
                     {
 
-                        SecUserLevel = dLayer.ExecuteDataTable("SELECT TOP (1) N_FormID, N_TransID, Approved_User, N_ApprovalLevelId,D_ApprovedDate, N_BranchID, N_CompanyID, N_FnYearID, N_ProcStatus, N_UserID, N_IssaveDraft, N_NextApprovalLevelId, X_Status, N_CurrentApprover, N_NextApproverID FROM vw_ApprovalDashBoard WHERE (N_FormID = @nFormID ) AND (N_CompanyID = @nCompanyID) AND (N_TransID = @nTransID ) AND (N_NextApproverID = @loggedInUserID )", ApprovalParams, connection);
+                        SecUserLevel = dLayer.ExecuteDataTable("SELECT TOP (1) N_FormID, N_TransID, Approved_User, N_ApprovalLevelId,D_ApprovedDate, N_CompanyID, N_FnYearID, N_ProcStatus, N_UserID, N_IssaveDraft, N_NextApprovalLevelId, X_Status, N_CurrentApprover, N_NextApproverID FROM vw_ApprovalDashBoard WHERE (N_FormID = @nFormID ) AND (N_CompanyID = @nCompanyID) AND (N_TransID = @nTransID ) AND (N_NextApproverID = @loggedInUserID )", ApprovalParams, connection);
                         if (SecUserLevel.Rows.Count > 0)
                         {
                             DataRow Drow = SecUserLevel.Rows[0];
@@ -505,6 +555,11 @@ namespace SmartxAPI.GeneralFunctions
                             //nTransStatus = 912;`
                             nNextApprovalLevel = this.getIntVAL(Drow["N_NextApprovalLevelId"].ToString());
                             Response["nextApprovalLevel"] = nNextApprovalLevel;
+                            if (nTransStatus == 8)
+                            {
+                                nTransStatus = 924;
+                                ApprovalParams["@nTransStatus"] = nTransStatus;
+                            }
                             if (nActionLevelID == 110)
                             {
                                 if (((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel)) && nTransStatus != 3)
@@ -514,6 +569,19 @@ namespace SmartxAPI.GeneralFunctions
                                 }
                                 //else
                                 //    nTransStatus = 7;
+                            }
+                            else if (nActionLevelID == 327)
+                            {
+                                if (nTransStatus == 924)
+                                {
+                                    nTransStatus = 930;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                                else
+                                {
+                                    nTransStatus = 8;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
                             }
                             if (nTransStatus == 3)
                             {
@@ -540,8 +608,16 @@ namespace SmartxAPI.GeneralFunctions
                         {
                             if (nTransStatus != 3 && nTransStatus != 4)
                             {
-                                nTransStatus = 913;
-                                ApprovalParams["@nTransStatus"] = nTransStatus;
+                                if (nNextActionLevelID == 327)
+                                {
+                                    nTransStatus = 929;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
+                                else
+                                {
+                                    nTransStatus = 913;
+                                    ApprovalParams["@nTransStatus"] = nTransStatus;
+                                }
                             }
                             else if (nTransStatus == 3)
                             {
@@ -559,7 +635,19 @@ namespace SmartxAPI.GeneralFunctions
                 else if (nTransID == 0)
                 {
                     nActionLevelID = 0;
-                    SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
+
+                    int nUsrCatID = 0;
+                    object UsrCatID = null;
+                    UsrCatID = dLayer.ExecuteScalar("Select N_UserCategoryID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID  and N_ApprovalID=@nApprovalID and N_level=1 ", ApprovalParams, connection);
+                    if (UsrCatID != null)
+                        nUsrCatID = this.getIntVAL(UsrCatID.ToString());
+
+                    if (nUsrCatID == 0)
+                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
+                    else
+                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in ("+objUserCategory+")", ApprovalParams, connection);
+
+
                     if (SecUserLevel.Rows.Count > 0)
                     {
                         nNextApprovalLevel = 1;
@@ -573,6 +661,8 @@ namespace SmartxAPI.GeneralFunctions
                         ApprovalParams["@nTransStatus"] = nTransStatus;
                     }
                 }
+
+
 
                 object NextApprovalUser = null;
 
@@ -667,7 +757,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         Response["saveEnabled"] = false;
                         Response["deleteEnabled"] = true;
-                        Response["btnDeleteText"] = "OK";
+                        Response["btnDeleteText"] = "Review";
                         Response["deleteTag"] = 7;
                     }
 
@@ -748,8 +838,101 @@ namespace SmartxAPI.GeneralFunctions
             }
             return MasterTable;
         }
+        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
+        {
+            try
+            {
+                int companyid = GetCompanyID(User);
+                int nUserID = GetUserID(User);
+                SortedList Params = new SortedList();
+                string Toemail = "";
+                object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
+                Toemail = Email.ToString();
+                object CurrentStatus = dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID=" + FormID + " and X_TransCode='" + TransCode + "' and N_TransID=" + TransID + " and X_Type='" + TransType + "'", Params, connection, transaction);
+                object EmployeeName = dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID=" + nUserID + " and N_CompanyID=" + companyid, Params, connection, transaction);
+                object companyemail = "";
+                object companypassword = "";
 
-        public void LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+                companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
+                companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+                if (Toemail.ToString() != "")
+                {
+                    if (companyemail.ToString() != "")
+                    {
+                        object body = null;
+                        string MailBody;
+                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink;
+                        if (body != null)
+                        {
+                            body = body.ToString();
+                        }
+                        else
+                            body = "";
+
+
+                        string Sender = companyemail.ToString();
+                        MailBody = body.ToString();
+                        string Subject = "Request for Approval";
+
+
+
+                        SmtpClient client = new SmtpClient
+                        {
+                            Host = "smtp.gmail.com",
+                            Port = 587,
+                            EnableSsl = true,
+                            DeliveryMethod = SmtpDeliveryMethod.Network,
+                            Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                            Timeout = 10000,
+                        };
+
+                        MailMessage message = new MailMessage();
+                        message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                        message.From = new MailAddress(Sender);
+                        message.Subject = Subject;
+                        message.Body = MailBody;
+
+                        message.IsBodyHtml = true; //HTML email  
+                        string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
+                        if (CC != "")
+                            message.CC.Add(CC);
+
+                        string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
+                        if (Bcc != "")
+                            message.Bcc.Add(Bcc);
+                        client.Send(message);
+
+                    }
+                }
+                return true;
+
+            }
+
+            catch (Exception ie)
+            {
+                return false;
+            }
+        }
+        public static string GetCCMail(int ID, int nCompanyID, SqlConnection connection, SqlTransaction transaction, IDataAccessLayer dLayer)
+        {
+            SortedList Params = new SortedList();
+            object CCMail = dLayer.ExecuteScalar("select X_CCMail from Gen_EmailAddresses where N_subjectID =" + ID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+            if (CCMail != null)
+                return CCMail.ToString();
+            else
+                return "";
+        }
+        public static string GetBCCMail(int ID, int nCompanyID, SqlConnection connection, SqlTransaction transaction, IDataAccessLayer dLayer)
+        {
+            SortedList Params = new SortedList();
+            object BCCMail = dLayer.ExecuteScalar("select X_BCCMail from Gen_EmailAddresses where N_subjectID =" + ID + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+            if (BCCMail != null)
+                return BCCMail.ToString();
+            else
+                return "";
+        }
+
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -792,7 +975,7 @@ namespace SmartxAPI.GeneralFunctions
 
             if (N_IsApprovalSystem == 1)
             {
-                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0", LogParams, connection, transaction);
+                dLayer.ExecuteNonQuery("SP_Gen_ApprovalCodesTrans @nCompanyID,@nFormID,@nApprovalUserID,@nTransID,@nApprovalLevelID,@nProcStatusID,@nApprovalID,@nGroupID,@nFnYearID,@xAction,@nEmpID,@xDepLevel,@dTransDate,0,0", LogParams, connection, transaction);
 
                 object NxtUser = null;
                 NxtUser = dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_Status=0", LogParams, connection, transaction);
@@ -826,6 +1009,7 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
             }
+            return N_NxtUserID;
         }
 
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
@@ -938,6 +1122,13 @@ namespace SmartxAPI.GeneralFunctions
                 B_IsDelete = false;
                 X_Message = "Revoked";
             }
+            else if (ButtonTag == "7")
+            {
+                //dLayer.ExecuteNonQuery("UPDATE " + X_ScreenTable + " SET N_ApprovalLevelId=@nApprovalLevelID,N_ProcStatus=@xButtonTag,N_UserID=@nApprovalUserID,B_IssaveDraft=1 where " + X_Criteria, UpdateParams, connection, transaction);
+                X_Action = "Review";
+                B_IsDelete = false;
+                X_Message = "Reviewed";
+            }
             else if (ButtonTag == "6" || ButtonTag == "0")
             {
                 SortedList DeleteParams = new SortedList();
@@ -951,74 +1142,79 @@ namespace SmartxAPI.GeneralFunctions
 
                 X_Action = "Delete";
                 X_Message = "Deleted";
+                int DeleteStatus = 0;
                 switch (FormID)
                 {
                     case 82:
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
                     case 212://loan issue
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
                     case 198://Salary Payment
-                        dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeePayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeePayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 586://Paycode Adjustment
-                        dLayer.ExecuteNonQuery("SP_Pay_EndOfServiceBatchPosting_Del @nCompanyID,@nFnYearID,'EOS',@xTransCode", DeleteParams, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQuery("SP_Pay_EndOfServiceBatchPosting_Del @nCompanyID,@nFnYearID,'EOS',@xTransCode", DeleteParams, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 578://Gosi Payment
-                        dLayer.DeleteData("Pay_GOSIPaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_GOSIPayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_GOSIPaymentDetails", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_GOSIPayment", "N_ReceiptID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 208://addition Dedution
-                        dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 1032://Employee Clearance
-                        dLayer.DeleteData("Pay_EmployeeClearanceDetails", "N_ClearanceID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeeClearance", "N_ClearanceID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeeClearanceDetails", "N_ClearanceID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmployeeClearance", "N_ClearanceID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 1068://Employee Evaluation
-                        dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", N_TransID, "N_CompanyID=" + N_CompanyID, connection, transaction);
+                        DeleteStatus = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", N_TransID, "N_CompanyID=@nFnYearID and N_FnYearID=" + N_FnYearID, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 684://Material Dispatch
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 81://Sales Order
                     case 1045://BOM
-                        dLayer.ExecuteNonQuery("UPDATE Prj_BOMDetails SET B_BOMProcessed=0 where N_BOMDetailID in (select N_BOMDetailID from Inv_SalesOrderDetails where N_SalesOrderID=@nTransID and N_CompanyID=@nFnYearID and N_FnYearId=@nFnYearID)", DeleteParams, connection, transaction);
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQuery("UPDATE Prj_BOMDetails SET B_BOMProcessed=0 where N_BOMDetailID in (select N_BOMDetailID from Inv_SalesOrderDetails where N_SalesOrderID=@nTransID and N_CompanyID=@nFnYearID and N_FnYearId=@nFnYearID)", DeleteParams, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 1015://PROJECT TRANSFER
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         B_IsDelete = true;
                         break;
                     case 44:
                     case 45:
                     case 46:
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParamsPro, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
                     default:
-                        dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
+                        DeleteStatus = dLayer.ExecuteNonQuery("DELETE FROM " + X_ScreenTable + " where " + X_Criteria, connection, transaction);
                         X_Action = "Delete";
                         B_IsDelete = true;
                         break;
 
+                }
+                if (DeleteStatus == 0)
+                {
+                    X_Message = "Error";
                 }
             }
 
@@ -1032,6 +1228,15 @@ namespace SmartxAPI.GeneralFunctions
             return X_Message;
         }
 
+public bool ContainColumn(string columnName, DataTable table)
+{
+    DataColumnCollection columns = table.Columns;        
+    if (columns.Contains(columnName))
+    {
+      return true;
+    }
+      return false;
+}
         public DataTable ListToTable(SortedList List)
         {
             DataTable ResultTable = new DataTable();
@@ -1057,6 +1262,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.Sid)?.Value);
         }
+        public string GetCompanyName(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.StreetAddress)?.Value;
+        }
         public int GetUserCategory(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
@@ -1070,8 +1279,8 @@ namespace SmartxAPI.GeneralFunctions
 
     public interface IMyFunctions
     {
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection);
-        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public int getIntVAL(string val);
         public double getVAL(string val);
         public double Round(double val, int RoundDigit);
@@ -1097,15 +1306,19 @@ namespace SmartxAPI.GeneralFunctions
         public string getDateVAL(DateTime val);
         public DateTime GetFormatedDate(string val);
         public DataTable SaveApprovals(DataTable MasterTable, DataTable Approvals, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public void LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public string UpdateApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int N_ProcStatusID, string X_ScreenTable, string X_Criteria, string PartyName, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable ListToTable(SortedList List);
         public int GetUserID(ClaimsPrincipal User);
         public int GetCompanyID(ClaimsPrincipal User);
+        public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+
+        public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
+        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
 
     }
 }

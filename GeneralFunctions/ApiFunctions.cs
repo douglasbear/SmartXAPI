@@ -4,8 +4,10 @@ using System.Collections.Generic;
 using System.Data;
 using System.IO;
 using System.Security.Claims;
+using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -14,11 +16,13 @@ namespace SmartxAPI.GeneralFunctions
         private readonly IMapper _mapper;
         private readonly IWebHostEnvironment env;
         private readonly IMyFunctions myFunctions;
-        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun)
+        private readonly string logPath;
+        public ApiFunctions(IMapper mapper, IWebHostEnvironment envn, IMyFunctions myFun, IConfiguration conf)
         {
             _mapper = mapper;
             env = envn;
             myFunctions = myFun;
+            logPath = conf.GetConnectionString("LogPath");
         }
 
         public object Response(int Code, string ResMessage)
@@ -55,9 +59,17 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = "null", Data = dataSet });
         }
+        public object Success(string[] json)
+        {
+            return (new { type = "success", Message = "null", Data = json });
+        }
         public object Success(SortedList result)
         {
             return (new { type = "success", Message = "null", Data = result });
+        }
+        public object Success(SortedList result, String message)
+        {
+            return (new { type = "success", Message = message, Data = result });
         }
         public object Success(DataSet dataSet, String message)
         {
@@ -111,15 +123,34 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = ex.Message.Substring(16, subString.IndexOf("'") + 1) + "' is not required or specified more than once";
                         break;
                     }
-                    if (env.EnvironmentName == "Development")
+                    if (ex.Message.Contains("Some accounts may not properly set. Please check the  Account Mapping !") == true)
+                    {
+                        Msg = "Some accounts may not properly set. Please check the  Account Mapping !";
+                        break;
+                    }
+                    if (ex.Message.Contains("Transaction Processed"))
+                    {
                         Msg = ex.Message;
-                    else
-                        Msg = "Internal Server Error";
+                        break;
+                    }
                     break;
+                    // if (env.EnvironmentName == "Development")
+                    // {
+                    //     Msg = ex.Message;
+                    //     break;
+                    // }
+                    // else
+                    // {
+                    //     Msg = "Internal Server Error";
+                    //     break;
+                    // }
             }
 
-
-            return (new { type = "error", Message = ex.Message, Data = "" });
+            // StringBuilder sb = new StringBuilder();
+            // sb.Append(ex.Message);
+            // File.AppendAllText(logPath+"log.txt", sb.ToString());
+            // sb.Clear();
+            return (new { type = "error", Message = Msg, Data = "" });
 
 
         }
@@ -188,7 +219,9 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(Dictionary<string, string> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary);
         public object Success(SortedList data);
+        public object Success(SortedList result, String message);
         public object Success(DataSet dataSet);
+        public object Success(string[] json);
         public object Success(string message);
         public object Success(DataSet dataSet, String message);
         public object Success(DataRow dataRow, String message);

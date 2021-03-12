@@ -30,25 +30,39 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID =1307;
+            FormID = 1307;
         }
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage,int nSizeperpage)
+        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bySalesMan)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 ";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Criteria ="";
+            if(bySalesMan==true){
+                Criteria = " and N_UserID=@nUserID ";
+            }
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and x_subject like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by n_activityid desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Activity where N_CompanyID=@p1 and N_ActivityID not in (select top("+ Count +") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1)";
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + Criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
+            Params.Add("@nUserID", nUserID);
 
             SortedList OutPut = new SortedList();
 
@@ -58,9 +72,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -74,11 +88,11 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -87,7 +101,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
@@ -98,7 +112,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -112,7 +126,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -144,7 +158,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
-                        if (ActivityCode == "") { return Ok(api.Error("Unable to generate Activity Code")); }
+                        if (ActivityCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
                     }
 
@@ -163,40 +177,32 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
-      
+
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nActivityID,int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nActivityID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                        
-                SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
-                QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nFormID", 1307);
-                QueryParams.Add("@nActivityID", nActivityID);
+            {
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Activity..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Activity", "N_ActivityID", nActivityID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_ActivityID",nActivityID.ToString());
-                    return Ok(api.Success(res,"Activity deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_ActivityID", nActivityID.ToString());
+                    return Ok(api.Success(res, "Activity deleted"));
                 }
                 else
                 {

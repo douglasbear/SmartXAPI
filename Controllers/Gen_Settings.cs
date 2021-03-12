@@ -88,9 +88,39 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
+
+
+        [HttpGet("allSettings")]
+        public ActionResult GetAllSettingsDetails(int nFnYearID,int nBranchID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList mParamsList = new SortedList()
+                    {
+                        {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                        {"N_FnYearID",nFnYearID},
+                        {"N_BranchID",nBranchID},
+                        {"N_UserCategoryID",myFunctions.GetUserCategory(User)}
+                    };
+                    DataTable Details = dLayer.ExecuteDataTablePro("SP_GenSettings_Disp_All", mParamsList, connection);
+                    return Ok(_api.Success(_api.Format(Details)));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        
 
                 //Save....
         [HttpPost("saveInventorySettings")]
@@ -112,9 +142,34 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
+
+ [HttpGet("checkScreenAccess")]
+        public ActionResult GetFormAccess(int nFormID)
+        {
+            bool Allowed=false;
+            SortedList Out =new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Allowed = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), nFormID, myFunctions.GetUserCategory(User).ToString(),"N_UserCategoryID", dLayer, connection);
+                    Out.Add("Allowed",Allowed);
+                    Out.Add("FormID",nFormID);
+                    return Ok(_api.Success(Out));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+        }
+       
 
 
 
@@ -152,10 +207,14 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
 
         }
+
+
+
+        
 
 
 
