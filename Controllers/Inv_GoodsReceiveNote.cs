@@ -23,22 +23,22 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("purchaseinvoice")]
+    [Route("goodsreceivenote")]
     [ApiController]
-    public class Inv_PurchaseInvoice : ControllerBase
+    public class Inv_GoodsReceiveNote : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_PurchaseInvoice(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
+        public Inv_GoodsReceiveNote(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = fun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 65;
+            N_FormID = 555;
         }
 
 
