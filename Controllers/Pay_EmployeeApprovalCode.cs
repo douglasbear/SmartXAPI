@@ -38,16 +38,16 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nComapnyID",nCompanyID);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText="select N_CompanyID,N_Action,X_ActionDesc from vw_web_ApprovalAction_Disp where N_CompanyID=@nComapnyID";
+            string sqlCommandText = "select N_CompanyID,N_Action,X_ActionDesc from vw_web_ApprovalAction_Disp where N_CompanyID=@nComapnyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -64,21 +64,21 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-         [HttpGet("approvalcodelist")]
+        [HttpGet("approvalcodelist")]
         public ActionResult ApprovalCodeList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nComapnyID",nCompanyID);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText="select N_CompanyID,N_ApprovalID,X_ApprovalCode,X_ApprovalDescription from vw_PayApprovalCodeDisp where N_CompanyID=@nComapnyID";
+            string sqlCommandText = "select N_CompanyID,N_ApprovalID,X_ApprovalCode,X_ApprovalDescription from vw_PayApprovalCodeDisp where N_CompanyID=@nComapnyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-          //Save....
+        //Save....
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -114,16 +114,16 @@ namespace SmartxAPI.Controllers
 
 
                     int n_ApprovalID = myFunctions.getIntVAL(MasterRow["n_ApprovalID"].ToString());
-                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string x_ApprovalCode = MasterRow["X_ApprovalCode"].ToString();
 
                     if (x_ApprovalCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
-                         Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
-                       // x_ApprovalCode = dLayer.GetAutoNumber("Web_Pay_ApprovalSystem", "X_ApprovalCode", Params, connection, transaction);
+                        // x_ApprovalCode = dLayer.GetAutoNumber("Web_Pay_ApprovalSystem", "X_ApprovalCode", Params, connection, transaction);
                         x_ApprovalCode = dLayer.GetAutoNumber("Acc_CostCentreMaster", "x_CostCentreCode", Params, connection, transaction);
                         if (x_ApprovalCode == "")
                         {
@@ -131,7 +131,7 @@ namespace SmartxAPI.Controllers
                             return Ok("Unable to generate  Approval Code");
                         }
                         MasterTable.Rows[0]["X_ApprovalCode"] = x_ApprovalCode;
-                         MasterTable.Columns.Remove("n_FnYearId");
+                        MasterTable.Columns.Remove("n_FnYearId");
                     }
 
 
@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save approval code");
                     }
-                   
+
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_ApprovalID", n_ApprovalID);
@@ -162,8 +162,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-     [HttpGet("details")]
-        public ActionResult PayEmployeApprovalCode(int? nCompanyID, string xApprovalCode, int nFnYearID,int nApprovalID )
+        [HttpGet("details")]
+        public ActionResult PayEmployeApprovalCode(int? nCompanyID, string xApprovalCode, int nFnYearID, int nApprovalID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -208,7 +208,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList DetailParams = new SortedList();
                     DetailParams.Add("@nCompanyID", nCompanyID);
-                   
+
 
                     DetailSql = "vw_PayApprovalCode_dtls @nCompanyID,@nFnYearID";
                     SortedList NewParams = new SortedList();
@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
         //     {
         //         return Ok(_api.Error(ex));
         //     }
-    
 
-        }
+
     }
+}

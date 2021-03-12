@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
                 break;
                 case "WorkType": N_FormID=1121;
                 break;
-                case "ProjectType": N_FormID=960;
+                case "ProjectType": N_FormID=1048;
                 break;
                 case "EnquiryType": N_FormID=1100;
                 break;
