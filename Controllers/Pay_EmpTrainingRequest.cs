@@ -81,6 +81,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+
         [HttpGet("Details") ]
         public ActionResult GetTrainingRequestList ()
         {    int nCompanyID=myFunctions.GetCompanyID(User);
@@ -108,6 +110,42 @@ namespace SmartxAPI.Controllers
             }catch(Exception e){
                 return Ok(api.Error(e));
             }   
+        }
+
+        [HttpGet("list")]
+        public ActionResult GetAllRequest(int? nCompanyID, int? nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "select * from vw_TrainingRequest where N_CompanyID=@p1 and N_FnYearID=@p2 order by X_RequestCode";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                   return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+               return Ok(api.Error(e));
+            }
+
+
         }
 
 

@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_WebLanMultilingual where LanguageId=@p1";
+            string sqlCommandText = "select * from vw_WebLanMultilingual where LanguageId=@p1 order by X_WFormName,X_WControlName,Text";
             Params.Add("@p1", nLangId);
 
             try
