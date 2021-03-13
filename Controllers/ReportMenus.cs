@@ -491,10 +491,7 @@ namespace SmartxAPI.Controllers
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
-
-                            if (xProCode != "")
-                            {
-                                string procParam = "";
+                             string procParam = "";
                                 if (dateFrom != null && (bRange && dateTo != null))
                                 {
                                     x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
@@ -510,6 +507,10 @@ namespace SmartxAPI.Controllers
                                     x_comments = dateTo.ToString("dd-MMM-yyyy");
                                     procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
                                 }
+
+                            if (xProCode != "")
+                            {
+                               
 
                                 SortedList mParamsList = new SortedList()
                             {
@@ -575,6 +576,7 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
+                //x_comments="abc";
                 string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments;//+ connectionString;
                 var path = client.GetAsync(URL);
 
