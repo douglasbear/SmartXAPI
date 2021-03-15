@@ -84,21 +84,21 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("Details") ]
-        public ActionResult GetTrainingRequestList ()
-        {    int nCompanyID=myFunctions.GetCompanyID(User);
-  
-            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+        public ActionResult GetTrainingRequestDetails (int xRequestCode)
+          
+        {   DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+             int nCompanyID=myFunctions.GetCompanyID(User);
+              string sqlCommandText="select * from vw_TrainingRequest where N_CompanyID=@nCompanyID  and X_RequestCode=@xRequestCode";
+               Params.Add("@nCompanyID",nCompanyID);
+             Params.Add("@xRequestCode",xRequestCode);
             
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="select * from vw_TrainingRequest where N_CompanyID=@p1";
-                
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                     if(dt.Rows.Count==0)
                         {
