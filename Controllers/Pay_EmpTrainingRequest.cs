@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly string connectionString;
          private readonly IMyFunctions myFunctions;
-          private readonly int N_FormID = 1083;
+          private readonly int N_FormID = 1085;
 
         public PayEmpTrainingRequest(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
