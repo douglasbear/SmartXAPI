@@ -123,15 +123,15 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
-                        // x_ApprovalCode = dLayer.GetAutoNumber("Web_Pay_ApprovalSystem", "X_ApprovalCode", Params, connection, transaction);
-                        x_ApprovalCode = dLayer.GetAutoNumber("Acc_CostCentreMaster", "x_CostCentreCode", Params, connection, transaction);
+                         x_ApprovalCode = dLayer.GetAutoNumber("Web_Pay_ApprovalSystem", "X_ApprovalCode", Params, connection, transaction);
+                        // x_ApprovalCode = dLayer.GetAutoNumber("Acc_CostCentreMaster", "x_CostCentreCode", Params, connection, transaction);
                         if (x_ApprovalCode == "")
                         {
                             transaction.Rollback();
                             return Ok("Unable to generate  Approval Code");
                         }
                         MasterTable.Rows[0]["X_ApprovalCode"] = x_ApprovalCode;
-                        MasterTable.Columns.Remove("n_FnYearId");
+                        MasterTable.Columns.Remove("n_FnYearID");
                     }
 
 
@@ -153,6 +153,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_ApprovalID", n_ApprovalID);
                     Result.Add("x_ApprovalCode", x_ApprovalCode);
+                
                     return Ok(_api.Success(Result, "Approval Code Saved"));
                 }
             }
@@ -190,7 +191,7 @@ namespace SmartxAPI.Controllers
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         DetailSql = "";
-                        DetailSql = "select * from vw_PayApprovalCode_dtls where N_CompanyId=@nCompanyID and N_ApprovalID=@nApprovalID";
+                        DetailSql = "select * from vw_PayApprovalCode_dtls where N_CompanyId=@nCompanyID and N_ApprovalID=@nApprovalID ";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dt.Tables.Add(MasterTable);
