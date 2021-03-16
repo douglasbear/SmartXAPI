@@ -315,9 +315,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public int ReminderSave(IDataAccessLayer dLayer, int N_FormID, int partyId, string dateval, string strSubject, string Title, int CategoryID, int Isattachment, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         {
-            string FieldList = "";
-            string FieldValues = "";
-            int N_AssemblyID = 0;
+
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
 
