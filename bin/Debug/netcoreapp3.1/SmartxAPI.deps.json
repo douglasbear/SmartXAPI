@@ -42,6 +42,7 @@
           "System.Data.SqlClient": "4.8.1",
           "System.IdentityModel.Tokens.Jwt": "6.5.1",
           "System.Text.Json": "4.7.2",
+          "Vse.Web.Serialization.ControlledSerializationJsonConverter": "1.0.4",
           "Microsoft.AspNetCore.Antiforgery": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Abstractions": "3.1.0.0",
           "Microsoft.AspNetCore.Authentication.Cookies": "3.1.0.0",
@@ -1587,6 +1588,17 @@
           "System.Threading": "4.3.0",
           "System.Xml.ReaderWriter": "4.3.0",
           "System.Xml.XmlDocument": "4.3.0"
+        }
+      },
+      "Vse.Web.Serialization.ControlledSerializationJsonConverter/1.0.4": {
+        "runtime": {
+          "lib/net45/Vse.Web.Serialization.dll": {
+            "assemblyVersion": "1.0.4.0",
+            "fileVersion": "1.0.4.0"
+          }
+        },
+        "compile": {
+          "lib/net45/Vse.Web.Serialization.dll": {}
         }
       },
       "Microsoft.AspNetCore.Antiforgery/3.1.0.0": {
@@ -4063,6 +4075,13 @@
       "sha512": "sha512-MYoTCP7EZ98RrANESW05J5ZwskKDoN0AuZ06ZflnowE50LTpbR5yRg3tHckTVm5j/m47stuGgCrCHWePyHS70Q==",
       "path": "system.xml.xmlserializer/4.3.0",
       "hashPath": "system.xml.xmlserializer.4.3.0.nupkg.sha512"
+    },
+    "Vse.Web.Serialization.ControlledSerializationJsonConverter/1.0.4": {
+      "type": "package",
+      "serviceable": true,
+      "sha512": "sha512-d1ZGds/VSN028I9xA8illzAH60ra08Rfxk9e4vuJZX+etAvQjyCY9z2iEdN4J9UD6nSdmaI9FNN+nJ1UNKI8Uw==",
+      "path": "vse.web.serialization.controlledserializationjsonconverter/1.0.4",
+      "hashPath": "vse.web.serialization.controlledserializationjsonconverter.1.0.4.nupkg.sha512"
     },
     "Microsoft.AspNetCore.Antiforgery/3.1.0.0": {
       "type": "referenceassembly",

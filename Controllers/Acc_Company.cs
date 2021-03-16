@@ -9,6 +9,7 @@ using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Threading.Tasks;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Text;
 
 namespace SmartxAPI.Controllers
 {
@@ -53,22 +54,23 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
 
         }
 
-  [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult GetCompanyInfo(int nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            SortedList Output = new SortedList();
 
             string sqlCommandText = "select * from Acc_Company where B_Inactive =@p1 and N_CompanyID=@p2";
             Params.Add("@p1", 0);
@@ -79,6 +81,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+
+
+
+                    DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
+
+                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params, connection);
+                    if (FnYearInfo.Rows.Count == 0)
+                    {
+                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where ('" + myFunctions.getDateVAL(myFunctions.GetFormatedDate(myCompanyID._SystemDate)) + "' between D_Start and D_End) and  N_CompanyID=@p2", Params, connection);
+                    }
+
+                    Output.Add("CompanyInfo", dt);
+                    Output.Add("AdminInfo", AdminInfo);
+                    Output.Add("FnYearInfo", FnYearInfo);
+
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -86,13 +104,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(Output));
                 }
 
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
 
         }
@@ -120,13 +138,13 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
 
 
-
+        [AllowAnonymous]
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -141,8 +159,6 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    // Auto Gen
-                    //var values = MasterTable.Rows[0]["X_CompanyCode"].ToString();
                     SortedList Params = new SortedList();
                     // Auto Gen
                     object CompanyCode = "";
@@ -153,6 +169,26 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
+                    string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
+                    string footer = myFunctions.ContainColumn("i_Footer", MasterTable) ? MasterTable.Rows[0]["i_Footer"].ToString() : "";
+                    string header = myFunctions.ContainColumn("i_Header", MasterTable) ? MasterTable.Rows[0]["i_Header"].ToString() : "";
+
+                    Byte[] logoBitmap = new Byte[logo.Length];
+                    Byte[] footerBitmap = new Byte[footer.Length];
+                    Byte[] headerBitmap = new Byte[header.Length];
+
+                    logoBitmap = Convert.FromBase64String(logo);
+                    footerBitmap = Convert.FromBase64String(footer);
+                    headerBitmap = Convert.FromBase64String(header);
+
+                    if (myFunctions.ContainColumn("i_Logo", MasterTable))
+                        MasterTable.Columns.Remove("i_Logo");
+                    if (myFunctions.ContainColumn("i_Footer", MasterTable))
+                        MasterTable.Columns.Remove("i_Footer");
+                    if (myFunctions.ContainColumn("i_Header", MasterTable))
+                        MasterTable.Columns.Remove("i_Header");
+                    MasterTable.AcceptChanges();
+
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
                     {
@@ -161,41 +197,64 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        SortedList proParams1 = new SortedList(){
-                                {"N_CompanyID",N_CompanyId},
-                                {"X_ModuleCode","500"},
-                                {"N_UserID",0},
-                                {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
-                                {"X_AdminPwd",GeneralTable.Rows[0]["x_AdminPwd"].ToString()},
-                                {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
-                        dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
+                        if (logo.Length > 0)
+                            dLayer.SaveImage("Acc_Company", "I_Logo", logoBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
+                        if (footer.Length > 0)
+                            dLayer.SaveImage("Acc_Company", "i_Footer", footerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
+                        if (header.Length > 0)
+                            dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
+                        object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
+                        if (values == "@Auto")
+                        {
+                            SortedList proParams1 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"X_ModuleCode","500"},
+                                        {"N_UserID",0},
+                                        {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
+                                        {"X_AdminPwd",myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())},
+                                        {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
+                            dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 
-                        object N_FnYearId = 0;
-     
-                        SortedList proParams2 = new SortedList(){
-                                {"N_CompanyID",N_CompanyId},
-                                {"N_FnYearID",N_FnYearId},
-                                {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
-                                {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
-                        N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
 
-                        SortedList proParams3 = new SortedList(){
-                                {"N_CompanyID",N_CompanyId},
-                                {"N_FnYearID",N_FnYearId}};
-                        dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
 
+                            SortedList proParams2 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"N_FnYearID",N_FnYearId},
+                                        {"D_Start",GeneralTable.Rows[0]["d_FromDate"].ToString()},
+                                        {"D_End",GeneralTable.Rows[0]["d_ToDate"].ToString()}};
+                            N_FnYearId = dLayer.ExecuteScalarPro("SP_FinancialYear_Create", proParams2, connection, transaction);
+
+                            SortedList proParams3 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"N_FnYearID",N_FnYearId}};
+                            dLayer.ExecuteNonQueryPro("SP_AccGruops_Accounts_Create", proParams3, connection, transaction);
+                        }
+                        SortedList taxParams = new SortedList(){
+                                        {"@nCompanyID",N_CompanyId},
+                                        {"@nFnYearID",N_FnYearId},
+                                        {"@nTaxType",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_TaxType"].ToString())}};
+                        dLayer.ExecuteNonQuery("UPDATE Acc_FnYear set N_TaxType=@nTaxType where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", taxParams, connection, transaction);
                         transaction.Commit();
-                        
-                        return Ok(api.Success("Company created successfully"));
+
+                        return Ok(api.Success("Company successfully saved"));
                     }
                 }
             }
             catch (Exception ex)
             {
 
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
+
+        public static string FixBase64ForImage(string image)
+        {
+            StringBuilder sbText = new StringBuilder(image, image.Length);
+            //sbText.Replace("\r\n", String.Empty);
+            //sbText.Replace(" ", String.Empty);
+            return sbText.ToString();
+        }
+
 
     }
 }

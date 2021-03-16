@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
        
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseReturnList(int? nCompanyId,int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetPurchaseReturnList(int? nCompanyId,int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
@@ -40,11 +40,27 @@ namespace SmartxAPI.Controllers
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string sqlCommandCount="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_CreditNoteNo like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or X_InvoiceNo like '%"+ xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_CreditNoteId desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "x_CreditNoteNo" : xSortBy ="N_CreditNoteId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                }
+            xSortBy = " order by " + xSortBy;
+            }
             
             if(Count==0)
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1",nCompanyId);
             Params.Add("@p2",nFnYearId);
@@ -53,12 +69,27 @@ namespace SmartxAPI.Controllers
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    // connection.Open();
+                    //  dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
+                    //  sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    // OutPut.Add("Details",_api.Format(dt));
+                    // OutPut.Add("TotalCount",TotalCount);
+
                     connection.Open();
-                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
-                     sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",_api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount="0";
+                    string TotalSum="0";
+                    if(Summary.Rows.Count>0){
+                    DataRow drow = Summary.Rows[0];
+                    TotalCount = drow["N_Count"].ToString();
+                    TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -69,7 +100,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(OutPut));
                 }     
                   }catch(Exception e){
-                     return BadRequest(_api.Error(e));
+                     return Ok(_api.Error(e));
                 }
         }
 
@@ -113,7 +144,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(OutPut));
                 }     
                   }catch(Exception e){
-                     return BadRequest(_api.Error(e));
+                     return Ok(_api.Error(e));
                 }
         }
 
@@ -183,11 +214,11 @@ namespace SmartxAPI.Controllers
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
-                return Ok(dt);
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
@@ -201,24 +232,25 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
+                    int N_CreditNoteID=0;
                     // Auto Gen
                                 try{
                  using (SqlConnection connection = new SqlConnection(connectionString))
                     {
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    string QuotationNo="";
+                    string ReturnNo="";
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID",80);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
-                        if(QuotationNo==""){return Ok(_api.Warning("Unable to generate Quotation Number"));}
-                        MasterTable.Rows[0]["X_CreditNoteNo"] = QuotationNo;
+                        ReturnNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
+                        if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Quotation Number"));}
+                        MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
                     }
-                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
+                    N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
                     if(N_CreditNoteID<=0){
                         transaction.Rollback();
                         }
@@ -228,12 +260,15 @@ namespace SmartxAPI.Controllers
                         }
                     int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
                     transaction.Commit();
-                    return Ok(_api.Success("Purchase Return Saved" ));
+                    SortedList Result = new SortedList();
+                Result.Add("n_PurchaseReturnID",N_CreditNoteID);
+                Result.Add("x_PurchaseReturnNo",ReturnNo);
+                return Ok(_api.Success(Result,"Purchase Return Saved"));
                     }
                 }
                 catch (Exception ex)
                 {
-                    return BadRequest(_api.Error(ex));
+                    return Ok(_api.Error(ex));
                 }
         }
        
@@ -248,13 +283,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nCreditNoteId +" and X_TransType='PURCHASE RETURN'" , connection,transaction);
+                    if (objPaymentProcessed == null)
+                        objPaymentProcessed = 0;
+                        
                     SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyId},
                                 {"X_TransType",xType},
                                 {"N_VoucherID",nCreditNoteId}
                             };
-                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
+                    if(myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0 )
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
+                    else
+                      return Ok(_api.Error("Payment processed! Unable to delete"));
                     transaction.Commit();
                 }
 
@@ -263,7 +305,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

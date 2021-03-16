@@ -33,21 +33,40 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesReceipt(int nFnYearId,int nListID,int nPage,int nSizeperpage)
+        public ActionResult GetSalesReceipt(int nFnYearId, int nListID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
 
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_PayReceiptId desc";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and n_PayReceiptId not in (select top("+ Count +") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId)";
-            
+            {
+                switch (xSortBy.Split(" ")[0]){
+                    case "customerName" : xSortBy ="[Customer Name] " + xSortBy.Split(" ")[1] ;
+                    break;
+                    case "receiptNo" : xSortBy ="N_PayReceiptId " + xSortBy.Split(" ")[1] ;
+                    break;
+                    default : break;
+                    }
+               xSortBy = " order by " + xSortBy;
+            }
+               
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and B_YearEndProcess =0   and (X_type='SR' OR X_type='SA') " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and B_YearEndProcess =0  and (X_type='SR' OR X_type='SA') " + Searchkey + " and n_PayReceiptId not in (select top(" + Count + ") n_PayReceiptId from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId  and B_YearEndProcess =0  and (X_type='SR' OR X_type='SA') " + xSortBy + " ) " + xSortBy;
+
             Params.Add("@nCompanyId", nCompanyId);
             Params.Add("@nFnYearId", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -58,23 +77,31 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount="0";
+                    string TotalSum="0";
+                    if(Summary.Rows.Count>0){
+                    DataRow drow = Summary.Rows[0];
+                    TotalCount = drow["N_Count"].ToString();
+                    TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
                 }
                 if (dt.Rows.Count == 0)
-                    {
-                   return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
                     return Ok(api.Success(OutPut));
-                    }
+                }
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -83,8 +110,14 @@ namespace SmartxAPI.Controllers
         {
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
+            SortedList general = new SortedList();
+            SortedList OutPut = new SortedList();
+
+            OutPut.Add("totalAmtDue", 0);
+            OutPut.Add("totalBalance", 0);
+            OutPut.Add("txnStarted", false);
             DataSet ds = new DataSet();
-            int nCompanyId =myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
 
@@ -102,9 +135,9 @@ namespace SmartxAPI.Controllers
                                 {"@nBranchID",nBranchId}};
                         string sql = "";
                         if (bShowAllbranch == true)
-                            sql = "select N_PayReceiptId,X_Type,N_PartyID from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
                         else
-                            sql = "select N_PayReceiptId,X_Type,N_PartyID from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
+                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
 
                         DataTable PayInfo = dLayer.ExecuteDataTable(sql, proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
@@ -112,10 +145,11 @@ namespace SmartxAPI.Controllers
                             n_PayReceiptId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString());
                             xTransType = PayInfo.Rows[0]["X_Type"].ToString();
                             nCustomerId = myFunctions.getIntVAL(PayInfo.Rows[0]["N_PartyID"].ToString());
+                            dTransDate = myFunctions.getDateVAL(Convert.ToDateTime(PayInfo.Rows[0]["D_Date"].ToString()));
                         }
 
-                        
-                    SortedList mParamsList = new SortedList()
+
+                        SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
                         {"X_VoucherNo",xInvoiceNo},
@@ -131,9 +165,9 @@ namespace SmartxAPI.Controllers
 
                     string balanceSql = "";
                     if (bShowAllbranch == true)
-                        balanceSql = "SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=@AccType and N_AccID=@CustomerID and N_CompanyID=@CompanyID and  D_TransDate<=@TransDate and B_IsSaveDraft = 0";
+                        balanceSql = "SELECT  ISNULL( Sum(n_Amount),0)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=@AccType and N_AccID=@CustomerID and N_CompanyID=@CompanyID and  D_TransDate<=@TransDate and B_IsSaveDraft = 0";
                     else
-                        balanceSql = "SELECT  Sum(n_Amount)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=@AccType and N_AccID=@CustomerID and N_CompanyID=@CompanyID and  D_TransDate<=@TransDate and N_BranchId=@BranchID  and B_IsSaveDraft = 0";
+                        balanceSql = "SELECT  ISNULL( Sum(n_Amount),0)  as N_BalanceAmount from  vw_InvCustomerStatement Where N_AccType=@AccType and N_AccID=@CustomerID and N_CompanyID=@CompanyID and  D_TransDate<=@TransDate and N_BranchId=@BranchID  and B_IsSaveDraft = 0";
                     SortedList balanceParams = new SortedList();
 
                     balanceParams.Add("@CustomerID", nCustomerId);
@@ -143,15 +177,16 @@ namespace SmartxAPI.Controllers
                     balanceParams.Add("@BranchID", nBranchId);
                     object balance = dLayer.ExecuteScalar(balanceSql, balanceParams, connection);
 
-                    string balanceAmt = "0.00";
-                    if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) < 0)
-                    {
-                        balanceAmt = Convert.ToDouble(-1 * myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString())).ToString(myFunctions.decimalPlaceString(2));
-                    }
-                    else if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) > 0)
-                    {
-                        balanceAmt = myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()).ToString(myFunctions.decimalPlaceString(2));
-                    }
+                    string balanceAmt = "0";
+
+                        OutPut["totalAmtDue"] = myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()).ToString(myFunctions.decimalPlaceString(2));
+                        if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) < 0)
+                            OutPut["totalBalance"] = Convert.ToDouble(-1 * myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()));
+                        else if (myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString()) > 0)
+                            OutPut["totalBalance"] = myFunctions.getIntVAL(Math.Round(Convert.ToDouble(balance)).ToString());
+                        else
+                            OutPut["totalBalance"] = 0;
+
 
                     if (n_PayReceiptId > 0)
                     {
@@ -173,18 +208,26 @@ namespace SmartxAPI.Controllers
                             detailParams.Add("@PayReceiptID", n_PayReceiptId);
                             detailParams.Add("@BranchID", nBranchId);
                             DetailTable = dLayer.ExecuteDataTable(DetailSql, detailParams, connection);
+                            if (DetailTable.Rows.Count > 0)
+                            {
+                                DetailTable.AcceptChanges();
+
+                                ds.Tables.Add(MasterTable);
+                                ds.Tables.Add(DetailTable);
+                                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut } }));
+                            }
                         }
                         else
                         {
 
                             SortedList detailParams = new SortedList()
-                    {
-                        {"N_CompanyID",nCompanyId},
-                        {"N_CustomerId",nCustomerId},
-                        {"D_SalesDate",dTransDate},
-                        {"N_PayReceiptId",n_PayReceiptId},
-                        {"N_BranchID",nBranchId}
-                    };
+                                {
+                                    {"N_CompanyID",nCompanyId},
+                                    {"N_CustomerId",nCustomerId},
+                                    {"D_SalesDate",dTransDate},
+                                    {"N_PayReceiptId",n_PayReceiptId},
+                                    {"N_BranchID",nBranchId}
+                                };
                             DetailTable = dLayer.ExecuteDataTablePro("SP_InvReceivables_Disp", detailParams, connection);
                         }
                     }
@@ -204,17 +247,50 @@ namespace SmartxAPI.Controllers
                     }
                     DetailTable = api.Format(DetailTable, "Details");
 
+
+
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                        double  N_InvoiceDueAmt = 0, N_TotalDueAmt = 0;
+                        foreach (DataRow dr in DetailTable.Rows)
+                        {
+                            if (myFunctions.getIntVAL(dr["N_SalesID"].ToString()) == 0)
+                            {
+                                // if (n_PayReceiptId > 0)
+                                // {
+                                //     txtAdvanceAmount.Text = myFunctions.getVAL(dr["N_Amount"].ToString()).ToString(myFunctions.decimalPlaceString(N_decimalPlace));
+                                // }
+                                dr.Delete();
+
+                                continue;
+                            }
+
+                            N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
+                            N_TotalDueAmt += N_InvoiceDueAmt;
+
+                            if (N_InvoiceDueAmt == 0)
+                            {
+                                dr.Delete();
+                            }
+                        }
+                    }
+                    
+                    DetailTable.AcceptChanges();
+
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
-                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable } }));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut  } }));
                 //return Ok(api.Success(ds));
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
+
+       
+
         [HttpGet("Receivables")]
         public ActionResult GetPendingDetails(int? nCompanyId, int nCustomerId, int nFnYearId, int nBranchId, bool bAllBranchData, string dTransDate, string xType)
         {
@@ -303,7 +379,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
         [HttpPost("Save")]
@@ -379,22 +455,41 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["n_PayReceiptId"] = PayReceiptId;
                     }
                     int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsId", DetailTable, connection, transaction);
+
+                    if(PayReceiptId>0)
+{
+    SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", xType);
+                            PostingParams.Add("N_InternalID", PayReceiptId);
+                            PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+
+}
+
                     transaction.Commit();
-                    if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { return Ok(api.Success("Customer Payment Saved")); }
+                    if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { 
+                    
+                SortedList Result = new SortedList();
+                Result.Add("n_SalesReceiptID",PayReceiptId);
+                Result.Add("x_SalesReceiptNo",xVoucherNo);
+                return Ok(api.Success(Result,"Customer Payment Saved"));
+                    }
                     else { return Ok(api.Error("Unable To Save Customer Payment")); }
                 }
 
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
         [HttpDelete()]
         public ActionResult DeleteData(int nPayReceiptId, string xType)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -407,16 +502,23 @@ namespace SmartxAPI.Controllers
                                 {"X_TransType",xType},
                                 {"N_VoucherID",nPayReceiptId}
                             };
-                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    
+                    if(result>0){
                     transaction.Commit();
+                    return Ok(api.Success("Sales Receipt Deleted"));
+                    }else{
+                        transaction.Rollback();
+                    }
+                    
                 }
 
-                return Ok(api.Success("Sales Receipt Deleted"));
+                return Ok(api.Success("Unable to Delete Sales Receipt "));
 
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
 
 

@@ -29,6 +29,7 @@ namespace SmartxAPI.Controllers
              myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
+        [AllowAnonymous]
          [HttpGet("list")]
         public ActionResult GetCurrencyList(int? nCompanyId)
         {
@@ -37,7 +38,6 @@ namespace SmartxAPI.Controllers
             
             string sqlCommandText="select * from Acc_CurrencyMaster where N_CompanyID=@p1 order by X_CurrencyCode";
             Params.Add("@p1",nCompanyId);
-
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -51,12 +51,11 @@ namespace SmartxAPI.Controllers
                        return Ok(api.Warning("No Results Found")); }
                        else{return Ok(dt);}
                 }catch(Exception e){
-                    return BadRequest(api.Error(e));
+                    return Ok(api.Error(e));
                 }
         }
 
        
-
         [HttpGet("listdetails")]
         public ActionResult GetCurrencyDetails(int? nCompanyId,int? nCurrencyId)
         {
@@ -78,10 +77,9 @@ namespace SmartxAPI.Controllers
                 else{return Ok(dt);}
                 }
             catch(Exception e){
-                     return BadRequest(api.Error(e));
+                     return Ok(api.Error(e));
                      }
         }
-
         [HttpGet("currencyExchangeRate")]
         public ActionResult GetCurrencyExchangeRate(int nCurrencyCode)
         {
@@ -98,7 +96,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(ex);
+                return Ok(ex);
             }
         }
 
@@ -125,6 +123,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_CurrencyCode =  dLayer.GetAutoNumber("Acc_CurrencyMaster","X_CurrencyCode", Params,connection,transaction);
                         if(X_CurrencyCode==""){
+                            transaction.Rollback();
                             return Ok(api.Warning("Unable to generate Category Code"));
                             }
                         MasterTable.Rows[0]["X_CurrencyCode"] = X_CurrencyCode;
@@ -146,10 +145,9 @@ namespace SmartxAPI.Controllers
                 catch (Exception ex)
                 {
                    
-                    return BadRequest(api.Error(ex));
+                    return Ok(api.Error(ex));
                 }
         }
-
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCurrencyId)
         {
@@ -170,7 +168,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
                 {
-                    return BadRequest(api.Error(ex));
+                    return Ok(api.Error(ex));
                 }
         }
     }

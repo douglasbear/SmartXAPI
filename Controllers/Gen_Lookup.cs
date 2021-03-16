@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public Gen_Lookup(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -39,7 +38,6 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
             int nCompanyId=myFunctions.GetCompanyID(User);
   
             string sqlCommandText = "select * from Gen_LookupTable where N_CompanyID=@p1 and N_FnyearID=@p2 and N_PkeyId=@p3";
@@ -66,7 +64,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -98,6 +96,10 @@ namespace SmartxAPI.Controllers
                 break;
                 case "Ownership": N_FormID=1314;
                 break;
+                case "District": N_FormID=1273;
+                break;
+                 case "ProjectType": N_FormID=1048;
+                break;
                 default: return Ok(api.Warning("Invalid Type"));
             }
 
@@ -118,7 +120,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", N_FormID);
                         PkeyCode = dLayer.GetAutoNumber("Gen_LookupTable", "X_PkeyCode", Params, connection, transaction);
-                        if (PkeyCode == "") { return Ok(api.Error("Unable to generate PkeyCode Code")); }
+                        if (PkeyCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate PkeyCode Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
                     }
                     else
@@ -141,7 +143,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
@@ -184,7 +186,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete entry"));
+                return Ok(api.Error(ex));
             }
 
 

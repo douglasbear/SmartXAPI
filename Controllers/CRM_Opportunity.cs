@@ -22,8 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
-
         public CRM_Opportunity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
@@ -34,7 +32,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult OpportunityList(int nPage,int nSizeperpage)
+        public ActionResult OpportunityList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -42,11 +40,19 @@ namespace SmartxAPI.Controllers
             int nCompanyId=myFunctions.GetCompanyID(User);
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_OpportunityID desc";
+            else
+                xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_ClosingStatusID is null " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_ClosingStatusID is null " + Searchkey + " and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -77,7 +83,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -111,7 +117,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -144,7 +150,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 1302);
                         Params.Add("N_BranchID", nBranchId);
                         OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", Params, connection, transaction);
-                        if (OpportunityCode == "") { return Ok(api.Error("Unable to generate Opportunity Code")); }
+                        if (OpportunityCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Opportunity Code")); }
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
 
@@ -164,7 +170,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
