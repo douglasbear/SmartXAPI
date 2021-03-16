@@ -934,164 +934,143 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpGet("details")]
-        // public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId)
-        // {
+        [HttpGet("details")]
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo)
+        {
 
-        //     try
-        //     {
-        //         using (SqlConnection Con = new SqlConnection(connectionString))
-        //         {
-        //             Con.Open();
-        //             DataSet dsSalesInvoice = new DataSet();
-        //             SortedList QueryParamsList = new SortedList();
-        //             QueryParamsList.Add("@nCompanyID", nCompanyId);
-        //             QueryParamsList.Add("@nFnYearID", nFnYearId);
-        //             QueryParamsList.Add("@nBranchId", nBranchId);
-        //             QueryParamsList.Add("@xTransType", "SALES");
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    DataSet dsSalesInvoice = new DataSet();
+                    SortedList QueryParamsList = new SortedList();
+                    QueryParamsList.Add("@nCompanyID", nCompanyId);
+                    QueryParamsList.Add("@nFnYearID", nFnYearId);
+                    QueryParamsList.Add("@nBranchId", nBranchId);
+                    QueryParamsList.Add("@xTransType", "SALES");           
+                    QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     
-        //             if (nSalesOrderID > 0)
-        //             {
-
-        //                 QueryParamsList.Add("@nOrderID", nSalesOrderID);
-        //                 string Mastersql = "select * from vw_Salesorder_Disp where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
-        //                 DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
-        //                 if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-        //                 MasterTable = _api.Format(MasterTable, "Master");
-        //                 string DetailSql = "";
-        //                 DetailSql = "select * from vw_SalesorderDetails_Disp where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
-        //                 DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
-        //                 DetailTable = _api.Format(DetailTable, "Details");
-        //                 dsSalesInvoice.Tables.Add(MasterTable);
-        //                 dsSalesInvoice.Tables.Add(DetailTable);
-        //                 return Ok(_api.Success(dsSalesInvoice));
-
-        //             }
-        //             else
-        //             {
-        //                 QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
-        //             }
 
 
 
 
 
-        //             SortedList mParamsList = new SortedList()
-        //             {
-        //                 {"N_CompanyID",nCompanyId},
-        //                 {"X_ReceiptNo",xInvoiceNo},
-        //                 {"X_TransType","SALES"},
-        //                 {"N_FnYearID",nFnYearId},
-        //                 {"N_BranchId",nBranchId}
-        //             };
-        //             DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
-        //             masterTable = _api.Format(masterTable, "Master");
-        //             if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-        //             DataRow MasterRow = masterTable.Rows[0];
-        //             int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
-        //             QueryParamsList.Add("@nSalesID", nSalesID);
-        //             int N_TruckID = myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString());
-        //             object objPlateNo = null;
-        //             if (N_TruckID > 0)
-        //             {
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "X_PlateNo", typeof(string), "");
-        //                 QueryParamsList.Add("@nTruckID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
-        //                 objPlateNo = dLayer.ExecuteScalar("Select X_PlateNumber from Inv_TruckMaster where N_TruckID=@nTruckID and N_companyID=@nCompanyID", QueryParamsList, Con);
-        //                 if (objPlateNo != null)
-        //                     masterTable.Rows[0]["X_PlateNo"] = objPlateNo.ToString();
-        //             }
+                    SortedList mParamsList = new SortedList()
+                    {
+                        {"N_CompanyID",nCompanyId},
+                        {"X_ReceiptNo",xInvoiceNo},
+                        {"X_TransType","SALES"},
+                        {"N_FnYearID",nFnYearId},
+                        {"N_BranchId",nBranchId}
+                    };
+                    DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
+                    masterTable = _api.Format(masterTable, "Master");
+                    if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                    DataRow MasterRow = masterTable.Rows[0];
+                    int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
+                    QueryParamsList.Add("@nSalesID", nSalesID);
+                    int N_TruckID = myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString());
+                    object objPlateNo = null;
+                    if (N_TruckID > 0)
+                    {
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_PlateNo", typeof(string), "");
+                        QueryParamsList.Add("@nTruckID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
+                        objPlateNo = dLayer.ExecuteScalar("Select X_PlateNumber from Inv_TruckMaster where N_TruckID=@nTruckID and N_companyID=@nCompanyID", QueryParamsList, Con);
+                        if (objPlateNo != null)
+                            masterTable.Rows[0]["X_PlateNo"] = objPlateNo.ToString();
+                    }
 
-        //             if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-        //                 masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
-        //             int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
-        //             if (N_TermsID > 0)
-        //             {
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "X_Terms", typeof(string), "");
-        //                 QueryParamsList.Add("@nTermsID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
-        //                 masterTable.Rows[0]["X_Terms"] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", QueryParamsList, dLayer, Con);
-        //             }
-
-        //             if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
-        //             {
-        //                 QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "X_FileNo", typeof(string), "");
-        //                 SortedList ProParamList = new SortedList()
-        //             {
-        //                 {"N_CompanyID",nCompanyId},
-        //                 {"N_FnYearID",nFnYearId},
-        //                 {"N_PkID",myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString())},
-        //                 {"Type","DN"}
-        //             };
-        //                 object objFileNo = dLayer.ExecuteScalarPro("SP_GetSalesOrder", ProParamList, Con);
-        //                 if (objFileNo != null)
-        //                     masterTable.Rows[0]["X_FileNo"] = objFileNo.ToString();
-        //             }
+                    if (masterTable.Rows[0]["X_TandC"].ToString() == "")
+                        masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
+                    int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
+                    if (N_TermsID > 0)
+                    {
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_Terms", typeof(string), "");
+                        QueryParamsList.Add("@nTermsID", myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString()));
+                        masterTable.Rows[0]["X_Terms"] = myFunctions.ReturnValue("Inv_Terms", "X_Terms", "N_TermsID =@nTermsID and N_CompanyID =@nCompanyID", QueryParamsList, dLayer, Con);
+                    }
 
 
 
+                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList, Con);
+                    if (objPayment != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), true);
+                    else
+                        myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), false);
+
+                    //sales return count(draft and non draft)
+                    object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
 
 
+                    myFunctions.AddNewColumnToDataTable(masterTable, "X_DebitNoteNo", typeof(string), objSalesReturn);
 
-        //             object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId,Inv_PayReceiptDetails.N_Amount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId=@nSalesID", QueryParamsList, Con);
-        //             if (objPayment != null)
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), true);
-        //             else
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), false);
+                    object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    if (objSalesReturnDraft != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
+                    QueryParamsList.Add("@nCustomerID", masterTable.Rows[0]["N_CustomerID"].ToString());
+                    object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList, Con);
+                    if (obPaymentMenthodid != null)
+                    {
+                        QueryParamsList.Add("@nPaymentMethodID", myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_PaymentMethodID", typeof(int), myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
+                        myFunctions.AddNewColumnToDataTable(masterTable, "X_PaymentMethod", typeof(string), myFunctions.ReturnValue("Inv_CustomerType", "X_TypeName", "N_TypeID =@nPaymentMethodID", QueryParamsList, dLayer, Con));
+                    }
 
-        //             //sales return count(draft and non draft)
-        //             object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    string qry = "";
+                    bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", "X_UserCategory", dLayer, Con);
+                    if (B_DeliveryDispatch)
+                    {
+                        DataTable dtDispatch = new DataTable();
+                        qry = "Select * From Inv_DeliveryDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_InvoiceID=@nSalesID";
+                        dtDispatch = dLayer.ExecuteDataTable(qry, QueryParamsList, Con);
+                        dtDispatch = _api.Format(dtDispatch, "Delivery Dispatch");
+                        dsSalesInvoice.Tables.Add(dtDispatch);
+                    }
+
+                    //invoice status
+                    object objInvoiceRecievable = null, objBal = null;
+                    double N_InvoiceRecievable = 0, N_BalanceAmt = 0;
+
+                    objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=@nSalesID and Inv_Sales.N_CompanyID=@nCompanyID", QueryParamsList, Con);
+                    objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=@nSalesID and X_Type= @xTransType and N_CompanyID=@nCompanyID", QueryParamsList, Con);
+                    if (objInvoiceRecievable != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_InvoiceRecievable", typeof(double), N_InvoiceRecievable);
+                    if (objBal != null)
+                        myFunctions.AddNewColumnToDataTable(masterTable, "N_BalanceAmt", typeof(double), N_BalanceAmt);
+
+                    DataTable dtPayment = new DataTable();
+                    string qry1 = "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =@nSalesID";
+                    dtPayment = dLayer.ExecuteDataTable(qry1, QueryParamsList, Con);
+                    string InvoiceNos = "";
+                    foreach (DataRow var in dtPayment.Rows)
+                        InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
+                    myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNos", typeof(string), InvoiceNos);
 
 
-        //             myFunctions.AddNewColumnToDataTable(masterTable, "X_DebitNoteNo", typeof(string), objSalesReturn);
+                    dLayer.ExecuteDataTable( "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchId Or N_BranchId=0)",QueryParamsList,Con);
 
-        //             object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-        //             if (objSalesReturnDraft != null)
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
-        //             QueryParamsList.Add("@nCustomerID", masterTable.Rows[0]["N_CustomerID"].ToString());
-        //             object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList, Con);
-        //             if (obPaymentMenthodid != null)
-        //             {
-        //                 QueryParamsList.Add("@nPaymentMethodID", myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "N_PaymentMethodID", typeof(int), myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
-        //                 myFunctions.AddNewColumnToDataTable(masterTable, "X_PaymentMethod", typeof(string), myFunctions.ReturnValue("Inv_CustomerType", "X_TypeName", "N_TypeID =@nPaymentMethodID", QueryParamsList, dLayer, Con));
-        //             }
+                    //Details
+                    SortedList dParamList = new SortedList()
+                    {
+                        {"N_CompanyID",nCompanyId},
+                        {"N_SalesID",masterTable.Rows[0]["n_SalesId"].ToString()},
+                        {"D_Date",Convert.ToDateTime(masterTable.Rows[0]["d_SalesDate"].ToString())}
+                    };
+                    DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
+                    detailTable = _api.Format(detailTable, "Details");
+                    if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }                   
+                    dsSalesInvoice.Tables.Add(masterTable);
+                    dsSalesInvoice.Tables.Add(detailTable);
+                    return Ok(_api.Success(dsSalesInvoice));
 
-        //             string qry = "";
-        //             bool B_DeliveryDispatch = myFunctions.CheckPermission(nCompanyId, 948, "Administrator", "X_UserCategory", dLayer, Con);
-        //             if (B_DeliveryDispatch)
-        //             {
-        //                 DataTable dtDispatch = new DataTable();
-        //                 qry = "Select * From Inv_DeliveryDispatch Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_InvoiceID=@nSalesID";
-        //                 dtDispatch = dLayer.ExecuteDataTable(qry, QueryParamsList, Con);
-        //                 dtDispatch = _api.Format(dtDispatch, "Delivery Dispatch");
-        //                 dsSalesInvoice.Tables.Add(dtDispatch);
-        //             }
-        //             //Details
-        //             SortedList dParamList = new SortedList()
-        //             {
-        //                 {"N_CompanyID",nCompanyId},
-        //                 {"N_SalesID",masterTable.Rows[0]["n_SalesId"].ToString()},
-        //                 {"D_Date",Convert.ToDateTime(masterTable.Rows[0]["d_SalesDate"].ToString())}
-        //             };
-        //             DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
-        //             detailTable = _api.Format(detailTable, "Details");
-        //             if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-
-        //             SortedList Status = StatusSetup(nSalesID, nFnYearId, Con);
-        //             masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "TxnStatus", typeof(SortedList), Status);
-        //             dsSalesInvoice.Tables.Add(masterTable);
-        //             dsSalesInvoice.Tables.Add(detailTable);
-
-        //             return Ok(_api.Success(dsSalesInvoice));
-
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(e));
-        //     }
-        // }
-
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
         private SortedList StatusSetup(int nSalesID, int nFnYearID, SqlConnection connection)
         {
