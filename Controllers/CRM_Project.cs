@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and X_ProjectName like '%" + xSearchkey + "%'";
+                Searchkey = "and (X_ProjectName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ProjectID desc";

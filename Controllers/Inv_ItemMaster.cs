@@ -96,7 +96,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%'";
+                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetItemDetails(string xItemCode)
+        public ActionResult GetItemDetails(string xItemCode,int nLocationID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -180,16 +180,47 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
+if (dt.Rows.Count == 0)
                 {
                     return Ok(_api.Notice("No Results Found"));
                 }
-                else
-                {
-                    return Ok(_api.Success(dt));
+
+                QueryParams.Add("@nItemID",dt.Rows[0]["N_ItemID"].ToString());
+                QueryParams.Add("@nLocationID",nLocationID);
+                QueryParams.Add("@xStockUnit",dt.Rows[0]["X_StockUnit"].ToString());
+            double OpeningStock = 0;
+            object res = dLayer.ExecuteScalar("Select SUM(Inv_StockMaster.N_OpenStock) from vw_InvItemMaster Left Outer Join Inv_StockMaster On vw_InvItemMaster.N_ItemID=Inv_StockMaster.N_ItemID and Inv_StockMaster.X_Type = 'Opening' Where vw_InvItemMaster.N_ItemID=@nItemID and vw_InvItemMaster.N_CompanyID =@nCompanyID and N_LocationID=@nLocationID and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)",QueryParams,connection);
+            if (res != null)
+                OpeningStock = myFunctions.getVAL(res.ToString());
+
+            double UnitQty = 0;
+            double Cost = 0;
+            res = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=@nCompanyID and N_ItemID =@nItemID and X_ItemUnit=@xStockUnit",QueryParams,connection);
+            if (res != null)
+                UnitQty = myFunctions.getVAL(res.ToString());
+
+            double BeginStock = OpeningStock / UnitQty;
+            res = dLayer.ExecuteScalar("Select N_LPrice from vw_InvItemMaster Left Outer Join Inv_StockMaster On vw_InvItemMaster.N_ItemID=Inv_StockMaster.N_ItemID and Inv_StockMaster.X_Type = 'Opening' Where vw_InvItemMaster.N_ItemID=@nItemID and vw_InvItemMaster.N_CompanyID =@nCompanyID and N_LocationID=@nLocationID and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)", QueryParams,connection);
+            if (res != null)
+                Cost = myFunctions.getVAL(res.ToString()) * UnitQty;
+
+  
+            dt = myFunctions.AddNewColumnToDataTable(dt,"N_OpeningStock",typeof(string),BeginStock.ToString(myCompanyID.DecimalPlaceString));
+
+            res = dLayer.ExecuteScalar("Select dbo.SP_StockByStockUnit(@nCompanyID,@nItemID,@nLocationID) As [Current Stock] from Inv_StockMaster where N_ItemId=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID order by N_StockId desc",QueryParams,connection);
+            if (res != null)
+            dt = myFunctions.AddNewColumnToDataTable(dt,"N_CurrentStock",typeof(string),myFunctions.getVAL(res.ToString()).ToString(myCompanyID.DecimalPlaceString));
+            else
+            dt = myFunctions.AddNewColumnToDataTable(dt,"N_CurrentStock",typeof(string),"0.00");
+
+
+
                 }
+                dt.AcceptChanges();
+                dt = _api.Format(dt);
+                
+
+                    return Ok(_api.Success(dt));
 
             }
             catch (Exception e)
