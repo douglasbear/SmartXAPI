@@ -463,6 +463,8 @@ namespace SmartxAPI.Controllers
             DetailTable = ds.Tables["details"];
             int nCompanyID = myFunctions.GetCompanyID(User);
             string x_comments = "";
+            string x_Reporttitle = "";
+            string X_TextforAll = "=all";
 
             try
             {
@@ -470,6 +472,7 @@ namespace SmartxAPI.Controllers
                 String reportName = "";
                 String CompanyData = "";
                 String YearData = "";
+                String FieldName = "";
 
                 var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -509,35 +512,42 @@ namespace SmartxAPI.Controllers
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
+                        FieldName=FieldName+"=";
 
                         if (xOperator == null || xOperator == "")
                             xOperator = "=";
+
+                        if (x_Reporttitle != "")
+                            x_Reporttitle += ", ";
 
                         if (type.ToLower() == "datepicker")
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
-                             string procParam = "";
+                            string procParam = ""; 
                                 if (dateFrom != null && (bRange && dateTo != null))
                                 {
-                                    x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
+                                    x_Reporttitle =x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
+                                    x_comments =dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
                                     procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
                                 }
                                 else if (dateFrom != null)
                                 {
+                                    x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy");
                                     x_comments = dateFrom.ToString("dd-MMM-yyyy");
                                     procParam = dateFrom.ToString("dd-MMM-yyyy") + "|";
                                 }
                                 else if (bRange && dateTo != null)
                                 {
-                                    x_comments = dateTo.ToString("dd-MMM-yyyy");
+                                    x_Reporttitle = x_Reporttitle + FieldName + dateTo.ToString("dd-MMM-yyyy");
+                                    x_comments =  dateTo.ToString("dd-MMM-yyyy");
                                     procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
                                 }
 
                             if (xProCode != "")
                             {
                                
-
                                 SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
@@ -574,6 +584,7 @@ namespace SmartxAPI.Controllers
                                 else
                                     Criteria = Criteria == "" ? xFeild + " "+xOperator+" '" + value + "' " : Criteria + " and " + xFeild + " "+xOperator+" '" + value + "' ";
                             }
+                            x_Reporttitle=x_Reporttitle + FieldName + value;
                         }
 
 
@@ -602,8 +613,7 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                //x_comments="abc";
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle="+x_Reporttitle;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
