@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and x_subject like '%" + xSearchkey + "%'";
+                Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by n_activityid desc";

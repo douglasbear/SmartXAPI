@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and X_HistoryCode like '%" + xSearchkey + "%'";
+                Searchkey = "and (X_HistoryCode like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_HistoryID desc";
