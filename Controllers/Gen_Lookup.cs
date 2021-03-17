@@ -98,7 +98,9 @@ namespace SmartxAPI.Controllers
                 break;
                 case "District": N_FormID=1273;
                 break;
-                 case "ProjectType": N_FormID=1048;
+                case "ProjectType": N_FormID=1048;
+                break;
+                case "SeparationReason": N_FormID=455;
                 break;
                 default: return Ok(api.Warning("Invalid Type"));
             }
