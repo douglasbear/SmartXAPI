@@ -30,8 +30,8 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
          [HttpGet("TrainersList") ]
-        public ActionResult GetTrainersList ()
-        {    int nCompanyID=myFunctions.GetCompanyID(User);
+        public ActionResult GetTrainersList (int nCompanyID)
+        {   // int nCompanyID=myFunctions.GetCompanyID(User);
   
             SortedList param = new SortedList(){{"@nCompanyID",nCompanyID}};
             
