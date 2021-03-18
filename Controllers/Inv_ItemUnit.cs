@@ -147,16 +147,22 @@ namespace SmartxAPI.Controllers
             {
                 SortedList mParamsList = new SortedList()
                     {
-                        {"N_CompanyID",nCompanyId},
-                        {"X_ItemUnit",baseUnit},
-                        {"N_ItemID",itemId}
+                        {"@N_CompanyID",nCompanyId},
+                        {"@X_ItemUnit",baseUnit},
+                        {"@N_ItemID",itemId}
                     };
                 DataTable masterTable = new DataTable();
+
+string sql = " Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit from Inv_ItemUnit Left Outer join Inv_ItemUnit as Base On Inv_ItemUnit.N_BaseUnitID=Base.N_ItemUnitID where Base.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0 UNION Select X_ItemUnit from Inv_ItemUnit where X_ItemUnit=@X_ItemUnit and N_CompanyID=@N_CompanyID and N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
+                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
+                    // masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
                 }
+
+
                 if (masterTable.Rows.Count == 0) { return Ok(api.Notice("No Data Found")); }
                 return Ok(api.Success(masterTable));
             }
