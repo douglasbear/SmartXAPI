@@ -146,6 +146,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "SubmissionType": N_FormID=1123;
                 break;
+                case "SeparationReason": N_FormID=455;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_ReferId=@p1";
