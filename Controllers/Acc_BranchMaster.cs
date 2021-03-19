@@ -150,7 +150,8 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection, transaction);
                     }
                     
-                    nBranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",MasterTable,connection,transaction);  
+                    nBranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",MasterTable,connection,transaction); 
+                   // int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction); 
                     transaction.Commit();
                     return Ok(_api.Success("Branch Saved")) ;
                 }
