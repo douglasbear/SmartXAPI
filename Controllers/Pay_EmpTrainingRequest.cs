@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly string connectionString;
          private readonly IMyFunctions myFunctions;
-          private readonly int N_FormID = 1083;
+          private readonly int N_FormID = 1085;
 
         public PayEmpTrainingRequest(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
@@ -84,21 +84,21 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("Details") ]
-        public ActionResult GetTrainingRequestList ()
-        {    int nCompanyID=myFunctions.GetCompanyID(User);
-  
-            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+        public ActionResult GetTrainingRequestDetails (int xRequestCode)
+          
+        {   DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+             int nCompanyID=myFunctions.GetCompanyID(User);
+              string sqlCommandText="select * from vw_TrainingRequest where N_CompanyID=@nCompanyID  and X_RequestCode=@xRequestCode";
+               Params.Add("@nCompanyID",nCompanyID);
+             Params.Add("@xRequestCode",xRequestCode);
             
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="select * from vw_TrainingRequest where N_CompanyID=@p1";
-                
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                     if(dt.Rows.Count==0)
                         {
@@ -146,6 +146,61 @@ namespace SmartxAPI.Controllers
             }
 
 
+        }
+
+         [HttpGet("dashboardlist")]
+        public ActionResult TrainingList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and x_RequestCode like '%" + xSearchkey + "%'or x_EmpName like'%" + xSearchkey + "%' or x_CourseName like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%' ";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_RequestID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +")x_RequestCode,X_EmpName,X_CourseName,[Date] from vw_TrainingRequest where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +")X_RequestCode,X_EmpName,X_CourseName,[Date] from vw_TrainingRequest where N_CompanyID=@p1  " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_TrainingRequest where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+            Params.Add("@p1", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_TrainingRequest where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
         }
 
 
