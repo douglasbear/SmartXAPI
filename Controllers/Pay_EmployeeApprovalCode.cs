@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("vw_Sec_ApprovalSettings_EmployeeDetails", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
+                        dLayer.DeleteData("Sec_ApprovalSettings_EmployeeDetails", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
                         return Ok(_api.Success("Approval Code deleted"));
                     }
                     else
