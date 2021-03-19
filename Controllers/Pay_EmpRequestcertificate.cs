@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             api = _api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1337;
+            FormID = 1339;
         }
 
         [HttpGet("list")]
