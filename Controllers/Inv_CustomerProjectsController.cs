@@ -155,22 +155,24 @@ namespace SmartxAPI.Controllers
 
         }
 
+        
         [HttpGet("Details") ]
-        public ActionResult GetCustomerProjectList ()
-        {    int nCompanyID=myFunctions.GetCompanyID(User);
-  
-            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+        public ActionResult GetCustomerProjectDetails (int nProjectID,int nFnYearId)
+          
+        {   DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+             int nCompanyID=myFunctions.GetCompanyID(User);
+              string sqlCommandText="select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and N_ProjectID=@nProjectID";
+               Params.Add("@nCompanyID",nCompanyID);
+                Params.Add("@YearID", nFnYearId);
+             Params.Add("@nProjectID",nProjectID);
             
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="select * from Vw_InvCustomerProjects where N_CompanyID=@p1";
-                
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                     if(dt.Rows.Count==0)
                         {
@@ -183,7 +185,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
-
          [HttpGet("AccountList") ]
         public ActionResult GetAccountList ()
         {    int nCompanyID=myFunctions.GetCompanyID(User);
@@ -230,7 +231,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%' or x_CustomerName like '%" + xSearchkey + "%' or x_District like '%" + xSearchkey + "%' or d_StartDate like '%" + xSearchkey + "%' or n_ContractAmt like '%" + xSearchkey + "%'";
+                Searchkey = "and (x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%' or x_CustomerName like '%" + xSearchkey + "%' or x_District like '%" + xSearchkey + "%' or d_StartDate like '%" + xSearchkey + "%' or n_ContractAmt like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ProjectID desc";

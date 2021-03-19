@@ -78,14 +78,20 @@ namespace SmartxAPI.Controllers
                     ProParam2.Add("N_Year", year);
                     ProParam2.Add("N_FnYearID", nFnYearID);
                     ProParam2.Add("N_Days", DateTime.DaysInMonth(year, month));
-                    ProParam2.Add("N_BatchID", nFnYearID);
                     ProParam2.Add("N_BatchID", nAddDedID>0?1:0);
 
                     dt = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParam2, connection);
                     if (dt.Rows.Count > 0)
                     {
-                        dt.Columns.Add("N_SaveChanges");
-                        dt.Columns.Add("N_Type");
+                        dt = myFunctions.AddNewColumnToDataTable(dt,"N_SaveChanges",typeof(int),0);
+                        dt = myFunctions.AddNewColumnToDataTable(dt,"N_Additions",typeof(string),"");
+                        dt = myFunctions.AddNewColumnToDataTable(dt,"N_Deductions",typeof(string),"");
+                    }
+                    foreach(DataRow dtRow in dt.Rows){
+                        if(myFunctions.getIntVAL(dtRow["N_Type"].ToString())==0)
+                        dtRow["N_Additions"] = dtRow["n_Payrate"].ToString();
+                        else
+                        dtRow["N_Deductions"] = dtRow["n_Payrate"].ToString();
                     }
 
                     SortedList paytypeParam = new SortedList();
@@ -180,8 +186,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
                     }
 
-
-                    int N_TransID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", MasterTable, connection, transaction);
+string DupCriteria = "N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " and X_Batch='" + x_Batch + "'";
+                    int N_TransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID",DupCriteria,"", MasterTable, connection, transaction);
                     if (N_TransID <= 0)
                     {
                         transaction.Rollback();
@@ -189,6 +195,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+//Delete Existing Data
+                          dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", N_TransID, "N_CompanyID =" + nCompanyID + " and N_FormID=190",connection,transaction);
+                    dLayer.ExecuteScalar("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + nCompanyID + " and N_PayrunID = " + N_TransID, connection,transaction);
+
+
                     for (int i = DetailsTable.Rows.Count - 1; i >= 0; i--) 
                     {
                         DataRow mstVar = DetailsTable.Rows[i];
@@ -243,6 +254,31 @@ namespace SmartxAPI.Controllers
 
                     }
                 }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+
+        [HttpGet("dummy")]
+        public ActionResult GetDepartmentDummy()
+        {
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    string sqlCommandText = "select * from Pay_PaymentDetails ";
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, Con);
+                    masterTable = _api.Format(masterTable, "master");
+
+                    if (masterTable.Rows.Count == 0) { return Ok(new { }); }
+                    DataSet dataSet = new DataSet();
+                    dataSet.Tables.Add(masterTable);
+                    return Ok(dataSet);
+}
             }
             catch (Exception ex)
             {

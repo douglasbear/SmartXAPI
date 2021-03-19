@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and [Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%'";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_SalesId desc";
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey="";
             if(xSearchkey!=null)
-                Searchkey = "and X_ItemName like '%" + xSearchkey + "%'";
+                Searchkey = "and (X_ItemName like '%" + xSearchkey + "%')";
 
             if(nCategoryID>0)
                 sqlCommandText = "select N_CompanyID, N_ItemID, X_ItemCode, X_ItemName, X_PartNo, B_InActive, N_LocationID, X_Category, N_ClassID, X_ClassName, N_BranchID, N_SPrice, N_CategoryID, X_Barcode,X_ItemName_a, N_ItemTypeID, N_TaxCategoryID, X_DisplayName, X_CategoryName, N_Amount, X_ItemUnit,'' as I_Image from vw_ItemPOSCloud where N_CompanyID=@p1 and X_ItemCode<>'001' and N_CategoryID=@p2"+ Searchkey;
