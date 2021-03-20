@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearID);
             Params.Add("@p3",nBranchID);
             Params.Add("@p4",dTransDate);
-            string sqlCommandText="Select * from  vw_VoucherTransaction where  and N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4";
+            string sqlCommandText="Select * from vw_VoucherTransaction where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -96,6 +96,34 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nCloseID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CloseID"].ToString());
+                
+                    nCloseID = dLayer.SaveData("Acc_DayClosing", "n_CloseID", MasterTable, connection, transaction);
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
         }
     }
