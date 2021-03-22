@@ -102,17 +102,20 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
             else
             {
-              switch (xSortBy.Split(" ")[0]){ 
-                    case "itemClass" : xSortBy ="[Item Class] " + xSortBy.Split(" ")[1] ;
-                    break;
-                    case "itemCode" : xSortBy ="N_ItemID " + xSortBy.Split(" ")[1] ;
-                    break;
-                    default : break;
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "itemClass":
+                        xSortBy = "[Item Class] " + xSortBy.Split(" ")[1];
+                        break;
+                    case "itemCode":
+                        xSortBy = "N_ItemID " + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
                 }
-             xSortBy = " order by " + xSortBy;
+                xSortBy = " order by " + xSortBy;
 
             }
-              
+
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
             else
@@ -161,7 +164,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetItemDetails(string xItemCode)
+        public ActionResult GetItemDetails(string xItemCode, int nLocationID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -180,16 +183,47 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+
+                    QueryParams.Add("@nItemID", dt.Rows[0]["N_ItemID"].ToString());
+                    QueryParams.Add("@nLocationID", nLocationID);
+                    QueryParams.Add("@xStockUnit", dt.Rows[0]["X_StockUnit"].ToString());
+                    double OpeningStock = 0;
+                    object res = dLayer.ExecuteScalar("Select SUM(Inv_StockMaster.N_OpenStock) from vw_InvItemMaster Left Outer Join Inv_StockMaster On vw_InvItemMaster.N_ItemID=Inv_StockMaster.N_ItemID and Inv_StockMaster.X_Type = 'Opening' Where vw_InvItemMaster.N_ItemID=@nItemID and vw_InvItemMaster.N_CompanyID =@nCompanyID and N_LocationID=@nLocationID and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)", QueryParams, connection);
+                    if (res != null)
+                        OpeningStock = myFunctions.getVAL(res.ToString());
+
+                    double UnitQty = 0;
+                    double Cost = 0;
+                    res = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=@nCompanyID and N_ItemID =@nItemID and X_ItemUnit=@xStockUnit", QueryParams, connection);
+                    if (res != null)
+                        UnitQty = myFunctions.getVAL(res.ToString());
+
+                    double BeginStock = OpeningStock / UnitQty;
+                    res = dLayer.ExecuteScalar("Select N_LPrice from vw_InvItemMaster Left Outer Join Inv_StockMaster On vw_InvItemMaster.N_ItemID=Inv_StockMaster.N_ItemID and Inv_StockMaster.X_Type = 'Opening' Where vw_InvItemMaster.N_ItemID=@nItemID and vw_InvItemMaster.N_CompanyID =@nCompanyID and N_LocationID=@nLocationID and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)", QueryParams, connection);
+                    if (res != null)
+                        Cost = myFunctions.getVAL(res.ToString()) * UnitQty;
+
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_OpeningStock", typeof(string), BeginStock.ToString(myCompanyID.DecimalPlaceString));
+
+                    res = dLayer.ExecuteScalar("Select dbo.SP_StockByStockUnit(@nCompanyID,@nItemID,@nLocationID) As [Current Stock] from Inv_StockMaster where N_ItemId=@nItemID and N_CompanyID=@nCompanyID and N_LocationID=@nLocationID order by N_StockId desc", QueryParams, connection);
+                    if (res != null)
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), myFunctions.getVAL(res.ToString()).ToString(myCompanyID.DecimalPlaceString));
+                    else
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), "0.00");
+
+
+
                 }
+                dt.AcceptChanges();
                 dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
+
+
+                return Ok(_api.Success(dt));
 
             }
             catch (Exception e)
@@ -204,7 +238,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit,SalesUnit,PurchaseUnit,AddUnit1,AddUnit2;
+                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -230,44 +264,44 @@ namespace SmartxAPI.Controllers
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTable.Rows[0]["X_ItemCode"] = ItemCode;
                     }
-                    
-                    string image= MasterTable.Rows[0]["i_Image"].ToString();
+
+                    string image = MasterTable.Rows[0]["i_Image"].ToString();
                     Byte[] imageBitmap = new Byte[image.Length];
                     imageBitmap = Convert.FromBase64String(image);
                     MasterTable.Columns.Remove("i_Image");
 
                     string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemCode='" + ItemCode + "'";
-                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID",DupCriteria,"", MasterTable, connection, transaction);
+                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_ItemID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save"));
                     }
 
-                    if(image.Length>0)
-                        dLayer.SaveImage("Inv_ItemMaster","i_Image",imageBitmap,"N_ItemID",N_ItemID,connection,transaction);
+                    if (image.Length > 0)
+                        dLayer.SaveImage("Inv_ItemMaster", "i_Image", imageBitmap, "N_ItemID", N_ItemID, connection, transaction);
 
-                    foreach (DataRow var in StockUnit.Rows)var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in SalesUnit.Rows)var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in PurchaseUnit.Rows)var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in AddUnit1.Rows)var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in AddUnit2.Rows)var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in StockUnit.Rows) var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in SalesUnit.Rows) var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in PurchaseUnit.Rows) var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in AddUnit1.Rows) var["n_ItemID"] = N_ItemID;
+                    foreach (DataRow var in AddUnit2.Rows) var["n_ItemID"] = N_ItemID;
 
                     int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
-                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID ="+ BaseUnitID  +" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
 
-                    foreach (DataRow var in SalesUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
-                    foreach (DataRow var in PurchaseUnit.Rows)var["n_BaseUnitID"] = BaseUnitID;
-                    foreach (DataRow var in AddUnit1.Rows)var["n_BaseUnitID"] = BaseUnitID;
-                    foreach (DataRow var in AddUnit2.Rows)var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in SalesUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in PurchaseUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in AddUnit1.Rows) var["n_BaseUnitID"] = BaseUnitID;
+                    foreach (DataRow var in AddUnit2.Rows) var["n_BaseUnitID"] = BaseUnitID;
 
                     int N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
                     int N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
                     int N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
                     int N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
 
-                        
-                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID="+N_PurchaseUnitID+" where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+
+                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID=" + N_PurchaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
                     if (BaseUnitID <= 0)
                     {
                         transaction.Rollback();

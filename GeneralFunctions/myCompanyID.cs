@@ -8,17 +8,17 @@ namespace SmartxAPI
     static class myCompanyID
     {
         // public static SqlConnection _myCon;
-        public static string _Project = "eBusiness2010 - Smart Accounting";//"eBussiness2010";
-        public static bool _SuccessLogin = false;
-        public static bool _LoginCancelled = false;
-        public static string _GlobalError = "";
-        public static string _Language = "English";
-        public static int _LanguageID = 1;
-        public static bool _RightToLeft = false;
-        public static bool _Loggoff = false;
-        public static bool _Relogin = true;
-        public static bool _PwdNotification = false;
-        public static bool _NoReminders = false;
+        // public static string _Project = "eBusiness2010 - Smart Accounting";//"eBussiness2010";
+        // public static bool _SuccessLogin = false;
+        // public static bool _LoginCancelled = false;
+        // public static string _GlobalError = "";
+        // public static string _Language = "English";
+        // public static int _LanguageID = 1;
+        // public static bool _RightToLeft = false;
+        // public static bool _Loggoff = false;
+        // public static bool _Relogin = true;
+        // public static bool _PwdNotification = false;
+        // public static bool _NoReminders = false;
         #region Account Defaults
 
         // public static string _FnYearName;

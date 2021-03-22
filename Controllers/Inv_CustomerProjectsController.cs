@@ -155,22 +155,24 @@ namespace SmartxAPI.Controllers
 
         }
 
+        
         [HttpGet("Details") ]
-        public ActionResult GetCustomerProjectList ()
-        {    int nCompanyID=myFunctions.GetCompanyID(User);
-  
-            SortedList param = new SortedList(){{"@p1",nCompanyID}};
+        public ActionResult GetCustomerProjectDetails (int nProjectID,int nFnYearId)
+          
+        {   DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+             int nCompanyID=myFunctions.GetCompanyID(User);
+              string sqlCommandText="select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and N_ProjectID=@nProjectID";
+               Params.Add("@nCompanyID",nCompanyID);
+                Params.Add("@YearID", nFnYearId);
+             Params.Add("@nProjectID",nProjectID);
             
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="select * from Vw_InvCustomerProjects where N_CompanyID=@p1";
-                
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                 }
                     if(dt.Rows.Count==0)
                         {
@@ -183,7 +185,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
-
          [HttpGet("AccountList") ]
         public ActionResult GetAccountList ()
         {    int nCompanyID=myFunctions.GetCompanyID(User);
