@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
             }
         }  
 
-         [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
             try
@@ -221,6 +221,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    
                     connection.Open();
                     Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
                     if (Results > 0)
