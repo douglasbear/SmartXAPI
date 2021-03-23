@@ -100,6 +100,122 @@ namespace SmartxAPI.Controllers
             }
         }
 
+         [HttpGet("details")]
+        public ActionResult EmployeeEvaluation(string xEvalCode)
+        {
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    DataTable DataTable = new DataTable();
+
+                    string Mastersql = "";
+                    string DetailSql = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@xEvalCode", xEvalCode);
+                    Mastersql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and X_EvalCode=@xEvalCode  ";
+                   
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int EvaID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvalID"].ToString());
+                    Params.Add("@nEvalID", EvaID);
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    DetailSql = "select * from vw_PayEvaluation_Details where N_CompanyId=@nCompanyID and N_EvalID=@nEvalID ";
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+            
+            [HttpGet("List")]
+        public ActionResult EmployeeEvaluationList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
+            SortedList OutPut = new SortedList();
+            string sqlCommandText = "select N_CompanyID,N_EvalID,X_EvalCode,X_Description from vw_PayEmpEvauation_List where N_CompanyID=@nComapnyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+        
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nEvalID, int nCompanyID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nEvalID", nEvalID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    Results = dLayer.DeleteData("Pay_EmpEvaluation", "N_EvalID", nEvalID, "", connection);
+
+
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", nEvalID, "", connection);
+                        return Ok(_api.Success("Employee Evaluation deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete"));
+                    }
+
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+
+
+        }
 
 
            }
