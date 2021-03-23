@@ -21,7 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly int FormID;
         private readonly IMyFunctions myFunctions;
-        
+
         public Gen_Approvalcodes(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
@@ -29,19 +29,21 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1056;
-        }   
+        }
         private readonly string connectionString;
 
-        
+
         [HttpGet("usercategorylist")]
-        public ActionResult GetUser(int nUsercategoryId, int nCompanyId)
+        public ActionResult GetUser(int nCompanyId)
         {
             DataTable dt = new DataTable();
+            //test
+            // int abc=0;
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1 and N_UserCategoryID=@p2 ";
+            string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nUsercategoryId);
+
 
             try
             {
@@ -64,14 +66,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("userlist")]
-        public ActionResult GetUserlist(int nUserId, int nCompanyId)
+        public ActionResult GetUserlist(int nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Sec_User where N_CompanyID=@p1 and N_UserID=@p2 ";
+            string sqlCommandText = "select * from Sec_User where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nUserId);           
+
 
             try
             {
@@ -92,14 +94,14 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        
+
 
         [HttpGet("actionlist")]
         public ActionResult GetActionList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 ";
             //Params.Add("@p1", nDefaultId);
             //Params.Add("@p1", nTypeId);
@@ -121,11 +123,11 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(e));
             }
-        }  
+        }
 
-         [HttpPost("save")]
-        public ActionResult SaveData([FromBody]DataSet ds)
-        { 
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -139,17 +141,17 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                int nApprovalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalID"].ToString());
-                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
-                string X_ApprovalCode = MasterTable.Rows[0]["X_ApprovalCode"].ToString();
-                
-                
-                // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
-                // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
-                // int nLevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_Level"].ToString());
-                // int nActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionTypeID"].ToString());
-                if (nApprovalID > 0)
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nApprovalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    string X_ApprovalCode = MasterTable.Rows[0]["X_ApprovalCode"].ToString();
+                    MasterTable.Columns.Remove("N_FnYearID");
+
+                    // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
+                    // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                    // int nLevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_Level"].ToString());
+                    // int nActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionTypeID"].ToString());
+                    if (nApprovalID > 0)
                     {
                         SortedList deleteParams = new SortedList()
                             {
@@ -159,24 +161,24 @@ namespace SmartxAPI.Controllers
                             };
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                     }
-                 DocNo = MasterRow["X_ApprovalCode"].ToString();
-                 if (X_ApprovalCode == "@Auto")
+                    DocNo = MasterRow["X_ApprovalCode"].ToString();
+                    if (X_ApprovalCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_YearID", nFnYearID);                       
-                        
-                      while (true)
+                        Params.Add("N_YearID", nFnYearID);
+
+                        while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Gen_ApprovalCodes Where X_ApprovalCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
-                        X_ApprovalCode=DocNo;
+                        X_ApprovalCode = DocNo;
 
 
-                        if (X_ApprovalCode == "") { transaction.Rollback();return Ok(_api.Error("Unable to generate Approval Code")); }
+                        if (X_ApprovalCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Approval Code")); }
                         MasterTable.Rows[0]["X_ApprovalCode"] = X_ApprovalCode;
 
                     }
@@ -185,31 +187,37 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
                     }
 
-                    MasterTable.Columns.Remove("N_FnYearID");
-                    
-                    nApprovalID=dLayer.SaveData("Gen_ApprovalCodes","N_ApprovalID",MasterTable,connection,transaction);
+
+                    nApprovalID = dLayer.SaveData("Gen_ApprovalCodes", "N_ApprovalID", MasterTable, connection, transaction);
                     if (nApprovalID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
-                    } 
+                    }
 
-                     for (int i = 0; i < DetailTable.Rows.Count; i++)
-                     {
-                        DetailTable.Rows[0]["N_ApprovalID"] = nApprovalID;
-                     }
+                    for (int i = 0; i < DetailTable.Rows.Count; i++)
+                    {
+                        DetailTable.Rows[i]["N_ApprovalID"] = nApprovalID;
+                    }
                     int N_ApprovalDetailsID = dLayer.SaveData("Gen_ApprovalCodesDetails", "N_ApprovalDetailsID", DetailTable, connection, transaction);
-
-
+                    if (N_ApprovalDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }
                     transaction.Commit();
-                    return Ok(_api.Success("Saved")) ;
+                    SortedList Result = new SortedList();
+                    Result.Add("N_ApprovalID", nApprovalID);
+                    Result.Add("N_ApprovalDetailsID", N_ApprovalDetailsID);
+
+                    return Ok(_api.Success(Result, "Saved"));
                 }
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
-        } 
+        }
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nApprovalID)
@@ -223,7 +231,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("deleted"));
+                        return Ok(_api.Success("deleted"));
                     }
                     else
                     {
@@ -237,50 +245,5 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //    [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nApprovalID, int nCompanyID, int nFnYearID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         SortedList Params = new SortedList();
-        //         SortedList QueryParams = new SortedList();
-        //         QueryParams.Add("@nCompanyID", nCompanyID);
-        //         QueryParams.Add("@nFnYearID", nFnYearID);
-        //         QueryParams.Add("@nFormID", 52);
-                
-
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-
-        //             if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-        //                 return Ok(_api.Error("Year is closed"));
-
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
-        //             transaction.Commit();
-        //         }
-        //         if (Results > 0)
-        //         {
-        //             Dictionary<string, string> res = new Dictionary<string, string>();
-        //             res.Add("N_ApprovalID", nApprovalID.ToString());
-        //             return Ok(_api.Success(res, "deleted"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(_api.Error("Unable to delete "));
-        //         }
-
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         if (ex.Message.Contains("REFERENCE constraint"))
-        //             return Ok(_api.Error("Unable to delete! It has been used."));
-        //         else
-        //             return Ok(_api.Error(ex));
-        //       }
-        // }     
     }
-}     
-     
+}
