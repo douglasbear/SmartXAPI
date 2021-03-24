@@ -134,6 +134,14 @@ namespace SmartxAPI.Controllers
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 string xBranchCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
+                int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
+                string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
+                int bIsCurrent = myFunctions.getIntVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
+                bool bIsDefault =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_DefaultBranch"].ToString());
+                string xPhoneNo = MasterTable.Rows[0]["x_PhoneNo"].ToString();
+
+
                 MasterTable.Columns.Remove("n_FnYearID");
                 MasterTable.AcceptChanges();
                  if (xBranchCode == "@Auto")
@@ -144,14 +152,51 @@ namespace SmartxAPI.Controllers
                         xBranchCode = dLayer.GetAutoNumber("Acc_BranchMaster", "x_BranchCode", Params, connection, transaction);
                         if (xBranchCode == "") {transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
                         MasterTable.Rows[0]["x_BranchCode"] = xBranchCode;
+
                     }
                     else
                     {
                         dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection, transaction);
                     }
-                    
-                    nBranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",MasterTable,connection,transaction);  
+
+                     nBranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",MasterTable,connection,transaction); 
+                     if (nBranchID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Branch"));
+                    }
+                    else
+                    {
+                     DataTable dt = new DataTable();
+                        dt.Clear();
+                        dt.Columns.Add("N_LocationID");
+                        dt.Columns.Add("N_CompanyID");
+                        dt.Columns.Add("X_LocationCode");
+                        dt.Columns.Add("X_LocationName");
+                        dt.Columns.Add("N_BranchID");
+                        dt.Columns.Add("B_IsCurrent");
+                        dt.Columns.Add("B_IsDefault");
+                         dt.Columns.Add("X_PhoneNo");
+                       
+                            DataRow row = dt.NewRow();
+                            row["N_LocationID"] = nLocationID;
+                            row["N_CompanyID"] = nCompanyID;
+                            row["X_LocationCode"] = xBranchCode;
+                            row["X_LocationName"] = xLocationName;
+                            row["N_BranchID"] = nBranchID;
+                            row["B_IsCurrent"] = bIsCurrent;
+                            row["B_IsDefault"] = bIsDefault;
+                            row["X_PhoneNo"] = xPhoneNo;
+                            dt.Rows.Add(row);
+                            
+                    int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", dt, connection, transaction);
+                    if (N_LocationID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("Unable to save"));
+                    }
                     transaction.Commit();
+                    }
                     return Ok(_api.Success("Branch Saved")) ;
                 }
             }
