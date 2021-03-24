@@ -184,6 +184,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        
                         dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
                     }
 
