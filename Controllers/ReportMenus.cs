@@ -465,6 +465,7 @@ namespace SmartxAPI.Controllers
             string x_comments = "";
             string x_Reporttitle = "";
             string X_TextforAll = "=all";
+            int nUserID=myFunctions.GetUserID(User);
 
             try
             {
@@ -473,6 +474,7 @@ namespace SmartxAPI.Controllers
                 String CompanyData = "";
                 String YearData = "";
                 String FieldName = "";
+                String UserData = "";
 
                 var dbName = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -513,6 +515,7 @@ namespace SmartxAPI.Controllers
                         CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
+                        UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName=FieldName+"=";
 
                         if (xOperator == null || xOperator == "")
@@ -601,6 +604,10 @@ namespace SmartxAPI.Controllers
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+                    }
+                    if(UserData!="")
+                    {
+                        Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
                     dbName = connection.Database;
                 }
