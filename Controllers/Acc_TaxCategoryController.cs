@@ -162,6 +162,8 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
                     int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID", MasterTable, connection, transaction);
+                   // DataTable detailTable = dLayer.ExecuteDataTablePro("SP_GeneralDefaults_ins",MasterTable, connection, transaction);
+                   //"SP_GeneralDefaults_ins " + myCompanyID._CompanyID + ",'73','ExcludeCESSForTaxCustomer' ," + myFunctions.getIntVAL(chkCustBasedCESS.Checked) + ""
                     if (N_TaxCategoryID <= 0)
                     {
                         transaction.Rollback();
