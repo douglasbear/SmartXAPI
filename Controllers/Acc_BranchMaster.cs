@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                 string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                 string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
-                int bIsCurrent = myFunctions.getIntVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
+                bool bIsCurrent = myFunctions.getBoolVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
                 bool bIsDefault =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_DefaultBranch"].ToString());
                 string xPhoneNo = MasterTable.Rows[0]["x_PhoneNo"].ToString();
 

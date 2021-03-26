@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
                         if (B_IsSupervisor)
                         {
                             N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
-                             
+
                         }
                         else
                             dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
@@ -180,30 +180,30 @@ namespace SmartxAPI.Controllers
 
 
         }
-        [HttpGet("dummy")]
-        public ActionResult GetDepartmentDummy()
-        {
-            try
-            {
-                using (SqlConnection Con = new SqlConnection(connectionString))
-                {
-                    Con.Open();
-                    string sqlCommandText = "select * from Mnp_EmployeeMaintenance where N_MaintenanceID=1";
-                    //SortedList mParamList = new SortedList() { { "@p1", nDepartmentID } };
-                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, Con);
-                    masterTable = _api.Format(masterTable, "master");
+        // [HttpGet("dummy")]
+        // public ActionResult GetDepartmentDummy()
+        // {
+           
+        //     try
+        //     {
+        //         DataTable masterTable;
+        //         DataTable dtSupervisor;
+        //         using (SqlConnection Con = new SqlConnection(connectionString))
+        //         {
+        //             Con.Open();
+        //             string sqlCommandText = "select * from Pay_Empshiftdetails where N_ShiftDetailsID=1";
+        //             masterTable=dLayer.ExecuteDataTable(sqlCommandText,Con);
+        //             masterTable = _api.Format(masterTable, "master");
 
-                    if (masterTable.Rows.Count == 0) { return Ok(new { }); }
-                    DataSet dataSet = new DataSet();
-                    dataSet.Tables.Add(masterTable);
-                    return Ok(dataSet);
-}
-            }
-            catch (Exception ex)
-            {
-                return Ok(_api.Error(ex));
-            }
-        }
+
+                   
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(ex));
+        //     }
+        // }
         // [HttpPost("save")]
         // public ActionResult SaveData([FromBody]DataSet ds)
         // { 
@@ -235,7 +235,7 @@ namespace SmartxAPI.Controllers
         //             {
         //                 dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection, transaction);
         //             }
-                    
+
         //             nPositionID=dLayer.SaveData("Pay_Position","N_PositionID",MasterTable,connection,transaction);  
         //             transaction.Commit();
         //             return Ok(_api.Success("Job Title Saved")) ;
@@ -250,25 +250,30 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetJobTitleDetails(int nPositionID)
         {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from vw_PayPosition_DispAdvanced where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nPositionID",nPositionID);
-            try{
+            string sqlCommandText = "select * from vw_PayPosition_DispAdvanced where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nPositionID", nPositionID);
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
-                    }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(_api.Notice("No Results Found" ));
-                        }else{
-                            return Ok(_api.Success(dt));
-                        }
-            }catch(Exception e){
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
                 return Ok(_api.Error(e));
             }
         }
@@ -285,7 +290,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Pay_Position", "N_PositionID", nPositionID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("Job Title deleted"));
+                        return Ok(_api.Success("Job Title deleted"));
                     }
                     else
                     {
