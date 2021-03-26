@@ -14,16 +14,16 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("salesDashboard")]
+    [Route("puchaseDashboard")]
     [ApiController]
-    public class SalesDashboard : ControllerBase
+    public class PurchaseDashboard : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        public SalesDashboard(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public PurchaseDashboard(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -37,15 +37,14 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(D_OrderDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP)";
-            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
-            string sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
-            //string sqlCurrentSales =""
+            string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseOrderNo_Search WHERE MONTH(Cast([Order Date] as DateTime))= MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Order Date] as DateTime))= YEAR(CURRENT_TIMESTAMP)";
+            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_InvoiceAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
+            //string sqlCurrentPurchase =""
 
             SortedList Data=new SortedList();
             DataTable CurrentOrder = new DataTable();
             DataTable CurrentInvoice = new DataTable();
-            DataTable CurrentQuotation = new DataTable();
+           
            
 
             try
@@ -56,7 +55,7 @@ namespace SmartxAPI.Controllers
 
                     CurrentOrder = dLayer.ExecuteDataTable(sqlCurrentOrder, Params, connection);
                     CurrentInvoice = dLayer.ExecuteDataTable(sqlCurrentInvoice, Params, connection);
-                    CurrentQuotation = dLayer.ExecuteDataTable(sqlCurrentQuotation, Params, connection);
+                    
 
                   
                 }
@@ -69,7 +68,7 @@ namespace SmartxAPI.Controllers
 
                 if(CurrentOrder.Rows.Count>0)Data.Add("orderData",CurrentOrder);
                 if(CurrentInvoice.Rows.Count>0)Data.Add("invoiceData",CurrentInvoice);
-                if(CurrentQuotation.Rows.Count>0)Data.Add("quotationData",CurrentQuotation);
+               
                 
                
 
