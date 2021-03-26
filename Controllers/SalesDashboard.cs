@@ -64,6 +64,7 @@ namespace SmartxAPI.Controllers
 
                CurrentOrder.AcceptChanges();
                CurrentInvoice.AcceptChanges();
+               CurrentQuotation.AcceptChanges();
 
 
 
