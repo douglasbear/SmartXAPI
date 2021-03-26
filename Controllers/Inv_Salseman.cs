@@ -72,6 +72,9 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+     
+
         //List
         // [HttpGet("listdetails")]
         // public ActionResult GetAllSalesExecutivesDetails(int? nCompanyID, int? nFnyearID, int? n_SalesmanID)

@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            string sqlCommandText = "Select *  from Acc_CostCentreMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " Order By X_CostCentreCode";
+            string sqlCommandText = "Select *  from vw_CostCentreMaster Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " Order By X_CostCentreCode";
           
 
             try
@@ -307,9 +307,10 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nDepartmentID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nDepartmentID, int nFnYearID)
         {
             int Results = 0;
+             int nCompanyID=myFunctions.GetCompanyID(User);
             try
             {
                 SortedList QueryParams = new SortedList();
@@ -325,6 +326,10 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
                         {
                             Results = dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", nDepartmentID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
+                        }
+                        else
+                        {
+                             return Ok(_api.Error("Department Allready Used"));
                         }
                     }
                 }
@@ -343,8 +348,9 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
 
-
         }
+
+
         [HttpGet("dummy")]
         public ActionResult GetDepartmentDummy(int? nDepartmentID)
         {

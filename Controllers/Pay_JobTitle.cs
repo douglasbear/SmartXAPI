@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
 
 
         }
-        [HttpGet("dummy")]
+        // [HttpGet("dummy")]
         // public ActionResult GetDepartmentDummy()
         // {
            

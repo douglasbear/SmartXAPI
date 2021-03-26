@@ -14,9 +14,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("activity")]
+    [Route("mnpEmpMaintenance")]
     [ApiController]
-    public class CRM_Activity : ControllerBase
+    public class Mnp_EmpMaintenance : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
@@ -24,20 +24,20 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
 
-        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Mnp_EmpMaintenance(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1307;
+            FormID = 1005;
         }
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bySalesMan)
+        public ActionResult EmpMaintenanceList(int nCompanyId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            int nCompanyId = myFunctions.GetCompanyID(User);
+            //int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -45,24 +45,20 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Criteria ="";
-            if(bySalesMan==true){
-                Criteria = " and N_UserID=@nUserID ";
-            }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
+                Searchkey = "and X_EmployeeName like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_activityid desc";
+                xSortBy = " order by N_MaintenanceID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + Criteria + xSortBy + " ) " + xSortBy;
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@nUserID", nUserID);
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_MaintenanceID not in (select top(" + Count + ") N_MaintenanceID from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+            Params.Add("@nCompanyId", nCompanyId);
 
             SortedList OutPut = new SortedList();
 
@@ -74,7 +70,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria ;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Searchkey + Criteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -96,15 +92,52 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("details")]
-        public ActionResult ActivityListDetails(string xActivityCode)
+        [HttpGet("employeelist")]
+        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", xActivityCode);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@bAllBranchData", bAllBranchData);
+            Params.Add("@nBranchID", nBranchID);
+            string sqlCommandText = "";
+            if (bAllBranchData == true)
+                sqlCommandText = "Select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,X_Nationality,N_PositionID,X_Position,X_Phone1,N_FnYearID from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  N_EmpID not in (select N_EmpID from Mnp_EmployeeMaintenance where N_CompanyID=@nCompanyID)";
+            else
+                sqlCommandText = "Select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,X_Nationality,N_PositionID,X_Position,X_Phone1,N_FnYearID from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) and  N_EmpID not in (select N_EmpID from Mnp_EmployeeMaintenance where N_CompanyID=@nCompanyID and (N_BranchID=0 or N_BranchID=@nBranchID))";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        [HttpGet("details")]
+        public ActionResult EmpMaintenanceListDetails(int nCompanyId,string xMaintenanceCode)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            //int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId and X_MaintenanceCode=@xMaintenanceCode";
+            Params.Add("@nCompanyId", nCompanyId);
+            Params.Add("@xMaintenanceCode", xMaintenanceCode);
 
 
             try
@@ -142,28 +175,30 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActivityID"].ToString());
+                int nMaintenanceID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MaintenanceID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    // Auto Gen
-                    string ActivityCode = "";
-                    var values = MasterTable.Rows[0]["x_ActivityCode"].ToString();
+                    string MaintenanceCode = "";
+                    var values = MasterTable.Rows[0]["x_MaintenanceCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
-                        ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
-                        if (ActivityCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
-                        MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
+                        MaintenanceCode = dLayer.GetAutoNumber("Mnp_EmployeeMaintenance", "x_MaintenanceCode", Params, connection, transaction);
+                        if (MaintenanceCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
+                        MasterTable.Rows[0]["x_MaintenanceCode"] = MaintenanceCode;
                     }
-
-                    nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
-                    if (nActivityID <= 0)
+                    if(nMaintenanceID>0)
+                    {
+                        dLayer.DeleteData("Mnp_EmployeeMaintenance", "N_MaintenanceID", nMaintenanceID, "", connection, transaction);
+                    }
+                    nMaintenanceID = dLayer.SaveData("Mnp_EmployeeMaintenance", "n_MaintenanceID", MasterTable, connection, transaction);
+                    if (nMaintenanceID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
@@ -171,7 +206,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Activity Created"));
+                        return Ok(api.Success("Manpower Maintenance Created"));
                     }
                 }
             }
@@ -183,7 +218,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nActivityID)
+        public ActionResult DeleteData(int nMaintenanceID)
         {
 
             int Results = 0;
@@ -195,18 +230,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Activity", "N_ActivityID", nActivityID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Mnp_EmployeeMaintenance", "N_MaintenanceID", nMaintenanceID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("N_ActivityID", nActivityID.ToString());
-                    return Ok(api.Success(res, "Activity deleted"));
+                    res.Add("N_MaintenanceID", nMaintenanceID.ToString());
+                    return Ok(api.Success(res, "Manpower Maintenance deleted"));
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Activity"));
+                    return Ok(api.Error("Unable to delete Manpower Maintenance"));
                 }
 
             }

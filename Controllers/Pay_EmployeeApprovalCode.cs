@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText = "select N_CompanyID,N_ApprovalID,X_ApprovalCode,X_ApprovalDescription from vw_PayApprovalCodeDisp where N_CompanyID=@nComapnyID";
+            string sqlCommandText = "select N_CompanyID,N_ApprovalID,X_ApprovalCode,X_ApprovalDescription from Gen_ApprovalCodes where N_CompanyID=@nComapnyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -112,38 +112,37 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
-
-                    int n_ApprovalID = myFunctions.getIntVAL(MasterRow["n_ApprovalID"].ToString());
+                    int n_ApprovalSettingsID = myFunctions.getIntVAL(MasterRow["N_ApprovalSettingsID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_ApprovalCode = MasterRow["X_ApprovalCode"].ToString();
+                    string x_ApprovalSettingsCode = MasterRow["X_ApprovalSettingsCode"].ToString();
 
-                    if (x_ApprovalCode == "@Auto")
+                    if (x_ApprovalSettingsCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
-                        // x_ApprovalCode = dLayer.GetAutoNumber("Web_Pay_ApprovalSystem", "X_ApprovalCode", Params, connection, transaction);
-                        x_ApprovalCode = dLayer.GetAutoNumber("Acc_CostCentreMaster", "x_CostCentreCode", Params, connection, transaction);
-                        if (x_ApprovalCode == "")
+                        x_ApprovalSettingsCode = dLayer.GetAutoNumber("Sec_ApprovalSettings_Employee", "X_ApprovalSettingsCode", Params, connection, transaction);
+                        if (x_ApprovalSettingsCode == "")
                         {
                             transaction.Rollback();
                             return Ok("Unable to generate  Approval Code");
                         }
-                        MasterTable.Rows[0]["X_ApprovalCode"] = x_ApprovalCode;
-                        MasterTable.Columns.Remove("n_FnYearId");
+                        MasterTable.Rows[0]["X_ApprovalSettingsCode"] = x_ApprovalSettingsCode;
                     }
 
-
-
-                    n_ApprovalID = dLayer.SaveData("Web_Pay_ApprovalSystem", "N_ApprovalID", "", "", MasterTable, connection, transaction);
-                    if (n_ApprovalID <= 0)
+                    n_ApprovalSettingsID = dLayer.SaveData("Sec_ApprovalSettings_Employee", "n_ApprovalSettingsID", "", "", MasterTable, connection, transaction);
+                    if (n_ApprovalSettingsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save approval code");
                     }
-                    int n_ApprovalDetailsID = dLayer.SaveData("Web_Pay_ApprovalSystemDetails", "N_ApprovalDetailsID", DetailTable, connection, transaction);
-                    if (n_ApprovalDetailsID <= 0)
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["n_ApprovalSettingsID"] = n_ApprovalSettingsID;
+                    }
+                    int n_ApprovalSettingsDetailsID = dLayer.SaveData("Sec_ApprovalSettings_EmployeeDetails", "n_ApprovalSettingsDetailsID", DetailTable, connection, transaction);
+                    if (n_ApprovalSettingsDetailsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save approval code");
@@ -151,8 +150,10 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("n_ApprovalID", n_ApprovalID);
-                    Result.Add("x_ApprovalCode", x_ApprovalCode);
+                    Result.Add("n_ApprovalSettingsID", n_ApprovalSettingsID);
+                    Result.Add("x_ApprovalSettingsCode", x_ApprovalSettingsCode);
+                    Result.Add("n_ApprovalSettingsDetailsID", n_ApprovalSettingsDetailsID);
+
                     return Ok(_api.Success(Result, "Approval Code Saved"));
                 }
             }
@@ -163,68 +164,44 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult PayEmployeApprovalCode(int? nCompanyID, string xApprovalCode, int nFnYearID, int nApprovalID)
+        public ActionResult PayEmployeApprovalCode(string xApprovalSettingsCode)
         {
-            DataSet dt = new DataSet();
-            SortedList Params = new SortedList();
-            DataTable MasterTable = new DataTable();
-            DataTable DetailTable = new DataTable();
-            DataTable DataTable = new DataTable();
 
-            string Mastersql = "";
-            string DetailSql = "";
-
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    if (nApprovalID > 0)
-                    {
-                        Params.Add("@nApprovalID", nApprovalID);
-                        Mastersql = "select * from vw_PayApprovalCodeDisp where N_CompanyId=@nCompanyID and N_ApprovalID=@nApprovalID";
-                        MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                        MasterTable = _api.Format(MasterTable, "Master");
-                        DetailSql = "";
-                        DetailSql = "select * from vw_PayApprovalCode_dtls where N_CompanyId=@nCompanyID and N_ApprovalID=@nApprovalID";
-                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                        DetailTable = _api.Format(DetailTable, "Details");
-                        dt.Tables.Add(MasterTable);
-                        dt.Tables.Add(DetailTable);
-                        return Ok(_api.Success(dt));
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    DataTable DataTable = new DataTable();
 
-                    }
+                    string Mastersql = "";
+                    string DetailSql = "";
 
-                    Params.Add("@xApprovalCode", xApprovalCode);
-
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                     Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
+                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and X_ApprovalSettingsCode=@xApprovalSettingsCode  ";
+                   
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int ApproovalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalSettingsID"].ToString());
+                    Params.Add("@nApproovalSettingsID", ApproovalSettingsID);
+
                     MasterTable = _api.Format(MasterTable, "Master");
-
-                    DataRow MasterRow = MasterTable.Rows[0];
-                    SortedList DetailParams = new SortedList();
-                    DetailParams.Add("@nCompanyID", nCompanyID);
-
-
-                    DetailSql = "vw_PayApprovalCode_dtls @nCompanyID,@nFnYearID";
-                    SortedList NewParams = new SortedList();
-                    NewParams.Add("@nFnYearID", nFnYearID);
-                    NewParams.Add("@nCompanyID", nCompanyID);
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
-
-                    SortedList Param = new SortedList();
-                    Param.Add("@nCompanyID", nCompanyID);
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, NewParams, connection);
+                    DetailSql = "select * from vw_Sec_ApprovalSettings_EmployeeDetails where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApproovalSettingsID ";
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+
+
                 }
-                return Ok(_api.Success(dt));
+
             }
             catch (Exception e)
             {
@@ -232,82 +209,43 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // Delete....
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nApprovalID,  int nFnYearID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
-        //             var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //             int nCompanyID = myFunctions.GetCompanyID(User);
-        //             object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
-        //             if (objProcessed == null) objProcessed = 0;
-        //             if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
-        //             {
-        //                 SortedList DeleteParams = new SortedList(){
-        //                         {"N_CompanyID",nCompanyID},
-        //                         // {"X_TransType","SALES ORDER"},
-        //                         // {"N_VoucherID",nSalesOrderID},
-        //                         // {"N_UserID",nUserID},
-        //                         // {"X_SystemName","WebRequest"},
-        //                         // {"N_BranchID",nBranchID}};
-        //                 Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-        //                 if (Results <= 0)
-        //                 {
-        //                     transaction.Rollback();
-        //                     return Ok(_api.Error("Unable to delete Sales Order"));
-        //                 }
-        //                 else
-        //                 {
-        //                     transaction.Commit();
-        //                     return Ok(_api.Success("Sales Order deleted"));
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nApprovalSettingsID, int nCompanyID, int nFnYearID)
+        {
+            int Results = 0;
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nFnYearID", nFnYearID);
+                QueryParams.Add("@nApprovalSettingsID", nApprovalSettingsID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
 
-        //                 }
-        //             }
-        //             else
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error("Sales invoice processed! Unable to delete Sales Order"));
-
-        //             }
+                    Results = dLayer.DeleteData("Sec_ApprovalSettings_Employee", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
 
 
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("Inv_SalesOrderDetails", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
-        //             if (Results <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error("Unable to delete sales order"));
-        //             }
-        //             else
-        //             {
-        //             Results = dLayer.DeleteData("Inv_SalesOrder", "N_SalesOrderID", nSalesOrderID, "", connection, transaction);
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Sec_ApprovalSettings_EmployeeDetails", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
+                        return Ok(_api.Success("Approval Code deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete"));
+                    }
 
-        //             }
+                }
 
-        //             if (Results > 0)
-        //             {
-        //                 transaction.Commit();
-        //                 return Ok(_api.Error("Sales order deleted"));
-        //             }
-        //             else
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error("Unable to delete sales order"));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(ex));
-        //     }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+
+
+        }
 
 
     }
