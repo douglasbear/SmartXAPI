@@ -34,7 +34,6 @@ namespace SmartxAPI.Controllers
 
         
         [HttpGet("usercategorylist")]
-<<<<<<< HEAD
         public ActionResult GetUser(int nCompanyId)
         {
             DataTable dt = new DataTable();
@@ -45,16 +44,6 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
           
-=======
-        public ActionResult GetUser(int nUsercategoryId, int nCompanyId)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            //int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Sec_UserCategory where N_CompanyID=@p1 and N_UserCategoryID=@p2 ";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nUsercategoryId);
->>>>>>> 0a421faf430fb5082dbcd91242d096930c69f13a
 
             try
             {
@@ -77,24 +66,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("userlist")]
-<<<<<<< HEAD
         public ActionResult GetUserlist(int nCompanyId)
-=======
-        public ActionResult GetUserlist(int nUserId, int nCompanyId)
->>>>>>> 0a421faf430fb5082dbcd91242d096930c69f13a
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
-<<<<<<< HEAD
             string sqlCommandText = "select * from Sec_User where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
                       
-=======
-            string sqlCommandText = "select * from Sec_User where N_CompanyID=@p1 and N_UserID=@p2 ";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nUserId);           
->>>>>>> 0a421faf430fb5082dbcd91242d096930c69f13a
 
             try
             {
@@ -146,11 +125,7 @@ namespace SmartxAPI.Controllers
             }
         }  
 
-<<<<<<< HEAD
         [HttpPost("save")]
-=======
-         [HttpPost("save")]
->>>>>>> 0a421faf430fb5082dbcd91242d096930c69f13a
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
             try
@@ -246,10 +221,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-<<<<<<< HEAD
                     
-=======
->>>>>>> 0a421faf430fb5082dbcd91242d096930c69f13a
                     connection.Open();
                     Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
                     if (Results > 0)
@@ -268,53 +240,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-<<<<<<< HEAD
-=======
-        //    [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nApprovalID, int nCompanyID, int nFnYearID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         SortedList Params = new SortedList();
-        //         SortedList QueryParams = new SortedList();
-        //         QueryParams.Add("@nCompanyID", nCompanyID);
-        //         QueryParams.Add("@nFnYearID", nFnYearID);
-        //         QueryParams.Add("@nFormID", 52);
-                
-
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-
-        //             if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-        //                 return Ok(_api.Error("Year is closed"));
-
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
-        //             transaction.Commit();
-        //         }
-        //         if (Results > 0)
-        //         {
-        //             Dictionary<string, string> res = new Dictionary<string, string>();
-        //             res.Add("N_ApprovalID", nApprovalID.ToString());
-        //             return Ok(_api.Success(res, "deleted"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(_api.Error("Unable to delete "));
-        //         }
-
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         if (ex.Message.Contains("REFERENCE constraint"))
-        //             return Ok(_api.Error("Unable to delete! It has been used."));
-        //         else
-        //             return Ok(_api.Error(ex));
-        //       }
-        // }     
->>>>>>> 0a421faf430fb5082dbcd91242d096930c69f13a
     }
 }     
      
