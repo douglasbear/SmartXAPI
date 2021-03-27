@@ -62,6 +62,41 @@ namespace SmartxAPI.Controllers
                 return Ok( _api.Error(e));
             }
         }
+
+
+         [HttpGet("productInformation")]
+        public ActionResult ProductInfo(int? nCompanyID,int nLocationIDFrom)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nLocationIDFrom", nLocationIDFrom);
+            string sqlCommandText = "";
+
+            sqlCommandText = "select * from vw_UC_ItemWithStockQty where N_CompanyID=@nCompanyID and B_Inactive=0 and [Product Code]<>'001' and N_ClassID<>4 and N_ClassID<>5 and N_LocationID=@nLocationIDFrom and B_Inactive=0 "; 
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
       
         [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)
