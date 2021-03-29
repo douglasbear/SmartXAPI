@@ -404,7 +404,7 @@ namespace SmartxAPI.Controllers
             TxnStatus.Add("ReceiptNumbers", "");
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=" + nSalesID + " and Inv_Sales.N_CompanyID=" + nCompanyID, connection);
+            objInvoiceRecievable = dLayer.ExecuteScalar("SELECT SUM(isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0)) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=" + nSalesID + " and Inv_Sales.N_CompanyID=" + nCompanyID, connection);
             objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + nSalesID + " and X_Type='SALES' and N_CompanyID=" + nCompanyID, connection);
 
 
@@ -417,7 +417,7 @@ namespace SmartxAPI.Controllers
             if (objBal != null)
                 BalanceAmt = myFunctions.getVAL(objBal.ToString());
 
-            if ((InvoiceRecievable == BalanceAmt) && (InvoiceRecievable > 0 && BalanceAmt > 0))
+            if ((Math.Round(InvoiceRecievable,2) == Math.Round(BalanceAmt,2)) && (Math.Round(InvoiceRecievable,2) > 0 && Math.Round(BalanceAmt,2) > 0))
             {
                 TxnStatus["Label"] = "NotPaid";
                 TxnStatus["LabelColor"] = "Red";

@@ -137,7 +137,8 @@ namespace SmartxAPI.Controllers
 
 
             try
-            
+            {
+
             
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
