@@ -341,7 +341,7 @@ namespace SmartxAPI.Controllers
                     myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNos", typeof(string), InvoiceNos);
 
 
-                    dLayer.ExecuteDataTable( "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchId Or N_BranchId=0)",QueryParamsList,Con);
+                    dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchId Or N_BranchId=0)", QueryParamsList, Con);
 
                     //Details
                     SortedList dParamList = new SortedList()
@@ -353,13 +353,30 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                    DataTable saleamountdetails = new DataTable();
+                    if (myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesId"].ToString()) > 0)
+                    {
+                        object CustomerID = dLayer.ExecuteScalar("Select TOP (1) PERCENT ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString(), Con);
+                        if (CustomerID != null)
+                        {
+                            if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
+                                saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString(), Con);
+                            else
+                                saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=0", Con);
+                        }
+                        else
+                            saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=0", Con);
+                    }
+
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesId"].ToString()), this.N_FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
                     Attachments = _api.Format(Attachments, "attachments");
+                    saleamountdetails = _api.Format(saleamountdetails, "saleamountdetails");
 
                     SortedList Status = StatusSetup(nSalesID, nFnYearId, Con);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "TxnStatus", typeof(SortedList), Status);
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
+                    dsSalesInvoice.Tables.Add(saleamountdetails);
                     dsSalesInvoice.Tables.Add(Attachments);
 
                     return Ok(_api.Success(dsSalesInvoice));
@@ -643,28 +660,31 @@ namespace SmartxAPI.Controllers
                         StockPostingParams.Add("N_SalesID", N_SalesID);
                         StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
                         StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
-                       if(N_DeliveryNoteID==0 ){ try
+                        if (N_DeliveryNoteID == 0)
                         {
-                            dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                if (ex.Message == "50")
+                                    return Ok(_api.Error("Day Closed"));
+                                else if (ex.Message == "51")
+                                    return Ok(_api.Error("Year Closed"));
+                                else if (ex.Message == "52")
+                                    return Ok(_api.Error("Year Exists"));
+                                else if (ex.Message == "53")
+                                    return Ok(_api.Error("Period Closed"));
+                                else if (ex.Message == "54")
+                                    return Ok(_api.Error("Txn Date"));
+                                else if (ex.Message == "55")
+                                    return Ok(_api.Error("Quantity exceeds!"));
+                                else
+                                    return Ok(_api.Error(ex));
+                            }
                         }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            if (ex.Message == "50")
-                                return Ok(_api.Error("Day Closed"));
-                            else if (ex.Message == "51")
-                                return Ok(_api.Error("Year Closed"));
-                            else if (ex.Message == "52")
-                                return Ok(_api.Error("Year Exists"));
-                            else if (ex.Message == "53")
-                                return Ok(_api.Error("Period Closed"));
-                            else if (ex.Message == "54")
-                                return Ok(_api.Error("Txn Date"));
-                            else if (ex.Message == "55")
-                                return Ok(_api.Error("Quantity exceeds!"));
-                            else
-                                return Ok(_api.Error(ex));
-                        }}
 
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
@@ -838,7 +858,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                    return Ok(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
         //Delete....
