@@ -181,6 +181,7 @@ namespace SmartxAPI.Controllers
                 {
                     Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',@p5";
                     Params.Add("@p5", nBranchID);
+                    Params.Add("@p4", xInvoiceNo);
                 }
             }
 
