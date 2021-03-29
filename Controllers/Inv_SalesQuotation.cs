@@ -127,11 +127,11 @@ namespace SmartxAPI.Controllers
 
             if (bAllBranchData == true)
             {
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName FROM Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID RIGHT OUTER JOIN Inv_SalesQuotation ON Inv_Customer.N_CompanyID = Inv_SalesQuotation.N_CompanyId AND Inv_Customer.N_CustomerID = Inv_SalesQuotation.N_CustomerId Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo";
+                sqlCommandText = "SELECT Inv_SalesQuotation.*, Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName FROM Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID RIGHT OUTER JOIN Inv_SalesQuotation ON Inv_Customer.N_CompanyID = Inv_SalesQuotation.N_CompanyId AND Inv_Customer.N_CustomerID = Inv_SalesQuotation.N_CustomerId Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo";
             }
             else
             {
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName FROM Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID RIGHT OUTER JOIN Inv_SalesQuotation ON Inv_Customer.N_CompanyID = Inv_SalesQuotation.N_CompanyId AND Inv_Customer.N_CustomerID = Inv_SalesQuotation.N_CustomerId Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
+                sqlCommandText = "SELECT Inv_SalesQuotation.*, Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName FROM Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID RIGHT OUTER JOIN Inv_SalesQuotation ON Inv_Customer.N_CompanyID = Inv_SalesQuotation.N_CompanyId AND Inv_Customer.N_CustomerID = Inv_SalesQuotation.N_CustomerId Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
             }
 
 
