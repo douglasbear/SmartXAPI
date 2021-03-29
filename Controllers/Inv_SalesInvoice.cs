@@ -208,12 +208,12 @@ namespace SmartxAPI.Controllers
                     {
 
                         QueryParamsList.Add("@nOrderID", nSalesOrderID);
-                        string Mastersql = "select * from vw_Salesorder_Disp where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
+                        string Mastersql = "select * from vw_SalesOrderMasterToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         string DetailSql = "";
-                        DetailSql = "select * from vw_SalesorderDetails_Disp where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
+                        DetailSql = "select * from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
