@@ -46,10 +46,24 @@ namespace SmartxAPI.Controllers
                 Params.Add("@query", "%" + query + "%");
             }
 
-            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
+            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
 
-            string sqlComandText = " * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
+            // string sqlComandText = " * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
+
+ string sqlComandText =  "  vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, "+
+ "                        vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, "+
+  "                       vw_InvItem_Search.B_BaseUnit, vw_InvItem_Search.N_Qty, vw_InvItem_Search.N_BaseUnitID, vw_InvItem_Search.N_MinimumMargin, vw_InvItem_Search.N_ItemManufacturerID, vw_InvItem_Search.X_ItemManufacturer, "+
+   "                      vw_InvItem_Search.X_SalesUnit, vw_InvItem_Search.X_PurchaseUnit, vw_InvItem_Search.X_Barcode, vw_InvItem_Search.B_BarcodewithQty, vw_InvItem_Search.X_StockUnit, vw_InvItem_Search.N_StockUnitQty, "+
+    "                     vw_InvItem_Search.B_IsIMEI, vw_InvItem_Search.N_LengthID, vw_InvItem_Search.N_PurchaseUnitQty, vw_InvItem_Search.N_SalesUnitQty, vw_InvItem_Search.Stock, vw_InvItem_Search.Rate, "+
+     "                    vw_InvItem_Search.N_StockUnitID, vw_InvItem_Search.X_Rack, vw_InvItem_Search.[Product Code], vw_InvItem_Search.B_IsBatch, vw_InvItem_Search.N_LeadDays, vw_InvItem_Search.N_TransitDays, "+
+      "                   vw_InvItem_Search.N_DeliveryDays, vw_InvItem_Search.X_BOMItemUnit, vw_InvItem_Search.N_BOMUnitID, vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName, vw_InvItem_Search.N_PkeyID, "+
+       "                  vw_InvItem_Search.N_TaxAmt, vw_InvItem_Search.X_DisplayName2, vw_InvItem_Search.N_TaxAmt2, vw_InvItem_Search.N_TaxID2, vw_InvItem_Search.N_PurchaseCost, vw_InvItem_Search.X_CategoryCode, "+
+        "                 vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, "+
+         "                vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11 "+
+" FROM            vw_InvItem_Search LEFT OUTER JOIN "+
+  "                       Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=@p2 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + qry;
+
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
             Params.Add("@p3", "001");
