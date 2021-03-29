@@ -131,12 +131,14 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                sqlCommandText = "SELECT Inv_SalesQuotation.*, Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName FROM Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID RIGHT OUTER JOIN Inv_SalesQuotation ON Inv_Customer.N_CompanyID = Inv_SalesQuotation.N_CompanyId AND Inv_Customer.N_CustomerID = Inv_SalesQuotation.N_CustomerId Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo and N_BranchID=@nBranchID";
+                sqlCommandText = "SELECT Inv_SalesQuotation.*, Acc_CurrencyMaster.N_CurrencyID, Acc_CurrencyMaster.X_CurrencyName FROM Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Customer ON Acc_CurrencyMaster.N_CompanyID = Inv_Customer.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Customer.N_CurrencyID RIGHT OUTER JOIN Inv_SalesQuotation ON Inv_Customer.N_CompanyID = Inv_SalesQuotation.N_CompanyId AND Inv_Customer.N_CustomerID = Inv_SalesQuotation.N_CustomerId Where Inv_SalesQuotation.N_CompanyID=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.X_QuotationNo=@xQuotationNo and Inv_SalesQuotation.N_BranchID=@nBranchID";
             }
 
 
+
             try
-            {
+            
+            
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
