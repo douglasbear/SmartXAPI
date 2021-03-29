@@ -181,16 +181,16 @@ namespace SmartxAPI.Controllers
 
         }
         [HttpGet("dummy")]
-        public ActionResult GetDepartmentDummy(int? nDepartmentID)
+        public ActionResult GetDepartmentDummy()
         {
             try
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
-                    string sqlCommandText = "select * from Acc_CostCentreMaster where N_CostCentreID=@p1";
-                    SortedList mParamList = new SortedList() { { "@p1", nDepartmentID } };
-                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
+                    string sqlCommandText = "select * from Mnp_EmployeeMaintenance where N_MaintenanceID=1";
+                    //SortedList mParamList = new SortedList() { { "@p1", nDepartmentID } };
+                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, Con);
                     masterTable = _api.Format(masterTable, "master");
 
                     if (masterTable.Rows.Count == 0) { return Ok(new { }); }
