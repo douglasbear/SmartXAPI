@@ -146,12 +146,25 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     string CategoryCode = "";
                     var values = MasterTable.Rows[0]["X_PkeyCode"].ToString();
+                    bool bIsCess= myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsCess"].ToString());
+                    bool bIsExclude =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsExclude"].ToString());
+                    int nIsExclude=0;
+
+                    if(bIsExclude)
+                    {
+                     nIsExclude = 1;
+                    }
+                    else
+                    {
+                      nIsExclude =0;
+                    }
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 852);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                      
                         CategoryCode = dLayer.GetAutoNumber("Acc_TaxCategory", "X_PkeyCode", Params, connection, transaction);
                         if (CategoryCode == "") {
                             transaction.Rollback();
@@ -161,13 +174,34 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
+                    MasterTable.Columns.Remove("b_IsExclude");
                     int N_TaxCategoryID = dLayer.SaveData("Acc_TaxCategory", "N_PkeyID", MasterTable, connection, transaction);
+                           
+                                  if(bIsCess == true)
+                                 {  
+                                        SortedList ParamSettings_Ins = new SortedList();
+                                        ParamSettings_Ins.Add("N_CompanyID",  MasterTable.Rows[0]["n_CompanyId"].ToString());
+                                        ParamSettings_Ins.Add("X_Group", "73");
+                                        ParamSettings_Ins.Add("X_Description", "ExcludeCESSForTaxCustomer");
+                                        ParamSettings_Ins.Add("N_Value",nIsExclude);
+                                        try
+                                        {
+                                            dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", ParamSettings_Ins, connection, transaction);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error("Unable to save!"));
+                                        }
+                                 
+                                 }
+                                       
                     if (N_TaxCategoryID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Warning("Unable to save"));
                     }
-                    else
+                    else 
                         transaction.Commit();
 
                     return GetAllTaxTypesDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_TaxCategoryID);

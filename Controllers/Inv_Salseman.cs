@@ -72,41 +72,43 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        //List
-        // [HttpGet("listdetails")]
-        // public ActionResult GetAllSalesExecutivesDetails(int? nCompanyID, int? nFnyearID, int? n_SalesmanID)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
 
-        //     string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
-        //     Params.Add("@p1", nCompanyID);
-        //     Params.Add("@p2", nFnyearID);
-        //     Params.Add("@p3", n_SalesmanID);
+     
+        //details
+        [HttpGet("details")]
+        public ActionResult GetAllSalesExecutivesDetails(int? n_SalesmanID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //         }
-        //         dt = _api.Format(dt);
-        //         if (dt.Rows.Count == 0)
-        //         {
-        //             return Ok(_api.Notice("No Results Found"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(dt);
-        //         }
+            string sqlCommandText = "select * from vw_InvSalesman where n_SalesmanID=@p3";
+            // Params.Add("@p1", nCompanyID);
+            // Params.Add("@p2", nFnyearID);
+            Params.Add("@p3", n_SalesmanID);
 
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(ex));
-        //     }
-        // }
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(dt);
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
         //Save....
         [HttpPost("save")]

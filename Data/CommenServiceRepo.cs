@@ -125,7 +125,8 @@ namespace SmartxAPI.Data
                     loginRes.B_AllBranchesData = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster Where N_CompanyID=@nCompanyID and B_DefaultBranch=1",Params, connection).ToString());
                 }
                 Params.Add("@nBranchID", loginRes.N_BranchID);
-                loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and N_TypeID=2 and B_IsDefault=1  and N_BranchID=@nBranchID",Params, connection).ToString();
+                // loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and N_TypeID=2 and B_IsDefault=1  and N_BranchID=@nBranchID",Params, connection).ToString();
+                loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1  and N_BranchID=@nBranchID",Params, connection).ToString();
                 loginRes.N_LocationID = dLayer.ExecuteScalar("Select N_LocationID From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID",Params, connection).ToString();
                 //loginRes.X_EmpNameLocale = dLayer.ExecuteScalar("Select X_EmpNameLocale From Pay_Employee Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID and ",Params, connection).ToString();
 
