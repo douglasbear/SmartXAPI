@@ -138,10 +138,6 @@ namespace SmartxAPI.Controllers
 
             try
             {
-<<<<<<< HEAD
-=======
-
->>>>>>> b72b8bec1f844af8bd9d55eb54364bb02a9ff6ee
             
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
