@@ -98,15 +98,14 @@ namespace SmartxAPI.Controllers
 
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
+                    MasterTable.Columns.Remove("n_OccupiedRooms");
+                    MasterTable.Columns.Remove("n_AvaialbleSpace");
                     // if(n_OccupiedRooms <= 0)
                     // {
                     // MasterTable.Columns.Remove("n_OccupiedRooms");
                     // MasterTable.Columns.Remove("n_AvailableSpace");
                     // }
                   
-
-
-
                    nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
                    
 

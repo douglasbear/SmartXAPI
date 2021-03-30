@@ -45,6 +45,9 @@ namespace SmartxAPI.Controllers
             string sqlOpportunitiesStage = "select X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
             string sqlLeadsbySource = "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
+            string sqlWin = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
+            string sqlLose = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
+          
             SortedList Data=new SortedList();
             DataTable CurrentLead = new DataTable();
             DataTable CurrentCustomer = new DataTable();
@@ -52,10 +55,14 @@ namespace SmartxAPI.Controllers
             DataTable OpportunitiesStage = new DataTable();
             DataTable LeadsbySource = new DataTable();
             DataTable PipelineOppotunity = new DataTable();
+            DataTable Win = new DataTable();
+            DataTable Lose = new DataTable();
             object LeadLastMonth="";
             object CustomerLastMonth="";
             object LeadPercentage="";
             object CustomerPercentage="";
+            // object Win="";
+            // object Lose="";
 
             try
             {
@@ -69,7 +76,8 @@ namespace SmartxAPI.Controllers
                     OpportunitiesStage = dLayer.ExecuteDataTable(sqlOpportunitiesStage, Params, connection);
                     LeadsbySource = dLayer.ExecuteDataTable(sqlLeadsbySource, Params, connection);
                     PipelineOppotunity = dLayer.ExecuteDataTable(sqlPipelineoppotunity, Params, connection);
-
+                    Win=dLayer.ExecuteDataTable(sqlWin, Params, connection);
+                    Lose=dLayer.ExecuteDataTable(sqlLose, Params, connection);
                     LeadLastMonth = dLayer.ExecuteScalar(sqlPreviousLead, Params, connection);
                     CustomerLastMonth = dLayer.ExecuteScalar(sqlPreviousCustomer, Params, connection);
 
@@ -107,6 +115,8 @@ namespace SmartxAPI.Controllers
                 if(OpportunitiesStage.Rows.Count>0)Data.Add("opportunitiesStage",OpportunitiesStage);
                 if(LeadsbySource.Rows.Count>0)Data.Add("leadsbySource",LeadsbySource);
                 if(PipelineOppotunity.Rows.Count>0)Data.Add("oppotunityData",PipelineOppotunity);
+                if(Win.Rows.Count>0)Data.Add("winData",Win);
+                if(Lose.Rows.Count>0)Data.Add("loseData",Lose);
 
                 return Ok(api.Success(Data));
 
