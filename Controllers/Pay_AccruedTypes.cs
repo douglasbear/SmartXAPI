@@ -54,9 +54,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description from vw_PayVacationType where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description,N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 " + Searchkey + " and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description,N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 " + Searchkey + " and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from Pay_VacationType where N_CompanyID=@p1 ";
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationType where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                      Params.Add("@xVacCode", xVacCode);
-                    Mastersql = "select * from Pay_VacationType where N_CompanyId=@nCompanyID and xVacCode=@xVacCode  ";
+                    Mastersql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -156,7 +156,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nVacTypeID", VacTypeID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from Pay_VacationTypeDetails where N_CompanyId=@nCompanyID and N_VacTypeID=@nVacTypeID ";
+                    DetailSql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and N_VacTypeID=@nVacTypeID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
