@@ -170,7 +170,7 @@ namespace SmartxAPI.Controllers
             DataTable PayInfo = new DataTable();
 
             string sql = "";
-            int AllBranch = 0;
+            int AllBranch = 1;
             int nPayReceiptID = 0;
             int nCompanyId = myFunctions.GetCompanyID(User);
             OutPut.Add("totalAmtDue", 0);
@@ -178,8 +178,7 @@ namespace SmartxAPI.Controllers
             OutPut.Add("txnStarted", false);
             if (bShowAllbranch == true)
             {
-                AllBranch = 1;
-                nBranchID = 0;
+                AllBranch = 0;
             }
 
             try
