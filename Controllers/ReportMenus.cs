@@ -443,7 +443,7 @@ namespace SmartxAPI.Controllers
                     var dbName = connection.Database;
                     var random = RandomString();
                     if(TableName!="" && critiria!=""){
-                        critiria = critiria + " and {"+TableName+".N_CompanyID}="+myFunctions.GetCompanyID(User)+" and {"+TableName+".N_FnYearID}="+nFnYearID;
+                        critiria = critiria + " and {"+TableName+".N_CompanyID}="+myFunctions.GetCompanyID(User);
                     }
                     string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random+ "&x_comments=&x_Reporttitle=";
                     var path = client.GetAsync(URL);

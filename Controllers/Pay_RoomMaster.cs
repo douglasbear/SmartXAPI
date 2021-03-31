@@ -77,6 +77,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRoomId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RoomId"].ToString());
 
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -98,10 +99,13 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_OccupiedRooms");
-                    MasterTable.Columns.Remove("n_AvailableSpace");
-
-
-
+                    MasterTable.Columns.Remove("n_AvaialbleSpace");
+                    // if(n_OccupiedRooms <= 0)
+                    // {
+                    // MasterTable.Columns.Remove("n_OccupiedRooms");
+                    // MasterTable.Columns.Remove("n_AvailableSpace");
+                    // }
+                  
                    nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
                    
 
