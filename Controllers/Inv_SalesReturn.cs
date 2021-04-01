@@ -148,10 +148,12 @@ namespace SmartxAPI.Controllers
                             if (bAllBranchData == true)
                             {
                                 sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                                Params.Add("@RcptNo", xDebitNoteNo);
                             }
                             else
                             {
                                 sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                                Params.Add("@RcptNo", xDebitNoteNo);
                             }
 
                         }
@@ -164,11 +166,11 @@ namespace SmartxAPI.Controllers
                             sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,0,@FnYearID";
                             Params.Add("@RcptNo", xReceiptNo);
                         }
-                        else
-                        {
-                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
-                            Params.Add("@RcptNo", xDebitNoteNo);
-                        }
+                        // else
+                        // {
+                        //     sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
+                        //     Params.Add("@RcptNo", xDebitNoteNo);
+                        // }
                     }
                     else
                     {
@@ -177,11 +179,11 @@ namespace SmartxAPI.Controllers
                             sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,@BranchID,@FnYearID";
                             Params.Add("@RcptNo", xReceiptNo);
                         }
-                        else
-                        {
-                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
-                            Params.Add("@RcptNo", xDebitNoteNo);
-                        }
+                        // else
+                        // {
+                        //     sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
+                        //     Params.Add("@RcptNo", xDebitNoteNo);
+                        // }
                     }
 
 
