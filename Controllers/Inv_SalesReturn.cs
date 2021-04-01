@@ -166,11 +166,11 @@ namespace SmartxAPI.Controllers
                             sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,0,@FnYearID";
                             Params.Add("@RcptNo", xReceiptNo);
                         }
-                    //     else
-                    //     {
-                    //         sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
-                    //         Params.Add("@RcptNo", xDebitNoteNo);
-                    //     }
+                        // else
+                        // {
+                        //     sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
+                        //     Params.Add("@RcptNo", xDebitNoteNo);
+                        // }
                     }
                     else
                     {
