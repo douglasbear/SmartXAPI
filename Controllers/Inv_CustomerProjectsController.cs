@@ -34,13 +34,13 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllProjects(int? nCompanyID, int? nFnYearID)
+        public ActionResult GetAllProjects(int? nCompanyId, int? nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by X_ProjectCode";
-            Params.Add("@p1", nCompanyID);
+            Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
 
             try
