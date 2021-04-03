@@ -113,6 +113,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string sqlCommandText = "";
             string X_type = "";
+            
 
 
 
@@ -152,7 +153,7 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
-                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Display Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
                                 Params.Add("@RcptNo", xDebitNoteNo);
                             }
 
