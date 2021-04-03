@@ -113,6 +113,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string sqlCommandText = "";
             string X_type = "";
+            
 
 
 
@@ -155,7 +156,19 @@ namespace SmartxAPI.Controllers
                                 sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Display Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
                                 Params.Add("@RcptNo", xDebitNoteNo);
                             }
-
+                        }
+                        else
+                        {
+                            if (bAllBranchData == true)
+                            {
+                                sqlCommandText = "SP_InvSalesReturn_Display @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
+                                Params.Add("@RcptNo", xDebitNoteNo);
+                            }
+                            else
+                            {
+                                sqlCommandText = "SP_InvSalesReturn_Display @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
+                                Params.Add("@RcptNo", xDebitNoteNo);
+                            }
                         }
                     }
 
@@ -219,7 +232,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (!bDeliveryNote)
-                            sqlCommandText2 = "Select * from vw_InvSalesRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
+                            sqlCommandText2 = "Select * from vw_InvSalesRetunEdit_Display Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
                         else
                             sqlCommandText2 = "Select * from vw_InvDeliveryRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
                     }
