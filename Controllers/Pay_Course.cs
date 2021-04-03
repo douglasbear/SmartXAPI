@@ -109,15 +109,15 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("Details") ]
-        public ActionResult GetCourseDetails (int xCourseCode,int nCompanyID,int nFnYearId)
+        public ActionResult GetCourseDetails (int nCourseID,int nCompanyID,int nFnYearId)
           
         {   DataTable dt=new DataTable();
             SortedList Params = new SortedList();
            //  int nCompanyID=myFunctions.GetCompanyID(User);
-              string sqlCommandText="select * from vw_PayCourse where N_CompanyID=@nCompanyID and N_FnYearID=@YearID and X_CourseCode=@xCourseCode";
+              string sqlCommandText="select * from vw_PayCourse where N_CompanyID=@nCompanyID and N_FnYearID=@YearID and N_CourseID=@nCourseID";
                Params.Add("@nCompanyID",nCompanyID);
                 Params.Add("@YearID", nFnYearId);
-             Params.Add("@xCourseCode",xCourseCode);
+             Params.Add("@nCourseID",nCourseID);
             
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
