@@ -113,6 +113,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string sqlCommandText = "";
             string X_type = "";
+            
 
 
 
