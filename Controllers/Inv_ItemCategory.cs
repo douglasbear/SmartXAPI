@@ -128,6 +128,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
+                    MasterTable.Columns.Remove("b_IsParent");
                     N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
