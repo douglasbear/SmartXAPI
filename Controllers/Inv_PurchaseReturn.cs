@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
-
+            if(xCreditNoteNo==null)xCreditNoteNo="";
             string Mastersql = "";
 
             if (bAllBranchData == true)
@@ -202,6 +202,8 @@ namespace SmartxAPI.Controllers
 
                     //PurchaseOrder Details
                     string DetailSql = "";
+                    if(xCreditNoteNo!="")
+                    {
                         if (bAllBranchData == true)
                         {
                             DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
@@ -210,7 +212,15 @@ namespace SmartxAPI.Controllers
                         {
                              DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
-                        
+                    }
+                    else
+                    {
+                        if (bAllBranchData == true)
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
+                        else
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
+                    }
+
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
