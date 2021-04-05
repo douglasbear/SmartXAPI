@@ -148,6 +148,7 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save approval code");
                     }
 
+
                     transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("n_ApprovalSettingsID", n_ApprovalSettingsID);

@@ -33,14 +33,14 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
          [HttpGet("details")]
-        public ActionResult PayCodeDetails(string xPaycode,int n_FnYearID)
+        public ActionResult PayCodeDetails(string xPaycode,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from  vw_Pay_PayMaster where N_CompanyID=@p1 and n_FnYearID=@p2 and X_PayCode=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", n_FnYearID);
+            Params.Add("@p2", nFnYearID);
             Params.Add("@p3", xPaycode);
             try
             {

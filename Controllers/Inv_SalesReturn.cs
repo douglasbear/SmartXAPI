@@ -113,6 +113,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string sqlCommandText = "";
             string X_type = "";
+            
 
 
 
@@ -147,11 +148,13 @@ namespace SmartxAPI.Controllers
                         {
                             if (bAllBranchData == true)
                             {
-                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Display Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0";
+                                Params.Add("@RcptNo", xDebitNoteNo);
                             }
                             else
                             {
-                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Disp Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                                sqlCommandText = "Select * from vw_SalesReturnMasterWithoutSale_Display Where N_CompanyID=@CompanyID and X_DebitNoteNo=@RcptNo and N_FnYearID=@FnYearID and B_Invoice=0 and N_BranchID=@BranchID";
+                                Params.Add("@RcptNo", xDebitNoteNo);
                             }
 
                         }
@@ -164,11 +167,11 @@ namespace SmartxAPI.Controllers
                             sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,0,@FnYearID";
                             Params.Add("@RcptNo", xReceiptNo);
                         }
-                        else
-                        {
-                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
-                            Params.Add("@RcptNo", xDebitNoteNo);
-                        }
+                        // else
+                        // {
+                        //     sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,0,@FnYearID";
+                        //     Params.Add("@RcptNo", xDebitNoteNo);
+                        // }
                     }
                     else
                     {
@@ -177,11 +180,11 @@ namespace SmartxAPI.Controllers
                             sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,0,@Xtype,@BranchID,@FnYearID";
                             Params.Add("@RcptNo", xReceiptNo);
                         }
-                        else
-                        {
-                            sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
-                            Params.Add("@RcptNo", xDebitNoteNo);
-                        }
+                        // else
+                        // {
+                        //     sqlCommandText = "SP_InvSalesReturn_Disp @CompanyID,@RcptNo,1,@Xtype,@BranchID,@FnYearID";
+                        //     Params.Add("@RcptNo", xDebitNoteNo);
+                        // }
                     }
 
 
@@ -203,14 +206,14 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText2 = "";
                     if (myFunctions.getBoolVAL(Res.ToString()) == false)
                     {
-                        sqlCommandText2 = "SELECT   * from vw_SalesReturnWithoutSale_Disp Where N_DebitNoteId=@DebitNoteID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
+                        sqlCommandText2 = "SELECT   * from vw_SalesReturnWithoutSale_Display Where N_DebitNoteId=@DebitNoteID and N_CompanyID=@CompanyID and N_FnYearID=@FnYearID";
                     }
                     else
                     if (xReceiptNo != "" && xReceiptNo != null)
                     {
                         Params.Add("@nSalesID", myFunctions.getIntVAL(SalesReturn.Rows[0]["N_SalesID"].ToString()));
                         if (!bDeliveryNote)
-                            sqlCommandText2 = "Select * from vw_InvSalesReturn_Disp Where N_CompanyID=@CompanyID and N_SalesID=@nSalesID";
+                            sqlCommandText2 = "Select * from vw_InvSalesReturn_Display Where N_CompanyID=@CompanyID and N_SalesID=@nSalesID";
                         else
                             sqlCommandText2 = "Select * from vw_InvDeliveryReturn_Disp Where N_CompanyID=@CompanyID and N_DeliveryNoteId=@nSalesID";
                     }
