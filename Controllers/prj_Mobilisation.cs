@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                     string x_MobilizationCode = MasterRow["X_MobilizationCode"].ToString();
                     int N_FromPrj = myFunctions.getIntVAL(MasterRow["N_FromPrj"].ToString());
                     int N_ProjectID = myFunctions.getIntVAL(MasterRow["N_ProjectID"].ToString());
-                    // int N_MaintenanceID = myFunctions.getIntVAL(MasterRow["N_MaintenanceID"].ToString());
+                 
 
 
                     if (x_MobilizationCode == "@Auto")
@@ -114,7 +114,6 @@ namespace SmartxAPI.Controllers
                     }
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    //  Result.Add("n_MaintenanceID", N_MaintenanceID);
                     Result.Add("n_MobilizationID", n_MobilizationID);
                     Result.Add("x_MobilizationCode", x_MobilizationCode);
                     Result.Add("n_MobilizationDetailsID", n_MobilizationDetailsID);
@@ -188,7 +187,6 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "select top(" + nSizeperpage + ") * from Mnp_Mobilization_Disp where N_CompanyID=@nCompanyId and  N_MobilizationID not in (select top(" + Count + ") N_MobilizationID from Mnp_Mobilization_Disp  where N_CompanyID=@p1 )";
 
             Params.Add("@p1", nCompanyId);
-            // Params.Add("@nFnYearId", nFnYearId);
             SortedList OutPut = new SortedList();
 
             try
