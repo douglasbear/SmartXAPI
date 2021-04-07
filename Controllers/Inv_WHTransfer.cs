@@ -97,8 +97,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-      
-        [HttpPost("save")]
+
+       [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
             try
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
-                    string X_TransType = MasterTable.Rows[0]["X_TransType"].ToString();
+                    string X_TransType = "TRANSFER";
                 
                 // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
                 // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
