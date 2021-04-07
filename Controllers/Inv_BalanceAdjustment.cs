@@ -43,9 +43,15 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string Searchkey = "";
-
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%')";
+            if (nPartyType ==1){
+                if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%')";
+            }
+            else {
+                if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%')";
+            }
+            
 
             if (xSortBy == null || xSortBy.Trim() == ""){
                 xSortBy = " order by [Invoice No] desc";
@@ -154,6 +160,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", nFnYearId);
             Params.Add("@p4", X_ReceiptNo);
             Params.Add("@p5", N_PartyType);
+            
 
             try
             {
@@ -202,7 +209,6 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -241,11 +247,6 @@ namespace SmartxAPI.Controllers
                             {X_Trasnaction = "CUSTOMER DEBIT NOTE";
                             N_FormID=505;}
                     }
-
-                    QueryParams.Add("@nCompanyID", N_CompanyID);
-                    QueryParams.Add("@nFnYearID", N_FnYearID);
-                    QueryParams.Add("@nQuotationID", N_AdjustmentID);
-                    QueryParams.Add("@nBranchID", N_BranchID);
 
                     // Auto Gen
                     string AdjustmentNo = "";
@@ -305,8 +306,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID, int nAdjustmentId, string xTransType)
         {
@@ -326,16 +325,12 @@ namespace SmartxAPI.Controllers
                     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                     transaction.Commit();
                 }
-
                 return Ok(_api.Success("Deleted"));
-
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
-
-
         }
 
 

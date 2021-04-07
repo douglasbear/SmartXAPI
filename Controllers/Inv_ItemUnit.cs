@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select Code,[Unit Code],Description from vw_InvItemUnit_Disp where N_CompanyID=@p1 and code=@p2 order by ItemCode,[Unit Code]";
+            string sqlCommandText = "select * from vw_InvItemUnit_Disp where N_CompanyID=@p1 and N_ItemUnitID=@p2 order by ItemCode";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nItemUnitID);
 

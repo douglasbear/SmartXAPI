@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select N_CompanyID, N_RoomId, X_RoomCode, X_RoomName, N_VillaID, X_Location, N_RentAmount, X_Remarks, D_Entrydate, N_Electricity, N_Water, N_Internet, N_Capasity from vw_Pay_RoomMaster Where N_CompanyID=@nCompanyID order by X_RoomCode";
+            string sqlCommandText="Select N_CompanyID, N_RoomId, X_RoomCode, X_RoomName, N_VillaID, X_Location, N_RentAmount, X_Remarks, D_Entrydate, N_Electricity, N_Water, N_Internet, N_Capasity,X_VillaName from vw_Pay_RoomMaster Where N_CompanyID=@nCompanyID order by X_RoomCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -77,6 +77,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nRoomId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RoomId"].ToString());
 
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -98,10 +99,13 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_OccupiedRooms");
-                    MasterTable.Columns.Remove("n_AvailableSpace");
-
-
-
+                    MasterTable.Columns.Remove("n_AvaialbleSpace");
+                    // if(n_OccupiedRooms <= 0)
+                    // {
+                    // MasterTable.Columns.Remove("n_OccupiedRooms");
+                    // MasterTable.Columns.Remove("n_AvailableSpace");
+                    // }
+                  
                    nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
                    
 
