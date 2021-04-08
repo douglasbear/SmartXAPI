@@ -164,10 +164,10 @@ namespace SmartxAPI.Controllers
             if (bAllBranchData == true)
             {
                 if(xInvoiceNo=="0")
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',0";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 0, @p3,@p2,'PURCHASE',0";
                 else
                 {
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',0";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 1, @p4,@p2,'PURCHASE',0";
                     Params.Add("@p4", xInvoiceNo);
                 }
             }
@@ -175,12 +175,12 @@ namespace SmartxAPI.Controllers
             {
               if(xInvoiceNo=="0")
                 {
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',@p5";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 0, @p3,@p2,'PURCHASE',@p5";
                     Params.Add("@p5", nBranchID);
                 }
                 else
                 {
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',@p5";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 1, @p4,@p2,'PURCHASE',@p5";
                     Params.Add("@p5", nBranchID);
                     Params.Add("@p4", xInvoiceNo);
                 }
@@ -207,11 +207,11 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
                         }
                         else
                         {
-                             DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                             DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
                     }
                     else
@@ -244,7 +244,6 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
-                    int N_CreditNoteID=0;
                     // Auto Gen
                                 try{
                  using (SqlConnection connection = new SqlConnection(connectionString))
@@ -252,6 +251,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
                     string ReturnNo="";
+                    int N_CreditNoteID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
+                    int N_UserID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -262,6 +263,24 @@ namespace SmartxAPI.Controllers
                         if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Quotation Number"));}
                         MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
                     }
+
+                    if(N_CreditNoteID>0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_TransType","PURCHASE RETURN"},
+                                {"N_VoucherID",N_CreditNoteID}};
+                         try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
+
                     N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
                     if(N_CreditNoteID<=0){
                         transaction.Rollback();
@@ -272,10 +291,23 @@ namespace SmartxAPI.Controllers
                         }
                     int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
                     transaction.Commit();
+
+                         SortedList InsParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"N_CreditNoteID",N_CreditNoteID}};    
+                        dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
+
+                    SortedList PostParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_InventoryMode","PURCHASE RETURN"},
+                                {"N_InternalID",N_CreditNoteID},
+                                {"N_UserID",N_UserID}};
+                    dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+
                     SortedList Result = new SortedList();
-                Result.Add("n_PurchaseReturnID",N_CreditNoteID);
-                Result.Add("x_PurchaseReturnNo",ReturnNo);
-                return Ok(_api.Success(Result,"Purchase Return Saved"));
+                    Result.Add("n_PurchaseReturnID",N_CreditNoteID);
+                    Result.Add("x_PurchaseReturnNo",ReturnNo);
+                    return Ok(_api.Success(Result,"Purchase Return Saved"));
                     }
                 }
                 catch (Exception ex)
@@ -283,11 +315,10 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Error(ex));
                 }
         }
-       
-     
 
-        [HttpDelete()]
-        public ActionResult DeleteData(int nCreditNoteId, int nCompanyId, string xType)
+        //Delete....
+       [HttpDelete("delete")]
+        public ActionResult DeleteData(int ? nCreditNoteId, int ? nCompanyId)
         {
             try
             {
@@ -302,7 +333,7 @@ namespace SmartxAPI.Controllers
                     SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyId},
-                                {"X_TransType",xType},
+                                {"X_TransType","PURCHASE RETURN"},
                                 {"N_VoucherID",nCreditNoteId}
                             };
                     if(myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0 )
