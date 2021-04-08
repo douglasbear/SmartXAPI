@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_PrjMainProject where N_CompanyID=@p1 and x_MainProjectCode=@p3";
+            string sqlCommandText = "select * from vw_PrjMainProject where N_CompanyID=@p1 and n_MainProjectID=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3",xProjectNo );
             try

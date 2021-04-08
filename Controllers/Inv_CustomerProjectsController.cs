@@ -157,15 +157,15 @@ namespace SmartxAPI.Controllers
 
         
         [HttpGet("Details") ]
-        public ActionResult GetCustomerProjectDetails (int nProjectID,int nFnYearId)
+        public ActionResult GetCustomerProjectDetails (string xProjectCode,int nFnYearId)
           
         {   DataTable dt=new DataTable();
             SortedList Params = new SortedList();
              int nCompanyID=myFunctions.GetCompanyID(User);
-              string sqlCommandText="select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and N_ProjectID=@nProjectID";
+              string sqlCommandText="select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
                Params.Add("@nCompanyID",nCompanyID);
                 Params.Add("@YearID", nFnYearId);
-             Params.Add("@nProjectID",nProjectID);
+             Params.Add("@xProjectCode",xProjectCode);
             
             try{
                     using (SqlConnection connection = new SqlConnection(connectionString))
