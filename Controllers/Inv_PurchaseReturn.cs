@@ -158,6 +158,7 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
             if(xCreditNoteNo==null)xCreditNoteNo="";
+            if(xInvoiceNo==null)xInvoiceNo="0";
             string Mastersql = "";
 
             if (bAllBranchData == true)
