@@ -143,8 +143,8 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActivityID"].ToString());
-                // bool bClosed = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_Closed"].ToString());
-                // string xStatus = MasterTable.Rows[0]["X_Status"].ToString());
+                string bClosed = MasterTable.Rows[0]["b_Closed"].ToString();
+                string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -173,10 +173,12 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        // if  (bClosed==1 && xStatus=="Closed")
-                        //     return Ok(api.Success("Activity Closed"));
-                        // else
+                        if  (bClosed=="1" && xStatus=="Closed"){
+                            return Ok(api.Success("Activity Closed"));
+                        }
+                        else{
                             return Ok(api.Success("Activity Created"));
+                        }
                     }
                 }
             }
