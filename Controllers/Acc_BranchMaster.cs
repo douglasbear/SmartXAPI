@@ -130,6 +130,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
+                    SortedList Params1 = new SortedList();
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
@@ -137,11 +138,12 @@ namespace SmartxAPI.Controllers
                 int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                 string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                 string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
-                bool bIsCurrent = myFunctions.getBoolVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
+               // bool bIsCurrent = myFunctions.getBoolVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
                 bool bIsDefault =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_DefaultBranch"].ToString());
                 string xPhoneNo = MasterTable.Rows[0]["x_PhoneNo"].ToString();
-
-
+                string xaddress = MasterTable.Rows[0]["x_Address"].ToString();
+                int nBranchIdd = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+   
                 MasterTable.Columns.Remove("n_FnYearID");
                 MasterTable.AcceptChanges();
                  if (xBranchCode == "@Auto")
@@ -162,11 +164,23 @@ namespace SmartxAPI.Controllers
                      nBranchID=dLayer.SaveData("Acc_BranchMaster","N_BranchID",MasterTable,connection,transaction); 
                      if (nBranchID <= 0)
                     {
+                      
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Branch"));
                     }
                     else
                     {
+                          if (xLocationCode == "@Auto")
+                    {
+                        Params1.Add("N_CompanyID", nCompanyID);
+                        Params1.Add("N_YearID", nFnYearID);
+                        Params1.Add("N_FormID", 450);
+                        xLocationCode = dLayer.GetAutoNumber("Inv_Location", "x_LocationCode", Params1, connection, transaction);
+                        if (xLocationCode == "") {transaction.Rollback(); return Ok(_api.Error("Unable to generate location Code")); }
+                     
+
+                    }
+                       
                      DataTable dt = new DataTable();
                         dt.Clear();
                         dt.Columns.Add("N_LocationID");
@@ -174,30 +188,44 @@ namespace SmartxAPI.Controllers
                         dt.Columns.Add("X_LocationCode");
                         dt.Columns.Add("X_LocationName");
                         dt.Columns.Add("N_BranchID");
-                        dt.Columns.Add("B_IsCurrent");
+                        dt.Columns.Add("N_TypeId");
+                       // dt.Columns.Add("B_IsCurrent");
                         dt.Columns.Add("B_IsDefault");
                          dt.Columns.Add("X_PhoneNo");
+                          dt.Columns.Add("X_Address");
                        
                             DataRow row = dt.NewRow();
                             row["N_LocationID"] = nLocationID;
                             row["N_CompanyID"] = nCompanyID;
-                            row["X_LocationCode"] = xBranchCode;
+                            row["X_LocationCode"] = xLocationCode;
                             row["X_LocationName"] = xLocationName;
                             row["N_BranchID"] = nBranchID;
-                            row["B_IsCurrent"] = bIsCurrent;
-                            row["B_IsDefault"] = bIsDefault;
+                            row["N_TypeId"] = 2;
+                           // row["B_IsCurrent"] = bIsCurrent;
+                            row["B_IsDefault"] = 1;
                             row["X_PhoneNo"] = xPhoneNo;
+                            row["X_Address"] = xaddress;
                             dt.Rows.Add(row);
-                            
+                     if(nBranchIdd >0)  
+                     {  
+                        Params1.Add("@nBranchIdd", nBranchIdd);
+                        dLayer.ExecuteNonQuery(" Update Inv_Location Set N_BranchID=N_BranchID where  N_LocationID=@nBranchIdd and N_CompanyID=N_CompanyID",Params1, connection,transaction);
+                     }   
+                     else
+                     {
                     int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", dt, connection, transaction);
                     if (N_LocationID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Warning("Unable to save"));
                     }
-                    transaction.Commit();
+                   
                     }
+                    transaction.Commit();
                     return Ok(_api.Success("Branch Saved")) ;
+                    }
+                   
+                   
                 }
             }
             catch (Exception ex)
@@ -210,13 +238,31 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nBranchID)
         {
             int Results = 0;
+            
+            SortedList Params = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
-                    if (Results > 0)
+                   
+                   // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    Params.Add("@nBranchID",nBranchID);
+                    object count=dLayer.ExecuteScalar("select count(*) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=N_CompanyID",Params,connection);
+                    int  N_Count= myFunctions.getIntVAL(count.ToString());
+                    if(N_Count <= 0)
+                    {
+                      Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
+                                    
+                      Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1",connection);
+                 
+                        
+                    }
+                    else
+                    {
+                        return Ok( _api.Success("unable to delete this branch"));
+                    }
+                    if (Results >= 0)
                     {
                         return Ok( _api.Success("Branch deleted"));
                     }
@@ -224,6 +270,8 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Error("Unable to delete Branch"));
                     }
+                   
+                   
                 }
             }
             catch (Exception ex)

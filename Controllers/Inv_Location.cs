@@ -175,12 +175,19 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nLocationId)
         {
             int Results = 0;
+            SortedList Params = new SortedList();
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    Params.Add("@nLocationId",nLocationId);
+                     object count=dLayer.ExecuteScalar("select count(*) as N_Count from vw_Inv_Location_Disp where N_LocationID=@nLocationId and N_CompanyID=N_CompanyID",Params,connection);
+                    int  N_Count= myFunctions.getIntVAL(count.ToString());
+                    if(N_Count <= 0)
+                    {
                 Results = dLayer.DeleteData("Inv_Location", "N_LocationID", nLocationId, "",connection);
+                }
                 }
                 if (Results > 0)
                 {
