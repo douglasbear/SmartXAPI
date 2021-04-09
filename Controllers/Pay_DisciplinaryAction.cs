@@ -43,10 +43,10 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_ActionID like '%" + xSearchkey + "%'or D_Date like '%" + xSearchkey + "%' or  X_ProjectName like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or N_Hours like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_ActionCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_TypeName like '%" + xSearchkey + "%' or cast(D_Date as VarChar) like '%" + xSearchkey + "%'or X_Reason like '%" + xSearchkey + "%' or X_Investigation like '%" + xSearchkey + "%' or N_Penalty like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ActionID desc";
+                xSortBy = " order by X_ActionCode desc";
             else
             
              xSortBy = " order by " + xSortBy;
