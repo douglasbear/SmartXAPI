@@ -104,12 +104,15 @@ namespace SmartxAPI.Controllers
 
                     SortedList mParamsList = new SortedList()
                     {
-                        {"N_CompanyID",myFunctions.GetCompanyID(User)},
-                        {"N_FnYearID",nFnYearID},
-                        {"N_BranchID",nBranchID},
-                        {"N_UserCategoryID",myFunctions.GetUserCategory(User)}
+                        {"@nCompanyID",myFunctions.GetCompanyID(User)},
+                        {"@nFnYearID",nFnYearID},
                     };
-                    DataTable Details = dLayer.ExecuteDataTablePro("SP_GenSettings_Disp_All", mParamsList, connection);
+                    string sql ="select X_Group,X_Description as name,N_Value,X_Value,N_UserCategoryID from Gen_Settings where N_CompanyID=@nCompanyID group by X_Group,X_Description,N_Value,X_Value,N_UserCategoryID union all "+
+                                "SELECT Acc_AccountDefaults.X_FieldDescr as X_Group, vw_AccMastLedger.Account as name, vw_AccMastLedger.N_LedgerID as N_Value, vw_AccMastLedger.[Account Code] as X_Value ,0 as N_UserCategoryID  "+
+                                "FROM vw_AccMastLedger INNER JOIN Acc_AccountDefaults ON vw_AccMastLedger.N_CompanyID = Acc_AccountDefaults.N_CompanyID AND vw_AccMastLedger.N_LedgerID = Acc_AccountDefaults.N_FieldValue AND   "+
+                                "vw_AccMastLedger.N_FnYearID = Acc_AccountDefaults.N_FnYearID  Where vw_AccMastLedger.N_CompanyID=@nCompanyID and vw_AccMastLedger.N_FnYearID=@nFnYearID and vw_AccMastLedger.B_Inactive=0 ";
+
+                    DataTable Details = dLayer.ExecuteDataTable(sql, mParamsList, connection);
                     return Ok(_api.Success(_api.Format(Details)));
                 }
 
