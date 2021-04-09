@@ -14,7 +14,7 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("endofservice")]
+    [Route("endofservice1")]
     [ApiController]
     public class Pay_EmployeePayIncrement : ControllerBase
     {
