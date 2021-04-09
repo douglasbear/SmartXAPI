@@ -157,13 +157,13 @@ namespace SmartxAPI.Controllers
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                object xCategory = dLayer.ExecuteScalar("Select X_CategoryName From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
+                object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
                 
                 Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "",connection);
                 if (Results > 0)
                 {
 
-                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString(),connection);
+                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString()+"'",connection);
 
                     return Ok(_api.Success("Product category deleted"));
                 }
