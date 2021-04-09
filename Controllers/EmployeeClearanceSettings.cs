@@ -21,7 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int N_FormID = 957;
+        private readonly int N_FormID = 1062;
 
 
         public EmployeeClearanceSettings(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -32,101 +32,78 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpGet("list")]
-        public ActionResult GetEmployeeClearance()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select N_CompanyID, N_RoomId, X_RoomCode, X_RoomName, N_VillaID, X_Location, N_RentAmount, X_Remarks, D_Entrydate, N_Electricity, N_Water, N_Internet, N_Capasity,X_VillaName from vw_Pay_RoomMaster Where N_CompanyID=@nCompanyID order by X_RoomCode";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
-
-      
+              
 
 
-          [HttpPost("save")]
+           [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
-                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nRoomId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RoomId"].ToString());
-
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                    // Auto Gen
-                    string RoomCode = "";
-                    var values = MasterTable.Rows[0]["X_RoomCode"].ToString();
-                    if (values == "@Auto")
+
+                    int n_ClearanceSettingsID = myFunctions.getIntVAL(MasterRow["N_ClearanceSettingsID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    string x_ClearanceCode = MasterRow["X_ClearanceCode"].ToString();
+
+                    if (x_ClearanceCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearId);
-                        Params.Add("N_FormID", this.N_FormID);
-                        RoomCode = dLayer.GetAutoNumber("Pay_RoomMaster", "X_RoomCode", Params, connection, transaction);
-                        if (RoomCode == "") { return Ok(_api.Error("Unable to generate Room Code")); }
-                        MasterTable.Rows[0]["X_RoomCode"] = RoomCode;
-                        
-
+                        Params.Add("N_CompanyID", N_CompanyID);
+                        Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_FormID", N_FormID);
+                        x_ClearanceCode = dLayer.GetAutoNumber("Pay_EmployeeClearanceSettings", "x_ClearanceCode", Params, connection, transaction);
+                        if (x_ClearanceCode == "")
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to generate Clearance Code");
+                        }
+                        MasterTable.Rows[0]["x_ClearanceCode"] = x_ClearanceCode;
                     }
-                    MasterTable.Columns.Remove("n_FnYearId");
-                    MasterTable.Columns.Remove("n_OccupiedRooms");
-                    MasterTable.Columns.Remove("n_AvaialbleSpace");
-                    // if(n_OccupiedRooms <= 0)
-                    // {
-                    // MasterTable.Columns.Remove("n_OccupiedRooms");
-                    // MasterTable.Columns.Remove("n_AvailableSpace");
-                    // }
-                  
-                   nRoomId = dLayer.SaveData("Pay_RoomMaster", "n_RoomId", MasterTable, connection, transaction);
-                   
+                    MasterTable.Columns.Remove("N_FormID");
 
-                   if (nRoomId <= 0)
+                    n_ClearanceSettingsID = dLayer.SaveData("Pay_EmployeeClearanceSettings", "n_ClearanceSettingsID", "", "", MasterTable, connection, transaction);
+                    if (n_ClearanceSettingsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok("Unable to save Clearance Code");
                     }
-                    else
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        transaction.Commit();
-                        return Ok(_api.Success("Room Information Saved"));
+                        DetailTable.Rows[j]["n_ClearanceSettingsID"] = n_ClearanceSettingsID;
                     }
+                    int n_ClearanceSettingsDetailsID = dLayer.SaveData("Pay_EmployeeClearanceSettingsDetails", "n_ClearanceSettingsDetailsID", DetailTable, connection, transaction);
+                    if (n_ClearanceSettingsDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save Clearance Code");
+                    }
+
+
+                    transaction.Commit();
+                    SortedList Result = new SortedList();
+                    Result.Add("n_ClearanceSettingsID", n_ClearanceSettingsID);
+                    Result.Add("x_ClearanceCode", x_ClearanceCode);
+                    Result.Add("n_ClearanceSettingsDetailsID", n_ClearanceSettingsDetailsID);
+
+                    return Ok(_api.Success(Result, "Clearance Code Saved"));
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
-      
+
              
         [HttpGet("details")]
         public ActionResult GetDetails(int nRoomID)
