@@ -559,14 +559,45 @@ namespace SmartxAPI.Controllers
 
                         if (N_SaveDraft == 0)
                         {
-                            SortedList PostingParam = new SortedList();
-                            PostingParam.Add("N_CompanyID", N_CompanyID);
-                            PostingParam.Add("X_InventoryMode", "SALES");
-                            PostingParam.Add("N_InternalID", N_SalesID);
-                            PostingParam.Add("N_UserID", N_UserID);
-                            PostingParam.Add("X_SystemName", "ERP Cloud");
+                            // SortedList PostingParam = new SortedList();
+                            // PostingParam.Add("N_CompanyID", N_CompanyID);
+                            // PostingParam.Add("X_InventoryMode", "SALES");
+                            // PostingParam.Add("N_InternalID", N_SalesID);
+                            // PostingParam.Add("N_UserID", N_UserID);
+                            // PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+
+                            SortedList StockPostingParams = new SortedList();
+                        StockPostingParams.Add("N_CompanyID", N_CompanyID);
+                        StockPostingParams.Add("N_SalesID", N_SalesID);
+                        StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
+                        StockPostingParams.Add("N_DeliveryNoteID", 0);
+
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                if (ex.Message == "50")
+                                    return Ok(_api.Error("Day Closed"));
+                                else if (ex.Message == "51")
+                                    return Ok(_api.Error("Year Closed"));
+                                else if (ex.Message == "52")
+                                    return Ok(_api.Error("Year Exists"));
+                                else if (ex.Message == "53")
+                                    return Ok(_api.Error("Period Closed"));
+                                else if (ex.Message == "54")
+                                    return Ok(_api.Error("Txn Date"));
+                                else if (ex.Message == "55")
+                                    return Ok(_api.Error("Quantity exceeds!"));
+                                else
+                                    return Ok(_api.Error(ex));
+                            }
+         
+
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
                             {

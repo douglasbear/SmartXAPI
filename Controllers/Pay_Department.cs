@@ -142,6 +142,7 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("chart")]
         public ActionResult GetDepartmentChart(int nFnYearID)
+    
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
