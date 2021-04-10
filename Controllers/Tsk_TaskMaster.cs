@@ -32,8 +32,111 @@ namespace SmartxAPI.Controllers
         }   
         private readonly string connectionString;
      
+        [HttpGet("list")]
+        public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_TaskSummery like '% " + xSearchkey + " OR X_TaskDescription like '% " + xSearchkey + " OR X_Assignee like '% " + xSearchkey + " OR X_Submitter like '% " + xSearchkey + " OR X_ClosedUser like '% " + xSearchkey + " OR X_Status like '% " + xSearchkey + ")";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_TaskID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 ";
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@nCompanyId and  N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCurrentStatus  where N_CompanyID=@p1 )";
+
+            Params.Add("@p1", nCompanyId);
+            // Params.Add("@nFnYearId", nFnYearId);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
      
-     
+        [HttpGet("details")]
+        public ActionResult TaskDetails(string xTaskCode)
+        {
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    DataTable DataTable = new DataTable();
+
+                    string Mastersql = "";
+                    string DetailSql = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@xTaskCode", xTaskCode);
+                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_ApprovalCode=@xTaskCode  ";
+
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    Params.Add("@nTaskID", TaskID);
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    DetailSql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+
        [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)
         { 
@@ -50,10 +153,10 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
-                    // int nUserID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_UserID"].ToString());
+                    //int nUserID = myFunctions.GetUserID(User);
              
                     if (nTaskId > 0)
                     {
@@ -70,6 +173,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", this.FormID);
+                        
                                            
                         
                       while (true)
