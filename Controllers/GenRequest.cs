@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
                 break;
                 case "decision": id=31;
                 break;
-
+                
                
                 default: return Ok("Invalid Type");
             }
@@ -149,6 +149,8 @@ namespace SmartxAPI.Controllers
                 case "SeparationReason": N_FormID=1155;
                 break;
                  case "Rating": N_FormID=9;
+                break;
+                case "Purpose": N_FormID=51;
                 break;
                 default: return Ok("Invalid Type");
             }
