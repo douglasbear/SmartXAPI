@@ -620,7 +620,10 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                     }
                     //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
-                    return Ok(_api.Success("Sales invoice saved" + ":" + InvoiceNo));
+                    SortedList Result = new SortedList();
+                Result.Add("n_InvoiceID", N_SalesID);
+                Result.Add("x_InvoiceNo", InvoiceNo);
+                return Ok(_api.Success(Result, "Sales invoice saved" + ":" + InvoiceNo));
                 }
             }
             catch (Exception ex)
