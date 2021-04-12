@@ -80,6 +80,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "decision": id=31;
                 break;
+                case "employmenttype": id=6;
+                break;
 
                
                 default: return Ok("Invalid Type");
