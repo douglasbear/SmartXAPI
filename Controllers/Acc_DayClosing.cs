@@ -42,22 +42,31 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2",nFnYearID);
             Params.Add("@p3",nBranchID);
             Params.Add("@p4",dTransDate);
+            object Total = "";
+            SortedList Result = new SortedList();
             string sqlCommandText="Select N_CompanyID,SUM(N_AmountDr)as N_AmountDr,SUM(N_AmountCr) as N_AmountCr,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName from  Vw_DailySalesSummary where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4 group by N_CompanyID,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName";
+            string sqlCommandTotal="Select SUM(N_AmountDr)as N_Amount from  Vw_DailySalesSummary where  D_TransDate=@p4 group by N_CompanyID,D_TransDate,N_BranchID,N_FnYearID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    Total = dLayer.ExecuteScalar(sqlCommandTotal, Params, connection);
                 }
                 dt = _api.Format(dt);
+
+                
+                Result.Add("details", dt);
+                Result.Add("total", Total);
+                
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(_api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(Result));
                 }
             }
             catch (Exception e)
