@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction=connection.BeginTransaction();
                     string ReturnNo="";
                     int N_CreditNoteID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
-                    int N_UserID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                    int N_UserID=myFunctions.GetUserID(User);
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
