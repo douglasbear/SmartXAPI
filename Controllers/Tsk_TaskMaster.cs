@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nTaskID", TaskID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
+                    DetailSql = "select * from vw_Tsk_TaskCurrentStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -226,5 +226,74 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         } 
+ [HttpPost("updateStatus")]
+        public ActionResult UpdateStatus([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable DetailTable;
+                     DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    string X_Status = DetailTable.Rows[0]["X_Status"].ToString();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+             
+                     for (int i = 0; i < DetailTable.Rows.Count; i++)
+                     {
+                        DetailTable.Rows[0]["N_TaskID"] = nTaskId;
+                        DetailTable.Rows[0]["N_TaskStatusID"] = 0;
+                     }
+                    int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                    if (nTaskStatusID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    } 
+
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster Set  X_Status='"+X_Status+"' Where N_TaskID=" + nTaskId + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        } 
+
+         [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTaskID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    
+                    connection.Open();
+                    dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskID, "", connection);
+                    Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok(_api.Success("deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
     }
 }
