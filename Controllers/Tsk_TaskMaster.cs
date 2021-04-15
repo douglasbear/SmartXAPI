@@ -251,7 +251,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
-                    string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
+                    string xStatus = DetailTable.Rows[0]["X_Status"].ToString();
              
                      for (int i = 0; i < DetailTable.Rows.Count; i++)
                      {
