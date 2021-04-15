@@ -295,6 +295,23 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
                     }
 
+                    if(N_DebitNoteId>0)
+                    {
+                        string sqlCommandText = "";
+                        SortedList DeleteParams = new SortedList();
+
+                        sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
+                        DeleteParams.Add("@N_CompanyId", masterRow["n_CompanyId"].ToString());
+                        DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
+
+                        dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
+
+                        for (int j = 1; j < DetailTable.Rows.Count; j++)
+                        {
+                            dLayer.ExecuteNonQuery("Update Inv_StockMaster_IMEI Set N_Status = 1 Where N_IMEI='" + DetailTable.Rows[j]["N_IMEI"] + "' and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_Status=0", connection, transaction);
+                        }
+                    }
+
                     // dLayer.setTransaction();
                     N_InvoiceId = dLayer.SaveData("Inv_SalesReturnMaster", "N_DebitNoteId", MasterTable, connection, transaction);
                     if (N_InvoiceId <= 0)
