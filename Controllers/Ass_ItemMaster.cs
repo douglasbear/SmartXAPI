@@ -243,7 +243,7 @@ namespace SmartxAPI.Controllers
         }
              
  [HttpGet("details")]
-        public ActionResult ItemMasterListDetails(int xItemCode)
+        public ActionResult ItemMasterListDetails(string xItemCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();

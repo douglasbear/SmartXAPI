@@ -321,7 +321,7 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(e));
             }
-        }
+        } 
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nApprovalID)
