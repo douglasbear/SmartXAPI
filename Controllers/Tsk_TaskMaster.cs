@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xTaskCode", xTaskCode);
-                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_ApprovalCode=@xTaskCode  ";
+                    Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
                     }
                      DetailTable.Columns.Remove("X_Assignee");
-                     DetailTable.Columns.Remove("x_Closed");
+                     DetailTable.Columns.Remove("x_ClosedUser");
                      DetailTable.Columns.Remove("x_Submitter");
 
                                                                                               
