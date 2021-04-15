@@ -53,10 +53,10 @@ namespace SmartxAPI.Controllers
                 string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
                  if (xEmploymentCode == "@Auto")
                     {
-                        if (B_CreateEmpSeries==1)
-                        {
-                            string sqlCommandText = "Sp_CreateInvoiceCounter(@nCompanyID,@nFnYearID,@)";
-                        }
+                        // if (B_CreateEmpSeries==1)
+                        // {
+                        //     string sqlCommandText = "Sp_CreateInvoiceCounter(@nCompanyID,@nFnYearID,@)";
+                        // }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
