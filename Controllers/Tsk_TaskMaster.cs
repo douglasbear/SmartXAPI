@@ -251,6 +251,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
              
                      for (int i = 0; i < DetailTable.Rows.Count; i++)
                      {
@@ -263,6 +264,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     } 
+
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET X_Status='"+xStatus+"' where N_TaskID="+nTaskID+" and N_CompanyID="+nCompanyID.ToString(),connection,transaction);
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved")) ;
