@@ -49,8 +49,14 @@ namespace SmartxAPI.Controllers
                 int nEmploymentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmploymentID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 string xEmploymentCode = MasterTable.Rows[0]["x_EmploymentCode"].ToString();
+                string xDescription=MasterTable.Rows[0]["x_Description"].ToString();
+                string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
                  if (xEmploymentCode == "@Auto")
                     {
+                        if (B_CreateEmpSeries==1)
+                        {
+                            string sqlCommandText = "Sp_CreateInvoiceCounter(@nCompanyID,@nFnYearID,@)";
+                        }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
