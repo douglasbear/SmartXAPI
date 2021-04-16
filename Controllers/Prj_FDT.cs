@@ -37,14 +37,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult PrjFdtDetails(string xFDTCode)
+        public ActionResult PrjFdtDetails(int nFDTID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_FDT where N_CompanyID=@p1  and x_FDTCode=@p3";
+            string sqlCommandText = "select * from vw_FDT where N_CompanyID=@p1  and N_FDTID=@p3";
             Params.Add("@p1", nCompanyId);  
-            Params.Add("@p3", xFDTCode);
+            Params.Add("@p3", nFDTID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
