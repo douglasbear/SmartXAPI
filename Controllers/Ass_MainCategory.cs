@@ -141,14 +141,13 @@ namespace SmartxAPI.Controllers
                     // DataRow[] dr = dt.Select("N_MainCategoryID = " + nMainCategoryID + " and  N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + " ");
                     // //  DataRow[] dr = dt.Select("N_MainCategoryID = @p3 and  N_CompanyID = @p1 and N_FnYearID=@p2 ");
                     DataTable output = new DataTable();
-                    output=dt.Select("N_MainCategoryID = " + nMainCategoryID + " and  N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + "");
-                    // output = dr.CopyToDataTable();  
-                    // output = api.Format(dt);
-                    api.Format(dt);
-                    if (dt.Rows.Count == 0)
+                     DataRow[] dr=dt.Select("N_MainCategoryID = " + nMainCategoryID + " and  N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + "");
+                    output = dr.CopyToDataTable();  
+                    output = api.Format(output);
+                    if (output.Rows.Count == 0)
                         return Ok(api.Warning("No Results Found"));
                     else
-                        return Ok(api.Success(dt));
+                        return Ok(api.Success(output));
                 }
             }
             catch (Exception e)

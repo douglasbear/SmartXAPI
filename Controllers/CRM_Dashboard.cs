@@ -43,12 +43,15 @@ namespace SmartxAPI.Controllers
             string sqlCurrentCustomer = "SELECT COUNT(*) as N_ThisMonth FROM CRM_Customer WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
             string sqlPreviousCustomer = "SELECT COUNT(*) as N_LastMonth FROM CRM_Customer WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))";
             string sqlPerformance = "SELECT 'Leads Created' as X_Status,COUNT(*) as N_Count FROM crm_leads WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())union SELECT 'Opportunities Created' as X_Status,COUNT(*) as N_Count FROM CRM_Opportunity WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Customer Created' as X_Status,COUNT(*) as N_Count FROM CRM_Customer WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Contacts Created' as X_Status,COUNT(*) as N_Count FROM CRM_Contact WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE()) union SELECT 'Projects Created' as X_Status,COUNT(*) as N_Count FROM CRM_Project WHERE D_Entrydate >= DATEADD(DAY, -90, GETDATE())";
-            string sqlOpportunitiesStage = "select X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
+           // string sqlOpportunitiesStage = "select X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
+            string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
             string sqlLeadsbySource = "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
-            string sqlWin = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
-            string sqlLose = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
-          
+            string sqlWin = "select count(*) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
+            string sqlLose = "select count(*) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
+            string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP)";
+            string sqlPreviousRevenue ="SELECT COUNT(*) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))";
+
             SortedList Data=new SortedList();
             DataTable CurrentLead = new DataTable();
             DataTable CurrentCustomer = new DataTable();
@@ -56,14 +59,17 @@ namespace SmartxAPI.Controllers
             DataTable OpportunitiesStage = new DataTable();
             DataTable LeadsbySource = new DataTable();
             DataTable PipelineOppotunity = new DataTable();
+            DataTable CurrentRevenue= new DataTable();
             DataTable Win = new DataTable();
             DataTable Lose = new DataTable();
             object LeadLastMonth="";
             object CustomerLastMonth="";
+            object RevenueLastMonth="";
             object LeadPercentage="";
             object CustomerPercentage="";
-            // object Win="";
-            // object Lose="";
+            object RevenuePercentage="";
+
+            
 
             try
             {
@@ -81,12 +87,15 @@ namespace SmartxAPI.Controllers
                     Lose=dLayer.ExecuteDataTable(sqlLose, Params, connection);
                     LeadLastMonth = dLayer.ExecuteScalar(sqlPreviousLead, Params, connection);
                     CustomerLastMonth = dLayer.ExecuteScalar(sqlPreviousCustomer, Params, connection);
+                    CurrentRevenue=dLayer.ExecuteDataTable(sqlCurrentRevenue, Params, connection);
+                    RevenueLastMonth=dLayer.ExecuteDataTable(sqlPreviousRevenue, Params, connection);
 
                     if(myFunctions.getVAL(LeadLastMonth.ToString())!=0)
                         LeadPercentage=((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString()))/myFunctions.getVAL(LeadLastMonth.ToString())*100).ToString();
                     if(myFunctions.getVAL(CustomerLastMonth.ToString())!=0)
                         CustomerPercentage=((myFunctions.getVAL(CurrentCustomer.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(CustomerLastMonth.ToString()))/myFunctions.getVAL(CustomerLastMonth.ToString())*100).ToString();
-            
+                  if(myFunctions.getVAL(RevenueLastMonth.ToString())!=0)
+                        RevenuePercentage=((myFunctions.getVAL(CurrentRevenue.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(RevenueLastMonth.ToString()))/myFunctions.getVAL(RevenueLastMonth.ToString())*100).ToString();
                     
                 }
                 // double N_TotalOppotunity=0;
@@ -107,7 +116,9 @@ namespace SmartxAPI.Controllers
                 CurrentCustomer = myFunctions.AddNewColumnToDataTable(CurrentCustomer, "N_LastMonth", typeof(string), CustomerLastMonth);
                 CurrentCustomer = myFunctions.AddNewColumnToDataTable(CurrentCustomer, "N_Percentage", typeof(string), CustomerPercentage);
                 CurrentCustomer.AcceptChanges();
-
+                CurrentRevenue = myFunctions.AddNewColumnToDataTable(CurrentRevenue, "N_LastMonth", typeof(string), RevenueLastMonth);
+                CurrentRevenue = myFunctions.AddNewColumnToDataTable(CurrentRevenue, "N_Percentage", typeof(string),RevenuePercentage);
+                CurrentRevenue.AcceptChanges();
 
 
                 if(CurrentLead.Rows.Count>0)Data.Add("leadData",CurrentLead);
@@ -118,6 +129,7 @@ namespace SmartxAPI.Controllers
                 if(PipelineOppotunity.Rows.Count>0)Data.Add("oppotunityData",PipelineOppotunity);
                 if(Win.Rows.Count>0)Data.Add("winData",Win);
                 if(Lose.Rows.Count>0)Data.Add("loseData",Lose);
+                if(CurrentRevenue.Rows.Count>0)Data.Add("revenueData",CurrentRevenue);
 
                 return Ok(api.Success(Data));
 
@@ -239,7 +251,118 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+  [HttpGet("customerslist")]
+        public ActionResult CustomerList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandCount = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
 
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_Customer like '%" + xSearchkey + "%'or X_CustomerCode like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_CustomerID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP) " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)" + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            Params.Add("@p1", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+ [HttpGet("opportunitylist")]
+        public ActionResult OpportunityList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandCount = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_OpportunityID desc";
+            else
+                xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and (N_ClosingStatusID is null or N_ClosingStatusID=0) " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and (N_ClosingStatusID is null or N_ClosingStatusID=0) " + Searchkey + " and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            Params.Add("@p1", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
 
       
 
