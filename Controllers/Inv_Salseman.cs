@@ -170,9 +170,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
-        [HttpDelete("delete")]
+   [HttpDelete("delete")]
         public ActionResult DeleteData(int nSalesmanID)
         {
             int Results = 0;
@@ -182,24 +180,50 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok( _api.Success("Sales Executive deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete Sales Executive"));
+                    }
                 }
-                if (Results > 0)
-                {
-                    return Ok(_api.Success("Sales Executive deleted"));
-                }
-                else
-                {
-                    return Ok(_api.Error("Unable to delete Sales Executive"));
-                }
-
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
-
-
         }
+
+        // [HttpDelete("delete")]
+        // public ActionResult DeleteData(int nSalesmanID)
+        // {
+        //     int Results = 0;
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "", connection);
+        //         }
+        //         if (Results > 0)
+        //         {
+        //             return Ok(_api.Success("Sales Executive deleted"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Error("Unable to delete Sales Executive"));
+        //         }
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(ex));
+        //     }
+
+
+        // }
 
 
 
