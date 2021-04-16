@@ -162,6 +162,7 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                     }
                     DocNo = MasterRow["X_ApprovalCode"].ToString();
+                    
                     if (X_ApprovalCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);

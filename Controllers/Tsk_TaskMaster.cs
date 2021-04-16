@@ -21,12 +21,14 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly int FormID;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         
-        public Tsk_TaskMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Tsk_TaskMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
              _api = api;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1056;
         }   
@@ -128,9 +130,15 @@ namespace SmartxAPI.Controllers
                     HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
+
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
+
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     dt.Tables.Add(HistoryTable);
+                    dt.Tables.Add(Attachments);
+
                     return Ok(_api.Success(dt));
 
 
@@ -158,6 +166,7 @@ namespace SmartxAPI.Controllers
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DataTable Attachment = ds.Tables["attachments"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -166,7 +175,7 @@ namespace SmartxAPI.Controllers
                     //int nUserID = myFunctions.GetUserID(User);
              
                     if (nTaskId > 0)
-                    {
+                    { 
                       SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyID},
@@ -223,6 +232,16 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     } 
+
+                    try
+                    {
+                        myAttachments.SaveAttachment(dLayer, Attachment, X_TaskCode, nTaskStatusID, "", "", 0, "Task Document", User, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(ex));
+                    }
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved")) ;

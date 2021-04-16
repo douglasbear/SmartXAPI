@@ -19,6 +19,7 @@ namespace SmartxAPI.Controllers
     public class Ass_FixedCategory : ControllerBase
     {
         private readonly IApiFunctions api;
+        
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
@@ -33,85 +34,126 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("list")]
-        public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
+        // [HttpGet("list")]
+        // public ActionResult FixedAssetList(int nFnYearId,int nPage,int nSizeperpage)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     string sqlCommandCount = "";
+        //     int Count= (nPage - 1) * nSizeperpage;
+        //     string sqlCommandText ="";
              
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1  ";
-            else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )";
-            Params.Add("@p1", nCompanyId);
+        //      if(Count==0)
+        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1  ";
+        //     else
+        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )";
+        //     Params.Add("@p1", nCompanyId);
 
-            SortedList OutPut = new SortedList();
+        //     SortedList OutPut = new SortedList();
 
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvAssetCategory_Disp where N_CompanyID=@p1 ";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(api.Success(OutPut));
-                    }
+        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvAssetCategory_Disp where N_CompanyID=@p1 ";
+        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+        //             OutPut.Add("Details", api.Format(dt));
+        //             OutPut.Add("TotalCount", TotalCount);
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(api.Success(OutPut));
+        //             }
 
-                }
+        //         }
                 
-            }
-            catch (Exception e)
-            {
-                return BadRequest(api.Error(e));
-            }
-        }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return BadRequest(api.Error(e));
+        //     }
+        // }
 
-        [HttpGet("details")]
-        public ActionResult FixedAssetListDetails(string xFixedAssetNo)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and Code=@p3";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p3",xFixedAssetNo );
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return BadRequest(api.Error(e));
-            }
-        }
+        // [HttpGet("details")]
+        // public ActionResult FixedAssetListDetails(string xFixedAssetNo)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId=myFunctions.GetCompanyID(User);
+        //     string sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and Code=@p3";
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p3",xFixedAssetNo );
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+        //         }
+        //         dt = api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(api.Warning("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return BadRequest(api.Error(e));
+        //     }
+        // }
+
+
+//  [HttpGet("details")]
+//         public ActionResult FixedAssetListDetails(string xFixedAssetNo , int nLangID)
+//         {
+//             DataTable dt = new DataTable();
+//             SortedList Params = new SortedList();
+//             int nCompanyId=myFunctions.GetCompanyID(User);
+//             int N_Flag = 0;
+//             if(nLangID ==2)
+//             {
+//                 N_Flag= 1;
+//             }
+//           string sqlCommandText = "SP_Inv_AssetItemcategory_Disp  " +CompanyID + "," + FnYearID + "," + N_Flag + ""
+//            // string sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and Code=@p3";
+//             Params.Add("@p1", nCompanyId);
+//               Params.Add("@p2", nCompanyId);
+//             Params.Add("@p3",xFixedAssetNo );
+//             try
+//             {
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+//                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+//                 }
+//                 dt = api.Format(dt);
+//                 if (dt.Rows.Count == 0)
+//                 {
+//                     return Ok(api.Warning("No Results Found"));
+//                 }
+//                 else
+//                 {
+//                     return Ok(api.Success(dt));
+//                 }
+//             }
+//             catch (Exception e)
+//             {
+//                 return BadRequest(api.Error(e));
+//             }
+//         }
+
 
 
 

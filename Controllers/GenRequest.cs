@@ -80,8 +80,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "decision": id=31;
                 break;
-
-               
+                case "employmenttype": id=6;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -150,9 +150,11 @@ namespace SmartxAPI.Controllers
                 break;
                  case "Rating": N_FormID=9;
                 break;
+                case "Purpose": N_FormID=51;
+                break;
                 default: return Ok("Invalid Type");
             }
-            string X_Criteria="N_ReferId=@p1";
+            string X_Criteria="N_ReferId=@p1 order by n_Sort ASC";
             SortedList param = new SortedList(){{"@p1",N_FormID}};
             
             DataTable dt=new DataTable();
@@ -160,7 +162,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText="select * from Gen_LookupTable where "+X_Criteria;
                 
             try{
-                                                using (SqlConnection connection = new SqlConnection(connectionString))
+                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
@@ -176,6 +178,8 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }   
         }
+
+
 
 
 [HttpGet("file")]
@@ -212,7 +216,9 @@ namespace SmartxAPI.Controllers
       memory.Position = 0;  
       return File(memory, api.GetContentType(path), Path.GetFileName(path));  
   }
-    } 
+    
 
+       
+    }
      
 }

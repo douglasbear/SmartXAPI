@@ -184,8 +184,9 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                     Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
-                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and X_ApprovalSettingsCode=@xApprovalSettingsCode  ";
+                    //  Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
+                    Params.Add("@nApprovalSettingsID", xApprovalSettingsCode);
+                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApproovalSettingsID  ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }

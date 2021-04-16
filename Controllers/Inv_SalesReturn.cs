@@ -275,6 +275,7 @@ namespace SmartxAPI.Controllers
                 DataRow masterRow = MasterTable.Rows[0];
                 var values = masterRow["X_DebitNoteNo"].ToString();
                 int UserID = myFunctions.GetUserID(User);
+                int N_CompanyID = myFunctions.GetCompanyID(User);
                 int N_InvoiceId = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -284,6 +285,9 @@ namespace SmartxAPI.Controllers
                     transaction = connection.BeginTransaction();
                     int N_DebitNoteId = myFunctions.getIntVAL(masterRow["N_DebitNoteId"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
+                    int N_SalesId = myFunctions.getIntVAL(masterRow["N_SalesId"].ToString());
+                    int N_DeliveryNote = 0;
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
@@ -297,19 +301,34 @@ namespace SmartxAPI.Controllers
 
                     if(N_DebitNoteId>0)
                     {
-                        string sqlCommandText = "";
-                        SortedList DeleteParams = new SortedList();
-
-                        sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
-                        DeleteParams.Add("@N_CompanyId", masterRow["n_CompanyId"].ToString());
-                        DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
-
-                        dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
-
-                        for (int j = 1; j < DetailTable.Rows.Count; j++)
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_TransType","SALES RETURN"},
+                                {"N_VoucherID",N_DebitNoteId}};
+                         try
                         {
-                            dLayer.ExecuteNonQuery("Update Inv_StockMaster_IMEI Set N_Status = 1 Where N_IMEI='" + DetailTable.Rows[j]["N_IMEI"] + "' and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_Status=0", connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+
+                            
+                            for (int j = 1; j < DetailTable.Rows.Count; j++)
+                            {
+                                dLayer.ExecuteNonQuery("Update Inv_StockMaster_IMEI Set N_Status = 1 Where N_IMEI='" + DetailTable.Rows[j]["N_IMEI"] + "' and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_Status=0", connection, transaction);
+                            }
                         }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                        // string sqlCommandText = "";
+                        // SortedList DeleteParams = new SortedList();
+
+                        // sqlCommandText = "SP_Delete_Trans_With_SaleAccounts  @N_CompanyId,'SALES RETURN',@N_DebitNoteId";
+                        // DeleteParams.Add("@N_CompanyId",myFunctions.getIntVAL(masterRow["n_CompanyId"].ToString()));
+                        // DeleteParams.Add("@N_DebitNoteId", N_DebitNoteId);
+
+                        // dLayer.ExecuteDataTable(sqlCommandText, DeleteParams, connection);
+
                     }
 
                     // dLayer.setTransaction();
@@ -339,6 +358,22 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(ex));
                         }
                     }
+
+                    SortedList InsParams = new SortedList();
+                        InsParams.Add("N_CompanyID", N_CompanyID);
+                        InsParams.Add("N_DebitNoteId", N_InvoiceId);
+                        InsParams.Add("N_DeliveryNote", N_DeliveryNote);
+
+                    dLayer.ExecuteNonQueryPro("SP_SalesReturn_Ins_New", InsParams, connection, transaction);
+                    
+                    SortedList StockPostingParams = new SortedList();
+                        StockPostingParams.Add("N_CompanyID", N_CompanyID);
+                        StockPostingParams.Add("X_InventoryMode", "SALES RETURN");
+                        StockPostingParams.Add("N_InternalID", N_InvoiceId);
+                        StockPostingParams.Add("N_UserID", UserID);
+
+                    dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", StockPostingParams, connection, transaction);
+
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
