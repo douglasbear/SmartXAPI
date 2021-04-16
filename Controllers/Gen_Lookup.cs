@@ -167,7 +167,47 @@ namespace SmartxAPI.Controllers
             }
 
 
-
         }
+
+        [HttpGet("SeqNo")]
+        public ActionResult GetSeqNo()
+        {
+            DataTable dt=new DataTable();
+            
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+        
+            Params.Add("@nReferId",1310);
+            int N_Sort =0; 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        object SeqNo = dLayer.ExecuteScalar("select MAX(isnull(n_Sort,0)) as SeqNo from Gen_LookupTable where N_ReferId=@nReferId", Params,connection);
+                         
+                if (SeqNo == null)
+                {
+                   N_Sort=1;
+                }
+                else
+                {
+                    N_Sort=myFunctions.getIntVAL(SeqNo.ToString())+1;
+                }
+                  
+                          SortedList Result = new SortedList();
+                          Result.Add("n_Sort", N_Sort);
+                          return Ok(api.Success(Result));
+                }
+            }
+            catch(Exception e)
+            {
+
+                return Ok(api.Error(e));
+            }
+        }
+
+
+        
     }
 }

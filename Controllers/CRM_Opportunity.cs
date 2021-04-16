@@ -50,9 +50,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and (N_ClosingStatusID is null or N_ClosingStatusID=0) " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 and (N_ClosingStatusID is null or N_ClosingStatusID=0) " + Searchkey + " and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 " + Searchkey + " and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
