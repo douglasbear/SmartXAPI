@@ -80,14 +80,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "decision": id=31;
                 break;
-<<<<<<< HEAD
                 case "employmenttype": id=6;
                 break;
-
-=======
-                
->>>>>>> 55d198e2cb2d25d4a52d856563dbb18333a17192
-               
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
