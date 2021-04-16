@@ -45,10 +45,10 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_TenderID like '%" + xSearchkey + "%'or X_TenderCode like '%" + xSearchkey + "%' or  X_TenderName like '%" + xSearchkey + "%' )";
+                Searchkey = "and (N_TenderID like '%" + xSearchkey + "%'or X_TenderCode like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_TenderID desc";
+                xSortBy = " order by X_TenderCode desc";
             else
             
              xSortBy = " order by " + xSortBy;
@@ -58,7 +58,6 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "select top("+ nSizeperpage +") X_TenderCode,X_CustomerName,X_ProjectName,ProjectType,X_ProjectPlace,EnquiryType,N_ProposedAmt,X_Type from vw_Prj_Tender where N_CompanyID=@p1  and N_TenderID not in (select top("+ Count +") N_TenderID from vw_Prj_Tender where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);
          
-
             SortedList OutPut = new SortedList();
 
 

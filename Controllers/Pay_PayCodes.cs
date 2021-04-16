@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
         }
 
           [HttpGet("Dashboardlist")]
-        public ActionResult PayCodeDashboardList(int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult PayCodeDashboardList(int nFnYearId,int nPage,int nSizeperpage,string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -168,6 +168,15 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%' or X_PayType like '%" + xSearchkey + "%' )";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_PayCode desc";
+            else
+             xSortBy = " order by " + xSortBy;
              
              if(Count==0)
                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_FnYearID=@p2 ";
