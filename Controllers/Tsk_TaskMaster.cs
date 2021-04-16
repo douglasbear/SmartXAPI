@@ -104,10 +104,11 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     DataTable MasterTable = new DataTable();
                     DataTable DetailTable = new DataTable();
-                    DataTable DataTable = new DataTable();
+                    DataTable HistoryTable = new DataTable();
 
                     string Mastersql = "";
                     string DetailSql = "";
+                    string HistorySql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xTaskCode", xTaskCode);
@@ -119,11 +120,17 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nTaskID", TaskID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
+                    //Detail
+                    DetailSql = "select * from vw_Tsk_TaskCurrentStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+                    //History
+                    HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
+                    HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
+                    HistoryTable = _api.Format(HistoryTable, "History");
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
+                    dt.Tables.Add(HistoryTable);
                     return Ok(_api.Success(dt));
 
 
@@ -228,7 +235,7 @@ namespace SmartxAPI.Controllers
         } 
 
         [HttpPost("UpdateStatus")]
-        public ActionResult UpdateStatus([FromBody]DataSet ds,int nTaskID)
+        public ActionResult UpdateStatus([FromBody]DataSet ds)
         { 
             try
             {
@@ -236,14 +243,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;              
                     DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
+                    DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    string xStatus = DetailTable.Rows[0]["X_Status"].ToString();
              
                      for (int i = 0; i < DetailTable.Rows.Count; i++)
                      {
                         DetailTable.Rows[0]["N_TaskID"] = nTaskID;
+                        DetailTable.Rows[0]["N_TaskStatusID"] = 0;
                      }
                     int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                     if (nTaskStatusID <= 0)
@@ -251,6 +264,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     } 
+
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET X_Status='"+xStatus+"' where N_TaskID="+nTaskID+" and N_CompanyID="+nCompanyID.ToString(),connection,transaction);
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved")) ;
