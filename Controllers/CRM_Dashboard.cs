@@ -47,9 +47,9 @@ namespace SmartxAPI.Controllers
             string sqlOpportunitiesStage = "select isNull(X_Stage,'Others') as X_Stage,CAST(COUNT(*) as varchar(50)) as N_Percentage  from vw_CRMOpportunity group by X_Stage";
             string sqlLeadsbySource = "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
-            string sqlWin = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
-            string sqlLose = "select count(*) as N_ThisMonth from vw_CRMOpportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
-            string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)";
+            string sqlWin = "select count(*) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=308 and MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
+            string sqlLose = "select count(*) as N_ThisMonth from CRM_Opportunity where N_StatusTypeID=309 and  MONTH(D_Entrydate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)"; 
+            string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP)";
             string sqlPreviousRevenue ="SELECT COUNT(*) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))";
 
             SortedList Data=new SortedList();
