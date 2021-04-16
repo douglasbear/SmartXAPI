@@ -32,13 +32,22 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetEndOfService()
+        public ActionResult GetEndOfServiceList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
+            int Count = (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_ServiceEndCode like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_EndType like '%" + xSearchkey + "%' or cast([D_EndDate] as VarChar) like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ServiceEndID desc";
+            else
+                xSortBy = " order by " + xSortBy;
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select X_ServiceEndCode,X_EmpCode,X_EmpName,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID";
+            string sqlCommandText="Select X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID";
             SortedList OutPut = new SortedList();
             try
             {
@@ -357,13 +366,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listDescription")]
-        public ActionResult ListDescription()
+        public ActionResult ListDescription(int nCountryID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="select N_CompanyID,N_FnYearID,N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,N_EndSettiingsID,ServiceEndStatus from vw_ServiceEndSettings where N_CompanyID=@nCompanyID";
+            Params.Add("@nCountryID",nCountryID);
+            string sqlCommandText="select N_CompanyID,N_FnYearID,N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,N_EndSettiingsID,ServiceEndStatus from vw_ServiceEndSettings where N_CompanyID=@nCompanyID and N_CountryID=@nCountryID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
