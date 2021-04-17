@@ -840,8 +840,8 @@ namespace SmartxAPI.Controllers
                             }
                             catch (Exception ex)
                             {
-                                transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                 transaction.Rollback();
+                               return Ok(_api.Error(ex));
                             }
                         }
                         //dispatch saving here
