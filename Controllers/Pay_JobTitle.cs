@@ -86,7 +86,6 @@ namespace SmartxAPI.Controllers
                     int N_SupervisorID = myFunctions.getIntVAL(dtSupervisor.Rows[0]["n_SupervisorID"].ToString());
                     bool B_IsSupervisor = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
                     QueryParams.Add("@nCompanyID", N_CompanyID);
-                    //QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nPositionID", N_PositionID);
 
                     if (X_PositionCode == "@Auto")
@@ -94,25 +93,12 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
                         if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Job title Code")); }
                         MasterTable.Rows[0]["x_PositionCode"] = X_PositionCode;
-
-
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Pay_Position", "n_positionID", N_PositionID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
-
-                        if (B_IsSupervisor)
-                        {
-                            N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
-
-                        }
-                        else
-                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
-                    }
+                    MasterTable.Columns.Remove("n_FnYearId");
+                    
                     N_PositionID = dLayer.SaveData("Pay_Position", "N_PositionID", MasterTable, connection, transaction);
                     if (N_PositionID <= 0)
                     {
@@ -121,12 +107,17 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        // if (B_IsSupervisor)
-                        // {
-                        //     N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
-                        // }
-                        // else
-                        //     dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+                        dtSupervisor.Rows[0]["n_SupervisorID"] = N_SupervisorID;
+                        dtSupervisor.Rows[0]["x_SupervisorCode"] = X_PositionCode;
+
+                         if (B_IsSupervisor)
+                        {
+                            N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
+
+                        }
+                        else
+                            dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
+
                         transaction.Commit();
                     }
 
