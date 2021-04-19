@@ -134,7 +134,7 @@ namespace SmartxAPI.Controllers
             DataTable dtSupervisor = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Pay_Position where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
+            string sqlCommandText = "select * from vw_Position_Display where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
             string sqlCommandText2 = "select * from Pay_Supervisor where N_CompanyID=@nCompanyID and N_PositionID=@nPositionID";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nPositionID", nPositionID);
