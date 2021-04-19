@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     dt.Tables.Add(HistoryTable);
-                    dt.Tables.Add(Attachments);
+                    // dt.Tables.Add(Attachments);
 
                     return Ok(_api.Success(dt));
 
@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
                     }
                      DetailTable.Columns.Remove("X_Assignee");
-                     DetailTable.Columns.Remove("x_Closed");
+                     DetailTable.Columns.Remove("x_ClosedUser");
                      DetailTable.Columns.Remove("x_Submitter");
 
                                                                                               
