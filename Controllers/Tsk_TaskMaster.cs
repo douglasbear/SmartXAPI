@@ -131,8 +131,8 @@ namespace SmartxAPI.Controllers
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
 
-                    // DataTable Attachments = myAttachments.ViewAttachment(dLayer, 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    // Attachments = _api.Format(Attachments, "attachments");
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
+                    Attachments = _api.Format(Attachments, "attachments");
 
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
@@ -176,13 +176,8 @@ namespace SmartxAPI.Controllers
              
                     if (nTaskId > 0)
                     { 
-                      SortedList deleteParams = new SortedList()
-                            {
-                                {"N_CompanyID",nCompanyID},
-                                {"n_TaskID",nTaskId}
-                            };
-                        dLayer.ExecuteNonQueryPro("Tsk_TaskMaster", deleteParams, connection, transaction);
-                        dLayer.ExecuteNonQueryPro("Tsk_TaskStatus", deleteParams, connection, transaction);
+                        dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskId, "", connection,transaction);
+                        dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection,transaction);
                     }
                     DocNo = MasterRow["X_TaskCode"].ToString();
                     if (X_TaskCode == "@Auto")
