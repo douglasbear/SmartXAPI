@@ -54,9 +54,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description from vw_PayVacationType where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description from Pay_VacationType where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description,N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 " + Searchkey + " and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description,N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 " + Searchkey + " and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationType where N_CompanyID=@p1 ";
+                    string sqlCommandCount = "select count(*) as N_Count  from Pay_VacationType where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

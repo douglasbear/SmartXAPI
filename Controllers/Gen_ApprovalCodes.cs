@@ -154,6 +154,7 @@ namespace SmartxAPI.Controllers
                     }
                    
                     DocNo = MasterRow["X_ApprovalCode"].ToString();
+                    
                     if (X_ApprovalCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);

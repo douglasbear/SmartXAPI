@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("holdlist")]
-        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate)
+        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate,int ID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -51,12 +51,21 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-
+            if(ID==0)
+            {
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+            }
+            else
+            {
+                if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
+            }
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -87,6 +96,62 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        // [HttpGet("DupPrint")]
+        // public ActionResult GetDupPrintList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate)
+        // {
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+
+        //     int Count = (nPage - 1) * nSizeperpage;
+        //     string sqlCommandText = "";
+        //     string sqlCommandCount = "";
+        //     string Searchkey = "";
+
+        //     if (xSearchkey != null && xSearchkey.Trim() != "")
+        //         Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%')";
+
+        //     if (xSortBy == null || xSortBy.Trim() == "")
+        //         xSortBy = " order by N_SalesId desc";
+        //     else
+        //         xSortBy = " order by " + xSortBy;
+
+
+        //     if (Count == 0)
+        //         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0  and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+        //     else
+        //         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0  and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", nFnYearId);
+        //     SortedList OutPut = new SortedList();
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
+        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+        //             OutPut.Add("Details", _api.Format(dt));
+        //             OutPut.Add("TotalCount", TotalCount);
+
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(_api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(_api.Success(OutPut));
+        //             }
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(e));
+        //     }
+        // }
         [HttpGet("listcategory")]
         public ActionResult GetDepartmentList()
         {
