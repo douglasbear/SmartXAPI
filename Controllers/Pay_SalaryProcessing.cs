@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("empList")]
-        public ActionResult GetEmpList(int nBatchID, int nFnYearID, string payRunID, string xDepartment, string xPosition, int nAddDedID, bool bAllBranchData, int nBranchID, int month, int year)
+        public ActionResult GetEmpList(string xBatch, int nFnYearID, string payRunID, string xDepartment, string xPosition, int nAddDedID, bool bAllBranchData, int nBranchID, int month, int year)
         {
             DataTable mst = new DataTable();
             DataTable dt = new DataTable();
@@ -51,7 +51,6 @@ namespace SmartxAPI.Controllers
 
             SortedList ProParams = new SortedList();
             ProParams.Add("N_CompanyID", nCompanyID);
-            ProParams.Add("N_TransID", nBatchID);
             ProParams.Add("N_PAyrunID", payRunID);
             ProParams.Add("X_Cond", X_Cond);
             ProParams.Add("N_FnYearID", nFnYearID);
@@ -68,6 +67,20 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SortedList batchParams = new SortedList();
+                    if (xBatch != null)
+                    {
+                        batchParams.Add("@nCompanyID", nCompanyID);
+                        batchParams.Add("@nFnYearId", nFnYearID);
+                        batchParams.Add("@xBatch", xBatch);
+                        object nBatchID = dLayer.ExecuteScalar("select N_TransID from Pay_PaymentMaster where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
+
+                        if (nBatchID != null)
+                            ProParams.Add("N_TransID", nBatchID);
+                    }else{
+                            ProParams.Add("N_TransID", 0);
+                    }
+
                     mst = dLayer.ExecuteDataTablePro("SP_Pay_SelEmployeeList4Process", ProParams, connection);
 
                     SortedList ProParam2 = new SortedList();
@@ -97,7 +110,11 @@ namespace SmartxAPI.Controllers
 
 
                     bool B_ShowBenefitsInGrid = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Payroll", "Show Benefits", "N_Value", nCompanyID, dLayer, connection)));
-
+                    DataTable PayPayMaster = new DataTable();
+                    if (B_ShowBenefitsInGrid)
+                    {
+                        PayPayMaster = dLayer.ExecuteDataTable("Select N_PaymentId,N_PayID from Pay_PayMaster where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection);
+                    }
 
                     for (int i = dt.Rows.Count - 1; i >= 0; i--)
                     {
@@ -105,7 +122,7 @@ namespace SmartxAPI.Controllers
                             dt.Rows[i].Delete();
                         if (B_ShowBenefitsInGrid)
                         {
-                            if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), nCompanyID, nFnYearID, connection))
+                            if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
                             {
                                 dt.Rows[i].Delete();
                             }
@@ -158,13 +175,13 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private bool ValidateBenefits(int PayID, int type, int nCompanyID, int nFnYearID, SqlConnection connection)
+        private bool ValidateBenefits(int PayID, int type, DataTable PayPayMaster)
         {
             if (type == 1) return false;
-            object obj = null;
-            obj = dLayer.ExecuteScalar("Select N_PaymentId from Pay_PayMaster where N_PayID=" + PayID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection);
-            if (obj != null)
+            DataRow[] dr = PayPayMaster.Select("N_PayID=" + PayID);
+            if (dr != null && dr.Length > 0)
             {
+                string obj = dr[0]["N_PaymentId"].ToString();
                 if (myFunctions.getIntVAL(obj.ToString()) == 6 || myFunctions.getIntVAL(obj.ToString()) == 264 || myFunctions.getIntVAL(obj.ToString()) == 7)
                     return true;
             }
@@ -179,6 +196,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable = ds.Tables["master"];
                 DataTable DetailsTable = ds.Tables["details"];
+                DataTable EmployeesTable = ds.Tables["employees"];
 
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
@@ -231,58 +249,72 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", N_TransID, "N_CompanyID =" + nCompanyID + " and N_FormID=190", connection, transaction);
                         dLayer.ExecuteScalar("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + nCompanyID + " and N_PayrunID = " + N_TransID, connection, transaction);
 
-
-                        for (int i = DetailsTable.Rows.Count - 1; i >= 0; i--)
+                        int row = 0;
+                        foreach (DataRow MasterVar in EmployeesTable.Rows)
                         {
-                            DataRow mstVar = DetailsTable.Rows[i];
-                            // if (var["N_SaveChanges"].ToString().Trim() == "" && (var["n_TransDetailsID"].ToString()).Trim() != "") 
-                            //     continue;
-
-
-                            double Amount = myFunctions.getVAL(mstVar["n_PayRate"].ToString());
-
-                            if (Amount == 0)
+                            double N_TotalSalary = 0;
+                            double N_EOSAmt = 0;
+                            foreach (DataRow var in DetailsTable.Rows)
                             {
-                                if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0)
-                                { dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()), "N_CompanyID = " + nCompanyID, connection, transaction); }
-                                DetailsTable.Rows[i].Delete();
-                                continue;
+
+                                if (MasterVar["N_EmpID"].ToString() != var["N_EmpID"].ToString()) continue;
+                                double Amount = 0;
+                                if (myFunctions.getVAL(var["N_PayRate"].ToString()) < 0)
+                                    Amount = (-1) * myFunctions.getVAL(var["N_PayRate"].ToString());
+                                else
+                                    Amount = myFunctions.getVAL(var["N_PayRate"].ToString());
+
+                                if (Amount == 0 && myFunctions.getVAL(var["N_Value"].ToString()) == 0) continue;
+                                //if (Amount == 0)
+                                //    Amount = myFunctions.getVAL(var["N_Value"].ToString());
+                                if (myFunctions.getIntVAL(var["N_Type"].ToString()) == 0)
+                                    N_TotalSalary += Amount;
+                                else
+                                    N_TotalSalary -= Amount;
+
+                                if (myFunctions.getIntVAL(var["N_PayTypeID"].ToString()) == 11)
+                                {
+                                    N_EOSAmt += Amount;
+                                }
+                                var["N_PayRate"] = Amount;
+                                var["N_TransID"] = N_TransID;
+
+                                //dba.SaveData(ref N_TransDetailsID, "Pay_PaymentDetails", "N_TransDetailsID", myFunctions.getIntVAL(var["N_TransDetailsID"].ToString()).ToString(), FieldList, FieldValues, DupCriteria, "");
+
+                                // if (var["N_IsLoan"].ToString() == "1")
+                                // {
+                                //     object N_result = null;
+                                //     dba.SaveData(ref N_result, "Pay_LoanIssueDetails", "N_LoanTransDetailsID", myFunctions.getIntVAL(var["N_LoanTransDetailsID"].ToString()).ToString(), "D_RefundDate,N_RefundAmount,N_PayRunID,N_TransDetailsID,B_IsLoanClose", "'" + myFunctions.getDateVAL(dtpCreationDate.Value) + "'|" + Amount.ToString() + "|" + N_TransID + "|" + N_TransDetailsID + "|0", "", "", "N_CompanyID = " + myCompanyID._CompanyID + " and N_LoanTransID = " + var["N_LoanTransID"].ToString());
+                                // }
+
+
+
+                                //--------------------------------------------------------
+
                             }
-                            else if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0 && mstVar["n_FormID"].ToString().Trim() != "")
+                            if (N_TotalSalary < 0)
                             {
-                                N_TransDetailsID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_TransDetailsID from Pay_MonthlyAddOrDedDetails Where N_PayID=" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and n_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_FormID=" + mstVar["n_FormID"].ToString() + " and N_CompanyID= " + nCompanyID, connection, transaction).ToString());
-                                FormID = myFunctions.getIntVAL(mstVar["N_FormID"].ToString());
+                                if (N_TotalSalary + N_EOSAmt < 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("-ve Salary"));
+                                }
                             }
-                            else if (mstVar["n_FormID"].ToString().Trim() == "" || myFunctions.getIntVAL(mstVar["n_FormID"].ToString()) == 0)
-                                FormID = this.FormID;
-
-
-                            if (Amount < 0)
-                                Amount = Amount * -1;
-
-                            N_IsAuto = 0;
-                            object N_ResultObj = dLayer.ExecuteScalar("Select B_TimeSheetEntry from Pay_MonthlyAddOrDedDetails Where N_PayID =" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and N_TransDetailsID=" + myFunctions.getVAL(mstVar["n_TransDetailsID"].ToString()) + " and N_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_CompanyID= " + nCompanyID + " and N_FormID=216", connection, transaction);
-                            if (N_ResultObj != null)
-                            {
-                                N_IsAuto = 1;
-                            }
-                            DetailsTable.Rows[i]["n_TransID"] = N_TransID;
-                            DetailsTable.Rows[i]["n_PayRate"] = Amount;
-                            DetailsTable.Rows[i]["b_TimeSheetEntry"] = N_IsAuto;
-                            DetailsTable.Rows[i]["n_FormID"] = FormID;
                         }
+                        DetailsTable.Columns.Remove("n_PayTypeID");
                         DetailsTable.AcceptChanges();
-                        N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", DetailsTable, connection, transaction).ToString());
+                        N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailsTable, connection, transaction);
                         if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
+                            return Ok(_api.Error("Error"));
+
                         }
-                        else
-                        {
-                            transaction.Commit();
-                            return Ok(_api.Success("Saved"));
-                        }
+
+
+
+                        transaction.Commit();
+                        return Ok(_api.Success("Saved"));
 
                     }
                 }
