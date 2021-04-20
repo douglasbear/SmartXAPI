@@ -406,12 +406,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nEmpID", nEmpID);
             string sqlCommandText="select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+            SortedList OutPut = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    string sqlCommandCount="select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                      
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -420,7 +433,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(OutPut));
                 }
             }
             catch (Exception e)
