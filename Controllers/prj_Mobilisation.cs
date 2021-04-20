@@ -56,8 +56,13 @@ namespace SmartxAPI.Controllers
                     string x_MobilizationCode = MasterRow["X_MobilizationCode"].ToString();
                     int N_FromPrj = myFunctions.getIntVAL(MasterRow["N_FromPrj"].ToString());
                     int N_ProjectID = myFunctions.getIntVAL(MasterRow["N_ProjectID"].ToString());
-                 
 
+                    if (n_MobilizationID > 0)
+                    {
+                        dLayer.DeleteData("Mnp_MobilizationDetails", "N_MobilizationID", n_MobilizationID, "", connection,transaction);
+                        dLayer.DeleteData("Mnp_Mobilization", "N_MobilizationID", n_MobilizationID, "", connection,transaction);
+
+                    }
 
                     if (x_MobilizationCode == "@Auto")
                     {
@@ -82,6 +87,7 @@ namespace SmartxAPI.Controllers
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
 
+
                         DetailTable.Rows[j]["N_MobilizationID"] = n_MobilizationID;
 
                     int n_MobilizationDetailsID = dLayer.SaveData("Mnp_MobilizationDetails", "n_MobilizationDetailsID", DetailTable, connection, transaction);
@@ -91,9 +97,9 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save mobilisation ");
                     }
 
-                    DataTable Gen = dLayer.ExecuteDataTable("Select * from Mnp_MobilizationDetails_Disp where N_CompanyID=@N_CompanyID and N_FnYearID=@N_YearID", Params, connection, transaction);
-                  
-                     int nCompanyID = 0;
+                    // DataTable Gen = dLayer.ExecuteDataTable("Select * from Mnp_MobilizationDetails_Disp where N_CompanyID=@N_CompanyID and N_FnYearID=@N_YearID", Params, connection, transaction);
+                    DataTable Gen = dLayer.ExecuteDataTable("Select * from Mnp_MobilizationDetails_Disp", Params, connection, transaction);
+                    int nCompanyID = 0;
                     int nEmpID = 0;
                     string EmpsID = "";
                     string empName = "";
