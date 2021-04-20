@@ -1,3 +1,4 @@
+
 using AutoMapper;
 using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
@@ -32,55 +33,6 @@ namespace SmartxAPI.Controllers
             connectionString =
             conf.GetConnectionString("SmartxConnection");
         }
-
-
-        // [HttpGet("list")]
-        // public ActionResult AssetMainList(int nFnYearId,int nPage,int nSizeperpage)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId = myFunctions.GetCompanyID(User);
-        //     string sqlCommandCount = "";
-        //     int Count= (nPage - 1) * nSizeperpage;
-        //     string sqlCommandText ="";
-
-        //      if(Count==0)
-        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1  ";
-        //     else
-        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 and N_MainCategoryId not in (select top("+ Count +") N_MainCategoryId from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 )";
-        //     Params.Add("@p1", nCompanyId);
-
-        //     SortedList OutPut = new SortedList();
-
-
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 ";
-        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-        //             OutPut.Add("Details", api.Format(dt));
-        //             OutPut.Add("TotalCount", TotalCount);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Success(OutPut));
-        //             }
-
-        //         }
-
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return BadRequest(api.Error(e));
-        //     }
-        // }
 
         [HttpGet("list")]
         public ActionResult AssetMainList()
@@ -125,8 +77,6 @@ namespace SmartxAPI.Controllers
             {
                 N_Flag = 1;
             }
-            // dba.FillDataSet( "Ass_AssetMainCategory", "SP_Inv_MainAssetItemcategory_Disp  " + myCompanyID._CompanyID + "," + myCompanyID._FnYearID + "," + N_Flag + "", "TEXT", new DataTable());
-            // string sqlCommandText = "select * from vw_InvMainAssetCategory_Disp where N_CompanyID=@p1 and N_MainCategoryID=@p3";
             string sqlCommandText = "SP_Inv_MainAssetItemcategory_Disp  " + nCompanyID + "," + nFnYearID + "," + N_Flag + "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
@@ -138,8 +88,6 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    // DataRow[] dr = dt.Select("N_MainCategoryID = " + nMainCategoryID + " and  N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + " ");
-                    // //  DataRow[] dr = dt.Select("N_MainCategoryID = @p3 and  N_CompanyID = @p1 and N_FnYearID=@p2 ");
                     DataTable output = new DataTable();
                      DataRow[] dr=dt.Select("N_MainCategoryID = " + nMainCategoryID + " and  N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + "");
                     output = dr.CopyToDataTable();  

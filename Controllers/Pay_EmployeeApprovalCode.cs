@@ -116,7 +116,13 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string x_ApprovalSettingsCode = MasterRow["X_ApprovalSettingsCode"].ToString();
+                    
+                    if (n_ApprovalSettingsID>0)
+                    {
+                         dLayer.DeleteData("Sec_ApprovalSettings_EmployeeDetails", "N_ApprovalSettingsID", n_ApprovalSettingsID, "", connection,transaction);
+                         dLayer.DeleteData("Sec_ApprovalSettings_Employee", "N_ApprovalSettingsID", n_ApprovalSettingsID, "", connection,transaction);
 
+                    }
                     if (x_ApprovalSettingsCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -184,9 +190,8 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    //  Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
-                    Params.Add("@nApprovalSettingsID", xApprovalSettingsCode);
-                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApproovalSettingsID  ";
+                     Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
+                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and X_ApprovalSettingsCode=@xApprovalSettingsCode  ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
