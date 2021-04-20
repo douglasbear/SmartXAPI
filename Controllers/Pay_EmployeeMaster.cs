@@ -140,8 +140,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nCountryID", nCountryID);
 
-            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=nCountryID order by X_Type desc";
+            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID order by X_Type desc";
             string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3) and B_InActive=0";
             string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
             string PayCodeSql ="Select * From [vw_Pay_Sal4perPaycodes] Where N_CompanyID=@nCompanyID and N_FnyearID =@nFnYearID";
