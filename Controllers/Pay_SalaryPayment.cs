@@ -67,7 +67,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("PayEmpList")]
+        [HttpGet("payEmpList")]
         public ActionResult GetSalaryPayEmpList(int nFnYearID, bool bAllBranchData, int nBranchID, string xBatchCode)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -75,13 +75,25 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@xBatchCode", xBatchCode);
+
             if (bAllBranchData == false)
                 Params.Add("@nBranchID", nBranchID);
             if (xBatchCode == null || xBatchCode == "")
                 xBatchCode = "";
+            string sqlCommandText="";
+            if(xBatchCode == "")
+            {
+                 sqlCommandText="select * from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID ";
+            }
+            else
+            {
+                  sqlCommandText="select * from vw_PayEmployeeSalaryPaymentsByEmployee where x_Batch = @xBatchCode and TotalSalaryCollected<>TotalSalary and N_CompanyID=@nCompanyID ";
 
 
-            string sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,TotalSalaryCollected,TotalSalary,X_EmpCode,X_EmpName " + (xBatchCode == "" ? " from vw_PayEmployeeSalaryPaymentsByEmployeeGroup Where" : ",X_Batch from vw_PayEmployeeSalaryPaymentsByBatch Where X_Batch =@xBatchCode") + " TotalSalary>TotalSalaryCollected and N_CompanyID=@nCompanyID " + (bAllBranchData == false ? "and N_BranchID=@nBranchID" : "");
+            }
+
+           
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
