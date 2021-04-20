@@ -17,7 +17,6 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
-         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
@@ -196,11 +195,13 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
             string Searchkey = "";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (N_TransID like '%" + xSearchkey + "%'or Batch like '%" + xSearchkey + "%' or  N_PayRunID like '%" + xSearchkey + "%' )";
@@ -214,8 +215,7 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 ";
             else
                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 )";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
+            
 
             SortedList OutPut = new SortedList();
 
@@ -227,17 +227,17 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
+                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(_api.Warning("No Results Found"));
                     }
                     else
                     {
-                        return Ok(api.Success(OutPut));
+                        return Ok(_api.Success(OutPut));
                     }
 
                 }
@@ -245,7 +245,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
 
