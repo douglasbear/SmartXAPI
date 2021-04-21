@@ -82,12 +82,15 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
                 int N_FormID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReferId"].ToString());
+                int nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                     Params.Add("@nReferId",N_FormID);
+                     Params.Add("@nSort",nSort);
                     // Auto Gen
                     string PkeyCode = "";
                     var values = MasterTable.Rows[0]["X_PkeyCode"].ToString();
@@ -104,8 +107,19 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     }
+                    object SeqNo = dLayer.ExecuteScalar("select n_Sort from Gen_LookupTable where N_ReferId=@nReferId and N_Sort=@nSort", Params,connection,transaction);
+                    if (SeqNo == null)
+                    {
+                     nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
+                   
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Seq No Already Exists"));
+                    }
 
-                    nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
+                   
                     if (nPkeyId <= 0)
                     {
                         transaction.Rollback();
