@@ -396,6 +396,8 @@ namespace SmartxAPI.Controllers
                          for (int j = 0; j < Terms.Rows.Count; j++)
                          {
                              Terms.Rows[j]["n_ReferanceID"] = n_SalesOrderId;
+                             Terms.Rows[j]["x_Type"] = "SO";
+                             
                              
                          }
                          dLayer.SaveData("Inv_Terms", "N_TermsID", Terms, connection, transaction);
