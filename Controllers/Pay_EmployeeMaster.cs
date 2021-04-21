@@ -388,9 +388,11 @@ namespace SmartxAPI.Controllers
                             pay_EmpAccrulsRes = dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", dtpay_EmpAccruls, connection, transaction);
 
                         int Acc_OtherInformationRes = 0;
-                        if (dtacc_OtherInformation.Rows.Count > 0)
-                            Acc_OtherInformationRes = dLayer.SaveData("Acc_OtherInformation", "N_OtherDtlsID", dtacc_OtherInformation, connection, transaction);
-
+                        if(myFunctions.getIntVAL(dtacc_OtherInformation.Rows[0]["n_OtherCode"].ToString())>0)
+                        {
+                            if (dtacc_OtherInformation.Rows.Count > 0)
+                                Acc_OtherInformationRes = dLayer.SaveData("Acc_OtherInformation", "N_OtherDtlsID", dtacc_OtherInformation, connection, transaction);
+                        }
                         //ATTACHMENT SAVING
                         //REMINDER SAVING
 
