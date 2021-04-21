@@ -140,8 +140,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nCountryID", nCountryID);
 
-            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=nCountryID order by X_Type desc";
+            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID order by X_Type desc";
             string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3) and B_InActive=0";
             string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
             string PayCodeSql ="Select * From [vw_Pay_Sal4perPaycodes] Where N_CompanyID=@nCompanyID and N_FnyearID =@nFnYearID";
@@ -364,14 +365,13 @@ namespace SmartxAPI.Controllers
                         if (dtPay_Employee_Log.Rows.Count > 0)
                             Pay_Employee_LogRes = dLayer.SaveData("Pay_Employee_Log", "N_EmployeeLogID", dtPay_Employee_Log, connection, transaction);
 
-                        dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID", QueryParams, connection);
+                        dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID", QueryParams, connection,transaction);
 
-                        bool B_Inactive = false;
-                        B_Inactive = myFunctions.getBoolVAL(dtMasterTable.Rows[0]["b_Inactive"].ToString());
+                        bool B_Inactive =  myFunctions.getIntVAL(dtMasterTable.Rows[0]["b_Inactive"].ToString())==1?true:false;
                         if (B_Inactive)
-                            dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nPositionID", QueryParams, connection);
+                            dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nPositionID", QueryParams, connection,transaction);
                         else
-                            dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = @nSavedEmpID Where N_CompanyID =@nCompanyID And N_PositionID =@nPositionID", QueryParams, connection);
+                            dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = @nSavedEmpID Where N_CompanyID =@nCompanyID And N_PositionID =@nPositionID", QueryParams, connection,transaction);
 
                         //SAving EMPLOYEE SALARY/BENEFITS
                         int pay_PaySetupRes = 0;
@@ -413,20 +413,20 @@ namespace SmartxAPI.Controllers
                             xDepartment = objDept.ToString();
 
                         SortedList ParamsAccount = new SortedList();
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_EmpID", nSavedEmpID);
-                        Params.Add("X_EmpCode", xEmpCode);
-                        Params.Add("X_Department", xDepartment);
-                        Params.Add("X_EmpName", xEmpName);
-                        Params.Add("N_UserID", nUserID);
-                        Params.Add("X_Form", "Pay_EmployeeMaster");
+                        ParamsAccount.Add("N_CompanyID", nCompanyID);
+                        ParamsAccount.Add("N_EmpID", nSavedEmpID);
+                        ParamsAccount.Add("X_EmpCode", xEmpCode);
+                        ParamsAccount.Add("X_Department", xDepartment);
+                        ParamsAccount.Add("X_EmpName", xEmpName);
+                        ParamsAccount.Add("N_UserID", nUserID);
+                        ParamsAccount.Add("X_Form", "Pay_EmployeeMaster");
 
                         if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LedgerID"].ToString()) == 0)
                             dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeAccount", ParamsAccount, connection, transaction).ToString();
                         if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LoanLedgerID"].ToString()) == 0)
                             dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeLoanAccount", ParamsAccount, connection, transaction).ToString();
 
-                        bool B_EnableSalesExec = myFunctions.CheckPermission(nCompanyID, 290, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection);
+                        bool B_EnableSalesExec = myFunctions.CheckPermission(nCompanyID, 290, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection,transaction);
                         if (B_EnableSalesExec)
                         {
                             int Inv_SalesmanRes = 0;
@@ -441,7 +441,7 @@ namespace SmartxAPI.Controllers
                             if (dtVeh_Drivers.Rows.Count > 0)
                                 Veh_DriversRes = dLayer.SaveData("Inv_Salesman", "N_SalesmanID", dtVeh_Drivers, connection, transaction);
                         }
-                        bool B_Teacher = myFunctions.CheckPermission(nCompanyID, 155, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection);
+                        bool B_Teacher = myFunctions.CheckPermission(nCompanyID, 155, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection,transaction);
                         if (B_Teacher)
                         {
                             int Sch_TeacherRes = 0;

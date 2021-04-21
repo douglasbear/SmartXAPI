@@ -91,20 +91,35 @@ namespace SmartxAPI.Controllers
                         if (xInsuranceCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Insurance Code")); }
                         MasterTable.Rows[0]["x_InsuranceCode"] = xInsuranceCode;
                     }
+                     MasterTable.Columns.Remove("n_FnYearID");
+                    nInsuranceID = dLayer.SaveData("Pay_Medical_Insurance", "n_MedicalInsID", MasterTable, connection, transaction);
+                   
+                     if (nInsuranceID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
                     else
                     {
-                        dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", nInsuranceID, "", connection, transaction);
-                        
+                        transaction.Commit();
+                        return Ok(_api.Success("Insurance Created"));
                     }
-                    MasterTable.Columns.Remove("n_FnYearID");
-                     
-                  nInsuranceID = dLayer.SaveData("Pay_Medical_Insurance", "n_MedicalInsID", MasterTable, connection, transaction);
-                    
-                    
-                    transaction.Commit();
-                    return Ok(_api.Success("Medical Insurance Saved")) ;
                 }
             }
+            //         else
+            //         {
+            //             dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", nInsuranceID, "", connection, transaction);
+                        
+            //         }
+            //         MasterTable.Columns.Remove("n_FnYearID");
+                     
+            //       nInsuranceID = dLayer.SaveData("Pay_Medical_Insurance", "n_MedicalInsID", MasterTable, connection, transaction);
+                    
+                    
+            //         transaction.Commit();
+            //         return Ok(_api.Success("Medical Insurance Saved")) ;
+            //     }
+            // }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
