@@ -44,15 +44,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@p4",dTransDate);
             object Total = "";
             SortedList Result = new SortedList();
-            string sqlCommandText="Select N_CompanyID,SUM(N_AmountDr)as N_AmountDr,SUM(N_AmountCr) as N_AmountCr,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName from  Vw_DailySalesSummary where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4 group by N_CompanyID,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName";
+            //string sqlCommandText="Select N_CompanyID,SUM(N_AmountDr)as N_AmountDr,SUM(N_AmountCr) as N_AmountCr,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName from  Vw_DailySalesSummary where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4 group by N_CompanyID,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName union Select N_CompanyID,SUM(N_TaxAmtF)as N_AmountDr,0 as N_AmountCr,D_SalesDate,N_BranchID,N_FnYearID,'Total VAT' from  Inv_Sales where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_SalesDate=@p4  group by N_CompanyID,D_SalesDate,N_BranchID,N_FnYearID union Select N_CompanyID,COUNT(N_SalesId)as N_AmountDr,0 as N_AmountCr,D_SalesDate,N_BranchID,N_FnYearID,'Count' from  Inv_Sales where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_SalesDate=@p4  group by N_CompanyID,D_SalesDate,N_BranchID,N_FnYearID";
+            string sqlCommandText="Select N_CompanyID,SUM(N_AmountDr)as N_AmountDr,SUM(N_AmountCr) as N_AmountCr,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName,N_Order from  vw_DailySummaryPOS where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and D_TransDate=@p4 group by N_CompanyID,D_TransDate,N_BranchID,N_FnYearID,X_CustomerName,n_order order by n_order";
             string sqlCommandTotal="Select SUM(N_AmountDr)as N_Amount from  Vw_DailySalesSummary where  D_TransDate=@p4 group by N_CompanyID,D_TransDate,N_BranchID,N_FnYearID";
+            // string sqlCommandTax="Select SUM(N_TaxAmt)as N_TaxAmt from  Inv_Sales where  D_SalesDate=@p4 and B_IsSaveDraft=0";
+            // string sqlCommandCount="Select Count(N_SalesID)as N_Count from  Inv_Sales where  D_SalesDate=@p4 and B_IsSaveDraft=0";
             try
             {
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
                     Total = dLayer.ExecuteScalar(sqlCommandTotal, Params, connection);
+                    // object TaxAmt = dLayer.ExecuteScalar(sqlCommandTax, Params, connection);
+                    // object Count = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    //  dt = myFunctions.AddNewColumnToDataTable(dt, "N_TaxAmt", typeof(string), TaxAmt);
+                    //  dt = myFunctions.AddNewColumnToDataTable(dt, "N_Count", typeof(string), Count);
+                    //  dt.AcceptChanges();
+
                 }
                 dt = _api.Format(dt);
 

@@ -82,37 +82,6 @@ namespace SmartxAPI.Controllers
         //     }
         // }
 
-        // [HttpGet("details")]
-        // public ActionResult FixedAssetListDetails(string xFixedAssetNo)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId=myFunctions.GetCompanyID(User);
-        //     string sqlCommandText = "select * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and Code=@p3";
-        //     Params.Add("@p1", nCompanyId);
-        //     Params.Add("@p3",xFixedAssetNo );
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-        //         }
-        //         dt = api.Format(dt);
-        //         if (dt.Rows.Count == 0)
-        //         {
-        //             return Ok(api.Warning("No Results Found"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(api.Success(dt));
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return BadRequest(api.Error(e));
-        //     }
-        // }
 
 
 //  [HttpGet("details")]
@@ -153,6 +122,48 @@ namespace SmartxAPI.Controllers
 //                 return BadRequest(api.Error(e));
 //             }
 //         }
+
+
+
+ [HttpGet("details")]
+        public ActionResult FixedAssetListDetails(int nCategoryID, int nFnYearID, int? nLangID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int N_Flag = 0;
+            if (nLangID == 2)
+            {
+                N_Flag = 1;
+            }
+            string sqlCommandText = "SP_Inv_AssetItemcategory_Disp  " + myCompanyID._CompanyID + "," + myCompanyID._FnYearID + "," + N_Flag + "";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nCategoryID);
+            try
+            {
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    DataTable output = new DataTable();
+                     DataRow[] dr=dt.Select("N_CategoryID = " + nCategoryID + " and  N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + "");
+                    output = dr.CopyToDataTable();  
+                    output = api.Format(output);
+                    if (output.Rows.Count == 0)
+                        return Ok(api.Warning("No Results Found"));
+                    else
+                        return Ok(api.Success(output));
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(e));
+            }
+        }
+
+
 
 
 

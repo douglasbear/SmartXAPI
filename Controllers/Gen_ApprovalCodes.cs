@@ -147,20 +147,12 @@ namespace SmartxAPI.Controllers
                     string X_ApprovalCode = MasterTable.Rows[0]["X_ApprovalCode"].ToString();
                     MasterTable.Columns.Remove("N_FnYearID");
 
-                    // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
-                    // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
-                    // int nLevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_Level"].ToString());
-                    // int nActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionTypeID"].ToString());
                     if (nApprovalID > 0)
                     {
-                        SortedList deleteParams = new SortedList()
-                            {
-                                {"N_CompanyID",nCompanyID},
-                                {"X_ApprovalCode",X_ApprovalCode},
-                                {"N_VoucherID",nApprovalID}
-                            };
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                         dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "", connection,transaction);
+                         dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection,transaction);
                     }
+                   
                     DocNo = MasterRow["X_ApprovalCode"].ToString();
                     
                     if (X_ApprovalCode == "@Auto")
@@ -337,7 +329,9 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok(_api.Success("deleted"));
+                    
+                        dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "", connection);
+                        return Ok(_api.Success("Approval Code deleted"));
                     }
                     else
                     {
