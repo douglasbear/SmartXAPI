@@ -92,12 +92,13 @@ namespace SmartxAPI.Controllers
                     if (X_PositionCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
+                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.FormID);
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
                         if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Job title Code")); }
                         MasterTable.Rows[0]["x_PositionCode"] = X_PositionCode;
                     }
-
+                    MasterTable.Columns.Remove("N_FnYearID");
                     N_PositionID = dLayer.SaveData("Pay_Position", "N_PositionID", MasterTable, connection, transaction);
                     if (N_PositionID <= 0)
                     {
