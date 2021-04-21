@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("details")]
+        [HttpGet("batchDetails")]
         public ActionResult GetTransDetails(int nFnYearID, int nReceiptID, int nEmpID, int nBatchID, string xPaymentID, bool showDueOnly, DateTime transDate)
         {
             string sql1 = "";
@@ -135,13 +135,14 @@ namespace SmartxAPI.Controllers
 
             for (int j = 0; j < temp.Length; j++)
             {
-                if (sql1 != "")
-                    sql1 = sql1 + " UNION ALL ";
+                //  if (sql1 != "")
+                //      sql1 = sql1 + " UNION ALL ";
 
                 if (nReceiptID > 0)
                 {
 
-                    sql1 = sql1 + " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
+                    //sql1 = sql1 + " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
+                    sql1 =  " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
                 }
                 else
                 {
@@ -157,7 +158,7 @@ namespace SmartxAPI.Controllers
                     if (showDueOnly == true)
                         X_DueCondition = " And dbo.vw_PayAmountDetailsForPay.D_TransDate <= '" + transDate + "' ";
 
-                    sql1 = sql1 + " SELECT     dbo.vw_PayAmountDetailsForPay.N_TransID,dbo.vw_PayAmountDetailsForPay.N_PayrunID,dbo.vw_PayAmountDetailsForPay.D_TransDate,dbo.vw_PayAmountDetailsForPay.X_PayrunText,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate) AS N_PayRate,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_InvoiceDueAmt,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_DueAmount,0 As N_Amount,0 As N_Discount,vw_PayAmountDetailsForPay.N_Entryfrom,vw_PayAmountDetailsForPay.X_Description,vw_PayAmountDetailsForPay.N_PayTypeID,vw_PayAmountDetailsForPay.N_PaymentId,vw_PayAmountDetailsForPay.X_EmpName,vw_PayAmountDetailsForPay.N_EmpID,vw_PayAmountDetailsForPay.X_Batch" +
+                    sql1 =  " SELECT     dbo.vw_PayAmountDetailsForPay.N_TransID,dbo.vw_PayAmountDetailsForPay.N_PayrunID,dbo.vw_PayAmountDetailsForPay.D_TransDate,dbo.vw_PayAmountDetailsForPay.X_PayrunText,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate) AS N_PayRate,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_InvoiceDueAmt,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_DueAmount,0 As N_Amount,0 As N_Discount,vw_PayAmountDetailsForPay.N_Entryfrom,vw_PayAmountDetailsForPay.X_Description,vw_PayAmountDetailsForPay.N_PayTypeID,vw_PayAmountDetailsForPay.N_PaymentId,vw_PayAmountDetailsForPay.X_EmpName,vw_PayAmountDetailsForPay.N_EmpID,vw_PayAmountDetailsForPay.X_Batch" +
                                   " FROM         dbo.vw_PayAmountDetailsForPay " +
                                   " LEFT OUTER JOIN vw_PayEmployeePaidTotal On dbo.vw_PayAmountDetailsForPay.N_TransID  =dbo.vw_PayEmployeePaidTotal.N_SalesID and dbo.vw_PayAmountDetailsForPay.N_EmpID =dbo.vw_PayEmployeePaidTotal.N_AdmissionID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =dbo.vw_PayEmployeePaidTotal.N_CompanyID and dbo.vw_PayEmployeePaidTotal.N_Entryfrom = dbo.vw_PayAmountDetailsForPay.N_EntryFrom and dbo.vw_PayEmployeePaidTotal.N_PayTypeID = dbo.vw_PayAmountDetailsForPay.N_PayTypeID" +
                                   " Where " + X_Condition + " " + X_DueCondition + " " +
@@ -190,109 +191,109 @@ namespace SmartxAPI.Controllers
 
         }
 
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         DataTable DetailTable;
-        //         MasterTable = ds.Tables["master"];
-        //         DetailTable = ds.Tables["details"];
-        //         SortedList Params = new SortedList();
-        //         SortedList QueryParams = new SortedList();
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                DataTable DetailTable;
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                SortedList Params = new SortedList();
+                SortedList QueryParams = new SortedList();
 
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction;
-        //             DataRow MasterRow = MasterTable.Rows[0];
-        //             transaction = connection.BeginTransaction();
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    transaction = connection.BeginTransaction();
 
 
-        //             int N_ReceiptID = myFunctions.getIntVAL(MasterRow["n_ReceiptID"].ToString());
-        //             int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
-        //             int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-        //             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                    int N_ReceiptID = myFunctions.getIntVAL(MasterRow["n_ReceiptID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
 
-        //             QueryParams.Add("@nCompanyID", N_CompanyID);
-        //             QueryParams.Add("@nFnYearID", N_FnYearID);
-        //             QueryParams.Add("@nReceiptID", N_ReceiptID);
-        //             QueryParams.Add("@nBranchID", N_BranchID);
+                    QueryParams.Add("@nCompanyID", N_CompanyID);
+                    QueryParams.Add("@nFnYearID", N_FnYearID);
+                    QueryParams.Add("@nReceiptID", N_ReceiptID);
+                    QueryParams.Add("@nBranchID", N_BranchID);
 
 
                
-        //             // Auto Gen
-        //             string x_QuotationNo = "";
-        //             var values = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
-        //             DataRow Master = MasterTable.Rows[0];
-        //             if (values == "@Auto")
-        //             {
-        //                 Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
-        //                 Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-        //                 Params.Add("N_FormID", 198);
-        //                 Params.Add("N_BranchID", Master["n_BranchId"].ToString());
-        //                 x_QuotationNo = dLayer.GetAutoNumber("Pay_EmployeePayment", "X_ReceiptNo", Params, connection, transaction);
-        //                 if (x_QuotationNo == "") { return Ok(_api.Error("Unable to generate Receipt Number")); }
-        //                 MasterTable.Rows[0]["x_QuotationNo"] = x_QuotationNo;
+                    // Auto Gen
+                    string X_ReceiptNo = "";
+                    var values = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
+                    DataRow Master = MasterTable.Rows[0];
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", Master["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", 198);
+                        Params.Add("N_BranchID", Master["n_BranchId"].ToString());
+                        X_ReceiptNo = dLayer.GetAutoNumber("Pay_EmployeePayment", "X_ReceiptNo", Params, connection, transaction);
+                        if (X_ReceiptNo == "") { return Ok(_api.Error("Unable to generate Receipt Number")); }
+                        MasterTable.Rows[0]["X_ReceiptNo"] = X_ReceiptNo;
 
-        //             }
-        //             else
-        //             {
-        //                 if (N_ReceiptID > 0)
-        //                 {
-        //                     int res = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_ReceiptID, "", connection, transaction);
-        //                     if (res <= 0)
-        //                     {
-        //                         transaction.Rollback();
-        //                         return Ok(_api.Error("Unable to save Quotation"));
-        //                     }
-        //                 }
-        //             }
+                    }
+                    else
+                    {
+                        if (N_ReceiptID > 0)
+                        {
+                            int res = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", N_ReceiptID, "", connection, transaction);
+                            if (res <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save Quotation"));
+                            }
+                        }
+                    }
 
 
-        //             N_ReceiptID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", MasterTable, connection, transaction);
-        //             if (N_ReceiptID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error("Unable to save Salary Payment"));
-        //             }
-        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
-        //             {
-        //                 DetailTable.Rows[j]["N_ReceiptID"] = N_ReceiptID;
-        //             }
+                    N_ReceiptID = dLayer.SaveData("Pay_EmployeePayment", "N_ReceiptID", MasterTable, connection, transaction);
+                    if (N_ReceiptID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Salary Payment"));
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_ReceiptID"] = N_ReceiptID;
+                    }
 
-        //             int N_QuotationDetailId = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
-        //             if (N_QuotationDetailId <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error("Unable to save Quotation"));
-        //             }
-        //             else
-        //             {
+                    int N_ReceiptDetailsID = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
+                    if (N_ReceiptDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Quotation"));
+                    }
+                    // else
+                    // {
                         
-        //                 for (int k = 0; k < DetailTable.Rows.Count; k++)
-        //                 {
-        //                         if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
-        //                         {
-        //                             if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
-        //                                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ELI','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
-        //                             else
-        //                                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ESP','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
-        //                         }
-        //                  }
-        //                 dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Ins " + myCompanyID._CompanyID.ToString() + "," + N_ReceiptID.ToString() + "," + myCompanyID._UserID.ToString() + ",'" + this.Text + "','" + System.Environment.MachineName + "'," + N_LoanFlag, "TEXT", new DataTable());
+                    //     for (int k = 0; k < DetailTable.Rows.Count; k++)
+                    //     {
+                    //             if (flxPurchase.get_TextMatrix(i, mcPay) == "P")
+                    //             {
+                    //                 if (myFunctions.getIntVAL(flxPurchase.get_TextMatrix(i, mcEntryFrom)) == 212)
+                    //                     dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ELI','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
+                    //                 else
+                    //                     dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Del " + myCompanyID._CompanyID + ",'ESP','" + txtReference.Text.Trim() + "'," + N_FnYearID + "", "TEXT", new DataTable());
+                    //             }
+                    //      }
+                    //     dba.ExecuteNonQuery("SP_Pay_SalaryPaid_Voucher_Ins " + myCompanyID._CompanyID.ToString() + "," + N_ReceiptID.ToString() + "," + myCompanyID._UserID.ToString() + ",'" + this.Text + "','" + System.Environment.MachineName + "'," + N_LoanFlag, "TEXT", new DataTable());
                         
-        //                 transaction.Commit();
-        //             }
-        //             return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(ex));
-        //     }
-        // }
+                    //     transaction.Commit();
+                    // }
+                    // return Ok(_api.Success("Sales quotation saved" + ":" + QuotationNo));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
 
         // [HttpPost("save")]
         // public ActionResult SaveData([FromBody] DataSet ds)
