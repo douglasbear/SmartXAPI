@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
 
         private readonly string connectionString;
-        private readonly int FormID=198;
+        private readonly int FormID = 198;
 
 
         public Pay_SalaryPayment(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -196,6 +196,66 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        
+           [HttpGet("dashboardList")]
+        public ActionResult EmpMaintenanceList(int nCompanyId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            //int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Criteria ="";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and Receipt No like '%" + xSearchkey + "%'";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ReceiptID asc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_ReceiptID not in (select top(" + Count + ") N_ReceiptID from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+            Params.Add("@nCompanyId", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria ;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+
 
 
         [HttpPost("save")]
@@ -242,8 +302,8 @@ namespace SmartxAPI.Controllers
                     if (X_ReceiptNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_FormID",FormID);
-                       Params.Add("N_YearID", nAcYearID);       
+                        Params.Add("N_FormID", FormID);
+                        Params.Add("N_YearID", nAcYearID);
 
                         while (true)
                         {
@@ -272,10 +332,32 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
+                    
+                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                        {
+                            DataRow mstVar = DetailTable.Rows[i];
+                            double Amount = myFunctions.getVAL(mstVar["n_Amount"].ToString());
+                             if (Amount == 0)
+                            {
 
-                    for (int i = 0; i < DetailTable.Rows.Count; i++)
-                    {
-                        DetailTable.Rows[0]["N_ReceiptID"] = nReceiptID;
+                               
+                                 dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", myFunctions.getIntVAL(mstVar["n_ReceiptDetailsID"].ToString()), "N_CompanyID = " + nCompanyID, connection, transaction); 
+                                DetailTable.Rows[i].Delete();
+                                continue;
+                            }
+
+
+          
+                       
+                           
+                            
+                            
+                            
+                            
+                         
+                       
+                        DetailTable.Rows[i]["N_ReceiptID"] = nReceiptID;
+                 
                     }
                     int nReceiptDetailsID = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
                     if (nReceiptDetailsID <= 0)
@@ -284,7 +366,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable To Save"));
                     }
 
-                    transaction.Commit();
+                    transaction.Commit(); 
                     return Ok(_api.Success("Saved"));
                 }
             }
