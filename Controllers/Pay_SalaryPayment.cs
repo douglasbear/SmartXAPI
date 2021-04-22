@@ -341,7 +341,7 @@ namespace SmartxAPI.Controllers
                             {
 
                                
-                                 dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", myFunctions.getIntVAL(mstVar["n_ReceiptDetailsID"].ToString()), "N_CompanyID = " + nCompanyID, connection, transaction); 
+                                dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", myFunctions.getIntVAL(mstVar["n_ReceiptDetailsID"].ToString()), "N_CompanyID = " + nCompanyID, connection, transaction); 
                                 DetailTable.Rows[i].Delete();
                                 continue;
                             }
