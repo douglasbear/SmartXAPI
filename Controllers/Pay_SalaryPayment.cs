@@ -356,7 +356,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if(!myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString()))
+                    if(myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString())==0)
                     {
                         for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                         {
