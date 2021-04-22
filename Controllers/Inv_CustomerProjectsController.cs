@@ -81,6 +81,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+                string X_ProjectCode = MasterTable.Rows[0]["X_ProjectCode"].ToString();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -91,15 +92,36 @@ namespace SmartxAPI.Controllers
                     string ProjectCode = "";
                     var values = MasterTable.Rows[0]["X_ProjectCode"].ToString();
                     if (values == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", nCompanyID);
+
+                      {
+                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
-                        ProjectCode = dLayer.GetAutoNumber("inv_CustomerProjects", "X_ProjectCode", Params, connection, transaction);
-                        if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Project Information")); }
-                        MasterTable.Rows[0]["X_ProjectCode"] = ProjectCode;
+
+                        while (true)
+                        {
+                            values = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from inv_CustomerProjects Where X_ProjectCode ='" + values + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        X_ProjectCode = values;
+
+
+                        if (X_ProjectCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate")); }
+                        MasterTable.Rows[0]["X_ProjectCode"] = X_ProjectCode;
+
                     }
-                     MasterTable.Columns.Remove("n_FnYearId");
+                    // {
+                    //     Params.Add("N_CompanyID", nCompanyID);
+                    //     Params.Add("N_YearID", nFnYearId);
+                    //     Params.Add("N_FormID", this.N_FormID);
+                    //     ProjectCode = dLayer.GetAutoNumber("inv_CustomerProjects", "X_ProjectCode", Params, connection, transaction);
+                    //     if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Project Information")); }
+                    //     MasterTable.Rows[0]["X_ProjectCode"] = ProjectCode;
+                    // }
+                      MasterTable.Columns.Remove("n_FnYearId");
+                      MasterTable.Columns.Remove("n_LocationID");
 
 
                     nProjectID = dLayer.SaveData("inv_CustomerProjects", "N_ProjectID", MasterTable, connection, transaction);
