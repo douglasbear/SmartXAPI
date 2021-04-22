@@ -33,65 +33,72 @@ namespace SmartxAPI.Controllers
             FormID = 218;
         }
 
-
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nNationalityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_NationalityID"].ToString());
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;
-                    MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                    int nNationalityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_NationalityID"].ToString());
-                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                    string xNationalityCode = MasterTable.Rows[0]["x_NationalityCode"].ToString();
-
-                    if (xNationalityCode == "@Auto")
+                    // Auto Gen
+                    string xNationalityCode = "";
+                    var values = MasterTable.Rows[0]["x_NationalityCode"].ToString();
+                    if (values == "@Auto")
                     {
-                        Params.Add("n_CompanyID", nCompanyID);
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
+                        while (true)
+                        {
+                            xNationalityCode = (string)dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction);
 
-                        xNationalityCode = dLayer.GetAutoNumber("Pay_Nationality", "x_NationalityCode", Params, connection, transaction);
-
-                        if (xNationalityCode == "")
-                        { transaction.Rollback(); return Ok(_api.Error("Unable to generate Nationality Code")); }
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_Nationality Where N_NationalityID ='" + xNationalityCode+"'", connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        if (xNationalityCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Nationality Code")); }
                         MasterTable.Rows[0]["x_NationalityCode"] = xNationalityCode;
+                    }
+
+                    MasterTable.Columns.Remove("n_FnYearID");
+                    MasterTable.AcceptChanges();
+                    nNationalityID = dLayer.SaveData("Pay_Nationality", "n_NationalityID", MasterTable, connection, transaction);
+                    if (nNationalityID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
                     }
                     else
                     {
-                        dLayer.DeleteData("Pay_Nationality", "N_NationalityID", nNationalityID, "", connection, transaction);
-
+                        transaction.Commit();
+                        return Ok(_api.Success("Nationality Created"));
                     }
-                    MasterTable.Columns.Remove("n_CompanyID");
-                    MasterTable.Columns.Remove("n_FnYearID");
-
-                    nNationalityID = dLayer.SaveData("Pay_Nationality", "N_NationalityID", MasterTable, connection, transaction);
-
-
-                    transaction.Commit();
-                    return Ok(_api.Success("Nationality Saved"));
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return BadRequest(_api.Error(ex));
             }
         }
+
+
+
 
         [HttpGet("details")]
         public ActionResult GetDetails(int nNationalityID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            // int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_PayNationality_Disp where N_NationalityID=@nNationalityID";
-            // Params.Add("@nCompanyID", nCompanyID);
+            string sqlCommandText = "select * from Pay_Nationality where N_NationalityID=@nNationalityID";
             Params.Add("@nNationalityID", nNationalityID);
             try
             {
@@ -121,15 +128,13 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            // int nCompanyID=myFunctions.GetCompanyID(User);
-            // Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="select N_NationalityID, X_Nationality, X_NationalityLocale, X_NationalityCode, D_Entrydate, X_Country, B_Default, X_Currency, N_CountryID from Pay_Nationality";
+            string sqlCommandText = "select N_NationalityID, X_Nationality, X_NationalityLocale, X_NationalityCode, D_Entrydate, X_Country, B_Default, X_Currency, N_CountryID from Pay_Nationality";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -150,7 +155,7 @@ namespace SmartxAPI.Controllers
 
 
 
-         [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nNationalityID)
         {
             int Results = 0;
@@ -162,7 +167,7 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Pay_Nationality", "n_NationalityID", nNationalityID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("Nationality deleted"));
+                        return Ok(_api.Success("Nationality deleted"));
                     }
                     else
                     {
