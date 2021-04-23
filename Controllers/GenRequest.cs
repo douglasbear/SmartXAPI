@@ -82,6 +82,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "employmenttype": id=6;
                 break;
+                case "csv": id=80;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -100,7 +102,8 @@ namespace SmartxAPI.Controllers
                     if(dt.Rows.Count==0)
                         {
                             return Ok(api.Notice("No Results Found"));
-                        }else{
+                        }
+                        else{
                             return Ok(api.Success(dt));
                         }
                 

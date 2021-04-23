@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID";
+            string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID where Inv_ItemCategory.N_CompanyID<>-1";
             Params.Add("@p1", nCompanyId);
 
             try

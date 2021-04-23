@@ -160,24 +160,39 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow row in Details.Rows)
                         {
 
-                            if (row["d_shift2_Out"].ToString() != "00:00:00" || row["d_out"].ToString() != "00:00:00")
+                            try
                             {
-                                // Summary
-                                N_WorkHours += HoursToMinutes(Convert.ToDouble(row["N_Workhours"].ToString()));
-                                N_WorkdHrs += HoursToMinutes(Convert.ToDouble(row["N_Tothours"].ToString()));
-                                N_compensated += HoursToMinutes(Convert.ToDouble(row["CompMinutes"].ToString()));
-                                N_Deduction += HoursToMinutes(Convert.ToDouble(row["Deduction"].ToString()));
-                            }
-                            else
-                            {
+                                string d_shift2_Out = row["d_shift2_Out"].ToString(); //row.GetColumnError("d_shift2_Out") ;
+                                string d_out = row["d_out"].ToString();
+                                if (d_shift2_Out != null && d_shift2_Out.ToString() != "00:00:00" || d_out != null && d_out.ToString() != "00:00:00")
+                                {
+                                    // Summary
+                                    N_WorkHours += HoursToMinutes(Convert.ToDouble(row["N_Workhours"].ToString()));
+                                    N_Deduction += HoursToMinutes(Convert.ToDouble(row["Deduction"].ToString()));
+                                    N_WorkdHrs += HoursToMinutes(Convert.ToDouble(row["N_Tothours"].ToString()));
+                                    N_compensated += HoursToMinutes(Convert.ToDouble(row["CompMinutes"].ToString()));
+                                }
+                                else
+                                {
 
+                                    row["N_CompAdd"] = 0;
+                                    row["N_CompLess"] = 0;
+                                    row["N_Diff"] = 0;
+                                    row["N_DutyHours"] = 0;
+                                    row["N_TotHours"] = 0;
+                                    row["deduction"] = 0;
+                                    row["compMinutes"] = 0;
+                                }
+                            }
+                            catch (Exception e)
+                            {
                                 row["N_CompAdd"] = 0;
                                 row["N_CompLess"] = 0;
                                 row["N_Diff"] = 0;
                                 row["N_DutyHours"] = 0;
                                 row["N_TotHours"] = 0;
-                                 row["deduction"] = 0;
-                                 row["compMinutes"] = 0;
+                                row["deduction"] = 0;
+                                row["compMinutes"] = 0;
                             }
 
                         }

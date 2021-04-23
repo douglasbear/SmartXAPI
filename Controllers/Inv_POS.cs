@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("holdlist")]
-        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate)
+        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate,int ID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -51,12 +51,21 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-
+            if(ID==0)
+            {
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+            }
+            else
+            {
+                if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
+            }
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -87,6 +96,93 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        // [HttpGet("DupPrint")]
+        // public ActionResult GetDupPrintList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate)
+        // {
+        //     int nCompanyId = myFunctions.GetCompanyID(User);
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+
+        //     int Count = (nPage - 1) * nSizeperpage;
+        //     string sqlCommandText = "";
+        //     string sqlCommandCount = "";
+        //     string Searchkey = "";
+
+        //     if (xSearchkey != null && xSearchkey.Trim() != "")
+        //         Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%')";
+
+        //     if (xSortBy == null || xSortBy.Trim() == "")
+        //         xSortBy = " order by N_SalesId desc";
+        //     else
+        //         xSortBy = " order by " + xSortBy;
+
+
+        //     if (Count == 0)
+        //         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0  and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+        //     else
+        //         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0  and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+        //     Params.Add("@p1", nCompanyId);
+        //     Params.Add("@p2", nFnYearId);
+        //     SortedList OutPut = new SortedList();
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //             sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey;
+        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+        //             OutPut.Add("Details", _api.Format(dt));
+        //             OutPut.Add("TotalCount", TotalCount);
+
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(_api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(_api.Success(OutPut));
+        //             }
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(e));
+        //     }
+        // }
+        [HttpGet("dayclose")]
+        public ActionResult GetDayCloseStatus(DateTime dDate)
+        {
+          
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@dDate", dDate);
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string sqlCommandText = "select n_closeid from Acc_Dayclosing where d_closeddate=@dDate and N_CompanyID= @nCompanyID";
+object obj;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    obj = dLayer.ExecuteScalar(sqlCommandText, Params, connection);
+                }
+                if(obj==null)
+                obj=0;
+                SortedList Output=new SortedList();
+                Output.Add("dayclose",myFunctions.getIntVAL(obj.ToString()));
+                
+                 return Ok(_api.Success(Output));
+              
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
         [HttpGet("listcategory")]
         public ActionResult GetDepartmentList()
         {
@@ -95,7 +191,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
 
-            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID";
+            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID<>-1";
 
             try
             {
@@ -136,7 +232,7 @@ namespace SmartxAPI.Controllers
 
 
             if(xSearchkey!=null)
-                Searchkey = "and (X_ItemName like '%" + xSearchkey + "%')";
+                Searchkey = " and (vw_InvItem_Search.Description like '%" + xSearchkey + "%')";
 
             if(nCategoryID>0)
                 categorySql = " and N_CategoryID=@p2 ";
@@ -153,7 +249,7 @@ namespace SmartxAPI.Controllers
                             " vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, "+
                             " vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11,'' as i_Image "+
                             " FROM vw_InvItem_Search LEFT OUTER JOIN "+
-                            " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + categorySql;
+                            " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + categorySql + Searchkey;
 
 
             Params.Add("@p1", nCompanyId);

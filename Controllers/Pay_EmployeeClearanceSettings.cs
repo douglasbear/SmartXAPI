@@ -13,35 +13,37 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("payemployeapprovalcode")]
+    [Route("employeeClearanceSettings")]
     [ApiController]
-    public class Pay_EmployeApprovalCode : ControllerBase
+    public class EmployeeClearanceSettings : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
+      
 
 
-        public Pay_EmployeApprovalCode(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public EmployeeClearanceSettings(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 202;
+            N_FormID = 1062;
         }
 
-        [HttpGet("actionlist")]
-        public ActionResult ActionList()
+       
+      [HttpGet("list")]
+        public ActionResult EmployeeClearanceList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText = "select N_CompanyID,N_Action,X_ActionDesc from vw_web_ApprovalAction_Disp where N_CompanyID=@nComapnyID";
+            string sqlCommandText = "select * from Pay_EmployeeClearanceSettings where N_CompanyID=@nComapnyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -64,39 +66,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        [HttpGet("approvalcodelist")]
-        public ActionResult ApprovalCodeList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nComapnyID", nCompanyID);
-            SortedList OutPut = new SortedList();
-            string sqlCommandText = "select N_CompanyID,N_ApprovalID,X_ApprovalCode,X_ApprovalDescription from Gen_ApprovalCodes where N_CompanyID=@nComapnyID";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
-        //Save....
-        [HttpPost("Save")]
+
+           [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -112,56 +83,51 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
-                    int n_ApprovalSettingsID = myFunctions.getIntVAL(MasterRow["N_ApprovalSettingsID"].ToString());
+                    int n_ClearanceSettingsID = myFunctions.getIntVAL(MasterRow["N_ClearanceSettingsID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_ApprovalSettingsCode = MasterRow["X_ApprovalSettingsCode"].ToString();
-                    
-                    if (n_ApprovalSettingsID>0)
-                    {
-                         dLayer.DeleteData("Sec_ApprovalSettings_EmployeeDetails", "N_ApprovalSettingsID", n_ApprovalSettingsID, "", connection,transaction);
-                         dLayer.DeleteData("Sec_ApprovalSettings_Employee", "N_ApprovalSettingsID", n_ApprovalSettingsID, "", connection,transaction);
+                    string x_ClearanceCode = MasterRow["X_ClearanceCode"].ToString();
 
-                    }
-                    if (x_ApprovalSettingsCode == "@Auto")
+                    if (x_ClearanceCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
-                        x_ApprovalSettingsCode = dLayer.GetAutoNumber("Sec_ApprovalSettings_Employee", "X_ApprovalSettingsCode", Params, connection, transaction);
-                        if (x_ApprovalSettingsCode == "")
+                        x_ClearanceCode = dLayer.GetAutoNumber("Pay_EmployeeClearanceSettings", "x_ClearanceCode", Params, connection, transaction);
+                        if (x_ClearanceCode == "")
                         {
                             transaction.Rollback();
-                            return Ok("Unable to generate  Approval Code");
+                            return Ok("Unable to generate Clearance Code");
                         }
-                        MasterTable.Rows[0]["X_ApprovalSettingsCode"] = x_ApprovalSettingsCode;
+                        MasterTable.Rows[0]["x_ClearanceCode"] = x_ClearanceCode;
                     }
+                    MasterTable.Columns.Remove("N_FnYearID");
 
-                    n_ApprovalSettingsID = dLayer.SaveData("Sec_ApprovalSettings_Employee", "n_ApprovalSettingsID", "", "", MasterTable, connection, transaction);
-                    if (n_ApprovalSettingsID <= 0)
+                    n_ClearanceSettingsID = dLayer.SaveData("Pay_EmployeeClearanceSettings", "n_ClearanceSettingsID", "", "", MasterTable, connection, transaction);
+                    if (n_ClearanceSettingsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save approval code");
+                        return Ok("Unable to save Clearance Code");
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_ApprovalSettingsID"] = n_ApprovalSettingsID;
+                        DetailTable.Rows[j]["n_ClearanceSettingsID"] = n_ClearanceSettingsID;
                     }
-                    int n_ApprovalSettingsDetailsID = dLayer.SaveData("Sec_ApprovalSettings_EmployeeDetails", "n_ApprovalSettingsDetailsID", DetailTable, connection, transaction);
-                    if (n_ApprovalSettingsDetailsID <= 0)
+                    int n_ClearanceSettingsDetailsID = dLayer.SaveData("Pay_EmployeeClearanceSettingsDetails", "n_ClearanceSettingsDetailsID", DetailTable, connection, transaction);
+                    if (n_ClearanceSettingsDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save approval code");
+                        return Ok("Unable to save Clearance Code");
                     }
 
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("n_ApprovalSettingsID", n_ApprovalSettingsID);
-                    Result.Add("x_ApprovalSettingsCode", x_ApprovalSettingsCode);
-                    Result.Add("n_ApprovalSettingsDetailsID", n_ApprovalSettingsDetailsID);
+                    Result.Add("n_ClearanceSettingsID", n_ClearanceSettingsID);
+                    Result.Add("x_ClearanceCode", x_ClearanceCode);
+                    Result.Add("n_ClearanceSettingsDetailsID", n_ClearanceSettingsDetailsID);
 
-                    return Ok(_api.Success(Result, "Approval Code Saved"));
+                    return Ok(_api.Success(Result, "Clearance Code Saved"));
                 }
             }
             catch (Exception ex)
@@ -170,8 +136,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("details")]
-        public ActionResult PayEmployeApprovalCode(string xApprovalSettingsCode)
+         [HttpGet("details")]
+        public ActionResult PayEmployeClearance(string xClearanceCode)
         {
 
 
@@ -190,16 +156,16 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                     Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
-                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and X_ApprovalSettingsCode=@xApprovalSettingsCode  ";
+                     Params.Add("@xClearanceCode", xClearanceCode);
+                    Mastersql = "select * from Pay_EmployeeClearanceSettings where N_CompanyId=@nCompanyID and X_ClearanceCode=@xClearanceCode ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int ApproovalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalSettingsID"].ToString());
-                    Params.Add("@nApproovalSettingsID", ApproovalSettingsID);
+                    int ClearanceSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ClearanceSettingsID"].ToString());
+                    Params.Add("@nClearanceSettingsID", ClearanceSettingsID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_Sec_ApprovalSettings_EmployeeDetails where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApproovalSettingsID ";
+                    DetailSql = "select * from vw_Pay_EmployeeClearanceSettingsDetails where N_CompanyId=@nCompanyID and N_ClearanceSettingsID=@nClearanceSettingsID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -217,7 +183,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nApprovalSettingsID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nClearanceSettingsID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -225,18 +191,18 @@ namespace SmartxAPI.Controllers
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nApprovalSettingsID", nApprovalSettingsID);
+                QueryParams.Add("@nClearanceSettingsID", nClearanceSettingsID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Sec_ApprovalSettings_Employee", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
+                    Results = dLayer.DeleteData("Pay_EmployeeClearanceSettings", "n_ClearanceSettingsID", nClearanceSettingsID, "", connection);
 
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Sec_ApprovalSettings_EmployeeDetails", "N_ApprovalSettingsID", nApprovalSettingsID, "", connection);
-                        return Ok(_api.Success("Approval Code deleted"));
+                        dLayer.DeleteData("Pay_EmployeeClearanceSettingsDetails", "n_ClearanceSettingsID", nClearanceSettingsID, "", connection);
+                        return Ok(_api.Success("Employee Clearance settings deleted"));
                     }
                     else
                     {
@@ -255,5 +221,6 @@ namespace SmartxAPI.Controllers
         }
 
 
+     
     }
 }
