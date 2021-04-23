@@ -629,8 +629,39 @@ namespace SmartxAPI.Controllers
                     // }
                     //saving data
                     InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
-                    if (InvoiceNo == "@Auto")
+                    if(N_SaveDraft==1)
                     {
+                        if(InvoiceNo == "@Auto")
+                        {
+                        Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", 1346);
+                        while (true)
+                        {
+                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        if (InvoiceNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to generate Quotation Number"));
+                        }
+                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                        }
+                    }
+                    //  InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
+                    
+                    else 
+                    {
+                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID +" and b_IsSaveDraft=1", connection, transaction);
+                        if(N_Resultval!=null)
+                            InvoiceNo = "@Auto";
+
+                        if (InvoiceNo == "@Auto" )
+                        {
+                            
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.N_FormID);
@@ -648,6 +679,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to generate Quotation Number"));
                         }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                        }
                     }
                     if (N_SalesID > 0)
                     {
