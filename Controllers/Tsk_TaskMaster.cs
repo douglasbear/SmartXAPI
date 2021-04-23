@@ -174,11 +174,11 @@ namespace SmartxAPI.Controllers
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     //int nUserID = myFunctions.GetUserID(User);
              
-                    if (nTaskId > 0)
-                    { 
-                        dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskId, "", connection,transaction);
-                        dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection,transaction);
-                    }
+                    // if (nTaskId > 0)
+                    // { 
+                    //     dLayer.DeleteData("Tsk_TaskStatus", "N_TaskID", nTaskId, "", connection,transaction);
+                    //     dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection,transaction);
+                    // }
                     DocNo = MasterRow["X_TaskCode"].ToString();
                     if (X_TaskCode == "@Auto")
                     {
@@ -201,10 +201,10 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_TaskCode"] = X_TaskCode;
 
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
-                    }
+                    // else
+                    // {
+                    //     dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
+                    // }
                      DetailTable.Columns.Remove("X_Assignee");
                      DetailTable.Columns.Remove("x_ClosedUser");
                      DetailTable.Columns.Remove("x_Submitter");
@@ -281,6 +281,49 @@ namespace SmartxAPI.Controllers
 
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET X_Status='"+xStatus+"' where N_TaskID="+nTaskID+" and N_CompanyID="+nCompanyID.ToString(),connection,transaction);
 
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        } 
+
+        [HttpPost("attachmentSave")]
+        public ActionResult AttachmentSave([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;              
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataTable Attachment = ds.Tables["attachments"];
+                    SortedList Params = new SortedList();
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    string XTaskCode = MasterTable.Rows[0]["x_TaskCode"].ToString();
+                    string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+
+                    if(Attachment.Rows.Count>0)
+                    {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, XTaskCode, nTaskID, xTaskSummery, XTaskCode, nTaskID, "Task Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
                     transaction.Commit();
                     return Ok(_api.Success("Saved")) ;
                 }
