@@ -152,6 +152,37 @@ namespace SmartxAPI.Controllers
         //         return Ok(_api.Error(e));
         //     }
         // }
+        [HttpGet("dayclose")]
+        public ActionResult GetDayCloseStatus(DateTime dDate)
+        {
+          
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@dDate", dDate);
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string sqlCommandText = "select n_closeid from Acc_Dayclosing where d_closeddate=@dDate and N_CompanyID= @nCompanyID";
+object obj;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    obj = dLayer.ExecuteScalar(sqlCommandText, Params, connection);
+                }
+                if(obj==null)
+                obj=0;
+                SortedList Output=new SortedList();
+                Output.Add("dayclose",myFunctions.getIntVAL(obj.ToString()));
+                
+                 return Ok(_api.Success(Output));
+              
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
         [HttpGet("listcategory")]
         public ActionResult GetDepartmentList()
         {
@@ -160,7 +191,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
 
-            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID";
+            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID<>-1";
 
             try
             {

@@ -26,6 +26,7 @@ namespace SmartxAPI.Controllers
         {
             dLayer = dl;
             _api = api;
+              dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 190;
@@ -187,6 +188,68 @@ namespace SmartxAPI.Controllers
             }
             return false;
         }
+
+
+          [HttpGet("Dashboardlist")]
+        public ActionResult SalaryProcessingDashboardList(int nFnYearId,int nPage,int nSizeperpage,string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
+            string Searchkey = "";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearId);
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (N_TransID like '%" + xSearchkey + "%'or Batch like '%" + xSearchkey + "%' or  N_PayRunID like '%" + xSearchkey + "%' )";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_TransID desc";
+            else
+             xSortBy = " order by " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 ";
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 )";
+            
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                     OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
+        }
+
+
 
         //Save....
         [HttpPost("save")]

@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("empList")]
-        public ActionResult GetJobTitle(int nBatchID, int nFnYearID, string payRunID, string xDepartment, string xPosition, bool bAllBranchData, int nBranchID)
+        public ActionResult GetJobTitle(string xBatch, int nFnYearID, string payRunID, string xDepartment, string xPosition, bool bAllBranchData, int nBranchID)
         {
             DataTable mst = new DataTable();
             DataTable dt = new DataTable();
@@ -51,8 +51,6 @@ namespace SmartxAPI.Controllers
 
             SortedList ProParams = new SortedList();
             ProParams.Add("N_CompanyID", nCompanyID);
-            ProParams.Add("N_TransID", nBatchID);
-            ProParams.Add("N_PAyrunID", payRunID);
             ProParams.Add("X_Cond", X_Cond);
             ProParams.Add("N_FnYearID", nFnYearID);
             if (bAllBranchData == false)
@@ -65,6 +63,29 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    object nTransID = 0;
+                    object nBatchID = 0;
+
+                    SortedList batchParams = new SortedList();
+                    if (xBatch != null)
+                    {
+                        batchParams.Add("@nCompanyID", nCompanyID);
+                        batchParams.Add("@nFnYearId", nFnYearID);
+                        batchParams.Add("@xBatch", xBatch);
+                        nTransID = dLayer.ExecuteScalar("select N_TransID from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
+                        payRunID = dLayer.ExecuteScalar("select N_PayRunID from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection).ToString();
+
+                        if (nTransID != null)
+                            ProParams.Add("N_TransID", nTransID);
+                    }
+                    else
+                    {
+                        ProParams.Add("N_TransID", 0);
+                    }
+                    ProParams.Add("N_PAyrunID", payRunID);
+
+
                     mst = dLayer.ExecuteDataTablePro("SP_Pay_AdditionDeductionEmployeeList", ProParams, connection);
 
                     SortedList ProParam2 = new SortedList();
@@ -175,10 +196,10 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    Params.Add("@nCompanyID",nCompanyID);
-                    Params.Add("@nPayRunID",nPayRunID);
-                    int FormID=0;
-                    int N_IsAuto=0;
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nPayRunID", nPayRunID);
+                    int FormID = 0;
+                    int N_IsAuto = 0;
                     int N_TransDetailsID = 0;
                     if (x_Batch.Trim() == "@Auto")
                     {
@@ -186,9 +207,9 @@ namespace SmartxAPI.Controllers
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID",Params,connection,transaction).ToString());
-                            x_Batch = nPayRunID +"" + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params,connection,transaction).ToString()) == 0)
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
+                            x_Batch = nPayRunID + "" + NewNo.ToString("0#");
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
                             }
@@ -198,7 +219,7 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to generate batch"));
-                            
+
                         }
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
                     }
@@ -212,25 +233,25 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                    for (int i = DetailsTable.Rows.Count - 1; i >= 0; i--) 
-                    {
-                        DataRow mstVar = DetailsTable.Rows[i];
+                        for (int i = DetailsTable.Rows.Count - 1; i >= 0; i--)
+                        {
+                            DataRow mstVar = DetailsTable.Rows[i];
                             // if (var["N_SaveChanges"].ToString().Trim() == "" && (var["n_TransDetailsID"].ToString()).Trim() != "") 
                             //     continue;
 
-                            
+
                             double Amount = myFunctions.getVAL(mstVar["n_PayRate"].ToString());
 
-                            if (Amount == 0 )
+                            if (Amount == 0)
                             {
                                 if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0)
-                                    {dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()), "N_CompanyID = " +nCompanyID ,connection,transaction);}
+                                { dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()), "N_CompanyID = " + nCompanyID, connection, transaction); }
                                 DetailsTable.Rows[i].Delete();
                                 continue;
                             }
                             else if (myFunctions.getIntVAL(mstVar["n_TransDetailsID"].ToString()) != 0 && mstVar["n_FormID"].ToString().Trim() != "")
                             {
-                                N_TransDetailsID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_TransDetailsID from Pay_MonthlyAddOrDedDetails Where N_PayID=" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and n_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_FormID=" + mstVar["n_FormID"].ToString() + " and N_CompanyID= " +nCompanyID,connection,transaction).ToString());
+                                N_TransDetailsID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_TransDetailsID from Pay_MonthlyAddOrDedDetails Where N_PayID=" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and n_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_FormID=" + mstVar["n_FormID"].ToString() + " and N_CompanyID= " + nCompanyID, connection, transaction).ToString());
                                 FormID = myFunctions.getIntVAL(mstVar["N_FormID"].ToString());
                             }
                             else if (mstVar["n_FormID"].ToString().Trim() == "" || myFunctions.getIntVAL(mstVar["n_FormID"].ToString()) == 0)
@@ -241,28 +262,28 @@ namespace SmartxAPI.Controllers
                                 Amount = Amount * -1;
 
                             N_IsAuto = 0;
-                            object N_ResultObj = dLayer.ExecuteScalar("Select B_TimeSheetEntry from Pay_MonthlyAddOrDedDetails Where N_PayID =" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and N_TransDetailsID=" + myFunctions.getVAL(mstVar["n_TransDetailsID"].ToString()) + " and N_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_CompanyID= " + nCompanyID + " and N_FormID=216",connection,transaction);
+                            object N_ResultObj = dLayer.ExecuteScalar("Select B_TimeSheetEntry from Pay_MonthlyAddOrDedDetails Where N_PayID =" + myFunctions.getVAL(mstVar["n_PayID"].ToString()) + " and N_TransID=" + N_OldTransID.ToString() + " and N_TransDetailsID=" + myFunctions.getVAL(mstVar["n_TransDetailsID"].ToString()) + " and N_EmpID=" + mstVar["n_EmpID"].ToString() + " and N_CompanyID= " + nCompanyID + " and N_FormID=216", connection, transaction);
                             if (N_ResultObj != null)
                             {
                                 N_IsAuto = 1;
                             }
-                        DetailsTable.Rows[i]["n_TransID"] = N_TransID;
-                        DetailsTable.Rows[i]["n_PayRate"] = Amount;
-                        DetailsTable.Rows[i]["b_TimeSheetEntry"] = N_IsAuto;
-                        DetailsTable.Rows[i]["n_FormID"] = FormID;
-                    }
-                    DetailsTable.AcceptChanges();
-                    N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID",DetailsTable,connection,transaction).ToString());
-                    if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }
-                    else
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Success("Saved"));
-                    }
+                            DetailsTable.Rows[i]["n_TransID"] = N_TransID;
+                            DetailsTable.Rows[i]["n_PayRate"] = Amount;
+                            DetailsTable.Rows[i]["b_TimeSheetEntry"] = N_IsAuto;
+                            DetailsTable.Rows[i]["n_FormID"] = FormID;
+                        }
+                        DetailsTable.AcceptChanges();
+                        N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", DetailsTable, connection, transaction).ToString());
+                        if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save"));
+                        }
+                        else
+                        {
+                            transaction.Commit();
+                            return Ok(_api.Success("Saved"));
+                        }
 
                     }
                 }
@@ -273,7 +294,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
- [HttpGet("dashboardList")]
+        [HttpGet("dashboardList")]
         public ActionResult PayyAddDedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -295,11 +316,11 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAddDed_Disp where N_CompanyID=@p1 ";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId ";
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from vw_PayAddDed_Disp  where N_CompanyID=@p1 )";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from vw_PayAddDed_Disp  where N_CompanyID=@nCompanyId )";
 
-            Params.Add("@p1", nCompanyId);
+            Params.Add("@nCompanyId", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);
             SortedList OutPut = new SortedList();
 
@@ -309,7 +330,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAddDed_Disp where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -329,7 +350,7 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(e));
             }
-        } 
+        }
 
 
 

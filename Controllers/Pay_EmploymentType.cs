@@ -49,13 +49,16 @@ namespace SmartxAPI.Controllers
                 int nEmploymentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmploymentID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 string xEmploymentCode = MasterTable.Rows[0]["x_EmploymentCode"].ToString();
-                string xDescription=MasterTable.Rows[0]["x_Description"].ToString();
-                // string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
+                // string bCreateEmpSeries = MasterTable.Rows[0]["b_CreateEmpSeries"].ToString();
                  if (xEmploymentCode == "@Auto")
                     {
-                        // if (B_CreateEmpSeries==1)
+                        // if (bCreateEmpSeries=="True")
                         // {
-                        //     string sqlCommandText = "Sp_CreateInvoiceCounter(@nCompanyID,@nFnYearID,@)";
+                        //     DataTable dt = new DataTable();
+                        //     string xDescription=MasterTable.Rows[0]["x_Description"].ToString();
+                        //     string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
+                        //     string sqlCommandText = "Sp_CreateInvoiceCounter(@nCompanyID,1272,@nFnYearID,1,@xPrefix,@xDescription)";
+                        //     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
                         // }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);

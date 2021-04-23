@@ -37,6 +37,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            SortedList OutPut = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from  vw_Pay_PayMaster where N_CompanyID=@p1 and n_FnYearID=@p2 and X_PayCode=@p3";
             Params.Add("@p1", nCompanyId);
@@ -48,16 +49,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
                 }
-                else
-                {
-                    return Ok(api.Success(dt));
+                int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
+                string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
+
+                    DataTable SummryTable = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, Params, connection);
+                    OutPut.Add("master",dt);
+                    OutPut.Add("summaryList",api.Format(SummryTable));
                 }
+                return Ok(api.Success(OutPut));
+
             }
             catch (Exception e)
             {
@@ -73,8 +75,9 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
+                DataTable MasterTable = ds.Tables["master"];
+                DataTable SummaryTable = ds.Tables["paySummaryList"];
+
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPayID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayID"].ToString());
@@ -87,6 +90,7 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string PayCode = "";
                     var values = MasterTable.Rows[0]["X_PayCode"].ToString();
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -96,9 +100,11 @@ namespace SmartxAPI.Controllers
                         if (PayCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Pay Code")); }
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
+                    dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
 
+                    string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID="+nFnYearId;
 
-                    nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", MasterTable, connection, transaction);
+                    nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", DupCriteria, "N_companyID=" + nCompanyID + " and N_FnYearID="+nFnYearId , MasterTable, connection, transaction);
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
@@ -106,6 +112,22 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (SummaryTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow Rows in SummaryTable.Rows)
+                            {
+                                Rows["n_PayID"] = nPayID;
+                            }
+                            SummaryTable.AcceptChanges();
+                            int SummaryID = dLayer.SaveData("Pay_SummaryPercentage", "N_PerCalcID", SummaryTable, connection, transaction);
+
+                            if (SummaryID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error("Unable to save"));
+                            }
+
+                        }
                         transaction.Commit();
                         return Ok(api.Success("Paycode Created"));
                     }
