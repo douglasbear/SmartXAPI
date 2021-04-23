@@ -303,6 +303,10 @@ namespace SmartxAPI.Controllers
                      dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set n_RefundAmount =0  Where N_CompanyID = @nCompanyID and N_PayrunID = 0", QueryParams, connection, transaction);
                      dLayer.ExecuteNonQuery("Update Pay_Employee Set N_Status = 0,D_StatusDate = null Where N_CompanyID =@nCompanyID And N_EmpID =@nEmpID", QueryParams, connection, transaction);
                      Results = dLayer.DeleteData("pay_EndOfServiceSDetails", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
+                     Results = dLayer.DeleteData("pay_EndOFService", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
+
+
+
                      transaction.Commit();
                 }
                 if (Results > 0)
@@ -373,7 +377,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nCountryID",nCountryID);
-            string sqlCommandText="select N_CompanyID,N_FnYearID,N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,N_EndSettiingsID,ServiceEndStatus from vw_ServiceEndSettings where N_CompanyID=@nCompanyID and N_CountryID=@nCountryID";
+            string sqlCommandText="select N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,ServiceEndStatus from vw_ServiceEndSettings where N_CompanyID=@nCompanyID and N_CountryID=@nCountryID group by N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,ServiceEndStatus";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -389,6 +393,51 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        [HttpGet("paymentDetails")]
+        public ActionResult GetPaymentDetails(int nEmpID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nEmpID", nEmpID);
+            string sqlCommandText="select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+            SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    string sqlCommandCount="select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                      
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(OutPut));
                 }
             }
             catch (Exception e)

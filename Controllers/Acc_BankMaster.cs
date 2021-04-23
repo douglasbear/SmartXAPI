@@ -81,7 +81,15 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nBankID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BankID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";    
                 string xBankCode = MasterTable.Rows[0]["x_BankCode"].ToString();
+
+                 Byte[] logoBitmap = new Byte[logo.Length];
+                 logoBitmap = Convert.FromBase64String(logo);
+                 if (myFunctions.ContainColumn("i_Logo", MasterTable))
+                        MasterTable.Columns.Remove("i_Logo");
+                 MasterTable.AcceptChanges();
+
                  if (xBankCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -97,8 +105,19 @@ namespace SmartxAPI.Controllers
                     }
                     
                     nBankID=dLayer.SaveData("Acc_BankMaster","N_BankID",MasterTable,connection,transaction);  
+                      if (nBankID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("Unable to save"));
+                    }
+                    else
+                    {
+
+                    if (logo.Length > 0)
+                    dLayer.SaveImage("Acc_BankMaster", "I_Logo", logoBitmap, "N_BankID", nBankID, connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Bank Saved")) ;
+                }
                 }
             }
             catch (Exception ex)
@@ -113,7 +132,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Acc_BankMaster where N_CompanyID=@nCompanyID and N_BankID=@nBankID";
+            string sqlCommandText="select * from vw_AccBank_Disp where N_CompanyID=@nCompanyID and N_BankID=@nBankID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nBankID",nBankID);
             try{

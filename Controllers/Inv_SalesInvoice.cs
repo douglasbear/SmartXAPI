@@ -172,6 +172,47 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        [HttpGet("listTerms")]
+        public ActionResult GetTermsList(int nCompanyId, int nFnYearId, int nSalesOrderID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+            string sqlCommandText = "";
+            SortedList QueryProject = new SortedList();
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    sqlCommandText = "select * from vw_Terms where N_CompanyID=@p1 and N_ReferanceID=@p2";
+
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nSalesOrderID);
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    
+                    OutPut.Add("Details", _api.Format(dt));
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(OutPut));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
         [HttpGet("details")]
         public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId)
         {
@@ -588,8 +629,39 @@ namespace SmartxAPI.Controllers
                     // }
                     //saving data
                     InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
-                    if (InvoiceNo == "@Auto")
+                    if(N_SaveDraft==1)
                     {
+                        if(InvoiceNo == "@Auto")
+                        {
+                        Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", 1346);
+                        while (true)
+                        {
+                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        if (InvoiceNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to generate Quotation Number"));
+                        }
+                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                        }
+                    }
+                    //  InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
+                    
+                    else 
+                    {
+                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID +" and b_IsSaveDraft=1", connection, transaction);
+                        if(N_Resultval!=null)
+                            InvoiceNo = "@Auto";
+
+                        if (InvoiceNo == "@Auto" )
+                        {
+                            
                         Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                         Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
                         Params.Add("N_FormID", this.N_FormID);
@@ -607,6 +679,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to generate Quotation Number"));
                         }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                        }
                     }
                     if (N_SalesID > 0)
                     {
@@ -755,11 +828,14 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+                            if(N_SaveDraft==0)
+                            {
                             int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
                             if (N_SalesAmountID <= 0)
                             {
                                 transaction.Rollback();
                                 return Ok(_api.Error("Unable to save Sales Invoice!"));
+                            }
                             }
                         }
                         bool B_salesOrder = myFunctions.CheckPermission(N_CompanyID, 81, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);

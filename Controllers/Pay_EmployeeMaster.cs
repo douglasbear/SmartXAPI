@@ -34,10 +34,49 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID)
+        public ActionResult GetEmployeeList(int nFnYearID, bool bAllBranchData, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@bAllBranchData", bAllBranchData);
+            Params.Add("@nBranchID", nBranchID);
+            string sqlCommandText = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    if (bAllBranchData == true)
+                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+                    else
+                        sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("delegateList")]
+        public ActionResult GetEmployeeList(int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@bAllBranchData", bAllBranchData);
@@ -51,7 +90,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     int filterByProject = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isNull(N_Value,0) as val from gen_settings where x_Group='HR' and x_Description='FilterDelegateEmployeeByProject' and n_CompanyID=" + nCompanyID, connection).ToString());
-                    if (nEmpID > 0 && filterByProject > 0)
+                    if (filterByProject > 0)
                         projectFilter = " and N_ProjectID =(select max(isNull(N_ProjectID,0)) from vw_PayEmployee_Disp where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID ) and n_EmpID<>@nEmpID ";
                     if (bAllBranchData == true)
                         sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + "  group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName";
@@ -388,9 +427,11 @@ namespace SmartxAPI.Controllers
                             pay_EmpAccrulsRes = dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", dtpay_EmpAccruls, connection, transaction);
 
                         int Acc_OtherInformationRes = 0;
-                        if (dtacc_OtherInformation.Rows.Count > 0)
-                            Acc_OtherInformationRes = dLayer.SaveData("Acc_OtherInformation", "N_OtherDtlsID", dtacc_OtherInformation, connection, transaction);
-
+                        // if(myFunctions.getIntVAL(dtacc_OtherInformation.Rows[0]["n_OtherCode"].ToString())>0)
+                        // {
+                            if (dtacc_OtherInformation.Rows.Count > 0)
+                                Acc_OtherInformationRes = dLayer.SaveData("Acc_OtherInformation", "N_OtherDtlsID", dtacc_OtherInformation, connection, transaction);
+                      //  }
                         //ATTACHMENT SAVING
                         //REMINDER SAVING
 
@@ -423,8 +464,8 @@ namespace SmartxAPI.Controllers
 
                         if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LedgerID"].ToString()) == 0)
                             dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeAccount", ParamsAccount, connection, transaction).ToString();
-                        if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LoanLedgerID"].ToString()) == 0)
-                            dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeLoanAccount", ParamsAccount, connection, transaction).ToString();
+                        // if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LoanLedgerID"].ToString()) == 0)
+                        //     dLayer.ExecuteScalarPro("SP_Pay_CreateEmployeeLoanAccount", ParamsAccount, connection, transaction).ToString();
 
                         bool B_EnableSalesExec = myFunctions.CheckPermission(nCompanyID, 290, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection,transaction);
                         if (B_EnableSalesExec)

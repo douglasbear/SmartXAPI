@@ -212,9 +212,9 @@ namespace SmartxAPI.Controllers
              xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 ";
+                sqlCommandText = "select top("+ nSizeperpage +")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 )";
+                sqlCommandText = "select top("+ nSizeperpage +") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 )";
             
 
             SortedList OutPut = new SortedList();

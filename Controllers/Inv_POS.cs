@@ -152,6 +152,37 @@ namespace SmartxAPI.Controllers
         //         return Ok(_api.Error(e));
         //     }
         // }
+        [HttpGet("dayclose")]
+        public ActionResult GetDayCloseStatus(DateTime dDate)
+        {
+          
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@dDate", dDate);
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string sqlCommandText = "select n_closeid from Acc_Dayclosing where d_closeddate=@dDate and N_CompanyID= @nCompanyID";
+object obj;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    obj = dLayer.ExecuteScalar(sqlCommandText, Params, connection);
+                }
+                if(obj==null)
+                obj=0;
+                SortedList Output=new SortedList();
+                Output.Add("dayclose",myFunctions.getIntVAL(obj.ToString()));
+                
+                 return Ok(_api.Success(Output));
+              
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
         [HttpGet("listcategory")]
         public ActionResult GetDepartmentList()
         {
@@ -160,7 +191,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
 
-            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID";
+            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID<>-1";
 
             try
             {
@@ -201,7 +232,7 @@ namespace SmartxAPI.Controllers
 
 
             if(xSearchkey!=null)
-                Searchkey = "and (X_ItemName like '%" + xSearchkey + "%')";
+                Searchkey = " and (vw_InvItem_Search.Description like '%" + xSearchkey + "%')";
 
             if(nCategoryID>0)
                 categorySql = " and N_CategoryID=@p2 ";
@@ -218,7 +249,7 @@ namespace SmartxAPI.Controllers
                             " vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, "+
                             " vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11,'' as i_Image "+
                             " FROM vw_InvItem_Search LEFT OUTER JOIN "+
-                            " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + categorySql;
+                            " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + categorySql + Searchkey;
 
 
             Params.Add("@p1", nCompanyId);

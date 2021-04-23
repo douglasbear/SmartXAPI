@@ -210,13 +210,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_TaskCode"] = X_TaskCode;
 
                     }
-                    else
-                    {
-                        dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
-                    }
-                    DetailTable.Columns.Remove("X_Assignee");
-                    DetailTable.Columns.Remove("x_ClosedUser");
-                    DetailTable.Columns.Remove("x_Submitter");
+                    // else
+                    // {
+                    //     dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
+                    // }
+                     DetailTable.Columns.Remove("X_Assignee");
+                     DetailTable.Columns.Remove("x_ClosedUser");
+                     DetailTable.Columns.Remove("x_Submitter");
 
 
                     nTaskId = dLayer.SaveData("Tsk_TaskMaster", "N_TaskID", MasterTable, connection, transaction);
@@ -300,7 +300,50 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpDelete("delete")]
+        [HttpPost("attachmentSave")]
+        public ActionResult AttachmentSave([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;              
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataTable Attachment = ds.Tables["attachments"];
+                    SortedList Params = new SortedList();
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    string XTaskCode = MasterTable.Rows[0]["x_TaskCode"].ToString();
+                    string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+
+                    if(Attachment.Rows.Count>0)
+                    {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, XTaskCode, nTaskID, xTaskSummery, XTaskCode, nTaskID, "Task Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        } 
+
+         [HttpDelete("delete")]
         public ActionResult DeleteData(int nTaskID)
         {
             int Results = 0;
