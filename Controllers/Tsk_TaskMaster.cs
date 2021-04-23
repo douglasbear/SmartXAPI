@@ -309,30 +309,21 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
-                    string xStatus = DetailTable.Rows[0]["X_Status"].ToString();
-             
-                     for (int i = 0; i < DetailTable.Rows.Count; i++)
-                     {
-                        DetailTable.Rows[0]["N_TaskID"] = nTaskID;
-                        DetailTable.Rows[0]["N_TaskStatusID"] = 0;
-                     }
-                    int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
-                    if (nTaskStatusID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
-                    } 
+                    string XTaskCode = MasterTable.Rows[0]["x_TaskCode"].ToString();
+                    string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
 
-                    try
+                    if(Attachment.Rows.Count>0)
                     {
-                        myAttachments.SaveAttachment(dLayer, Attachment, X_TaskCode, nTaskStatusID, "", "", 0, "Task Document", User, connection, transaction);
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, XTaskCode, nTaskID, xTaskSummery, XTaskCode, nTaskID, "Task Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(ex));
-                    }
-
                     transaction.Commit();
                     return Ok(_api.Success("Saved")) ;
                 }
