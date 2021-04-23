@@ -53,7 +53,6 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
                 }
                 int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
                 string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
