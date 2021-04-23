@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
 
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
                     dt.Tables.Add(MasterTable);
