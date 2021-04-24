@@ -140,13 +140,13 @@ namespace SmartxAPI.Controllers
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
 
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, 0, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
 
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     dt.Tables.Add(HistoryTable);
-                    // dt.Tables.Add(Attachments);
+                    dt.Tables.Add(Attachments);
 
                     return Ok(_api.Success(dt));
 
@@ -181,6 +181,8 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
+                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+
                     //int nUserID = myFunctions.GetUserID(User);
 
                     if (nTaskId > 0)
@@ -237,16 +239,18 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable To Save"));
                     }
 
-                    try
+                   if(Attachment.Rows.Count>0)
                     {
-                        myAttachments.SaveAttachment(dLayer, Attachment, X_TaskCode, nTaskStatusID, "", "", 0, "Task Document", User, connection, transaction);
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment, X_TaskCode, nTaskId, xTaskSummery, X_TaskCode, nTaskId, "Task Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
                     }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(ex));
-                    }
-
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }

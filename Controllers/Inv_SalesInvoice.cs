@@ -188,7 +188,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    sqlCommandText = "select * from vw_Terms where N_CompanyID=@p1 and N_ReferanceID=@p2";
+                    sqlCommandText = "select * from vw_Terms where N_CompanyID=@p1 and N_ReferanceID=@p2 and N_TermsID not in(select N_TermsID from inv_sales where n_salesorderid=@p2)";
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nSalesOrderID);
