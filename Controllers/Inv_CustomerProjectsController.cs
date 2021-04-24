@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
                     //     MasterTable.Rows[0]["X_ProjectCode"] = ProjectCode;
                     // }
                       MasterTable.Columns.Remove("n_FnYearId");
-                      MasterTable.Columns.Remove("n_LocationID");
+                     // MasterTable.Columns.Remove("n_LocationID");
 
 
                     nProjectID = dLayer.SaveData("inv_CustomerProjects", "N_ProjectID", MasterTable, connection, transaction);

@@ -195,9 +195,56 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetDetails( string xReceiptNo, int nBranchID,bool bAllBranchData)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    Params.Add("@xReceiptNo", xReceiptNo);
+                    Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    string Mastersql = "";
+                    string DetailSql = "";
+                    string xCondition = "";
+
+                    if (bAllBranchData)
+                        xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID";
+                    else
+                        xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
+
+                    Mastersql = "select * from vw_EmppaymentMaster where "+xCondition;
+            
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int nReceiptID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceiptID"].ToString());
+                    Params.Add("@nReceiptID", nReceiptID);
+
+                    DetailSql = "Select N_PaymentID,X_TypeName from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(DetailTable);
+
+                     return Ok(_api.Success(dt));
+                }
+           }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
         
-           [HttpGet("dashboardList")]
-        public ActionResult EmpMaintenanceList(int nCompanyId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("dashboardList")]
+        public ActionResult SalaryPayList(int nCompanyId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             //int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);

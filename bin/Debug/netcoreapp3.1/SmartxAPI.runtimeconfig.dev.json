@@ -3,16 +3,16 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
-=======
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
->>>>>>> 80ee78b61df160a70cc29c28f0e850e87081b97b
 =======
-      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\USER\\.nuget\\packages"
->>>>>>> 899bca46ea997a5c82b8515caef3c42bcd21a046
+      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\LENOVO\\.nuget\\packages"
+>>>>>>> 0baa5d0b801e049563a8d8a497b38bd659c159b1
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> 6d7d5723ac6eec1e70779a15731b3acac4b8c2d0
     ]
   }
 }
