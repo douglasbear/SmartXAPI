@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok("Unable to save");
-                    }
+                    }lan
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -168,7 +168,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("x_ServiceEndCode", x_ServiceEndCode);
                     Result.Add("n_EndSettiingsID", n_EndSettiingsID);
 
-                    return Ok(_api.Success(Result, "Approval Code Saved"));
+                    return Ok(_api.Success(Result, "Employee End Of Service Settings Saved"));
                 }
             }
             catch (Exception ex)
