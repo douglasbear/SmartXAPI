@@ -211,8 +211,10 @@ namespace SmartxAPI.Controllers
 
                     DataTable MasterTable = new DataTable();
                     DataTable DetailTable = new DataTable();
+                    DataTable Details = new DataTable();
                     string Mastersql = "";
-                    string DetailSql = "";
+                    //string DetailSql = "";
+                    string DetailGetSql = "";
                     string xCondition = "";
 
                     if (bAllBranchData)
@@ -225,11 +227,52 @@ namespace SmartxAPI.Controllers
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int nReceiptID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceiptID"].ToString());
+                   // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nReceiptID", nReceiptID);
 
-                    DetailSql = "Select N_PaymentID,X_TypeName from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
+                    DetailGetSql = "Select N_PaymentID,X_TypeName from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
+                    Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
+                    //Details = _api.Format(Details, "Details");
+                    string xPaymentID="";
+                    for (int j = 0; j < Details.Rows.Count; j++)
+                    {
+                        if(xPaymentID=="")
+                            xPaymentID=Details.Rows[0]["N_PaymentID"].ToString();
+                        else 
+                            xPaymentID=xPaymentID+","+Details.Rows[0]["N_PaymentID"].ToString();
+
+                        string X_TypeName = Details.Rows[0]["X_TypeName"].ToString();
+                    }
+
+                    //DetailTable=GetTransDetails(0,nReceiptID, 0, 0,xPaymentID, true, null);
+
+                    string[] temp = new string[10];
+                    if (xPaymentID.ToString() != null || xPaymentID.ToString() != "")
+                    {
+                        temp = xPaymentID.ToString().Split(',');
+                    }
+
+                    // string X_Condition="";
+                    // string X_DueCondition="";
+                    string sql1="";
+
+                    for (int j = 0; j < temp.Length; j++)
+                    {
+                        sql1 = " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
+
+                        // X_Condition = "dbo.vw_PayAmountDetailsForPay.N_TransID =@nBatchID and dbo.vw_PayAmountDetailsForPay.N_EmpID =@nEmpID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =@nCompanyID and vw_PayAmountDetailsForPay.N_PaymentId=" + temp[j];
+
+                        // X_DueCondition = " And dbo.vw_PayAmountDetailsForPay.D_TransDate <= '" + dTransdate + "' ";
+
+                        // sql1 = " SELECT     dbo.vw_PayAmountDetailsForPay.N_TransID,dbo.vw_PayAmountDetailsForPay.N_PayrunID,dbo.vw_PayAmountDetailsForPay.D_TransDate,dbo.vw_PayAmountDetailsForPay.X_PayrunText,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate) AS N_PayRate,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_InvoiceDueAmt,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_DueAmount,0 As N_Amount,0 As N_Discount,vw_PayAmountDetailsForPay.N_Entryfrom,vw_PayAmountDetailsForPay.X_Description,vw_PayAmountDetailsForPay.N_PayTypeID,vw_PayAmountDetailsForPay.N_PaymentId,vw_PayAmountDetailsForPay.X_EmpName,vw_PayAmountDetailsForPay.N_EmpID,vw_PayAmountDetailsForPay.X_Batch,vw_PayAmountDetailsForPay.X_EmpCode" +
+                        //           " FROM         dbo.vw_PayAmountDetailsForPay " +
+                        //           " LEFT OUTER JOIN vw_PayEmployeePaidTotal On dbo.vw_PayAmountDetailsForPay.N_TransID  =dbo.vw_PayEmployeePaidTotal.N_SalesID and dbo.vw_PayAmountDetailsForPay.N_EmpID =dbo.vw_PayEmployeePaidTotal.N_AdmissionID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =dbo.vw_PayEmployeePaidTotal.N_CompanyID and dbo.vw_PayEmployeePaidTotal.N_Entryfrom = dbo.vw_PayAmountDetailsForPay.N_EntryFrom and dbo.vw_PayEmployeePaidTotal.N_PayTypeID = dbo.vw_PayAmountDetailsForPay.N_PayTypeID" +
+                        //           " Where ISNULL(dbo.vw_PayAmountDetailsForPay.B_IsSaveDraft,0)=0 and " + X_Condition + " " + X_DueCondition + " " +
+                        //           " group by     dbo.vw_PayAmountDetailsForPay.N_TransID,dbo.vw_PayAmountDetailsForPay.N_PayrunID,dbo.vw_PayAmountDetailsForPay.D_TransDate,dbo.vw_PayAmountDetailsForPay.X_PayrunText,dbo.vw_PayAmountDetailsForPay.N_PayRate,vw_PayAmountDetailsForPay.N_Entryfrom,vw_PayAmountDetailsForPay.X_Description,vw_PayAmountDetailsForPay.N_PayTypeID,vw_PayAmountDetailsForPay.N_PaymentId,vw_PayAmountDetailsForPay.X_EmpName,vw_PayAmountDetailsForPay.N_EmpID,vw_PayAmountDetailsForPay.X_Batch,vw_PayAmountDetailsForPay.X_EmpCode" +
+                        //           " having  (ABS(dbo.vw_PayAmountDetailsForPay.N_Payrate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) > 0) Order By dbo.vw_PayAmountDetailsForPay.D_TransDate";
+
+                    }
+                    DetailTable = dLayer.ExecuteDataTable(sql1, Params, connection);
 
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
