@@ -110,37 +110,38 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow mstVar in mst.Rows)
                     {
                         DataTable dtNode = new DataTable();
-                        //     foreach (DataRow dtVar in dt.Rows){
-                        //         if ( dtVar["N_EmpID"].ToString() != mstVar["N_EmpID"].ToString()) continue;
+                            foreach (DataRow dtVar in dt.Rows){
+                                if ( dtVar["N_EmpID"].ToString() != mstVar["N_EmpID"].ToString()) continue;
 
-                        //         if (myFunctions.getIntVAL(dtVar["N_PayMethod"].ToString()) == 4)
-                        //         {
-                        //             object objRate = null;
-                        //             SortedList param = new SortedList();
-                        //             param.Add("@nCompanyID", nCompanyID);
-                        //             param.Add("@nEmpID", dtVar["N_EmpID"].ToString());
-                        //             param.Add("@nFnYearId", nFnYearID);
-                        //             param.Add("@nPayID", dtVar["N_PayID"].ToString());
-                        //             objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID",param,connection);
-                        //             if (objRate != null)
-                        //             {
-                        //                 dtVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
-                        //             }
-                        //         }
-                        //         SortedList param2 = new SortedList();
-                        //             param2.Add("@nCompanyID", nCompanyID);
-                        //             param2.Add("@nPayTypeID", dtVar["N_PayTypeID"].ToString());
-                        //         object N_Result = dLayer.ExecuteScalar("Select N_Type from Pay_PayType Where N_PayTypeID =@nPayTypeID and N_CompanyID=@nCompanyID",param2,connection);
-                        //         if (N_Result != null)
-                        //         {
-                        //             if (myFunctions.getIntVAL(N_Result.ToString()) == 1){
-                        //             dtVar["N_PayRate"] = -1 * myFunctions.getVAL( dtVar["N_PayRate"].ToString());
-                        //             dtVar["N_Value"] = -1 * myFunctions.getVAL( dtVar["N_PayRate"].ToString());
-                        //             }
-                        //         }
-                        //         dtNode.Rows.Add(dtVar.ItemArray);
-                        //          dtNode = dtVar.CopyToDataTable();
-                        // }
+                                if (myFunctions.getIntVAL(dtVar["N_PayMethod"].ToString()) == 4)
+                                {
+                                    object objRate = null;
+                                    SortedList param = new SortedList();
+                                    param.Add("@nCompanyID", nCompanyID);
+                                    param.Add("@nEmpID", dtVar["N_EmpID"].ToString());
+                                    param.Add("@nFnYearId", nFnYearID);
+                                    param.Add("@nPayID", dtVar["N_PayID"].ToString());
+                                    objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)",param,connection);
+                                    if (objRate != null)
+                                    {
+                                        dtVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
+                                    }
+                                }
+                                SortedList param2 = new SortedList();
+                                    param2.Add("@nCompanyID", nCompanyID);
+                                    param2.Add("@nPayTypeID", dtVar["N_PayTypeID"].ToString());
+                                object N_Result = dLayer.ExecuteScalar("Select N_Type from Pay_PayType Where N_PayTypeID =@nPayTypeID and N_CompanyID=@nCompanyID",param2,connection);
+                                if (N_Result != null)
+                                {
+                                    if (myFunctions.getIntVAL(N_Result.ToString()) == 1){
+                                    dtVar["N_PayRate"] = -1 * myFunctions.getVAL( dtVar["N_PayRate"].ToString());
+                                    dtVar["N_Value"] = -1 * myFunctions.getVAL( dtVar["N_PayRate"].ToString());
+                                    }
+                                }
+                                // dtNode.Rows.Add(dtVar.ItemArray);
+                                //  dtNode = dtVar.CopyToDataTable();
+                        }
+                        dt.AcceptChanges();
 
                         DataRow[] drEmpDetails = dt.Select("N_EmpID = " + mstVar["N_EmpID"].ToString());
                         if (drEmpDetails.Length > 0)

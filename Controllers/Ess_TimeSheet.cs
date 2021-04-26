@@ -419,6 +419,9 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_workLocation", "n_LocationID", n_LocationID, "", connection, transaction);
                     }
 
+                     MasterTable.Columns.Remove("N_FnYearID");
+                     MasterTable.Columns.Remove("N_EmpID");
+
                     n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
                     if (n_LocationID <= 0)
                     {
