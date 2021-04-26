@@ -223,11 +223,12 @@ namespace SmartxAPI.Controllers
                     Mastersql = "select * from vw_EmppaymentMaster where "+xCondition;
             
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int nReceiptID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceiptID"].ToString());
                     Params.Add("@nReceiptID", nReceiptID);
 
-                    DetailSql = "Select N_PaymentID,X_TypeName from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
+                    DetailSql = "Select * from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
