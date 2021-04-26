@@ -225,6 +225,7 @@ namespace SmartxAPI.Controllers
                     Mastersql = "select * from vw_EmppaymentMaster where "+xCondition;
             
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int nReceiptID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceiptID"].ToString());
                    // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
