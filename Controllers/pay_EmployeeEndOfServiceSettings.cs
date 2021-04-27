@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok("Unable to save");
-                    }lan
+                    }
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
