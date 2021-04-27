@@ -53,7 +53,6 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
                 }
                 int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
                 string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
@@ -260,8 +259,8 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and n_PerPayPayment=5 order by N_PayTypeID";
-
+            // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
+             string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID"; 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

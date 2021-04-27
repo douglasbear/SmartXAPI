@@ -419,6 +419,9 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_workLocation", "n_LocationID", n_LocationID, "", connection, transaction);
                     }
 
+                     MasterTable.Columns.Remove("N_FnYearID");
+                     MasterTable.Columns.Remove("N_EmpID");
+
                     n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
                     if (n_LocationID <= 0)
                     {
@@ -518,6 +521,51 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("timesheetLog")]
+        public ActionResult GetTimesheetLog(int nEmpID,DateTime dEventDate)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nEmpID", nEmpID);
+            Params.Add("@dEventDate", dEventDate);
+            string sqlCommandText="select * from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate order by D_In,D_Out";
+            SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    string sqlCommandCount="select count(*) as N_Count from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                      
+                    }
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
 
 
 

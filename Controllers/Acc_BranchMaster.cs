@@ -139,10 +139,10 @@ namespace SmartxAPI.Controllers
                 string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                 string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
                // bool bIsCurrent = myFunctions.getBoolVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
-                bool bIsDefault =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_DefaultBranch"].ToString());
-                string xPhoneNo = MasterTable.Rows[0]["x_PhoneNo"].ToString();
-                string xaddress = MasterTable.Rows[0]["x_Address"].ToString();
-                int nBranchIdd = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                bool bIsDefault =myFunctions.getBoolVAL(MasterTable.Rows.Contains("b_DefaultBranch") ?MasterTable.Rows[0]["b_DefaultBranch"].ToString():"0");
+                string xPhoneNo = MasterTable.Rows.Contains("x_Address") ?MasterTable.Rows[0]["x_PhoneNo"].ToString():"";
+                string xaddress = MasterTable.Rows.Contains("x_Address") ?MasterTable.Rows[0]["x_Address"].ToString():"";
+                int nBranchIdd = MasterTable.Rows.Contains("n_BranchID") ?myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString()):0;
    
                 MasterTable.Columns.Remove("n_FnYearID");
                 MasterTable.AcceptChanges();

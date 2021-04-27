@@ -320,6 +320,7 @@ namespace SmartxAPI.Controllers
                     int N_QuotationID = myFunctions.getIntVAL(MasterRow["n_QuotationID"].ToString());
                     string x_OrderNo = MasterRow["x_OrderNo"].ToString();
                     int N_CustomerId = myFunctions.getIntVAL(MasterRow["n_CustomerId"].ToString());
+                    bool B_IsService=true;
 
                     if (x_OrderNo == "@Auto")
                     {
@@ -352,6 +353,15 @@ namespace SmartxAPI.Controllers
 
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_OrderNo='" + x_OrderNo + "' and N_FnYearID=" + N_FnYearID + "";
 
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        object objService = dLayer.ExecuteScalar("select n_classid from inv_itemmaster where N_CompanyID=" + N_CompanyID + " and N_ItemID=" + DetailTable.Rows[j]["n_ItemId"], connection, transaction);
+                        if(objService.ToString()!="4")
+                            B_IsService=false;
+                    } 
+                    //MasterTable.Columns.Add("b_IsService", typeof(bool)); 
+                    MasterTable.Rows[0]["b_IsService"] = B_IsService;
+
 
                     n_SalesOrderId = dLayer.SaveData("Inv_SalesOrder", "N_SalesOrderID", DupCriteria, "", MasterTable, connection, transaction);
                     if (n_SalesOrderId <= 0)
@@ -365,7 +375,9 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_SalesOrderId"] = n_SalesOrderId;
+                        
                     }
+
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesOrderDetails", "N_SalesOrderDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
                     {
@@ -396,6 +408,8 @@ namespace SmartxAPI.Controllers
                          for (int j = 0; j < Terms.Rows.Count; j++)
                          {
                              Terms.Rows[j]["n_ReferanceID"] = n_SalesOrderId;
+                             Terms.Rows[j]["x_Type"] = "SO";
+                             
                              
                          }
                          dLayer.SaveData("Inv_Terms", "N_TermsID", Terms, connection, transaction);

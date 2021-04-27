@@ -13,9 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("employeeClearanceSettings")]
+    [Route("employeeEndOfServiceSettings")]
     [ApiController]
-    public class EmployeeClearanceSettings : ControllerBase
+    public class EmployeeEndOfServiceSettings : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -25,7 +25,7 @@ namespace SmartxAPI.Controllers
       
 
 
-        public EmployeeClearanceSettings(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public EmployeeEndOfServiceSettings(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
@@ -36,14 +36,47 @@ namespace SmartxAPI.Controllers
 
        
       [HttpGet("list")]
-        public ActionResult EmployeeClearanceList()
+        public ActionResult EmployeeEndOfServiceList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nComapnyID", nCompanyID);
             SortedList OutPut = new SortedList();
-            string sqlCommandText = "select * from Pay_EmployeeClearanceSettings where N_CompanyID=@nComapnyID";
+            string sqlCommandText = "select * from Pay_ServiceEnd where N_CompanyID=@nComapnyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+
+         [HttpGet("TerminationType")]
+        public ActionResult TerminationTypeList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nComapnyID", nCompanyID);
+            SortedList OutPut = new SortedList();
+            string sqlCommandText = "select * from Pay_EmployeeStatus where N_Status in(2,3)";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -83,51 +116,51 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
-                    int n_ClearanceSettingsID = myFunctions.getIntVAL(MasterRow["N_ClearanceSettingsID"].ToString());
+                    int n_ServiceEndID = myFunctions.getIntVAL(MasterRow["N_ServiceEndID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_ClearanceCode = MasterRow["X_ClearanceCode"].ToString();
+                    string x_ServiceEndCode = MasterRow["X_ServiceEndCode"].ToString();
 
-                    if (x_ClearanceCode == "@Auto")
+                    if (x_ServiceEndCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
-                        x_ClearanceCode = dLayer.GetAutoNumber("Pay_EmployeeClearanceSettings", "x_ClearanceCode", Params, connection, transaction);
-                        if (x_ClearanceCode == "")
+                        x_ServiceEndCode = dLayer.GetAutoNumber("Pay_ServiceEnd ", "x_ServiceEndCode", Params, connection, transaction);
+                        if (x_ServiceEndCode == "")
                         {
                             transaction.Rollback();
                             return Ok("Unable to generate Clearance Code");
                         }
-                        MasterTable.Rows[0]["x_ClearanceCode"] = x_ClearanceCode;
+                        MasterTable.Rows[0]["X_ServiceEndCode"] = x_ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearID");
 
-                    n_ClearanceSettingsID = dLayer.SaveData("Pay_EmployeeClearanceSettings", "n_ClearanceSettingsID", "", "", MasterTable, connection, transaction);
-                    if (n_ClearanceSettingsID <= 0)
+                    n_ServiceEndID = dLayer.SaveData("Pay_ServiceEnd ", "n_ServiceEndID", "", "", MasterTable, connection, transaction);
+                    if (n_ServiceEndID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save Clearance Code");
+                        return Ok("Unable to  Save End of Service Settings ");
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["n_ClearanceSettingsID"] = n_ClearanceSettingsID;
+                        DetailTable.Rows[j]["N_ServiceEndID"] = n_ServiceEndID;
                     }
-                    int n_ClearanceSettingsDetailsID = dLayer.SaveData("Pay_EmployeeClearanceSettingsDetails", "n_ClearanceSettingsDetailsID", DetailTable, connection, transaction);
-                    if (n_ClearanceSettingsDetailsID <= 0)
+                    int n_EndSettiingsID = dLayer.SaveData("Pay_ServiceEndSettings ", "n_EndSettiingsID", DetailTable, connection, transaction);
+                    if (n_EndSettiingsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save Clearance Code");
+                        return Ok("Unable to Save End of Service Settings");
                     }
 
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("n_ClearanceSettingsID", n_ClearanceSettingsID);
-                    Result.Add("x_ClearanceCode", x_ClearanceCode);
-                    Result.Add("n_ClearanceSettingsDetailsID", n_ClearanceSettingsDetailsID);
+                    Result.Add("n_ServiceEndID", n_ServiceEndID);
+                    Result.Add("x_ServiceEndCode", x_ServiceEndCode);
+                    Result.Add("n_EndSettiingsID", n_EndSettiingsID);
 
-                    return Ok(_api.Success(Result, "Clearance Code Saved"));
+                    return Ok(_api.Success(Result, " End of Service Settings Saved"));
                 }
             }
             catch (Exception ex)
@@ -137,7 +170,7 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("details")]
-        public ActionResult PayEmployeApprovalCode(string xClearanceCode)
+        public ActionResult PayEndOfServiceSettings(string xServiceEndCode)
         {
 
 
@@ -156,16 +189,16 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                     Params.Add("@xClearanceCode", xClearanceCode);
-                    Mastersql = "select * from Pay_EmployeeClearanceSettings where N_CompanyId=@nCompanyID and X_ClearanceCode=@xClearanceCode ";
+                     Params.Add("@xServiceEndCode", xServiceEndCode);
+                    Mastersql = "select * from Pay_ServiceEnd where N_CompanyId=@nCompanyID and X_ServiceEndCode=@xServiceEndCode ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int ClearanceSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ClearanceSettingsID"].ToString());
-                    Params.Add("@nClearanceSettingsID", ClearanceSettingsID);
+                    int ServiceEndID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ServiceEndID"].ToString());
+                    Params.Add("@nServiceEndID", ServiceEndID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_Pay_EmployeeClearanceSettingsDetails where N_CompanyId=@nCompanyID and N_ClearanceSettingsID=@nClearanceSettingsID ";
+                    DetailSql = "select * from vw_ServiceEndSettings where N_CompanyId=@nCompanyID and N_ServiceEndID=@nServiceEndID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -183,7 +216,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nClearanceSettingsID, int nCompanyID, int nFnYearID)
+        public ActionResult DeleteData(int nServiceEndID, int nCompanyID, int nFnYearID)
         {
             int Results = 0;
             try
@@ -191,18 +224,18 @@ namespace SmartxAPI.Controllers
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
                 QueryParams.Add("@nFnYearID", nFnYearID);
-                QueryParams.Add("@nClearanceSettingsID", nClearanceSettingsID);
+                QueryParams.Add("@nServiceEndID", nServiceEndID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
 
-                    Results = dLayer.DeleteData("Pay_EmployeeClearanceSettings", "n_ClearanceSettingsID", nClearanceSettingsID, "", connection);
+                    Results = dLayer.DeleteData("Pay_ServiceEnd", "n_ServiceEndID", nServiceEndID, "", connection);
 
 
                     if (Results > 0)
                     {
-                        dLayer.DeleteData("Pay_EmployeeClearanceSettingsDetails", "n_ClearanceSettingsID", nClearanceSettingsID, "", connection);
-                        return Ok(_api.Success("Employee Clearance settings deleted"));
+                        dLayer.DeleteData("Pay_ServiceEndSettings ", "n_ServiceEndID", nServiceEndID, "", connection);
+                        return Ok(_api.Success("Employee End of Service settings deleted"));
                     }
                     else
                     {

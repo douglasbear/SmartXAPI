@@ -111,9 +111,9 @@ namespace SmartxAPI.Controllers
              xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from Pay_VacationType where N_CompanyID=@p1 ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayVacationType where N_CompanyID=@p1 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from Pay_VacationType where N_CompanyID=@p1  and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 )";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayVacationType where N_CompanyID=@p1  and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);
           
 
@@ -127,17 +127,17 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from Pay_VacationType where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationType where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(_api.Warning("No Results Found"));
                     }
                     else
                     {
-                        return Ok(api.Success(OutPut));
+                        return Ok(_api.Success(OutPut));
                     }
 
                 }
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(_api.Error(e));
             }
         }
 
