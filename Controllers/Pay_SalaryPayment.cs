@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
 
                     DetailGetSql = "Select N_PaymentID,X_TypeName from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
-                    //Details = _api.Format(Details, "Details");
+                    // Details = _api.Format(Details, "Details");
                     string xPaymentID="";
                     for (int j = 0; j < Details.Rows.Count; j++)
                     {
@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
 
                     for (int j = 0; j < temp.Length; j++)
                     {
-                        sql1 = " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
+                        sql1 = "Select * from vw_SalaryPaid_Disp where N_ReceiptID=@nReceiptID  and N_CompanyID =@nCompanyID  and N_PaymentId =" + temp[j] + "";
 
                         // X_Condition = "dbo.vw_PayAmountDetailsForPay.N_TransID =@nBatchID and dbo.vw_PayAmountDetailsForPay.N_EmpID =@nEmpID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =@nCompanyID and vw_PayAmountDetailsForPay.N_PaymentId=" + temp[j];
 
@@ -274,6 +274,7 @@ namespace SmartxAPI.Controllers
 
                     }
                     DetailTable = dLayer.ExecuteDataTable(sql1, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
 
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
