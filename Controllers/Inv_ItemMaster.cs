@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetItemDetails(string xItemCode, int nLocationID)
+        public ActionResult GetItemDetails(string xItemCode, int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -201,7 +201,8 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Notice("No Results Found"));
                     }
-
+                    int N_BranchID= nBranchID;
+                    int N_ItemID=myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nItemID", dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nLocationID", nLocationID);
                     QueryParams.Add("@xStockUnit", dt.Rows[0]["X_StockUnit"].ToString());
@@ -236,11 +237,22 @@ namespace SmartxAPI.Controllers
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "b_TxnDone", typeof(bool), b_InStocks);
 
+                    SortedList WhParam = new SortedList(){
+                                    {"N_CompanyID", myFunctions.GetCompanyID(User)},
+                                    {"N_ItemID", N_ItemID},
+                                    {"N_BranchID", N_BranchID},
+                                    };
 
+          
+                    DataTable whDt=dLayer.ExecuteDataTablePro("Sp_Inv_ItemMaster_Disp " ,WhParam,connection);
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"warehouseList",typeof(DataTable),whDt);
+                
 
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
+
 
 
                 return Ok(_api.Success(dt));
@@ -258,7 +270,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2;
+                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2,LocationList;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -266,7 +278,7 @@ namespace SmartxAPI.Controllers
                 PurchaseUnit = ds.Tables["purchaseUnit"];
                 AddUnit1 = ds.Tables["addUnit1"];
                 AddUnit2 = ds.Tables["addUnit2"];
-
+                LocationList = ds.Tables["warehouseDetails"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -329,6 +341,15 @@ namespace SmartxAPI.Controllers
                     }
 
 
+                        if (LocationList.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in LocationList.Rows)
+                            {
+                                dRow["N_ItemID"] = N_ItemID;
+                            }
+                            LocationList.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
+                        }
 
                     transaction.Commit();
                 }
