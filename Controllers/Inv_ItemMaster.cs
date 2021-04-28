@@ -33,18 +33,22 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page)
+        public ActionResult GetAllItems(string query, int PageSize, int Page,int nCategoryID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string qry = "";
+            string Category = "";
             if (query != "" && query != null)
             {
                 qry = " and (Description like @query or [Item Code] like @query) ";
                 Params.Add("@query", "%" + query + "%");
             }
+            if(nCategoryID>0)
+                Category= " and vw_InvItem_Search.N_CategoryID =" + nCategoryID; 
+
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
@@ -62,7 +66,7 @@ namespace SmartxAPI.Controllers
         "                 vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, "+
          "                vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11 "+
 " FROM            vw_InvItem_Search LEFT OUTER JOIN "+
-  "                       Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=@p2 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + qry;
+  "                       Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=@p2 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + qry + Category;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
