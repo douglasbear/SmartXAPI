@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 1062;
+            N_FormID = 454;
         }
 
        
@@ -100,7 +100,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-           [HttpPost("Save")]
+
+ [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -120,39 +121,46 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string x_ServiceEndCode = MasterRow["X_ServiceEndCode"].ToString();
+                    
+                    if (n_ServiceEndID>0)
+                    {
+                         dLayer.DeleteData("Pay_ServiceEnd", "N_ServiceEndID", n_ServiceEndID, "", connection,transaction);
+                         dLayer.DeleteData("Pay_ServiceEndSettings", "N_ServiceEndID", n_ServiceEndID, "", connection,transaction);
 
+                    }
                     if (x_ServiceEndCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", N_FormID);
-                        x_ServiceEndCode = dLayer.GetAutoNumber("Pay_ServiceEnd ", "x_ServiceEndCode", Params, connection, transaction);
+                        x_ServiceEndCode = dLayer.GetAutoNumber("Pay_ServiceEnd", "x_ServiceEndCode", Params, connection, transaction);
                         if (x_ServiceEndCode == "")
                         {
                             transaction.Rollback();
-                            return Ok("Unable to generate Clearance Code");
+                            return Ok("Unable to generate Code");
                         }
                         MasterTable.Rows[0]["X_ServiceEndCode"] = x_ServiceEndCode;
                     }
-                    MasterTable.Columns.Remove("N_FnYearID");
 
-                    n_ServiceEndID = dLayer.SaveData("Pay_ServiceEnd ", "n_ServiceEndID", "", "", MasterTable, connection, transaction);
+                    n_ServiceEndID = dLayer.SaveData("Pay_ServiceEnd", "n_ServiceEndID", "", "", MasterTable, connection, transaction);
                     if (n_ServiceEndID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to  Save End of Service Settings ");
+                        return Ok("Unable to save ");
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["N_ServiceEndID"] = n_ServiceEndID;
+                        DetailTable.Rows[j]["n_ServiceEndID"] = n_ServiceEndID;
+                        
+
                     }
-                    int n_EndSettiingsID = dLayer.SaveData("Pay_ServiceEndSettings ", "n_EndSettiingsID", DetailTable, connection, transaction);
-                    if (n_EndSettiingsID <= 0)
+                  
+                     int n_EndSettiingsID = dLayer.SaveData("Pay_ServiceEndSettings", "n_EndSettiingsID", DetailTable, connection, transaction);
+                     if (n_EndSettiingsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to Save End of Service Settings");
+                        return Ok("Unable to save");
                     }
-
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -160,7 +168,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("x_ServiceEndCode", x_ServiceEndCode);
                     Result.Add("n_EndSettiingsID", n_EndSettiingsID);
 
-                    return Ok(_api.Success(Result, " End of Service Settings Saved"));
+                    return Ok(_api.Success(Result, "Employee End Of Service Settings Saved"));
                 }
             }
             catch (Exception ex)
@@ -168,6 +176,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+
 
          [HttpGet("details")]
         public ActionResult PayEndOfServiceSettings(string xServiceEndCode)
