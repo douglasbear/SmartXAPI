@@ -252,6 +252,11 @@ namespace SmartxAPI.Controllers
                     string sqlQuery = "SELECT     Inv_Location.X_LocationName, dbo.SP_LocationStock(Inv_ItemMasterWHLink.N_ItemID, Inv_Location.N_LocationID) AS N_Stock, vw_InvItemMaster.X_StockUnit,vw_InvItemMaster.N_StockUnitID FROM Inv_ItemMasterWHLink INNER JOIN  Inv_Location ON Inv_ItemMasterWHLink.N_WarehouseID = Inv_Location.N_LocationID AND Inv_ItemMasterWHLink.N_CompanyID = Inv_Location.N_CompanyID LEFT OUTER JOIN  vw_InvItemMaster ON Inv_ItemMasterWHLink.N_ItemID = vw_InvItemMaster.N_ItemID AND Inv_ItemMasterWHLink.N_CompanyID = vw_InvItemMaster.N_CompanyID where Inv_ItemMasterWHLink.N_ItemID=" + N_ItemID + " and Inv_ItemMasterWHLink.N_CompanyID=" + companyid;
                     dt_LocStock = dLayer.ExecuteDataTable(sqlQuery, QueryParams, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt,"locationStockList",typeof(DataTable),dt_LocStock);
+
+                    string sqlQuery1 = "Select Isnull(Sum(N_Qty),0) from Inv_PurchaseOrderDetails inner join Inv_PurchaseOrder On Inv_PurchaseOrderDetails.N_POrderID =Inv_PurchaseOrder.N_POrderID Where B_CancelOrder=0 and Inv_PurchaseOrderDetails.N_ItemID=" + N_ItemID + "and Inv_PurchaseOrderDetails.N_BranchID= " + N_BranchID + " and Inv_PurchaseOrderDetails.N_CompanyID=" + companyid + " and Inv_PurchaseOrder.N_Processed=0";
+                    object purchaseQty = dLayer.ExecuteScalar(sqlQuery1,QueryParams,connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"n_POrderQty",typeof(string),purchaseQty);
+
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
