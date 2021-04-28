@@ -155,6 +155,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "Purpose": N_FormID=51;
                 break;
+                case "InsuranceClass": N_FormID=17;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_ReferId=@p1 order by n_Sort ASC";
