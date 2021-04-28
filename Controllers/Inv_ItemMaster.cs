@@ -182,9 +182,10 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetItemDetails(string xItemCode, int nLocationID)
+        public ActionResult GetItemDetails(string xItemCode, int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
+            DataTable dt_LocStock = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
@@ -205,7 +206,8 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Notice("No Results Found"));
                     }
-
+                    int N_BranchID= nBranchID;
+                    int N_ItemID=myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nItemID", dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nLocationID", nLocationID);
                     QueryParams.Add("@xStockUnit", dt.Rows[0]["X_StockUnit"].ToString());
@@ -240,13 +242,30 @@ namespace SmartxAPI.Controllers
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "b_TxnDone", typeof(bool), b_InStocks);
 
+                    SortedList WhParam = new SortedList(){
+                                    {"N_CompanyID", myFunctions.GetCompanyID(User)},
+                                    {"N_ItemID", N_ItemID},
+                                    {"N_BranchID", N_BranchID},
+                                    };
 
+          
+                    DataTable whDt=dLayer.ExecuteDataTablePro("Sp_Inv_ItemMaster_Disp " ,WhParam,connection);
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"warehouseList",typeof(DataTable),whDt);
+                
+                    string sqlQuery = "SELECT     Inv_Location.X_LocationName, dbo.SP_LocationStock(Inv_ItemMasterWHLink.N_ItemID, Inv_Location.N_LocationID) AS N_Stock, vw_InvItemMaster.X_StockUnit,vw_InvItemMaster.N_StockUnitID FROM Inv_ItemMasterWHLink INNER JOIN  Inv_Location ON Inv_ItemMasterWHLink.N_WarehouseID = Inv_Location.N_LocationID AND Inv_ItemMasterWHLink.N_CompanyID = Inv_Location.N_CompanyID LEFT OUTER JOIN  vw_InvItemMaster ON Inv_ItemMasterWHLink.N_ItemID = vw_InvItemMaster.N_ItemID AND Inv_ItemMasterWHLink.N_CompanyID = vw_InvItemMaster.N_CompanyID where Inv_ItemMasterWHLink.N_ItemID=" + N_ItemID + " and Inv_ItemMasterWHLink.N_CompanyID=" + companyid;
+                    dt_LocStock = dLayer.ExecuteDataTable(sqlQuery, QueryParams, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"locationStockList",typeof(DataTable),dt_LocStock);
+
+                    string sqlQuery1 = "Select Isnull(Sum(N_Qty),0) from Inv_PurchaseOrderDetails inner join Inv_PurchaseOrder On Inv_PurchaseOrderDetails.N_POrderID =Inv_PurchaseOrder.N_POrderID Where B_CancelOrder=0 and Inv_PurchaseOrderDetails.N_ItemID=" + N_ItemID + "and Inv_PurchaseOrderDetails.N_BranchID= " + N_BranchID + " and Inv_PurchaseOrderDetails.N_CompanyID=" + companyid + " and Inv_PurchaseOrder.N_Processed=0";
+                    object purchaseQty = dLayer.ExecuteScalar(sqlQuery1,QueryParams,connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"n_POrderQty",typeof(string),purchaseQty);
 
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
 
-
+                
                 return Ok(_api.Success(dt));
 
             }
@@ -262,7 +281,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2;
+                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2,LocationList;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -270,7 +289,7 @@ namespace SmartxAPI.Controllers
                 PurchaseUnit = ds.Tables["purchaseUnit"];
                 AddUnit1 = ds.Tables["addUnit1"];
                 AddUnit2 = ds.Tables["addUnit2"];
-
+                LocationList = ds.Tables["warehouseDetails"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -332,7 +351,16 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable to save"));
                     }
 
-
+                 dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
+                        if (LocationList.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in LocationList.Rows)
+                            {
+                                dRow["N_ItemID"] = N_ItemID;
+                            }
+                            LocationList.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
+                        }
 
                     transaction.Commit();
                 }
