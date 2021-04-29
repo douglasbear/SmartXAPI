@@ -106,20 +106,6 @@ namespace SmartxAPI.Controllers
                     }
                 }
             }
-            //         else
-            //         {
-            //             dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", nInsuranceID, "", connection, transaction);
-                        
-            //         }
-            //         MasterTable.Columns.Remove("n_FnYearID");
-                     
-            //       nInsuranceID = dLayer.SaveData("Pay_Medical_Insurance", "n_MedicalInsID", MasterTable, connection, transaction);
-                    
-                    
-            //         transaction.Commit();
-            //         return Ok(_api.Success("Medical Insurance Saved")) ;
-            //     }
-            // }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
