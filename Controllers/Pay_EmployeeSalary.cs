@@ -144,6 +144,50 @@ namespace SmartxAPI.Controllers
             }
         }
 
-    }
+        [HttpGet("details")]
+        public ActionResult GetEmpGradeDetails(int nFnYearID, string xGradeCode)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            string Mastersql="Select * from vw_Pay_SalaryGrade Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_GradeCode=@xGradeCode";
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@xGradeCode",xGradeCode);
+            
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+                        if (MasterTable.Rows.Count == 0)
+                        {
+                        return Ok(_api.Warning("No Data Found !!"));
+                        }
+
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        dt.Tables.Add(MasterTable);
+
+                        int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
+
+                        string DetailSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=@nCompanyID and N_GradeID=" + N_GradeID;
+
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dt.Tables.Add(DetailTable);
+                    }
+                    return Ok(_api.Success(dt));
+                }
+                catch (Exception e)
+                {
+                    return Ok(_api.Error(e));
+                }
+            }
+          
+        }
+
 }
 
