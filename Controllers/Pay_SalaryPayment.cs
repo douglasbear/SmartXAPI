@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
 
                     for (int j = 0; j < temp.Length; j++)
                     {
-                        sql1 = " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
+                        sql1 = "Select * from vw_SalaryPaid_Disp where N_ReceiptID=@nReceiptID  and N_CompanyID =@nCompanyID  and N_PaymentId =" + temp[j] + "";
 
                         // X_Condition = "dbo.vw_PayAmountDetailsForPay.N_TransID =@nBatchID and dbo.vw_PayAmountDetailsForPay.N_EmpID =@nEmpID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =@nCompanyID and vw_PayAmountDetailsForPay.N_PaymentId=" + temp[j];
 
