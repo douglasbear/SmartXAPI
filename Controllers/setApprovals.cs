@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
             }
         }
  [HttpGet("approvalcodelist")]
-        public ActionResult GetUserlist(int nCompanyId)
+        public ActionResult GetApprovalCodelist(int nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
         }
 
 [HttpGet("projectlist")]
-        public ActionResult GetUserlist(int nCompanyId)
+        public ActionResult GetProjectList(int nCompanyId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
