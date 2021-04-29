@@ -48,7 +48,7 @@ namespace SmartxAPI.Controllers
 
             //int nCompanyId=myFunctions.GetCompanyID(User);ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_
            // string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_List WHERE N_LanguageID = " + LanguageID + " and N_ParentMenuID = 0 and (N_UserCategoryID in (" + UserCategoryIDList + ") or N_UserCategoryID=" + UserCategoryID + ") and N_CompanyID=" + CompanyID + "and N_MenuID not in (85,1,83) group by N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module";
-            string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_List WHERE N_CompanyID=@p1 and N_MenuID not in (85,1,83) group by N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module";
+            string sqlCommandText = "select Top 10  N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module FROM vw_UserMenus_List WHERE N_CompanyID=@p1 and N_ParentMenuID = 0 and N_MenuID not in (85,1,83) group by N_CompanyID,N_LanguageID,N_ParentMenuID,N_MenuID,X_Text,X_Module";
             Params.Add("@p1", nCompanyId);
             // Params.Add("@p2", nLanguageID);
             // Params.Add("@p3", nUserCategoryID);
@@ -76,15 +76,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("screenlist")]
-        public ActionResult GetUserlist(int nCompanyId)
+        public ActionResult GetScreenlist()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
             
-            string sqlCommandText = "select N_MenuID,N_LanguageId,N_ParentMenuID,B_AllowApproval,X_Text from vw_UserPrevilegesDisp where N_CompanyID=@p1";
-            Params.Add("@p1", nCompanyId);
-
+            string sqlCommandText = "select N_MenuID,N_LanguageId,N_ParentMenuID,B_AllowApproval,X_Text from vw_UserPrevilegesDisp ";
+           
 
             try
             {
@@ -164,6 +163,40 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+       
+
+[HttpGet("list")]
+        public ActionResult GetsetApprovalsList(int nCompanyId)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            //int nCompanyId=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "Select * from Sec_ApprovalSettings_General where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    connection.Open();
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else { return Ok(_api.Success(dt)); }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+
  [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
