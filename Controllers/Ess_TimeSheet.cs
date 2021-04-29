@@ -440,7 +440,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
         }
+    [HttpGet("locationList")]
+        public ActionResult GetSalaryPayBatch()
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+          
 
+
+            string sqlCommandText = "Select * from Pay_WorkLocation Where  N_CompanyID=@nCompanyID " ;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
 
         [HttpGet("workLocationList")]
         public ActionResult GetEmpReqList(string xLocationCode, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
