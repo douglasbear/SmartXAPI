@@ -85,7 +85,9 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int N_PositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
                     int N_SupervisorID = myFunctions.getIntVAL(dtSupervisor.Rows[0]["n_SupervisorID"].ToString());
-                    bool B_IsSupervisor = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
+                    int N_IsSupervisor=myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
+                    bool B_IsSupervisor = false;
+                    if(N_IsSupervisor==1)B_IsSupervisor=true;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nPositionID", N_PositionID);
 

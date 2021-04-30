@@ -49,17 +49,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                }
-                int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
-                string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
+
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                    }
+                    int N_PayID = myFunctions.getIntVAL(dt.Rows[0]["N_PayID"].ToString());
+                    string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + nCompanyId;
 
                     DataTable SummryTable = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, Params, connection);
-                    OutPut.Add("master",dt);
-                    OutPut.Add("summaryList",api.Format(SummryTable));
+                    OutPut.Add("master", dt);
+                    OutPut.Add("summaryList", api.Format(SummryTable));
                 }
                 return Ok(api.Success(OutPut));
 
@@ -105,9 +105,9 @@ namespace SmartxAPI.Controllers
                     }
                     dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
 
-                    string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID="+nFnYearId;
+                    string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
 
-                    nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", DupCriteria, "N_companyID=" + nCompanyID + " and N_FnYearID="+nFnYearId , MasterTable, connection, transaction);
+                    nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", DupCriteria, "N_companyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId, MasterTable, connection, transaction);
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
-             string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID"; 
+            string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -321,14 +321,24 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("calculationMethod")]
-        public ActionResult GetCalculationMethod()
+        public ActionResult GetCalculationMethod(string xPerPayMethod)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 order by N_SortOrder";
+            string sqlCommandText = "";
+            if ( xPerPayMethod == null || xPerPayMethod=="" )
+            {
+               sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 order by N_SortOrder";
+            }
+            else
+            {
+                
+                 sqlCommandText = "Select X_Method,N_IndexID from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
+            }
 
             try
             {
+            
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();

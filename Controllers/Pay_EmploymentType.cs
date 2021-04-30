@@ -49,17 +49,25 @@ namespace SmartxAPI.Controllers
                 int nEmploymentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmploymentID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 string xEmploymentCode = MasterTable.Rows[0]["x_EmploymentCode"].ToString();
-                // string bCreateEmpSeries = MasterTable.Rows[0]["b_CreateEmpSeries"].ToString();
+                string bCreateEmpSeries = MasterTable.Rows[0]["b_CreateEmpSeries"].ToString();
                  if (xEmploymentCode == "@Auto")
                     {
-                        // if (bCreateEmpSeries=="True")
-                        // {
-                        //     DataTable dt = new DataTable();
-                        //     string xDescription=MasterTable.Rows[0]["x_Description"].ToString();
-                        //     string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
-                        //     string sqlCommandText = "Sp_CreateInvoiceCounter(@nCompanyID,1272,@nFnYearID,1,@xPrefix,@xDescription)";
-                        //     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-                        // }
+                        if (bCreateEmpSeries=="True")
+                        {
+                            DataTable dt = new DataTable();
+                            string xDescription=MasterTable.Rows[0]["x_Description"].ToString();
+                            string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
+                                                        SortedList proParams2 = new SortedList(){
+                                        {"N_CompanyID",nCompanyID},
+                                        {"N_FormID",1272},
+                                        {"N_FnYearID",nFnYearID},
+                                        {"N_BranchID",0},
+                                        {"X_Prefix",xPrefix},
+                                        {"X_Type",xDescription}};
+
+                           dLayer.ExecuteScalarPro("Sp_CreateInvoiceCounter", proParams2, connection, transaction);
+
+                        }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);

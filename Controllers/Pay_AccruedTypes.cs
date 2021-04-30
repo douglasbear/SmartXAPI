@@ -187,7 +187,7 @@ namespace SmartxAPI.Controllers
 
        
          [HttpGet("details")]
-        public ActionResult PayAccruedDetails(string xVacCode)
+        public ActionResult PayAccruedDetails(string xVacCode, int nVacTypeID )
         {
 
 
@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nVacTypeID", VacTypeID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and N_VacTypeID=@nVacTypeID ";
+                    DetailSql = "select * from Pay_VacationTypeDetails where N_CompanyId=@nCompanyID and N_VacTypeID=@nVacTypeID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
