@@ -185,9 +185,73 @@ namespace SmartxAPI.Controllers
                 {
                     return Ok(_api.Error(e));
                 }
-            }
-          
         }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                DataTable DetailTable;
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nGradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GradeID"].ToString());
+                int  nGradeDetailsID=0;
+                
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    // SortedList QueryParams = new SortedList();
+                   
+                    // Auto Gen
+                    string GradeCode = "";
+                    var values = MasterTable.Rows[0]["x_GradeCode"].ToString();
+                    for (int j = 0; j < DetailTable.Rows.Count; j++){
+                        string select = MasterTable.Rows[0]["b_Select"].ToString();
+                        if (select=="1"){
+                            int nValue = myFunctions.getIntVAL(DetailTable.Rows[0]["n_Value"].ToString());
+                            nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
+                        }
+                    }
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.N_FormID);
+                        Params.Add("N_GradeID", nGradeID);
+                        GradeCode = dLayer.GetAutoNumber("Pay_SalaryGrade", "X_GradeCode", Params, connection, transaction);
+                        if (GradeCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Grade Code")); }
+                        MasterTable.Rows[0]["x_GradeCode"] = GradeCode;
+                    }
+                    nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", MasterTable, connection, transaction);
+                    if (nGradeID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+                    
+                    dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                          nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Employee Grade Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+          
+    }
 
 }
 
