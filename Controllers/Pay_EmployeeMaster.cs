@@ -488,22 +488,24 @@ namespace SmartxAPI.Controllers
                         //SAving EMPLOYEE SALARY/BENEFITS
                         int pay_PaySetupRes = 0;
                         if (dtpay_PaySetup.Rows.Count > 0)
+                        {
                             foreach (DataRow dRow in dtpay_PaySetup.Rows)
                             {
                                 dRow["N_EmpID"] = nEmpID;
                             }
-                        dtpay_PaySetup.AcceptChanges();
-                        pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
-                        if (pay_PaySetupRes > 0)
-                        {
-                            int Pay_EmployeePayHistoryRes = 0;
-                            if (dtpay_EmployeePayHistory.Rows.Count > 0)
-                                foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
-                                {
-                                    dRow["N_EmpID"] = nEmpID;
-                                }
-                            dtpay_EmployeePayHistory.AcceptChanges();
-                            Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
+                            dtpay_PaySetup.AcceptChanges();
+                            pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
+                            if (pay_PaySetupRes > 0)
+                            {
+                                int Pay_EmployeePayHistoryRes = 0;
+                                if (dtpay_EmployeePayHistory.Rows.Count > 0)
+                                    foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
+                                    {
+                                        dRow["N_EmpID"] = nEmpID;
+                                    }
+                                dtpay_EmployeePayHistory.AcceptChanges();
+                                Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
+                            }
                         }
                         int pay_EmpAccrulsRes = 0;
                         if (dtpay_EmpAccruls.Rows.Count > 0)
