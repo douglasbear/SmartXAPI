@@ -206,52 +206,33 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;
+                    
                     DataTable DetailTable;
-                    MasterTable = ds.Tables["master"];
+                    
                     DetailTable = ds.Tables["details"];
-                    DataRow MasterRow = MasterTable.Rows[0];
+                    DataRow MasterRow = DetailTable.Rows[0];
                     SortedList Params = new SortedList();
 
                     int n_SecApprovalID = myFunctions.getIntVAL(MasterRow["N_SecApprovalID"].ToString());
-                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                  
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                   // string x_ServiceEndCode = MasterRow["X_ServiceEndCode"].ToString();
-                    
-                    if (n_SecApprovalID>0)
+                    int n_ModuleID = myFunctions.getIntVAL(MasterRow["N_ModuleID"].ToString());
+                    if (n_ModuleID>0)
                     {
                         
-                         dLayer.DeleteData("Sec_ApprovalSettings_General", "N_SecApprovalID", n_SecApprovalID, "", connection,transaction);
+                         dLayer.DeleteData("Sec_ApprovalSettings_General", "N_ModuleID", n_ModuleID, "", connection,transaction);
 
                     }
-                    // if (x_ServiceEndCode == "@Auto")
-                    // {
-                    //     Params.Add("N_CompanyID", N_CompanyID);
-                    //     Params.Add("N_YearID", N_FnYearID);
-                    //     Params.Add("N_FormID", N_FormID);
-                    //     x_ServiceEndCode = dLayer.GetAutoNumber("Pay_ServiceEnd", "x_ServiceEndCode", Params, connection, transaction);
-                    //     if (x_ServiceEndCode == "")
-                    //     {
-                    //         transaction.Rollback();
-                    //         return Ok("Unable to generate Code");
-                    //     }
-                    //     MasterTable.Rows[0]["X_ServiceEndCode"] = x_ServiceEndCode;
-                    // }
-
-                    n_SecApprovalID = dLayer.SaveData("Sec_ApprovalSettings_General", "N_SecApprovalID", "", "", MasterTable, connection, transaction);
+                    n_SecApprovalID = dLayer.SaveData("Sec_ApprovalSettings_General", "N_SecApprovalID", "", "", DetailTable, connection, transaction);
                     if (n_SecApprovalID <= 0)
                     {
                         transaction.Rollback();
                         return Ok("Unable to save ");
                     }
                    
-
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    // Result.Add("n_ServiceEndID", n_ServiceEndID);
-                    // Result.Add("x_ServiceEndCode", x_ServiceEndCode);
-                    // Result.Add("n_EndSettiingsID", n_EndSettiingsID);
-
+                    Result.Add("n_SecApprovalID", n_SecApprovalID);
                     return Ok(_api.Success(Result, "set Approvals Saved"));
                 }
             }
@@ -263,7 +244,7 @@ namespace SmartxAPI.Controllers
 
         
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nSecApprovalID)
+        public ActionResult DeleteData(int nModuleID)
         {
             int Results = 0;
             try
@@ -272,7 +253,7 @@ namespace SmartxAPI.Controllers
                 {
                     
                     connection.Open();
-                    Results = dLayer.DeleteData("Sec_ApprovalSettings_General", "N_SecApprovalID", nSecApprovalID, "", connection);
+                    Results = dLayer.DeleteData("Sec_ApprovalSettings_General", "N_ModuleID", nModuleID, "", connection);
                     if (Results > 0)
                     {
                     
@@ -293,7 +274,7 @@ namespace SmartxAPI.Controllers
 
 
           [HttpGet("details")]
-        public ActionResult GenApprovalCode(int nSecApprovalID)
+        public ActionResult GenApprovalCode(int nModuleID)
         {
 
 
@@ -314,14 +295,14 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@nSecApprovalID", nSecApprovalID);
+                    Params.Add("@nModuleID", nModuleID);
                     // Mastersql = "select * from Gen_ApprovalCodes where N_CompanyId=@nCompanyID and N_SecApprovalID=@nSecApprovalID  ";
 
                     // MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     // if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                   
                     // MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_SecAppSettings where N_CompanyId=@nCompanyID and N_SecApprovalID=@nSecApprovalID ";
+                    DetailSql = "select * from vw_SecAppSettings where N_CompanyId=@nCompanyID and N_ModuleID=@nModuleID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
