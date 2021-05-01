@@ -250,6 +250,36 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nCompanyID, int nGradeID)
+        {
+            int nUserID = myFunctions.GetUserID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList deleteParams = new SortedList()
+                            {
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","Employee Salary Grade"},
+                                {"N_VoucherID",nGradeID},
+                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"},
+
+                            };
+                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    transaction.Commit();
+                }
+                return Ok(_api.Success("Deleted"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
           
     }
 
