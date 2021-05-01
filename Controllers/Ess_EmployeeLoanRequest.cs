@@ -107,6 +107,40 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        
+        [HttpGet("typeList")]
+        public ActionResult GetLoanTypeList(int? nCompanyID, int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            string sqlCommandText = "";
+            sqlCommandText = "select * from Pay_PayMaster where N_PayTypeID=8 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult GetEmployeeLoanDetails(int nLoanID)
         {
@@ -123,7 +157,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_LoanIssue.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position,Pay_Employee.X_EmpNameLocale FROM  Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_LoanIssue ON Pay_Employee.N_EmpID = Pay_LoanIssue.N_EmpID AND Pay_Employee.N_CompanyID = Pay_LoanIssue.N_CompanyID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT Pay_LoanIssue.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position, Pay_Employee.X_EmpNameLocale, Pay_PayMaster.X_Description AS x_LoanType FROM Pay_PayMaster RIGHT OUTER JOIN Pay_LoanIssue ON Pay_PayMaster.N_FnYearID = Pay_LoanIssue.N_FnYearID AND Pay_PayMaster.N_CompanyID = Pay_LoanIssue.N_CompanyID AND Pay_PayMaster.N_PayID = Pay_LoanIssue.N_PayID LEFT OUTER JOIN Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_LoanIssue.N_FnYearID = Pay_Employee.N_FnYearID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
