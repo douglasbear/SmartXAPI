@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("report")]
     [ApiController]
-    public class ReportMenus : ControllerBase
+    public class Reports : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         private readonly string reportPath;
         private readonly string reportLocation;
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
-        public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
@@ -539,11 +539,11 @@ namespace SmartxAPI.Controllers
                                     x_comments =dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
                                     procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
                                 }
-                                else if (dateFrom != null)
+                                else if (dateFrom != null && !bRange)
                                 {
                                     x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy");
                                     x_comments = dateFrom.ToString("dd-MMM-yyyy");
-                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|";
+                                    procParam = dateFrom.ToString("dd-MMM-yyyy");
                                 }
                                 else if (bRange && dateTo != null)
                                 {

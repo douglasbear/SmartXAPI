@@ -4,6 +4,7 @@ using System.Data;
 using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
+using System.Security.Claims;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -145,6 +146,7 @@ namespace SmartxAPI.GeneralFunctions
                 throw ex;
             }
         }
+
 
         public object ExecuteScalar(string sqlCommandText, SortedList paramList, SqlConnection connection)
         {
