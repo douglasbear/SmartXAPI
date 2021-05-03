@@ -181,6 +181,8 @@ namespace SmartxAPI.Controllers
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+                    
+
 
                     //int nUserID = myFunctions.GetUserID(User);
 
@@ -209,18 +211,27 @@ namespace SmartxAPI.Controllers
 
                         if (X_TaskCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
                         MasterTable.Rows[0]["X_TaskCode"] = X_TaskCode;
+                        //DetailTable.Rows[0]["n_CreaterID"]=myFunctions.GetUserID(User);
 
                     }
                     // else
                     // {
                     //     dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
                     // }
-                    if(DetailTable.Rows[0]["N_AssigneeID"].ToString() =="0")
+                    if(DetailTable.Rows[0]["N_AssigneeID"].ToString() !="0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() !="")
                     {
                     DetailTable.Columns.Remove("X_Assignee");
                     }
+                    if(DetailTable.Rows[0]["n_ClosedUserID"].ToString() !="0" && DetailTable.Rows[0]["n_ClosedUserID"].ToString() !="")
+                    {
                     DetailTable.Columns.Remove("x_ClosedUser");
+                    }
+                      if(DetailTable.Rows[0]["n_SubmitterID"].ToString() !="0" && DetailTable.Rows[0]["n_SubmitterID"].ToString() !="")
+                    {
                     DetailTable.Columns.Remove("x_Submitter");
+                    }
+
+
                     
 
 
