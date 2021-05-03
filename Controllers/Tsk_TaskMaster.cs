@@ -47,11 +47,10 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
             string Criteria = "";
-            string Criteria2="";
+            string Criteria2 = "";
             if (byUser == true)
             {
                 Criteria = " and N_AssigneeID=@nUserID ";
-                Criteria2= "or N_SubmitterID=@nUserID";
             }
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -63,11 +62,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 " + Searchkey + Criteria +Criteria2+ xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 " + Searchkey + Criteria + Criteria2 + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 " + Searchkey + Criteria + Criteria2 +" and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 " + Criteria +Criteria2+ xSortBy + " ) " + xSortBy;
-            
-      
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 " + Searchkey + Criteria + Criteria2 + " and N_TaskID not in (select top(" + Count + ") N_TaskID from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 " + Criteria + Criteria2 + xSortBy + " ) " + xSortBy;
+
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@nUserID", nUserID);
             // Params.Add("@nFnYearId", nFnYearId);
@@ -181,7 +180,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
-                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+                    string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
 
                     //int nUserID = myFunctions.GetUserID(User);
 
@@ -216,9 +215,13 @@ namespace SmartxAPI.Controllers
                     // {
                     //     dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
                     // }
-                     DetailTable.Columns.Remove("X_Assignee");
-                     DetailTable.Columns.Remove("x_ClosedUser");
-                     DetailTable.Columns.Remove("x_Submitter");
+                    if(DetailTable.Rows[0]["N_AssigneeID"].ToString() =="0")
+                    {
+                    DetailTable.Columns.Remove("X_Assignee");
+                    }
+                    DetailTable.Columns.Remove("x_ClosedUser");
+                    DetailTable.Columns.Remove("x_Submitter");
+                    
 
 
                     nTaskId = dLayer.SaveData("Tsk_TaskMaster", "N_TaskID", MasterTable, connection, transaction);
@@ -239,7 +242,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable To Save"));
                     }
 
-                   if(Attachment.Rows.Count>0)
+                    if (Attachment.Rows.Count > 0)
                     {
                         try
                         {
@@ -279,6 +282,17 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string xStatus = DetailTable.Rows[0]["X_Status"].ToString();
+                    if (xStatus == "Completed")
+                    {
+                        DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
+
+                    }
+                    else if (xStatus == "Submitted")
+                    {
+
+                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                    
+                    }
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
@@ -305,15 +319,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpPost("attachmentSave")]
-        public ActionResult AttachmentSave([FromBody]DataSet ds)
-        { 
+        public ActionResult AttachmentSave([FromBody] DataSet ds)
+        {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;              
+                    DataTable MasterTable;
                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
@@ -325,7 +339,7 @@ namespace SmartxAPI.Controllers
                     string XTaskCode = MasterTable.Rows[0]["x_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
 
-                    if(Attachment.Rows.Count>0)
+                    if (Attachment.Rows.Count > 0)
                     {
                         try
                         {
@@ -338,16 +352,16 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     transaction.Commit();
-                    return Ok(_api.Success("Saved")) ;
+                    return Ok(_api.Success("Saved"));
                 }
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
-        } 
+        }
 
-         [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nTaskID)
         {
             int Results = 0;
