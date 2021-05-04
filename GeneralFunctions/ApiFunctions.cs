@@ -7,6 +7,7 @@ using System.Security.Claims;
 using System.Text;
 using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
+using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 
 namespace SmartxAPI.GeneralFunctions
@@ -195,6 +196,20 @@ namespace SmartxAPI.GeneralFunctions
                 {".gif", "image/gif"},
                 {".csv", "text/csv"}
             };
+        }
+
+
+                public string GetConnectionString(ClaimsPrincipal User,SqlConnection connection)
+        {
+            try
+            {
+                
+                return "";
+            }
+            catch (Exception ex)
+            {
+                throw ex;
+            }
         }
 
 

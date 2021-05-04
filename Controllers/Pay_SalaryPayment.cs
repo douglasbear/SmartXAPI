@@ -83,19 +83,19 @@ namespace SmartxAPI.Controllers
                 Params.Add("@nBranchID", nBranchID);
             if (xBatchCode == null || xBatchCode == "")
                 xBatchCode = "";
-            string sqlCommandText="";
-            if(xBatchCode == "")
+            string sqlCommandText = "";
+            if (xBatchCode == "")
             {
-                 sqlCommandText="select * from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID ";
+                sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID ";
             }
             else
             {
-                  sqlCommandText="select * from vw_PayEmployeeSalaryPaymentsByEmployee where x_Batch = @xBatchCode and TotalSalaryCollected<>TotalSalary and N_CompanyID=@nCompanyID ";
+                sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployee where x_Batch = @xBatchCode and TotalSalaryCollected<>TotalSalary and N_CompanyID=@nCompanyID ";
 
 
             }
 
-           
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetDetails( string xReceiptNo, int nBranchID,bool bAllBranchData)
+        public ActionResult GetDetails(string xReceiptNo, int nBranchID, bool bAllBranchData)
         {
             try
             {
@@ -218,29 +218,29 @@ namespace SmartxAPI.Controllers
                     string xCondition = "";
 
                     if (bAllBranchData)
-                        xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID";
+                        xCondition = "X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID";
                     else
-                        xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
+                        xCondition = "X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 
-                    Mastersql = "select * from vw_EmppaymentMaster where "+xCondition;
-            
+                    Mastersql = "select * from vw_EmppaymentMaster where " + xCondition;
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int nReceiptID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceiptID"].ToString());
-                   // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
+                    // DateTime dTransdate = Convert.ToDateTime(MasterTable.Rows[0]["D_ReceiptDate"].ToString());
                     Params.Add("@nReceiptID", nReceiptID);
 
                     DetailGetSql = "Select N_PaymentID,X_TypeName from Pay_EmployeePaymentDetails Inner Join Gen_Defaults ON Pay_EmployeePaymentDetails.N_PaymentID=Gen_Defaults.N_TypeId and Gen_Defaults.N_DefaultId=2 Where  Pay_EmployeePaymentDetails.N_CompanyID=@nCompanyID and Pay_EmployeePaymentDetails.N_ReceiptID=@nReceiptID";
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
-                    //Details = _api.Format(Details, "Details");
-                    string xPaymentID="";
+                    // Details = _api.Format(Details, "Details");
+                    string xPaymentID = "";
                     for (int j = 0; j < Details.Rows.Count; j++)
                     {
-                        if(xPaymentID=="")
-                            xPaymentID=Details.Rows[0]["N_PaymentID"].ToString();
-                        else 
-                            xPaymentID=xPaymentID+","+Details.Rows[0]["N_PaymentID"].ToString();
+                        if (xPaymentID == "")
+                            xPaymentID = Details.Rows[0]["N_PaymentID"].ToString();
+                        else
+                            xPaymentID = xPaymentID + "," + Details.Rows[0]["N_PaymentID"].ToString();
 
                         string X_TypeName = Details.Rows[0]["X_TypeName"].ToString();
                     }
@@ -255,7 +255,7 @@ namespace SmartxAPI.Controllers
 
                     // string X_Condition="";
                     // string X_DueCondition="";
-                    string sql1="";
+                    string sql1 = "";
 
                     for (int j = 0; j < temp.Length; j++)
                     {
@@ -274,21 +274,22 @@ namespace SmartxAPI.Controllers
 
                     }
                     DetailTable = dLayer.ExecuteDataTable(sql1, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
 
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
 
-                     return Ok(_api.Success(dt));
+                    return Ok(_api.Success(dt));
                 }
-           }
+            }
             catch (Exception e)
             {
                 return Ok(_api.Error(e));
             }
         }
-        
+
         [HttpGet("dashboardList")]
-        public ActionResult SalaryPayList(int nCompanyId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult SalaryPayList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             //int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -297,7 +298,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
-            string Criteria ="";
+            string Criteria = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and Receipt No like '%" + xSearchkey + "%'";
@@ -323,7 +324,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria ;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -344,6 +345,38 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
+        // [HttpDelete("delete")]
+        // public ActionResult DeleteData( int nCompanyID,string X_ReceiptNo,int nAcYearID)
+        // {
+        //     int Results = 0;
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             SortedList PostingDelParam = new SortedList();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             PostingDelParam.Add("N_CompanyID", nCompanyID);
+        //             PostingDelParam.Add("X_TransType", "ESP");
+        //             PostingDelParam.Add("X_ReferenceNo", X_ReceiptNo);
+        //             PostingDelParam.Add("N_FnYearID", nAcYearID);
+        //             try
+        //             {
+        //                 dLayer.ExecuteNonQueryPro("SP_Pay_SalaryPaid_Voucher_Del", PostingDelParam, connection, transaction);
+        //             }
+        //             catch (Exception ex)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error("Unable to delete"));
+        //             }
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(ex));
+        //     }
+        // }
 
 
 
@@ -372,7 +405,7 @@ namespace SmartxAPI.Controllers
                     int nAcYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AcYearID"].ToString());
                     string X_ReceiptNo = MasterTable.Rows[0]["x_ReceiptNo"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
-                    int nLoanFlag=0;
+                    int nLoanFlag = 0;
                     // QueryParams.Add("@nCompanyID", N_CompanyID);
                     // QueryParams.Add("@nFnYearID", N_FnYearID);
                     // QueryParams.Add("@nReceiptID", N_ReceiptID);
@@ -417,27 +450,27 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID + " and X_ReceiptNo='" + X_ReceiptNo + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nAcYearID;
 
-                    nReceiptID = dLayer.SaveData("Pay_EmployeePayment", "N_ReceiptId",DupCriteria,X_Criteria, MasterTable, connection, transaction);
+                    nReceiptID = dLayer.SaveData("Pay_EmployeePayment", "N_ReceiptId", DupCriteria, X_Criteria, MasterTable, connection, transaction);
                     if (nReceiptID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
-                    
+
                     for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                     {
                         DataRow mstVar = DetailTable.Rows[i];
                         double Amount = myFunctions.getVAL(mstVar["n_Amount"].ToString());
                         if (Amount == 0)
-                        {      
+                        {
                             DetailTable.Rows[i].Delete();
                             continue;
                         }
                         if (myFunctions.getIntVAL(DetailTable.Rows[0]["n_Entryfrom"].ToString()) == 212)
-                            nLoanFlag=1;
+                            nLoanFlag = 1;
 
                         DetailTable.Rows[i]["N_ReceiptID"] = nReceiptID;
-                       
+
                     }
                     int nReceiptDetailsID = dLayer.SaveData("Pay_EmployeePaymentDetails", "N_ReceiptDetailsID", DetailTable, connection, transaction);
                     if (nReceiptDetailsID <= 0)
@@ -447,7 +480,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if(myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString())==0)
+                    if (myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString()) == 0)
                     {
                         for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                         {
@@ -468,7 +501,7 @@ namespace SmartxAPI.Controllers
                                     transaction.Rollback();
                                     return Ok(_api.Error(ex));
                                 }
-                                
+
                             }
                             else
                             {
@@ -506,7 +539,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    transaction.Commit(); 
+                    transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
             }
