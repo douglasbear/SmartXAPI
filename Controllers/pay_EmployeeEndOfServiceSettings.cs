@@ -199,7 +199,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                      Params.Add("@xServiceEndCode", xServiceEndCode);
-                    Mastersql = "select * from Pay_ServiceEnd where N_CompanyId=@nCompanyID and X_ServiceEndCode=@xServiceEndCode ";
+                    Mastersql = "select * from vw_ServiceEndSettings where N_CompanyId=@nCompanyID and X_ServiceEndCode=@xServiceEndCode ";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }

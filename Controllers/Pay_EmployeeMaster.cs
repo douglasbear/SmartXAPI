@@ -252,6 +252,17 @@ namespace SmartxAPI.Controllers
                         dRow["summeryInfo"] = summeryInfo;
 
                     }
+                    // pay_benifits = myFunctions.AddNewColumnToDataTable(pay_benifits, "summeryInfo", typeof(DataTable), null);
+                    // foreach (DataRow dRow in pay_benifits.Rows)
+                    // {
+                    //     DataTable dtNode = new DataTable();
+                    //     int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
+                    //     string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
+                    //     DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
+
+                    //     dRow["summeryInfo"] = summeryInfo;
+
+                    // }
                     pay_PaySetup.AcceptChanges();
                     pay_PaySetup = _api.Format(pay_PaySetup);
                     pay_EmpAccruls = _api.Format(pay_EmpAccruls);
@@ -488,22 +499,24 @@ namespace SmartxAPI.Controllers
                         //SAving EMPLOYEE SALARY/BENEFITS
                         int pay_PaySetupRes = 0;
                         if (dtpay_PaySetup.Rows.Count > 0)
+                        {
                             foreach (DataRow dRow in dtpay_PaySetup.Rows)
                             {
                                 dRow["N_EmpID"] = nEmpID;
                             }
-                        dtpay_PaySetup.AcceptChanges();
-                        pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
-                        if (pay_PaySetupRes > 0)
-                        {
-                            int Pay_EmployeePayHistoryRes = 0;
-                            if (dtpay_EmployeePayHistory.Rows.Count > 0)
-                                foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
-                                {
-                                    dRow["N_EmpID"] = nEmpID;
-                                }
-                            dtpay_EmployeePayHistory.AcceptChanges();
-                            Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
+                            dtpay_PaySetup.AcceptChanges();
+                            pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
+                            if (pay_PaySetupRes > 0)
+                            {
+                                int Pay_EmployeePayHistoryRes = 0;
+                                if (dtpay_EmployeePayHistory.Rows.Count > 0)
+                                    foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
+                                    {
+                                        dRow["N_EmpID"] = nEmpID;
+                                    }
+                                dtpay_EmployeePayHistory.AcceptChanges();
+                                Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
+                            }
                         }
                         int pay_EmpAccrulsRes = 0;
                         if (dtpay_EmpAccruls.Rows.Count > 0)
@@ -658,7 +671,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select N_EmploymentID,N_TypeId,B_EnableGosi,N_CompanyID,N_Months,X_Description from Pay_EmploymentType Where N_CompanyID=@nCompanyID  order by X_Description";
+            string sqlCommandText = "Select N_EmploymentID,N_TypeId,B_EnableGosi,N_CompanyID,N_Months,X_Description from Pay_EmploymentType Where N_CompanyID=@nCompanyID  order by N_EmploymentID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

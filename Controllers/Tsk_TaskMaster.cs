@@ -115,10 +115,13 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable = new DataTable();
                     DataTable DetailTable = new DataTable();
                     DataTable HistoryTable = new DataTable();
+                    DataTable CommentsTable = new DataTable();
+
 
                     string Mastersql = "";
                     string DetailSql = "";
                     string HistorySql = "";
+                    string CommentsSql="";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xTaskCode", xTaskCode);
@@ -138,6 +141,10 @@ namespace SmartxAPI.Controllers
                     HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
+                    //Comments
+                    CommentsSql="select * from vw_Tsk_TaskComments where N_ActionID=@nTaskID ";
+                    CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
+                    CommentsTable = _api.Format(CommentsTable, "Comments");
 
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
@@ -146,6 +153,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(DetailTable);
                     dt.Tables.Add(HistoryTable);
                     dt.Tables.Add(Attachments);
+                    dt.Tables.Add(CommentsTable);
 
                     return Ok(_api.Success(dt));
 
@@ -177,11 +185,12 @@ namespace SmartxAPI.Controllers
                     DataTable Attachment = ds.Tables["attachments"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
+                    SortedList Paramsforstatus = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
-                    
+
 
 
                     //int nUserID = myFunctions.GetUserID(User);
@@ -211,28 +220,35 @@ namespace SmartxAPI.Controllers
 
                         if (X_TaskCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
                         MasterTable.Rows[0]["X_TaskCode"] = X_TaskCode;
-                        //DetailTable.Rows[0]["n_CreaterID"]=myFunctions.GetUserID(User);
-
-                    }
-                    // else
-                    // {
-                    //     dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskId, "", connection, transaction);
-                    // }
-                    if(DetailTable.Rows[0]["N_AssigneeID"].ToString() !="0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() !="")
-                    {
-                    DetailTable.Columns.Remove("X_Assignee");
-                    }
-                    if(DetailTable.Rows[0]["n_ClosedUserID"].ToString() !="0" && DetailTable.Rows[0]["n_ClosedUserID"].ToString() !="")
-                    {
-                    DetailTable.Columns.Remove("x_ClosedUser");
-                    }
-                      if(DetailTable.Rows[0]["n_SubmitterID"].ToString() !="0" && DetailTable.Rows[0]["n_SubmitterID"].ToString() !="")
-                    {
-                    DetailTable.Columns.Remove("x_Submitter");
-                    }
 
 
-                    
+                    }
+
+                    if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
+                    {
+                        DetailTable.Columns.Remove("X_Assignee");
+                    }
+                    if (DetailTable.Rows[0]["n_ClosedUserID"].ToString() != "0" && DetailTable.Rows[0]["n_ClosedUserID"].ToString() != "")
+                    {
+                        DetailTable.Columns.Remove("x_ClosedUser");
+                    }
+                    if (DetailTable.Rows[0]["n_SubmitterID"].ToString() != "0" && DetailTable.Rows[0]["n_SubmitterID"].ToString() != "")
+                    {
+                        DetailTable.Columns.Remove("x_Submitter");
+                    }
+
+                    if (DetailTable.Rows[0]["N_AssigneeID"].ToString() == "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() == "")
+                    {
+                        DetailTable.Rows[0]["N_Status"] = 5;
+
+                    }
+                    else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
+                    {
+                        DetailTable.Rows[0]["N_Status"] = 1;
+                    }
+
+
+
 
 
                     nTaskId = dLayer.SaveData("Tsk_TaskMaster", "N_TaskID", MasterTable, connection, transaction);
@@ -292,24 +308,29 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
-                    string xStatus = DetailTable.Rows[0]["X_Status"].ToString();
-                    if (xStatus == "Completed")
+                    string nStatus = DetailTable.Rows[0]["N_Status"].ToString();
+
+                    if(DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString())
+                    {
+                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+
+
+                    }
+
+
+                    else if (nStatus == "3")
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
-                    else if (xStatus == "Submitted")
-                    {
-
-                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
-                    
-                    }
+                  
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
                         DetailTable.Rows[0]["N_TaskID"] = nTaskID;
                         DetailTable.Rows[0]["N_TaskStatusID"] = 0;
                     }
+                   
                     int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                     if (nTaskStatusID <= 0)
                     {
@@ -317,7 +338,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable To Save"));
                     }
 
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET X_Status='" + xStatus + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    //dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET X_Status='" + xStatus + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
@@ -350,6 +371,7 @@ namespace SmartxAPI.Controllers
                     string XTaskCode = MasterTable.Rows[0]["x_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
 
+
                     if (Attachment.Rows.Count > 0)
                     {
                         try
@@ -361,6 +383,62 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(ex));
                         }
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+        [HttpPost("updateComments")]
+        public ActionResult CommentsSave([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataTable Comments = ds.Tables["comments"];
+                    SortedList Params = new SortedList();
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nCommentsID = myFunctions.getIntVAL(Comments.Rows[0]["N_CommentsID"].ToString());
+                    int nUserID=myFunctions.GetUserID(User);
+                    string xComments = (Comments.Rows[0]["x_Comments"].ToString());
+                    Comments.Rows[0]["N_ActionID"] = MasterTable.Rows[0]["N_TaskID"].ToString();
+                    Comments.Rows[0]["N_Creator"]=nUserID;
+
+                    if (Comments.Rows.Count > 0)
+                    {
+                        nCommentsID = dLayer.SaveData("Tsk_TaskComments", "N_CommentsID", Comments, connection, transaction);
+                        if (nCommentsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable To Save"));
+                        }
+
+                    }
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                        int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                        if (nTaskStatusID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable To Save"));
+                        }
+
+
+
+
                     }
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
