@@ -17,5 +17,6 @@ namespace SmartxAPI.Dtos.Login
 		public string N_LocationID { get; set; }
 		public string I_CompanyLogo { get; set; }
         public int N_TaxType { get; set; }
+        public int N_CurrencyDecimal { get; set; }
     }
 }
