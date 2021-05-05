@@ -148,11 +148,6 @@ namespace SmartxAPI.Controllers
                     int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
-                    // bool bIsCurrent = myFunctions.getBoolVAL(MasterTable.Rows[0]["IsCurrent"].ToString());
-                    bool bIsDefault = myFunctions.getBoolVAL(MasterTable.Rows.Contains("b_DefaultBranch") ? MasterTable.Rows[0]["b_DefaultBranch"].ToString() : "0");
-                    string xPhoneNo = MasterTable.Rows.Contains("x_PhoneNo") ? MasterTable.Rows[0]["x_PhoneNo"].ToString() : "";
-                    string xaddress = MasterTable.Rows.Contains("x_Address") ? MasterTable.Rows[0]["x_Address"].ToString() : "";
-                    int nBranchIdd = MasterTable.Rows.Contains("n_BranchID") ? myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString()) : 0;
 
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
@@ -181,56 +176,31 @@ namespace SmartxAPI.Controllers
                     {
                         if (xLocationCode == "@Auto")
                         {
+                            String sql = "select N_CompanyID,0 as N_LocationID,'' as X_LocationCode,X_BranchName as X_LocationName,N_BranchID,0 as B_IsCurrent,2 as N_typeId,1 as B_IsDefault,X_Address,X_PhoneNo,0 as B_PhysicalSite,0 as N_MainLocationID from Acc_BranchMaster where N_CompanyID=@nCompanyID and N_branchID=@nBranchID";
+                            SortedList BranchParams = new SortedList();
+                            BranchParams.Add("@nCompanyID", nCompanyID);
+                            BranchParams.Add("@nBranchID", nBranchID);
+                            DataTable LocationTable = dLayer.ExecuteDataTable(sql, BranchParams, connection, transaction);
+                            if (LocationTable.Rows.Count == 0)
+                            {
+                                transaction.Rollback(); return Ok(_api.Error("Unable to Create location"));
+                            }
                             Params1.Add("N_CompanyID", nCompanyID);
                             Params1.Add("N_YearID", nFnYearID);
                             Params1.Add("N_FormID", 450);
                             xLocationCode = dLayer.GetAutoNumber("Inv_Location", "x_LocationCode", Params1, connection, transaction);
                             if (xLocationCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate location Code")); }
-                        }
-
-                        // DataTable dt = new DataTable();
-                        // dt.Clear();
-                        // dt.Columns.Add("N_LocationID");
-                        // dt.Columns.Add("N_CompanyID");
-                        // dt.Columns.Add("X_LocationCode");
-                        // dt.Columns.Add("X_LocationName");
-                        // dt.Columns.Add("N_BranchID");
-                        // dt.Columns.Add("N_TypeId");
-                        // // dt.Columns.Add("B_IsCurrent");
-                        // dt.Columns.Add("B_IsDefault");
-                        // dt.Columns.Add("X_PhoneNo");
-                        // dt.Columns.Add("X_Address");
-
-                        // DataRow row = dt.NewRow();
-                        // row["N_LocationID"] = nLocationID;
-                        // row["N_CompanyID"] = nCompanyID;
-                        // row["X_LocationCode"] = xLocationCode;
-                        // row["X_LocationName"] = xLocationName;
-                        // row["N_BranchID"] = nBranchID;
-                        // row["N_TypeId"] = 2;
-                        // // row["B_IsCurrent"] = bIsCurrent;
-                        // row["B_IsDefault"] = 1;
-                        // row["X_PhoneNo"] = xPhoneNo;
-                        // row["X_Address"] = xaddress;
-                        // dt.Rows.Add(row);
-
-                        if (nBranchIdd > 0)
-                        {
-                            Params1.Add("@nBranchIdd", nBranchIdd);
-                            dLayer.ExecuteNonQuery("insert into Inv_Location(N_CompanyID, N_BranchID, N_LocationID, X_Address, X_PhoneNo)values('nCompanyID', 'nBranchID', 'nLocationID', 'xaddress', 'xPhoneNo')", Params1, connection, transaction);
-
-                            // dLayer.ExecuteNonQuery(" Update Inv_Location Set N_BranchID=N_BranchID where  N_LocationID=@nBranchIdd and N_CompanyID=N_CompanyID", Params1, connection, transaction);
-                        }
-                        else
-                        {
-                            int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
-                            if (N_LocationID <= 0)
+                            LocationTable.Rows[0]["x_LocationCode"] = xLocationCode;
+                            LocationTable.AcceptChanges();
+                            String DupCriteria = "N_BranchID=" + nBranchID + " and X_LocationName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
+                            nLocationID = dLayer.SaveData("Inv_Location", "N_LocationID", DupCriteria, "", LocationTable, connection, transaction);
+                            if (nLocationID <= 0)
                             {
-                                transaction.Rollback();
-                                return Ok(_api.Warning("Unable to save"));
+                                transaction.Rollback(); return Ok(_api.Error("Unable to Create location"));
                             }
 
                         }
+
                         transaction.Commit();
                         return Ok(_api.Success("Branch Saved"));
                     }
