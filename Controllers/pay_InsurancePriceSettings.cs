@@ -71,6 +71,49 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetInsuranceSettingsDetails(int nFnYearID, string xInsuranceSettingsCode)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            string Mastersql="Select * from vw_InsuranceSettings Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_InsuranceSettingsCode=@p3";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3",xInsuranceSettingsCode);
+            
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+                        if (MasterTable.Rows.Count == 0)
+                        {
+                        return Ok(_api.Warning("No Data Found !!"));
+                        }
+
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        dt.Tables.Add(MasterTable);
+
+                        int N_InsuranceSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_InsuranceSettingsID"].ToString());
+
+                        string DetailSql = "select * from Pay_InsuranceSettingsDetails where N_CompanyID=@nCompanyID and N_InsuranceSettingsID=" + N_InsuranceSettingsID;
+
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dt.Tables.Add(DetailTable);
+                    }
+                    return Ok(_api.Success(dt));
+                }
+                catch (Exception e)
+                {
+                    return Ok(_api.Error(e));
+                }
+        }
+
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
