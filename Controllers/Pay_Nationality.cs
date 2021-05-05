@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nNationalityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_NationalityID"].ToString());
-
+                string xNationality = MasterTable.Rows[0]["x_Nationality"].ToString();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -57,6 +57,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
+                       
                         while (true)
                         {
                             xNationalityCode = (string)dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction);
@@ -68,10 +69,12 @@ namespace SmartxAPI.Controllers
                         if (xNationalityCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Nationality Code")); }
                         MasterTable.Rows[0]["x_NationalityCode"] = xNationalityCode;
                     }
-
+                   
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
-                    nNationalityID = dLayer.SaveData("Pay_Nationality", "n_NationalityID", MasterTable, connection, transaction);
+                    string X_Nationality= MasterTable.Rows[0]["X_Nationality"].ToString();
+                    string DupCriteria = "X_Nationality='" + X_Nationality + "'";
+                    nNationalityID = dLayer.SaveData("Pay_Nationality", "n_NationalityID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nNationalityID <= 0)
                     {
                         transaction.Rollback();
@@ -82,6 +85,9 @@ namespace SmartxAPI.Controllers
                         transaction.Commit();
                         return Ok(_api.Success("Nationality Created"));
                     }
+                        
+                   
+                    
                 }
             }
             catch (Exception ex)

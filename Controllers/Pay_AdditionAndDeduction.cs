@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
                     {
                         dt.Columns.Add("N_SaveChanges");
                         dt.Columns.Add("N_Type");
-                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Amount", typeof(float), null);
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Amount", typeof(string), null);
                     }
 
                     SortedList paytypeParam = new SortedList();
