@@ -216,13 +216,14 @@ object obj;
             }
         }
          [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID,string xSearchkey, int PageSize, int Page)
+        public ActionResult GetItems(int nCategoryID,string xSearchkey, int PageSize, int Page,int nCustomerID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string sqlCommandText = "";
+            string sqlDiscount = "";
             string sqlCommandCount = "";
             string Searchkey="";
             string categorySql="";
@@ -258,6 +259,8 @@ object obj;
             Params.Add("@p4", 1);
             Params.Add("@PSize", PageSize);
             Params.Add("@Offset", Page);
+            Params.Add("@p5", Page);
+            
             
             SortedList OutPut = new SortedList();
 
@@ -268,6 +271,19 @@ object obj;
                     connection.Open();
                     string sql = pageQry + sqlCommandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
+                    
+
+                    if(nCustomerID>0)
+                    {
+                        dt.Columns.Add("N_DiscPerc",typeof(string));
+                        foreach (DataRow var in dt.Rows)
+                        {
+                            object DiscPerc = dLayer.ExecuteScalar("select N_DiscPerc from inv_customerdiscount where N_CompanyID="+ nCompanyId +" and N_CustomerID="+ nCustomerID +" and N_ProductID=" + var["N_ItemID"] +"", connection);
+                            var["N_DiscPerc"] = DiscPerc.ToString();
+                        }               
+                    }
+
+
                     sqlCommandCount = "select count(*) from vw_InvItem_Search where N_CompanyID=@p1 and [Item Code]<>'001' and N_CategoryID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
