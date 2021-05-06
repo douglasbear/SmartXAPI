@@ -289,6 +289,58 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+//          [HttpGet("employeeDetails")]
+//         public ActionResult GetEmpDetails(int nEmpID, string xEmployeeCode, string xType, int xDepId ,int nFnYearID)
+//         {
+//             DataTable dt = new DataTable();
+//             SortedList Params = new SortedList();
+//             int nCompanyID = myFunctions.GetCompanyID(User);
+//             Params.Add("@nCompanyID", nCompanyID);
+//             Params.Add("@nFnYearID", nFnYearID);
+//             Params.Add("@xType", xType);
+//             Params.Add("@nEmpID", nEmpID);
+//             Params.Add("@xEmployeeCode", xEmployeeCode);
+//             Params.Add("@xDepId", xDepId);
+          
+//             string sqlCommandText = "";
+//             if (xType =="EMP" )
+//             {
+//                 sqlCommandText = "select * from vw_MedicalInsuranceAdditionEmp where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and X_EmpCode =@xEmployeeCode  ";
+//                 object InsAmt = dba.ExecuteSclar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + EmployeeClass + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_EmpInsClassID"].ToString()) + "", "TEXT", new DataTable());
+//                  object InsCost = dba.ExecuteSclar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + EmployeeClass + "' and EmpType=171and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_EmpInsClassID"].ToString()) + "", "TEXT", new DataTable());
+//              object date = dba.ExecuteSclar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID = " + myCompanyID._CompanyID + "", "TEXT", new DataTable());
+//             }
+//             else if (xType == "DEP")
+//             {
+//                 sqlCommandText = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and  N_DependenceID==@xDepId  ";
+//                 object InsAmt = dba.ExecuteSclar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + DependentClass + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_DepInsClassID"].ToString()) + "", "TEXT", new DataTable());
+//                  object InsCost = dba.ExecuteSclar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + DependentClass + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_DepInsClassID"].ToString()) + "", "TEXT", new DataTable());
+//             object date = dba.ExecuteSclar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID = " + myCompanyID._CompanyID + "", "TEXT", new DataTable());
+//             }
+//            try
+//             {
+//                 using (SqlConnection connection = new SqlConnection(connectionString))
+//                 {
+//                     connection.Open();
+//                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+//                 }
+//                 if (dt.Rows.Count == 0)
+//                 {
+//                     return Ok(_api.Notice("No Results Found"));
+//                 }
+//                 else
+//                 {
+//                     return Ok(_api.Success(dt));
+//                 }
+//             }
+//             catch (Exception e)
+//             {
+//                 return Ok(_api.Error(e));
+//             }
+//         }
+// // 
+
+
 
 
 
