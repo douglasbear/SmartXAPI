@@ -84,6 +84,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "csv": id=80;
                 break;
+                case "insurancetype": id=49;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
