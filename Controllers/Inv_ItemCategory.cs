@@ -129,11 +129,13 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
                     MasterTable.Columns.Remove("b_IsParent");
-                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", MasterTable, connection, transaction);
+                     string X_Category= MasterTable.Rows[0]["X_Category"].ToString();
+                      string DupCriteria = "X_Category='" + X_Category + "'";
+                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID",DupCriteria,"", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Error("Unable to save"));
+                        return Ok( _api.Error("Unable to save...Category Name Exists"));
                     }
                     else
                     {
@@ -152,13 +154,21 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCategoryID)
         {
             int Results = 0;
+          
             try
             {
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                 object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
-                
+                object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
+                     int Obcount = myFunctions.getIntVAL(Objcount.ToString());
+                    if (Obcount != 0)
+                    {
+                       
+                             return Ok(_api.Error("Unable to Delete.Product category Allready Used"));
+                        }
+                    
                 Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "",connection);
                 if (Results > 0)
                 {
