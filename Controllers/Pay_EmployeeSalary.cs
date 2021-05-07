@@ -173,7 +173,7 @@ namespace SmartxAPI.Controllers
 
                         int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
 
-                        string DetailSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=@nCompanyID and N_GradeID=" + N_GradeID;
+                        string DetailSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID;
 
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                         DetailTable = _api.Format(DetailTable, "Details");

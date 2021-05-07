@@ -35,13 +35,22 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetInsurancePriceSettingsList(int nFnYearID)
+        public ActionResult GetInsurancePriceSettingsList(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_InsuranceSettingsCode like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_InsuranceSettingsID desc";
+            else
+                xSortBy = " order by " + xSortBy;
 
             string sqlCommandText = " Select * from vw_InsuranceSettings Where N_CompanyID=@p1 and N_FnYearID=@p2 order by N_InsuranceSettingsID";
 
@@ -53,22 +62,70 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    string sqlCommandCount = "select count(*) as N_Count from vw_InsuranceSettings where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                     
-                    dt=_api.Format(dt);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Success(dt));
-                    }
+                }
+                dt=_api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(OutPut));
                 }
             }
             catch (Exception e)
             {
                 return Ok(_api.Error(e));
             }
+        }
+
+        [HttpGet("details")]
+        public ActionResult GetInsuranceSettingsDetails(int nFnYearID, string xInsuranceSettingsCode)
+        {
+            DataSet dt=new DataSet();
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            string Mastersql="Select * from vw_InsuranceSettings Where N_CompanyID=@p1 and N_FnYearID=@p2 and X_InsuranceSettingsCode=@p3";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3",xInsuranceSettingsCode);
+            
+            try{
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
+
+                        if (MasterTable.Rows.Count == 0)
+                        {
+                        return Ok(_api.Warning("No Data Found !!"));
+                        }
+
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        dt.Tables.Add(MasterTable);
+
+                        int N_InsuranceSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_InsuranceSettingsID"].ToString());
+
+                        string DetailSql = "select * from Pay_InsuranceSettingsDetails where N_CompanyID=" + nCompanyID + " and N_InsuranceSettingsID=" + N_InsuranceSettingsID;
+
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dt.Tables.Add(DetailTable);
+                    }
+                    return Ok(_api.Success(dt));
+                }
+                catch (Exception e)
+                {
+                    return Ok(_api.Error(e));
+                }
         }
 
         [HttpPost("save")]
