@@ -621,6 +621,8 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
+
+                    MasterTable.Rows[0]["N_VacTypeID"] =DetailTable.Rows[0]["N_VacTypeID"];
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);

@@ -218,28 +218,6 @@ namespace SmartxAPI.Controllers
         }
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {

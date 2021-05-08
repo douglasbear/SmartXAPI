@@ -72,6 +72,8 @@ namespace SmartxAPI.Dtos.SP
         public string X_SalesmanCode { get; set; }
         [NotMapped]
         public string X_SalesmanName { get; set; }
+        [NotMapped]
+        public int N_CurrencyDecimal { get; set; }
 
 
     }
