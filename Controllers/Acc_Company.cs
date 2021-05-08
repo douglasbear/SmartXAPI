@@ -155,7 +155,10 @@ namespace SmartxAPI.Controllers
                 DataTable GeneralTable;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
-
+                string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
+                string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
+                
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -170,6 +173,16 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
+                      Params.Add("@p1", xUserName);
+                      Params.Add("@p2", xPassword);
+                      object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
+                      
+                     int Obcount = myFunctions.getIntVAL(count.ToString());
+                    if (Obcount == 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Warning("Unable to save.Password Mismatch"));
+                     }
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
                     string footer = myFunctions.ContainColumn("i_Footer", MasterTable) ? MasterTable.Rows[0]["i_Footer"].ToString() : "";
                     string header = myFunctions.ContainColumn("i_Header", MasterTable) ? MasterTable.Rows[0]["i_Header"].ToString() : "";
@@ -189,6 +202,9 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.ContainColumn("i_Header", MasterTable))
                         MasterTable.Columns.Remove("i_Header");
                     MasterTable.AcceptChanges();
+
+                    //object paswd=myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())
+                    
 
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
