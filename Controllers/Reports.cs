@@ -300,7 +300,7 @@ namespace SmartxAPI.Controllers
                         else if (xCriteria == "all")
                         {
                             RPTLocation = reportLocation + "printing/quotation/vat/";
-                             ReportName = "Shift_Schedule";
+                            ReportName = "Shift_Schedule";
 
 
 
@@ -453,7 +453,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (nFormID == 46)
                     {
-                         critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
+                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
                         TableName = "vw_AccVoucherJrnlCC";
 
                         RPTLocation = reportLocation + "printing/";
@@ -478,7 +478,98 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(e));
             }
+
         }
+
+       [HttpGet("shiftSchedulePrint")]
+        public IActionResult GetshiftSchedulePrint(int nFormID, DateTime dPeriodFrom, DateTime dPeriodTo, int nFnYearID, string xCriteria, int nDepartmentID)
+        {
+            string RPTLocation = reportLocation;
+            string ReportName = "";
+            string critiria = "";
+            var random = RandomString();
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    QueryParams.Add("@p1", nCompanyId);
+                    QueryParams.Add("@p3", nFnYearID);
+
+
+                    string TableName = "";
+                    var handler = new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                    };
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@p1 and Acc_FnYear.N_FnYearID=@p3", QueryParams, connection, transaction);
+                    string TaxType = ObjPath + "/";
+
+
+                    if (nFormID == 1260)
+                    {
+                        if (xCriteria == "department")
+                        {
+                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>='" +Convert.ToDateTime(dPeriodFrom.ToString()) + "' and {vw_Pay_Empshiftdetails.D_PeriodTo}<='" + Convert.ToDateTime(dPeriodTo.ToString()) + "' and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
+                            TableName = "vw_Pay_Empshiftdetails";
+
+
+                            RPTLocation = reportLocation + "printing";
+                            ReportName = "Employee_ShiftSchedule";
+
+
+                        }
+                        else if (xCriteria == "all")
+                        {
+                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>='" + Convert.ToDateTime(dPeriodFrom.ToString()) + "' and {vw_Pay_Empshiftdetails.D_PeriodTo}<='" +Convert.ToDateTime(dPeriodTo.ToString()) + "'";
+                            TableName = "vw_Pay_Empshiftdetails";
+
+
+                            RPTLocation = reportLocation + "printing/"; 
+                            ReportName = "Employee_ShiftSchedule";
+
+
+
+                        }
+                        var client = new HttpClient(handler);
+                        var dbName = connection.Database;
+                        
+                        if (TableName != "" && critiria != "")
+                        {
+                            critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
+                        }
+                        string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=";
+                        var path = client.GetAsync(URL);
+                        path.Wait();
+                        
+                    }
+                    return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
         [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
