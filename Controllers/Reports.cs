@@ -310,7 +310,7 @@ namespace SmartxAPI.Controllers
 
 
                     }
-                    if (nFormID == 81)
+                    if (nFormID == 1260)
                     {
                         critiria = "{vw_InvSalesOrderDetails.N_SalesOrderId}=" + nPkeyID;
                         TableName = "vw_InvSalesOrderDetails";
