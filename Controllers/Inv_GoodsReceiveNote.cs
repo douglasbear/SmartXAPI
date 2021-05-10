@@ -167,6 +167,35 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("fillfreight")]
+        public ActionResult fillMRNFreight(int nCompanyId, int nFnYearId,int nMrnId)
+        {
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            DataTable dtFreightList = new DataTable();
+
+            Params.Add("@CompanyID", nCompanyId);
+            Params.Add("@YearID", nFnYearId);
+            Params.Add("@MRNID", nMrnId);
+            string x_SqlQurery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    x_SqlQurery = "select * from vw_InvMRNFreights where N_CompanyID = @CompanyID and N_FnYearID = @YearID and N_MRNID = @MRNID";
+                    dtFreightList = dLayer.ExecuteDataTable(x_SqlQurery, Params, connection);
+                    if (dtFreightList.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                    dtFreightList = _api.Format(dtFreightList, "Master"); 
+                    dt.Tables.Add(dtFreightList);
+                }
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
         // private SortedList StatusSetup(int nSalesID, int nFnYearID, SqlConnection connection)
         // {
