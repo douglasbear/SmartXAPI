@@ -142,17 +142,18 @@ namespace SmartxAPI.Controllers
     //                 SqlTransaction transaction;
     //                 transaction = connection.BeginTransaction();
 
-    //               int n_LedgerID = myFunctions.getIntVAL(Detailss["n_LedgerID"].ToString());
-    //                int N_FnYearID = myFunctions.getIntVAL(Detailss["n_FnYearID"].ToString());
+    //                 int n_LedgerID = myFunctions.getIntVAL(Detailss["n_LedgerID"].ToString());
+    //                 int N_FnYearID = myFunctions.getIntVAL(Detailss["n_FnYearID"].ToString());
     //                 int N_CompanyID = myFunctions.getIntVAL(Detailss["n_CompanyID"].ToString());
     //                 int  N_CashBahavID  = myFunctions.getIntVAL(Detailss["N_CashBahavID"].ToString());
     //                 int  N_TransBehavID  = myFunctions.getIntVAL(Detailss["N_TransBehavID"].ToString());
     //                 int  N_PostingBehavID  = myFunctions.getIntVAL(Detailss["N_PostingBehavID"].ToString());
-    //                SortedList QueryParamsList = new SortedList();
-    //                  QueryParams.Add("@nCompanyID", N_CompanyID);
+                    
+    //                 SortedList QueryParamsList = new SortedList();
+    //                 QueryParams.Add("@nCompanyID", N_CompanyID);
     //                 QueryParams.Add("@nFnYearID", N_FnYearID);
     //                 QueryParams.Add("@nLedgerID",n_LedgerID);
-    //                  QueryParams.Add("@nCashBahavID", N_CashBahavID);
+    //                 QueryParams.Add("@nCashBahavID", N_CashBahavID);
     //                 QueryParams.Add("@nTransBehavID", N_TransBehavID);
     //                 QueryParams.Add("@nPostingBehavID",N_PostingBehavID);
                     
