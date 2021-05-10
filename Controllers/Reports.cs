@@ -250,7 +250,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID, string xCriteria)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID)
         {
             string RPTLocation = reportLocation;
             string ReportName = "";
@@ -287,28 +287,6 @@ namespace SmartxAPI.Controllers
                         }
                         else
                             ReportName = "Sales_Quatation";
-                    }
-                    if (nFormID == 1260)
-                    {
-                        if (xCriteria == "department")
-                        {
-                            RPTLocation = reportLocation + "printing/EmployeeShiftSchedule";
-                            ReportName = "Shift_Schedule.rpt";
-
-
-                        }
-                        else if (xCriteria == "all")
-                        {
-                            RPTLocation = reportLocation + "printing/quotation/vat/";
-                            ReportName = "Shift_Schedule";
-
-
-
-                        }
-
-
-
-
                     }
                     if (nFormID == 81)
                     {
@@ -515,7 +493,8 @@ namespace SmartxAPI.Controllers
                     {
                         if (xCriteria == "department")
                         {
-                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>='" +Convert.ToDateTime(dPeriodFrom.ToString()) + "' and {vw_Pay_Empshiftdetails.D_PeriodTo}<='" + Convert.ToDateTime(dPeriodTo.ToString()) + "' and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
+                            
+                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "') and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
                             TableName = "vw_Pay_Empshiftdetails";
 
 
@@ -526,7 +505,7 @@ namespace SmartxAPI.Controllers
                         }
                         else if (xCriteria == "all")
                         {
-                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>='" + Convert.ToDateTime(dPeriodFrom.ToString()) + "' and {vw_Pay_Empshiftdetails.D_PeriodTo}<='" +Convert.ToDateTime(dPeriodTo.ToString()) + "'";
+                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "')";
                             TableName = "vw_Pay_Empshiftdetails";
 
 
