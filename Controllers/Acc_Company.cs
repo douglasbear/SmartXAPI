@@ -65,6 +65,8 @@ namespace SmartxAPI.Controllers
 
         }
 
+       
+
         [HttpGet("details")]
         public ActionResult GetCompanyInfo(int nCompanyID,int nFnYearID)
         {

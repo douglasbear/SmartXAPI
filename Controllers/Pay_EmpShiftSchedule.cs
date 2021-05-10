@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
             string s = day1.DayOfWeek.ToString();
             string sqlCommandText = "";
 
-            sqlCommandText = "select D_In1,D_Out2 from Pay_WorkingHours where N_CatagoryID=@p1 and X_Day='" + day1.DayOfWeek.ToString() + "'";
+            sqlCommandText = "select D_In1,D_Out1 from Pay_WorkingHours where N_CatagoryID=@p1 and X_Day='" + day1.DayOfWeek.ToString() + "'";
 
             try
             {
@@ -216,28 +216,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         [HttpPost("save")]
