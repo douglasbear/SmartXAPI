@@ -304,7 +304,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and Receipt No like '%" + xSearchkey + "%'";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ReceiptID asc";
+                xSortBy = " order by N_ReceiptID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -476,7 +476,7 @@ namespace SmartxAPI.Controllers
                     if (nReceiptDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error("Pay not selected"));
                     }
 
 
