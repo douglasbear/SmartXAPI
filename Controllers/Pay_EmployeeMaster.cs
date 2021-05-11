@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetEmployeeDetails(string xEmpCode, int nFnYearID, bool bAllBranchData, int nBranchID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable Pay_Employee, Pay_EmpAddlInfo, pay_EmployeeDependence, pay_EmployeeAlerts, acc_OtherInformation, pay_EmpAccruls, pay_EmployeePayHistory, pay_PaySetup, pay_EmployeeSub, pay_Getsalary, 
+            DataTable Pay_Employee, pay_EmpAddlInfo, pay_EmployeeDependence, pay_EmployeeAlerts, acc_OtherInformation, pay_EmpAccruls, pay_EmployeeSub, pay_Getsalary, 
             pay_EmployeeEducation,pay_EmploymentHistory;
             SortedList Result = new SortedList();
             SortedList Params = new SortedList();
@@ -182,6 +182,8 @@ namespace SmartxAPI.Controllers
             string empDepedenceSql = "Select * from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID    Where Pay_EmployeeDependence.N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
             string empEducationSql  = "Select * from Pay_EmployeeEducation where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
             string employementHistorySql = "Select * from Pay_EmploymentHistory where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+            string empAddlInfoSql = "Select * from vw_EmpAddlInfo where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID";
+            string empAlertSql = "Select * from Pay_EmployeeAlerts where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -203,7 +205,8 @@ namespace SmartxAPI.Controllers
                         pay_EmployeeDependence =  dLayer.ExecuteDataTable(empDepedenceSql, Params, connection);
                         pay_EmployeeEducation=  dLayer.ExecuteDataTable(empEducationSql, Params, connection);
                         pay_EmploymentHistory =  dLayer.ExecuteDataTable(employementHistorySql, Params, connection);
-
+                        pay_EmpAddlInfo = dLayer.ExecuteDataTable(empAddlInfoSql, Params, connection);
+                        pay_EmployeeAlerts = dLayer.ExecuteDataTable(empAlertSql, Params, connection);
 
                         Result.Add("pay_Employee", Pay_Employee);
                         Result.Add("pay_EmployeeSub", pay_EmployeeSub);
@@ -212,6 +215,10 @@ namespace SmartxAPI.Controllers
                         Result.Add("pay_EmployeeDependence", pay_EmployeeDependence);
                         Result.Add("pay_EmployeeEducation", pay_EmployeeEducation);
                         Result.Add("pay_EmploymentHistory", pay_EmploymentHistory);
+                        Result.Add("pay_EmpAddlInfo", pay_EmpAddlInfo);
+                        Result.Add("pay_EmployeeAlerts", pay_EmployeeAlerts);
+
+
 
                         return Ok(_api.Success(Result));
                     }
