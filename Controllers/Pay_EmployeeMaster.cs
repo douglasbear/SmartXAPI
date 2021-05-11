@@ -381,7 +381,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log, dtInv_Salesman, dtVeh_Drivers, dtSch_Teacher, dtPay_EmployeeEducation, dtPay_EmploymentHistory,dtSec_User;
+                DataTable dtMasterTable, dtPay_EmpAddlInfo, dtpay_EmployeeDependence, dtpay_EmployeeAlerts, dtacc_OtherInformation, dtpay_EmpAccruls, dtpay_EmployeePayHistory, dtpay_PaySetup, dtpay_EmployeeSub, dtPay_Employee_Log, dtInv_Salesman, dtVeh_Drivers, dtSch_Teacher, dtPay_EmployeeEducation, dtPay_EmploymentHistory;//,dtSec_User;
                 // if(ds.Tables.Contains("pay_Employee"))
                 dtMasterTable = ds.Tables["pay_Employee"];
                 // if(ds.Tables.Contains("pay_EmpAddlInfo"))
@@ -406,7 +406,7 @@ namespace SmartxAPI.Controllers
                 dtSch_Teacher = ds.Tables["Sch_Teacher"];
                 dtPay_EmployeeEducation = ds.Tables["Pay_EmployeeEducation"];
                 dtPay_EmploymentHistory = ds.Tables["Pay_EmploymentHistory"];
-                dtSec_User = ds.Tables["Sec_User"];
+                //dtSec_User = ds.Tables["Sec_User"];
 
 
                 int nCompanyID = myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -637,36 +637,36 @@ namespace SmartxAPI.Controllers
                         dtPay_EmploymentHistory.AcceptChanges();
                         Pay_EmploymentHistoryRes = dLayer.SaveData("Pay_EmploymentHistory", "N_JobID", dtPay_EmploymentHistory, connection, transaction);
 
-                        //User Information Save
-                        int n_UserID = 0 ;
-                        int n_UserCategoryID = myFunctions.getIntVAL(dtSec_User.Rows[0]["n_UserCategoryID"].ToString());
-                        int n_LoginFlag = myFunctions.getIntVAL(dtSec_User.Rows[0]["n_LoginFlag"].ToString());
-                        string x_UserCategoryIDList = dtSec_User.Rows[0]["x_UserCategoryIDList"].ToString();
-                        bool b_EnableApplicationLogin = myFunctions.getIntVAL(dtSec_User.Rows[0]["b_EnableApplicationLogin"].ToString()) == 1 ? true : false;
-                        bool b_EnablePortalLogin = myFunctions.getIntVAL(dtSec_User.Rows[0]["b_EnablePortalLogin"].ToString()) == 1 ? true : false;
-                        bool b_UserActive = myFunctions.getIntVAL(dtSec_User.Rows[0]["b_Active"].ToString()) == 1 ? true : false;
+                        // //User Information Save
+                        // int n_UserID = 0 ;
+                        // int n_UserCategoryID = myFunctions.getIntVAL(dtSec_User.Rows[0]["n_UserCategoryID"].ToString());
+                        // int n_LoginFlag = myFunctions.getIntVAL(dtSec_User.Rows[0]["n_LoginFlag"].ToString());
+                        // string x_UserCategoryIDList = dtSec_User.Rows[0]["x_UserCategoryIDList"].ToString();
+                        // bool b_EnableApplicationLogin = myFunctions.getIntVAL(dtSec_User.Rows[0]["b_EnableApplicationLogin"].ToString()) == 1 ? true : false;
+                        // bool b_EnablePortalLogin = myFunctions.getIntVAL(dtSec_User.Rows[0]["b_EnablePortalLogin"].ToString()) == 1 ? true : false;
+                        // bool b_UserActive = myFunctions.getIntVAL(dtSec_User.Rows[0]["b_Active"].ToString()) == 1 ? true : false;
 
-                        if(dtSec_User.Rows.Count > 0){
-                        object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_EmpID=" + nEmpID, connection, transaction);                        
-                        if (objUser != null)
-                            n_UserID = myFunctions.getIntVAL(objUser.ToString());
-                        else{
-                            object objEmpUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + xEmpCode  + "'  and N_EmpID is null", connection, transaction);                       
-                            if (objEmpUser != null)
-                                n_UserID = myFunctions.getIntVAL(objEmpUser.ToString());
-                            else
-                                n_UserID = 0;
-                        }
-                        if(n_UserID == 0) {
-                            n_UserID = dLayer.SaveData("Sec_User", "N_UserID", dtSec_User, connection, transaction);
-                        }
-                        else {
-                            dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",N_UserCategoryID=" + n_UserCategoryID + ",N_LoginFlag=" + n_LoginFlag + ",X_UserCategoryList=" + x_UserCategoryIDList + " where N_UserID=" + n_UserID + " and N_CompanyID= " + nCompanyID, Params, connection, transaction);
-                        }
-                        }
-                        else{
-                            dLayer.ExecuteNonQuery("update  Sec_User set N_LoginFlag=" + n_LoginFlag + ",B_Active= 0 where N_UserID=" + n_UserID + " and N_CompanyID= " + nCompanyID, Params, connection, transaction);
-                        }
+                        // if(dtSec_User.Rows.Count > 0){
+                        // object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_EmpID=" + nEmpID, connection, transaction);                        
+                        // if (objUser != null)
+                        //     n_UserID = myFunctions.getIntVAL(objUser.ToString());
+                        // else{
+                        //     object objEmpUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + xEmpCode  + "'  and N_EmpID is null", connection, transaction);                       
+                        //     if (objEmpUser != null)
+                        //         n_UserID = myFunctions.getIntVAL(objEmpUser.ToString());
+                        //     else
+                        //         n_UserID = 0;
+                        // }
+                        // if(n_UserID == 0) {
+                        //     n_UserID = dLayer.SaveData("Sec_User", "N_UserID", dtSec_User, connection, transaction);
+                        // }
+                        // else {
+                        //     dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",N_UserCategoryID=" + n_UserCategoryID + ",N_LoginFlag=" + n_LoginFlag + ",X_UserCategoryList=" + x_UserCategoryIDList + " where N_UserID=" + n_UserID + " and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                        // }
+                        // }
+                        // else{
+                        //     dLayer.ExecuteNonQuery("update  Sec_User set N_LoginFlag=" + n_LoginFlag + ",B_Active= 0 where N_UserID=" + n_UserID + " and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                        // }
 
                         transaction.Commit();
                         return Ok(value: _api.Success("Employee Information Saved"));
