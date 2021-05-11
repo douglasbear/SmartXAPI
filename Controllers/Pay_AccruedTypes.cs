@@ -255,11 +255,13 @@ namespace SmartxAPI.Controllers
                     int n_VacTypeID = myFunctions.getIntVAL(MasterRow["N_VacTypeID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                   
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
                     if (n_VacTypeID > 0)
                     {
+                         string N_StartType =(MasterRow["N_StartType"].ToString());
                         object objVacationStarted;
-                         MasterTable.Columns.Remove("n_FnYearId");
+                        MasterTable.Columns.Remove("n_FnYearId");
 
                         objVacationStarted = dLayer.ExecuteScalar("select 1 FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                         if (objVacationStarted != null)
@@ -269,9 +271,54 @@ namespace SmartxAPI.Controllers
 
 
                         }
+                       
+                        
+                        dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
+                        dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="M";
+
+                        }
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="Y";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="None")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="N";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="One Time")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="O";
+                            
+                        }
+                          if(MasterTable.Rows[0]["X_Type"].ToString()=="Leave")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="B";
+
+                        }
+                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Tickets")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="T";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Allowance")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="A";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Exit Re-Entry")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="E";
+                            
+                        }
+                       
+
+                        
                     }
-
-
                     if (x_VacCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -286,7 +333,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }
-                  
+
 
                     n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", "", "", MasterTable, connection, transaction);
                     if (n_VacTypeID <= 0)
