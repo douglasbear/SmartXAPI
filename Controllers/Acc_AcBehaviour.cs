@@ -97,117 +97,104 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("details")]
-        public ActionResult GetAccBehaviourDetails(int nFnYearID)
-        {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Acc_VoucherMaster left outer join Acc_MastLedger on Acc_VoucherMaster.N_DefLedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster.N_FnYearID=Acc_MastLedger.N_FnYearID and Acc_VoucherMaster.N_CompanyID=Acc_MastLedger.N_CompanyID Where Acc_VoucherMaster.N_CompanyID=@p1 and Acc_VoucherMaster.N_FnYearID=@p2 Order By N_VoucherID";
-            Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",nFnYearID);
-            try{
+        // [HttpGet("details")]
+        // public ActionResult GetAccBehaviourDetails(int nFnYearID)
+        // {
+        //     DataTable dt=new DataTable();
+        //     DataTable DetailTable;
+        //     DetailTable = ds.Tables["details"];
+        //     SortedList Params=new SortedList();
+        //     int SLNo = 1;
+        //     DetailTable.Rows = SLNo;
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     string sqlCommandText="select * from Acc_VoucherMaster left outer join Acc_MastLedger on Acc_VoucherMaster.N_DefLedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster.N_FnYearID=Acc_MastLedger.N_FnYearID and Acc_VoucherMaster.N_CompanyID=Acc_MastLedger.N_CompanyID Where Acc_VoucherMaster.N_CompanyID=@p1 and Acc_VoucherMaster.N_FnYearID=@p2 Order By N_VoucherID";
+        //     Params.Add("@p1",nCompanyID);
+        //     Params.Add("@p2",nFnYearID);
+        //     Params.Add("@p3",nGroupID);
+        //     if (dsTransaction.Tables.Contains("Acc_MastLedger"))
+        //         dsTransaction.Tables.Remove("Acc_MastLedger");
+        //     if(nGroupID !=0)
+        //     {
+        //         sqlCommandText="Select * from Acc_MastLedger  where (Isnull(X_CashTypeBehaviour,'') <> '' or Isnull(N_TransBehavID,0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and N_GroupID=@p3 and Acc_MastLedger.N_FnYearID=@p2 order  by X_LedgerName asc";
+        //     }
+        //     else{
+        //         sqlCommandText="Select * from Acc_MastLedger  where (Isnull(X_CashTypeBehaviour,'') <> '' or Isnull(N_TransBehavID,0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2 order  by X_LedgerName asc";
+        //     }
+
+        //     try{
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //             {
+        //                 connection.Open();
+        //                 dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+        //             }
+        //             if(dt.Rows.Count==0)
+        //                 {
+        //                     return Ok(_api.Notice("No Results Found" ));
+        //                 }else{
+        //                     return Ok(_api.Success(dt));
+        //                 }
+        //     }catch(Exception e){
+        //         return Ok(_api.Error(e));
+        //     }
+        // }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    object Result = 0;
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable DetailTable;
+                    DetailTable = ds.Tables["details"];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_CompanyID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearID"].ToString());
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+
+                    for (int i = 1; i <= DetailTable.Rows.Count; i++)
                     {
-                        connection.Open();
-                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
-                    }
-                    if(dt.Rows.Count==0)
+                        int nLedgerID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_LedgerID"].ToString());
+                        int nCashBahavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_CashBahavID"].ToString());
+                        int nTransBehavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_TransBehavID"].ToString());
+                        string xCashTypeBehaviour = DetailTable.Rows[i-1]["x_CashTypeBehaviour"].ToString();
+                        string isDeleted = DetailTable.Rows[i-1]["isDeleted"].ToString();
+
+                        if (isDeleted == "False")
                         {
-                            return Ok(_api.Notice("No Results Found" ));
-                        }else{
-                            return Ok(_api.Success(dt));
+                            dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '',N_CashBahavID=0,N_TransBehavID=0 Where N_LedgerID= " + nLedgerID + " And N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
                         }
-            }catch(Exception e){
-                return Ok(_api.Error(e));
+                        else
+                        {
+                            dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '" + xCashTypeBehaviour + "',N_CashBahavID=" + nCashBahavID + ",N_TransBehavID=" + nTransBehavID + " where N_LedgerID= " + nLedgerID + " and N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
+                        }
+                        DetailTable.Columns.Remove("isDeleted");
+                    }
+                    if (DetailTable.Rows.Count < 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+                    else {
+                        transaction.Commit();
+                        return Ok(_api.Success("Account Behaviour Saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
         }
      
-     
-    //   [HttpPost("Save")]
-    //     public ActionResult SaveData([FromBody] DataSet ds)
-    //     {
-    //         try
-    //         {
-    //              DataTable DetailTable;
-    //              DetailTable = ds.Tables["details"];
-    //              SortedList Params = new SortedList();
-    //              SortedList QueryParams = new SortedList();
-                 
 
-    //              using (SqlConnection connection = new SqlConnection(connectionString))
-    //             {
-    //                 connection.Open();
-    //                 DataRow Detailss = DetailTable.Rows[0];
-    //                 SqlTransaction transaction;
-    //                 transaction = connection.BeginTransaction();
-
-    //                 int n_LedgerID = myFunctions.getIntVAL(Detailss["n_LedgerID"].ToString());
-    //                 int N_FnYearID = myFunctions.getIntVAL(Detailss["n_FnYearID"].ToString());
-    //                 int N_CompanyID = myFunctions.getIntVAL(Detailss["n_CompanyID"].ToString());
-    //                 int  N_CashBahavID  = myFunctions.getIntVAL(Detailss["N_CashBahavID"].ToString());
-    //                 int  N_TransBehavID  = myFunctions.getIntVAL(Detailss["N_TransBehavID"].ToString());
-    //                 int  N_PostingBehavID  = myFunctions.getIntVAL(Detailss["N_PostingBehavID"].ToString());
-                    
-    //                 SortedList QueryParamsList = new SortedList();
-    //                 QueryParams.Add("@nCompanyID", N_CompanyID);
-    //                 QueryParams.Add("@nFnYearID", N_FnYearID);
-    //                 QueryParams.Add("@nLedgerID",n_LedgerID);
-    //                 QueryParams.Add("@nCashBahavID", N_CashBahavID);
-    //                 QueryParams.Add("@nTransBehavID", N_TransBehavID);
-    //                 QueryParams.Add("@nPostingBehavID",N_PostingBehavID);
-                    
-                   
-                    
-    //                  for (int j = 0; j < DetailTable.Rows.Count; j++)
-    //                     {
-    //                          //dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '',N_CashBahavID=0,N_TransBehavID=0 Where N_LedgerID= @nLedgerID And N_CompanyID = @nCompanyID and N_FnYearID=@nFnYearID",Params,connection, transaction);
-                        
-    //                     // int  N_CashBahavID, N_TransBehavID, N_PostingBehavID;
-    //                      string x_behaviour="",x_Dr="";
-    //                      x_behaviour=DetailTable.Rows[j]["x_behaviour"];
-    //                      DetailTable.Rows[j]["N_LedgerBehaviourID"];
-                         
-
-    //                      if(DetailTable.Rows[j]["N_LedgerBehaviourID"]==0)
-    //                         N_CashBahavID=0;
-    //                     else
-    //                         N_CashBahavID =myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT N_LedgerBehaviourID FROM Acc_LedgerBehaviour where  X_Description="+x_behaviour,Params,connection, transaction));
-    //                     if (x_Dr == "")
-    //                         N_TransBehavID = 0;
-    //                     else
-    //                     N_TransBehavID = myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT N_LedgerBehaviourID FROM Acc_LedgerBehaviour where X_Description="+x_behaviour,Params,connection, transaction));
-
-    //                     if (flxPayTransactions.get_TextMatrix(i, mcBehaviour) == "")
-    //                         X_CashTypeBehaviour = "";
-    //                     else
-    //                         X_CashTypeBehaviour = dLayer.ExecuteSclar("SELECT  X_Description FROM Acc_LedgerBehaviour where  N_LedgerBehaviourID=" + N_CashBahavID, "TEXT", new DataTable()).ToString();
-    //                         dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '" + X_CashTypeBehaviour + "',N_CashBahavID=" + N_CashBahavID + ",N_TransBehavID=" + N_TransBehavID + " Where N_LedgerID= " + myFunctions.getIntVAL(flxPayTransactions.get_TextMatrix(i, mcLedgerID)).ToString() + " And N_CompanyID = " + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, "TEXT", new DataTable());
-                    
-    //                     }
-    //                     transaction.Commit();
-
-    //               //  return Ok(_api.Success(Result, " Employee Evaluation Created"));
-    //             }
-            
-        
-    //         }
-    //       catch (Exception ex)
-    //         {
-    //             return Ok(_api.Error(ex));
-    //         }
-        
-    //         }
         }
-        }
-
-            
-        
-    
-
-
-
-        
+    }
        
 
     
