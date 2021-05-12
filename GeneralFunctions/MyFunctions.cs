@@ -1,3 +1,14 @@
+// using Microsoft.AspNetCore.Mvc;
+// using Microsoft.AspNetCore.Authorization;
+// using Microsoft.AspNetCore.Authentication.JwtBearer;
+// using System;
+// using SmartxAPI.GeneralFunctions;
+// using System.Data;
+// using System.Collections;
+// using Microsoft.Extensions.Configuration;
+// using Microsoft.Data.SqlClient;
+// using System.Collections.Generic;
+
 using System;
 using System.Collections;
 using System.Data;
@@ -293,6 +304,19 @@ namespace SmartxAPI.GeneralFunctions
             DateTime.TryParseExact(val, sysFormat.ShortDatePattern, CultureInfo.CurrentCulture, DateTimeStyles.None, out dt);
 
             return dt;
+        }
+
+        public bool CheckClosedYear(int nCompanyID,int nFnYearID,IDataAccessLayer dLayer, SqlConnection connection)
+        {
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+
+            bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@nCompanyID and N_FnYearID = @nFnYearID", Params, connection));
+            if (CheckClosedYear)
+                return true;
+            else
+                return false;
         }
 
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection)
@@ -1308,6 +1332,6 @@ public bool ContainColumn(string columnName, DataTable table)
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
-
+        public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }

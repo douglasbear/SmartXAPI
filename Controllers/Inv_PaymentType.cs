@@ -97,6 +97,12 @@ namespace SmartxAPI.Controllers
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
+                    string Image = myFunctions.ContainColumn("i_Image", MasterTable) ? MasterTable.Rows[0]["i_Image"].ToString() : "";
+                    Byte[] ImageBitmap = new Byte[Image.Length];
+                    ImageBitmap = Convert.FromBase64String(Image);
+                    if (myFunctions.ContainColumn("i_Image", MasterTable))
+                        MasterTable.Columns.Remove("i_Image");
+                    
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_CustomerCode='" + CustomerCode + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria,X_Criteria,MasterTable, connection, transaction);
@@ -107,6 +113,9 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (Image.Length > 0)
+                            dLayer.SaveImage("Inv_Customer", "I_Image", ImageBitmap, "n_CustomerID", nCustomerID, connection, transaction);
+                        
                         transaction.Commit();
                         // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
                         return Ok(_api.Success("Customer Saved") );

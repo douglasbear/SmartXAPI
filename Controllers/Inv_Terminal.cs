@@ -11,9 +11,9 @@ using Microsoft.Extensions.Configuration;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("itemcategory")]
+    [Route("posterminal")]
     [ApiController]
-    public class Inv_ItemCategory : ControllerBase
+    public class Inv_Terminal : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
 
 
 
-        public Inv_ItemCategory(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_Terminal(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
@@ -33,13 +33,13 @@ namespace SmartxAPI.Controllers
 
         //GET api/productcategory/list?....
         [HttpGet("list")]
-        public ActionResult GetItemCategory()
+        public ActionResult GetTerminal()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID where Inv_ItemCategory.N_CompanyID<>-1";
+            string sqlCommandText = "select * from vw_InvTerminal where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
 
             try
@@ -65,16 +65,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetItemCategoryDetails(int nFnYearID, int nCategoryId)
+        public ActionResult GetTerminalDetails(int nTerminalID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select TOP 1 *,Code as X_CategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and (N_FnYearID =@p3 or N_FnYearID is null ) and n_CategoryID=@p2 Order By N_CategoryID";
+            string sqlCommandText = "select * from vw_InvTerminal where N_CompanyID=@p1 and N_TerminalID=@p2";
 
             Params.Add("@p1", myFunctions.GetCompanyID(User));
-            Params.Add("@p2", nCategoryId);
-            Params.Add("@p3", nFnYearID);
+            Params.Add("@p2", nTerminalID);
             
 
             try
@@ -107,40 +106,40 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    int N_CategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CategoryID"].ToString());
+                    
                     int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
                     SortedList Params = new SortedList();
                     // Auto Gen
-                    string CategoryCode = "";
-                    var values = MasterTable.Rows[0]["X_CategoryCode"].ToString();
+                    string TerminalCode = "";
+                    var values = MasterTable.Rows[0]["X_TerminalCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID", N_FnYearId);
-                        Params.Add("N_FormID", 73);
-                        CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") {transaction.Rollback();  return Ok(_api.Error("Unable to generate Category Code")); }
-                        MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
+                        Params.Add("N_FormID", 895);
+                        TerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params, connection, transaction);
+                        if (TerminalCode == "") {transaction.Rollback();  return Ok(_api.Error("Unable to generate Terminal Code")); }
+                        MasterTable.Rows[0]["X_TerminalCode"] = TerminalCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
-                    MasterTable.Columns.Remove("b_IsParent");
-                     string X_Category= MasterTable.Rows[0]["X_Category"].ToString();
-                      string DupCriteria = "X_Category='" + X_Category + "'";
-                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID",DupCriteria,"", MasterTable, connection, transaction);
-                    if (N_CategoryID <= 0)
+                    int N_TerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", MasterTable, connection, transaction);
+                    if (N_TerminalID <= 0)
                     {
-                        transaction.Rollback();
-                        return Ok( _api.Error("Unable to save...Category Name Exists"));
+                         transaction.Rollback();
+                        return Ok( _api.Error("Unable to save"));
                     }
                     else
                     {
+                        dLayer.SaveData("Inv_Terminaldetails", "N_SettingsID", DetailTable, connection, transaction);
                         transaction.Commit();
-                        return Ok( _api.Success("Product Category Saved"));
+                        return Ok( _api.Success("Terminal Saved"));
                     }
                 }
             }
@@ -151,35 +150,23 @@ namespace SmartxAPI.Controllers
         }
 
           [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCategoryID)
+        public ActionResult DeleteData(int nTerminalID)
         {
             int Results = 0;
-          
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
-                object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
-                     int Obcount = myFunctions.getIntVAL(Objcount.ToString());
-                    if (Obcount != 0)
-                    {
-                       
-                             return Ok(_api.Error("Unable to Delete.Product category Allready Used"));
-                        }
-                    
-                Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "",connection);
+
+                Results = dLayer.DeleteData("Inv_Terminal", "N_TerminalID", nTerminalID, "",connection);
                 if (Results > 0)
                 {
-
-                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString()+"'",connection);
-
-                    return Ok(_api.Success("Product category deleted"));
+                    return Ok(_api.Success("Terminal deleted"));
                 }
                 else
                 {
-                    return Ok(_api.Error( "Unable to delete product category"));
+                    return Ok(_api.Error( "Unable to delete Terminal"));
                 }
                 }
             }
