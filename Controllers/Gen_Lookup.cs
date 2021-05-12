@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     }
                     object SeqNo = dLayer.ExecuteScalar("select n_Sort from Gen_LookupTable where N_ReferId=@nReferId and N_Sort=@nSort", Params,connection,transaction);
-                    if (SeqNo == null)
+                    if (SeqNo == null||0)
                     {
                      nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
                    
