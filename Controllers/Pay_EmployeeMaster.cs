@@ -524,10 +524,12 @@ namespace SmartxAPI.Controllers
                         object PayEmp = dLayer.ExecuteScalar("select N_EmpID from Pay_PaySetup where N_EmpID=" + nSavedEmpID, connection, transaction);
                         if (PayEmp != null)
                             NewEmp = 1;
-                        
-                        object Processed = dLayer.ExecuteScalar("Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
-                        if (Processed != null)
-                            n_NoEdit = 1;
+                        if(NewEmp == 1)
+                        {
+                            object Processed = dLayer.ExecuteScalar("Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
+                            if (myFunctions.getIntVAL(Processed.ToString()) != 0)
+                                n_NoEdit = 1;
+                        }
                         if(n_NoEdit != 1)
                         {
                             int pay_PaySetupRes = 0;
