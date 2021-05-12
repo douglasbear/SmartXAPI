@@ -482,6 +482,7 @@ namespace SmartxAPI.Controllers
                         int pay_EmpAddlInfoRes = 0;
                         if (dtPay_EmpAddlInfo.Rows.Count > 0)
                         {
+                            dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
                             foreach (DataRow dRow in dtPay_EmpAddlInfo.Rows)
                             {
                                 dRow["N_EmpID"] = nEmpID;
@@ -491,22 +492,25 @@ namespace SmartxAPI.Controllers
                         }
                         int Pay_EmployeeSubRes = 0;
                         if (dtpay_EmployeeSub.Rows.Count > 0)
+                        {
+                            dLayer.DeleteData("Pay_EmployeeSub", "N_EmpID", nEmpID, "", connection, transaction);
                             foreach (DataRow dRow in dtpay_EmployeeSub.Rows)
                             {
                                 dRow["N_EmpID"] = nEmpID;
                             }
-                        dtpay_EmployeeSub.AcceptChanges();
-                        Pay_EmployeeSubRes = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", dtpay_EmployeeSub, connection, transaction);
-
+                            dtpay_EmployeeSub.AcceptChanges();
+                            Pay_EmployeeSubRes = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", dtpay_EmployeeSub, connection, transaction);
+                        }
                         int Pay_Employee_LogRes = 0;
                         if (dtPay_Employee_Log.Rows.Count > 0)
+                        {
                             foreach (DataRow dRow in dtPay_Employee_Log.Rows)
                             {
                                 dRow["N_EmpID"] = nEmpID;
                             }
-                        dtPay_Employee_Log.AcceptChanges();
-                        Pay_Employee_LogRes = dLayer.SaveData("Pay_Employee_Log", "N_EmployeeLogID", dtPay_Employee_Log, connection, transaction);
-
+                            dtPay_Employee_Log.AcceptChanges();
+                            Pay_Employee_LogRes = dLayer.SaveData("Pay_Employee_Log", "N_EmployeeLogID", dtPay_Employee_Log, connection, transaction);
+                        }
                         dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0 Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID", QueryParams, connection, transaction);
 
                         bool B_Inactive = myFunctions.getIntVAL(dtMasterTable.Rows[0]["b_Inactive"].ToString()) == 1 ? true : false;
@@ -519,30 +523,46 @@ namespace SmartxAPI.Controllers
                         int pay_PaySetupRes = 0;
                         if (dtpay_PaySetup.Rows.Count > 0)
                         {
+                            int NewEmp = 0;
+                            object PayEmp = dLayer.ExecuteScalar("select N_EmpID from Pay_PaySetup where N_EmpID=" + nSavedEmpID, connection, transaction);
+                            if (PayEmp != null)
+                                NewEmp = 1;
+                            foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
+                            {
+                                dRow["N_EmpID"] = nEmpID;
+                            }
+                            dtpay_EmployeePayHistory.AcceptChanges();           
                             foreach (DataRow dRow in dtpay_PaySetup.Rows)
                             {
+                                if(myFunctions.getIntVAL(dRow["N_PayID"].ToString()) <= 0) continue;
+                                // if(myFunctions.getIntVAL(dRow["N_NoEdit"].ToString()) > 0) {
+                                //     if(NewEmp == 1) continue;
+                                // }
+
+                                dLayer.DeleteData("Pay_PaySetup", "N_PaySetupID", myFunctions.getIntVAL(dRow["N_PaySetupID"].ToString()) , "N_CompanyID = "+ nCompanyID +"", connection, transaction);
+                                dLayer.DeleteData("Pay_EmployeePayHistory", "N_PayID", myFunctions.getIntVAL(dRow["N_PayID"].ToString()) , "N_CompanyID = "+ nCompanyID +" and N_EmpID = " +nEmpID + "", connection, transaction);
+
                                 dRow["N_EmpID"] = nEmpID;
-                            }
-                            dtpay_PaySetup.AcceptChanges();
-                            pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
-                            if (pay_PaySetupRes > 0)
-                            {
-                                int Pay_EmployeePayHistoryRes = 0;
-                                if (dtpay_EmployeePayHistory.Rows.Count > 0)
-                                    foreach (DataRow dRow in dtpay_EmployeePayHistory.Rows)
+                                dtpay_PaySetup.AcceptChanges();
+                                pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);                        
+                                if (pay_PaySetupRes > 0)
+                                {
+                                    int Pay_EmployeePayHistoryRes = 0;
+                                    if (dtpay_EmployeePayHistory.Rows.Count > 0)
                                     {
-                                        dRow["N_EmpID"] = nEmpID;
+                                        Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
                                     }
-                                dtpay_EmployeePayHistory.AcceptChanges();
-                                Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
+                                }
                             }
                         }
+
+                        //Employee Accruals
                         int pay_EmpAccrulsRes = 0;
                         if (dtpay_EmpAccruls.Rows.Count > 0)
-                            foreach (DataRow dRow in dtpay_EmpAccruls.Rows)
-                            {
-                                dRow["N_EmpID"] = nEmpID;
-                            }
+                        foreach (DataRow dRow in dtpay_EmpAccruls.Rows)
+                        {
+                            dRow["N_EmpID"] = nEmpID;
+                        }
                         dtpay_EmpAccruls.AcceptChanges();
                         pay_EmpAccrulsRes = dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", dtpay_EmpAccruls, connection, transaction);
 
@@ -712,6 +732,36 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("relationList")]
+        public ActionResult GetRelationList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            string sqlCommandText = "Select  n_RelationID,x_Relation from Pay_Relation Where N_CompanyID=@nCompanyID  order by n_RelationID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
         [HttpGet("employeeType")]
         public ActionResult GetEmployeeType()
