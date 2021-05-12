@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        [HttpGet("details")]
+        [HttpGet("details")] 
         public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId)
         {
 

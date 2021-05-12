@@ -294,7 +294,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("list")]
-        public ActionResult AdjustmentList(int nCompanyID,int nFnYearID,int nType,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult AdjustmentList(int nCompanyID,int nFnYearID,int nType,int nBranchId,bool bAllBranchData,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -302,11 +302,12 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string TableName = "";
             string sqlCondition = "";
+            string sqlCondition1 = "";
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
-            int nBranchId=myCompanyID._BranchID;
-            bool bAllBranchData=myCompanyID._B_AllBranchData;
+            // int nBranchId=myCompanyID._BranchID;
+            // bool bAllBranchData=myCompanyID._B_AllBranchData;
 
             if(nType==2)
                 TableName="vw_Pay_OpeningBalance_Search";
@@ -336,16 +337,28 @@ namespace SmartxAPI.Controllers
                     if(!myFunctions.CheckClosedYear(nCompanyID,nFnYearID,dLayer,connection))
                     {
                         if(bAllBranchData)
-                            sqlCondition = "N_CompanyID=@nCompanyID and and B_YearEndProcess=0 "+xSortBy+"";
+                        {
+                            sqlCondition = "N_CompanyID=@nCompanyID and B_YearEndProcess=0 "+xSortBy+"";
+                            sqlCondition1 = "N_CompanyID=@nCompanyID and B_YearEndProcess=0 ";
+                        }
                         else
-                            sqlCondition = "N_CompanyID=@nCompanyID and and B_YearEndProcess=0 and N_BranchID=@nBranchId "+xSortBy+"";
+                        {
+                            sqlCondition = "N_CompanyID=@nCompanyID and B_YearEndProcess=0 and N_BranchID=@nBranchId "+xSortBy+"";
+                            sqlCondition1 = "N_CompanyID=@nCompanyID and B_YearEndProcess=0 and N_BranchID=@nBranchId ";
+                        }
                     }
                     else
                     {
-                          if(bAllBranchData)
-                            sqlCondition = "N_CompanyID=@nCompanyID and and N_FnYearID=@nFnYearId "+xSortBy+"";
+                        if(bAllBranchData)
+                        {
+                            sqlCondition = "N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearId "+xSortBy+"";
+                            sqlCondition1 = "N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearId ";
+                        }
                         else
-                            sqlCondition = "N_CompanyID=@nCompanyID and and N_FnYearID=@nFnYearId and N_BranchID=@nBranchId "+xSortBy+"";
+                        {
+                            sqlCondition = "N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_BranchID=@nBranchId "+xSortBy+"";
+                            sqlCondition1 = "N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_BranchID=@nBranchId ";
+                        }
                     }
 
                     if (Count == 0)
@@ -354,7 +367,7 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "select top(" + nSizeperpage + ") * from "+TableName+" where "+sqlCondition+" and  N_AdjustmentID not in (select top(" + Count + ") N_AdjustmentID from "+TableName+"  where "+sqlCondition+" )";
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from "+TableName+" where "+sqlCondition+" ";
+                    sqlCommandCount = "select count(*) as N_Count  from "+TableName+" where "+sqlCondition1+" ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
