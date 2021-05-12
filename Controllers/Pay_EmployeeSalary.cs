@@ -194,8 +194,14 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable SalaryTable;
+                DataTable BenefitTable;
+                DataTable AccrualTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                SalaryTable = ds.Tables["salary"];
+                BenefitTable = ds.Tables["benefit"];
+                AccrualTable = ds.Tables["accrual"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nGradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GradeID"].ToString());
@@ -212,13 +218,7 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string GradeCode = "";
                     var values = MasterTable.Rows[0]["x_GradeCode"].ToString();
-                    for (int j = 0; j < DetailTable.Rows.Count; j++){
-                        string select = MasterTable.Rows[0]["b_Select"].ToString();
-                        if (select=="1"){
-                            int nValue = myFunctions.getIntVAL(DetailTable.Rows[0]["n_Value"].ToString());
-                            nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
-                        }
-                    }
+                    
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -230,17 +230,51 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_GradeCode"] = GradeCode;
                     }
                     nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", MasterTable, connection, transaction);
-                    if (nGradeID <= 0)
+                    
+                    if (nGradeID > 0)
+                    {
+                        double nPayValue = 0;
+                        for (int j = 0; j < SalaryTable.Rows.Count; j++)
+                        {
+                            string isSalChecked = SalaryTable.Rows[j]["isSalChecked"].ToString();
+                            if (isSalChecked == "True")
+                            {
+                                nPayValue = myFunctions.getIntVAL(SalaryTable.Rows[j]["n_Value"].ToString());;
+                                nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", SalaryTable, connection, transaction);
+                            }
+                        }
+                        SalaryTable.Columns.Remove("isSalChecked");
+
+                        for (int j = 0; j < BenefitTable.Rows.Count; j++)
+                        {
+                            string isBenChecked = BenefitTable.Rows[j]["isBenChecked"].ToString();
+                            if (isBenChecked == "True")
+                            {
+                                nPayValue = myFunctions.getIntVAL(BenefitTable.Rows[j]["n_Value"].ToString());;
+                                nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", BenefitTable, connection, transaction);
+                            }
+                        }
+                        BenefitTable.Columns.Remove("isBenChecked");
+
+                        for (int j = 0; j < AccrualTable.Rows.Count; j++)
+                        {
+                            string isAccChecked = AccrualTable.Rows[j]["isAccChecked"].ToString();
+                            if (isAccChecked == "True")
+                            {
+                                nPayValue = myFunctions.getIntVAL(AccrualTable.Rows[j]["n_Accrued"].ToString());;
+                                nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", AccrualTable, connection, transaction);
+                            }
+                        }
+                        AccrualTable.Columns.Remove("isAccChecked");
+                    }
+                    else
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save"));
                     }
                     
                     dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                          nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
-                    }
+                    
                     transaction.Commit();
                     return Ok(_api.Success("Employee Grade Saved"));
                 }
