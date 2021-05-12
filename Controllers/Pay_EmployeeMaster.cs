@@ -535,9 +535,9 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow dRow in dtpay_PaySetup.Rows)
                             {
                                 if(myFunctions.getIntVAL(dRow["N_PayID"].ToString()) <= 0) continue;
-                                if(myFunctions.getIntVAL(dRow["N_NoEdit"].ToString()) > 0) {
-                                    if(NewEmp == 1) continue;
-                                }
+                                // if(myFunctions.getIntVAL(dRow["N_NoEdit"].ToString()) > 0) {
+                                //     if(NewEmp == 1) continue;
+                                // }
 
                                 dLayer.DeleteData("Pay_PaySetup", "N_PaySetupID", myFunctions.getIntVAL(dRow["N_PaySetupID"].ToString()) , "N_CompanyID = "+ nCompanyID +"", connection, transaction);
                                 dLayer.DeleteData("Pay_EmployeePayHistory", "N_PayID", myFunctions.getIntVAL(dRow["N_PayID"].ToString()) , "N_CompanyID = "+ nCompanyID +" and N_EmpID = " +nEmpID + "", connection, transaction);
