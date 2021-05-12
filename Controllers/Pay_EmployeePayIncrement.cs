@@ -60,6 +60,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+        
 
         [HttpGet("details")]
         public ActionResult EndOfServiceDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
