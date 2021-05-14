@@ -38,6 +38,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_ServiceEndCode like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_EndType like '%" + xSearchkey + "%' or cast([D_EndDate] as VarChar) like '%" + xSearchkey + "%')";
@@ -46,8 +47,13 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_ServiceEndID desc";
             else
                 xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " and N_ServiceEndID not in (select top(" + Count + ") N_ServiceEndID from vw_EndOfService where N_CompanyID=@nCompanyID" + xSearchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID";
+            
             SortedList OutPut = new SortedList();
             try
             {
