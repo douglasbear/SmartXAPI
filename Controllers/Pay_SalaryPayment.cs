@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@xBatchCode", xBatchCode);
+          
 
             if (bAllBranchData == false)
                 Params.Add("@nBranchID", nBranchID);
@@ -90,6 +90,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
+                  Params.Add("@xBatchCode", xBatchCode);
                 sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployee where x_Batch = @xBatchCode and TotalSalaryCollected<>TotalSalary and N_CompanyID=@nCompanyID ";
 
 

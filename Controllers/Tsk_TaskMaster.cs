@@ -131,16 +131,20 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     Params.Add("@nTaskID", TaskID);
-
                     MasterTable = _api.Format(MasterTable, "Master");
+
                     //Detail
                     DetailSql = "select * from vw_Tsk_TaskCurrentStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+
+
                     //History
                     HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
+
+                    
                     //Comments
                     CommentsSql="select * from vw_Tsk_TaskComments where N_ActionID=@nTaskID ";
                     CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
