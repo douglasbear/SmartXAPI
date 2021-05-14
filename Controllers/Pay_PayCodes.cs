@@ -173,8 +173,17 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
                     dt = dLayer.ExecuteDataTable(sqlCommandText, param, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "summeryInfo", typeof(DataTable), null);
+                    foreach (DataRow dRow in dt.Rows)
+                    {
+                        DataTable dtNode = new DataTable();
+                        int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
+                        string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
+                        DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
+                        dRow["summeryInfo"] = summeryInfo;
+
+                    }
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -182,6 +191,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
+                    
                     return Ok(api.Success(dt));
                 }
 
