@@ -37,6 +37,8 @@ namespace SmartxAPI.Controllers
             DataTable mst = new DataTable();
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int Year = myFunctions.getIntVAL(payRunID.Substring(0, 4));
+            int Month = myFunctions.getIntVAL(payRunID.Substring(4, 2));
 
             string X_Cond = "";
             if (xDepartment != null && xDepartment != "")
@@ -108,6 +110,28 @@ namespace SmartxAPI.Controllers
                     mst = myFunctions.AddNewColumnToDataTable(mst, "details", typeof(DataTable), null);
                     mst.AcceptChanges();
                     dt.AcceptChanges();
+////////////
+                    object SalaryProcess = myFunctions.ReturnSettings("HR", "Salary Process", "N_Value", nCompanyID, dLayer, connection);
+                    object Periodvalue = myFunctions.ReturnSettings("Payroll", "Period Settings", "N_Value", nCompanyID, dLayer, connection);
+                 
+                                int daysinWork = 0;
+                                int days = 0;
+                                double TotalHrs = 0;
+                                if (Periodvalue == null) daysinWork = 0;
+                                else
+                                    daysinWork = myFunctions.getIntVAL(Periodvalue.ToString());
+                                DateTime dtStartDate = new DateTime(Year, Month, 1);
+                                if (SalaryProcess != null && myFunctions.getIntVAL(SalaryProcess.ToString()) == 1)
+                                    days = 30;
+                                else
+                                    days = DateTime.DaysInMonth(Year, Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+                                DateTime dt1, dt2;
+                                dt2 = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+                                int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+                                dt1 = dtStartDate.AddDays(-lastdays);
+//////////////////                           
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"TotalHrs",typeof(int),0);
 
                     foreach (DataRow mstVar in mst.Rows)
                     {
@@ -131,6 +155,18 @@ namespace SmartxAPI.Controllers
                                 {
                                     dtVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
                                 }
+                            }
+
+
+                            if (myFunctions.getIntVAL(dtVar["N_PayTypeID"].ToString()) != 17)
+                            {
+                                object obj = 240;// dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" + myFunctions.getDateVAL(dt1) + "','" + myFunctions.getDateVAL(dt2) + "'," + myFunctions.getIntVAL(dtVar["N_EmpID"].ToString()) + ")", connection);
+                                if (obj != null)
+                                    TotalHrs = myFunctions.getVAL(obj.ToString());
+                                else
+                                    TotalHrs = 240;
+                                dtVar["TotalHrs"] = TotalHrs;
+
                             }
 
                             if (B_PostedAccount)
