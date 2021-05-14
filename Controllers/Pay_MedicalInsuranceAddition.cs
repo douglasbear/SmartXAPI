@@ -1,3 +1,5 @@
+using AutoMapper;
+using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,8 +9,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-using System.ComponentModel;
-using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", FormID);
                         Params.Add("N_YearID", nFnYearID);
-                        while (true) 
+                        while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_MedicalInsuranceAddition Where X_PolicyCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
@@ -290,101 +290,160 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("employeeDetails")]
-        public ActionResult GetEmpDetails(int nEmpID, string xEmployeeCode, string xType, int xDepId, int nFnYearID)
+        public ActionResult GetEmpDetails(int nEmpID, string xEmployeeCode, string xType, int xDepId, int nFnYearID, int N_MedicalInsID)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@xType", xType);
-            Params.Add("@nEmpID", nEmpID);
-            Params.Add("@xEmployeeCode", xEmployeeCode);
-            Params.Add("@xDepId", xDepId);
-
-            string sqlCommandText = "";
-            if (xType == "EMP")
-            {
-                sqlCommandText = "select * from vw_MedicalInsuranceAdditionEmp where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and X_EmpCode =@xEmployeeCode  ";
-                //object InsAmt = dba.ExecuteSclar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + EmployeeClass + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_EmpInsClassID"].ToString()) + "", "TEXT", new DataTable());
-                // object InsCost = dba.ExecuteSclar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + EmployeeClass + "' and EmpType=171and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_EmpInsClassID"].ToString()) + "", "TEXT", new DataTable());
-                //object date = dba.ExecuteSclar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID = " + myCompanyID._CompanyID + "", "TEXT", new DataTable());
-            }
-            else if (xType == "DEP")
-            {
-                sqlCommandText = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and  N_DependenceID==@xDepId  ";
-                // object InsAmt = dba.ExecuteSclar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + DependentClass + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_DepInsClassID"].ToString()) + "", "TEXT", new DataTable());
-                //object InsCost = dba.ExecuteSclar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = " + myCompanyID._CompanyID + " and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + DependentClass + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dsMaster.Tables["EmployeeDetails"].Rows[0]["N_DepInsClassID"].ToString()) + "", "TEXT", new DataTable());
-                //object date = dba.ExecuteSclar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID = " + myCompanyID._CompanyID + "", "TEXT", new DataTable());
-            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    SortedList EmpParams = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@xType", xType);
+                    Params.Add("@nEmpID", nEmpID);
+                    Params.Add("@xEmployeeCode", xEmployeeCode);
+                    Params.Add("@xDepId", xDepId);
+
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+
+
+
+                    DataTable EmployeeTable = new DataTable();
+                    DataTable RelationTable = new DataTable();
+                    DataTable FamilyTable = new DataTable();
+                    DataTable FamilyRelationTable = new DataTable();
+
+                    string EmployeeSql = "";
+                    string RelationSql = "";
+                    string FamilySql = "";
+
+
+
+
+                    if (xType == "EMP")
+                    {
+
+                        EmployeeSql = "select * from vw_MedicalInsuranceAdditionEmp where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and X_EmpCode ='" + xEmployeeCode + "'";
+                        EmployeeTable = dLayer.ExecuteDataTable(EmployeeSql, EmpParams, connection);
+                        if (EmployeeTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Price", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Cost", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "D_LastDate", typeof(DateTime), null);
+
+                        foreach (DataRow dvar in EmployeeTable.Rows)
+                        {
+                            object InsAmt = dLayer.ExecuteDataTable("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID  and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + dvar["X_InsuranceClassEmp"] + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dvar["N_EmpInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsCost = dLayer.ExecuteDataTable("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID  and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + dvar["X_InsuranceClassEmp"] + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dvar["N_EmpInsClassID"].ToString()) + "", EmpParams, connection);
+                            object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
+
+                            if (InsAmt != null)
+                            {
+                                dvar["N_Price"] = myFunctions.getVAL(InsAmt.ToString());
+                            }
+                            if (InsCost != null)
+                            {
+                                dvar["N_Cost"] = myFunctions.getVAL(InsCost.ToString());
+                            }
+                            if (date != null)
+                            {
+                                dvar["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
+                            }
+
+                        }
+                        EmployeeTable.AcceptChanges();
+                        EmployeeTable = _api.Format(EmployeeTable, "EmpTable");
+
+
+                        //FamilyDetails
+                        FamilySql = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_EmpID =" + nEmpID + "";
+                        FamilyTable = dLayer.ExecuteDataTable(FamilySql, EmpParams, connection);
+
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Price", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "D_LastDate", typeof(DateTime), null);
+
+
+                        foreach (DataRow var in FamilyTable.Rows)
+                        {
+                            object InsAmt = dLayer.ExecuteDataTable("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsCost = dLayer.ExecuteDataTable("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
+
+                            if (InsAmt != null)
+                            {
+                                var["N_Price"] = myFunctions.getVAL(InsAmt.ToString());
+                            }
+                            if (InsCost != null)
+                            {
+                                var["N_Cost"] = myFunctions.getVAL(InsCost.ToString());
+                            }
+                            if (date != null)
+                            {
+                                var["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
+                            }
+
+                        }
+                        FamilyTable.AcceptChanges();
+                        FamilyTable = _api.Format(FamilyTable, "FamilyTable");
+                    }
+                    else if (xType == "DEP")
+                    {
+                        RelationSql = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and  N_DependenceID==@xDepId  ";
+                        RelationTable = dLayer.ExecuteDataTable(RelationSql, EmpParams, connection);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Price", typeof(double), 0);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "D_LastDate", typeof(DateTime), null);
+
+                        if (RelationTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        foreach (DataRow kvar in RelationTable.Rows)
+                        {
+                            object InsAmt = dLayer.ExecuteDataTable("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsCost = dLayer.ExecuteDataTable("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
+
+                            if (InsAmt != null)
+                            {
+                                kvar["N_Price"] = myFunctions.getVAL(InsAmt.ToString());
+                            }
+                            if (InsCost != null)
+                            {
+                                kvar["N_Cost"] = myFunctions.getVAL(InsCost.ToString());
+                            }
+                            if (date != null)
+                            {
+                                kvar["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
+                            }
+
+
+                        }
+                        RelationTable.AcceptChanges();
+                        RelationTable = _api.Format(RelationTable, "RelationTable");
+
+
+                    }
+
+                    dt.Tables.Add(EmployeeTable);
+                    dt.Tables.Add(FamilyTable);
+                    dt.Tables.Add(RelationTable);
+
+
+
                     return Ok(_api.Success(dt));
                 }
             }
+
+
             catch (Exception e)
             {
                 return Ok(_api.Error(e));
             }
+
         }
-        [HttpGet("familyDetails")]
-        public ActionResult GetFamDetails(int nEmpID, int nFnYearID)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@nEmpID", nEmpID);
-
-            string sqlCommandText = "";
-
-            sqlCommandText = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_EmpID =@nEmpID  ";
-
-
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
-
-
-
-
-        // 
-
-
-
-
-
-
     }
 }
