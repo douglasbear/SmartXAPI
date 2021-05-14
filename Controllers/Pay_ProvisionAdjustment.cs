@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GenApprovalCode(string xApprovalCode,int nApproovalID)
+        public ActionResult GenApprovalCode(string xAdjustmentCode,int nAdjustmentID)
         {
 
 
@@ -268,7 +268,7 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xApprovalCode", xApprovalCode);
+                    Params.Add("@xApprovalCode", xAdjustmentCode);
                     Mastersql = "select * from Gen_ApprovalCodes where N_CompanyId=@nCompanyID and X_ApprovalCode=@xApprovalCode  ";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
