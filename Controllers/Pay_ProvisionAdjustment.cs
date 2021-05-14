@@ -129,37 +129,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-
-
-        [HttpGet("actionlist")]
-        public ActionResult GetActionList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from gen_defaults where n_DefaultId=33 ";
-            //Params.Add("@p1", nDefaultId);
-            //Params.Add("@p1", nTypeId);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    connection.Open();
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else { return Ok(_api.Success(dt)); }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
-
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -177,20 +146,31 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                    int nApprovalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalID"].ToString());
+                    int nAdjustment = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
-                    string X_ApprovalCode = MasterTable.Rows[0]["X_ApprovalCode"].ToString();
+                    int nPayID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayID"].ToString());
+                    string X_AdjustmentCode = MasterTable.Rows[0]["X_AdjustmentCode"].ToString();
                     MasterTable.Columns.Remove("N_FnYearID");
 
-                    if (nApprovalID > 0)
+                    if (nAdjustment > 0)
                     {
-                         dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "", connection,transaction);
-                         dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection,transaction);
+                           SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"N_FnYearID",nFnYearID},
+                                {"X_TransType","EOS"},
+                                {"X_ReferenceNo",X_AdjustmentCode}};
+                         try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Pay_EndOfServiceBatchPosting_Del", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
                     }
                    
-                    DocNo = MasterRow["X_ApprovalCode"].ToString();
-                    
-                    if (X_ApprovalCode == "@Auto")
+                    if (X_AdjustmentCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", this.FormID);
@@ -199,26 +179,21 @@ namespace SmartxAPI.Controllers
                         while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Gen_ApprovalCodes Where X_ApprovalCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_PayCodeAdjustment Where X_AdjustmentCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
-                        X_ApprovalCode = DocNo;
+                        X_AdjustmentCode = DocNo;
 
 
-                        if (X_ApprovalCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Approval Code")); }
-                        MasterTable.Rows[0]["X_ApprovalCode"] = X_ApprovalCode;
+                        if (X_AdjustmentCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Adjustment Code")); }
+                        MasterTable.Rows[0]["X_AdjustmentCode"] = X_AdjustmentCode;
 
-                    }
-                    else
-                    {
-                        
-                        dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection, transaction);
                     }
 
 
-                    nApprovalID = dLayer.SaveData("Gen_ApprovalCodes", "N_ApprovalID", MasterTable, connection, transaction);
-                    if (nApprovalID <= 0)
+                    nAdjustment = dLayer.SaveData("Pay_PayCodeAdjustment", "N_AdjustmentID", MasterTable, connection, transaction);
+                    if (nAdjustment <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
@@ -226,18 +201,36 @@ namespace SmartxAPI.Controllers
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        DetailTable.Rows[i]["N_ApprovalID"] = nApprovalID;
+                        DetailTable.Rows[i]["N_AdjustmentID"] = nAdjustment;
                     }
-                    int N_ApprovalDetailsID = dLayer.SaveData("Gen_ApprovalCodesDetails", "N_ApprovalDetailsID", DetailTable, connection, transaction);
-                    if (N_ApprovalDetailsID <= 0)
+                    int N_AdjustmentDetailsID = dLayer.SaveData("Pay_PayCodeAdjustmentDetails", "N_AdjustmentDetailsID", DetailTable, connection, transaction);
+                    if (N_AdjustmentDetailsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
+
+                    SortedList PostParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"N_FnYearID",nFnYearID},
+                                {"N_AdjustmentID",nAdjustment},
+                                {"N_PayID",nPayID},
+                                {"D_Date",0},
+                                {"N_UserID",0},
+                                {"X_EntryFrom",""}};
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_Pay_EndOfServiceBatchPosting", PostParams, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(ex));
+                    }
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    Result.Add("N_ApprovalID", nApprovalID);
-                    Result.Add("N_ApprovalDetailsID", N_ApprovalDetailsID);
+                    Result.Add("N_AdjustmentID", nAdjustment);
+                    Result.Add("N_AdjustmentDetailsID", N_AdjustmentDetailsID);
 
                     return Ok(_api.Success(Result, "Saved"));
                 }
@@ -249,7 +242,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GenApprovalCode(string xApprovalCode,int nApproovalID)
+        public ActionResult ProvsionAdjDetails(string xAdjustmentCode,int nType,int nFnYearID,int nBranchId, bool bAllBranchData)
         {
 
 
@@ -266,18 +259,35 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
+                    string strCondition  = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xApprovalCode", xApprovalCode);
-                    Mastersql = "select * from Gen_ApprovalCodes where N_CompanyId=@nCompanyID and X_ApprovalCode=@xApprovalCode  ";
+                    Params.Add("@xAdjustmentCode", xAdjustmentCode);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nBranchId", nBranchId);
+
+                    if (bAllBranchData)
+                        strCondition = "N_CompanyID=@nCompanyID and Code=@xAdjustmentCode and N_FnYearID=@nFnYearID" ;
+                     else
+                        strCondition = "N_CompanyID=@nCompanyID and Code=@xAdjustmentCode and N_FnYearID=@nFnYearID and N_BranchId=@nBranchId";
+
+                    if(nType==2)
+                        Mastersql = "Select N_AdjustmentID,Code,N_BranchID,D_AdjustmentDate,X_PayrunText,X_Description,N_PayID,N_PayTypeID,N_ApprovalLevelID,N_ProcStatus,N_SaveDraft,N_UserID From vw_Pay_OpeningBalance_Search Where " + strCondition + "";
+                    else
+                        Mastersql = "Select N_AdjustmentID,Code,N_BranchID,D_AdjustmentDate,X_PayrunText,X_Description,N_PayID,N_PayTypeID,N_ApprovalLevelID,N_ProcStatus,N_SaveDraft,N_UserID From vw_Pay_EosAdjustment_Search Where " + strCondition + "";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int ApproovalID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalID"].ToString());
-                    Params.Add("@nApproovalID", ApproovalID);
+                    int nAdjustmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentID"].ToString());
+                    Params.Add("@nAdjustmentID", nAdjustmentID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_ApprovalCodeDetails where N_CompanyId=@nCompanyID and N_ApprovalID=@nApproovalID ";
+
+                    if(nType==2)
+                        DetailSql = "select * from vw_Pay_OpeningBalance where N_CompanyId=@nCompanyID and N_AdjustmentID=@nAdjustmentID ";
+                    else
+                        DetailSql = "select * from vw_Pay_EosAdjustment where N_CompanyId=@nCompanyID and N_AdjustmentID=@nAdjustmentID ";
+
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -293,6 +303,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
         [HttpGet("list")]
         public ActionResult AdjustmentList(int nCompanyID,int nFnYearID,int nType,int nBranchId,bool bAllBranchData,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
