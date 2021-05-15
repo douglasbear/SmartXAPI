@@ -257,6 +257,7 @@ namespace SmartxAPI.Controllers
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                    
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
+                    var values = MasterTable.Rows[0]["X_VacCode"].ToString();
                     if (n_VacTypeID > 0)
                     {
                          string N_StartType =(MasterRow["N_StartType"].ToString());
@@ -333,9 +334,10 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }
+                      string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "'" ;
 
 
-                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", "", "", MasterTable, connection, transaction);
+                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria, "", MasterTable, connection, transaction);
                     if (n_VacTypeID <= 0)
                     {
                         transaction.Rollback();

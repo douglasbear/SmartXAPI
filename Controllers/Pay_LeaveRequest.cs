@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             string isAdjestmentCriteria="  and B_IsAdjustEntry<>1 ";
 
             if(isAdjestment==true){
-                isAdjestmentCriteria="  and B_IsAdjustEntry=0 ";
+                isAdjestmentCriteria="  and B_IsAdjustEntry=1 ";
             }
 
             if (Count == 0)
