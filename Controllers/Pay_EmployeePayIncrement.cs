@@ -60,6 +60,68 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+        [HttpGet("defaultdetails")]
+        public ActionResult GetSalaryRevisionDefaultDetails(int nEmpID,int nFnYearID,DateTime EffectiveDate)
+        {
+            DataTable dtOtherinfo = new DataTable();
+            DataTable dtSalaryHistory = new DataTable();
+            DataTable dtAccrual = new DataTable();
+            DataTable dtBenefits = new DataTable();
+           
+            DataSet DS=new DataSet();
+            SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+
+          
+            string sqlAcrual="Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlBenefits="Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2";
+            string sqlOtherinfo="select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
+           
+            
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nEmpID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dParamList.Add("@N_CompanyID", nCompanyId);
+                    dParamList.Add("@N_FnYearID", nFnYearID);
+                    dParamList.Add("@N_EmpID", nEmpID);
+                    dParamList.Add("@Date", Convert.ToDateTime(EffectiveDate));
+
+                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
+                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params,connection);
+                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params,connection);
+                    dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params,connection);
+
+                }
+                dtSalaryHistory = api.Format(dtSalaryHistory, "SalaryHistory");
+                dtAccrual = api.Format(dtAccrual, "Accrual");
+                dtBenefits = api.Format(dtBenefits, "Benefits");
+                dtOtherinfo = api.Format(dtOtherinfo, "Otherinfo");
+
+                DS.Tables.Add(dtSalaryHistory);
+                DS.Tables.Add(dtAccrual);
+                DS.Tables.Add(dtBenefits);
+                DS.Tables.Add(dtOtherinfo);
+
+                if (dtOtherinfo.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(DS));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
         
 
         [HttpGet("details")]
