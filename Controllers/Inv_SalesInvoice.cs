@@ -946,7 +946,7 @@ namespace SmartxAPI.Controllers
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID)
         {
-            int Results = 0;
+            int Results = 0; 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
