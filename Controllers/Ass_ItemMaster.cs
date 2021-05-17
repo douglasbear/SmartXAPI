@@ -243,29 +243,51 @@ namespace SmartxAPI.Controllers
         }
              
  [HttpGet("details")]
-        public ActionResult ItemMasterListDetails(string xItemCode)
+        public ActionResult ItemMasterListDetails(string xItemCode,int nItemID,int nBranchID,bool bAllBranchData)
         {
-            DataTable dt = new DataTable();
+            DataSet dt = new DataSet();
+            DataTable MasterTable = new DataTable();
+            DataTable ExpiryTable = new DataTable();
+            DataTable HistoryTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_AssetMaster where N_CompanyID=@p1 and X_ItemCode=@p2 ";
+            string sqlCommandText="";
+            string ExpirysqlCommand="";
+            string HistorysqlCommand="";
+
+            string Condn = "";
+            if (bAllBranchData)
+                Condn = "X_ItemCode=@p2 and N_CompanyID=@p1";
+            else
+                Condn = "N_ItemID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
+
+            sqlCommandText = "select * from vw_AssetMaster where "+Condn+"";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xItemCode);
+            Params.Add("@p3", nBranchID);
             
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    MasterTable = api.Format(MasterTable,"Master");
+
+                    HistorysqlCommand = "Select D_StartDate, D_EndDate ,X_Description , X_RefNo ,N_Amount,X_Branch,N_BookValue,X_CostcentreName,X_ProjectName,ProjectPeriod,N_TypeOrder,X_EmpName,Dep_Amount from vw_Ass_ItemHistory where N_ItemID=@p4 and N_CompanyID=@p1 order by D_EndDate,N_TypeOrder";
+                    Params.Add("@p4", nItemID);
+                    HistoryTable = dLayer.ExecuteDataTable(HistorysqlCommand, Params, connection);
+
                 }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
+                
+                if (MasterTable.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
+                    dt.Tables.Add(MasterTable);
                     return Ok(api.Success(dt));
                 }
             }

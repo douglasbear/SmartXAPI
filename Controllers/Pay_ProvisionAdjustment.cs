@@ -206,7 +206,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
-
+                    
+                    DetailTable.Columns.Remove("b_Select");
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
                         DetailTable.Rows[i]["N_AdjustmentID"] = nAdjustment;
@@ -216,8 +217,7 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
-                    }
-                    DetailTable.Columns.Remove("b_Select");
+                    }                   
 
                     for (int i = 0; i < PaymentTable.Rows.Count; i++)
                     {
