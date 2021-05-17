@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
 if(MainMst.Rows.Count==0){
     return Ok(_api.Notice("No Results Found"));
 }
-                    string nBatchID = MainMst.Rows[0]["MainMst"].ToString();
+                    string nBatchID = MainMst.Rows[0]["N_TransID"].ToString();
                     if (nBatchID != null)
                             ProParams.Add("N_TransID", nBatchID);
                     }else{
@@ -234,7 +234,7 @@ if(MainMst.Rows.Count==0){
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2" + xSearchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                      OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
