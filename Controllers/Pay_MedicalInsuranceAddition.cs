@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_MedicalInsurance where N_CompanyID=@nCompanyID ";
+            string sqlCommandText = "select X_InsuranceCode,X_CardNo,X_InsuranceName,X_VendorName,X_StartDate,X_EndDate,N_MedicalInsID,N_CompanyID,N_VendorID from vw_MedicalInsurance where N_CompanyID=@nCompanyID  group By  X_InsuranceCode,X_CardNo,X_InsuranceName,X_VendorName,X_StartDate,X_EndDate,N_MedicalInsID,N_CompanyID,N_VendorID ";
             Params.Add("@nCompanyID", nCompanyID);
             try
             {
@@ -138,12 +138,12 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             if (nDependentID > 0)
             {
-                sqlCommandText = "select * from vw_InsuranceAmountCategoryWise where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_InsuranceID =@nMedicalInsID and  EmpType=172 or EmpType=0  ";
+                sqlCommandText = "select * from vw_InsuranceAmountCategoryWise where N_CompanyID=@nCompanyID  and N_InsuranceID =@nMedicalInsID and  EmpType=172 or EmpType=0  ";
 
             }
             else
             {
-                sqlCommandText = "select * from vw_InsuranceAmountCategoryWise where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and N_InsuranceID =@nMedicalInsID and  EmpType=171 or EmpType=0  ";
+                sqlCommandText = "select * from vw_InsuranceAmountCategoryWise where N_CompanyID=@nCompanyID  and N_InsuranceID =@nMedicalInsID and  EmpType=171 or EmpType=0  ";
             }
             try
             {
@@ -300,6 +300,7 @@ namespace SmartxAPI.Controllers
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
                     SortedList EmpParams = new SortedList();
+                    SortedList DepParams = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nFnYearID", nFnYearID);
@@ -310,6 +311,10 @@ namespace SmartxAPI.Controllers
 
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nFnYearID", nFnYearID);
+
+                    DepParams.Add("@nCompanyID", nCompanyID);
+
+
 
 
 
@@ -327,6 +332,7 @@ namespace SmartxAPI.Controllers
 
                     if (xType == "EMP")
                     {
+                        RelationTable = _api.Format(RelationTable, "RelationTable");
 
                         EmployeeSql = "select * from vw_MedicalInsuranceAdditionEmp where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and X_EmpCode ='" + xEmployeeCode + "'";
                         EmployeeTable = dLayer.ExecuteDataTable(EmployeeSql, EmpParams, connection);
@@ -394,11 +400,15 @@ namespace SmartxAPI.Controllers
                     }
                     else if (xType == "DEP")
                     {
-                        RelationSql = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_EmpID =@nEmpID and  N_DependenceID==@xDepId  ";
-                        RelationTable = dLayer.ExecuteDataTable(RelationSql, EmpParams, connection);
-                        RelationTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Price", typeof(double), 0);
-                        RelationTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
-                        RelationTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "D_LastDate", typeof(DateTime), null);
+                        FamilyTable = _api.Format(FamilyTable, "FamilyTable");
+                        EmployeeTable = _api.Format(EmployeeTable, "EmpTable");
+
+
+                        RelationSql = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_EmpID =" + nEmpID + " and  N_DependenceID=" + xDepId + " and N_FnYearId=" + nFnYearID + "";
+                        RelationTable = dLayer.ExecuteDataTable(RelationSql, DepParams, connection);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "N_Price", typeof(double), 0);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "N_Cost", typeof(double), 0);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "D_LastDate", typeof(DateTime), null);
 
                         if (RelationTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         foreach (DataRow kvar in RelationTable.Rows)
@@ -445,5 +455,54 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("fillDataVendor")]
+        public ActionResult GetfillDataVendor(int nCompanyID, string xProjectName, int nVendorID, DateTime dDate)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    SortedList EmpParams = new SortedList();
+
+                    Params.Add("@nCompanyID", nCompanyID);
+
+                    Params.Add("@xProjectName", xProjectName);
+                    Params.Add("@nVendorID", nVendorID);
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    String FillDataSql = "";
+                    DataTable FillVendorTable = new DataTable();
+                    //var Date =dDate.ToShortDateString();
+                    String X_Date = dDate.Year + "" + dDate.Month.ToString().PadLeft(2, '0') + "" + dDate.Day.ToString().PadLeft(2, '0');
+                    int N_Date = Convert.ToInt32(X_Date);
+                    if (xProjectName == null || xProjectName == "")
+                    {
+                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where N_VendorID=@nVendorID and N_CEndDate<" + N_Date + "";
+                        FillVendorTable = dLayer.ExecuteDataTable(FillDataSql, EmpParams, connection);
+                        if (FillVendorTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                    }
+                    else
+                    {
+
+                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where  N_VendorID=@nVendorID and N_CEndDate<" + N_Date + " and X_ProjectName='" + xProjectName + "' ";
+                        FillVendorTable = dLayer.ExecuteDataTable(FillDataSql, EmpParams, connection);
+                        if (FillVendorTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                    }
+                    dt.Tables.Add(FillVendorTable);
+                    return Ok(_api.Success(dt));
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
     }
 }
+
