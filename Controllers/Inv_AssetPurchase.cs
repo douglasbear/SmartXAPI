@@ -167,56 +167,10 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+ 
+        
 
-           [HttpGet("poList")]
-        public ActionResult GetPurchaseOrderList(int nLocationID, string type, string query, int PageSize, int Page)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "";
-            string Feilds = "";
-            string X_Crieteria = "";
-            string X_VisibleFieldList = "";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    Params.Add("@Type", type);
-                    Params.Add("@CompanyID", nCompanyId);
-                    Params.Add("@LocationID", nLocationID);
-                    Params.Add("@PSize", PageSize);
-                    Params.Add("@Offset", Page);
 
-                    // string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY N_ItemID) RowNo,";
-                    // string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize)";
-
-                    int N_POTypeID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select ISNULL(N_TypeId,0) From Gen_Defaults Where X_TypeName=@Type and N_DefaultId=36", Params, connection).ToString());
-                    X_VisibleFieldList = myFunctions.ReturnSettings("65", "Item Search List", "X_Value", myFunctions.getIntVAL(nCompanyId.ToString()), dLayer, connection);
-                    if (N_POTypeID == 121)
-                    {
-                        Feilds = "N_CompanyID,N_ItemID,[Item Class],B_Inactive,N_WarehouseID,N_BranchID,[Item Code],N_ItemTypeID";
-                        X_Crieteria = "N_CompanyID=@CompanyID and B_Inactive=0 and [Item Code]<>'001' and ([Item Class]='Stock Item' Or [Item Class]='Non Stock Item' Or [Item Class]='Expense Item' Or [Item Class]='Assembly Item' ) and N_WarehouseID=@LocationID and N_ItemTypeID<>1";
-                    }
-                    else if (N_POTypeID == 122)
-                    {
-                        Feilds = "N_CompanyID,N_ItemID,[Item Class],B_Inactive,N_WarehouseID,N_BranchID,[Item Code],N_ItemTypeID";
-                        X_Crieteria = "N_CompanyID=@CompanyID and B_Inactive=0 and [Item Code]<>'001' and ([Item Class]='Stock Item' Or [Item Class]='Non Stock Item' Or [Item Class]='Expense Item' Or [Item Class]='Assembly Item' ) and N_WarehouseID=@LocationID and N_ItemTypeID=1";
-                    }
-
-                    sqlCommandText = "select " + Feilds + "," + X_VisibleFieldList + " from vw_ItemDisplay where " + X_Crieteria + " Order by [Item Code]";
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-
-                dt = _api.Format(dt);
-                return Ok(_api.Success(dt));
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
        
    } 
   

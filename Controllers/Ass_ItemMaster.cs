@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nAddlInfoID)
+        public ActionResult DeleteData(int nItemID)
         {
 
             int Results = 0;
@@ -221,13 +221,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Ass_AssetAddlInfo", "N_AddlInfoID", nAddlInfoID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
                 {
                     Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("N_AddlInfoID", nAddlInfoID.ToString());
+                    res.Add("N_ItemID", nItemID.ToString());
                     return Ok(api.Success(res, "Item deleted"));
                 }
                 else
@@ -274,6 +274,39 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+        [HttpGet("costCentreList")]
+        public ActionResult ListcostCentre(int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nFnYearID",nFnYearID);
+            string sqlCommandText="Select * from Acc_CostCentreMaster Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
 
     }
 }
