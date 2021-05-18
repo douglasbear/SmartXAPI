@@ -83,7 +83,9 @@ namespace SmartxAPI.Controllers
                 case "employmenttype": id=6;
                 break;
                 case "csv": id=80;
+            
                 break;
+
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -115,7 +117,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("lookup/{type}") ]
         public ActionResult GetLookup (string type)
         {
-            int N_FormID=0;
+            int N_FormID=0;           
             switch(type){
                 case "VendorType": N_FormID=52;
                 break;
@@ -154,6 +156,8 @@ namespace SmartxAPI.Controllers
                  case "Rating": N_FormID=9;
                 break;
                 case "Purpose": N_FormID=51;
+                break;
+                case "Pricetype": N_FormID=3;
                 break;
                 default: return Ok("Invalid Type");
             }

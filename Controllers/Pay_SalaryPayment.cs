@@ -146,6 +146,7 @@ namespace SmartxAPI.Controllers
                 if (nReceiptID > 0)
                 {
 
+
                     // sql1 = sql1 + " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
                     sql1 = " Select * from vw_SalaryPaid_Disp where N_PaymentID=@nReceiptID";
                 }
@@ -196,7 +197,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetDetails( string xReceiptNo, int nBranchID,bool bAllBranchData)
+        public ActionResult GetDetails( string X_ReferenceNo, int N_FnYearID,bool bAllBranchData)
         {
             try
             {
@@ -205,8 +206,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
-                    Params.Add("@xReceiptNo", xReceiptNo);
-                    Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@xReferenceNo", X_ReferenceNo);
+                    Params.Add("@nFnYearID", N_FnYearID);
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
 
                     DataTable MasterTable = new DataTable();
@@ -218,7 +219,7 @@ namespace SmartxAPI.Controllers
                     string xCondition = "";
 
                     if (bAllBranchData)
-                        xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID";
+                        xCondition="X_ReferenceNo=@xReferenceNo and N_CompanyId=@nCompanyID";
                     else
                         xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 

@@ -119,13 +119,13 @@ namespace SmartxAPI.Controllers
                     if (N_ItemUnitID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( api.Warning("Unable to save ItemUnit"));
+                        return Ok( api.Warning("Unit Already Exist"));
                     }
                     else
                     {
                         transaction.Commit();
                     }
-                    return GetItemUnitListDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_ItemUnitID);
+                    return Ok( api.Success("Unit Created"));
                 }
                 
 
