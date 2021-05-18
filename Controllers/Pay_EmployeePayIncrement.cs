@@ -35,15 +35,15 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="select * from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID";
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            string sqlCommandText = "select * from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -61,24 +61,24 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("defaultdetails")]
-        public ActionResult GetSalaryRevisionDefaultDetails(int nEmpID,int nFnYearID,DateTime EffectiveDate)
+        public ActionResult GetSalaryRevisionDefaultDetails(int nEmpID, int nFnYearID, DateTime EffectiveDate)
         {
             DataTable dtOtherinfo = new DataTable();
             DataTable dtSalaryHistory = new DataTable();
             DataTable dtAccrual = new DataTable();
             DataTable dtBenefits = new DataTable();
-           
-            DataSet DS=new DataSet();
+
+            DataSet DS = new DataSet();
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
-          
-            string sqlAcrual="Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
-            string sqlBenefits="Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2";
-            string sqlOtherinfo="select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
-           
-            
+
+            string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2 and N_PaymentID in (6,7)";
+            string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
+
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nEmpID);
@@ -93,12 +93,12 @@ namespace SmartxAPI.Controllers
                     dParamList.Add("@Date", Convert.ToDateTime(EffectiveDate));
 
                     dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
-                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params,connection);
-                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params,connection);
-                    dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params,connection);
+                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
+                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
+                    dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params, connection);
 
                 }
-                dtSalaryHistory = api.Format(dtSalaryHistory, "SalaryHistory");
+                dtSalaryHistory = api.Format(dtSalaryHistory, "Salaryhistory");
                 dtAccrual = api.Format(dtAccrual, "Accrual");
                 dtBenefits = api.Format(dtBenefits, "Benefits");
                 dtOtherinfo = api.Format(dtOtherinfo, "Otherinfo");
@@ -122,27 +122,27 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-        
+
 
         [HttpGet("details")]
-        public ActionResult GetSalaryRevisionDetails(int nEmpID,int nFnYearID,int nHistoryID)
+        public ActionResult GetSalaryRevisionDetails(int nEmpID, int nFnYearID, int nHistoryID)
         {
             DataTable dtOtherinfo = new DataTable();
             DataTable dtSalaryHistory = new DataTable();
             DataTable dtAccrual = new DataTable();
             DataTable dtBenefits = new DataTable();
-           
-            DataSet DS=new DataSet();
+
+            DataSet DS = new DataSet();
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
-          
-            string sqlAcrual="Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
-            string sqlBenefits="Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3";
-            string sqlSalaryHistory="select top 1 * from vw_Pay_EmployeeAdditionalInfo Where N_CompanyID=@p1 and N_HistoryID=@p4";
-           
-            
+
+            string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
+            string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3";
+            string sqlSalaryHistory = "select top 1 * from vw_Pay_EmployeeAdditionalInfo Where N_CompanyID=@p1 and N_HistoryID=@p4";
+
+
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nEmpID);
             Params.Add("@p3", nFnYearID);
@@ -158,9 +158,9 @@ namespace SmartxAPI.Controllers
                     dParamList.Add("@p4", Convert.ToDateTime(dtOtherinfo.Rows[0]["d_SalesDate"].ToString()));
 
                     dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
-                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params,connection);
-                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params,connection);
-                    dtOtherinfo = dLayer.ExecuteDataTable(sqlSalaryHistory, Params,connection);
+                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
+                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
+                    dtOtherinfo = dLayer.ExecuteDataTable(sqlSalaryHistory, Params, connection);
 
                 }
                 dtSalaryHistory = api.Format(dtSalaryHistory, "SalaryHistory");
@@ -196,9 +196,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    
-                    
-                    DataTable SalaryHistory= ds.Tables["SalaryHistory"];
+
+
+                    DataTable SalaryHistory = ds.Tables["SalaryHistory"];
                     DataTable Accrual = ds.Tables["Accrual"];
                     DataTable Benefits = ds.Tables["Benefits"];
                     DataTable Otherinfo = ds.Tables["Otherinfo"];
@@ -211,6 +211,7 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string x_HistoryNo = MasterRow["x_HistoryNo"].ToString();
+                    int N_EmpID = myFunctions.getIntVAL(MasterRow["N_EmpID"].ToString());
 
                     if (x_HistoryNo == "@Auto")
                     {
@@ -226,7 +227,7 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_OrderNo"] = x_HistoryNo;
                     }
-                    string DupCriteria="";
+                    string DupCriteria = "";
 
 
                     int n_HistoryId = dLayer.SaveData("Pay_PayHistoryMaster", "N_HistoryID", DupCriteria, "", MasterTable, connection, transaction);
@@ -235,21 +236,49 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok("Unable to save");
                     }
-                    //select payhistory id for update if revision done in same month
-                    //object N_PayHistory = dLayer.ExecuteScalar("select isnull(N_PayHistoryID,0) from  Pay_EmployeePayHistory  where N_EmpID="+n_em and MONTH(D_EffectiveDate)=" + dtpEffectiveDate.Value.Month + " and year(D_EffectiveDate)=" + dtpEffectiveDate.Value.Year + " and N_PayID=" + flxSalayHistory.get_TextMatrix(i, mcPayID) + " ", Con);
 
                     for (int i = 0; i < SalaryHistory.Rows.Count; i++)
                     {
                         SalaryHistory.Rows[i]["N_HistoryID"] = n_HistoryId;
-                        
-                    }
 
-                    dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", SalaryHistory, connection, transaction);
-                    
-                   
+                    }
+                    //Salary & Benefits Save
+
+                    dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", SalaryHistory, connection, transaction);
+                     dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", Benefits, connection, transaction);
+
+                    // Other Details
+
+                    for (int i = 0; i < Otherinfo.Rows.Count; i++)
+                    {
+
+                        if (Otherinfo.Rows[i]["X_Value"] == "") continue;
+
+                        if (i == 1)
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, connection, transaction);
+                        if (i == 2)
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_DepartmentID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, connection, transaction);
+                        if (i == 3)
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_ProjectID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, connection, transaction);
+                        if (i == 4)
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_BranchID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, connection, transaction);
+                        if (i == 5)
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, connection, transaction);
+                        if (i == 6)
+                            dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[i]["X_Value"] + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID, connection, transaction);
+                        if (i == 7)
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID, connection, transaction);
+
+                    }
+                    dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
+                    //Accrual Save
+                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
+
+
+
                     transaction.Commit();
                     SortedList Result = new SortedList();
-                    
+
                     return Ok(api.Success(Result, "Saved"));
                 }
             }
