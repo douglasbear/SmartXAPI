@@ -255,36 +255,36 @@ namespace SmartxAPI.Controllers
                         double nPayValue = 0;
                         for (int j = 0; j < SalaryTable.Rows.Count; j++)
                         {
-                            string isSalChecked = SalaryTable.Rows[j]["isSalChecked"].ToString();
-                            if (isSalChecked == "True")
+                            string SalarySelect = SalaryTable.Rows[j]["b_SalarySelect"].ToString();
+                            if (SalarySelect == "True")
                             {
                                 nPayValue = myFunctions.getIntVAL(SalaryTable.Rows[j]["n_Value"].ToString());;
                                 nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", SalaryTable, connection, transaction);
                             }
                         }
-                        SalaryTable.Columns.Remove("isSalChecked");
+                        SalaryTable.Columns.Remove("b_SalarySelect");
 
                         for (int j = 0; j < BenefitTable.Rows.Count; j++)
                         {
-                            string isBenChecked = BenefitTable.Rows[j]["isBenChecked"].ToString();
-                            if (isBenChecked == "True")
+                            string BenefitSelect = BenefitTable.Rows[j]["b_BenefitSelect"].ToString();
+                            if (BenefitSelect == "True")
                             {
                                 nPayValue = myFunctions.getIntVAL(BenefitTable.Rows[j]["n_Value"].ToString());;
                                 nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", BenefitTable, connection, transaction);
                             }
                         }
-                        BenefitTable.Columns.Remove("isBenChecked");
+                        BenefitTable.Columns.Remove("b_BenefitSelect");
 
                         for (int j = 0; j < AccrualTable.Rows.Count; j++)
                         {
-                            string isAccChecked = AccrualTable.Rows[j]["isAccChecked"].ToString();
-                            if (isAccChecked == "True")
+                            string AccrualSelect = AccrualTable.Rows[j]["b_AccrualSelect"].ToString();
+                            if (AccrualSelect == "True")
                             {
                                 nPayValue = myFunctions.getIntVAL(AccrualTable.Rows[j]["n_Accrued"].ToString());;
                                 nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", AccrualTable, connection, transaction);
                             }
                         }
-                        AccrualTable.Columns.Remove("isAccChecked");
+                        AccrualTable.Columns.Remove("b_AccrualSelect");
                     }
                     else
                     {

@@ -270,17 +270,17 @@ namespace SmartxAPI.Controllers
                         dRow["summeryInfo"] = summeryInfo;
 
                     }
-                    // pay_benifits = myFunctions.AddNewColumnToDataTable(pay_benifits, "summeryInfo", typeof(DataTable), null);
-                    // foreach (DataRow dRow in pay_benifits.Rows)
-                    // {
-                    //     DataTable dtNode = new DataTable();
-                    //     int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
-                    //     string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
-                    //     DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
+                    pay_benifits = myFunctions.AddNewColumnToDataTable(pay_benifits, "summeryInfo", typeof(DataTable), null);
+                    foreach (DataRow dRow in pay_benifits.Rows)
+                    {
+                         DataTable dtNode = new DataTable();
+                         int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
+                         string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
+                         DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
 
-                    //     dRow["summeryInfo"] = summeryInfo;
+                          dRow["summeryInfo"] = summeryInfo;
 
-                    // }
+                     }
                     pay_PaySetup.AcceptChanges();
                     pay_PaySetup = _api.Format(pay_PaySetup);
                     pay_EmpAccruls = _api.Format(pay_EmpAccruls);
@@ -721,6 +721,38 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("reportingToList")]
+        public ActionResult GetReportingToList(int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            string sqlCommandText = "Select N_CompanyID, N_BranchID, N_FnYearID, N_EmpID, X_EmpCode, X_EmpName, N_Status from vw_ReportingTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by X_EmpCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
