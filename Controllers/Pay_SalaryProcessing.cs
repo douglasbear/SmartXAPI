@@ -36,6 +36,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetEmpList(string xBatch, int nFnYearID, string payRunID, string xDepartment, string xPosition, int nAddDedID, bool bAllBranchData, int nBranchID, int month, int year)
         {
             DataTable mst = new DataTable();
+            DataTable MainMst = new DataTable();
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
@@ -74,9 +75,12 @@ namespace SmartxAPI.Controllers
                         batchParams.Add("@nCompanyID", nCompanyID);
                         batchParams.Add("@nFnYearId", nFnYearID);
                         batchParams.Add("@xBatch", xBatch);
-                        object nBatchID = dLayer.ExecuteScalar("select N_TransID from Pay_PaymentMaster where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
-
-                        if (nBatchID != null)
+                        MainMst = dLayer.ExecuteDataTable("select * from Pay_PaymentMaster where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
+if(MainMst.Rows.Count==0){
+    return Ok(_api.Notice("No Results Found"));
+}
+                    string nBatchID = MainMst.Rows[0]["N_TransID"].ToString();
+                    if (nBatchID != null)
                             ProParams.Add("N_TransID", nBatchID);
                     }else{
                             ProParams.Add("N_TransID", 0);
@@ -166,7 +170,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Success(mst));
+                         SortedList Output = new SortedList();
+                        Output.Add("master",MainMst);
+                        Output.Add("details",mst);
+                        return Ok(_api.Success(Output));
                     }
                 }
             }
@@ -204,17 +211,17 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_TransID like '%" + xSearchkey + "%'or Batch like '%" + xSearchkey + "%' or  N_PayRunID like '%" + xSearchkey + "%' )";
+                Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' ) ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_TransID desc";
+                xSortBy = " order by batch desc,D_TransDate desc";
             else
              xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey;
+                sqlCommandText = "select top("+ nSizeperpage +")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey ;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey+"and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 ) "+Searchkey;
+                sqlCommandText = "select top("+ nSizeperpage +") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey+"and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 ) "+Searchkey ;
             
 
             SortedList OutPut = new SortedList();
@@ -227,7 +234,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                      OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -389,28 +396,43 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("dummy")]
-        public ActionResult GetDepartmentDummy()
+  [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTransID,int nFnYearID,string xBatch)
         {
+            int Results = 0;
             try
             {
-                using (SqlConnection Con = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    Con.Open();
-                    string sqlCommandText = "select * from Pay_PaymentDetails ";
-                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, Con);
-                    masterTable = _api.Format(masterTable, "master");
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
 
-                    if (masterTable.Rows.Count == 0) { return Ok(new { }); }
-                    DataSet dataSet = new DataSet();
-                    dataSet.Tables.Add(masterTable);
-                    return Ok(dataSet);
+                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection,transaction);
+                     dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " +  myFunctions.GetCompanyID(User) + "," + nFnYearID + ",'ESI','" + xBatch + "'", connection,transaction);
+                     Results = dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nTransID, "N_CompanyID=" +  myFunctions.GetCompanyID(User)  + " and N_FormID = 190",connection,transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete batch"));
+                        }
+                        Results = dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nTransID, "N_CompanyID=" +  myFunctions.GetCompanyID(User) ,connection,transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete batch"));
+                        }
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Batch deleted"));
                 }
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
+
         }
 
     }

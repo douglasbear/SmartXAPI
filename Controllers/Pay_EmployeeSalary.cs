@@ -229,6 +229,25 @@ namespace SmartxAPI.Controllers
                         if (GradeCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["x_GradeCode"] = GradeCode;
                     }
+
+                    if(nGradeID>0)
+                    {
+                         SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","Employee Salary Grade"},
+                                {"N_VoucherID",nGradeID},};
+                         try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
+
+
                     nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", MasterTable, connection, transaction);
                     
                     if (nGradeID > 0)
@@ -273,7 +292,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable to save"));
                     }
                     
-                    dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
+                   // dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
                     
                     transaction.Commit();
                     return Ok(_api.Success("Employee Grade Saved"));
