@@ -63,15 +63,16 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetDiscountDetails(int N_DiscID, int nFnYearID)
         {
-            DataTable dtDiscount = new DataTable();
+            DataTable dtDiscountMaster = new DataTable();
+            DataTable dtDiscountDetails = new DataTable();
 
             DataSet DS = new DataSet();
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-
-            string SqlDiscount = "Select * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            string MasterDiscount = "Select * from Inv_DiscountMaster Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            string DetailsDiscount = "Select * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
@@ -81,18 +82,24 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dtDiscount = dLayer.ExecuteDataTable(SqlDiscount, Params, connection);
+                    dtDiscountMaster = dLayer.ExecuteDataTable(MasterDiscount, Params, connection);
+                    dtDiscountDetails = dLayer.ExecuteDataTable(DetailsDiscount, Params, connection);
 
                 }
-                dtDiscount = api.Format(dtDiscount, "Details");
+                dtDiscountMaster = api.Format(dtDiscountMaster, "Master");
+                dtDiscountDetails = api.Format(dtDiscountDetails, "Details");
 
-                if (dtDiscount.Rows.Count == 0)
+                SortedList Data=new SortedList();
+                Data.Add("Master",dtDiscountMaster);
+                Data.Add("Details",dtDiscountDetails);
+
+                if (dtDiscountMaster.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dtDiscount));
+                    return Ok(api.Success(Data));
                 }
             }
             catch (Exception e)
@@ -125,7 +132,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", 1346);
+                        Params.Add("N_FormID", 1347);
                         Params.Add("N_BranchID", 1);
                         x_DiscountNo = dLayer.GetAutoNumber("Inv_DiscountMaster", "X_DiscCode", Params, connection, transaction);
                         if (x_DiscountNo == "")
