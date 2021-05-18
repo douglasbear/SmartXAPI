@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
 
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_DiscountNo = MasterRow["[X_DiscCode]"].ToString();
+                    string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
 
                     if (x_DiscountNo == "@Auto")
                     {
