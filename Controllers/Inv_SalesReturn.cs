@@ -287,6 +287,10 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(masterRow["n_CustomerID"].ToString());
                     int N_SalesId = myFunctions.getIntVAL(masterRow["N_SalesId"].ToString());
                     int N_DeliveryNote = 0;
+                    double N_TotalPaid=myFunctions.getVAL(MasterTable.Rows[0]["N_TotalPaidAmount"].ToString());
+                    MasterTable.Rows[0]["N_TotalPaidAmount"] = N_TotalPaid;
+                    double N_TotalPaidF=myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
+                    MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
 
                     if (values == "@Auto")
                     {
