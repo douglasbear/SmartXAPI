@@ -14,7 +14,7 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("endofservice1")]
+    [Route("amendment")]
     [ApiController]
     public class Pay_EmployeePayIncrement : ControllerBase
     {
@@ -31,13 +31,13 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetEndOfService()
+        public ActionResult GetSalaryRevisionList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select X_ServiceEndCode,X_EmpCode,X_EmpName,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID";
+            string sqlCommandText="select * from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -60,64 +60,55 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-        
-
-        [HttpGet("details")]
-        public ActionResult EndOfServiceDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
+        [HttpGet("defaultdetails")]
+        public ActionResult GetSalaryRevisionDefaultDetails(int nEmpID,int nFnYearID,DateTime EffectiveDate)
         {
-            DataTable dtAdjustment = new DataTable();
-            DataTable dtLoan = new DataTable();
+            DataTable dtOtherinfo = new DataTable();
+            DataTable dtSalaryHistory = new DataTable();
+            DataTable dtAccrual = new DataTable();
+            DataTable dtBenefits = new DataTable();
+           
             DataSet DS=new DataSet();
             SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string xCondition="";
-            string sqlAdjustment="";
-            string sqlLoan="";
 
-            if(nFnYearId==0)
-            {
-                if(bAllBranchData==true)    
-                    xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) and dbo.Pay_LoanIssue.N_LoanStatus=0";
-                else
-                    xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) AND (dbo.Pay_LoanIssue.N_BranchID = @p4) and dbo.Pay_LoanIssue.N_LoanStatus=0";
-
-                sqlAdjustment="SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM         dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + xCondition+"";
-            }
-            else
-            {
-                if(bAllBranchData==true) 
-                    xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) and dbo.Pay_LoanIssue.N_LoanStatus=0";
-                else
-                    xCondition="(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_FnYearID =@p2) AND (dbo.Pay_LoanIssue.N_BranchID = @p4) and dbo.Pay_LoanIssue.N_LoanStatus=0";
-
-                sqlAdjustment="SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM         dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + xCondition+"";
-
-            }
-            
+          
+            string sqlAcrual="Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
+            string sqlBenefits="Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2";
+            string sqlOtherinfo="select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
+           
             
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nLoanID);
-            Params.Add("@p4", nBranchID);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nEmpID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dtAdjustment = dLayer.ExecuteDataTable(sqlAdjustment, Params,connection);
-                    int nLoanTransID=0;
-                    Params.Add("@p5", nLoanTransID);
-                    nLoanTransID=myFunctions.getIntVAL(dtAdjustment.Rows[0]["N_LoanTransID"].ToString());
-                    sqlLoan="SELECT  ROW_NUMBER() over(ORDER BY  N_LoanTransDetailsID) as SlNo,Pay_LoanIssueDetails.N_LoanTransDetailsID,Pay_LoanIssueDetails.N_InstAmount,Pay_LoanIssueDetails.N_InstActualAmt,Pay_LoanIssueDetails.N_RefundAmount,Pay_LoanIssueDetails.D_DateFrom,Pay_LoanIssueDetails.D_DateTo,CONVERT(VARCHAR(3),Pay_LoanIssueDetails.D_DateFrom,100)+' - '+ CAST(datepart(year,Pay_LoanIssueDetails.D_DateFrom)As varchar) As X_Month FROm Pay_LoanIssueDetails Where Pay_LoanIssueDetails.N_LoanTransID=@p5 and  Pay_LoanIssueDetails.N_CompanyID = @p1 and N_LoanTransDetailsID not in (Select N_LoanTransDetailsID From Pay_LoanIssueDetails Where N_LoanTransID=@p5 and(N_RefundAmount=0 OR N_RefundAmount IS NULL) and N_TransDetailsID IS NOT NULL and B_IsLoanClose=1)";
-                    dtLoan = dLayer.ExecuteDataTable(sqlLoan, Params,connection);
+                    dParamList.Add("@N_CompanyID", nCompanyId);
+                    dParamList.Add("@N_FnYearID", nFnYearID);
+                    dParamList.Add("@N_EmpID", nEmpID);
+                    dParamList.Add("@Date", Convert.ToDateTime(EffectiveDate));
+
+                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
+                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params,connection);
+                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params,connection);
+                    dtOtherinfo = dLayer.ExecuteDataTable(sqlOtherinfo, Params,connection);
 
                 }
-                dtAdjustment = api.Format(dtAdjustment);
-                dtLoan = api.Format(dtLoan);
-                DS.Tables.Add(dtAdjustment);
-                DS.Tables.Add(dtLoan);
+                dtSalaryHistory = api.Format(dtSalaryHistory, "SalaryHistory");
+                dtAccrual = api.Format(dtAccrual, "Accrual");
+                dtBenefits = api.Format(dtBenefits, "Benefits");
+                dtOtherinfo = api.Format(dtOtherinfo, "Otherinfo");
 
-                if (dtAdjustment.Rows.Count == 0)
+                DS.Tables.Add(dtSalaryHistory);
+                DS.Tables.Add(dtAccrual);
+                DS.Tables.Add(dtBenefits);
+                DS.Tables.Add(dtOtherinfo);
+
+                if (dtOtherinfo.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
@@ -129,6 +120,142 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(api.Error(e));
+            }
+        }
+        
+
+        [HttpGet("details")]
+        public ActionResult GetSalaryRevisionDetails(int nEmpID,int nFnYearID,int nHistoryID)
+        {
+            DataTable dtOtherinfo = new DataTable();
+            DataTable dtSalaryHistory = new DataTable();
+            DataTable dtAccrual = new DataTable();
+            DataTable dtBenefits = new DataTable();
+           
+            DataSet DS=new DataSet();
+            SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+
+          
+            string sqlAcrual="Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
+            string sqlBenefits="Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3";
+            string sqlSalaryHistory="select top 1 * from vw_Pay_EmployeeAdditionalInfo Where N_CompanyID=@p1 and N_HistoryID=@p4";
+           
+            
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nEmpID);
+            Params.Add("@p3", nFnYearID);
+            Params.Add("@p4", nHistoryID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dParamList.Add("@p1", nCompanyId);
+                    dParamList.Add("@p2", nFnYearID);
+                    dParamList.Add("@p3", nEmpID);
+                    dParamList.Add("@p4", Convert.ToDateTime(dtOtherinfo.Rows[0]["d_SalesDate"].ToString()));
+
+                    dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
+                    dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params,connection);
+                    dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params,connection);
+                    dtOtherinfo = dLayer.ExecuteDataTable(sqlSalaryHistory, Params,connection);
+
+                }
+                dtSalaryHistory = api.Format(dtSalaryHistory, "SalaryHistory");
+                dtAccrual = api.Format(dtAccrual, "Accrual");
+                dtBenefits = api.Format(dtBenefits, "Benefits");
+                dtOtherinfo = api.Format(dtOtherinfo, "Otherinfo");
+
+                DS.Tables.Add(dtSalaryHistory);
+                DS.Tables.Add(dtAccrual);
+                DS.Tables.Add(dtBenefits);
+                DS.Tables.Add(dtOtherinfo);
+
+                if (dtOtherinfo.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(DS));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    
+                    
+                    DataTable SalaryHistory= ds.Tables["SalaryHistory"];
+                    DataTable Accrual = ds.Tables["Accrual"];
+                    DataTable Benefits = ds.Tables["Benefits"];
+                    DataTable Otherinfo = ds.Tables["Otherinfo"];
+                    DataTable MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                    DataRow MasterRow = MasterTable.Rows[0];
+
+
+
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    string x_HistoryNo = MasterRow["x_HistoryNo"].ToString();
+
+                    if (x_HistoryNo == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", N_CompanyID);
+                        Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_FormID", 305);
+                        Params.Add("N_BranchID", 1);
+                        x_HistoryNo = dLayer.GetAutoNumber("Pay_PayHistoryMaster", "X_HistoryCode", Params, connection, transaction);
+                        if (x_HistoryNo == "")
+                        {
+                            transaction.Rollback();
+                            return Ok("Unable to generate Invoicec Number");
+                        }
+                        MasterTable.Rows[0]["X_OrderNo"] = x_HistoryNo;
+                    }
+                    string DupCriteria="";
+
+
+                    int n_HistoryId = dLayer.SaveData("Pay_PayHistoryMaster", "N_HistoryID", DupCriteria, "", MasterTable, connection, transaction);
+                    if (n_HistoryId <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save");
+                    }
+                    //select payhistory id for update if revision done in same month
+                    //object N_PayHistory = dLayer.ExecuteScalar("select isnull(N_PayHistoryID,0) from  Pay_EmployeePayHistory  where N_EmpID="+n_em and MONTH(D_EffectiveDate)=" + dtpEffectiveDate.Value.Month + " and year(D_EffectiveDate)=" + dtpEffectiveDate.Value.Year + " and N_PayID=" + flxSalayHistory.get_TextMatrix(i, mcPayID) + " ", Con);
+
+                    for (int i = 0; i < SalaryHistory.Rows.Count; i++)
+                    {
+                        SalaryHistory.Rows[i]["N_HistoryID"] = n_HistoryId;
+                        
+                    }
+
+                    dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", SalaryHistory, connection, transaction);
+                    
+                   
+                    transaction.Commit();
+                    SortedList Result = new SortedList();
+                    
+                    return Ok(api.Success(Result, "Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
             }
         }
     }
