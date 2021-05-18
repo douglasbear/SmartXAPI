@@ -279,6 +279,12 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p4", nItemID);
                     HistoryTable = dLayer.ExecuteDataTable(HistorysqlCommand, Params, connection);
 
+                    HistoryTable = api.Format(HistoryTable,"History");
+
+                    ExpirysqlCommand = "Select * From vw_AssetAddlInfo Where N_CompanyID=@p1 and N_ItemID=@p4";
+                    ExpiryTable = dLayer.ExecuteDataTable(ExpirysqlCommand, Params, connection);
+
+                    ExpiryTable = api.Format(ExpiryTable,"Expiry");
                 }
                 
                 if (MasterTable.Rows.Count == 0)
@@ -287,7 +293,44 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(MasterTable); 
+                    dt.Tables.Add(HistoryTable); 
+                    dt.Tables.Add(ExpiryTable); 
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        [HttpGet("defaults")]
+        public ActionResult ExpiryDefaults()
+        {
+            DataTable dt = new DataTable();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            SortedList Params = new SortedList();
+            string sqlCommandText="";
+
+            sqlCommandText =  "Select * From Gen_Defaults where N_DefaultId= 51";
+            
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = api.Format(dt);
+                }
+                
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                   // dt.Tables.Add(dt); 
                     return Ok(api.Success(dt));
                 }
             }
