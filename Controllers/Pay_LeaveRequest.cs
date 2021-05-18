@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("leaveListAll")]
-        public ActionResult GetLeaveRequestList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetLeaveRequestList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool isAdjestment)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -138,10 +138,16 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
+            string isAdjestmentCriteria="  and B_IsAdjustEntry<>1 ";
+
+            if(isAdjestment==true){
+                isAdjestmentCriteria="  and B_IsAdjustEntry=1 ";
+            }
+
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays  From vw_PayVacationList where N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1  " + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays  From vw_PayVacationList where N_CompanyID=@nCompanyID   " + isAdjestmentCriteria + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays From vw_PayVacationList where N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1  " + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays From vw_PayVacationList where N_CompanyID=@nCompanyID " + isAdjestmentCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID "+ isAdjestmentCriteria +"   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -152,7 +158,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_CompanyID=@nCompanyID and B_IsAdjustEntry<>1 " + Searchkey + " ";
+                        sqlCommandCount = "select count(*) as N_Count From vw_PayVacationList where N_CompanyID=@nCompanyID "+ isAdjestmentCriteria  + Searchkey + " ";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);

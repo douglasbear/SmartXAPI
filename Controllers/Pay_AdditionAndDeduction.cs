@@ -36,7 +36,10 @@ namespace SmartxAPI.Controllers
         {
             DataTable mst = new DataTable();
             DataTable dt = new DataTable();
+            DataTable node = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int Year = myFunctions.getIntVAL(payRunID.Substring(0, 4));
+            int Month = myFunctions.getIntVAL(payRunID.Substring(4, 2));
 
             string X_Cond = "";
             if (xDepartment != null && xDepartment != "")
@@ -73,8 +76,16 @@ namespace SmartxAPI.Controllers
                         batchParams.Add("@nCompanyID", nCompanyID);
                         batchParams.Add("@nFnYearId", nFnYearID);
                         batchParams.Add("@xBatch", xBatch);
-                        nTransID = dLayer.ExecuteScalar("select N_TransID from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
-                        payRunID = dLayer.ExecuteScalar("select N_PayRunID from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection).ToString();
+                        mst = dLayer.ExecuteDataTable("select * from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
+                        
+                        if(mst.Rows.Count==0){
+                             return Ok(_api.Notice("No Results Found"));
+                        }
+                           nTransID = myFunctions.getIntVAL(mst.Rows[0]["N_TransID"].ToString());
+                           payRunID = mst.Rows[0]["N_PayRunID"].ToString();
+
+                        // nTransID = dLayer.ExecuteScalar("select N_TransID from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
+                        // payRunID = dLayer.ExecuteScalar("select N_PayRunID from Pay_MonthlyAddOrDed where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection).ToString();
 
                         if (nTransID != null)
                             ProParams.Add("N_TransID", nTransID);
@@ -86,8 +97,165 @@ namespace SmartxAPI.Controllers
                     ProParams.Add("N_PAyrunID", payRunID);
 
 
-                    mst = dLayer.ExecuteDataTablePro("SP_Pay_AdditionDeductionEmployeeList", ProParams, connection);
+                    dt = dLayer.ExecuteDataTablePro("SP_Pay_AdditionDeductionEmployeeList", ProParams, connection);
 
+if (xBatch != null)
+{
+                    SortedList ProParam2 = new SortedList();
+                    ProParam2.Add("N_CompanyID", nCompanyID);
+                    ProParam2.Add("N_PayrunID", payRunID);
+                    ProParam2.Add("N_FnYearID", nFnYearID);
+                    ProParam2.Add("N_BatchID", nTransID);
+                    node = dLayer.ExecuteDataTablePro("SP_Pay_SelAddOrDed", ProParam2, connection);
+                    if (node.Rows.Count > 0)
+                    {
+                        node.Columns.Add("N_SaveChanges");
+                        node.Columns.Add("N_Type");
+                        node = myFunctions.AddNewColumnToDataTable(node, "N_Amount", typeof(string), null);
+                    }
+
+                    SortedList paytypeParam = new SortedList();
+                    paytypeParam.Add("@nCompanyID", nCompanyID);
+                    DataTable payType = dLayer.ExecuteDataTable("Select N_PayTypeID,N_Type from Pay_PayType Where  N_CompanyID=@nCompanyID", paytypeParam, connection);
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "details", typeof(DataTable), null);
+                    dt.AcceptChanges();
+                    node.AcceptChanges();
+////////////
+                    object SalaryProcess = myFunctions.ReturnSettings("HR", "Salary Process", "N_Value", nCompanyID, dLayer, connection);
+                    object Periodvalue = myFunctions.ReturnSettings("Payroll", "Period Settings", "N_Value", nCompanyID, dLayer, connection);
+                 
+                                int daysinWork = 0;
+                                int days = 0;
+                                double TotalHrs = 0;
+                                if (Periodvalue == null) daysinWork = 0;
+                                else
+                                    daysinWork = myFunctions.getIntVAL(Periodvalue.ToString());
+                                DateTime dtStartDate = new DateTime(Year, Month, 1);
+                                if (SalaryProcess != null && myFunctions.getIntVAL(SalaryProcess.ToString()) == 1)
+                                    days = 30;
+                                else
+                                    days = DateTime.DaysInMonth(Year, Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+                                DateTime dt1, dt2;
+                                dt2 = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+                                int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+                                dt1 = dtStartDate.AddDays(-lastdays);
+//////////////////                           
+
+                    node = myFunctions.AddNewColumnToDataTable(node,"TotalHrs",typeof(int),0);
+
+                    foreach (DataRow dtVar in dt.Rows)
+                    {
+                        DataTable dtNode = new DataTable();
+                        foreach (DataRow nodeVar in node.Rows)
+                        {
+                            if (dtVar["N_EmpID"].ToString() != nodeVar["N_EmpID"].ToString()) continue;
+                            bool B_PostedAccount = false;
+                            if (myFunctions.getIntVAL(nodeVar["N_Processed"].ToString()) > 0)
+                                B_PostedAccount = true;
+                            if (myFunctions.getIntVAL(nodeVar["N_PayMethod"].ToString()) == 4)
+                            {
+                                object objRate = null;
+                                SortedList param = new SortedList();
+                                param.Add("@nCompanyID", nCompanyID);
+                                param.Add("@nEmpID", nodeVar["N_EmpID"].ToString());
+                                param.Add("@nFnYearId", nFnYearID);
+                                param.Add("@nPayID", nodeVar["N_PayID"].ToString());
+                                objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)", param, connection);
+                                if (objRate != null)
+                                {
+                                    nodeVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
+                                }
+                            }
+
+
+                            if (myFunctions.getIntVAL(nodeVar["N_PayTypeID"].ToString()) != 17)
+                            {
+                                object obj =  dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" + myFunctions.getDateVAL(dt1) + "','" + myFunctions.getDateVAL(dt2) + "'," + myFunctions.getIntVAL(dtVar["N_EmpID"].ToString()) + ")", connection);
+                                if (obj != null)
+                                    TotalHrs = myFunctions.getVAL(obj.ToString());
+                                else
+                                    TotalHrs = 240;
+                                nodeVar["TotalHrs"] = TotalHrs;
+
+                            }
+
+                            if (B_PostedAccount)
+                            {
+                                nodeVar["N_Amount"] = nodeVar["N_PayRate"].ToString();
+
+                            }
+                            else
+                            {
+                                if (myFunctions.getVAL(nodeVar["N_PayRate"].ToString()) == 0)
+                                {
+                                    nodeVar["N_Amount"] = nodeVar["N_Value"].ToString();
+                                }
+                                else
+                                {
+                                    nodeVar["N_Amount"] = nodeVar["N_PayRate"].ToString();
+                                }
+                            }
+
+                            DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + nodeVar["N_PayTypeID"].ToString());
+                            if (payTypeRow.Length > 0)
+                            {
+                                if (myFunctions.getIntVAL(payTypeRow[0]["N_Type"].ToString()) == 1)
+                                {
+                                    nodeVar["N_Amount"] = -1 * myFunctions.getVAL(nodeVar["N_Amount"].ToString());
+                                    nodeVar["N_Type"] = payTypeRow[0]["N_Type"];
+                                }
+                            }
+                        }
+                        dt.AcceptChanges();
+
+                        DataRow[] drEmpDetails = node.Select("N_EmpID = " + dtVar["N_EmpID"].ToString());
+                        if (drEmpDetails.Length > 0)
+                        {
+                            dtNode = drEmpDetails.CopyToDataTable();
+                            dtNode.AcceptChanges();
+                            dtVar["details"] = dtNode;
+                        }
+                    }
+
+}
+                    mst.AcceptChanges();
+                    dt.AcceptChanges();
+                    dt = _api.Format(dt);
+                    mst = _api.Format(mst);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        SortedList Output = new SortedList();
+                        Output.Add("master",mst);
+                        Output.Add("details",dt);
+                        return Ok(_api.Success(Output));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+
+
+        [HttpGet("empElements")]
+        public ActionResult GetEmpElements(int nEmpID,string payRunID,int nFnYearID,int nTransID)
+        {
+            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int Year = myFunctions.getIntVAL(payRunID.Substring(0, 4));
+            int Month = myFunctions.getIntVAL(payRunID.Substring(4, 2));
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
                     SortedList ProParam2 = new SortedList();
                     ProParam2.Add("N_CompanyID", nCompanyID);
                     ProParam2.Add("N_PayrunID", payRunID);
@@ -104,17 +272,33 @@ namespace SmartxAPI.Controllers
                     SortedList paytypeParam = new SortedList();
                     paytypeParam.Add("@nCompanyID", nCompanyID);
                     DataTable payType = dLayer.ExecuteDataTable("Select N_PayTypeID,N_Type from Pay_PayType Where  N_CompanyID=@nCompanyID", paytypeParam, connection);
-
-                    mst = myFunctions.AddNewColumnToDataTable(mst, "details", typeof(DataTable), null);
-                    mst.AcceptChanges();
                     dt.AcceptChanges();
+////////////
+                    object SalaryProcess = myFunctions.ReturnSettings("HR", "Salary Process", "N_Value", nCompanyID, dLayer, connection);
+                    object Periodvalue = myFunctions.ReturnSettings("Payroll", "Period Settings", "N_Value", nCompanyID, dLayer, connection);
+                 
+                    int daysinWork = 0;
+                    int days = 0;
+                    double TotalHrs = 0;
+                    if (Periodvalue == null) daysinWork = 0;
+                    else
+                        daysinWork = myFunctions.getIntVAL(Periodvalue.ToString());
+                    DateTime dtStartDate = new DateTime(Year, Month, 1);
+                    if (SalaryProcess != null && myFunctions.getIntVAL(SalaryProcess.ToString()) == 1)
+                        days = 30;
+                    else
+                        days = DateTime.DaysInMonth(Year, Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+                    DateTime dt1, dt2;
+                    dt2 = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+                    int lastdays = myFunctions.getIntVAL(Periodvalue.ToString());
+                    dt1 = dtStartDate.AddDays(-lastdays);
+//////////////////                           
 
-                    foreach (DataRow mstVar in mst.Rows)
-                    {
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"TotalHrs",typeof(int),0);
                         DataTable dtNode = new DataTable();
                         foreach (DataRow dtVar in dt.Rows)
                         {
-                            if (dtVar["N_EmpID"].ToString() != mstVar["N_EmpID"].ToString()) continue;
+                            if (dtVar["N_EmpID"].ToString() != nEmpID.ToString() ) continue;
                             bool B_PostedAccount = false;
                             if (myFunctions.getIntVAL(dtVar["N_Processed"].ToString()) > 0)
                                 B_PostedAccount = true;
@@ -131,6 +315,18 @@ namespace SmartxAPI.Controllers
                                 {
                                     dtVar["N_Percentage"] = myFunctions.getFloatVAL(objRate.ToString()).ToString();
                                 }
+                            }
+
+
+                            if (myFunctions.getIntVAL(dtVar["N_PayTypeID"].ToString()) != 17)
+                            {
+                                object obj =  dLayer.ExecuteScalar("SELECT  [dbo].[SP_TimeSheetCalc_TotalHours](" + nCompanyID + ",'" + myFunctions.getDateVAL(dt1) + "','" + myFunctions.getDateVAL(dt2) + "'," + myFunctions.getIntVAL(dtVar["N_EmpID"].ToString()) + ")", connection);
+                                if (obj != null)
+                                    TotalHrs = myFunctions.getVAL(obj.ToString());
+                                else
+                                    TotalHrs = 240;
+                                dtVar["TotalHrs"] = TotalHrs;
+
                             }
 
                             if (B_PostedAccount)
@@ -162,24 +358,15 @@ namespace SmartxAPI.Controllers
                         }
                         dt.AcceptChanges();
 
-                        DataRow[] drEmpDetails = dt.Select("N_EmpID = " + mstVar["N_EmpID"].ToString());
+                        DataRow[] drEmpDetails = dt.Select("N_EmpID = " + nEmpID.ToString());
                         if (drEmpDetails.Length > 0)
                         {
                             dtNode = drEmpDetails.CopyToDataTable();
                             dtNode.AcceptChanges();
-                            mstVar["details"] = dtNode;
                         }
-                    }
-                    mst.AcceptChanges();
-                    mst = _api.Format(mst);
-                    if (mst.Rows.Count == 0)
-                    {
-                        return Ok(_api.Notice("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Success(mst));
-                    }
+                        dtNode = _api.Format(dtNode);
+                        return Ok(_api.Success(dtNode));
+
                 }
             }
             catch (Exception e)
@@ -318,18 +505,18 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_PayRunID like '%" + xSearchkey + "%' or Payrun ID like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%')";
+                Searchkey = "and (x_Batch like '%" + xSearchkey + "%' or right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or REPLACE(CONVERT(CHAR(11), D_TransDate, 106),' ','-') like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PayRunID desc";
+                xSortBy = " order by X_Batch desc,D_TransDate desc";
             else
                 xSortBy = " order by " + xSortBy;
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId order by D_TransDate desc";
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from vw_PayAddDed_Disp  where N_CompanyID=@nCompanyId ) order by D_TransDate desc";
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,x_Batch,right(REPLACE(CONVERT(CHAR(11), x_PayrunText, 106),' ','-'),8) as x_PayrunText,D_TransDate,X_Notes from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId " + Searchkey +" and  N_PayRunID not in (select top(" + Count + ") N_PayRunID from Pay_MonthlyAddOrDed  where N_CompanyID=@nCompanyId ) "+Searchkey+xSortBy;
 
             Params.Add("@nCompanyId", nCompanyId);
             // Params.Add("@nFnYearId", nFnYearId);
@@ -341,13 +528,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAddDed_Disp where N_CompanyID=@nCompanyId ";
+                    sqlCommandCount = "select count(*) as N_Count  from Pay_MonthlyAddOrDed where N_CompanyID=@nCompanyId "+ Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                        return Ok(_api.Success(OutPut));
                     }
                     else
                     {
@@ -361,6 +548,44 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(e));
             }
+        }
+
+
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTransID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                        Results = dLayer.DeleteData("Pay_MonthlyAddOrDed", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User),connection,transaction);
+                        
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete batch"));
+                        }
+                        Results = dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User),connection,transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete batch"));
+                        }
+                    
+                    transaction.Commit();
+                    return Ok(_api.Success("Batch deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+
         }
 
 
