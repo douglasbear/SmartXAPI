@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
             if (bAllBranchData)
                 Condn = "X_ItemCode=@p2 and N_CompanyID=@p1";
             else
-                Condn = "N_ItemID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
+                Condn = "X_ItemCode=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
 
             sqlCommandText = "select * from vw_AssetMaster where "+Condn+"";
             Params.Add("@p1", nCompanyId);
