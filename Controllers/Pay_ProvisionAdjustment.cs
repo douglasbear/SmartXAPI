@@ -75,9 +75,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             //int nCompanyId=myFunctions.GetCompanyID(User);
+            if(xDepartment==null)xDepartment="";
+            if(xPosition==null)xPosition="";
+
             string strcondition="";
 
-            strcondition = " and X_Department = ''" + xDepartment + "''";
+            if(xDepartment!="")
+                strcondition = " and X_Department = ''" + xDepartment + "''";
             if (xPosition != "")
             {
                 if (strcondition == "")
@@ -140,17 +144,21 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable PaymentTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    PaymentTable = ds.Tables["paymentDetails"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nAdjustment = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nPayID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayID"].ToString());
+                    int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     string X_AdjustmentCode = MasterTable.Rows[0]["X_AdjustmentCode"].ToString();
-                    MasterTable.Columns.Remove("N_FnYearID");
+                    string X_EntryForm = MasterTable.Rows[0]["X_EntryForm"].ToString();
+                    MasterTable.Columns.Remove("X_EntryForm");
 
                     if (nAdjustment > 0)
                     {
@@ -198,13 +206,25 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
-
+                    
+                    DetailTable.Columns.Remove("b_Select");
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
                         DetailTable.Rows[i]["N_AdjustmentID"] = nAdjustment;
                     }
                     int N_AdjustmentDetailsID = dLayer.SaveData("Pay_PayCodeAdjustmentDetails", "N_AdjustmentDetailsID", DetailTable, connection, transaction);
                     if (N_AdjustmentDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }                   
+
+                    for (int i = 0; i < PaymentTable.Rows.Count; i++)
+                    {
+                        PaymentTable.Rows[i]["N_TransID"] = nAdjustment;
+                    }
+                    int N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailTable, connection, transaction);
+                    if (N_TransDetailsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
@@ -215,9 +235,9 @@ namespace SmartxAPI.Controllers
                                 {"N_FnYearID",nFnYearID},
                                 {"N_AdjustmentID",nAdjustment},
                                 {"N_PayID",nPayID},
-                                {"D_Date",0},
-                                {"N_UserID",0},
-                                {"X_EntryFrom",""}};
+                                {"D_Date",Convert.ToDateTime(MasterTable.Rows[0]["D_AdjustmentDate"].ToString())},
+                                {"N_UserID",nUserID},
+                                {"X_EntryFrom",X_EntryForm}};
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Pay_EndOfServiceBatchPosting", PostParams, connection, transaction);
@@ -402,7 +422,7 @@ namespace SmartxAPI.Controllers
         } 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nApprovalID)
+        public ActionResult DeleteData(int nAdjustmentID,int nCompanyID,int nFnYearID,string XAdjustmentCode)
         {
             int Results = 0;
             try
@@ -411,12 +431,28 @@ namespace SmartxAPI.Controllers
                 {
                     
                     connection.Open();
-                    Results = dLayer.DeleteData("Gen_ApprovalCodes", "N_ApprovalID", nApprovalID, "", connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    if(nAdjustmentID>0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"N_FnYearID",nFnYearID},
+                                {"X_TransType","EOS"},
+                                {"X_ReferenceNo",XAdjustmentCode}};
+                            try
+                        {
+                            Results=dLayer.ExecuteNonQueryPro("SP_Pay_EndOfServiceBatchPosting_Del", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
                     if (Results > 0)
                     {
-                    
-                        dLayer.DeleteData("Gen_ApprovalCodesDetails", "N_ApprovalID", nApprovalID, "", connection);
-                        return Ok(_api.Success("Approval Code deleted"));
+                        return Ok(_api.Success("Adjustment Code deleted"));
                     }
                     else
                     {
