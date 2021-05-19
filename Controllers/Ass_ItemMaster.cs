@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int N_FormID = 1305;
+        private readonly int N_FormID = 452;
 
          public Ass_ItemMaster(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         
@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
         }
              
  [HttpGet("details")]
-        public ActionResult ItemMasterListDetails(string xItemCode,int nItemID,int nBranchID,bool bAllBranchData)
+        public ActionResult ItemMasterListDetails(string xItemCode,int nBranchID,bool bAllBranchData)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -186,6 +186,7 @@ namespace SmartxAPI.Controllers
             DataTable HistoryTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
+            int nItemID=0;
             string sqlCommandText="";
             string ExpirysqlCommand="";
             string HistorysqlCommand="";
@@ -209,6 +210,8 @@ namespace SmartxAPI.Controllers
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     MasterTable = api.Format(MasterTable,"Master");
+                    if (MasterTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
+                    nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_itemID"].ToString());
 
                     HistorysqlCommand = "Select D_StartDate, D_EndDate ,X_Description , X_RefNo ,N_Amount,X_Branch,N_BookValue,X_CostcentreName,X_ProjectName,ProjectPeriod,N_TypeOrder,X_EmpName,Dep_Amount from vw_Ass_ItemHistory where N_ItemID=@p4 and N_CompanyID=@p1 order by D_EndDate,N_TypeOrder";
                     Params.Add("@p4", nItemID);
