@@ -15,7 +15,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("assetPurchase")]
     [ApiController]
-    public class Inv_AssetPurchase : ControllerBase
+    public class Ass_AssetPurchase : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -23,14 +23,14 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Inv_AssetPurchase(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
+        public Ass_AssetPurchase(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = fun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 65;
+            N_FormID = 129;
         }
 
 
@@ -171,7 +171,136 @@ namespace SmartxAPI.Controllers
         
 
 
-       
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    SortedList Params = new SortedList();
+                    // Auto Gen
+                                try{
+                 using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                    connection.Open();
+                    SqlTransaction transaction=connection.BeginTransaction();
+                    string ReturnNo="";
+                    int N_CreditNoteID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
+                    int N_UserID=myFunctions.GetUserID(User);
+                    double N_TotalReceived=myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceived"].ToString());
+                    MasterTable.Rows[0]["n_TotalReceived"] = N_TotalReceived;
+                    double N_TotalReceivedF=myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
+                    MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
+                    var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
+                    if(values=="@Auto"){
+                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID",80);
+                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
+                        ReturnNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
+                        if(ReturnNo==""){transaction.Rollback(); return Ok(_api.Warning("Unable to generate Quotation Number"));}
+                        MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
+                    }
+
+                    if(N_CreditNoteID>0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_TransType","PURCHASE RETURN"},
+                                {"N_VoucherID",N_CreditNoteID}};
+                         try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
+
+                    N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
+                    if(N_CreditNoteID<=0){
+                        transaction.Rollback();
+                        }
+                    for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                        {
+                            DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
+                        }
+                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
+                    transaction.Commit();
+
+                         SortedList InsParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"N_CreditNoteID",N_CreditNoteID}};    
+                        dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
+
+                    SortedList PostParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_InventoryMode","PURCHASE RETURN"},
+                                {"N_InternalID",N_CreditNoteID},
+                                {"N_UserID",N_UserID}};
+                    dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+
+                    SortedList Result = new SortedList();
+                    Result.Add("n_PurchaseReturnID",N_CreditNoteID);
+                    Result.Add("x_PurchaseReturnNo",ReturnNo);
+                    return Ok(_api.Success(Result,"Purchase Return Saved"));
+                    }
+                }
+                catch (Exception ex)
+                {
+                    return Ok(_api.Error(ex));
+                }
+        }
+
+       [HttpDelete("delete")]
+        public ActionResult DeleteData(int nBranchID)
+        {
+            int Results = 0;
+
+            SortedList Params = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    Params.Add("@nBranchID", nBranchID);
+                    object count = dLayer.ExecuteScalar("select count(*) as N_Count from Vw_Acc_BranchMaster_Disp where N_BranchID=@nBranchID and N_CompanyID=N_CompanyID", Params, connection);
+                    int N_Count = myFunctions.getIntVAL(count.ToString());
+                    if (N_Count <= 0)
+                    {
+                        Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
+
+                        Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1", connection);
+
+
+                    }
+                    else
+                    {
+                        return Ok(_api.Success("unable to delete this branch"));
+                    }
+                    if (Results >= 0)
+                    {
+                        return Ok(_api.Success("Branch deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete Branch"));
+                    }
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
    } 
   
  }
