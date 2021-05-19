@@ -155,9 +155,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", d_Date);
             string sqlCommandText = "";
             if (bAllBranchData == true)
-                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2 )";
+                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2 )";
             else
-                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01') ";
+                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01') ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
             string s = day1.DayOfWeek.ToString();
             string sqlCommandText = "";
 
-            sqlCommandText = "select D_In1,D_Out2 from Pay_WorkingHours where N_CatagoryID=@p1 and X_Day='" + day1.DayOfWeek.ToString() + "'";
+            sqlCommandText = "select D_In1,D_Out1 from Pay_WorkingHours where N_CatagoryID=@p1 and X_Day='" + day1.DayOfWeek.ToString() + "'";
 
             try
             {
@@ -216,28 +216,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
 
 
         [HttpPost("save")]
@@ -284,15 +262,18 @@ namespace SmartxAPI.Controllers
                             DayOfWeek dow = dt.DayOfWeek; //enumD_PeriodTo
                             string str = dow.ToString(); //string
                             int N_GroupIDGrid = myFunctions.getIntVAL(mstVar["n_GroupID"].ToString());
-                            string qry = " Select " + mstVar["n_CompanyID"] + " as N_CompanyID," + mstVar["n_ShiftDetailsID"] + " as N_ShiftDetailsID," + mstVar["n_EmpID"] + " as N_EmpID,'" + mstVar["d_PeriodFrom"] + "' as D_PeriodFrom ,'" + mstVar["d_PeriodTo"] + "' as  D_PeriodTo," + mstVar["n_GroupID"] + " as N_GroupID," + mstVar["n_BranchID"] + " AS N_BranchID," + mstVar["n_TypeID"] + " as N_TypeID,'" + mstVar["d_EntryDate"] + "' as D_EntryDate, '" + (mstVar["d_Date"]) + "' as D_Date,'" + mstVar["x_GroupName"] + "' as X_GroupName," + mstVar["n_FnYearID"] + " as N_FnYearID,D_In1,D_Out1,D_In2,D_Out2 from vw_WorkingHours Where N_CompanyID =@nCompanyID and N_CatagoryID= " + myFunctions.getIntVAL(mstVar["n_GroupID"].ToString()) + " and X_Day= '" + dow.ToString() + "' ";
+                            string qry = " Select " + mstVar["n_CompanyID"] + " as N_CompanyID," + mstVar["n_ShiftDetailsID"] + " as N_ShiftDetailsID," + mstVar["n_ShiftID"] + " as N_ShiftID," + mstVar["n_EmpID"] + " as N_EmpID,'" + mstVar["d_PeriodFrom"] + "' as D_PeriodFrom ,'" + mstVar["d_PeriodTo"] + "' as  D_PeriodTo," + mstVar["n_GroupID"] + " as N_GroupID," + mstVar["n_BranchID"] + " AS N_BranchID," + mstVar["n_TypeID"] + " as N_TypeID,'" + mstVar["d_EntryDate"] + "' as D_EntryDate, '" + (mstVar["d_Date"]) + "' as D_Date,'" + mstVar["x_GroupName"] + "' as X_GroupName," + mstVar["n_FnYearID"] + " as N_FnYearID,D_In1,D_Out1,D_In2,D_Out2 from vw_WorkingHours Where N_CompanyID =@nCompanyID and N_CatagoryID= " + myFunctions.getIntVAL(mstVar["n_GroupID"].ToString()) + " and X_Day= '" + dow.ToString() + "' ";
                             Sql = Sql == "" ? qry : Sql + " UNION " + qry;
 
                         }
 
 
                     }
+                    
+
                     detailsTable = dLayer.ExecuteDataTable(Sql, Params, connection, transaction);
                     dLayer.SaveData("Pay_Empshiftdetails", "N_ShiftDetailsID", detailsTable, connection, transaction);
+                    dLayer.ExecuteNonQuery("update pay_empshiftDetails set N_SHIFTid=N_ShiftDetailsID", connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }

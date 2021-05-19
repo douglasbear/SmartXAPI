@@ -38,6 +38,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_ServiceEndCode like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_EndType like '%" + xSearchkey + "%' or cast([D_EndDate] as VarChar) like '%" + xSearchkey + "%')";
@@ -46,8 +47,13 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_ServiceEndID desc";
             else
                 xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " and N_ServiceEndID not in (select top(" + Count + ") N_ServiceEndID from vw_EndOfService where N_CompanyID=@nCompanyID" + xSearchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID";
+            
             SortedList OutPut = new SortedList();
             try
             {
@@ -56,7 +62,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_EndOfService where N_CompanyID=@nCompanyID";
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_EndOfService where N_CompanyID=@nCompanyID " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -242,7 +248,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");
-                    nServiceEndID = dLayer.SaveData("pay_EndOFService", "N_ServiceEndID", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ServiceEndCode='" + ServiceEndCode + "' and N_FnyearID=" + nFnYearId;
+                    nServiceEndID = dLayer.SaveData("pay_EndOFService", "N_ServiceEndID", DupCriteria, "", MasterTable, connection, transaction);
                     if (nServiceEndID <= 0)
                     {
                         transaction.Rollback();

@@ -21,7 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
-         private readonly IApiFunctions _api;
+        private readonly IApiFunctions _api;
         private readonly string connectionString;
         private readonly int N_FormID = 587;
 
@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-       
+
         //  [HttpGet("list")]
         // public ActionResult PayAccruedList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         // {
@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
         //         xSortBy = " order by N_VacTypeID desc";
         //     else
         //         xSortBy = " order by " + xSortBy;
-             
+
         //      if(Count==0)
         //         sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description from Pay_VacationType where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
         //     else
@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
         //             }
 
         //         }
-                
+
         //     }
         //     catch (Exception e)
         //     {
@@ -91,31 +91,31 @@ namespace SmartxAPI.Controllers
         //     }
         // }
 
- [HttpGet("Dashboardlist")]
-        public ActionResult PayAccruedList(int nPage,int nSizeperpage,string xSearchkey, string xSortBy)
+        [HttpGet("Dashboardlist")]
+        public ActionResult PayAccruedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-            
-                  Searchkey = "and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%' or x_Type like '%" + xSearchkey + "%' or x_Period like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' )";
+
+                Searchkey = "and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%' or x_Type like '%" + xSearchkey + "%' or x_Period like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' )";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VacTypeID desc";
             else
-             xSortBy = " order by " + xSortBy;
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayVacationType where N_CompanyID=@p1 ";
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationType where N_CompanyID=@p1 ";
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_PayVacationType where N_CompanyID=@p1  and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 )";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationType where N_CompanyID=@p1  and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 )";
             Params.Add("@p1", nCompanyId);
-          
+
 
             SortedList OutPut = new SortedList();
 
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationType where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-         [HttpGet("VactionList")]
+        [HttpGet("VactionList")]
         public ActionResult AccruedTypeList()
         {
             DataTable dt = new DataTable();
@@ -181,13 +181,13 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        
 
 
 
-       
-         [HttpGet("details")]
-        public ActionResult PayAccruedDetails(string xVacCode)
+
+
+        [HttpGet("details")]
+        public ActionResult PayAccruedDetails(string xVacCode, int nVacTypeID)
         {
 
 
@@ -206,16 +206,16 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                     Params.Add("@xVacCode", xVacCode);
+                    Params.Add("@xVacCode", xVacCode);
                     Mastersql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
-                   
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int VacTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_VacTypeID"].ToString());
                     Params.Add("@nVacTypeID", VacTypeID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and N_VacTypeID=@nVacTypeID ";
+                    DetailSql = "select * from Pay_VacationTypeDetails where N_CompanyId=@nCompanyID and N_VacTypeID=@nVacTypeID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
@@ -235,7 +235,7 @@ namespace SmartxAPI.Controllers
 
 
 
-        
+
         [HttpPost("Save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -255,9 +255,71 @@ namespace SmartxAPI.Controllers
                     int n_VacTypeID = myFunctions.getIntVAL(MasterRow["N_VacTypeID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_VacCode = MasterRow["X_VacCode"].ToString();
                    
+                    string x_VacCode = MasterRow["X_VacCode"].ToString();
+                    var values = MasterTable.Rows[0]["X_VacCode"].ToString();
+                    if (n_VacTypeID > 0)
+                    {
+                         string N_StartType =(MasterRow["N_StartType"].ToString());
+                        object objVacationStarted;
+                        MasterTable.Columns.Remove("n_FnYearId");
 
+                        objVacationStarted = dLayer.ExecuteScalar("select 1 FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        if (objVacationStarted != null)
+                        {
+
+                            return Ok(_api.Error("Transaction started!!!"));
+
+
+                        }
+                       
+                        
+                        dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
+                        dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="M";
+
+                        }
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="Y";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="None")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="N";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="One Time")
+                        {
+                            MasterTable.Rows[0]["X_Period"]="O";
+                            
+                        }
+                          if(MasterTable.Rows[0]["X_Type"].ToString()=="Leave")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="B";
+
+                        }
+                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Tickets")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="T";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Allowance")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="A";
+                            
+                        }
+                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Exit Re-Entry")
+                        {
+                            MasterTable.Rows[0]["X_Type"]="E";
+                            
+                        }
+                       
+
+                        
+                    }
                     if (x_VacCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
@@ -270,10 +332,12 @@ namespace SmartxAPI.Controllers
                             return Ok("Unable to generate Accrual Code");
                         }
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
-                          MasterTable.Columns.Remove("n_FnYearId");
+                        MasterTable.Columns.Remove("n_FnYearId");
                     }
+                      string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "'" ;
 
-                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", "", "", MasterTable, connection, transaction);
+
+                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria, "", MasterTable, connection, transaction);
                     if (n_VacTypeID <= 0)
                     {
                         transaction.Rollback();
@@ -308,26 +372,47 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nVacTypeID)
-        
+        public ActionResult DeleteData(int nVacTypeID, int nCompanyID, int fnYearID)
+
         {
 
-             int Results = 0;
+            int Results = 0;
+            object objVacationStarted;
+            object objAssigned;
+
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", nVacTypeID, "", connection, transaction);
-                    transaction.Commit();
+                    objAssigned = dLayer.ExecuteScalar("select 1 FRom Pay_EmpAccruls Where N_VacTypeID= " + nVacTypeID + " and N_CompanyID=" + nCompanyID + "", connection, transaction);
+                    objVacationStarted = dLayer.ExecuteScalar("select 1 FRom Pay_VacationDetails Where N_VacTypeID= " + nVacTypeID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + fnYearID, connection, transaction);
+                    if (objVacationStarted != null)
+                    {
+
+                        return Ok(_api.Error("Transaction started cannot delete Accrual Code"));
+
+
+                    }
+                    else if (objAssigned != null)
+                    {
+                        return Ok(_api.Error("can't delete Accrual Code"));
+
+                    }
+                    else
+                    {
+
+                        Results = dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", nVacTypeID, "", connection, transaction);
+                        transaction.Commit();
+                    }
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_VacTypeID",nVacTypeID.ToString());
-                    return Ok(api.Success(res,"Accrual Code deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_VacTypeID", nVacTypeID.ToString());
+                    return Ok(api.Success(res, "Accrual Code deleted"));
                 }
                 else
                 {

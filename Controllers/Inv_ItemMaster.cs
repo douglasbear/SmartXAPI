@@ -33,36 +33,30 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page)
+        public ActionResult GetAllItems(string query, int PageSize, int Page,int nCategoryID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
             string qry = "";
+            string Category = "";
             if (query != "" && query != null)
             {
                 qry = " and (Description like @query or [Item Code] like @query) ";
                 Params.Add("@query", "%" + query + "%");
             }
+            if(nCategoryID>0)
+                Category= " and vw_InvItem_Search.N_CategoryID =" + nCategoryID; 
+
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
 
             // string sqlComandText = " * from Vw_InvItem_Search where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
- string sqlComandText =  "  vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, "+
- "                        vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, "+
-  "                       vw_InvItem_Search.B_BaseUnit, vw_InvItem_Search.N_Qty, vw_InvItem_Search.N_BaseUnitID, vw_InvItem_Search.N_MinimumMargin, vw_InvItem_Search.N_ItemManufacturerID, vw_InvItem_Search.X_ItemManufacturer, "+
-   "                      vw_InvItem_Search.X_SalesUnit, vw_InvItem_Search.X_PurchaseUnit, vw_InvItem_Search.X_Barcode, vw_InvItem_Search.B_BarcodewithQty, vw_InvItem_Search.X_StockUnit, vw_InvItem_Search.N_StockUnitQty, "+
-    "                     vw_InvItem_Search.B_IsIMEI, vw_InvItem_Search.N_LengthID, vw_InvItem_Search.N_PurchaseUnitQty, vw_InvItem_Search.N_SalesUnitQty, vw_InvItem_Search.Stock, vw_InvItem_Search.Rate, "+
-     "                    vw_InvItem_Search.N_StockUnitID, vw_InvItem_Search.X_Rack, vw_InvItem_Search.[Product Code], vw_InvItem_Search.B_IsBatch, vw_InvItem_Search.N_LeadDays, vw_InvItem_Search.N_TransitDays, "+
-      "                   vw_InvItem_Search.N_DeliveryDays, vw_InvItem_Search.X_BOMItemUnit, vw_InvItem_Search.N_BOMUnitID, vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName, vw_InvItem_Search.N_PkeyID, "+
-       "                  vw_InvItem_Search.N_TaxAmt, vw_InvItem_Search.X_DisplayName2, vw_InvItem_Search.N_TaxAmt2, vw_InvItem_Search.N_TaxID2, vw_InvItem_Search.N_PurchaseCost, vw_InvItem_Search.X_CategoryCode, "+
-        "                 vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, "+
-         "                vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11 "+
-" FROM            vw_InvItem_Search LEFT OUTER JOIN "+
-  "                       Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=@p2 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + qry;
+ string sqlComandText =  "  vw_InvItem_Search.*,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search LEFT OUTER JOIN "+
+  " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=@p2 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + qry + Category;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
@@ -178,9 +172,10 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetItemDetails(string xItemCode, int nLocationID)
+        public ActionResult GetItemDetails(string xItemCode, int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
+            DataTable dt_LocStock = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
@@ -201,7 +196,8 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Notice("No Results Found"));
                     }
-
+                    int N_BranchID= nBranchID;
+                    int N_ItemID=myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nItemID", dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nLocationID", nLocationID);
                     QueryParams.Add("@xStockUnit", dt.Rows[0]["X_StockUnit"].ToString());
@@ -236,13 +232,30 @@ namespace SmartxAPI.Controllers
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "b_TxnDone", typeof(bool), b_InStocks);
 
+                    SortedList WhParam = new SortedList(){
+                                    {"N_CompanyID", myFunctions.GetCompanyID(User)},
+                                    {"N_ItemID", N_ItemID},
+                                    {"N_BranchID", N_BranchID},
+                                    };
 
+          
+                    DataTable whDt=dLayer.ExecuteDataTablePro("Sp_Inv_ItemMaster_Disp " ,WhParam,connection);
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"warehouseList",typeof(DataTable),whDt);
+                
+                    string sqlQuery = "SELECT     Inv_Location.X_LocationName, dbo.SP_LocationStock(Inv_ItemMasterWHLink.N_ItemID, Inv_Location.N_LocationID) AS N_Stock, vw_InvItemMaster.X_StockUnit,vw_InvItemMaster.N_StockUnitID FROM Inv_ItemMasterWHLink INNER JOIN  Inv_Location ON Inv_ItemMasterWHLink.N_WarehouseID = Inv_Location.N_LocationID AND Inv_ItemMasterWHLink.N_CompanyID = Inv_Location.N_CompanyID LEFT OUTER JOIN  vw_InvItemMaster ON Inv_ItemMasterWHLink.N_ItemID = vw_InvItemMaster.N_ItemID AND Inv_ItemMasterWHLink.N_CompanyID = vw_InvItemMaster.N_CompanyID where Inv_ItemMasterWHLink.N_ItemID=" + N_ItemID + " and Inv_ItemMasterWHLink.N_CompanyID=" + companyid;
+                    dt_LocStock = dLayer.ExecuteDataTable(sqlQuery, QueryParams, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"locationStockList",typeof(DataTable),dt_LocStock);
+
+                    string sqlQuery1 = "Select Isnull(Sum(N_Qty),0) from Inv_PurchaseOrderDetails inner join Inv_PurchaseOrder On Inv_PurchaseOrderDetails.N_POrderID =Inv_PurchaseOrder.N_POrderID Where B_CancelOrder=0 and Inv_PurchaseOrderDetails.N_ItemID=" + N_ItemID + "and Inv_PurchaseOrderDetails.N_BranchID= " + N_BranchID + " and Inv_PurchaseOrderDetails.N_CompanyID=" + companyid + " and Inv_PurchaseOrder.N_Processed=0";
+                    object purchaseQty = dLayer.ExecuteScalar(sqlQuery1,QueryParams,connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"n_POrderQty",typeof(string),purchaseQty);
 
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
 
-
+                
                 return Ok(_api.Success(dt));
 
             }
@@ -258,7 +271,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2;
+                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2,LocationList;
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -266,7 +279,7 @@ namespace SmartxAPI.Controllers
                 PurchaseUnit = ds.Tables["purchaseUnit"];
                 AddUnit1 = ds.Tables["addUnit1"];
                 AddUnit2 = ds.Tables["addUnit2"];
-
+                LocationList = ds.Tables["warehouseDetails"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -328,7 +341,16 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable to save"));
                     }
 
-
+                 dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
+                        if (LocationList.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in LocationList.Rows)
+                            {
+                                dRow["N_ItemID"] = N_ItemID;
+                            }
+                            LocationList.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
+                        }
 
                     transaction.Commit();
                 }

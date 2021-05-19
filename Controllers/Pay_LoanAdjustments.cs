@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status] from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
+            string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status],RefundAmoount AS N_RefundAmount from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -111,6 +111,7 @@ namespace SmartxAPI.Controllers
                     dtLoan = dLayer.ExecuteDataTable(sqlLoan, Params,connection);
 
                 }
+
                 dtAdjustment = api.Format(dtAdjustment);
                 dtLoan = api.Format(dtLoan);
                 DS.Tables.Add(dtAdjustment);

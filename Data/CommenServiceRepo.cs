@@ -131,6 +131,7 @@ namespace SmartxAPI.Data
                 //loginRes.X_EmpNameLocale = dLayer.ExecuteScalar("Select X_EmpNameLocale From Pay_Employee Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID and ",Params, connection).ToString();
 
                 loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1",Params, connection).ToString());
+                loginRes.N_CurrencyDecimal = myFunctions.getIntVAL(dLayer.ExecuteScalar("select ISNULL(N_Decimal,0)  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1",Params, connection).ToString());
                     Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
                 
                 

@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_RequestCode"] = RequestCode;
                     }
                     
-
+                     // MasterTable.Columns.Remove("n_UserID");
 
                     nRequestID = dLayer.SaveData("Pay_TrainingRequest", "N_RequestID", MasterTable, connection, transaction);
                     if (nRequestID <= 0)

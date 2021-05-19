@@ -13,9 +13,9 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("employmentType")]
+    [Route("insuranceCategory")]
     [ApiController]
-    public class Pay_EmploymentType : ControllerBase
+    public class InsuranceCategory : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -24,13 +24,49 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
 
 
-        public Pay_EmploymentType(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public InsuranceCategory(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1272;
+            FormID = 1133;
+        }
+
+        [HttpGet("list")]
+        public ActionResult GetInsuranceCategoryList()
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyID);
+
+            string sqlCommandText = "Select * from vw_Pay_InsuranceCategory Where N_CompanyID=@p1 order by N_CategoryId";
+
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    
+                    dt=_api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
         }
 
         [HttpPost("save")]
@@ -45,44 +81,28 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
-                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                int nEmploymentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmploymentID"].ToString());
-                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                string xEmploymentCode = MasterTable.Rows[0]["x_EmploymentCode"].ToString();
-                string bCreateEmpSeries = MasterTable.Rows[0]["b_CreateEmpSeries"].ToString();
-                 if (xEmploymentCode == "@Auto")
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CategoryId"].ToString());
+                    string xCategoryCode = MasterTable.Rows[0]["x_CategoryCode"].ToString();
+                    MasterTable.Columns.Remove("n_FnYearID");
+                    if (xCategoryCode == "@Auto")
                     {
-                        if (bCreateEmpSeries=="True")
-                        {
-                            DataTable dt = new DataTable();
-                            string xDescription=MasterTable.Rows[0]["x_Description"].ToString();
-                            string xPrefix=MasterTable.Rows[0]["x_Prefix"].ToString();
-                                                        SortedList proParams2 = new SortedList(){
-                                        {"N_CompanyID",nCompanyID},
-                                        {"N_FormID",1272},
-                                        {"N_FnYearID",nFnYearID},
-                                        {"N_BranchID",0},
-                                        {"X_Prefix",xPrefix},
-                                        {"X_Type",xDescription}};
-
-                           dLayer.ExecuteScalarPro("Sp_CreateInvoiceCounter", proParams2, connection, transaction);
-
-                        }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        xEmploymentCode = dLayer.GetAutoNumber("Pay_EmploymentType", "x_EmploymentCode", Params, connection, transaction);
-                        if (xEmploymentCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employment Type Code")); }
-                        MasterTable.Rows[0]["x_EmploymentCode"] = xEmploymentCode;
+                        xCategoryCode = dLayer.GetAutoNumber("Pay_InsuranceCategory", "x_CategoryCode", Params, connection, transaction);
+                        if (xCategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Insurance Category Code")); }
+                        MasterTable.Rows[0]["x_CategoryCode"] = xCategoryCode;
                     }
                     else
                     {
-                        dLayer.DeleteData("Pay_EmploymentType", "N_EmploymentID", nEmploymentID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_InsuranceCategory", "N_CategoryId", nCategoryId, "", connection, transaction);
                     }
                     
-                    nEmploymentID=dLayer.SaveData("Pay_EmploymentType","N_EmploymentID",MasterTable,connection,transaction);  
+                    nCategoryId=dLayer.SaveData("Pay_InsuranceCategory","N_CategoryId",MasterTable,connection,transaction);  
                     transaction.Commit();
-                    return Ok(_api.Success("Employment Type Saved")) ;
+                    return Ok(_api.Success("Insurance Category Saved")) ;
                 }
             }
             catch (Exception ex)
@@ -92,14 +112,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetEmploymentTypeDetails(int nEmploymentID)
+        public ActionResult GetInsuranceCategoryDetails(string xCategoryCode)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Pay_EmploymentType where N_CompanyID=@nCompanyID and N_EmploymentID=@nEmploymentID";
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nEmploymentID",nEmploymentID);
+            string sqlCommandText="select * from Pay_InsuranceCategory where N_CompanyID=@p1 and X_CategoryCode=@p2";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",xCategoryCode);
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
@@ -115,11 +135,10 @@ namespace SmartxAPI.Controllers
             }catch(Exception e){
                 return Ok(_api.Error(e));
             }
-          
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nEmploymentID)
+        public ActionResult DeleteData(int nCategoryId)
         {
             int Results = 0;
             try
@@ -127,14 +146,14 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Pay_EmploymentType", "N_EmploymentID", nEmploymentID, "", connection);
+                    Results = dLayer.DeleteData("Pay_InsuranceCategory", "N_CategoryId", nCategoryId, "", connection);
                     if (Results > 0)
                     {
-                        return Ok( _api.Success("Employment Type deleted"));
+                        return Ok( _api.Success("Insurance Category deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Employment Type"));
+                        return Ok(_api.Error("Unable to delete Insurance Category"));
                     }
                 }
             }

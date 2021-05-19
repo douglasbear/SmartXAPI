@@ -83,7 +83,8 @@ namespace SmartxAPI.Controllers
                 case "employmenttype": id=6;
                 break;
                 case "csv": id=80;
-            
+                break;
+                case "insurancetype": id=49;
                 break;
 
                 default: return Ok("Invalid Type");
@@ -156,6 +157,8 @@ namespace SmartxAPI.Controllers
                  case "Rating": N_FormID=9;
                 break;
                 case "Purpose": N_FormID=51;
+                break;
+                case "InsuranceClass": N_FormID=17;
                 break;
                 case "Pricetype": N_FormID=3;
                 break;

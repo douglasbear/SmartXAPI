@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("report")]
     [ApiController]
-    public class ReportMenus : ControllerBase
+    public class Reports : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         private readonly string reportPath;
         private readonly string reportLocation;
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
-        public ReportMenus(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
@@ -250,7 +250,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("getscreenprint")]
-        public IActionResult GetModulePrint(int nFormID, int nPkeyID,int nFnYearID)
+        public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID)
         {
             string RPTLocation = reportLocation;
             string ReportName = "";
@@ -272,9 +272,9 @@ namespace SmartxAPI.Controllers
                     {
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
-                    
+
                     object ObjPath = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@p1 and Acc_FnYear.N_FnYearID=@p3", QueryParams, connection, transaction);
-                    string TaxType=ObjPath + "/";
+                    string TaxType = ObjPath + "/";
                     if (nFormID == 80)
                     {
                         critiria = "{Inv_SalesQuotation.N_QuotationId}=" + nPkeyID;
@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
                     {
                         critiria = "{vw_InvSalesOrderDetails.N_SalesOrderId}=" + nPkeyID;
                         TableName = "vw_InvSalesOrderDetails";
-                        RPTLocation = reportLocation + "printing/SalesOrder/"+TaxType;
+                        RPTLocation = reportLocation + "printing/SalesOrder/" + TaxType;
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
                         if (Template != null)
                         {
@@ -323,7 +323,7 @@ namespace SmartxAPI.Controllers
                         critiria = "{Inv_Sales.N_SalesId}=" + nPkeyID;
                         TableName = "Inv_Sales";
 
-                        RPTLocation = reportLocation + "printing/salesinvoice/"+TaxType;
+                        RPTLocation = reportLocation + "printing/salesinvoice/" + TaxType;
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
                         if (Template != null)
                         {
@@ -364,7 +364,7 @@ namespace SmartxAPI.Controllers
                         critiria = "{vw_InvPurchaseDetailsView_Rpt.N_PurchaseId}=" + nPkeyID;
                         TableName = "vw_InvPurchaseDetailsView_Rpt";
 
-                        RPTLocation = reportLocation + "printing/PurchaseInvoice/"+TaxType;
+                        RPTLocation = reportLocation + "printing/PurchaseInvoice/" + TaxType;
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
                         if (Template != null)
                         {
@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
                         critiria = "{Inv_PurchaseOrder.N_POrderID}=" + nPkeyID;
                         TableName = "Inv_PurchaseOrder";
 
-                        RPTLocation = reportLocation + "printing/PurchaseOrder/"+TaxType;
+                        RPTLocation = reportLocation + "printing/PurchaseOrder/" + TaxType;
                         object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
                         if (Template != null)
                         {
@@ -442,10 +442,11 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var dbName = connection.Database;
                     var random = RandomString();
-                    if(TableName!="" && critiria!=""){
-                        critiria = critiria + " and {"+TableName+".N_CompanyID}="+myFunctions.GetCompanyID(User);
+                    if (TableName != "" && critiria != "")
+                    {
+                        critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                     }
-                    string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random+ "&x_comments=&x_Reporttitle=";
+                    string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=";
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
@@ -455,7 +456,99 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(e));
             }
+
         }
+
+       [HttpGet("shiftSchedulePrint")]
+        public IActionResult GetshiftSchedulePrint(int nFormID, DateTime dPeriodFrom, DateTime dPeriodTo, int nFnYearID, string xCriteria, int nDepartmentID)
+        {
+            string RPTLocation = reportLocation;
+            string ReportName = "";
+            string critiria = "";
+            var random = RandomString();
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    QueryParams.Add("@p1", nCompanyId);
+                    QueryParams.Add("@p3", nFnYearID);
+
+
+                    string TableName = "";
+                    var handler = new HttpClientHandler
+                    {
+                        ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                    };
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@p1 and Acc_FnYear.N_FnYearID=@p3", QueryParams, connection, transaction);
+                    string TaxType = ObjPath + "/";
+
+
+                    if (nFormID == 1260)
+                    {
+                        if (xCriteria == "department")
+                        {
+                            
+                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "') and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
+                            TableName = "vw_Pay_Empshiftdetails";
+
+
+                            RPTLocation = reportLocation + "printing";
+                            ReportName = "Employee_ShiftSchedule";
+
+
+                        }
+                        else if (xCriteria == "all")
+                        {
+                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "')";
+                            TableName = "vw_Pay_Empshiftdetails";
+
+
+                            RPTLocation = reportLocation + "printing/"; 
+                            ReportName = "Employee_ShiftSchedule";
+
+
+
+                        }
+                        var client = new HttpClient(handler);
+                        var dbName = connection.Database;
+                        
+                        if (TableName != "" && critiria != "")
+                        {
+                            critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
+                        }
+                        string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=";
+                        var path = client.GetAsync(URL);
+                        path.Wait();
+                        
+                    }
+                    return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
 
         [HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
@@ -469,7 +562,7 @@ namespace SmartxAPI.Controllers
             string x_comments = "";
             string x_Reporttitle = "";
             string X_TextforAll = "=all";
-            int nUserID=myFunctions.GetUserID(User);
+            int nUserID = myFunctions.GetUserID(User);
 
             try
             {
@@ -520,7 +613,7 @@ namespace SmartxAPI.Controllers
                         YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        FieldName=FieldName+"=";
+                        FieldName = FieldName + "=";
 
                         if (xOperator == null || xOperator == "")
                             xOperator = "=";
@@ -532,29 +625,29 @@ namespace SmartxAPI.Controllers
                         {
                             DateTime dateFrom = Convert.ToDateTime(value);
                             DateTime dateTo = Convert.ToDateTime(valueTo);
-                            string procParam = ""; 
-                                if (dateFrom != null && (bRange && dateTo != null))
-                                {
-                                    x_Reporttitle =x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
-                                    x_comments =dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
-                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
-                                }
-                                else if (dateFrom != null)
-                                {
-                                    x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy");
-                                    x_comments = dateFrom.ToString("dd-MMM-yyyy");
-                                    procParam = dateFrom.ToString("dd-MMM-yyyy") + "|";
-                                }
-                                else if (bRange && dateTo != null)
-                                {
-                                    x_Reporttitle = x_Reporttitle + FieldName + dateTo.ToString("dd-MMM-yyyy");
-                                    x_comments =  dateTo.ToString("dd-MMM-yyyy");
-                                    procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
-                                }
+                            string procParam = "";
+                            if (dateFrom != null && (bRange && dateTo != null))
+                            {
+                                x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
+                                x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
+                                procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
+                            }
+                            else if (dateFrom != null && !bRange)
+                            {
+                                x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy");
+                                x_comments = dateFrom.ToString("dd-MMM-yyyy");
+                                procParam = dateFrom.ToString("dd-MMM-yyyy");
+                            }
+                            else if (bRange && dateTo != null)
+                            {
+                                x_Reporttitle = x_Reporttitle + FieldName + dateTo.ToString("dd-MMM-yyyy");
+                                x_comments = dateTo.ToString("dd-MMM-yyyy");
+                                procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
+                            }
 
                             if (xProCode != "")
                             {
-                               
+
                                 SortedList mParamsList = new SortedList()
                             {
                             {"N_CompanyID",nCompanyID},
@@ -589,9 +682,9 @@ namespace SmartxAPI.Controllers
                                 if (xFeild.Contains("#"))
                                     Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
                                 else
-                                    Criteria = Criteria == "" ? xFeild + " "+xOperator+" '" + value + "' " : Criteria + " and " + xFeild + " "+xOperator+" '" + value + "' ";
+                                    Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
                             }
-                            x_Reporttitle=x_Reporttitle + FieldName + value;
+                            x_Reporttitle = x_Reporttitle + FieldName + value;
                         }
 
 
@@ -609,7 +702,7 @@ namespace SmartxAPI.Controllers
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
                     }
-                    if(UserData!="")
+                    if (UserData != "")
                     {
                         Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
@@ -624,7 +717,7 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle="+x_Reporttitle;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();

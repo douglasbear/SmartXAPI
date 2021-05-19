@@ -253,6 +253,10 @@ namespace SmartxAPI.Controllers
                     string ReturnNo="";
                     int N_CreditNoteID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
                     int N_UserID=myFunctions.GetUserID(User);
+                    double N_TotalReceived=myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceived"].ToString());
+                    MasterTable.Rows[0]["n_TotalReceived"] = N_TotalReceived;
+                    double N_TotalReceivedF=myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
+                    MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
                     var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
                     if(values=="@Auto"){
                         Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());

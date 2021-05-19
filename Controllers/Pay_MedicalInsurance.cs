@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
-            string sqlCommandText="Select N_CompanyID, N_MedicalInsID, X_InsuranceCode, X_InsuranceName, D_StartDate, D_EndDate, X_CardNo, N_VendorID, D_Entrydate, X_PolicyDetails, N_PaycodeID from Pay_Medical_Insurance";
+            string sqlCommandText="select * from vw_MedicalInsurance where N_CompanyID=@nCompanyID order by N_MedicalInsID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -106,20 +106,6 @@ namespace SmartxAPI.Controllers
                     }
                 }
             }
-            //         else
-            //         {
-            //             dLayer.DeleteData("Pay_Medical_Insurance", "n_MedicalInsID", nInsuranceID, "", connection, transaction);
-                        
-            //         }
-            //         MasterTable.Columns.Remove("n_FnYearID");
-                     
-            //       nInsuranceID = dLayer.SaveData("Pay_Medical_Insurance", "n_MedicalInsID", MasterTable, connection, transaction);
-                    
-                    
-            //         transaction.Commit();
-            //         return Ok(_api.Success("Medical Insurance Saved")) ;
-            //     }
-            // }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));

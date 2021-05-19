@@ -263,6 +263,8 @@ DateTime date = DateTime.Today;
 
             }
             catch (Exception e)
+
+
             {
                 return "0";
             }
