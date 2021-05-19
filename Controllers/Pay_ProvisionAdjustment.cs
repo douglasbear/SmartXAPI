@@ -223,7 +223,7 @@ namespace SmartxAPI.Controllers
                     {
                         PaymentTable.Rows[i]["N_TransID"] = nAdjustment;
                     }
-                    int N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailTable, connection, transaction);
+                    int N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", PaymentTable, connection, transaction);
                     if (N_TransDetailsID <= 0)
                     {
                         transaction.Rollback();
