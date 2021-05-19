@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-          
+
 
             if (bAllBranchData == false)
                 Params.Add("@nBranchID", nBranchID);
@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                  Params.Add("@xBatchCode", xBatchCode);
+                Params.Add("@xBatchCode", xBatchCode);
                 sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployee where x_Batch = @xBatchCode and TotalSalaryCollected<>TotalSalary and N_CompanyID=@nCompanyID ";
 
 
@@ -348,36 +348,53 @@ namespace SmartxAPI.Controllers
         }
 
 
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData( int nCompanyID,string X_ReceiptNo,int nAcYearID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             SortedList PostingDelParam = new SortedList();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             PostingDelParam.Add("N_CompanyID", nCompanyID);
-        //             PostingDelParam.Add("X_TransType", "ESP");
-        //             PostingDelParam.Add("X_ReferenceNo", X_ReceiptNo);
-        //             PostingDelParam.Add("N_FnYearID", nAcYearID);
-        //             try
-        //             {
-        //                 dLayer.ExecuteNonQueryPro("SP_Pay_SalaryPaid_Voucher_Del", PostingDelParam, connection, transaction);
-        //             }
-        //             catch (Exception ex)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error("Unable to delete"));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(ex));
-        //     }
-        // }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nCompanyID, string X_ReceiptNo, int nAcYearID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                     connection.Open();
+                     SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList PostingDelParam = new SortedList();
+                   
+                    PostingDelParam.Add("N_CompanyID", nCompanyID);
+                    PostingDelParam.Add("X_TransType", "ESP");
+                    PostingDelParam.Add("X_ReferenceNo", X_ReceiptNo);
+                    PostingDelParam.Add("N_FnYearID", nAcYearID);
+                    try
+                    {
+                        {
+                            Results = dLayer.ExecuteNonQueryPro("SP_Pay_SalaryPaid_Voucher_Del", PostingDelParam, connection, transaction);
+                        }
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete "));
+                        }
+                        else
+                        {
+                            transaction.Commit();
+                            return Ok(_api.Success("deleted"));
+
+                        }
+                    }
+                    catch (Exception ex)
+                    {
+                        return Ok(_api.Error(ex));
+                    }
+
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
 
 
 

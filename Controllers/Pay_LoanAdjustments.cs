@@ -64,14 +64,22 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult LoanAdjustmentDetails(int nLoanID,int nFnYearId,bool bAllBranchData,int nBranchID)
         {
-            DataTable dtAdjustment = new DataTable();
-            DataTable dtLoan = new DataTable();
+            
             DataSet DS=new DataSet();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string xCondition="";
             string sqlAdjustment="";
             string sqlLoan="";
+
+            DataTable dtAdjustment = new DataTable();
+            DataTable dtLoan = new DataTable();
+               
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nLoanID);
+            Params.Add("@p4", nBranchID);
+
 
             if(nFnYearId==0)
             {
@@ -93,11 +101,7 @@ namespace SmartxAPI.Controllers
 
             }
             
-            
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            Params.Add("@p3", nLoanID);
-            Params.Add("@p4", nBranchID);
+         
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -105,15 +109,15 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dtAdjustment = dLayer.ExecuteDataTable(sqlAdjustment, Params,connection);
                     int nLoanTransID=0;
-                    Params.Add("@p5", nLoanTransID);
                     nLoanTransID=myFunctions.getIntVAL(dtAdjustment.Rows[0]["N_LoanTransID"].ToString());
-                    sqlLoan="SELECT  ROW_NUMBER() over(ORDER BY  N_LoanTransDetailsID) as SlNo,Pay_LoanIssueDetails.N_LoanTransDetailsID,Pay_LoanIssueDetails.N_InstAmount,Pay_LoanIssueDetails.N_InstActualAmt,Pay_LoanIssueDetails.N_RefundAmount,Pay_LoanIssueDetails.D_DateFrom,Pay_LoanIssueDetails.D_DateTo,CONVERT(VARCHAR(3),Pay_LoanIssueDetails.D_DateFrom,100)+' - '+ CAST(datepart(year,Pay_LoanIssueDetails.D_DateFrom)As varchar) As X_Month FROm Pay_LoanIssueDetails Where Pay_LoanIssueDetails.N_LoanTransID=@p5 and  Pay_LoanIssueDetails.N_CompanyID = @p1 and N_LoanTransDetailsID not in (Select N_LoanTransDetailsID From Pay_LoanIssueDetails Where N_LoanTransID=@p5 and(N_RefundAmount=0 OR N_RefundAmount IS NULL) and N_TransDetailsID IS NOT NULL and B_IsLoanClose=1)";
-                    dtLoan = dLayer.ExecuteDataTable(sqlLoan, Params,connection);
+                    Params.Add("@p5", nLoanTransID);
+                    sqlLoan="SELECT  ROW_NUMBER() over(ORDER BY  N_LoanTransDetailsID) as SlNo,Pay_LoanIssueDetails.N_LoanTransDetailsID,Pay_LoanIssueDetails.N_InstAmount,Pay_LoanIssueDetails.N_InstActualAmt,Pay_LoanIssueDetails.N_RefundAmount,Pay_LoanIssueDetails.D_DateFrom,Pay_LoanIssueDetails.D_DateTo,CONVERT(VARCHAR(3),Pay_LoanIssueDetails.D_DateFrom,100)+' - '+ CAST(datepart(year,Pay_LoanIssueDetails.D_DateFrom)As varchar) As X_Month FROm Pay_LoanIssueDetails Where Pay_LoanIssueDetails.N_LoanTransID="+nLoanTransID+" and  Pay_LoanIssueDetails.N_CompanyID ="+nCompanyId+" and N_LoanTransDetailsID not in (Select N_LoanTransDetailsID From Pay_LoanIssueDetails Where N_LoanTransID="+nLoanTransID+" and(N_RefundAmount=0 OR N_RefundAmount IS NULL) and N_TransDetailsID IS NOT NULL and B_IsLoanClose=1)";
+                    dtLoan = dLayer.ExecuteDataTable(sqlLoan,connection);
 
                 }
 
-                dtAdjustment = api.Format(dtAdjustment);
-                dtLoan = api.Format(dtLoan);
+                dtAdjustment = api.Format(dtAdjustment, "master");
+                dtLoan = api.Format(dtLoan, "details");
                 DS.Tables.Add(dtAdjustment);
                 DS.Tables.Add(dtLoan);
 
