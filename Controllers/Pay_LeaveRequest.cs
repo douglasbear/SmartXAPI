@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
             int Count = (nPage - 1) * nSizeperpage;
-            string Searchkey = "";
+            string Searchkey = "Name";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%')";
 
