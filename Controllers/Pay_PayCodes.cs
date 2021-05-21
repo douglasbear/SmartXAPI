@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPayCodeList(string type)
+        public ActionResult GetPayCodeList(string type,int nFnyearID)
         {
             int id = 0;
             switch (type)
@@ -160,9 +160,9 @@ namespace SmartxAPI.Controllers
             }
             string X_Criteria = "";
             if (id > 0)
-                X_Criteria = "where N_PayTypeID=@p1";
+                X_Criteria = "where N_PayTypeID=@p1 and N_CompanyID=@nCompanyID";
 
-            SortedList param = new SortedList() { { "@p1", id } };
+            SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetUserID(User) },{"@nFnYearID",nFnyearID} };
 
             DataTable dt = new DataTable();
 
