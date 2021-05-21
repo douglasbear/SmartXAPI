@@ -35,40 +35,61 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetAssetPurchaseList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAssetPurchaseList(int? nCompanyId, int nFnYearId,int nFormID,int nVendorID,int nBranchID,bool bAllBranchData, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             DataTable CountTable = new DataTable();
             SortedList Params = new SortedList();
             DataSet dataSet = new DataSet();
             string sqlCommandText = "";
+            string sqlCondition = "";
             string sqlCommandCount = "";
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PurchaseID desc";
+                xSortBy = " order by N_AssetInventoryID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
                 {
                     case "invoiceNo":
-                        xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
+                        xSortBy = "N_AssetInventoryID " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
                 xSortBy = " order by " + xSortBy;
             }
+            
+            if (bAllBranchData)
+            {
+                if (nVendorID > 0)
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_VendorID=@p4 and isnull(N_FormID,129)=@p5";
+                else
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and isnull(N_FormID,129)=@p5";
+            }
+            else
+            {
+                if (nVendorID > 0)
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_VendorID=@p4 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
+                else
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
+            }
+        
+
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_AssetInventoryID,N_FnYearID,N_BranchID,N_FormID,[Invoice No],[Invoice Date],Vendor,X_VendorInvoice,X_Description,NetAmount,X_TypeName from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_AssetInventoryID,N_FnYearID,N_BranchID,N_FormID,[Invoice No],[Invoice Date],Vendor,X_VendorInvoice,X_Description,NetAmount,X_TypeName from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + Searchkey + " and N_AssetInventoryID not in (select top(" + Count + ") N_AssetInventoryID from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nBranchID);
+            Params.Add("@p4", nVendorID);
+            Params.Add("@p5", nFormID);
             SortedList OutPut = new SortedList();
 
             try
@@ -77,7 +98,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(NetAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -323,7 +344,7 @@ namespace SmartxAPI.Controllers
         }
 
        [HttpDelete("delete")]
-        public ActionResult DeleteData(int N_AssetInventoryID,int FormID)
+        public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID,int FormID)
         {
             int Results = 0;
 
@@ -333,31 +354,31 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    //Params.Add("@nBranchID", nBranchID);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
                     if (N_AssetInventoryID > 0)
                     {
-                        // Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
+                        if (FormID == 129)
+                            dLayer.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = @nCompanyID AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID AND Ass_PurchaseDetails.N_FnYearID = @nCompanyID)", Params, connection, transaction);
 
-                        // Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1", connection);
-                        // if (FormID == 129)
-                        //     dba.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = " + myCompanyID._CompanyID + " AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =" + N_AssetInventoryID + " AND Ass_PurchaseDetails.N_CompanyID = " + myCompanyID._CompanyID + " AND Ass_PurchaseDetails.N_FnYearID = " + myCompanyID._CompanyID + ")", "TEXT", new DataTable());
-                        // dba.ExecuteNonQuery("delete from Ass_PurchaseDetails Where N_AssetInventoryID=" + N_AssetInventoryID+ " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-                        // dba.ExecuteNonQuery("delete from Ass_PurchaseMaster Where N_AssetInventoryID=" + N_AssetInventoryID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                        dLayer.ExecuteNonQuery("delete from Ass_PurchaseDetails Where N_AssetInventoryID=@N_AssetInventoryID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Ass_PurchaseMaster Where N_AssetInventoryID=@N_AssetInventoryID and N_CompanyID=@nCompanyID", Params, connection, transaction);
                         
-
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Success("unable to delete Asset Purchase "));
                     }
                     if (Results >= 0)
                     {
+                        transaction.Commit();
                         return Ok(_api.Success("Asset Purchase deleted"));
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error("Unable to delete Asset Purchase"));
                     }
 

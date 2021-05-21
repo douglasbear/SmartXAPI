@@ -35,18 +35,10 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-<<<<<<< HEAD
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             string sqlCommandText="Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status],RefundAmoount AS N_RefundAmount,N_LoanTransID from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
-            try 
-=======
-
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select [Loan ID],[Employee No],Name,Position,[Loan Amount],[Issue Date],[Status],RefundAmoount AS N_RefundAmount from vw_PayLoanIssue_Status Where N_CompanyID=@nCompanyID and N_LoanStatus=0 order by D_LoanIssueDate DESC";
             try
->>>>>>> c891880c382c0a848b428c3aec1c43e10e4a90ae
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
