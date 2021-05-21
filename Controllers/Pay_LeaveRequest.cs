@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_VacationGroupCode desc";
+                xSortBy = " order by cast(X_VacationGroupCode as numeric) desc";
             else if(xSortBy.Contains("vacationRequestDate"))
                 xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
