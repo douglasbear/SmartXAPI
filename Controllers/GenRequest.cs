@@ -86,6 +86,11 @@ namespace SmartxAPI.Controllers
                 break;
                 case "insurancetype": id=49;
                 break;
+                 case "assetcurrentstatus": id=46;
+                break;
+                 case "assetdepreciationmethod": id=57;
+                break;
+
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
@@ -117,7 +122,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("lookup/{type}") ]
         public ActionResult GetLookup (string type)
         {
-            int N_FormID=0;
+            int N_FormID=0;           
             switch(type){
                 case "VendorType": N_FormID=52;
                 break;
@@ -158,6 +163,8 @@ namespace SmartxAPI.Controllers
                 case "Purpose": N_FormID=51;
                 break;
                 case "InsuranceClass": N_FormID=17;
+                break;
+                case "Pricetype": N_FormID=3;
                 break;
                 default: return Ok("Invalid Type");
             }
