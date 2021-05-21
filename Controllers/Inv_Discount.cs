@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", 1347);
+                        Params.Add("N_FormID", 1346);
                         Params.Add("N_BranchID", 1);
                         x_DiscountNo = dLayer.GetAutoNumber("Inv_DiscountMaster", "X_DiscCode", Params, connection, transaction);
                         if (x_DiscountNo == "")

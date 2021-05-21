@@ -191,7 +191,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    
+
                     return Ok(api.Success(dt));
                 }
 
@@ -208,13 +208,16 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
+
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%' or X_PayType like '%" + xSearchkey + "%' )";
+                Searchkey = "and (X_PayCode like '%"+xSearchkey+"%'or X_Description like '%"+xSearchkey+"%' or  X_TypeName like '%"+xSearchkey+"%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_PayCode desc";
@@ -222,11 +225,10 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_FnYearID=@p2 ";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID="+nCompanyId+" "+ Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=@p1 and N_FnYearID=@p2 and N_PayID not in (select top(" + Count + ") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 )";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID="+nCompanyId+" "  + Searchkey + " and N_PayID not in (select top(" + Count + ") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+
 
             SortedList OutPut = new SortedList();
 
@@ -238,7 +240,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_PayMaster where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_PayMaster where N_CompanyID=@p1 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -336,19 +338,19 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
-            if ( xPerPayMethod == null || xPerPayMethod=="" )
+            if (xPerPayMethod == null || xPerPayMethod == "")
             {
-               sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 order by N_SortOrder";
+                sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 order by N_SortOrder";
             }
             else
             {
-                
-                 sqlCommandText = "Select X_Method,N_IndexID from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
+
+                sqlCommandText = "Select X_Method,N_IndexID from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
             }
 
             try
             {
-            
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
