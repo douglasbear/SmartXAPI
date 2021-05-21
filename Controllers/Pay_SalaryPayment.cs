@@ -45,7 +45,8 @@ namespace SmartxAPI.Controllers
                 Params.Add("@nBranchID", nBranchID);
 
 
-            string sqlCommandText = "Select N_CompanyID,N_TransID,N_FnYearID,N_BranchID,TotalSalary,TotalSalaryCollected,X_Batch,X_PayrunText,D_TransDate from vw_PayEmployeeSalaryPaymentsByBatch Where TotalSalary>TotalSalaryCollected and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + (bAllBranchData == false ? "and N_BranchID=@nBranchID" : "");
+
+            string sqlCommandText = "Select N_CompanyID,N_TransID,N_FnYearID,N_BranchID,TotalSalary,TotalSalaryCollected,X_Batch,X_PayrunText,D_TransDate from vw_PayEmployeeSalaryPaymentsByBatch Where TotalSalary>TotalSalaryCollected and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -262,16 +263,7 @@ namespace SmartxAPI.Controllers
                     {
                         sql1 = "Select * from vw_SalaryPaid_Disp where N_ReceiptID=@nReceiptID  and N_CompanyID =@nCompanyID  and N_PaymentId =" + temp[j] + "";
 
-                        // X_Condition = "dbo.vw_PayAmountDetailsForPay.N_TransID =@nBatchID and dbo.vw_PayAmountDetailsForPay.N_EmpID =@nEmpID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =@nCompanyID and vw_PayAmountDetailsForPay.N_PaymentId=" + temp[j];
 
-                        // X_DueCondition = " And dbo.vw_PayAmountDetailsForPay.D_TransDate <= '" + dTransdate + "' ";
-
-                        // sql1 = " SELECT     dbo.vw_PayAmountDetailsForPay.N_TransID,dbo.vw_PayAmountDetailsForPay.N_PayrunID,dbo.vw_PayAmountDetailsForPay.D_TransDate,dbo.vw_PayAmountDetailsForPay.X_PayrunText,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate) AS N_PayRate,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_InvoiceDueAmt,ABS(dbo.vw_PayAmountDetailsForPay.N_PayRate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) As N_DueAmount,0 As N_Amount,0 As N_Discount,vw_PayAmountDetailsForPay.N_Entryfrom,vw_PayAmountDetailsForPay.X_Description,vw_PayAmountDetailsForPay.N_PayTypeID,vw_PayAmountDetailsForPay.N_PaymentId,vw_PayAmountDetailsForPay.X_EmpName,vw_PayAmountDetailsForPay.N_EmpID,vw_PayAmountDetailsForPay.X_Batch,vw_PayAmountDetailsForPay.X_EmpCode" +
-                        //           " FROM         dbo.vw_PayAmountDetailsForPay " +
-                        //           " LEFT OUTER JOIN vw_PayEmployeePaidTotal On dbo.vw_PayAmountDetailsForPay.N_TransID  =dbo.vw_PayEmployeePaidTotal.N_SalesID and dbo.vw_PayAmountDetailsForPay.N_EmpID =dbo.vw_PayEmployeePaidTotal.N_AdmissionID and dbo.vw_PayAmountDetailsForPay.N_CompanyID =dbo.vw_PayEmployeePaidTotal.N_CompanyID and dbo.vw_PayEmployeePaidTotal.N_Entryfrom = dbo.vw_PayAmountDetailsForPay.N_EntryFrom and dbo.vw_PayEmployeePaidTotal.N_PayTypeID = dbo.vw_PayAmountDetailsForPay.N_PayTypeID" +
-                        //           " Where ISNULL(dbo.vw_PayAmountDetailsForPay.B_IsSaveDraft,0)=0 and " + X_Condition + " " + X_DueCondition + " " +
-                        //           " group by     dbo.vw_PayAmountDetailsForPay.N_TransID,dbo.vw_PayAmountDetailsForPay.N_PayrunID,dbo.vw_PayAmountDetailsForPay.D_TransDate,dbo.vw_PayAmountDetailsForPay.X_PayrunText,dbo.vw_PayAmountDetailsForPay.N_PayRate,vw_PayAmountDetailsForPay.N_Entryfrom,vw_PayAmountDetailsForPay.X_Description,vw_PayAmountDetailsForPay.N_PayTypeID,vw_PayAmountDetailsForPay.N_PaymentId,vw_PayAmountDetailsForPay.X_EmpName,vw_PayAmountDetailsForPay.N_EmpID,vw_PayAmountDetailsForPay.X_Batch,vw_PayAmountDetailsForPay.X_EmpCode" +
-                        //           " having  (ABS(dbo.vw_PayAmountDetailsForPay.N_Payrate)-(sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Amount ,0))+ sum(Isnull(dbo.vw_PayEmployeePaidTotal.N_Discount,0))) > 0) Order By dbo.vw_PayAmountDetailsForPay.D_TransDate";
 
                     }
                     DetailTable = dLayer.ExecuteDataTable(sql1, Params, connection);
@@ -349,46 +341,94 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCompanyID, string X_ReceiptNo, int nAcYearID)
+        public ActionResult DeleteData(int nCompanyID, string X_ReceiptNo, int nAcYearID, int nReceiptId)
         {
             int Results = 0;
+            int Results1 = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                     connection.Open();
-                     SqlTransaction transaction = connection.BeginTransaction();
+                    connection.Open();
+
+
                     SortedList PostingDelParam = new SortedList();
-                   
+                    SortedList Params = new SortedList();
+                    SortedList PostingDelParam1 = new SortedList();
+                    String detailSql = "";
+                    DataTable DetailTable = new DataTable();
+                    Params.Add("@nCompanyID", nCompanyID);
+
                     PostingDelParam.Add("N_CompanyID", nCompanyID);
-                    PostingDelParam.Add("X_TransType", "ESP");
+                    PostingDelParam.Add("X_TransType", "ELI");
                     PostingDelParam.Add("X_ReferenceNo", X_ReceiptNo);
                     PostingDelParam.Add("N_FnYearID", nAcYearID);
-                    try
+
+                    PostingDelParam1.Add("N_CompanyID", nCompanyID);
+                    PostingDelParam1.Add("X_TransType", "ESP");
+                    PostingDelParam1.Add("X_ReferenceNo", X_ReceiptNo);
+                    PostingDelParam1.Add("N_FnYearID", nAcYearID);
+
+                    detailSql = "select * from Pay_EmployeePaymentDetails where N_ReceiptID=" + nReceiptId + " ";
+                    DetailTable = dLayer.ExecuteDataTable(detailSql, Params, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                     {
+
+
+                        if (myFunctions.getIntVAL(DetailTable.Rows[0]["n_Entryfrom"].ToString()) == 212)
                         {
-                            Results = dLayer.ExecuteNonQueryPro("SP_Pay_SalaryPaid_Voucher_Del", PostingDelParam, connection, transaction);
+
+
+
+                            try
+                            {
+                                Results = dLayer.ExecuteNonQueryPro("SP_Pay_SalaryPaid_Voucher_Del", PostingDelParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
                         }
-                        if (Results <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete "));
-                        }
+
                         else
                         {
-                            transaction.Commit();
-                            return Ok(_api.Success("deleted"));
+
+
+                            try
+                            {
+                                Results = dLayer.ExecuteNonQueryPro("SP_Pay_SalaryPaid_Voucher_Del", PostingDelParam1, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
 
                         }
+                        // if (Results <= 0)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(_api.Error("Unable to delete "));
+                        // }
+
                     }
-                    catch (Exception ex)
+                    Results1 = dLayer.DeleteData("Pay_EmployeePaymentDetails", "N_ReceiptID", nReceiptId, "", connection, transaction);
+                    if (Results1 > 0)
                     {
-                        return Ok(_api.Error(ex));
+                        dLayer.DeleteData("Pay_EmployeePayment", "N_ReceiptID", nReceiptId, "", connection, transaction);
+                        transaction.Commit();
+                        return Ok(_api.Success(" deleted"));
                     }
-
-
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete"));
+                    }
 
                 }
+
             }
             catch (Exception ex)
             {
