@@ -86,6 +86,10 @@ namespace SmartxAPI.Controllers
                 break;
                 case "insurancetype": id=49;
                 break;
+                 case "assetcurrentstatus": id=46;
+                break;
+                 case "assetdepreciationmethod": id=57;
+                break;
 
                 default: return Ok("Invalid Type");
             }
