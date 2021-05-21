@@ -110,6 +110,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
+                    
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     Params.Add("@nCompanyID", nCompanyID);
