@@ -550,6 +550,7 @@ namespace SmartxAPI.Controllers
                 DataTable dtsaleamountdetails; ;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
                 DataTable Attachment = ds.Tables["attachments"];
 
