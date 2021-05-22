@@ -303,7 +303,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = _api.Format(MasterTable, "Master");
 
-                    if(nType==2)
+                    if(nType==2) 
                         DetailSql = "select * from vw_Pay_OpeningBalance where N_CompanyId=@nCompanyID and N_AdjustmentID=@nAdjustmentID ";
                     else
                         DetailSql = "select * from vw_Pay_EosAdjustment where N_CompanyId=@nCompanyID and N_AdjustmentID=@nAdjustmentID ";
