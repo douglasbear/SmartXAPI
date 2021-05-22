@@ -422,7 +422,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("loanListAll")]
-        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID)
+        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID,  string xSearchkey)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -431,7 +431,12 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nFnYearID", nFnYearID);
+            
             string sqlCommandText = "";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_EmpName like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%')";
+
 
             try
             {

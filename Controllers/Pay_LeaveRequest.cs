@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
         }
 
          [HttpGet("leaveListAll")]
-        public ActionResult GetLeaveRequestList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool isAdjestment)
+        public ActionResult GetLeaveRequestList(int nPage, int nSizeperpage,int nFnyearID, string xSearchkey, string xSortBy,bool isAdjestment)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -126,11 +126,12 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
+            QueryParams.Add("@nFnyearID", nFnyearID);
             string sqlCommandText = "";
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or [Emp Name] like'%"+ xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_VacationGroupCode desc";
@@ -146,9 +147,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays  From vw_PayVacationList where N_CompanyID=@nCompanyID   " + isAdjestmentCriteria + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays  From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID  " + isAdjestmentCriteria + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays From vw_PayVacationList where N_CompanyID=@nCompanyID " + isAdjestmentCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID "+ isAdjestmentCriteria +"   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID "+ isAdjestmentCriteria +"   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
