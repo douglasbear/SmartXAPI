@@ -245,7 +245,7 @@ if (xBatch != null)
 
 
         [HttpGet("empElements")]
-        public ActionResult GetEmpElements(int nEmpID,string payRunID,int nFnYearID,int nTransID)
+        public ActionResult GetEmpElements(int nEmpID,string payRunID,int nFnYearID,int nTransID,DateTime payrunDate)
         {
             DataTable dt = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -310,6 +310,7 @@ if (xBatch != null)
                                 param.Add("@nEmpID", dtVar["N_EmpID"].ToString());
                                 param.Add("@nFnYearId", nFnYearID);
                                 param.Add("@nPayID", dtVar["N_PayID"].ToString());
+                                param.Add("@dDate", payrunDate);
                                 objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)", param, connection);
                                 if (objRate != null)
                                 {
