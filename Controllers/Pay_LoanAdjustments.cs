@@ -209,9 +209,10 @@ namespace SmartxAPI.Controllers
             {
                 DataTable DetailTable;
                 DetailTable = ds.Tables["details"];
-                int nCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_CompanyId"].ToString());
+               int nCompanyId = myFunctions.GetCompanyID(User);;
                 //int nFnYearId = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearId"].ToString());
                 int nLoanTransID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_LoanTransID"].ToString());
+                 DetailTable.Columns.Remove("n_CalculatedAmt");
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
