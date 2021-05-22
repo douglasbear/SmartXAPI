@@ -111,9 +111,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationType where N_CompanyID=@p1 " + Searchkey  + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 " + Searchkey  + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationType where N_CompanyID=@nCompanyId " + Searchkey  + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayVacationType where N_CompanyID=@nCompanyId "  + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@nCompanyId " + Searchkey  + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=@nCompanyId "  + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
 

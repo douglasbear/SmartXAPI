@@ -157,6 +157,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+
         [HttpGet("ponoList")]
         public ActionResult ListPonumber(int nFnYearID)
         {
@@ -188,8 +190,41 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+ 
+        
+        [HttpGet("assetList")]
+        public ActionResult ListAssetName(int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nFnYearID",nFnYearID);
+            string sqlCommandText="Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
-           [HttpGet("poList")]
+         [HttpGet("poList")]
         public ActionResult GetPurchaseOrderList(int nLocationID, string type, string query, int PageSize, int Page)
         {
             DataTable dt = new DataTable();
@@ -245,10 +280,11 @@ namespace SmartxAPI.Controllers
             
                     DataTable MasterTable;
                     DataTable DetailTable;
-                    DataTable PurchaseTable;
+                    DataTable PurchaseTable = new DataTable();
+                    DataTable TransactionTable = new DataTable();
+                    DataTable AssMasterTable = new DataTable();
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    PurchaseTable = ds.Tables["purchase"];
                     SortedList Params = new SortedList();
                     // Auto Gen
                     try{
@@ -256,11 +292,14 @@ namespace SmartxAPI.Controllers
                     {
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    string ReturnNo="";
+                    string ReturnNo="",xTransType="";
                     int N_AssetInventoryID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
                     int FormID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
                     int TypeID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
                     int N_UserID=myFunctions.GetUserID(User);
+
+                    if(FormID==1293) xTransType="AR";
+                    else xTransType="AP";
 
                     var X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     if(X_InvoiceNo=="@Auto"){
@@ -277,7 +316,7 @@ namespace SmartxAPI.Controllers
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                                {"X_TransType","PURCHASE RETURN"},
+                                {"X_TransType",xTransType},
                                 {"N_VoucherID",N_AssetInventoryID},
                                 {"N_UserID",N_UserID},
                                 {"X_SystemName",System.Environment.MachineName}};
@@ -296,40 +335,43 @@ namespace SmartxAPI.Controllers
                     if(N_AssetInventoryID<=0)
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error("Error"));
                     }
                     int PurchaseID=0;
                     if (!(FormID == 1293 && TypeID == 281))
                     {
-                        PurchaseTable.Rows[0]["N_PurchaseRefID"]=N_AssetInventoryID;
-                        PurchaseTable.Rows[0]["X_InvoiceNo"] = MasterTable.Rows[0]["X_InvoiceNo"].ToString();;
+                        SortedList PurchaseParams = new SortedList();
+                        PurchaseParams.Add("@N_AssetInventoryID",N_AssetInventoryID);
+                        PurchaseParams.Add("@xTransType",xTransType);
+                        string sqlCommandText="select N_CompanyID,N_FnYearID,0 AS N_PurchaseID,X_InvoiceNo,D_EntryDate,D_InvoiceDate,N_InvoiceAmt AS N_InvoiceAmtF,N_DiscountAmt AS N_DiscountAmtF,N_CashPaid AS N_CashPaidF,N_FreightAmt AS N_FreightAmtF,N_UserID,N_POrderID,4 AS N_PurchaseType,@xTransType AS X_TransType,N_AssetInventoryID AS N_PurchaseRefID,N_BranchID,N_InvoiceAmt,N_DiscountAmt,N_CashPaid,N_FreightAmt,N_TaxAmt,N_TaxAmtF,N_TaxCategoryId,X_VendorInvoice,N_VendorId,N_VendorId AS N_ActVendorID from Ass_PurchaseMaster where N_AssetInventoryID=@N_AssetInventoryID";
+
+                        PurchaseTable = dLayer.ExecuteDataTable(sqlCommandText, PurchaseParams, connection);
+                        PurchaseTable = _api.Format(PurchaseTable, "Purchase");
+
                         PurchaseID=dLayer.SaveData("Inv_Purchase","N_PurchaseID",PurchaseTable,connection,transaction); 
                         if(PurchaseID<=0)
                         {
                             transaction.Rollback();
+                            return Ok(_api.Error("Error"));
                         }
                     }
+                    for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                    {
+                        DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
+                    }
+                    int N_AssetInventoryDetailsID=0;
                     if (PurchaseID > 0 ||(FormID ==1293 && TypeID ==281))
                     {
-
+                        if(FormID ==1293)
+                        {
+                            N_AssetInventoryDetailsID=dLayer.SaveData("Ass_PurchaseDetails","N_AssetInventoryDetailsID",DetailTable,connection,transaction);                    
+                            if(N_AssetInventoryDetailsID<=0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Error"));
+                            }
+                        }
                     }
-                    // for (int j = 0 ;j < DetailTable.Rows.Count;j++)
-                    // {
-                    //     DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
-                    // }
-                    // int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
-                    // transaction.Commit();
-
-                    //      SortedList InsParams = new SortedList(){
-                    //             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                    //             {"N_CreditNoteID",N_CreditNoteID}};    
-                    //     dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
-
-                    // SortedList PostParams = new SortedList(){
-                    //             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                    //             {"X_InventoryMode","PURCHASE RETURN"},
-                    //             {"N_InternalID",N_CreditNoteID},
-                    //             {"N_UserID",N_UserID}};
-                    // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
 
                      SortedList Result = new SortedList();
                     // Result.Add("n_PurchaseReturnID",N_CreditNoteID);
