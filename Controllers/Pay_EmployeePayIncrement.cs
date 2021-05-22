@@ -203,14 +203,16 @@ namespace SmartxAPI.Controllers
                     DataTable Benefits = ds.Tables["Benefits"];
                     DataTable Otherinfo = ds.Tables["Otherinfo"];
                     DataTable MasterTable = ds.Tables["master"];
+                    DataTable pay_PaySetup = ds.Tables["pay_PaySetup"];
+                    DataTable pay_EmployeePayHistory = ds.Tables["pay_EmployeePayHistory"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
 
 
 
-                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_FnYearID = 1;//myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_HistoryNo = MasterRow["x_HistoryNo"].ToString();
+                    string x_HistoryNo = MasterRow["x_HistoryCode"].ToString();
                     int N_EmpID = myFunctions.getIntVAL(MasterRow["N_EmpID"].ToString());
 
                     if (x_HistoryNo == "@Auto")
@@ -237,9 +239,14 @@ namespace SmartxAPI.Controllers
                         return Ok("Unable to save");
                     }
 
-                    for (int i = 0; i < SalaryHistory.Rows.Count; i++)
+                    for (int i = 0; i < pay_PaySetup.Rows.Count; i++)
                     {
-                        SalaryHistory.Rows[i]["N_HistoryID"] = n_HistoryId;
+                        pay_PaySetup.Rows[i]["N_HistoryID"] = n_HistoryId;
+
+                    }
+                    for (int i = 0; i < pay_EmployeePayHistory.Rows.Count; i++)
+                    {
+                        pay_EmployeePayHistory.Rows[i]["N_HistoryID"] = n_HistoryId;
 
                     }
                     //Salary & Benefits Save
