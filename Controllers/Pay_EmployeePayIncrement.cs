@@ -199,12 +199,14 @@ namespace SmartxAPI.Controllers
 
 
                     DataTable SalaryHistory = ds.Tables["SalaryHistory"];
-                    DataTable Accrual = ds.Tables["Accrual"];
                     DataTable Benefits = ds.Tables["Benefits"];
                     DataTable Otherinfo = ds.Tables["Otherinfo"];
+
+                    
                     DataTable MasterTable = ds.Tables["master"];
                     DataTable pay_PaySetup = ds.Tables["pay_PaySetup"];
                     DataTable pay_EmployeePayHistory = ds.Tables["pay_EmployeePayHistory"];
+                    DataTable Accrual = ds.Tables["payEmpAccruls"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
 
