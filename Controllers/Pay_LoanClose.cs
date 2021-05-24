@@ -45,29 +45,33 @@ namespace SmartxAPI.Controllers
             
             if(nLoanTransID!=0)
             {
-                 if (bAllBranchData== true)
+                if (bAllBranchData== true)
+                {
                     X_condition = "(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND(dbo.Pay_LoanIssue.N_LoanStatus=0)";
+                }
                 else
+                {
                     X_condition = "(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_BranchID =@p4)AND(dbo.Pay_LoanIssue.N_LoanStatus=0)";
-
-
+                    Params.Add("@p4", nBranchID);
+                }
                 sqlCommandText = "SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM  dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID " +
                     "LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + X_condition + "";
             }
             else
+            {
                 sqlCommandText = "select * from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
+                Params.Add("@p2", xLoanCode);
+            }
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xLoanCode);
             Params.Add("@p3", nLoanTransID);
-            Params.Add("@p4", nBranchID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-                    double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-myFunctions.getVAL(dt.Rows[0]["Paid Amount"].ToString());
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "x_Balance", typeof(string), balance);
+                    // double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-myFunctions.getVAL(dt.Rows[0]["Paid Amount"].ToString());
+                    // dt = myFunctions.AddNewColumnToDataTable(dt, "x_Balance", typeof(string), balance);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
