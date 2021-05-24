@@ -263,7 +263,7 @@ namespace SmartxAPI.Controllers
                     object Savedraft = dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from pay_EndOFService where N_CompanyID=@nCompanyID and N_ServiceEndID=@N_ServiceEndID", QueryParams, connection, transaction);
                     if(Savedraft!=null)
                         N_SaveDraft=myFunctions.getIntVAL(Savedraft.ToString());
-                    object Status = dLayer.ExecuteScalar("select N_Status  from Pay_EmployeeStatus where X_Description=@X_Method", QueryParams, connection, transaction);
+                    object Status ="3";// dLayer.ExecuteScalar("select N_Status  from Pay_EmployeeStatus where X_Description=@X_Method", QueryParams, connection, transaction);
                     if(Status!=null)
                         N_Status=myFunctions.getIntVAL(Status.ToString());
 
