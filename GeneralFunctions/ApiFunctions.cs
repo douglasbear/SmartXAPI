@@ -9,7 +9,9 @@ using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 namespace SmartxAPI.GeneralFunctions
 {
     public class ApiFunctions : IApiFunctions
@@ -211,6 +213,8 @@ namespace SmartxAPI.GeneralFunctions
                 throw ex;
             }
         }
+
+
 
 
 

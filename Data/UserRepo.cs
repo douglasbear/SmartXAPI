@@ -84,7 +84,7 @@ namespace SmartxAPI.Data
                 else
                 {
                     DataRow dr =dt.Rows[0];
-                   return(_services.Authenticate(myFunctions.getIntVAL(dr["N_CompanyID"].ToString()),dr["X_CompanyName"].ToString(),dr["X_UserName"].ToString(),myFunctions.getIntVAL(dr["N_UserID"].ToString()),"All",AppType));
+                   return(_services.Authenticate(myFunctions.getIntVAL(dr["N_CompanyID"].ToString()),dr["X_CompanyName"].ToString(),dr["X_UserName"].ToString(),myFunctions.getIntVAL(dr["N_UserID"].ToString()),"All",AppType,"",0,0));
                 }                   
         }
     }

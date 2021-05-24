@@ -26,9 +26,12 @@ namespace SmartxAPI.GeneralFunctions
     public class MyFunctions : IMyFunctions
     {
         private readonly string ApprovalLink;
+        private readonly IConfiguration config;
         public MyFunctions(IConfiguration conf)
         {
             ApprovalLink = conf.GetConnectionString("ApprovalLink");
+            config = conf;
+            
         }
 
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
@@ -161,7 +164,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool getBoolVAL(string val)
         {
-            if (val==null || val.Trim() == "")
+            if (val == null || val.Trim() == "")
                 return false;
             else
                 return Convert.ToBoolean(val);
@@ -306,7 +309,7 @@ namespace SmartxAPI.GeneralFunctions
             return dt;
         }
 
-        public bool CheckClosedYear(int nCompanyID,int nFnYearID,IDataAccessLayer dLayer, SqlConnection connection)
+        public bool CheckClosedYear(int nCompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
@@ -363,9 +366,9 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
 
-            object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID="+nCompanyID+" and N_UserID="+loggedInUserID, ApprovalParams, connection);
-                    
-            objUserCategory = objUserCategory !=null?objUserCategory:0;
+            object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
+
+            objUserCategory = objUserCategory != null ? objUserCategory : 0;
 
 
             if (nApprovalID == 0)
@@ -658,7 +661,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (nUsrCatID == 0)
                         SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
                     else
-                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in ("+objUserCategory+")", ApprovalParams, connection);
+                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in (" + objUserCategory + ")", ApprovalParams, connection);
 
 
                     if (SecUserLevel.Rows.Count > 0)
@@ -1241,15 +1244,15 @@ namespace SmartxAPI.GeneralFunctions
             return X_Message;
         }
 
-public bool ContainColumn(string columnName, DataTable table)
-{
-    DataColumnCollection columns = table.Columns;        
-    if (columns.Contains(columnName))
-    {
-      return true;
-    }
-      return false;
-}
+        public bool ContainColumn(string columnName, DataTable table)
+        {
+            DataColumnCollection columns = table.Columns;
+            if (columns.Contains(columnName))
+            {
+                return true;
+            }
+            return false;
+        }
         public DataTable ListToTable(SortedList List)
         {
             DataTable ResultTable = new DataTable();
@@ -1279,11 +1282,28 @@ public bool ContainColumn(string columnName, DataTable table)
         {
             return User.FindFirst(ClaimTypes.StreetAddress)?.Value;
         }
+        public string GetEmailID(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.Email)?.Value;
+        }
         public int GetUserCategory(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
         }
+        public int GetClientID(ClaimsPrincipal User)
+        {
+            return this.getIntVAL(User.FindFirst(ClaimTypes.PrimaryGroupSid)?.Value);
+        }
 
+        public int GetGlobalUserID(ClaimsPrincipal User)
+        {
+            return this.getIntVAL(User.FindFirst(ClaimTypes.PrimarySid)?.Value);
+        }
+
+        public string GetConnectionString(ClaimsPrincipal User)
+        {
+            return config.GetConnectionString(User.FindFirst(ClaimTypes.Uri)?.Value);
+        }
 
 
     }
@@ -1328,6 +1348,11 @@ public bool ContainColumn(string columnName, DataTable table)
         public int GetCompanyID(ClaimsPrincipal User);
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+        public int GetClientID(ClaimsPrincipal User);
+        public int GetGlobalUserID(ClaimsPrincipal User);
+        public string GetEmailID(ClaimsPrincipal User);
+
+        public string GetConnectionString(ClaimsPrincipal User);
 
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
