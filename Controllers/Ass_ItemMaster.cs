@@ -184,12 +184,14 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable ExpiryTable = new DataTable();
             DataTable HistoryTable = new DataTable();
+            DataTable DeprTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nItemID=0;
             string sqlCommandText="";
             string ExpirysqlCommand="";
             string HistorysqlCommand="";
+            string DeprsqlCommand="";
 
             string Condn = "";
             if (bAllBranchData)
@@ -223,6 +225,11 @@ namespace SmartxAPI.Controllers
                     ExpiryTable = dLayer.ExecuteDataTable(ExpirysqlCommand, Params, connection);
 
                     ExpiryTable = api.Format(ExpiryTable,"Expiry");
+
+                    DeprsqlCommand = "Select Max(D_EndDate) as LastRunDate,COUNT(D_RunDate) as DepreciationCount,Sum(DATEDIFF(D,D_StartDate ,D_EndDate )) as DepreciationDays from Ass_Depreciation where N_ItemID=@p4 and N_CompanyID=@p1" ;
+                    DeprTable = dLayer.ExecuteDataTable(DeprsqlCommand, Params, connection);
+
+                    DeprTable = api.Format(DeprTable,"Depreciation");
                 }
                 
                 if (MasterTable.Rows.Count == 0)
@@ -234,6 +241,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(MasterTable); 
                     dt.Tables.Add(HistoryTable); 
                     dt.Tables.Add(ExpiryTable); 
+                    dt.Tables.Add(DeprTable); 
                     return Ok(api.Success(dt));
                 }
             }

@@ -35,40 +35,61 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetAssetPurchaseList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAssetPurchaseList(int? nCompanyId, int nFnYearId,int nFormID,int nVendorID,int nBranchID,bool bAllBranchData, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             DataTable CountTable = new DataTable();
             SortedList Params = new SortedList();
             DataSet dataSet = new DataSet();
             string sqlCommandText = "";
+            string sqlCondition = "";
             string sqlCommandCount = "";
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PurchaseID desc";
+                xSortBy = " order by N_AssetInventoryID desc";
             else
             {
                 switch (xSortBy.Split(" ")[0])
                 {
                     case "invoiceNo":
-                        xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
+                        xSortBy = "N_AssetInventoryID " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
                 xSortBy = " order by " + xSortBy;
             }
+            
+            if (bAllBranchData)
+            {
+                if (nVendorID > 0)
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_VendorID=@p4 and isnull(N_FormID,129)=@p5";
+                else
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and isnull(N_FormID,129)=@p5";
+            }
+            else
+            {
+                if (nVendorID > 0)
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_VendorID=@p4 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
+                else
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
+            }
+        
+
             int Count = (nPage - 1) * nSizeperpage;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_AssetInventoryID,N_FnYearID,N_BranchID,N_FormID,[Invoice No],[Invoice Date],Vendor,X_VendorInvoice,X_Description,NetAmount,X_TypeName from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_AssetInventoryID,N_FnYearID,N_BranchID,N_FormID,[Invoice No],[Invoice Date],Vendor,X_VendorInvoice,X_Description,NetAmount,X_TypeName from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + Searchkey + " and N_AssetInventoryID not in (select top(" + Count + ") N_AssetInventoryID from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nBranchID);
+            Params.Add("@p4", nVendorID);
+            Params.Add("@p5", nFormID);
             SortedList OutPut = new SortedList();
 
             try
@@ -77,7 +98,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(NetAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvAssetInventoryInvoiceNo_Search where "+sqlCondition+" " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -259,10 +280,11 @@ namespace SmartxAPI.Controllers
             
                     DataTable MasterTable;
                     DataTable DetailTable;
-                    DataTable PurchaseTable;
+                    DataTable PurchaseTable = new DataTable();
+                    DataTable TransactionTable = new DataTable();
+                    DataTable AssMasterTable = new DataTable();
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    PurchaseTable = ds.Tables["purchase"];
                     SortedList Params = new SortedList();
                     // Auto Gen
                     try{
@@ -270,11 +292,15 @@ namespace SmartxAPI.Controllers
                     {
                     connection.Open();
                     SqlTransaction transaction=connection.BeginTransaction();
-                    string ReturnNo="";
+                    string ReturnNo="",xTransType="";
                     int N_AssetInventoryID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
                     int FormID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
                     int TypeID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
+                    int POrderID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
                     int N_UserID=myFunctions.GetUserID(User);
+
+                    if(FormID==1293) xTransType="AR";
+                    else xTransType="AP";
 
                     var X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     if(X_InvoiceNo=="@Auto"){
@@ -291,7 +317,7 @@ namespace SmartxAPI.Controllers
                     {
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                                {"X_TransType","PURCHASE RETURN"},
+                                {"X_TransType",xTransType},
                                 {"N_VoucherID",N_AssetInventoryID},
                                 {"N_UserID",N_UserID},
                                 {"X_SystemName",System.Environment.MachineName}};
@@ -310,40 +336,83 @@ namespace SmartxAPI.Controllers
                     if(N_AssetInventoryID<=0)
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error("Error"));
                     }
                     int PurchaseID=0;
                     if (!(FormID == 1293 && TypeID == 281))
                     {
-                        PurchaseTable.Rows[0]["N_PurchaseRefID"]=N_AssetInventoryID;
-                        PurchaseTable.Rows[0]["X_InvoiceNo"] = MasterTable.Rows[0]["X_InvoiceNo"].ToString();;
+                        SortedList PurchaseParams = new SortedList();
+                        PurchaseParams.Add("@N_AssetInventoryID",N_AssetInventoryID);
+                        PurchaseParams.Add("@xTransType",xTransType);
+                        string sqlCommandText="select N_CompanyID,N_FnYearID,0 AS N_PurchaseID,X_InvoiceNo,D_EntryDate,D_InvoiceDate,N_InvoiceAmt AS N_InvoiceAmtF,N_DiscountAmt AS N_DiscountAmtF,N_CashPaid AS N_CashPaidF,N_FreightAmt AS N_FreightAmtF,N_UserID,N_POrderID,4 AS N_PurchaseType,@xTransType AS X_TransType,N_AssetInventoryID AS N_PurchaseRefID,N_BranchID,N_InvoiceAmt,N_DiscountAmt,N_CashPaid,N_FreightAmt,N_TaxAmt,N_TaxAmtF,N_TaxCategoryId,X_VendorInvoice,N_VendorId,N_VendorId AS N_ActVendorID from Ass_PurchaseMaster where N_AssetInventoryID=@N_AssetInventoryID";
+
+                        PurchaseTable = dLayer.ExecuteDataTable(sqlCommandText, PurchaseParams, connection);
+                        PurchaseTable = _api.Format(PurchaseTable, "Purchase");
+
                         PurchaseID=dLayer.SaveData("Inv_Purchase","N_PurchaseID",PurchaseTable,connection,transaction); 
                         if(PurchaseID<=0)
                         {
                             transaction.Rollback();
+                            return Ok(_api.Error("Error"));
                         }
                     }
+                    for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                    {
+                        DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
+                    }
+                    int N_AssetInventoryDetailsID=0,N_ActionID=0;
                     if (PurchaseID > 0 ||(FormID ==1293 && TypeID ==281))
                     {
-
+                        if(FormID ==1293)
+                        {
+                            N_AssetInventoryDetailsID=dLayer.SaveData("Ass_PurchaseDetails","N_AssetInventoryDetailsID",DetailTable,connection,transaction);                    
+                            if(N_AssetInventoryDetailsID<=0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Error"));
+                            }
+                            for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
+                            {
+                                TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
+                                TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
+                                TransactionTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
+                            }
+                            N_ActionID=dLayer.SaveData("Ass_Transactions","N_ActionID",TransactionTable,connection,transaction);                    
+                            if(N_ActionID<=0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Error"));
+                            }
+                        }
+                        else
+                        {
+                            if(POrderID>0)
+                            {
+                                for (int k = 0 ;k < DetailTable.Rows.Count;k++)
+                                {
+                                    dLayer.ExecuteNonQuery("Update Inv_PurchaseOrderDetails Set N_Processed=1  Where N_POrderID=" + POrderID + " and N_POrderDetailsID=" + DetailTable.Rows[k]["N_POrderDetailsID"] + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
+                                }
+                                int nCount=DetailTable.Rows.Count;
+                                for (int j = 0 ;j < nCount;j++)
+                                {
+                                    int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
+                                    if(Qty>1)
+                                    {
+                                        for (int l = 0 ;l < Qty-1;l++)
+                                        {
+                                            DetailTable.Rows.Add(DetailTable.Rows[j]);
+                                            TransactionTable.Rows.Add(TransactionTable.Rows[j]);
+                                            AssMasterTable.Rows.Add(AssMasterTable.Rows[j]);
+                                        }
+                                    }
+                                }
+                                for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                                {
+                                    DetailTable.Rows[j]["N_PurchaseQty"]=1;
+                                }
+                            }
+                        }
                     }
-                    // for (int j = 0 ;j < DetailTable.Rows.Count;j++)
-                    // {
-                    //     DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
-                    // }
-                    // int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
-                    // transaction.Commit();
-
-                    //      SortedList InsParams = new SortedList(){
-                    //             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                    //             {"N_CreditNoteID",N_CreditNoteID}};    
-                    //     dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
-
-                    // SortedList PostParams = new SortedList(){
-                    //             {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
-                    //             {"X_InventoryMode","PURCHASE RETURN"},
-                    //             {"N_InternalID",N_CreditNoteID},
-                    //             {"N_UserID",N_UserID}};
-                    // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
 
                      SortedList Result = new SortedList();
                     // Result.Add("n_PurchaseReturnID",N_CreditNoteID);
@@ -358,7 +427,7 @@ namespace SmartxAPI.Controllers
         }
 
        [HttpDelete("delete")]
-        public ActionResult DeleteData(int N_AssetInventoryID,int FormID)
+        public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID,int FormID)
         {
             int Results = 0;
 
@@ -368,31 +437,31 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    //Params.Add("@nBranchID", nBranchID);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
                     if (N_AssetInventoryID > 0)
                     {
-                        // Results = dLayer.DeleteData("Acc_BranchMaster", "N_BranchID", nBranchID, "", connection);
+                        if (FormID == 129)
+                            dLayer.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = @nCompanyID AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =@N_AssetInventoryID AND Ass_PurchaseDetails.N_CompanyID = @nCompanyID AND Ass_PurchaseDetails.N_FnYearID = @nCompanyID)", Params, connection, transaction);
 
-                        // Results = dLayer.DeleteData("Inv_Location", "N_BranchID", nBranchID, "B_IsDefault=1", connection);
-                        // if (FormID == 129)
-                        //     dba.ExecuteNonQuery("DELETE FROM Ass_AssetMaster WHERE Ass_AssetMaster.N_CompanyID = " + myCompanyID._CompanyID + " AND Ass_AssetMaster.N_AssetInventoryDetailsID IN (SELECT N_AssetInventoryDetailsID FROM Ass_PurchaseDetails WHERE Ass_PurchaseDetails.N_AssetInventoryID =" + N_AssetInventoryID + " AND Ass_PurchaseDetails.N_CompanyID = " + myCompanyID._CompanyID + " AND Ass_PurchaseDetails.N_FnYearID = " + myCompanyID._CompanyID + ")", "TEXT", new DataTable());
-                        // dba.ExecuteNonQuery("delete from Ass_PurchaseDetails Where N_AssetInventoryID=" + N_AssetInventoryID+ " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
-                        // dba.ExecuteNonQuery("delete from Ass_PurchaseMaster Where N_AssetInventoryID=" + N_AssetInventoryID + " and N_CompanyID=" + myCompanyID._CompanyID.ToString(), "TEXT", new DataTable());
+                        dLayer.ExecuteNonQuery("delete from Ass_PurchaseDetails Where N_AssetInventoryID=@N_AssetInventoryID and N_CompanyID=@nCompanyID", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Ass_PurchaseMaster Where N_AssetInventoryID=@N_AssetInventoryID and N_CompanyID=@nCompanyID", Params, connection, transaction);
                         
-
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Success("unable to delete Asset Purchase "));
                     }
                     if (Results >= 0)
                     {
+                        transaction.Commit();
                         return Ok(_api.Success("Asset Purchase deleted"));
                     }
                     else
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error("Unable to delete Asset Purchase"));
                     }
 
