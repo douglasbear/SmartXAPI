@@ -85,6 +85,196 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        [HttpGet("loadEmployee")]
+        public ActionResult GetEmployeeRelationList(int nFnYearID, int nCompanyID, int nMedicalInsID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nCompanyID", nCompanyID);
+
+
+            string sqlCommandText = "select * from vw_MedicalInsDeletionEmployee where N_CompanyID=@nCompanyID and N_InsuranceID= " + nMedicalInsID + " ";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+        [HttpGet("employeeDetails")]
+        public ActionResult GetEmpDetails(int nEmpID, string xEmployeeCode, string xType, int xDepId, int nFnYearID, int N_MedicalInsID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    SortedList EmpParams = new SortedList();
+                    SortedList DepParams = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@xType", xType);
+                    Params.Add("@nEmpID", nEmpID);
+                    Params.Add("@xEmployeeCode", xEmployeeCode);
+                    Params.Add("@xDepId", xDepId);
+
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+
+                    DepParams.Add("@nCompanyID", nCompanyID);
+
+
+                    DataTable EmployeeTable = new DataTable();
+                    DataTable FamilyTable = new DataTable();
+
+                    string EmployeeSql = "";
+                    string FamilySql = "";
+
+                    if (xType == "EMP")
+                    {
+                        FamilyTable = _api.Format(FamilyTable, "FamilyTable");
+
+                        EmployeeSql = "select * from vw_MedicalInsuranceAdditionEmp where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID  and X_EmpCode ='" + xEmployeeCode + "'";
+                        EmployeeTable = dLayer.ExecuteDataTable(EmployeeSql, EmpParams, connection);
+                        if (EmployeeTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Price", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Cost", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActPrice", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActCost", typeof(double), 0);
+                        foreach (DataRow dvar in EmployeeTable.Rows)
+                        {
+                            object nPrice = dLayer.ExecuteScalar("Select N_Price From vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
+                            object nCost = dLayer.ExecuteScalar("Select N_Cost From  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
+                            object nActPrice = dLayer.ExecuteScalar("select N_ActPrice from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
+                            object nActCost = dLayer.ExecuteScalar("select N_ActCost from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
+
+                            if (nPrice != null)
+                            {
+                                dvar["N_Price"] = myFunctions.getVAL(nPrice.ToString());
+                            }
+                            if (nCost != null)
+                            {
+                                dvar["N_Cost"] = myFunctions.getVAL(nCost.ToString());
+                            }
+                            if (nActPrice != null)
+                            {
+                                dvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                            }
+                            if (nActPrice != null)
+                            {
+                                dvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                            }
+
+                            EmployeeTable.AcceptChanges();
+                            EmployeeTable = _api.Format(EmployeeTable, "EmpTable");
+                        }
+                    }
+                    else if (xType == "DEP")
+                    {
+                        FamilyTable = _api.Format(FamilyTable, "FamilyTable");
+                        EmployeeTable = _api.Format(EmployeeTable, "EmpTable");
+
+                        FamilySql = "select * from vw_EmployeeDependenceDetails where N_CompanyID=@nCompanyID and N_EmpID =" + nEmpID + " and  N_DependenceID=" + xDepId + " and N_FnYearId=" + nFnYearID + "";
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Price", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_ActPrice", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_ActCost", typeof(double), 0);
+
+
+                        if (FamilyTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                        foreach (DataRow kvar in FamilyTable.Rows)
+                        {
+                            object nPrice = dLayer.ExecuteScalar("Select N_Price From vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
+                            object nCost = dLayer.ExecuteScalar("Select N_Cost From  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
+                            object nActPrice = dLayer.ExecuteScalar("select N_ActPrice from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
+                            object nActCost = dLayer.ExecuteScalar("select N_ActCost from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
+
+                            if (nPrice != null)
+                            {
+                                kvar["N_Price"] = myFunctions.getVAL(nPrice.ToString());
+                            }
+                            if (nCost != null)
+                            {
+                                kvar["N_Cost"] = myFunctions.getVAL(nCost.ToString());
+                            }
+                            if (nActPrice != null)
+                            {
+                                kvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                            }
+                            if (nActPrice != null)
+                            {
+                                kvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                            }
+                        }
+                        FamilyTable.AcceptChanges();
+                        FamilyTable = _api.Format(FamilyTable, "RelationTable");
+
+
+                    }
+
+                    dt.Tables.Add(EmployeeTable);
+                    dt.Tables.Add(FamilyTable);
+
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
     }
 }
+
+
+
