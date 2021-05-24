@@ -296,6 +296,7 @@ namespace SmartxAPI.Controllers
                     int N_AssetInventoryID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
                     int FormID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
                     int TypeID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
+                    int POrderID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
                     int N_UserID=myFunctions.GetUserID(User);
 
                     if(FormID==1293) xTransType="AR";
@@ -359,7 +360,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
                     }
-                    int N_AssetInventoryDetailsID=0;
+                    int N_AssetInventoryDetailsID=0,N_ActionID=0;
                     if (PurchaseID > 0 ||(FormID ==1293 && TypeID ==281))
                     {
                         if(FormID ==1293)
@@ -369,6 +370,46 @@ namespace SmartxAPI.Controllers
                             {
                                 transaction.Rollback();
                                 return Ok(_api.Error("Error"));
+                            }
+                            for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
+                            {
+                                TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
+                                TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
+                                TransactionTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
+                            }
+                            N_ActionID=dLayer.SaveData("Ass_Transactions","N_ActionID",TransactionTable,connection,transaction);                    
+                            if(N_ActionID<=0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Error"));
+                            }
+                        }
+                        else
+                        {
+                            if(POrderID>0)
+                            {
+                                for (int k = 0 ;k < DetailTable.Rows.Count;k++)
+                                {
+                                    dLayer.ExecuteNonQuery("Update Inv_PurchaseOrderDetails Set N_Processed=1  Where N_POrderID=" + POrderID + " and N_POrderDetailsID=" + DetailTable.Rows[k]["N_POrderDetailsID"] + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
+                                }
+                                int nCount=DetailTable.Rows.Count;
+                                for (int j = 0 ;j < nCount;j++)
+                                {
+                                    int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
+                                    if(Qty>1)
+                                    {
+                                        for (int l = 0 ;l < Qty-1;l++)
+                                        {
+                                            DetailTable.Rows.Add(DetailTable.Rows[j]);
+                                            TransactionTable.Rows.Add(TransactionTable.Rows[j]);
+                                            AssMasterTable.Rows.Add(AssMasterTable.Rows[j]);
+                                        }
+                                    }
+                                }
+                                for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                                {
+                                    DetailTable.Rows[j]["N_PurchaseQty"]=1;
+                                }
                             }
                         }
                     }
