@@ -360,7 +360,7 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
                     }
-                    int N_AssetInventoryDetailsID=0,N_ActionID=0;
+                    int N_AssetInventoryDetailsID=0,N_ActionID=0,N_MasterID=0;
                     if (PurchaseID > 0 ||(FormID ==1293 && TypeID ==281))
                     {
                         if(FormID ==1293)
@@ -410,11 +410,34 @@ namespace SmartxAPI.Controllers
                                 {
                                     DetailTable.Rows[j]["N_PurchaseQty"]=1;
                                 }
+                                N_AssetInventoryDetailsID=dLayer.SaveData("Ass_PurchaseDetails","N_AssetInventoryDetailsID",DetailTable,connection,transaction);                    
+                                if(N_AssetInventoryDetailsID<=0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Error"));
+                                }
+                                for (int k = 0 ;k < AssMasterTable.Rows.Count;k++)
+                                {
+                                    AssMasterTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
+                                }
+                                for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
+                                {
+                                    TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
+                                    TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
+                                    TransactionTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
+                                    TransactionTable.Rows[k]["N_ItemId"]=AssMasterTable.Rows[k]["N_ItemID"];
+                                }
+                                N_ActionID=dLayer.SaveData("Ass_Transactions","N_ActionID",TransactionTable,connection,transaction); 
+                                if(N_ActionID<=0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Error"));
+                                }                   
                             }
                         }
                     }
 
-                     SortedList Result = new SortedList();
+                    SortedList Result = new SortedList();
                     // Result.Add("n_PurchaseReturnID",N_CreditNoteID);
                     Result.Add("x_PurchaseReturnNo",ReturnNo);
                     return Ok(_api.Success(Result,"Purchase Return Saved"));
