@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
 =======
@@ -32,6 +33,10 @@
       "C:\\Users\\LENOVO\\.nuget\\packages"
 >>>>>>> df6e7f4da6d84ffc8ca020c2c793bec045de99df
 >>>>>>> aeb3c5605da451b5be1c6a937e9019c4037ade81
+=======
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages"
+>>>>>>> ee5e601bf044e2fcf0fc8aaf86a36cf9a6139417
     ]
   }
 }
