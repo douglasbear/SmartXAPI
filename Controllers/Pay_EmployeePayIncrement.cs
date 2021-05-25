@@ -199,12 +199,14 @@ namespace SmartxAPI.Controllers
 
 
                     DataTable SalaryHistory = ds.Tables["SalaryHistory"];
-                    DataTable Accrual = ds.Tables["Accrual"];
                     DataTable Benefits = ds.Tables["Benefits"];
                     DataTable Otherinfo = ds.Tables["Otherinfo"];
+
+
                     DataTable MasterTable = ds.Tables["master"];
                     DataTable pay_PaySetup = ds.Tables["pay_PaySetup"];
                     DataTable pay_EmployeePayHistory = ds.Tables["pay_EmployeePayHistory"];
+                    DataTable Accrual = ds.Tables["payEmpAccruls"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
 
@@ -241,18 +243,18 @@ namespace SmartxAPI.Controllers
 
                     for (int i = 0; i < pay_PaySetup.Rows.Count; i++)
                     {
-                        pay_PaySetup.Rows[i]["N_HistoryID"] = n_HistoryId;
+                        pay_PaySetup.Rows[i]["n_HistoryID"] = n_HistoryId;
 
                     }
                     for (int i = 0; i < pay_EmployeePayHistory.Rows.Count; i++)
                     {
-                        pay_EmployeePayHistory.Rows[i]["N_HistoryID"] = n_HistoryId;
+                        pay_EmployeePayHistory.Rows[i]["n_HistoryID"] = n_HistoryId;
 
                     }
                     //Salary & Benefits Save
 
-                    dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", SalaryHistory, connection, transaction);
-                    dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", Benefits, connection, transaction);
+                    dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", pay_PaySetup, connection, transaction);
+                    dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", pay_EmployeePayHistory, connection, transaction);
 
                     // Other Details
 
