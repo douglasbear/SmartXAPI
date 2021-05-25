@@ -908,6 +908,50 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nEmpID, int nFnyearID)
+        {
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string EmployeeSql = " select * from vw_payemployee Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID";
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnyearID);
+            Params.Add("@nEmpID", nEmpID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection);
+
+                    object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" +  Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" +  Employee.Rows[0]["n_ledgerID"] , Params, connection,transaction);
+                    
+                    //Delete
+                     dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_EmployeeAlerts", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_EmployeePayHistory", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_VacationDetails", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Web_Pay_EmployeeLogin", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Inv_Salesman", "N_EmpRefID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Sec_User", "N_UserID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_EmployeeAttachments", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
+                     dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
+                    
+                    
+                    transaction.Commit();
+                }
+                return Ok(_api.Success("Deleted"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
 
     }
 }
