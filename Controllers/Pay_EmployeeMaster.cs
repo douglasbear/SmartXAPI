@@ -927,7 +927,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection,transaction);
+                    DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection, transaction);
 
                     object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" + Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" + Employee.Rows[0]["n_loanledgerid"] + ")", Params, connection, transaction);
                     if (EmployeeLedger != null)
@@ -941,15 +941,21 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unpaid Dues Exists"));
                         }
 
-                        DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection);
-                        if(SalaryLedger.Rows[0]["X_EmpName"].ToString() == SalaryLedger.Rows[0]["X_LedgerName"].ToString())
+                        DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
+                        if (SalaryLedger.Rows.Count > 0)
                         {
-                            dLayer.DeleteData("Acc_Mastledger", "N_LedgerID",myFunctions.getIntVAL(SalaryLedger.Rows[0]["N_LedgerID"].ToString()), "", connection, transaction);
+                            if (SalaryLedger.Rows[0]["X_EmpName"].ToString() == SalaryLedger.Rows[0]["X_LedgerName"].ToString())
+                            {
+                                dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(SalaryLedger.Rows[0]["N_LedgerID"].ToString()), "", connection, transaction);
+                            }
                         }
-                        DataTable LoanLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LoanLedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LoanLedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection);
-                        if(LoanLedger.Rows[0]["X_EmpName"].ToString() + " " +"Loan" == LoanLedger.Rows[0]["X_LedgerName"].ToString())
+                        DataTable LoanLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LoanLedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LoanLedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
+                        if (LoanLedger.Rows.Count > 0)
                         {
-                            dLayer.DeleteData("Acc_Mastledger", "N_LedgerID",myFunctions.getIntVAL(LoanLedger.Rows[0]["N_LoanLedgerID"].ToString()), "", connection, transaction);
+                            if (LoanLedger.Rows[0]["X_EmpName"].ToString() + " " + "Loan" == LoanLedger.Rows[0]["X_LedgerName"].ToString())
+                            {
+                                dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(LoanLedger.Rows[0]["N_LoanLedgerID"].ToString()), "", connection, transaction);
+                            }
                         }
                         //Delete
                         dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nEmpID, "", connection, transaction);
