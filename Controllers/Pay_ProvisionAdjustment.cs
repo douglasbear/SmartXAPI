@@ -96,9 +96,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
 
             if (bAllBranchData)
-                sqlCommandText = "SP_Pay_EOSAdjustment @nCompanyId," + PayrunID + ",'" + strcondition + "',0,@nPayID,@nFnYearID";
+                sqlCommandText = "SP_Pay_EOSAdjustment_Cloud @nCompanyId," + PayrunID + ",'" + strcondition + "',0,@nPayID,@nFnYearID";
             else
-                sqlCommandText = "SP_Pay_EOSAdjustment @nCompanyId," + PayrunID + ",'" + strcondition + "',@nBranchId,@nPayID,@nFnYearID";
+                sqlCommandText = "SP_Pay_EOSAdjustment_Cloud @nCompanyId," + PayrunID + ",'" + strcondition + "',@nBranchId,@nPayID,@nFnYearID";
 
             if (nType == 2)
             {
