@@ -942,7 +942,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
-                        if (SalaryLedger.Rows.Count == 0)
+                        if (SalaryLedger.Rows.Count > 0)
                         {
                             if (SalaryLedger.Rows[0]["X_EmpName"].ToString() == SalaryLedger.Rows[0]["X_LedgerName"].ToString())
                             {
@@ -950,7 +950,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         DataTable LoanLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LoanLedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LoanLedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
-                        if (SalaryLedger.Rows.Count == 0)
+                        if (LoanLedger.Rows.Count > 0)
                         {
                             if (LoanLedger.Rows[0]["X_EmpName"].ToString() + " " + "Loan" == LoanLedger.Rows[0]["X_LedgerName"].ToString())
                             {
