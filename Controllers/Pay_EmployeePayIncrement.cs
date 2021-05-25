@@ -200,13 +200,13 @@ namespace SmartxAPI.Controllers
 
                     DataTable SalaryHistory = ds.Tables["SalaryHistory"];
                     DataTable Benefits = ds.Tables["Benefits"];
-                    DataTable Otherinfo = ds.Tables["Otherinfo"];
+                    DataTable Otherinfo = ds.Tables["additional"];
 
 
                     DataTable MasterTable = ds.Tables["master"];
                     DataTable pay_PaySetup = ds.Tables["pay_PaySetup"];
                     DataTable pay_EmployeePayHistory = ds.Tables["pay_EmployeePayHistory"];
-                    DataTable Accrual = ds.Tables["payEmpAccruls"];
+                    DataTable Accrual = ds.Tables["pay_EmpAccruls"];
                     SortedList Params = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
 
@@ -257,28 +257,22 @@ namespace SmartxAPI.Controllers
                     dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", pay_EmployeePayHistory, connection, transaction);
 
                     // Other Details
+                        if (Otherinfo.Rows[0]["n_NPositionID"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        if (Otherinfo.Rows[0]["n_NDepartmentID"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_DepartmentID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        if (Otherinfo.Rows[0]["n_NProjectID"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_ProjectID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +  N_CompanyID  + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        if (Otherinfo.Rows[0]["n_NBranchID"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_BranchID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +  N_CompanyID  + " and N_FnYearID=" +  N_FnYearID, connection, transaction);
+                        if (Otherinfo.Rows[0]["n_NEmpTypeID"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" +  N_FnYearID, connection, transaction);
+                        if (Otherinfo.Rows[0]["n_NLocation"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
+                        if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
+                            dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 
-                    for (int i = 0; i < Otherinfo.Rows.Count; i++)
-                    {
 
-                        if (Otherinfo.Rows[i]["X_Value"].ToString() == "") continue;
-
-                        if (i == 1)
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (i == 2)
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_DepartmentID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (i == 3)
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_ProjectID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +  N_CompanyID  + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (i == 4)
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_BranchID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +  N_CompanyID  + " and N_FnYearID=" +  N_FnYearID, connection, transaction);
-                        if (i == 5)
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" +  N_FnYearID, connection, transaction);
-                        if (i == 6)
-                            dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[i]["X_Value"] + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
-                        if (i == 7)
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[i]["X_Value"] + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-
-                    }
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
                     //Accrual Save
                      dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
