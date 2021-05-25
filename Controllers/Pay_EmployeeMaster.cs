@@ -924,7 +924,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection);
+                    DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection,transaction);
 
                     object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" +  Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" +  Employee.Rows[0]["n_ledgerID"] , Params, connection,transaction);
                     
