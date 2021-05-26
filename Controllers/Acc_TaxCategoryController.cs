@@ -246,17 +246,17 @@ namespace SmartxAPI.Controllers
         [HttpGet("taxType")]
         public ActionResult GetTaxType()
         {
-            int nCompanyId = myFunctions.GetCompanyID(User);
+            // int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            Params.Add("@p1",nCompanyId);
-            string sqlCommandText = "Select * from Acc_TaxType where N_CompanyID=@p1";
+            // Params.Add("@p1",nCompanyId);
+            string sqlCommandText = "Select * from Acc_TaxType ";
 
             try{
                 using(SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,connection);
                 }
                     if (dt.Rows.Count==0)
                     {

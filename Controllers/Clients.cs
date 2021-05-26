@@ -226,7 +226,7 @@ namespace SmartxAPI.Controllers
                         new Claim(ClaimTypes.Role,""),
                         new Claim(ClaimTypes.GroupSid,"0"),
                         new Claim(ClaimTypes.StreetAddress,""),
-                        new Claim(ClaimTypes.Sid,"0"),
+                        new Claim(ClaimTypes.Sid,"-1"),
                         new Claim(ClaimTypes.Version,"V0.1"),
                         new Claim(ClaimTypes.System,""),
                         new Claim(ClaimTypes.Uri,output.Rows[0]["X_DBUri"].ToString())

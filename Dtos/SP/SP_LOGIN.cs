@@ -2,6 +2,7 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using SmartxAPI.Dtos.Login;
 using SmartxAPI.Models;
 
@@ -76,6 +77,8 @@ namespace SmartxAPI.Dtos.SP
         public int N_CurrencyDecimal { get; set; }
         [NotMapped]
         public string X_AppType { get; set; }
+        [NotMapped]
+        public DataTable GlobalUserInfo { get; set; }
 
 
     }

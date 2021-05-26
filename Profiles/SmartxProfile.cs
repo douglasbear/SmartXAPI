@@ -20,6 +20,7 @@ namespace SmartxAPI.Profiles
             CreateMap<SP_LOGIN, FnYearDto>();
             CreateMap<SP_LOGIN, CompanyDto>();
             CreateMap<SP_LOGIN, TokenDto>();
+            
             CreateMap<SP_LOGIN, LoginResponseDto>()
             .ForMember(dest => dest.UserData, opt => opt.MapFrom(src =>src))
             .ForMember(dest => dest.FnYearData, opt => opt.MapFrom(src =>src))

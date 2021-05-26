@@ -33,6 +33,7 @@ namespace SmartxAPI.Data
         private readonly IMyFunctions myFunctions;
         private readonly IConfiguration config;
         private readonly string connectionString;
+        private readonly string olivoClientConnectionString;
         public CommenServiceRepo(SmartxContext context, IOptions<AppSettings> appSettings, IMapper mapper, IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
         {
             _context = context;
@@ -42,18 +43,19 @@ namespace SmartxAPI.Data
             dLayer = dl;
             myFunctions = fun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
             config = conf;
         }
 
 
-        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, string AppType,string uri,int clientID=0,int globalUserID=0)
+        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, string AppType, string uri, int clientID = 0, int globalUserID = 0)
         {
 
             if (string.IsNullOrEmpty(companyid.ToString()) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userid.ToString()))
                 return null;
 
             var password = _context.SecUser
-            .Where(y => y.NCompanyId == companyid && y.XUserId == username)
+            .Where(y => y.NCompanyId == companyid && y.XUserId == username )
             .Select(x => x.XPassword)
             .FirstOrDefault();
 
@@ -63,7 +65,7 @@ namespace SmartxAPI.Data
 
 
 
-            using (SqlConnection connection = new SqlConnection(uri!=""?config.GetConnectionString(uri):connectionString))
+            using (SqlConnection connection = new SqlConnection(uri != "" ? config.GetConnectionString(uri) : connectionString))
             {
                 connection.Open();
 
@@ -159,10 +161,23 @@ namespace SmartxAPI.Data
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
 
+                using (SqlConnection cnn = new SqlConnection(olivoClientConnectionString))
+                {
+                    cnn.Open();
+                    string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, AppMaster.X_AppName FROM Users LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where Users.x_EmailID='" + username+"'";
+
+                    DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
+                    if(globalInfo.Rows.Count>0)
+                    loginRes.GlobalUserInfo = globalInfo;
+                }
+
+
+
                 switch (reqtype.ToLower())
                 {
                     case "all":
                     case "app":
+                    case "switchcompany":
                         var tokenHandler = new JwtSecurityTokenHandler();
                         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                         var tokenDescriptor = new SecurityTokenDescriptor
@@ -353,6 +368,6 @@ namespace SmartxAPI.Data
 
     public interface ICommenServiceRepo
     {
-        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, string AppType,string uri,int clientID,int globalUserID);
+        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, string AppType, string uri, int clientID, int globalUserID);
     }
 }

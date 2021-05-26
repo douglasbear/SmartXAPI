@@ -1305,6 +1305,11 @@ namespace SmartxAPI.GeneralFunctions
             return config.GetConnectionString(User.FindFirst(ClaimTypes.Uri)?.Value);
         }
 
+        public string GetAppType(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.System)?.Value;
+        }
+
 
     }
 
@@ -1351,6 +1356,7 @@ namespace SmartxAPI.GeneralFunctions
         public int GetClientID(ClaimsPrincipal User);
         public int GetGlobalUserID(ClaimsPrincipal User);
         public string GetEmailID(ClaimsPrincipal User);
+        public string GetAppType(ClaimsPrincipal User);
 
         public string GetConnectionString(ClaimsPrincipal User);
 

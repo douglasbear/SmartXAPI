@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("auth-user")]
-        public ActionResult AuthenticateUser(string reqType, string appName)
+        public ActionResult AuthenticateUser(string reqType, string appName,int nCompanyID,string xCompanyName)
         {
             connectionString = myFunctions.GetConnectionString(User);
             try
@@ -66,11 +66,25 @@ namespace SmartxAPI.Controllers
 
                 if (reqType == "all")
                 {
-                    int userid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.NameIdentifier).Value);
-                    int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
-                    string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
-                    string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
-                    string AppType = reqType == "all" ? User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.System).Value : appName;
+                    int userid = myFunctions.GetUserID(User);
+                    int companyid = myFunctions.GetCompanyID(User);
+                    string companyname = myFunctions.GetCompanyName(User);
+                    string username = myFunctions.GetEmailID(User);
+                    string AppType = myFunctions.GetAppType(User);
+
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppType,User.FindFirst(ClaimTypes.Uri)?.Value,myFunctions.GetClientID(User),myFunctions.GetGlobalUserID(User));
+
+                    if (user == null) { return StatusCode(403, _api.Response(403, "Unauthorized Access")); }
+
+                    return Ok(user);
+                }
+                if (reqType == "switchCompany")
+                {
+                    int userid = 0;
+                    int companyid = nCompanyID;
+                    string companyname = xCompanyName;
+                    string username = myFunctions.GetEmailID(User);
+                    string AppType = myFunctions.GetAppType(User);
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppType,User.FindFirst(ClaimTypes.Uri)?.Value,myFunctions.GetClientID(User),myFunctions.GetGlobalUserID(User));
 

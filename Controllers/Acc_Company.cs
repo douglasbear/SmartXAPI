@@ -22,6 +22,8 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string olivoClientConnectionString;
+
 
         public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -29,18 +31,20 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
 
         //GET api/Company/list
-        [AllowAnonymous]
+        // [AllowAnonymous]
         [HttpGet("list")]
         public ActionResult GetAllCompanys()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode from Acc_Company where B_Inactive =@p1 order by X_CompanyName";
-            Params.Add("@p1", 0);
+            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
+            Params.Add("@inactive", 0);
+            Params.Add("@nClientID", myFunctions.GetClientID(User));
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -177,14 +181,14 @@ namespace SmartxAPI.Controllers
                     }
                       Params.Add("@p1", xUserName);
                       Params.Add("@p2", xPassword);
-                      object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
+                    //   object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
                       
-                     int Obcount = myFunctions.getIntVAL(count.ToString());
-                    if (Obcount == 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Warning("Unable to save.Password Mismatch"));
-                     }
+                    //  int Obcount = myFunctions.getIntVAL(count.ToString());
+                    // if (Obcount == 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(api.Warning("Unable to save.Password Mismatch"));
+                    //  }
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
                     string footer = myFunctions.ContainColumn("i_Footer", MasterTable) ? MasterTable.Rows[0]["i_Footer"].ToString() : "";
                     string header = myFunctions.ContainColumn("i_Header", MasterTable) ? MasterTable.Rows[0]["i_Header"].ToString() : "";
@@ -223,6 +227,16 @@ namespace SmartxAPI.Controllers
                         if (header.Length > 0)
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
+string pwd="";
+              using (SqlConnection cnn = new SqlConnection(olivoClientConnectionString))
+                {
+                    cnn.Open();
+                    string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() +"'";
+
+                     pwd =  dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
+                }
+
+                        
                         if (values == "@Auto")
                         {
                             SortedList proParams1 = new SortedList(){
@@ -230,7 +244,7 @@ namespace SmartxAPI.Controllers
                                         {"X_ModuleCode","500"},
                                         {"N_UserID",0},
                                         {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
-                                        {"X_AdminPwd",myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())},
+                                        {"X_AdminPwd",pwd},
                                         {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 
