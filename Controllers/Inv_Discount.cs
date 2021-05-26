@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, int nQty)
         {
             DataTable dtPriceList = new DataTable();
 
@@ -130,6 +130,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCategoryID", nCategoryID);
 
                     object N_PriceTypeID = dLayer.ExecuteScalar("select N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
+
                     if (N_PriceTypeID != null)
                     {
                         Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
@@ -153,6 +154,10 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                }
+                if (nQty < myFunctions.getVAL(dtPriceList.Rows[0]["N_MinQty"].ToString()))
+                {
+                    return Ok(api.Warning("No Results Found"));
                 }
                 dtPriceList = api.Format(dtPriceList, "pricelist");
 
