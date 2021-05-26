@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationType where N_CompanyID=@p1" + Searchkey ;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List where N_CompanyID=@p1" + Searchkey ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xVacCode", xVacCode);
-                    Mastersql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
+                    Mastersql = "select * from vw_PayVacationType_Web where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -276,12 +276,12 @@ namespace SmartxAPI.Controllers
                         
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
                         dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly")
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly" || MasterTable.Rows[0]["X_Period"].ToString()=="Monthly/شهرية")
                         {
                             MasterTable.Rows[0]["X_Period"]="M";
 
                         }
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly")
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly" || MasterTable.Rows[0]["X_Period"].ToString()=="Yearly/سنوي")
                         {
                             MasterTable.Rows[0]["X_Period"]="Y";
                             

@@ -246,35 +246,173 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    string DocNo = "";
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    int N_AmortizationID = 0;
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                    int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
+                    string X_DeletionCode = MasterTable.Rows[0]["x_DeletionCode"].ToString();
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                    if (nDeletionID > 0)
+                    {
+                        dLayer.DeleteData("Pay_MedicalInsuranceDeletion", "N_DeletionID", nDeletionID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_MedicalInsuranceDeletionDetails", "N_DeletionID", nDeletionID, "N_CompanyID = " + nCompanyID, connection, transaction);
 
 
 
+                        object lobj = dLayer.ExecuteScalar("Select N_ProcessID From Inv_MonthlyProcess Where X_ProcessCode='10'and N_CompanyID =" + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
+                        object res = dLayer.ExecuteScalar("select N_PrePayScheduleID from Inv_PrePaymentScheduleMaster  Where N_PrePaymentID =" + nDeletionID + " and N_CompanyID=" + nCompanyID + " and X_Type='PrjInv' and N_FormID = 1137", connection, transaction);
+
+                        if (res != null)
+                        {
+                            N_AmortizationID = myFunctions.getIntVAL(res.ToString());
+
+                            dLayer.DeleteData("Inv_PrePaymentSchedule", "N_PrePayScheduleID", N_AmortizationID, "", connection, transaction);
+                            dLayer.DeleteData("Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", N_AmortizationID, "N_CompanyID=" + nCompanyID, connection, transaction);
 
 
+                        }
+                        object VendorDebitID = dLayer.ExecuteScalar("Select N_AdjustmentID From Inv_BalanceAdjustmentMaster Where N_MedInsDeletionID =" + nDeletionID + " and N_CompanyID =" + nCompanyID + " and X_EntryFrom= '" + 1137 + "'", connection, transaction);
+                        if (VendorDebitID != null)
+                        {
+                            int N_AdjustmentID = myFunctions.getIntVAL(VendorDebitID.ToString());
+                            dLayer.ExecuteNonQuery("SP_Delete_Trans_With_Accounts " + myCompanyID._CompanyID.ToString() + ",'VENDOR DEBIT NOTE'," + N_AdjustmentID.ToString() + ",'" + nUserID + "','" + myCompanyID._SystemName + "'", connection, transaction);
+                        }
+                    }
 
 
+                    DocNo = MasterRow["x_DeletionCode"].ToString();
+                    if (X_DeletionCode == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_FormID", FormID);
+                        Params.Add("N_FnYearId", nFnYearID);
+                        while (true)
+                        {
+                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_MedicalInsuranceDeletion Where X_DeletionCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        X_DeletionCode = DocNo;
+                        if (X_DeletionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        MasterTable.Rows[0]["x_DeletionCode"] = X_DeletionCode;
+
+                    }
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_DeletionCode='" + X_DeletionCode + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+
+                    nDeletionID = dLayer.SaveData("Pay_MedicalInsuranceDeletion", "n_DeletionID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                    if (nDeletionID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }
+                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                    {
+                        DataRow mstVar = DetailTable.Rows[i];
+
+                        DetailTable.Rows[i]["n_DeletionID"] = nDeletionID;
 
 
+                    }
+
+                    int nAdditionDetailsID = dLayer.SaveData("Pay_MedicalInsuranceDeletionDetails", "N_DeletionDetailsID", DetailTable, connection, transaction);
+                    if (nAdditionDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }
+                   // Amortization(nDeletionID, N_AmortizationID, MasterTable, connection);
 
 
+                    dLayer.ExecuteNonQuery("SP_Inv_VendorDebitNotePosting " + nCompanyID.ToString() + "," + nDeletionID.ToString() + "," + N_MedicalInsID.ToString() + "," + nBranchID.ToString() + "," + nUserID.ToString(), connection, transaction);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
     }
 }
+
+
+
+    //     private SortedList Amortization(int _plPkeyID, int AmortizationID_Loc, DataTable MasterTable, SqlConnection connection)
+    //     {
+
+    //         object ObjAmortizationID = 0;
+    //         object N_AmortizationDetailsID = 0;
+    //         object lobjResult = null;
+    //         lobjResult = 0;
+    //         SortedList Amortization = new SortedList();
+    //         SortedList Params = new SortedList();
+    //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+    //         int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
+    //         int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+    //         int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+    //         int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
+    //          int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+    //          string PrjInv="PrjInv";
+    //          string A="A";
+
+    //         string qry = " Select " + nCompanyID + " as N_CompanyID," + nFnYearID+ " as N_FnYearID," + nUserID + " as N_UserID," +nBranchID + " as N_BranchID," + _plPkeyID + " as N_PrePaymentID ,'" + PrjInv + "' as  X_Type," + FormID + " as N_FormID,'" + A + "' as X_EntryType ";
+
+
+
+
+  
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+    //     }
+    // }
 
 
 
