@@ -96,9 +96,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
 
             if (bAllBranchData)
-                sqlCommandText = "SP_Pay_EOSAdjustment @nCompanyId," + PayrunID + ",'" + strcondition + "',0,@nPayID,@nFnYearID";
+                sqlCommandText = "SP_Pay_EOSAdjustment_Cloud @nCompanyId," + PayrunID + ",'" + strcondition + "',0,@nPayID,@nFnYearID";
             else
-                sqlCommandText = "SP_Pay_EOSAdjustment @nCompanyId," + PayrunID + ",'" + strcondition + "',@nBranchId,@nPayID,@nFnYearID";
+                sqlCommandText = "SP_Pay_EOSAdjustment_Cloud @nCompanyId," + PayrunID + ",'" + strcondition + "',@nBranchId,@nPayID,@nFnYearID";
 
             if (nType == 2)
             {
@@ -223,7 +223,7 @@ namespace SmartxAPI.Controllers
                     {
                         PaymentTable.Rows[i]["N_TransID"] = nAdjustment;
                     }
-                    int N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailTable, connection, transaction);
+                    int N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", PaymentTable, connection, transaction);
                     if (N_TransDetailsID <= 0)
                     {
                         transaction.Rollback();
@@ -303,7 +303,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = _api.Format(MasterTable, "Master");
 
-                    if(nType==2)
+                    if(nType==2) 
                         DetailSql = "select * from vw_Pay_OpeningBalance where N_CompanyId=@nCompanyID and N_AdjustmentID=@nAdjustmentID ";
                     else
                         DetailSql = "select * from vw_Pay_EosAdjustment where N_CompanyId=@nCompanyID and N_AdjustmentID=@nAdjustmentID ";

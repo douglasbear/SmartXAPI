@@ -164,8 +164,8 @@ namespace SmartxAPI.Controllers
         public ActionResult GetEmployeeDetails(string xEmpCode, int nFnYearID, bool bAllBranchData, int nBranchID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable Pay_Employee, pay_EmpAddlInfo, pay_EmployeeDependence, pay_EmployeeAlerts, acc_OtherInformation, pay_EmpAccruls, pay_EmployeeSub, pay_Getsalary, 
-            pay_EmployeeEducation,pay_EmploymentHistory;
+            DataTable Pay_Employee, pay_EmpAddlInfo, pay_EmployeeDependence, pay_EmployeeAlerts, acc_OtherInformation, pay_EmpAccruls, pay_EmployeeSub, pay_Getsalary,
+            pay_EmployeeEducation, pay_EmploymentHistory;
             SortedList Result = new SortedList();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
@@ -175,12 +175,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@xEmpCode", xEmpCode);
 
             string branchSql = bAllBranchData == false ? " and (vw_PayEmployee.N_BranchID=0 or vw_PayEmployee.N_BranchID=@nBranchID" : "";
-            string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name],[Loan Ledger Name_Ar] AS X_LoanLedgerName_Ar,[Loan Ledger Code] AS X_LoanLedgerCode,[Loan Ledger Name] AS X_LoanLedgerName, *,Pay_Employee.X_EmpName AS X_ReportTo,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status]  from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID and vw_PayEmployee.N_CompanyID= Pay_Supervisor.N_CompanyID  Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID and Pay_employee.N_FnYearID=@nFnYearID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
+            string EmployeeSql = "Select X_LedgerName_Ar As X_LedgerName,[Loan Ledger Name_Ar] As [Loan Ledger Name],[Loan Ledger Name_Ar] AS X_LoanLedgerName_Ar,[Loan Ledger Code] AS X_LoanLedgerCode,[Loan Ledger Name] AS X_LoanLedgerName, *,Pay_Employee.X_EmpName AS X_ReportTo,CASE WHEN dbo.Pay_VacationDetails.D_VacDateFrom<=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo>=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0 and dbo.Pay_VacationDetails.B_IsSaveDraft=0 Then '1' Else vw_PayEmployee.N_Status end AS [Status] ,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_PayEmployee.N_CompanyID AND N_EmpID = vw_PayEmployee.N_EmpID and ISNULL(B_BeginingBalEntry,0) = 0 and N_FormID = 190 ) AS N_NoEdit from vw_PayEmployee Left Outer Join Pay_Supervisor On vw_PayEmployee.N_ReportToID= Pay_Supervisor.N_SupervisorID and vw_PayEmployee.N_CompanyID= Pay_Supervisor.N_CompanyID  Left Outer Join Pay_Employee On Pay_Supervisor.N_EmpID=Pay_Employee.N_EmpID and Pay_employee.N_FnYearID=@nFnYearID Left Outer Join  dbo.Pay_VacationDetails ON vw_PayEmployee.N_EmpID = dbo.Pay_VacationDetails.N_EmpID AND dbo.Pay_VacationDetails.D_VacDateFrom <= CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.D_VacDateTo >=CONVERT(date, GETDATE()) AND dbo.Pay_VacationDetails.N_VacDays<0  Where vw_PayEmployee.N_CompanyID=@nCompanyID and vw_PayEmployee.N_FnYearID=@nFnYearID and vw_PayEmployee.X_EmpCode=@xEmpCode " + branchSql;
             string contactSql = "Select * from vw_ContactDetails where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
             string salarySql = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformation.N_CompanyID AND N_EmpID = vw_EmpPayInformation.N_EmpID AND N_PayID = vw_EmpPayInformation.N_PayID AND N_Value = vw_EmpPayInformation.N_value ) AS N_NoEdit from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID";
             string accrualSql = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@nCompanyID  and N_EmpID=@nEmpID";
             string empDepedenceSql = "Select * from Pay_EmployeeDependence Inner Join Pay_Relation on Pay_EmployeeDependence.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependence.N_CompanyID = Pay_Relation.N_CompanyID    Where Pay_EmployeeDependence.N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
-            string empEducationSql  = "Select * from Pay_EmployeeEducation where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
+            string empEducationSql = "Select * from Pay_EmployeeEducation where N_CompanyID =@nCompanyID and N_EmpID=@nEmpID";
             string employementHistorySql = "Select * from Pay_EmploymentHistory where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
             string empAddlInfoSql = "Select * from vw_EmpAddlInfo where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID";
             string empAlertSql = "Select * from Pay_EmployeeAlerts where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
@@ -202,9 +202,9 @@ namespace SmartxAPI.Controllers
                         pay_EmployeeSub = dLayer.ExecuteDataTable(contactSql, Params, connection);
                         pay_Getsalary = dLayer.ExecuteDataTable(salarySql, Params, connection);
                         pay_EmpAccruls = dLayer.ExecuteDataTable(accrualSql, Params, connection);
-                        pay_EmployeeDependence =  dLayer.ExecuteDataTable(empDepedenceSql, Params, connection);
-                        pay_EmployeeEducation=  dLayer.ExecuteDataTable(empEducationSql, Params, connection);
-                        pay_EmploymentHistory =  dLayer.ExecuteDataTable(employementHistorySql, Params, connection);
+                        pay_EmployeeDependence = dLayer.ExecuteDataTable(empDepedenceSql, Params, connection);
+                        pay_EmployeeEducation = dLayer.ExecuteDataTable(empEducationSql, Params, connection);
+                        pay_EmploymentHistory = dLayer.ExecuteDataTable(employementHistorySql, Params, connection);
                         pay_EmpAddlInfo = dLayer.ExecuteDataTable(empAddlInfoSql, Params, connection);
                         pay_EmployeeAlerts = dLayer.ExecuteDataTable(empAlertSql, Params, connection);
 
@@ -273,14 +273,14 @@ namespace SmartxAPI.Controllers
                     pay_benifits = myFunctions.AddNewColumnToDataTable(pay_benifits, "summeryInfo", typeof(DataTable), null);
                     foreach (DataRow dRow in pay_benifits.Rows)
                     {
-                         DataTable dtNode = new DataTable();
-                         int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
-                         string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
-                         DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
+                        DataTable dtNode = new DataTable();
+                        int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
+                        string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
+                        DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
 
-                          dRow["summeryInfo"] = summeryInfo;
+                        dRow["summeryInfo"] = summeryInfo;
 
-                     }
+                    }
                     pay_PaySetup.AcceptChanges();
                     pay_PaySetup = _api.Format(pay_PaySetup);
                     pay_EmpAccruls = _api.Format(pay_EmpAccruls);
@@ -520,31 +520,33 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = @nSavedEmpID Where N_CompanyID =@nCompanyID And N_PositionID =@nPositionID", QueryParams, connection, transaction);
 
                         //SAving EMPLOYEE SALARY/BENEFITS
-                        int NewEmp = 0,n_NoEdit = 0;
+                        int NewEmp = 0, n_NoEdit = 0;
                         object PayEmp = dLayer.ExecuteScalar("select N_EmpID from Pay_PaySetup where N_EmpID=" + nSavedEmpID, connection, transaction);
                         if (PayEmp != null)
                             NewEmp = 1;
-                        if(NewEmp == 1)
+                        if (NewEmp == 1)
                         {
                             object Processed = dLayer.ExecuteScalar("Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
                             if (myFunctions.getIntVAL(Processed.ToString()) != 0)
                                 n_NoEdit = 1;
                         }
-                        if(n_NoEdit != 1)
+                        if (n_NoEdit != 1)
                         {
                             int pay_PaySetupRes = 0;
                             if (dtpay_PaySetup.Rows.Count > 0)
                             {
-                                if(NewEmp == 1) {
-                                dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nSavedEmpID, "N_CompanyID = "+ nCompanyID +"", connection, transaction);
-                                dLayer.DeleteData("Pay_EmployeePayHistory", "N_EmpID", nSavedEmpID , "N_CompanyID = "+ nCompanyID +"", connection, transaction);}
-                                      
+                                if (NewEmp == 1)
+                                {
+                                    dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nSavedEmpID, "N_CompanyID = " + nCompanyID + "", connection, transaction);
+                                    dLayer.DeleteData("Pay_EmployeePayHistory", "N_EmpID", nSavedEmpID, "N_CompanyID = " + nCompanyID + "", connection, transaction);
+                                }
+
                                 foreach (DataRow dRow in dtpay_PaySetup.Rows)
                                 {
                                     dRow["N_EmpID"] = nEmpID;
                                 }
                                 dtpay_PaySetup.AcceptChanges();
-                                pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);                        
+                                pay_PaySetupRes = dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", dtpay_PaySetup, connection, transaction);
                                 if (pay_PaySetupRes > 0)
                                 {
                                     int Pay_EmployeePayHistoryRes = 0;
@@ -552,7 +554,7 @@ namespace SmartxAPI.Controllers
                                     {
                                         dRow["N_EmpID"] = nEmpID;
                                     }
-                                    dtpay_EmployeePayHistory.AcceptChanges();     
+                                    dtpay_EmployeePayHistory.AcceptChanges();
                                     if (dtpay_EmployeePayHistory.Rows.Count > 0)
                                     {
                                         Pay_EmployeePayHistoryRes = dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", dtpay_EmployeePayHistory, connection, transaction);
@@ -565,14 +567,15 @@ namespace SmartxAPI.Controllers
                         //Employee Accruals
                         //object AccrualUsed = dLayer.ExecuteScalar("Select COUNT(*) from Pay_VacationDetails Where N_VacDays < 0 and N_CompanyID = " + nCompanyID + " AND N_EmpID = " + nSavedEmpID, connection, transaction);
                         int pay_EmpAccrulsRes = 0;
-                        if (dtpay_EmpAccruls.Rows.Count > 0){
-                            dLayer.DeleteData("Pay_EmpAccruls", "N_EmpID", nSavedEmpID, "N_CompanyID = "+ nCompanyID +"", connection, transaction);
-                        foreach (DataRow dRow in dtpay_EmpAccruls.Rows)
+                        if (dtpay_EmpAccruls.Rows.Count > 0)
                         {
-                            dRow["N_EmpID"] = nEmpID;
-                        }
-                        dtpay_EmpAccruls.AcceptChanges();
-                        pay_EmpAccrulsRes = dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", dtpay_EmpAccruls, connection, transaction);
+                            dLayer.DeleteData("Pay_EmpAccruls", "N_EmpID", nSavedEmpID, "N_CompanyID = " + nCompanyID + "", connection, transaction);
+                            foreach (DataRow dRow in dtpay_EmpAccruls.Rows)
+                            {
+                                dRow["N_EmpID"] = nEmpID;
+                            }
+                            dtpay_EmpAccruls.AcceptChanges();
+                            pay_EmpAccrulsRes = dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", dtpay_EmpAccruls, connection, transaction);
                         }
 
                         int Acc_OtherInformationRes = 0;
@@ -596,7 +599,7 @@ namespace SmartxAPI.Controllers
                         int Pay_EmployeeDependenceRes = 0;
                         if (dtpay_EmployeeDependence.Rows.Count > 0)
                         {
-                            dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nSavedEmpID, "N_CompanyID = "+ nCompanyID +"", connection, transaction);
+                            dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nSavedEmpID, "N_CompanyID = " + nCompanyID + "", connection, transaction);
                             foreach (DataRow dRow in dtpay_EmployeeDependence.Rows)
                             {
                                 dRow["N_EmpID"] = nEmpID;
@@ -905,6 +908,77 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return StatusCode(403, _api.Error(e));
+            }
+        }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nEmpID, int nFnyearID)
+        {
+            int nUserID = myFunctions.GetUserID(User);
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string EmployeeSql = " select * from vw_payemployee Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID";
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnyearID);
+            Params.Add("@nEmpID", nEmpID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection, transaction);
+
+                    object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" + Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" + Employee.Rows[0]["n_loanledgerid"] + ")", Params, connection, transaction);
+                    if (EmployeeLedger != null)
+                        return Ok(_api.Error("Can't delete,it has been used"));
+
+                    else
+                    {
+                        object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
+                        if (obj != null)
+                        {
+                            return Ok(_api.Error("Unpaid Dues Exists"));
+                        }
+
+                        DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
+                        if (SalaryLedger.Rows.Count > 0)
+                        {
+                            if (SalaryLedger.Rows[0]["X_EmpName"].ToString() == SalaryLedger.Rows[0]["X_LedgerName"].ToString())
+                            {
+                                dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(SalaryLedger.Rows[0]["N_LedgerID"].ToString()), "", connection, transaction);
+                            }
+                        }
+                        DataTable LoanLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LoanLedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LoanLedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
+                        if (LoanLedger.Rows.Count > 0)
+                        {
+                            if (LoanLedger.Rows[0]["X_EmpName"].ToString() + " " + "Loan" == LoanLedger.Rows[0]["X_LedgerName"].ToString())
+                            {
+                                dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(LoanLedger.Rows[0]["N_LoanLedgerID"].ToString()), "", connection, transaction);
+                            }
+                        }
+                        //Delete
+                        dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmployeeAlerts", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmployeePayHistory", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_VacationDetails", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Web_Pay_EmployeeLogin", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Inv_Salesman", "N_EmpRefID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Sec_User", "N_UserID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmployeeAttachments", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
+
+
+                    }
+                    transaction.Commit();
+                }
+                return Ok(_api.Success("Employee Deleted"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
         }
 

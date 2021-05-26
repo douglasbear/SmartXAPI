@@ -30,6 +30,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
+
         [HttpGet("list")]
         public ActionResult GetDiscountList()
         {
@@ -63,15 +64,16 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetDiscountDetails(int N_DiscID, int nFnYearID)
         {
-            DataTable dtDiscount = new DataTable();
+            DataTable dtDiscountMaster = new DataTable();
+            DataTable dtDiscountDetails = new DataTable();
 
             DataSet DS = new DataSet();
             SortedList Params = new SortedList();
             SortedList dParamList = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
-
-            string SqlDiscount = "Select * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            string MasterDiscount = "Select * from Inv_DiscountMaster Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
+            string DetailsDiscount = "Select * from vw_Discount Where N_CompanyID = @p1 and N_FnYearID = @p2 and N_DiscID = @p3";
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
@@ -81,18 +83,91 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dtDiscount = dLayer.ExecuteDataTable(SqlDiscount, Params, connection);
+                    dtDiscountMaster = dLayer.ExecuteDataTable(MasterDiscount, Params, connection);
+                    dtDiscountDetails = dLayer.ExecuteDataTable(DetailsDiscount, Params, connection);
 
                 }
-                dtDiscount = api.Format(dtDiscount, "Details");
+                dtDiscountMaster = api.Format(dtDiscountMaster, "Master");
+                dtDiscountDetails = api.Format(dtDiscountDetails, "Details");
 
-                if (dtDiscount.Rows.Count == 0)
+                SortedList Data = new SortedList();
+                Data.Add("Master", dtDiscountMaster);
+                Data.Add("Details", dtDiscountDetails);
+
+                if (dtDiscountMaster.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dtDiscount));
+                    return Ok(api.Success(Data));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpGet("pricelist")]
+        public ActionResult GetPriceListDetails(int nCustomerID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, int nQty)
+        {
+            DataTable dtPriceList = new DataTable();
+
+            DataSet DS = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList dParamList = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string pricelist = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Params.Add("@nCompanyID", nCompanyId);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nItemID", nItemID);
+                    Params.Add("@nItemUnitID", nItemUnitID);
+                    Params.Add("@nCategoryID", nCategoryID);
+
+                    object N_PriceTypeID = dLayer.ExecuteScalar("select N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
+
+                    if (N_PriceTypeID != null)
+                    {
+                        Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
+                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID";
+                        string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID";
+                        string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID";
+                        string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID";
+
+                        dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
+                        if (dtPriceList.Rows.Count == 0)
+                        {
+                            dtPriceList = dLayer.ExecuteDataTable(pricelistItem, Params, connection);
+                            if (dtPriceList.Rows.Count == 0)
+                            {
+                                dtPriceList = dLayer.ExecuteDataTable(pricelistCategory, Params, connection);
+                                if (dtPriceList.Rows.Count == 0)
+                                {
+                                    dtPriceList = dLayer.ExecuteDataTable(pricelistUnit, Params, connection);
+                                }
+                            }
+                        }
+                    }
+
+                }
+                if (nQty < myFunctions.getVAL(dtPriceList.Rows[0]["N_MinQty"].ToString()))
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                dtPriceList = api.Format(dtPriceList, "pricelist");
+
+                if (dtPriceList.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dtPriceList));
                 }
             }
             catch (Exception e)
@@ -119,7 +194,7 @@ namespace SmartxAPI.Controllers
 
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_DiscountNo = MasterRow["[X_DiscCode]"].ToString();
+                    string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
 
                     if (x_DiscountNo == "@Auto")
                     {

@@ -26,7 +26,7 @@ namespace SmartxAPI.Controllers
         {
             dLayer = dl;
             _api = api;
-              dLayer = dl;
+            dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 190;
@@ -73,17 +73,24 @@ namespace SmartxAPI.Controllers
                     if (xBatch != null)
                     {
                         batchParams.Add("@nCompanyID", nCompanyID);
-                        batchParams.Add("@nFnYearId", nFnYearID);
+                        batchParams.Add("@nFnYearID", nFnYearID);
                         batchParams.Add("@xBatch", xBatch);
+                        batchParams.Add("@nBranchID", nBranchID);
                         MainMst = dLayer.ExecuteDataTable("select * from Pay_PaymentMaster where n_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID and X_Batch=@xBatch", batchParams, connection);
-if(MainMst.Rows.Count==0){
-    return Ok(_api.Notice("No Results Found"));
-}
-                    string nBatchID = MainMst.Rows[0]["N_TransID"].ToString();
-                    if (nBatchID != null)
+                        if (MainMst.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+                        string nBatchID = MainMst.Rows[0]["N_TransID"].ToString();
+                        if (nBatchID != null)
+                        {
                             ProParams.Add("N_TransID", nBatchID);
-                    }else{
-                            ProParams.Add("N_TransID", 0);
+                        }
+
+                    }
+                    else
+                    {
+                        ProParams.Add("N_TransID", 0);
                     }
 
                     mst = dLayer.ExecuteDataTablePro("SP_Pay_SelEmployeeList4Process", ProParams, connection);
@@ -170,9 +177,9 @@ if(MainMst.Rows.Count==0){
                     }
                     else
                     {
-                         SortedList Output = new SortedList();
-                        Output.Add("master",MainMst);
-                        Output.Add("details",mst);
+                        SortedList Output = new SortedList();
+                        Output.Add("master", MainMst);
+                        Output.Add("details", mst);
                         return Ok(_api.Success(Output));
                     }
                 }
@@ -197,15 +204,15 @@ if(MainMst.Rows.Count==0){
         }
 
 
-          [HttpGet("Dashboardlist")]
-        public ActionResult SalaryProcessingDashboardList(int nFnYearId,int nPage,int nSizeperpage,string xSearchkey, string xSortBy)
+        [HttpGet("Dashboardlist")]
+        public ActionResult SalaryProcessingDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
@@ -216,13 +223,13 @@ if(MainMst.Rows.Count==0){
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by batch desc,D_TransDate desc";
             else
-             xSortBy = " order by " + xSortBy;
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey ;
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+Searchkey+"and N_TransID not in (select top("+ Count +") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 ) "+Searchkey ;
-            
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_TransID not in (select top(" + Count + ") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 ) " + Searchkey;
+
 
             SortedList OutPut = new SortedList();
 
@@ -232,11 +239,11 @@ if(MainMst.Rows.Count==0){
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                     OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
@@ -248,7 +255,7 @@ if(MainMst.Rows.Count==0){
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -289,9 +296,9 @@ if(MainMst.Rows.Count==0){
                         int NewNo = 0, loop = 1;
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID  And N_PayRunID =@nPayRunID", Params, connection, transaction).ToString());
                             x_Batch = nPayRunID + "" + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_MonthlyAddOrDed Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_PaymentMaster Where N_CompanyID=@nCompanyID And X_Batch = '" + x_Batch + "'", Params, connection, transaction).ToString()) == 0)
                             {
                                 OK = false;
                             }
@@ -396,8 +403,8 @@ if(MainMst.Rows.Count==0){
         }
 
 
-  [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTransID,int nFnYearID,string xBatch)
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTransID, int nFnYearID, string xBatch)
         {
             int Results = 0;
             try
@@ -407,23 +414,23 @@ if(MainMst.Rows.Count==0){
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection,transaction);
-                     dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " +  myFunctions.GetCompanyID(User) + "," + nFnYearID + ",'ESI','" + xBatch + "'", connection,transaction);
-                     Results = dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nTransID, "N_CompanyID=" +  myFunctions.GetCompanyID(User)  + " and N_FormID = 190",connection,transaction);
+                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + myFunctions.GetCompanyID(User) + "," + nFnYearID + ",'ESI','" + xBatch + "'", connection, transaction);
+                    Results = dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FormID = 190", connection, transaction);
 
-                        if (Results <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete batch"));
-                        }
-                        Results = dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nTransID, "N_CompanyID=" +  myFunctions.GetCompanyID(User) ,connection,transaction);
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to delete batch"));
+                    }
+                    Results = dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
 
-                        if (Results <= 0)
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete batch"));
-                        }
-                    
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to delete batch"));
+                    }
+
                     transaction.Commit();
                     return Ok(_api.Success("Batch deleted"));
                 }

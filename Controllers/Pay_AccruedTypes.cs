@@ -104,16 +104,16 @@ namespace SmartxAPI.Controllers
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
-                Searchkey = "and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%' or x_Type like '%" + xSearchkey + "%' or x_Period like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' )";
+                Searchkey = " and (x_VacCode like '%"+xSearchkey+"%'or x_VacType like'%"+xSearchkey+"%')";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VacTypeID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationType where N_CompanyID=@p1 ";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 " + Searchkey  + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationType where N_CompanyID=@p1  and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayVacationType where N_CompanyID=@p1 )";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@nCompanyId " + Searchkey  + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=@nCompanyId "  + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
 
@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationType where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List where N_CompanyID=@p1" + Searchkey ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xVacCode", xVacCode);
-                    Mastersql = "select * from vw_PayVacationType where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
+                    Mastersql = "select * from vw_PayVacationType_Web where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -276,12 +276,12 @@ namespace SmartxAPI.Controllers
                         
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
                         dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly")
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly" || MasterTable.Rows[0]["X_Period"].ToString()=="Monthly/شهرية")
                         {
                             MasterTable.Rows[0]["X_Period"]="M";
 
                         }
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly")
+                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly" || MasterTable.Rows[0]["X_Period"].ToString()=="Yearly/سنوي")
                         {
                             MasterTable.Rows[0]["X_Period"]="Y";
                             

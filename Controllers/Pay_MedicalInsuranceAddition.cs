@@ -219,6 +219,15 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
+                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                    {
+                        DataRow mstVar = DetailTable.Rows[i];
+
+                        DetailTable.Rows[i]["N_AdditionID"] = nAdditionID;
+
+
+                    }
+
                     int nAdditionDetailsID = dLayer.SaveData("Pay_MedicalInsuranceAdditionDetails", "N_AdditionDetailsID", DetailTable, connection, transaction);
                     if (nAdditionDetailsID <= 0)
                     {
@@ -255,9 +264,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ")  N_AdditionID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId  group By  N_AdditionID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate " + Searchkey + Criteria + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_AdditionID not in (select top(" + Count + ") N_AdditionID from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_AdditionID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_AdditionID not in (select top(" + Count + ") N_AdditionID from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId  group By  N_AdditionID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate  " + Criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@nCompanyId", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -268,7 +277,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*)x as N_Count  from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
+                    sqlCommandCount = "select count(*)  as N_Count  from vw_MedicalInsuranceAdditionSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -341,13 +350,14 @@ namespace SmartxAPI.Controllers
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Price", typeof(double), 0);
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Cost", typeof(double), 0);
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "D_LastDate", typeof(DateTime), null);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "PolicyDays", typeof(int), 0);
 
                         foreach (DataRow dvar in EmployeeTable.Rows)
                         {
-                            object InsAmt = dLayer.ExecuteDataTable("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID  and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + dvar["X_InsuranceClassEmp"] + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dvar["N_EmpInsClassID"].ToString()) + "", EmpParams, connection);
-                            object InsCost = dLayer.ExecuteDataTable("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID  and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + dvar["X_InsuranceClassEmp"] + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dvar["N_EmpInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsAmt = dLayer.ExecuteScalar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID  and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + dvar["X_InsuranceClassEmp"] + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dvar["N_EmpInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsCost = dLayer.ExecuteScalar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID  and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + dvar["X_InsuranceClassEmp"] + "' and EmpType=171 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(dvar["N_EmpInsClassID"].ToString()) + "", EmpParams, connection);
                             object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
-
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
                             if (InsAmt != null)
                             {
                                 dvar["N_Price"] = myFunctions.getVAL(InsAmt.ToString());
@@ -359,6 +369,10 @@ namespace SmartxAPI.Controllers
                             if (date != null)
                             {
                                 dvar["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
+                            }
+                            if (policyDays != null)
+                            {
+                                dvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
                             }
 
                         }
@@ -373,13 +387,15 @@ namespace SmartxAPI.Controllers
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Price", typeof(double), 0);
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "D_LastDate", typeof(DateTime), null);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "PolicyDays", typeof(int), 0);
 
 
                         foreach (DataRow var in FamilyTable.Rows)
                         {
-                            object InsAmt = dLayer.ExecuteDataTable("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
-                            object InsCost = dLayer.ExecuteDataTable("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsAmt = dLayer.ExecuteScalar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsCost = dLayer.ExecuteScalar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
                             object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
 
                             if (InsAmt != null)
                             {
@@ -393,6 +409,11 @@ namespace SmartxAPI.Controllers
                             {
                                 var["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
                             }
+                            if (policyDays != null)
+                            {
+                                var["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
+                            }
+
 
                         }
                         FamilyTable.AcceptChanges();
@@ -409,13 +430,16 @@ namespace SmartxAPI.Controllers
                         RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "N_Price", typeof(double), 0);
                         RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "N_Cost", typeof(double), 0);
                         RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "D_LastDate", typeof(DateTime), null);
+                        RelationTable = myFunctions.AddNewColumnToDataTable(RelationTable, "PolicyDays", typeof(int), 0);
+
 
                         if (RelationTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         foreach (DataRow kvar in RelationTable.Rows)
                         {
-                            object InsAmt = dLayer.ExecuteDataTable("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
-                            object InsCost = dLayer.ExecuteDataTable("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsAmt = dLayer.ExecuteScalar("Select N_Price From vw_InsuranceAmountCategoryWise Where N_CompanyID =@nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172 and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
+                            object InsCost = dLayer.ExecuteScalar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
                             object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
 
                             if (InsAmt != null)
                             {
@@ -429,6 +453,11 @@ namespace SmartxAPI.Controllers
                             {
                                 kvar["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
                             }
+                            if (policyDays != null)
+                            {
+                                kvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
+                            }
+
 
 
                         }
@@ -479,7 +508,7 @@ namespace SmartxAPI.Controllers
                     int N_Date = Convert.ToInt32(X_Date);
                     if (xProjectName == null || xProjectName == "")
                     {
-                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where N_VendorID=@nVendorID and N_CEndDate<" + N_Date + "";
+                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where N_VendorID=" + nVendorID + " and N_CEndDate<" + N_Date + "";
                         FillVendorTable = dLayer.ExecuteDataTable(FillDataSql, EmpParams, connection);
                         if (FillVendorTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
@@ -487,7 +516,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where  N_VendorID=@nVendorID and N_CEndDate<" + N_Date + " and X_ProjectName='" + xProjectName + "' ";
+                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where  N_VendorID=" + nVendorID + " and N_CEndDate<" + N_Date + " and X_ProjectName='" + xProjectName + "' ";
                         FillVendorTable = dLayer.ExecuteDataTable(FillDataSql, EmpParams, connection);
                         if (FillVendorTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 

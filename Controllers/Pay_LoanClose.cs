@@ -33,40 +33,69 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult LoanCloseDetails(string xLoanCode, int nLoanTransID)
+        public ActionResult LoanCloseDetails(string xLoanCloseCode, int nLoanID, int nBranchID,bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-           // int nBranchID=myCompanyID._BranchID;
+            int nLoanTransID=0;
             string sqlCommandText ="";
-           // string X_condition ="";
-             bool bAllBranchData=myCompanyID._B_AllBranchData;
+            string X_condition ="";
+            if(xLoanCloseCode==null)xLoanCloseCode="";
             
-            // if(nLoanTransID!=0)
-            // {
-            //      if (bAllBranchData== true)
-            //         X_condition = "(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND(dbo.Pay_LoanIssue.N_LoanStatus=0)";
-            //     else
-            //         X_condition = "(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanID =@p3) AND (dbo.Pay_LoanIssue.N_BranchID =@p4)AND(dbo.Pay_LoanIssue.N_LoanStatus=0)";
-
-
-            //     sqlCommandText = "SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM  dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID " +
-            //         "LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + X_condition + "";
-            // }
-            // else
-                sqlCommandText = "select * from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xLoanCode);
-            Params.Add("@p3", nLoanTransID);
-            //Params.Add("@p4", nBranchID);
-            try
+              try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-                    double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-myFunctions.getVAL(dt.Rows[0]["Paid Amount"].ToString());
+                    SqlTransaction transaction=connection.BeginTransaction();
+
+                    if(nLoanID!=0)
+                    {
+                        object ID=dLayer.ExecuteScalar("Select N_LoanTransID  From Pay_LoanIssue Where N_LoanID=" + nLoanID + " and N_CompanyID = " + nCompanyId+ "",connection, transaction);
+                        if(ID!=null)
+                            nLoanTransID=myFunctions.getIntVAL(ID.ToString());
+                    }
+
+                    if(nLoanTransID!=0)
+                    {
+                        object Code=dLayer.ExecuteScalar("Select X_LoanClosingCode  From Pay_LoanClose Where N_LoanTransID=" + nLoanTransID + " and N_CompanyID = " + nCompanyId+ "",connection, transaction);
+                        if(Code!=null)
+                            xLoanCloseCode=Code.ToString();
+
+                        if (bAllBranchData== true)
+                            X_condition = "(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanTransID =@p3) AND(dbo.Pay_LoanIssue.N_LoanStatus=0)";
+                        else
+                            X_condition = "(dbo.Pay_LoanIssue.N_CompanyID = @p1)  AND (dbo.Pay_LoanIssue.n_LoanTransID =@p3) AND (dbo.Pay_LoanIssue.N_BranchID =@p4)AND(dbo.Pay_LoanIssue.N_LoanStatus=0)";
+
+
+                        sqlCommandText = "SELECT     dbo.Pay_LoanIssue.*, dbo.Pay_Employee.X_EmpCode, dbo.Pay_Employee.X_EmpName, dbo.Pay_PayMaster.X_Description ,Acc_MastLedger.X_LedgerCode FROM  dbo.Pay_LoanIssue INNER JOIN dbo.Pay_Employee ON dbo.Pay_LoanIssue.N_EmpID = dbo.Pay_Employee.N_EmpID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_Employee.N_CompanyID AND dbo.Pay_LoanIssue.N_FnYearID=dbo.Pay_Employee.N_FnYearID INNER JOIN dbo.Pay_PayMaster ON dbo.Pay_LoanIssue.N_PayID = dbo.Pay_PayMaster.N_PayID AND dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_PayMaster.N_CompanyID " +
+                            "LEFT Outer Join Acc_MastLedger On Pay_LoanIssue.N_DefLedgerID = Acc_MastLedger.N_LedgerID AND dbo.Pay_LoanIssue.N_FnYearID=Acc_MastLedger.N_FnYearID AND dbo.Pay_LoanIssue.N_CompanyID=Acc_MastLedger.N_CompanyID  WHERE " + X_condition + "";
+                    }
+            
+                    if(xLoanCloseCode!="")
+                        sqlCommandText = "select * from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
+
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", xLoanCloseCode);
+                    Params.Add("@p3", nLoanTransID);
+                    Params.Add("@p4", nBranchID);
+          
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection,transaction);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    double N_RefundAmount =0;
+                    if(xLoanCloseCode=="")
+                    {
+                        N_RefundAmount=myFunctions.getVAL(dLayer.ExecuteScalar("Select SUM(N_RefundAmount) As N_RefundAmount  From Pay_LoanIssueDetails Where Pay_LoanIssueDetails.N_LoanTransID=" + nLoanTransID + " and  Pay_LoanIssueDetails.N_CompanyID = " + nCompanyId+ "",connection, transaction).ToString());
+                    }
+                    else
+                    {
+                        N_RefundAmount=myFunctions.getVAL(dt.Rows[0]["Paid Amount"].ToString());
+                    }
+                    double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-N_RefundAmount;
                     dt = myFunctions.AddNewColumnToDataTable(dt, "x_Balance", typeof(string), balance);
                 }
                 dt = api.Format(dt);
