@@ -103,6 +103,7 @@ namespace SmartxAPI.Controllers
                         if (PayCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Pay Code")); }
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
+                   
                     dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
 
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
