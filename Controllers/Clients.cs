@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
         private readonly string connectionString;
-        private readonly string olivoClientConnectionString;
+        private readonly string masterDBConnectionString;
 
         public Clients(ICommenServiceRepo repository, IOptions<AppSettings> appSettings, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             _appSettings = appSettings.Value;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             config=conf;
             _repository = repository;
         }
@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
                 string email = MasterRow["x_EmailID"].ToString();
                 string ConnString = "ObConnection";
 
-                using (SqlConnection connection = new SqlConnection(olivoClientConnectionString))
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
@@ -134,7 +134,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                using (SqlConnection connection = new SqlConnection(olivoClientConnectionString))
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
                     DataTable UserTable = ds.Tables["user"];
@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                using (SqlConnection cnn = new SqlConnection(olivoClientConnectionString))
+                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
                     password = myFunctions.EncryptString(password);
@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
                         }
                         int nClientID = myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString());
                         int nGlobalUserID = myFunctions.getIntVAL(output.Rows[0]["N_UserID"].ToString());
-                        var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", output.Rows[0]["X_AppName"].ToString(),uri,nClientID,nGlobalUserID);
+                        var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()),uri,nClientID,nGlobalUserID);
                     Res.Add("UserInfo", user);
                     Res.Add("StatusCode", 1);
                     Res.Add("Type", "User");
@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
                     tokenSet.Add("Token", tokenHandler.WriteToken(token));
                     tokenSet.Add("Expiry", DateTime.UtcNow.AddDays(2));
                     tokenSet.Add("RefreshToken", reToken);
-                    tokenSet.Add("x_AppType", "");
+                    tokenSet.Add("n_AppID", "");
                     dLayer.ExecuteScalar("Update Users set X_Token='" + reToken + "' where N_UserID=" + output.Rows[0]["N_UserID"].ToString(), cnn);
 
                     SortedList User = new SortedList();

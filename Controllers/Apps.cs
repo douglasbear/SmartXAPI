@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
 
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
-        private readonly string olivoClientConnectionString;
+        private readonly string masterDBConnectionString;
 
         public Apps(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
@@ -30,7 +30,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
-            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
        
         [AllowAnonymous]
@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from AppMaster where B_Inactive =0 order by N_AppID";
             try
             {
-                using (SqlConnection connection = new SqlConnection(olivoClientConnectionString))
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select X_DBUri,X_AppUrl from ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID";
             try
             {
-                using (SqlConnection connection = new SqlConnection(olivoClientConnectionString))
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText,appParams, connection);

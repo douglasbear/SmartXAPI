@@ -9,10 +9,11 @@ using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
+using System.Security.Cryptography;
 
 namespace SmartxAPI.Controllers
 {
-    
+
     [Route("user")]
     [ApiController]
     public class UserController : ControllerBase
@@ -23,6 +24,9 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
         private readonly string connectionString;
+        private readonly string masterDBConnectionString;
+
+        private readonly string seperator;
 
         public UserController(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
@@ -31,6 +35,8 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            seperator = "$+$-!";
         }
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody] Sec_AuthenticateDto model)
@@ -44,7 +50,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                 var password = myFunctions.EncryptString(model.Password);
                 //var password = model.Password;
-                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress,model.AppType);
+                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress, model.AppID);
 
                 if (user == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
@@ -63,7 +69,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);
             // Params.Add("N_UserId", userid);
@@ -92,16 +98,16 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetUserList(int? nCompanyId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetUserList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
             string Searchkey = "";
-            string exclude=" and X_UserID<>'Olivo' ";
+            string exclude = " and X_UserID<>'Olivo' ";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_UserID like '%" + xSearchkey + "%' or X_UserCategory like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
@@ -109,13 +115,13 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_UserID desc";
             else
-            xSortBy = " order by " + xSortBy;
+                xSortBy = " order by " + xSortBy;
 
-            if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1 "+ exclude + Searchkey + " " + xSortBy;
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_UserList where N_CompanyID=@p1 "+ exclude  + Searchkey + " and N_UserID not in(select top("+ Count +")  N_UserID from vw_UserList where N_CompanyID=@p1 "+ exclude  + xSortBy + " ) " + xSortBy;
-            
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_UserList where N_CompanyID=@p1 " + exclude + Searchkey + " and N_UserID not in(select top(" + Count + ")  N_UserID from vw_UserList where N_CompanyID=@p1 " + exclude + xSortBy + " ) " + xSortBy;
+
             Params.Add("@p1", nCompanyId);
             SortedList OutPut = new SortedList();
 
@@ -125,7 +131,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  "+ exclude  + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -139,7 +145,7 @@ namespace SmartxAPI.Controllers
                         dt.Columns.Remove("X_Password");
                         dt.AcceptChanges();
                         return Ok(_api.Success(OutPut));
-                    }  
+                    }
                 }
             }
             catch (Exception e)
@@ -148,40 +154,111 @@ namespace SmartxAPI.Controllers
             }
         }
         //Save....
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
-                DataTable MasterTable;
+                DataTable MasterTable, globalUser;
                 MasterTable = ds.Tables["master"];
-                
-               
+                globalUser = ds.Tables["globalUser"];
+
+                int nClientID = myFunctions.GetClientID(User);
+
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
+                    int globalUserID = 0;
+                    using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                    {
+                        olivoCon.Open();
+                        SqlTransaction olivoTxn = olivoCon.BeginTransaction();
+                        int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                        if (nUserID == 0)
+                        {
+                            transaction = connection.BeginTransaction();
+                            SortedList userParams = new SortedList();
+                            userParams.Add("@nClientID", nClientID);
+                            userParams.Add("@nAppID", myFunctions.GetAppID(User));
+                            userParams.Add("@xUserID", MasterTable.Rows[0]["x_UserID"].ToString());
+                            userParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                            object userCountinOtherOrg = dLayer.ExecuteScalar("SELECT Count(Sec_User.N_CompanyID) as Count FROM Sec_User LEFT OUTER JOIN Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID  where Sec_User.X_UserID=@xUserID and Acc_Company.N_ClientID<>@nClientID", userParams, connection, transaction);
+                            if (myFunctions.getIntVAL(userCountinOtherOrg.ToString()) > 0)
+                            {
+                                return Ok(_api.Warning("The email address is already registered with another account which is not a part of this organization."));
+                            }
+
+                            object userCountinThisCompany = dLayer.ExecuteScalar("SELECT Count(Sec_User.N_CompanyID) as Count FROM Sec_User LEFT OUTER JOIN Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID  where Sec_User.X_UserID=@xUserID and Acc_Company.N_ClientID=@nClientID and Acc_Company.N_CompanyID=@nCompanyID", userParams, connection, transaction);
+                            if (myFunctions.getIntVAL(userCountinThisCompany.ToString()) > 0)
+                            {
+                                return Ok(_api.Warning("The email address is already registered and part this company."));
+                            }
+
+                            MasterTable.Columns.Add("x_Password", typeof(System.String));
+                            DataRow MasterRow = MasterTable.Rows[0];
+
+                            MasterTable.Rows[0]["x_Password"] = ".";
+                            MasterTable.Rows[0]["b_Active"] = 0;
+                            globalUser.Rows[0]["b_Inactive"] = 1;
+                            globalUser.Rows[0]["x_Password"] = ".";
+                            globalUser.Rows[0]["b_EmailVerified"] = 0;
+                            globalUser.Rows[0]["n_ActiveAppID"] = myFunctions.GetAppID(User);
 
 
-                    transaction = connection.BeginTransaction();
-                    MasterTable.Columns.Add("x_Password", typeof(System.String));
-                    DataRow MasterRow = MasterTable.Rows[0];
-                    string Password =MasterRow["x_UserID"].ToString();
-                    Password=myFunctions.EncryptString(Password);
-                    MasterTable.Rows[0]["x_Password"] = Password;
-                    int Result = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
-                    if (Result > 0)
-                    {
-                        //MULTI COMPANY USER CREATION
+
+                            globalUserID = dLayer.SaveData("Users", "n_UserID", globalUser, olivoCon, olivoTxn);
+                            if (globalUserID <= 0)
+                            {
+                                transaction.Rollback();
+                                olivoTxn.Rollback();
+                                return Ok(_api.Error("Unable to invite user"));
+                            }
+                            // object userCount = dLayer.ExecuteScalar("Select count(1) from Sec_User where n_UserID=" + globalUserID, connection, transaction);
+                            // if (myFunctions.getIntVAL(userCount.ToString()) > 0)
+                            // {
+                            //     transaction.Rollback();
+                            //     olivoTxn.Rollback();
+                            //     return Ok(_api.Error("User Already Registerd With this ID !!!"));
+                            // }
+                            // MasterTable.Rows[0]["n_UserID"] = globalUserID;
+                            nUserID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
+                            if (nUserID > 0)
+                            {
+                                object appUrl = dLayer.ExecuteScalar("select X_AppUrl from ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID", userParams, olivoCon, olivoTxn);
+                                if (appUrl == null)
+                                {
+                                    transaction.Rollback();
+                                    olivoTxn.Rollback();
+                                    return Ok(_api.Error("Unable to invite user - App Url Not Found"));
+                                }
+                                // format -> userid + email + clientid + companyid + companyUserID
+                                string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(MasterTable.Rows[0]["x_UserID"].ToString()) + seperator + myFunctions.EncryptString(nClientID.ToString()) + seperator + myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(nUserID.ToString());
+
+                                string EmailBody = "<div style='font-size: 18px;font-weight: 400;width: 600px;margin: 0 auto;color: #2d2f36;font-family: sans-serif;'><span style='font-weight: 500;margin: 56px 0 20px;'><span style='color: #2c6af6;'> "
+      + "Smartx Erp"
+         + "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
+           + " Welcome," + MasterRow["x_UserName"].ToString()
+          + "</h1><p style='margin: 0 0 24px;'>" + myFunctions.GetEmailID(User) + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
+          + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
+                                string EmailSubject = "Olivo Cloud Solutions Invite";
+                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, connection, transaction, dLayer, User);
+
+                            }
+                            else
+                            {
+                                transaction.Rollback();
+                                olivoTxn.Rollback();
+                                return Ok(_api.Error("Unable to invite user"));
+                            }
+                            transaction.Commit();
+                            olivoTxn.Commit();
+                        }
                     }
-                    else
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }
-                    transaction.Commit();
                 }
-                 return Ok(_api.Success("User Saved"));
+                return Ok(_api.Success("User Invited"));
             }
             catch (Exception ex)
             {
@@ -189,41 +266,125 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+        private string generateRefreshToken()
+        {
+            using (var rngCryptoServiceProvider = new RNGCryptoServiceProvider())
+            {
+                var randomBytes = new byte[64];
+                rngCryptoServiceProvider.GetBytes(randomBytes);
+                return Convert.ToBase64String(randomBytes);
+            }
+        }
+
+        [HttpGet("verifyUser")]
+        public ActionResult VerifyUser(string verificationCode, string password)
+        {
+            // format -> userid + email + clientid + companyid + companyUserID
+            string[] cred = verificationCode.Split(seperator);
+
+            int globalUserID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[0]));
+            string emailID = myFunctions.DecryptString(cred[1]);
+            int clientID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[2]));
+            int companyID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[3]));
+            int companyUserID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[4]));
+
+            SortedList userParams = new SortedList();
+            userParams.Add("@nClientID", clientID);
+            userParams.Add("@xUserID", emailID);
+            userParams.Add("@nCompanyID", companyID);
+            userParams.Add("@nCompanyUserID", companyUserID);
+            userParams.Add("@nglobalUserID", globalUserID);
+
+            using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                SqlTransaction transaction = connection.BeginTransaction();
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SqlTransaction olivoTxn = olivoCon.BeginTransaction();
+                    object globalCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_UserID=@nglobalUserID and N_ClientID=@nClientID and x_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
+                    if (myFunctions.getIntVAL(globalCount.ToString()) == 0 || myFunctions.getIntVAL(globalCount.ToString()) > 1)
+                    {
+                        transaction.Rollback();
+                        olivoTxn.Rollback();
+                        return Ok(_api.Warning("Invitation Code Expired"));
+                    }
+
+                    object companyCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_UserID=@nCompanyUserID and N_CompanyID=@nCompanyID and x_UserID=@xUserID", userParams, connection, transaction);
+                    if (myFunctions.getIntVAL(companyCount.ToString()) == 0 || myFunctions.getIntVAL(companyCount.ToString()) > 1)
+                    {
+                        transaction.Rollback();
+                        olivoTxn.Rollback();
+                        return Ok(_api.Warning("Invitation Code Expired"));
+                    }
+
+                    string Pwd = myFunctions.EncryptString(password);
+                    userParams.Add("@xPassword", Pwd);
+
+                    int res = dLayer.ExecuteNonQuery("Update Sec_User set X_Password=@xPassword,B_Active=1 where N_UserID=@nCompanyUserID and N_CompanyID=@nCompanyID and x_UserID=@xUserID", userParams, connection, transaction);
+                    if (res != 1)
+                    {
+                        transaction.Rollback();
+                        olivoTxn.Rollback();
+                        return Ok(_api.Warning("Invitation Code Expired"));
+                    }
+                    res = dLayer.ExecuteNonQuery("Update Users set X_Password=@xPassword,B_InActive=0,B_EmailVerified=1 where N_UserID=@nglobalUserID and N_ClientID=@nClientID and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
+                    if (res != 1)
+                    {
+                        transaction.Rollback();
+                        olivoTxn.Rollback();
+                        return Ok(_api.Warning("Invitation Code Expired"));
+                    }
+                    transaction.Commit();
+                        olivoTxn.Commit();
+                }
+            }
+
+            return Ok(_api.Success("User Verified , please login to continue"));
+        }
+
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpGet("all")]
         public ActionResult GetCustomer(int nFnYearId)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            
-            string sqlCommandText="select * from Sec_user";
-            
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
 
-            try{
+            string sqlCommandText = "select * from Sec_user";
+
+
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                     if(dt.Rows.Count==0)
-                    {
-                       return Ok(_api.Warning("No Results Found"));
-                    }else{
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
                     return Ok(_api.Success(dt));
 
-                    }
-                }catch(Exception e){
-                    return BadRequest(_api.Error(e));
                 }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-         [HttpGet("details")]
+        [HttpGet("details")]
         public ActionResult GetUserListDetails(string xUser)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int  nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "Sp_UserList";
             Params.Add("N_CompanyID", nCompanyId);
             try
@@ -234,12 +395,12 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
                 }
                 foreach (DataRow dtRow in dt.Rows)
+                {
+                    if (dtRow["x_UserID"].ToString() != xUser)
                     {
-                        if(dtRow["x_UserID"].ToString()!=xUser)
-                        {
-                            dtRow.Delete();
-                        }
+                        dtRow.Delete();
                     }
+                }
 
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -254,45 +415,45 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nUserId)
+        {
+            int Results = 0;
+            SortedList Params = new SortedList();
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCategory = "Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
+            string sqlTrans = "select COUNT(*) from vw_UserTransaction where n_userid=@p2";
+            string sqlUser = "select X_UserID from sec_user where n_userid=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nUserId);
+            try
             {
-                int Results = 0;
-                SortedList Params = new SortedList();
-                
-                int nCompanyID = myFunctions.GetCompanyID(User);
-                string sqlCategory="Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
-                string sqlTrans="select COUNT(*) from vw_UserTransaction where n_userid=@p2";
-                string sqlUser="select X_UserID from sec_user where n_userid=@p2";
-                Params.Add("@p1", nCompanyID);
-                Params.Add("@p2", nUserId);
-                try
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
                     connection.Open();
                     object User = dLayer.ExecuteScalar(sqlUser, Params, connection);
                     Params.Add("@p3", User.ToString());
                     object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
-                    if(Category==null)
+                    if (Category == null)
                         return Ok(_api.Error("Unable to delete User"));
                     else if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
                         return Ok(_api.Error("Unable to delete User"));
                     else
-                        {
-                            int N_CountTransUser=0;
-                            object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
-                            N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
-                            if (N_CountTransUser > 0)
-                                return Ok(_api.Error("Unable to delete User"));
-                        }
+                    {
+                        int N_CountTransUser = 0;
+                        object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
+                        N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
+                        if (N_CountTransUser > 0)
+                            return Ok(_api.Error("Unable to delete User"));
+                    }
 
-                    Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "",connection);
-            
+                    Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "", connection);
+
                     if (Results > 0)
                     {
                         return Ok(_api.Success("User deleted"));
@@ -303,13 +464,13 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                }
-                catch (Exception ex)
-                {
-                    return Ok(_api.Error(ex));
-                }
-
-
             }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+
+
+        }
     }
 }

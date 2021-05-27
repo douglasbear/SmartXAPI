@@ -43,9 +43,9 @@ namespace SmartxAPI.Controllers
         //         int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
         //         string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
         //         string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
-        //         string AppType = reqType=="all"?User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.System).Value:appName;
+        //         string AppID = reqType=="all"?User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.System).Value:appName;
 
-        //         var user = _repository.Authenticate(companyid,companyname,username,userid,reqType,AppType);
+        //         var user = _repository.Authenticate(companyid,companyname,username,userid,reqType,AppID);
 
         //         if (user == null){ return StatusCode(403,_api.Response(403,"Unauthorized Access" )); }
 
@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("auth-user")]
-        public ActionResult AuthenticateUser(string reqType, string appName,int nCompanyID,string xCompanyName)
+        public ActionResult AuthenticateUser(string reqType, int appID,int nCompanyID,string xCompanyName)
         {
             connectionString = myFunctions.GetConnectionString(User);
             try
@@ -70,9 +70,9 @@ namespace SmartxAPI.Controllers
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
                     string username = myFunctions.GetEmailID(User);
-                    string AppType = myFunctions.GetAppType(User);
+                    int AppID = myFunctions.GetAppID(User);
 
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppType,User.FindFirst(ClaimTypes.Uri)?.Value,myFunctions.GetClientID(User),myFunctions.GetGlobalUserID(User));
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID,User.FindFirst(ClaimTypes.Uri)?.Value,myFunctions.GetClientID(User),myFunctions.GetGlobalUserID(User));
 
                     if (user == null) { return StatusCode(403, _api.Response(403, "Unauthorized Access")); }
 
@@ -84,9 +84,9 @@ namespace SmartxAPI.Controllers
                     int companyid = nCompanyID;
                     string companyname = xCompanyName;
                     string username = myFunctions.GetEmailID(User);
-                    string AppType = myFunctions.GetAppType(User);
+                    int AppID = myFunctions.GetAppID(User);
 
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppType,User.FindFirst(ClaimTypes.Uri)?.Value,myFunctions.GetClientID(User),myFunctions.GetGlobalUserID(User));
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID,User.FindFirst(ClaimTypes.Uri)?.Value,myFunctions.GetClientID(User),myFunctions.GetGlobalUserID(User));
 
                     if (user == null) { return StatusCode(403, _api.Response(403, "Unauthorized Access")); }
 
@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok();
                     }
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, appName,User.FindFirst(ClaimTypes.Uri)?.Value,clientID,GlobalUserID);
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, appID,User.FindFirst(ClaimTypes.Uri)?.Value,clientID,GlobalUserID);
 
                     if (user == null) { return StatusCode(403, _api.Response(403, "Unauthorized Access")); }
 
@@ -143,9 +143,9 @@ namespace SmartxAPI.Controllers
                 int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
                 string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
                 string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
-                string AppType = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.System).Value;
+                int AppID = myFunctions.GetAppID(User);
 
-                var user = _repository.Authenticate(companyid, companyname, username, userid, "RefreshToken", AppType,"",0,0);
+                var user = _repository.Authenticate(companyid, companyname, username, userid, "RefreshToken", AppID,"",0,0);
 
                 if (user == null) { return StatusCode(403, _api.Response(403, "Unauthorized Access")); }
 

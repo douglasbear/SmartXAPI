@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly string olivoClientConnectionString;
+        private readonly string masterDBConnectionString;
 
 
         public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
 
         //GET api/Company/list
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
 string pwd="";
-              using (SqlConnection cnn = new SqlConnection(olivoClientConnectionString))
+              using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
                     string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() +"'";

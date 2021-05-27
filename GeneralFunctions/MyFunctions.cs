@@ -948,6 +948,76 @@ namespace SmartxAPI.GeneralFunctions
                 return "";
         }
 
+        public bool SendMail(string ToMail,string Body,string Subjectval, SqlConnection connection, SqlTransaction transaction, IDataAccessLayer dLayer,ClaimsPrincipal User)
+        {
+
+            try
+            {
+                    int companyid = GetCompanyID(User);
+                    ToMail = ToMail.ToString();
+                    object companyemail = "";
+                    object companypassword = "";
+
+                    companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, connection, transaction);
+                    companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, connection, transaction);
+                    if (ToMail.ToString() != "")
+                    {
+                        if (companyemail.ToString() != "")
+                        {
+                            object body = null;
+                            string MailBody;
+                            body = Body;
+                            if (body != null)
+                            {
+                                body = body.ToString();
+                            }
+                            else
+                                body = "";
+
+
+                            string Sender = companyemail.ToString();
+                            MailBody = body.ToString();
+                            string Subject = Subjectval;
+
+
+
+                            SmtpClient client = new SmtpClient
+                            {
+                                Host = "smtp.gmail.com",
+                                Port = 587,
+                                EnableSsl = true,
+                                DeliveryMethod = SmtpDeliveryMethod.Network,
+                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                Timeout = 10000,
+                            };
+
+                            MailMessage message = new MailMessage();
+                            message.To.Add(ToMail.ToString()); // Add Receiver mail Address  
+                            message.From = new MailAddress(Sender);
+                            message.Subject = Subject;
+                            message.Body = MailBody;
+
+                            message.IsBodyHtml = true; //HTML email  
+                            string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
+                            if (CC != "")
+                                message.CC.Add(CC);
+
+                            string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
+                            if (Bcc != "")
+                                message.Bcc.Add(Bcc);
+                            client.Send(message);
+
+                        }
+                    }
+                    return true;
+            }
+
+            catch (Exception ie)
+            {
+                return false;
+            }
+        }
+
         public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
@@ -1305,9 +1375,9 @@ namespace SmartxAPI.GeneralFunctions
             return config.GetConnectionString(User.FindFirst(ClaimTypes.Uri)?.Value);
         }
 
-        public string GetAppType(ClaimsPrincipal User)
+        public int GetAppID(ClaimsPrincipal User)
         {
-            return User.FindFirst(ClaimTypes.System)?.Value;
+            return this.getIntVAL(User.FindFirst(ClaimTypes.System)?.Value);
         }
 
 
@@ -1356,13 +1426,14 @@ namespace SmartxAPI.GeneralFunctions
         public int GetClientID(ClaimsPrincipal User);
         public int GetGlobalUserID(ClaimsPrincipal User);
         public string GetEmailID(ClaimsPrincipal User);
-        public string GetAppType(ClaimsPrincipal User);
+        public int GetAppID(ClaimsPrincipal User);
 
         public string GetConnectionString(ClaimsPrincipal User);
 
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
+        public bool SendMail(string ToMail,string Body,string Subjectval, SqlConnection connection, SqlTransaction transaction, IDataAccessLayer dLayer,ClaimsPrincipal User);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }

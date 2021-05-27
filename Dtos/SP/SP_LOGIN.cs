@@ -76,7 +76,7 @@ namespace SmartxAPI.Dtos.SP
         [NotMapped]
         public int N_CurrencyDecimal { get; set; }
         [NotMapped]
-        public string X_AppType { get; set; }
+        public int N_AppID { get; set; }
         [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
 

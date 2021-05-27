@@ -33,7 +33,7 @@ namespace SmartxAPI.Data
         private readonly IMyFunctions myFunctions;
         private readonly IConfiguration config;
         private readonly string connectionString;
-        private readonly string olivoClientConnectionString;
+        private readonly string masterDBConnectionString;
         public CommenServiceRepo(SmartxContext context, IOptions<AppSettings> appSettings, IMapper mapper, IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf)
         {
             _context = context;
@@ -43,12 +43,12 @@ namespace SmartxAPI.Data
             dLayer = dl;
             myFunctions = fun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             config = conf;
         }
 
 
-        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, string AppType, string uri, int clientID = 0, int globalUserID = 0)
+        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID = 0, int globalUserID = 0)
         {
 
             if (string.IsNullOrEmpty(companyid.ToString()) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userid.ToString()))
@@ -75,7 +75,7 @@ namespace SmartxAPI.Data
                         {"X_FnYearDescr",""},
                         {"X_LoginName",username},
                         {"X_Pwd",password.ToString()},
-                        {"X_AppType",AppType}
+                        {"X_AppType",AppID==2?"ESS":"ERP"}
                     };
                 DataTable loginDt = dLayer.ExecuteDataTablePro("SP_LOGIN", paramsList, connection);
                 //var loginRes = new List<SP_LOGIN>();  
@@ -161,7 +161,7 @@ namespace SmartxAPI.Data
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
 
-                using (SqlConnection cnn = new SqlConnection(olivoClientConnectionString))
+                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
                     string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, AppMaster.X_AppName FROM Users LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where Users.x_EmailID='" + username+"'";
@@ -190,7 +190,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
-                        new Claim(ClaimTypes.System,AppType),
+                        new Claim(ClaimTypes.System,AppID.ToString()),
                         new Claim(ClaimTypes.PrimarySid,globalUserID.ToString()),
                         new Claim(ClaimTypes.PrimaryGroupSid,clientID.ToString()),
                         new Claim(ClaimTypes.Email,username),
@@ -202,7 +202,7 @@ namespace SmartxAPI.Data
                         var token = tokenHandler.CreateToken(tokenDescriptor);
                         loginRes.Token = tokenHandler.WriteToken(token);
                         loginRes.Expiry = DateTime.UtcNow.AddDays(2);
-                        loginRes.X_AppType = AppType;
+                        loginRes.N_AppID = AppID;
 
                         loginRes.RefreshToken = generateRefreshToken();
                         var user = _context.SecUser.SingleOrDefault(u => u.NUserId == loginRes.N_UserID);
@@ -334,7 +334,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
-                        new Claim(ClaimTypes.System,AppType)
+                        new Claim(ClaimTypes.System,AppID.ToString())
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(rkey), SecurityAlgorithms.HmacSha256Signature)
@@ -368,6 +368,6 @@ namespace SmartxAPI.Data
 
     public interface ICommenServiceRepo
     {
-        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, string AppType, string uri, int clientID, int globalUserID);
+        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID, int globalUserID);
     }
 }
