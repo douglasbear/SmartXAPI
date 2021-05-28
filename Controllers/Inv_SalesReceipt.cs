@@ -397,12 +397,19 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     DataRow Master = MasterTable.Rows[0];
+                    double nAmount=0,nAmountF=0;string xDesc="";
                     var xVoucherNo = Master["x_VoucherNo"].ToString();
                     var xType = Master["x_Type"].ToString();
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                     int PayReceiptId = myFunctions.getIntVAL(Master["n_PayReceiptId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(Master["n_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
+                    nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
+                    nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
+                    xDesc = Master["x_Desc"].ToString();
+                    MasterTable.Columns.Remove("n_Amount");
+                    MasterTable.Columns.Remove("n_AmountF");
+                    MasterTable.Columns.Remove("x_Desc");
 
                     SortedList InvCounterParams = new SortedList()
                     {
@@ -450,6 +457,26 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error("Unable To Save Customer Payment"));
                     }
+
+                    if(xType=="SA")
+                    {
+                        DetailTable.Rows.Clear();
+                        
+                        DetailTable.Rows[0]["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
+                        DetailTable.Rows[0]["N_PayReceiptId"] =PayReceiptId;
+                        DetailTable.Rows[0]["N_InventoryId"] =PayReceiptId;
+                        DetailTable.Rows[0]["N_DiscountAmt"] =0;
+                        DetailTable.Rows[0]["N_DiscountAmtF"] =0;
+                        DetailTable.Rows[0]["N_Amount"] =nAmount;
+                        DetailTable.Rows[0]["X_Description"] =xDesc;
+                        DetailTable.Rows[0]["N_BranchID"] =nBranchID;
+                        DetailTable.Rows[0]["X_TransType"] =xType;
+                        DetailTable.Rows[0]["N_AmountF"] =nAmountF;
+                        DetailTable.Rows[0]["N_AmtPaidFromAdvanceF"] =0;
+                        DetailTable.Rows[0]["N_CurrencyID"] =myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
+                        DetailTable.Rows[0]["N_ExchangeRate"] =myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
+                    }
+
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_PayReceiptId"] = PayReceiptId;
@@ -457,16 +484,16 @@ namespace SmartxAPI.Controllers
                     int n_PayReceiptDetailsId = dLayer.SaveData("Inv_PayReceiptDetails", "n_PayReceiptDetailsId", DetailTable, connection, transaction);
 
                     if(PayReceiptId>0)
-{
-    SortedList PostingParams = new SortedList();
-                            PostingParams.Add("N_CompanyID", nCompanyId);
-                            PostingParams.Add("X_InventoryMode", xType);
-                            PostingParams.Add("N_InternalID", PayReceiptId);
-                            PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
-                            PostingParams.Add("X_SystemName", "ERP Cloud");
-                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                    {
+                        SortedList PostingParams = new SortedList();
+                        PostingParams.Add("N_CompanyID", nCompanyId);
+                        PostingParams.Add("X_InventoryMode", xType);
+                        PostingParams.Add("N_InternalID", PayReceiptId);
+                        PostingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                        PostingParams.Add("X_SystemName", "ERP Cloud");
+                        object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
 
-}
+                    }
 
                     transaction.Commit();
                     if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0) { 
@@ -522,6 +549,36 @@ namespace SmartxAPI.Controllers
             }
 
 
+        }
+
+         [HttpGet("paymentType")]
+        public ActionResult GetPaymentType()
+        {
+                string sqlCommandText = "select 'Customer Payment' AS X_PaymentType,'SR' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'SA' AS x_Type";
+                SortedList mParamList = new SortedList() {};
+                DataTable typeTable=new DataTable();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                  
+                    typeTable= dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
+                }
+                typeTable = api.Format(typeTable, "PaymentType");
+                if (typeTable.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(typeTable));
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, api.Error(e));
+            }
         }
 
         // [HttpGet("dummy")]
