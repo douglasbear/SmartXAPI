@@ -87,6 +87,9 @@ namespace SmartxAPI.Controllers
                             ProParams.Add("N_TransID", nBatchID);
                         }
 
+                        year = myFunctions.getIntVAL(MainMst.Rows[0]["N_PayRunID"].ToString().Substring(0, 4));
+                        month = myFunctions.getIntVAL(MainMst.Rows[0]["N_PayRunID"].ToString().Substring(4, 2));
+
                     }
                     else
                     {
