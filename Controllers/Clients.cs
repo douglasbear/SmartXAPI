@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             _appSettings = appSettings.Value;
             connectionString = conf.GetConnectionString("SmartxConnection");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
-            config=conf;
+            config = conf;
             _repository = repository;
         }
         [HttpPost("register")]
@@ -49,13 +49,13 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable, UserTable, AppTable;
                 MasterTable = ds.Tables["master"];
                 UserTable = ds.Tables["user"];
-                AppTable = ds.Tables["app"];
+                // AppTable = ds.Tables["app"];
 
                 string pwd = UserTable.Rows[0]["x_Password"].ToString();
                 DataRow MasterRow = MasterTable.Rows[0];
 
                 string email = MasterRow["x_EmailID"].ToString();
-                string ConnString = "ObConnection";
+                
 
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
@@ -82,25 +82,25 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    AppTable.Rows[0]["N_ClientID"] = ClientID;
+                    // AppTable.Rows[0]["N_ClientID"] = ClientID;
                     UserTable.Rows[0]["b_Inactive"] = true;
 
-                    AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "X_DBUri", typeof(string), ConnString);
-                    AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_UserLimit", typeof(int), 5);
-                    AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_RefID", typeof(int), 0);
-                    AppTable.AcceptChanges();
-                    int N_RefID = dLayer.SaveData("ClientApps", "N_RefID", AppTable, connection, transaction);
-                    if (N_RefID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Something went wrong"));
-                    }
+                    // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "X_DBUri", typeof(string), ConnString);
+                    // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_UserLimit", typeof(int), 5);
+                    // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_RefID", typeof(int), 0);
+                    // AppTable.AcceptChanges();
+                    // int N_RefID = dLayer.SaveData("ClientApps", "N_RefID", AppTable, connection, transaction);
+                    // if (N_RefID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error("Something went wrong"));
+                    // }
 
                     UserTable.Rows[0]["N_ClientID"] = ClientID;
                     UserTable.Rows[0]["x_Password"] = Password;
                     UserTable.Rows[0]["b_EmailVerified"] = false;
                     UserTable.Rows[0]["b_Inactive"] = true;
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), myFunctions.getIntVAL(AppTable.Rows[0]["N_AppID"].ToString()));
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
 
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
                     if (UserID <= 0)
@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
                         return Res;
                     }
 
-                    if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null || output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
+                    if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null && output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
                     {
                         int companyid = 0;
                         string companyname = "";
@@ -206,11 +206,11 @@ namespace SmartxAPI.Controllers
                         }
                         int nClientID = myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString());
                         int nGlobalUserID = myFunctions.getIntVAL(output.Rows[0]["N_UserID"].ToString());
-                        var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()),uri,nClientID,nGlobalUserID);
-                    Res.Add("UserInfo", user);
-                    Res.Add("StatusCode", 1);
-                    Res.Add("Type", "User");
-                    Res.Add("Message", "Login Success");
+                        var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()), uri, nClientID, nGlobalUserID);
+                        Res.Add("UserInfo", user);
+                        Res.Add("StatusCode", 1);
+                        Res.Add("Type", "User");
+                        Res.Add("Message", "Login Success");
                         return Res;
                     }
 
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
                         new Claim(ClaimTypes.StreetAddress,""),
                         new Claim(ClaimTypes.Sid,"-1"),
                         new Claim(ClaimTypes.Version,"V0.1"),
-                        new Claim(ClaimTypes.System,""),
+                        new Claim(ClaimTypes.System,"0"),
                         new Claim(ClaimTypes.Uri,output.Rows[0]["X_DBUri"].ToString())
 
                     }),
@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
                     tokenSet.Add("Token", tokenHandler.WriteToken(token));
                     tokenSet.Add("Expiry", DateTime.UtcNow.AddDays(2));
                     tokenSet.Add("RefreshToken", reToken);
-                    tokenSet.Add("n_AppID", "");
+                    tokenSet.Add("n_AppID", "0");
                     dLayer.ExecuteScalar("Update Users set X_Token='" + reToken + "' where N_UserID=" + output.Rows[0]["N_UserID"].ToString(), cnn);
 
                     SortedList User = new SortedList();
@@ -270,6 +270,69 @@ namespace SmartxAPI.Controllers
                 var randomBytes = new byte[64];
                 rngCryptoServiceProvider.GetBytes(randomBytes);
                 return Convert.ToBase64String(randomBytes);
+            }
+        }
+
+
+
+
+        [HttpGet("language")]
+        public ActionResult LanguageList()
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable("Select * from LanguageMaster", olivoCon);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("country")]
+        public ActionResult CountryList()
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable("Select * from CountryMaster", olivoCon);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
             }
         }
 

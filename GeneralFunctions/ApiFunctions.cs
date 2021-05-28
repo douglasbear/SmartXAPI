@@ -86,6 +86,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "success", Message = message, Data = "" });
         }
+        public object Success(dynamic data)
+        {
+            return (new { type = "success", Message = "", Data = data });
+        }
         public object Notice(string message)
         {
             return (new { type = "notice", Message = message, Data = "" });
@@ -233,6 +237,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable Format(DataTable dt);
         public object Error(string message);
         public object Success(DataTable dataTable);
+        public object Success(dynamic data);
         public object Success(DataTable dataTable, string message);
         public object Success(Dictionary<DataRow, DataTable> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary, string message);
