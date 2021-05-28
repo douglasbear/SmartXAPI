@@ -101,20 +101,20 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
-
+            Params.Add("@p1", nCompanyId);
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
-                Searchkey = " and (x_VacCode like '%"+xSearchkey+"%'or x_VacType like'%"+xSearchkey+"%')";
+                Searchkey = " and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%')";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VacTypeID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 " + Searchkey  + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@nCompanyId " + Searchkey  + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=@nCompanyId "  + xSortBy + " ) " + xSortBy;
-            Params.Add("@p1", nCompanyId);
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + xSortBy + " ) " + xSortBy;
+
 
 
             SortedList OutPut = new SortedList();
@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List where N_CompanyID=@p1" + Searchkey ;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List where N_CompanyID=@p1" + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -255,12 +255,12 @@ namespace SmartxAPI.Controllers
                     int n_VacTypeID = myFunctions.getIntVAL(MasterRow["N_VacTypeID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                   
+
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
                     var values = MasterTable.Rows[0]["X_VacCode"].ToString();
                     if (n_VacTypeID > 0)
                     {
-                         string N_StartType =(MasterRow["N_StartType"].ToString());
+                        string N_StartType = (MasterRow["N_StartType"].ToString());
                         object objVacationStarted;
                         MasterTable.Columns.Remove("n_FnYearId");
 
@@ -272,53 +272,53 @@ namespace SmartxAPI.Controllers
 
 
                         }
-                       
-                        
-                        dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
-                        dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "" , connection, transaction);
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Monthly" || MasterTable.Rows[0]["X_Period"].ToString()=="Monthly/شهرية")
+
+
+                        dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
+                        if (MasterTable.Rows[0]["X_Period"].ToString() == "Monthly" || MasterTable.Rows[0]["X_Period"].ToString() == "Monthly/شهرية")
                         {
-                            MasterTable.Rows[0]["X_Period"]="M";
+                            MasterTable.Rows[0]["X_Period"] = "M";
 
                         }
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="Yearly" || MasterTable.Rows[0]["X_Period"].ToString()=="Yearly/سنوي")
+                        if (MasterTable.Rows[0]["X_Period"].ToString() == "Yearly" || MasterTable.Rows[0]["X_Period"].ToString() == "Yearly/سنوي")
                         {
-                            MasterTable.Rows[0]["X_Period"]="Y";
-                            
-                        }
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="None")
-                        {
-                            MasterTable.Rows[0]["X_Period"]="N";
-                            
-                        }
-                        if(MasterTable.Rows[0]["X_Period"].ToString()=="One Time")
-                        {
-                            MasterTable.Rows[0]["X_Period"]="O";
-                            
-                        }
-                          if(MasterTable.Rows[0]["X_Type"].ToString()=="Leave")
-                        {
-                            MasterTable.Rows[0]["X_Type"]="B";
+                            MasterTable.Rows[0]["X_Period"] = "Y";
 
                         }
-                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Tickets")
+                        if (MasterTable.Rows[0]["X_Period"].ToString() == "None")
                         {
-                            MasterTable.Rows[0]["X_Type"]="T";
-                            
-                        }
-                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Allowance")
-                        {
-                            MasterTable.Rows[0]["X_Type"]="A";
-                            
-                        }
-                        if(MasterTable.Rows[0]["X_Type"].ToString()=="Exit Re-Entry")
-                        {
-                            MasterTable.Rows[0]["X_Type"]="E";
-                            
-                        }
-                       
+                            MasterTable.Rows[0]["X_Period"] = "N";
 
-                        
+                        }
+                        if (MasterTable.Rows[0]["X_Period"].ToString() == "One Time")
+                        {
+                            MasterTable.Rows[0]["X_Period"] = "O";
+
+                        }
+                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Leave")
+                        {
+                            MasterTable.Rows[0]["X_Type"] = "B";
+
+                        }
+                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Tickets")
+                        {
+                            MasterTable.Rows[0]["X_Type"] = "T";
+
+                        }
+                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Allowance")
+                        {
+                            MasterTable.Rows[0]["X_Type"] = "A";
+
+                        }
+                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Exit Re-Entry")
+                        {
+                            MasterTable.Rows[0]["X_Type"] = "E";
+
+                        }
+
+
+
                     }
                     if (x_VacCode == "@Auto")
                     {
@@ -334,7 +334,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }
-                      string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "'" ;
+                    string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "'";
 
 
                     n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria, "", MasterTable, connection, transaction);
