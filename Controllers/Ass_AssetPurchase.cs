@@ -490,7 +490,7 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID,int FormID)
         {
             int Results = 0;
-
+ 
             SortedList Params = new SortedList();
             try
             {
