@@ -293,7 +293,7 @@ namespace SmartxAPI.Controllers
                     // {
                     //     dLayer.DeleteData("Acc_CostCentreMaster", "N_CostCentreID", N_CostCentreID, "N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
                     // }
-                    // MasterTable.Columns.Remove("n_empid");
+                     MasterTable.Columns.Remove("n_empid");
                     N_CostCentreID = dLayer.SaveData("Acc_CostCentreMaster", "N_CostCentreID", MasterTable, connection, transaction);
                     if (N_CostCentreID <= 0)
                     {
