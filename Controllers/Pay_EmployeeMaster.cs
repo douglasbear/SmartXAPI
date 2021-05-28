@@ -447,6 +447,13 @@ namespace SmartxAPI.Controllers
                         X_BtnAction = "UPDATE";
 
                     }
+                    if(dtMasterTable.Rows[0]["N_LedgerID"].ToString()=="0")
+                    {
+                        object N_LedgerID = dLayer.ExecuteScalar("select N_FieldValue from acc_accountdefaults where X_FieldDescr='Employee Account Ledger' and N_CompanyID = " + nCompanyID +" and n_fnyearid="+nFnYearID , connection, transaction);
+                        if(N_LedgerID!=null)
+                            dtMasterTable.Rows[0]["N_LedgerID"]=N_LedgerID;
+                    }
+
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + xEmpCode.Trim() + "'";
                     string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
