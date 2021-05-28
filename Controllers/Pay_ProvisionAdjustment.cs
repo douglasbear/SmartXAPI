@@ -452,6 +452,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (Results > 0)
                     {
+                        transaction.Commit();
                         return Ok(_api.Success("Adjustment Code deleted"));
                     }
                     else
