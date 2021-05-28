@@ -393,6 +393,8 @@ namespace SmartxAPI.Controllers
                                 {
                                     dLayer.ExecuteNonQuery("Update Inv_PurchaseOrderDetails Set N_Processed=1  Where N_POrderID=" + POrderID + " and N_POrderDetailsID=" + DetailTable.Rows[k]["N_POrderDetailsID"] + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
                                 }
+                                dLayer.ExecuteNonQuery("Update Inv_PurchaseOrder  Set N_Processed=1,N_PurchaseID="+N_AssetInventoryID+"   Where N_POrderID=" + POrderID + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
+                                
                                 int nCount=DetailTable.Rows.Count;
                                 for (int j = 0 ;j < nCount;j++)
                                 {
@@ -473,9 +475,25 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    // SortedList PostingParam = new SortedList();
+                    // PostingParam.Add("N_CompanyID", N_CompanyID);
+                    // PostingParam.Add("X_InventoryMode", "SALES");
+                    // PostingParam.Add("N_InternalID", N_SalesID);
+                    // PostingParam.Add("N_UserID", N_UserID);
+                    // PostingParam.Add("X_SystemName", "ERP Cloud");
+                    // try
+                    // {
+                    //     dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
+                    // }
+                    // catch (Exception ex)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(ex));
+                    // }
+
                     SortedList Result = new SortedList();
-                    // Result.Add("n_PurchaseReturnID",N_CreditNoteID);
-                    // Result.Add("x_PurchaseReturnNo",ReturnNo);
+                    Result.Add("N_AssetInventoryID",N_AssetInventoryID);
+                    Result.Add("X_InvoiceNo",ReturnNo);
                     transaction.Commit();
                     return Ok(_api.Success(Result,"Asset Purchase Saved"));
                 }
