@@ -475,21 +475,21 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    // SortedList PostingParam = new SortedList();
-                    // PostingParam.Add("N_CompanyID", N_CompanyID);
-                    // PostingParam.Add("X_InventoryMode", "SALES");
-                    // PostingParam.Add("N_InternalID", N_SalesID);
-                    // PostingParam.Add("N_UserID", N_UserID);
-                    // PostingParam.Add("X_SystemName", "ERP Cloud");
-                    // try
-                    // {
-                    //     dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
-                    // }
-                    // catch (Exception ex)
-                    // {
-                    //     transaction.Rollback();
-                    //     return Ok(_api.Error(ex));
-                    // }
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                    PostingParam.Add("X_InventoryMode", xTransType);
+                    PostingParam.Add("N_InternalID", N_AssetInventoryID);
+                    PostingParam.Add("N_UserID", N_UserID);
+                    PostingParam.Add("X_SystemName", "ERP Cloud");
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(ex));
+                    }
 
                     SortedList Result = new SortedList();
                     Result.Add("N_AssetInventoryID",N_AssetInventoryID);
@@ -503,6 +503,57 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+
+         [HttpGet("details")]
+        public ActionResult AssPurchaseDetails(string xInvoiceNo,int nFnYearID,int nBranchId, bool bAllBranchData)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+
+                    string Mastersql = "";
+                    string DetailSql = "";
+                    string strCondition  = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@xInvoiceNo", xInvoiceNo);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@nBranchId", nBranchId);
+
+                    if (bAllBranchData)
+                        Mastersql = "Select * from vw_Ass_PurchaseMaster_Disp Where N_CompanyID=@nCompanyID and X_InvoiceNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
+                     else
+                        Mastersql = "Select * from vw_Ass_PurchaseMaster_Disp Where N_CompanyID=@nCompanyID and X_InvoiceNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchId";
+
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int N_AssetInventoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
+                    Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+
+                    DetailSql = "Select vw_InvAssetInventoryDetails.*  from vw_InvAssetInventoryDetails Where vw_InvAssetInventoryDetails.N_CompanyID=@nCompanyID and vw_InvAssetInventoryDetails.N_AssetInventoryID=@N_AssetInventoryID and N_FnYearID=@nFnYearID order by N_AssetInventoryDetailsID";
+
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
 
        [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID,int FormID)
