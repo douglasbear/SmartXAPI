@@ -190,6 +190,28 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     if (nAdditionID > 0)
                     {
+
+                        int flag = 0;
+                        for (int i = 1; i < DetailTable.Rows.Count; i++)
+                        {
+                            if ((DetailTable.Rows[i]["n_EmpID"]) == "") continue;
+                            int EmpID = myFunctions.getIntVAL(DetailTable.Rows[i]["n_EmpID"].ToString());
+
+                            object SalaryProc = dLayer.ExecuteScalar("select * from Pay_PaymentDetails where N_EmpID=" + myFunctions.getIntVAL(EmpID.ToString()) + " and N_PayID =46 and N_CompanyID=" + nCompanyID + " and D_DateTo>='" + myFunctions.getDateVAL(Convert.ToDateTime(DetailTable.Rows[i]["d_StartDate"].ToString())) + "'",Params,connection,transaction);
+                            if (SalaryProc.ToString() != null)
+                                flag += 1;
+                        }
+                        if (flag > 0)
+                        {
+                         
+                            return Ok("Can't update Salary already Processed!");
+                        }
+                    }
+
+
+
+                    if (nAdditionID > 0)
+                    {
                         dLayer.DeleteData("Pay_MedicalInsuranceAddition", "N_ReceiptId", nAdditionID, "N_CompanyID = " + nCompanyID, connection, transaction);
                     }
                     DocNo = MasterRow["x_PolicyCode"].ToString();
@@ -219,6 +241,15 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
+                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                    {
+                        DataRow mstVar = DetailTable.Rows[i];
+
+                        DetailTable.Rows[i]["N_AdditionID"] = nAdditionID;
+
+
+                    }
+
                     int nAdditionDetailsID = dLayer.SaveData("Pay_MedicalInsuranceAdditionDetails", "N_AdditionDetailsID", DetailTable, connection, transaction);
                     if (nAdditionDetailsID <= 0)
                     {
@@ -387,7 +418,7 @@ namespace SmartxAPI.Controllers
                             object InsCost = dLayer.ExecuteScalar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + var["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(var["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
                             object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
                             object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
-                           
+
                             if (InsAmt != null)
                             {
                                 var["N_Price"] = myFunctions.getVAL(InsAmt.ToString());
@@ -400,7 +431,7 @@ namespace SmartxAPI.Controllers
                             {
                                 var["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
                             }
-                              if (policyDays != null)
+                            if (policyDays != null)
                             {
                                 var["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
                             }
@@ -431,8 +462,8 @@ namespace SmartxAPI.Controllers
                             object InsCost = dLayer.ExecuteScalar("Select N_Cost From vw_InsuranceAmountCategoryWise Where N_CompanyID = @nCompanyID and N_InsuranceID=" + N_MedicalInsID + " and X_InsuranceClass='" + kvar["X_InsuranceClassDep"] + "' and EmpType=172and N_InsuranceSettingsDetailsID=" + myFunctions.getIntVAL(kvar["N_DepInsClassID"].ToString()) + "", EmpParams, connection);
                             object date = dLayer.ExecuteScalar("select D_EndDate from Pay_Medical_Insurance where N_MedicalInsID = " + N_MedicalInsID + " and N_CompanyID =@nCompanyID ", Params, connection);
                             object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
-                          
-                           if (InsAmt != null)
+
+                            if (InsAmt != null)
                             {
                                 kvar["N_Price"] = myFunctions.getVAL(InsAmt.ToString());
                             }
@@ -444,7 +475,7 @@ namespace SmartxAPI.Controllers
                             {
                                 kvar["D_LastDate"] = myFunctions.getDateVAL(Convert.ToDateTime(date));
                             }
-                              if (policyDays != null)
+                            if (policyDays != null)
                             {
                                 kvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
                             }
@@ -499,7 +530,7 @@ namespace SmartxAPI.Controllers
                     int N_Date = Convert.ToInt32(X_Date);
                     if (xProjectName == null || xProjectName == "")
                     {
-                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where N_VendorID=@nVendorID and N_CEndDate<" + N_Date + "";
+                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where N_VendorID=" + nVendorID + " and N_CEndDate<" + N_Date + "";
                         FillVendorTable = dLayer.ExecuteDataTable(FillDataSql, EmpParams, connection);
                         if (FillVendorTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
@@ -507,7 +538,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where  N_VendorID=@nVendorID and N_CEndDate<" + N_Date + " and X_ProjectName='" + xProjectName + "' ";
+                        FillDataSql = "Select * From vw_MedicalInsuranceAddition Where  N_VendorID=" + nVendorID + " and N_CEndDate<" + N_Date + " and X_ProjectName='" + xProjectName + "' ";
                         FillVendorTable = dLayer.ExecuteDataTable(FillDataSql, EmpParams, connection);
                         if (FillVendorTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
