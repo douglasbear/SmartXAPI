@@ -24,6 +24,8 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string masterDBConnectionString;
+
 
 
         public Reset_Password(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
@@ -32,6 +34,8 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+
         }
 
         //Save....
@@ -57,7 +61,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    // SqlTransaction transaction = connection.BeginTransaction();
+                    //  SqlTransaction transaction = connection.BeginTransaction();
                     int days=0;
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nUserID", nUserID);
@@ -73,6 +77,16 @@ namespace SmartxAPI.Controllers
                     string password=EncryptString(xNewpasswd);
 
                     dLayer.ExecuteNonQuery("Update Sec_User set X_Password='" + password + "',D_ExpireDate='" + myFunctions.getDateVAL(Convert.ToDateTime(System.DateTime.Today).AddDays(days)) + "' where N_UserID=@nUserID and N_CompanyID=@nCompanyID", Params, connection);
+                    
+                    using (SqlConnection olivCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivCon.Open();
+                    
+                    dLayer.ExecuteNonQuery("Update Users set X_Password='" + password + "' where N_UserID="+myFunctions.GetGlobalUserID(User)+" and N_ClientID="+myFunctions.GetClientID(User)+" and X_EmailID='"+myFunctions.GetEmailID(User)+"'", olivCon);
+
+                }
+                    
+                    
                     return Ok(api.Success(dt));
                   
                 }

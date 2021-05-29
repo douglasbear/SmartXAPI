@@ -91,16 +91,16 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetCompanyInfo(int nCompanyID, int nFnYearID)
+        public ActionResult GetCompanyInfo(int nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
 
-            string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName FROM Acc_Company LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=@p3 ";
+            string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName FROM Acc_Company LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
-            Params.Add("@p3", nFnYearID);
+            Params.Add("@nClientID", myFunctions.GetClientID(User));
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -113,10 +113,10 @@ namespace SmartxAPI.Controllers
 
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
 
-                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=@p3  and  N_CompanyID=@p2", Params, connection);
+                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
                     {
-                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=@p3  and  N_CompanyID=@p2", Params, connection);
+                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     }
 
                     Output.Add("CompanyInfo", dt);

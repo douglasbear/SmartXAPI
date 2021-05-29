@@ -170,8 +170,8 @@ namespace SmartxAPI.Controllers
                 {
                     cnn.Open();
                     password = myFunctions.EncryptString(password);
+                    string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_EmailID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_EmailID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_EmailID =@emailID and Users.x_Password=@xPassword)";
 
-                    string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, AppMaster.X_AppName FROM Users LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where Users.x_EmailID=@emailID and Users.x_Password=@xPassword";
                     SortedList Params = new SortedList();
                     Params.Add("@emailID", emailID);
                     Params.Add("@xPassword", password);
