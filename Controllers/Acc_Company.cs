@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
+            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode,I_Logo,X_Country from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
             Params.Add("@inactive", 0);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
             try
@@ -51,6 +51,25 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "I_CompanyLogo", typeof(string), null);
+
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        if (row["I_Logo"] != null)
+                        {
+                            string ImageData = row["I_Logo"].ToString();
+                            if (ImageData != "")
+                            {
+                                byte[] Image = (byte[])row["I_Logo"];
+                                row["I_CompanyLogo"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
+                            }
+                        }
+                    }
+                    dt.Columns.Remove("I_Logo");
+
+                    dt.AcceptChanges();
+
+
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -69,10 +88,10 @@ namespace SmartxAPI.Controllers
 
         }
 
-       
+
 
         [HttpGet("details")]
-        public ActionResult GetCompanyInfo(int nCompanyID,int nFnYearID)
+        public ActionResult GetCompanyInfo(int nCompanyID, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -163,8 +182,8 @@ namespace SmartxAPI.Controllers
                 GeneralTable = ds.Tables["general"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
-                
-                
+
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -179,10 +198,10 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
-                      Params.Add("@p1", xUserName);
-                      Params.Add("@p2", xPassword);
+                    Params.Add("@p1", xUserName);
+                    Params.Add("@p2", xPassword);
                     //   object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
-                      
+
                     //  int Obcount = myFunctions.getIntVAL(count.ToString());
                     // if (Obcount == 0)
                     // {
@@ -210,7 +229,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
 
                     //object paswd=myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())
-                    
+
 
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
@@ -227,16 +246,16 @@ namespace SmartxAPI.Controllers
                         if (header.Length > 0)
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
-string pwd="";
-              using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
-                {
-                    cnn.Open();
-                    string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() +"'";
+                        string pwd = "";
+                        using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
+                        {
+                            cnn.Open();
+                            string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
 
-                     pwd =  dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
-                }
+                            pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
+                        }
 
-                        
+
                         if (values == "@Auto")
                         {
                             SortedList proParams1 = new SortedList(){
