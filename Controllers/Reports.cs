@@ -237,7 +237,7 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var random = RandomString();
                     var dbName = connection.Database;
-                    string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random;
+                    string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random +"&x_comments=&x_Reporttitle=&extention=pdf";;
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
