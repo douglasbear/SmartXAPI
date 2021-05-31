@@ -319,6 +319,24 @@ namespace SmartxAPI.GeneralFunctions
                 return false;
         }
 
+        public bool CheckActiveYearTransaction(int nCompanyID,int nFnYearID,DateTime dTransDate,IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        {
+            DateTime dStart;
+            DateTime dEnd;
+
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+
+            dStart=Convert.ToDateTime(dLayer.ExecuteScalar("select D_Start from Acc_FnYear where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", Params, connection,transaction));
+            dEnd=Convert.ToDateTime(dLayer.ExecuteScalar("select D_End from Acc_FnYear where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", Params, connection,transaction));
+
+            if (dTransDate < dStart || dTransDate > dEnd)
+                return false;
+            else
+                return true;
+        }
+
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable SecUserLevel = new DataTable();
@@ -1333,5 +1351,6 @@ public bool ContainColumn(string columnName, DataTable table)
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool CheckActiveYearTransaction(int nCompanyID,int nFnYearID,DateTime dTransDate,IDataAccessLayer dLayer, SqlConnection connection,SqlTransaction transaction);
     }
 }
