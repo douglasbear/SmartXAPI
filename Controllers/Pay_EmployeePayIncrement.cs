@@ -30,36 +30,36 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
-        [HttpGet("list")]
-        public ActionResult GetSalaryRevisionList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select * from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID";
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(e));
-            }
-        }
+        // [HttpGet("list")]
+        // public ActionResult GetSalaryRevisionList()
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     Params.Add("@nCompanyID", nCompanyID);
+        //     string sqlCommandText = "select * from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         dt = api.Format(dt);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Success(dt));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(e));
+        //     }
+        // }
         [HttpGet("defaultdetails")]
         public ActionResult GetSalaryRevisionDefaultDetails(int nEmpID, int nFnYearID, DateTime EffectiveDate)
         {
