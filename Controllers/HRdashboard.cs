@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
 
             string sqlEmpByDpt = "select X_Department,N_Male,N_Female from vw_DptWiseEmployee where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             string sqlTerminationTrend = "SELECT YEAR(D_EndDate) [Year], MONTH(D_EndDate) [Month],  DATENAME(MONTH,D_EndDate) [Month Name], COUNT(1) [N_Count] FROM pay_EndOFService where N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+" GROUP BY YEAR(D_EndDate), MONTH(D_EndDate),  DATENAME(MONTH, D_EndDate),N_FnYearID,N_CompanyID ORDER BY 1,2";
-            string sqlEmpBySalary = "select case when N_Salary >= 1000 and N_Salary <= 3000 then '1000 - 3000'  when N_Salary >= 3000 and N_Salary <= 6000 then '3000 - 6000'  when N_Salary >= 6000 and N_Salary <= 9000 then '6000 - 9000'  when N_Salary >= 9000 and N_Salary <= 15000 then '9000 - 15000' Else 'Other' End as X_Range, COUNT(*) as N_Count from vw_pay_EmpHistory_rpt where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"  group by case when N_Salary >= 1000 and N_Salary <= 3000 then '1000 - 3000'  when N_Salary >= 3000 and N_Salary <= 6000 then '3000 - 6000'  when N_Salary >= 6000 and N_Salary <= 9000 then '6000 - 9000'  when N_Salary >= 9000 and N_Salary <= 15000 then '9000 - 15000' Else 'Other'  End , N_CompanyID , N_FnYearID";
+            string sqlEmpBySalary = "select X_Range, count(*) as N_Count from vw_payEmpSalary where n_companyid = "+nCompanyID+" and X_Range <> 'Other' group by X_Range";
             //"select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             string sqlEmpOnLeave = "select COUNT(*) as N_Count from Pay_VacationDetails where N_VacDays < 0 and B_IsAdjustEntry =0 and (D_VacDateFrom = GETDATE() or (D_VacDateTo >GETDATE()  and D_VacDateFrom <GETDATE() ) or D_VacDateFrom =GETDATE() ) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             //string sqlCurrentSales =""
@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                 if (EmpByCountry.Rows.Count > 0) Data.Add("empByCountry", EmpByCountry);
                 if (EmpByDpt.Rows.Count > 0) Data.Add("empByDpt", EmpByDpt);
                 if (TerminationTrend.Rows.Count > 0) Data.Add("terminationTrend", TerminationTrend);
-                if (EmpBySalary.Rows.Count > 0) Data.Add("empBySalary", TerminationTrend);
+                if (EmpBySalary.Rows.Count > 0) Data.Add("empBySalary", EmpBySalary);
 
                 return Ok(api.Success(Data));
 
