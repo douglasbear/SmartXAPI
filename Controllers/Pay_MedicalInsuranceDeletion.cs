@@ -246,35 +246,306 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    string DocNo = "";
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    int N_AmortizationID = 0;
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                    int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
+                    string X_DeletionCode = MasterTable.Rows[0]["x_DeletionCode"].ToString();
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                    if (nDeletionID > 0)
+                    {
+                        dLayer.DeleteData("Pay_MedicalInsuranceDeletion", "N_DeletionID", nDeletionID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_MedicalInsuranceDeletionDetails", "N_DeletionID", nDeletionID, "N_CompanyID = " + nCompanyID, connection, transaction);
+
+
+
+                        object lobj = dLayer.ExecuteScalar("Select N_ProcessID From Inv_MonthlyProcess Where X_ProcessCode='10'and N_CompanyID =" + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
+                        object res = dLayer.ExecuteScalar("select N_PrePayScheduleID from Inv_PrePaymentScheduleMaster  Where N_PrePaymentID =" + nDeletionID + " and N_CompanyID=" + nCompanyID + " and X_Type='PrjInv' and N_FormID = 1137", connection, transaction);
+
+                        if (res != null)
+                        {
+                            N_AmortizationID = myFunctions.getIntVAL(res.ToString());
+
+                            dLayer.DeleteData("Inv_PrePaymentSchedule", "N_PrePayScheduleID", N_AmortizationID, "", connection, transaction);
+                            dLayer.DeleteData("Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", N_AmortizationID, "N_CompanyID=" + nCompanyID, connection, transaction);
+
+
+                        }
+                        object VendorDebitID = dLayer.ExecuteScalar("Select N_AdjustmentID From Inv_BalanceAdjustmentMaster Where N_MedInsDeletionID =" + nDeletionID + " and N_CompanyID =" + nCompanyID + " and X_EntryFrom= '" + 1137 + "'", connection, transaction);
+                        if (VendorDebitID != null)
+                        {
+                            int N_AdjustmentID = myFunctions.getIntVAL(VendorDebitID.ToString());
+                            dLayer.ExecuteNonQuery("SP_Delete_Trans_With_Accounts " + myCompanyID._CompanyID.ToString() + ",'VENDOR DEBIT NOTE'," + N_AdjustmentID.ToString() + ",'" + nUserID + "','" + myCompanyID._SystemName + "'", connection, transaction);
+                        }
+                    }
+
+
+                    DocNo = MasterRow["x_DeletionCode"].ToString();
+                    if (X_DeletionCode == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_FormID", FormID);
+                        Params.Add("N_FnYearId", nFnYearID);
+                        while (true)
+                        {
+                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_MedicalInsuranceDeletion Where X_DeletionCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        X_DeletionCode = DocNo;
+                        if (X_DeletionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        MasterTable.Rows[0]["x_DeletionCode"] = X_DeletionCode;
+
+                    }
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_DeletionCode='" + X_DeletionCode + "'";
+                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+
+                    nDeletionID = dLayer.SaveData("Pay_MedicalInsuranceDeletion", "n_DeletionID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                    if (nDeletionID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }
+                    for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
+                    {
+                        DataRow mstVar = DetailTable.Rows[i];
+
+                        DetailTable.Rows[i]["n_DeletionID"] = nDeletionID;
+
+
+                    }
+
+                    int nAdditionDetailsID = dLayer.SaveData("Pay_MedicalInsuranceDeletionDetails", "N_DeletionDetailsID", DetailTable, connection, transaction);
+                    if (nAdditionDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }
+                     Amortization(nDeletionID, N_AmortizationID, MasterTable, DetailTable, connection, transaction);
+
+
+                    dLayer.ExecuteNonQuery("SP_Inv_VendorDebitNotePosting " + nCompanyID.ToString() + "," + nDeletionID.ToString() + "," + N_MedicalInsID.ToString() + "," + nBranchID.ToString() + "," + nUserID.ToString(), connection, transaction);
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+
+        private SortedList Amortization(int _plPkeyID, int AmortizationID_Loc, DataTable MasterTable, DataTable DetailTable, SqlConnection connection, SqlTransaction transaction)
+        {
+
+            object ObjAmortizationID = 0;
+            object N_AmortizationDetailsID = 0;
+            //int  object lobjResult = null;
+            int lobjResult = 0;
+            SortedList Amortization = new SortedList();
+            SortedList Params = new SortedList();
+            SortedList EmpParams = new SortedList();
+
+            DataTable amortizationTable;
+            DataTable MedIns;
+            int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+            int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
+            int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+            int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+            int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
+            int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+            int payid = 0;
+            int piPKeyId = 0;
+
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nCompanyID", nCompanyID);
+            EmpParams.Add("@nFnYearID", nFnYearID);
+
+
+            string PrjInv = "PrjInv";
+            string A = "A";
+
+            string qry = "Select " + nCompanyID + " as N_CompanyID," + nFnYearID + " as N_FnYearID," + nUserID + " as N_UserID," + nBranchID + " as N_BranchID," + _plPkeyID + " as N_PrePaymentID ,'" + PrjInv + "' as  X_Type," + FormID + " as N_FormID,'" + A + "' as X_EntryType ";
+
+
+            amortizationTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+            lobjResult = dLayer.SaveData("Inv_PrePaymentScheduleMaster", "AmortizationID_Loc", amortizationTable, connection, transaction);
+            if (lobjResult > 0)
+            {
+                ObjAmortizationID = myFunctions.getIntVAL(lobjResult.ToString());
+                foreach (DataRow var in DetailTable.Rows)
+                {
+                    double amttotel = 0;
+                    int frquency = 0;
+                    double AmtSplit = 0, TotAmtSpilt = 0;
+                    if (var["n_EmpID"].ToString() == "") continue;
+                    if (myFunctions.getIntVAL(var["n_Price"].ToString()) == 0) continue;
+                    if (myFunctions.getIntVAL(var["n_DependenceID"].ToString()) > 0)
+                    {
+                        int empID1 = myFunctions.getIntVAL(var["n_EmpID"].ToString());
+                        int empcount = 1;
+                        for (int y = 1; y < DetailTable.Rows.Count; y++)
+                        {
+                            if (empID1 == myFunctions.getIntVAL(DetailTable.Rows[y]["n_EmpID"].ToString()) && myFunctions.getIntVAL(DetailTable.Rows[y]["n_DependenceID"].ToString()) == 0)
+                            {
+                                empcount++;
+                            }
+
+
+                        }
+                        if (empcount > 2)
+                            continue;
+
+
+                    }
+
+                    bool isExists1 = false;
+                    object res1 = null;
+
+                    object lobj1;
+                    object objProj1 = dLayer.ExecuteScalar("select N_ProjectID from Pay_Employee  where N_EmpID=" + myFunctions.getIntVAL(var["n_EmpID"].ToString()) + " and N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, EmpParams, connection, transaction);
+                    if (objProj1 != null)
+                    {
+                        int ProjectID1 = myFunctions.getIntVAL(objProj1.ToString());
+                        object objPaycode1 = dLayer.ExecuteScalar("select N_PaycodeID from Prj_ProjectParameters  where N_ProjectID=" + ProjectID1 + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+                        if (objPaycode1 != null)
+                        {
+                            payid = myFunctions.getIntVAL(objPaycode1.ToString());
+                            res1 = dLayer.ExecuteScalar("select N_PayID from Pay_PayMaster Where N_PayID =" + payid + " and N_CompanyID=" + nCompanyID + " and B_isInvoice=1 and B_Amortized=1  and N_FnYearID=" + nFnYearID, Params, connection, transaction);
+                            if (res1 != null)
+                            {
+                                isExists1 = true;
+
+                            }
+
+                        }
+                    }
+                    if (!isExists1) continue;
+                    int employeeid = myFunctions.getIntVAL(var["n_EmpID"].ToString());
+                    for (int z = 1; z < DetailTable.Rows.Count; z++)
+                    {
+                        if (employeeid == myFunctions.getIntVAL(DetailTable.Rows[z]["n_EmpID"].ToString()))
+                        {
+                            amttotel = amttotel + myFunctions.getVAL(DetailTable.Rows[z]["n_Pricce"].ToString());
+
+                        }
+                    }
+
+                    string sql = "Select * From vw_MedicalInsDetailForEmp Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + employeeid + " and N_PaycodeID=" + payid;
+                    MedIns = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                    if (MedIns.Rows.Count > 0)
+                    {
+                        // DataRow drow = dsMedIns.Tables["MedIns"].Rows[0];
+                        piPKeyId = myFunctions.getIntVAL(MedIns.Rows[0]["N_ServiceSheetID"].ToString());
+                        double N_Price = amttotel;
+                         DateTime st = Convert.ToDateTime(var["d_DeletionDate"]);
+                        DateTime ed = Convert.ToDateTime(MedIns.Rows[0]["D_EndDate"]);
+
+                        TimeSpan diff = ed - st;
+                        double InsDays = diff.TotalDays + 1;
+                        AmtSplit = -(N_Price / InsDays);
+                        DateTime Start = st;
+                        int freq = 0;
+                        while (st < ed)
+                        {
+                            st = st.AddMonths(1);
+                            freq++;
+                        }
+                        //int freq = ((ed.Year - st.Year) * 12) + ed.Month - st.Month;
+
+
+                        // if (freq > 0)
+                        // {
+                        //     for (int j = 1; j <= freq; j++)
+                        //     {
+                        //         double Days = 0;
+                        //         TotAmtSpilt = 0;
+                        //         DateTime End = new DateTime(Start.AddMonths(1).Year, Start.AddMonths(1).Month, 1).AddDays(-1);
+
+                        //         //DateTime End = new DateTime(Start.Year, Start.Month, Start.Day, 00, 45, 00).AddDays(1);
+                        //         TimeSpan diff1 = End - Start;
+                        //         Days = diff1.TotalDays + 1;
+                        //         TotAmtSpilt = AmtSplit * Days;
+                        //         N_AmortizationDetailsID = 0;
+                        //         string newSql= "Select " + nCompanyID + " as N_CompanyID," + _plPkeyID + " as N_PrePaymentID ,
+                        //         FieldList = "N_CompanyID,N_PrePaymentID,N_PrePayScheduleID,D_DateFrom,D_DateTo,N_InstAmount,N_RefID,N_PaycodeID";
+                        //         FieldValues = myCompanyID._CompanyID + "|" + _plPkeyID + "|" + ObjAmortizationID + "|'" + myFunctions.getDateVAL(Start) + "'|'" + myFunctions.getDateVAL(End) + "'|" + TotAmtSpilt + "|" + myFunctions.getIntVAL(flxMedicalInsurance.get_TextMatrix(i, mcEmpID)) + "|" + payid;
+                        //         RefField = "";
+                        //         RefFieldDescr = "";
+                        //         DupCriteria = "";
+                        //         pObjCon.SaveData(ref N_AmortizationDetailsID, "Inv_PrePaymentSchedule", "N_PrePaymentDetailsID", N_AmortizationDetailsID.ToString(), FieldList, FieldValues, RefField, RefFieldDescr, DupCriteria, "");
+                        //         if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
+                        //         {
+                        //             result = false;
+                        //             //break;
+                        //         }
+                        //         Start = new DateTime(End.AddMonths(1).Year, End.AddMonths(1).Month, 1);
+                        //     }
+                        // }
+                    }
+                    //else
+                    //{
+                    //    dba.Commit();
+                    //}
+                }
+
+
+
+
+
+
+
+
+
+
+
+
+                // }
+            }
+                 return Amortization;
+
+
+
+
+
+
+
+
+        }
+    }
+}
+       
+
+
+
+
+
+
+
         
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    }
-}
 
 
 
