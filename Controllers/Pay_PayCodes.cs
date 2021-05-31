@@ -349,7 +349,7 @@ namespace SmartxAPI.Controllers
             else
             {
 
-                sqlCommandText = "Select X_Method,N_IndexID from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
+                sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
             }
 
             try
