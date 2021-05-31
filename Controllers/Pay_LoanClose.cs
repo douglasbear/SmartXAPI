@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                     }
             
                     if(xLoanCloseCode!="")
-                        sqlCommandText = "select * from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
+                        sqlCommandText = "select *,Name AS X_EmpName from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", xLoanCloseCode);
@@ -97,6 +97,7 @@ namespace SmartxAPI.Controllers
                     }
                     double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-N_RefundAmount;
                     dt = myFunctions.AddNewColumnToDataTable(dt, "x_Balance", typeof(string), balance);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "n_RefundAmount", typeof(string), N_RefundAmount);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

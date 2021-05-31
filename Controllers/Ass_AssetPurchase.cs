@@ -280,13 +280,19 @@ namespace SmartxAPI.Controllers
             
             DataTable MasterTable;
             DataTable DetailTable;
+            DataTable DetailTableNew;
             DataTable PurchaseTable = new DataTable();
             DataTable TransactionTable = new DataTable();
+            DataTable TransactionTableNew = new DataTable();
             DataTable AssMasterTable = new DataTable();
+            DataTable AssMasterTableNew = new DataTable();
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            DetailTableNew = ds.Tables["details"];
             TransactionTable = ds.Tables["transaction"];
+            TransactionTableNew = ds.Tables["transaction"];
             AssMasterTable = ds.Tables["assMaster"];
+            AssMasterTableNew = ds.Tables["assMaster"];
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -405,25 +411,25 @@ namespace SmartxAPI.Controllers
                                     {
                                         for (int l = 0 ;l < Qty-1;l++)
                                         {
-                                            DetailTable.Rows.Add(DetailTable.Rows[j]);
-                                            TransactionTable.Rows.Add(TransactionTable.Rows[j]);
-                                            AssMasterTable.Rows.Add(AssMasterTable.Rows[j]);
+                                            DetailTableNew.Rows.Add(DetailTable.Rows[j]);
+                                            TransactionTableNew.Rows.Add(TransactionTable.Rows[j]);
+                                            AssMasterTableNew.Rows.Add(AssMasterTable.Rows[j]);
                                         }
                                     }
                                 }
-                                for (int j = 0 ;j < DetailTable.Rows.Count;j++)
+                                for (int j = 0 ;j < DetailTableNew.Rows.Count;j++)
                                 {
-                                    DetailTable.Rows[j]["N_PurchaseQty"]=1;
+                                    DetailTableNew.Rows[j]["N_PurchaseQty"]=1;
                                 }
-                                N_AssetInventoryDetailsID=dLayer.SaveData("Ass_PurchaseDetails","N_AssetInventoryDetailsID",DetailTable,connection,transaction);                    
+                                N_AssetInventoryDetailsID=dLayer.SaveData("Ass_PurchaseDetails","N_AssetInventoryDetailsID",DetailTableNew,connection,transaction);                    
                                 if(N_AssetInventoryDetailsID<=0)
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error("Error"));
                                 }
-                                for (int k = 0 ;k < AssMasterTable.Rows.Count;k++)
+                                for (int k = 0 ;k < AssMasterTableNew.Rows.Count;k++)
                                 {
-                                    AssMasterTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
+                                    AssMasterTableNew.Rows[k]["N_AssetInventoryDetailsID"]=DetailTableNew.Rows[k]["N_AssetInventoryDetailsID"];
                                     int N_ItemCodeId = 0;
                                     object ItemCodeID= dLayer.ExecuteScalar("Select ISNULL(MAX(N_ItemCodeId),0)+1 FROM Ass_AssetMaster  where N_CompanyID=" + AssMasterTable.Rows[k]["N_CompanyID"] + " and X_CategoryPrefix='" + AssMasterTable.Rows[k]["X_CategoryPrefix"] + "'", connection, transaction);                                  
                                     if(ItemCodeID!=null)
@@ -431,18 +437,18 @@ namespace SmartxAPI.Controllers
 
                                     string X_ItemCode="";
 
-                                    if (AssMasterTable.Rows[k]["X_ItemCode"].ToString().Trim() == AssMasterTable.Rows[k]["X_CategoryPrefix"].ToString() + "@Auto".Trim())
+                                    if (AssMasterTableNew.Rows[k]["X_ItemCode"].ToString().Trim() == AssMasterTableNew.Rows[k]["X_CategoryPrefix"].ToString() + "@Auto".Trim())
                                     {
-                                        if (AssMasterTable.Rows[k]["X_CategoryPrefix"].ToString() == "")
+                                        if (AssMasterTableNew.Rows[k]["X_CategoryPrefix"].ToString() == "")
                                             X_ItemCode = "Asset" + "" + N_ItemCodeId.ToString("0000");
                                         else
-                                            X_ItemCode = AssMasterTable.Rows[k]["X_CategoryPrefix"].ToString() + "" + N_ItemCodeId.ToString("0000");
+                                            X_ItemCode = AssMasterTableNew.Rows[k]["X_CategoryPrefix"].ToString() + "" + N_ItemCodeId.ToString("0000");
                                     }
                                     else
                                     {
-                                        X_ItemCode = AssMasterTable.Rows[k]["X_ItemCode"].ToString();
+                                        X_ItemCode = AssMasterTableNew.Rows[k]["X_ItemCode"].ToString();
                                     }
-                                    if(myFunctions.getIntVAL(AssMasterTable.Rows[k]["N_ItemID"].ToString())==0)
+                                    if(myFunctions.getIntVAL(AssMasterTableNew.Rows[k]["N_ItemID"].ToString())==0)
                                     {
                                         int ItemCodeCount=myFunctions.getIntVAL(dLayer.ExecuteScalar("Select count(X_ItemCode) FROM Ass_AssetMaster  where N_CompanyID=" + AssMasterTable.Rows[k]["N_CompanyID"] + " and ltrim(X_ItemCode)='" + X_ItemCode + "'", connection, transaction).ToString());                                  
                                         if(ItemCodeCount>0)
@@ -451,23 +457,23 @@ namespace SmartxAPI.Controllers
                                             return Ok(_api.Error("Item Exists"));
                                         }
                                     }
-                                    AssMasterTable.Rows[k]["X_ItemCode"]=X_ItemCode;
+                                    AssMasterTableNew.Rows[k]["X_ItemCode"]=X_ItemCode;
                                 }
-                                N_MasterID=dLayer.SaveData("Ass_AssetMaster","N_ItemID",AssMasterTable,connection,transaction); 
+                                N_MasterID=dLayer.SaveData("Ass_AssetMaster","N_ItemID",AssMasterTableNew,connection,transaction); 
                                 if(N_MasterID<=0)
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error("Error"));
                                 }   
 
-                                for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
+                                for (int k = 0 ;k < TransactionTableNew.Rows.Count;k++)
                                 {
-                                    TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
-                                    TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
-                                    TransactionTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
-                                    TransactionTable.Rows[k]["N_ItemId"]=AssMasterTable.Rows[k]["N_ItemID"];
+                                    TransactionTableNew.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
+                                    TransactionTableNew.Rows[k]["X_Reference"]=ReturnNo;
+                                    TransactionTableNew.Rows[k]["N_AssetInventoryDetailsID"]=DetailTableNew.Rows[k]["N_AssetInventoryDetailsID"];
+                                    TransactionTableNew.Rows[k]["N_ItemId"]=AssMasterTableNew.Rows[k]["N_ItemID"];
                                 }
-                                N_ActionID=dLayer.SaveData("Ass_Transactions","N_ActionID",TransactionTable,connection,transaction); 
+                                N_ActionID=dLayer.SaveData("Ass_Transactions","N_ActionID",TransactionTableNew,connection,transaction); 
                                 if(N_ActionID<=0)
                                 {
                                     transaction.Rollback();
