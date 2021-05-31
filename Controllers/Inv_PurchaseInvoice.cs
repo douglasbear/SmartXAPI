@@ -454,11 +454,17 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
+                    connection.Open(); 
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
                     N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
+
+                    if(!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID,Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()),dLayer,connection,transaction))
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Transaction date must be in the active Financial Year."));
+                    }
 
                     if (N_PurchaseID > 0)
                     {
