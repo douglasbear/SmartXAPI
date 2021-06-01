@@ -180,6 +180,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             DataTable dt_LocStock = new DataTable();
+            DataTable Images = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
@@ -255,6 +256,29 @@ namespace SmartxAPI.Controllers
                     object purchaseQty = dLayer.ExecuteScalar(sqlQuery1, QueryParams, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "n_POrderQty", typeof(string), purchaseQty);
 
+                    //Image Retriving
+                    string _sqlImageQuery = "SELECT * from Inv_DisplayImages where N_ItemID=" + dt.Rows[0]["N_ItemID"].ToString() + " and N_CompanyID=" + companyid;
+                    Images = dLayer.ExecuteDataTable(_sqlImageQuery, QueryParams, connection);
+                    if (Images.Rows.Count > 0)
+                    {
+                        Images.Columns.Add("I_Image", typeof(System.String));
+                        foreach (DataRow var in Images.Rows)
+                        {
+                            var path = var["X_ImageLocation"].ToString() + "\\" + var["X_ImageName"].ToString();
+                            if (System.IO.File.Exists(path))
+                            {
+                                Byte[] bytes = System.IO.File.ReadAllBytes(path);
+                                var["I_Image"] = Convert.ToBase64String(bytes);
+
+                            }
+                        }
+                        // DataSet dataSet = new DataSet();
+                        // dt = _api.Format(dt, "details");
+                        // Images = _api.Format(dt, "Images");
+                        // dataSet.Tables.Add(dt);
+                        // dataSet.Tables.Add(Images);
+
+                    }
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
@@ -276,6 +300,8 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList;
+                DataTable POS = ds.Tables["Pos"];
+                DataTable ECOM = ds.Tables["Ecom"];
                 MasterTable = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
@@ -284,6 +310,7 @@ namespace SmartxAPI.Controllers
                 AddUnit1 = ds.Tables["addUnit1"];
                 AddUnit2 = ds.Tables["addUnit2"];
                 LocationList = ds.Tables["warehouseDetails"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -355,6 +382,47 @@ namespace SmartxAPI.Controllers
                         LocationList.AcceptChanges();
                         dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
                     }
+                    //Saving Display Images
+                    object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
+                    string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
+                    DocumentPath = DocumentPath + "DisplayImages";
+                    System.IO.Directory.CreateDirectory(DocumentPath);
+
+
+                    if (POS.Rows.Count > 0)
+                    {
+                        POS.Columns.Add("X_ImageName", typeof(System.String));
+                        POS.Columns.Add("X_ImageLocation", typeof(System.String));
+                        POS.Columns.Add("N_ImageID", typeof(System.Int32));
+
+
+                        foreach (DataRow dRow in POS.Rows)
+                        {
+                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
+                            dRow["X_ImageName"] = ItemCode + ".jpg";
+                            dRow["X_ImageLocation"] = DocumentPath;
+
+                        }
+                        POS.Columns.Remove("I_Image");
+                        dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
+
+                    }
+                    // if (ECOM.Rows.Count > 0)
+                    // {
+                    //     ECOM.Columns.Add("X_ImageName", typeof(System.String));
+                    //     ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
+                    //     ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
+                    //     foreach (DataRow dRow in ECOM.Rows)
+                    //     {
+                    //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
+                    //         dRow["X_ImageName"] = ItemCode + ".jpg";
+                    //         dRow["X_ImageLocation"] = DocumentPath;
+
+                    //     }
+                    //     ECOM.Columns.Remove("I_Image");
+                    //     dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
+
+                    // }
 
                     transaction.Commit();
                 }
@@ -366,6 +434,52 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+        public bool writefile(string FileString, string Path, string Name)
+        {
+
+            string imageName = "\\" + Name + ".jpg";
+            string imgPath = Path + imageName;
+
+            byte[] imageBytes = Convert.FromBase64String(FileString);
+
+            System.IO.File.WriteAllBytes(imgPath, imageBytes);
+            return true;
+
+
+        }
+
+        // [HttpGet("saveimages")]
+        // public ActionResult SaveDisplayImages([FromBody] DataSet ds)
+        // {
+        //     DataTable POS = ds.Tables["POS"];
+        //     DataTable ECOM = ds.Tables["ECOM"];
+        //     object Result = 0;
+        //     string path = "";
+        //     string s = "";
+        //     using (SqlConnection connection = new SqlConnection(connectionString))
+        //     {
+        //         connection.Open();
+        //         SqlTransaction transaction = connection.BeginTransaction();
+        //         int nCompanyID = myFunctions.GetCompanyID(User);
+        //         object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
+        //         string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
+
+        //         if (POS.Rows.Count > 0)
+        //         {
+        //             DocumentPath = DocumentPath + "/DisplayImages";
+        //             System.IO.Directory.CreateDirectory(DocumentPath);
+
+        //         }
+        //         foreach (DataRow dRow in POS.Rows)
+        //         {
+        //             writefile(dRow["I_Image"].ToString(), DocumentPath,ItemCode);
+
+        //         }
+        //     }
+
+
+        //     return Ok();
+        // }
 
 
 
@@ -479,45 +593,8 @@ namespace SmartxAPI.Controllers
 
 
         }
-        [HttpGet("saveimages")]
-        public ActionResult SaveDisplayImages([FromBody] DataSet ds)
-        {
-            DataTable POS = ds.Tables["POS"];
-            DataTable ECOM = ds.Tables["ECOM"];
-            object Result = 0;
-            string path = "";
-            string s = "";
-            using (SqlConnection connection = new SqlConnection(connectionString))
-            {
-                connection.Open();
-                SqlTransaction transaction = connection.BeginTransaction();
-                int nCompanyID = myFunctions.GetCompanyID(User);
-                object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-                string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-
-                if (POS.Rows.Count > 0)
-                {
-                    DocumentPath = DocumentPath + "/DisplayImages";
-                    System.IO.Directory.CreateDirectory(DocumentPath);
-
-                }
-                foreach (DataRow dRow in POS.Rows)
-                {
-                    writefile(dRow["I_Image"].ToString(),DocumentPath);
-                    
-                }
-            }
 
 
-            return Ok();
-        }
-        public void writefile(string File,string Path)
-        {
-            var base64Data = Regex.Match(File, @"data:(?<type>.+?);base64,(?<data>.+)").Groups["data"].Value;
-                    byte[] FileBytes = Convert.FromBase64String(base64Data);
-                    System.IO.File.WriteAllBytes(Path,FileBytes);
-
-        }
 
         // public void CopyFiles(IDataAccessLayer dLayer, string filename, string subject, int folderId, bool overwriteexisting, string category, string fileData, string destpath, string filecode, int attachID, int FormID, string strExpireDate, int remCategoryId, int transId, int partyID, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         // {
