@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*)x as N_Count  from vw_Pay_MedicalInsuranceDeletion where N_CompanyId=@nCompanyId " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_MedicalInsuranceDeletion where N_CompanyId=@nCompanyId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -179,11 +179,11 @@ namespace SmartxAPI.Controllers
                             }
                             if (nActPrice != null)
                             {
-                                dvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                                dvar["N_ActPrice"] = myFunctions.getVAL(nActPrice.ToString());
                             }
-                            if (nActPrice != null)
+                            if (nActCost != null)
                             {
-                                dvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                                dvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
                             }
 
                             EmployeeTable.AcceptChanges();
@@ -221,11 +221,11 @@ namespace SmartxAPI.Controllers
                             }
                             if (nActPrice != null)
                             {
-                                kvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                                kvar["N_ActPrice"] = myFunctions.getVAL(nActPrice.ToString());
                             }
-                            if (nActPrice != null)
+                            if (nActCost != null)
                             {
-                                kvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                                kvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
                             }
                         }
                         FamilyTable.AcceptChanges();
