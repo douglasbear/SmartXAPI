@@ -412,61 +412,31 @@ namespace SmartxAPI.Controllers
 
                                     DetailTableNew.Rows.Clear();
                                     AssMasterTableNew.Rows.Clear();
-                                    TransactionTableNew.Rows.Clear();
-
-                                  
-                                    var newRow2=AssMasterTableNew.NewRow();
-                                    var newRow3=TransactionTableNew.NewRow();
+                                    TransactionTableNew.Rows.Clear();                                 
 
                                     if(Qty>1)
                                     {                                                                            
                                         for (int l = 0 ;l < Qty;l++)
                                         {
-                                              var newRow=DetailTableNew.NewRow();
-                                             newRow.ItemArray=DetailTable.Rows[j].ItemArray;    
-                                            // newRow2.ItemArray=AssMasterTable.Rows[j].ItemArray;    
-                                            // newRow3.ItemArray=TransactionTable.Rows[j].ItemArray;  
-                                            // newRow["n_CompanyID"] = DetailTable.Rows[j]["n_CompanyID"];
-                                            // newRow["n_AssetInventoryID"] = DetailTable.Rows[j]["n_AssetInventoryID"];
-                                            // newRow["n_AssetInventoryDetailsID"] = DetailTable.Rows[j]["n_AssetInventoryDetailsID"];
-                                            // newRow["x_ItemName"] = DetailTable.Rows[j]["x_ItemName"];
-                                            // newRow["x_Description"] = DetailTable.Rows[j]["x_Description"];
-                                            // newRow["n_CategoryID"] = DetailTable.Rows[j]["n_CategoryID"];
-                                            // newRow["n_PurchaseQty"] = DetailTable.Rows[j]["n_PurchaseQty"];
-                                            // newRow["n_Price"] = DetailTable.Rows[j]["n_Price"];
-                                            // newRow["n_LifePeriod"] = DetailTable.Rows[j]["n_LifePeriod"];
-                                            // newRow["d_PurchaseDate"] = DetailTable.Rows[j]["d_PurchaseDate"];
-                                            // //newRow["d_Entrydate"] = DetailTable.Rows[j]["d_Entrydate"];
-                                            // newRow["b_BegningbalEntry"] = DetailTable.Rows[j]["b_BegningbalEntry"];
-                                            // newRow["n_FnYearID"] = DetailTable.Rows[j]["n_FnYearID"];
-                                            // newRow["n_Bookvalue"] = DetailTable.Rows[j]["n_Bookvalue"];
-                                            // newRow["n_BranchID"] = DetailTable.Rows[j]["n_BranchID"];
-                                            // newRow["n_LocationID"] = DetailTable.Rows[j]["n_LocationID"];
-                                            // newRow["n_CostCentreID"] = DetailTable.Rows[j]["n_CostCentreID"];
-                                            // newRow["n_DepreciationAmt"] = DetailTable.Rows[j]["n_DepreciationAmt"];
-                                            // newRow["n_TaxCategoryId"] = DetailTable.Rows[j]["n_TaxCategoryId"];
-                                            // newRow["n_TaxPercentage1"] = DetailTable.Rows[j]["n_TaxPercentage1"];
-                                            // newRow["n_TaxAmt1"] = DetailTable.Rows[j]["n_TaxAmt1"];
-                                            // newRow["n_POrderID"] = DetailTable.Rows[j]["n_POrderID"];
-                                            // newRow["n_POrderDetailsID"] = DetailTable.Rows[j]["n_POrderDetailsID"];
-                                            // newRow["x_ItemCode"] = DetailTable.Rows[j]["x_ItemCode"];
-                                            // newRow["n_EmpID"] = DetailTable.Rows[j]["n_EmpID"];
-                                            // newRow["n_ProjectID"] = DetailTable.Rows[j]["n_ProjectID"];
-                                            // newRow["n_SalvageAmt"] = DetailTable.Rows[j]["n_SalvageAmt"];
-                                            // newRow["n_TaxCategoryId2"] = DetailTable.Rows[j]["n_TaxCategoryId2"];
-                                            // newRow["n_TaxPercentage2"] = DetailTable.Rows[j]["n_TaxPercentage2"];
-                                            // newRow["n_TaxAmt2"] = DetailTable.Rows[j]["n_TaxAmt2"];
-                                            // newRow["n_DiscountAmt"] = DetailTable.Rows[j]["n_DiscountAmt"];
-                                            // //newRow["n_ItemID"] = DetailTable.Rows[j]["n_ItemID"];
+                                            var newRow=DetailTableNew.NewRow();
+                                            var newRow2=AssMasterTableNew.NewRow();
+                                            var newRow3=TransactionTableNew.NewRow();
 
+                                            newRow.ItemArray=DetailTable.Rows[j].ItemArray;    
+                                            newRow2.ItemArray=AssMasterTable.Rows[j].ItemArray;    
+                                            newRow3.ItemArray=TransactionTable.Rows[j].ItemArray;  
+                                            
                                             DetailTableNew.Rows.Add(newRow);
-                                            // AssMasterTableNew.Rows.Add(newRow2);
-                                            // TransactionTableNew.Rows.Add(newRow3);
+                                            AssMasterTableNew.Rows.Add(newRow2);
+                                            TransactionTableNew.Rows.Add(newRow3);
                                         }
                                     }
                                     else
                                     {
                                         var newRow=DetailTableNew.NewRow();
+                                        var newRow2=AssMasterTableNew.NewRow();
+                                        var newRow3=TransactionTableNew.NewRow();
+
                                         newRow.ItemArray=DetailTable.Rows[j].ItemArray;    
                                         newRow2.ItemArray=AssMasterTable.Rows[j].ItemArray;    
                                         newRow3.ItemArray=TransactionTable.Rows[j].ItemArray;    
@@ -490,7 +460,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     AssMasterTableNew.Rows[k]["N_AssetInventoryDetailsID"]=DetailTableNew.Rows[k]["N_AssetInventoryDetailsID"];
                                     int N_ItemCodeId = 0;
-                                    object ItemCodeID= dLayer.ExecuteScalar("Select ISNULL(MAX(N_ItemCodeId),0)+1 FROM Ass_AssetMaster  where N_CompanyID=" + AssMasterTable.Rows[k]["N_CompanyID"] + " and X_CategoryPrefix='" + AssMasterTable.Rows[k]["X_CategoryPrefix"] + "'", connection, transaction);                                  
+                                    object ItemCodeID= dLayer.ExecuteScalar("Select ISNULL(MAX(N_ItemCodeId),0)+1 FROM Ass_AssetMaster  where N_CompanyID=" + AssMasterTableNew.Rows[k]["N_CompanyID"] + " and X_CategoryPrefix='" + AssMasterTableNew.Rows[k]["X_CategoryPrefix"] + "'", connection, transaction);                                  
                                     if(ItemCodeID!=null)
                                         N_ItemCodeId=myFunctions.getIntVAL(ItemCodeID.ToString());
 
@@ -507,9 +477,24 @@ namespace SmartxAPI.Controllers
                                     {
                                         X_ItemCode = AssMasterTableNew.Rows[k]["X_ItemCode"].ToString();
                                     }
+                                    for (int l = 0 ;l < AssMasterTableNew.Rows.Count;l++)
+                                    {
+                                        if(X_ItemCode == AssMasterTableNew.Rows[l]["X_ItemCode"].ToString())
+                                        {
+                                            N_ItemCodeId+=1;
+
+                                            if (AssMasterTableNew.Rows[k]["X_CategoryPrefix"].ToString() == "")
+                                                X_ItemCode = "Asset" + "" + N_ItemCodeId.ToString("0000");
+                                            else
+                                                X_ItemCode = AssMasterTableNew.Rows[k]["X_CategoryPrefix"].ToString() + "" + N_ItemCodeId.ToString("0000");
+
+                                            l=0;
+                                        }
+                                    }
+
                                     if(myFunctions.getIntVAL(AssMasterTableNew.Rows[k]["N_ItemID"].ToString())==0)
                                     {
-                                        int ItemCodeCount=myFunctions.getIntVAL(dLayer.ExecuteScalar("Select count(X_ItemCode) FROM Ass_AssetMaster  where N_CompanyID=" + AssMasterTable.Rows[k]["N_CompanyID"] + " and ltrim(X_ItemCode)='" + X_ItemCode + "'", connection, transaction).ToString());                                  
+                                        int ItemCodeCount=myFunctions.getIntVAL(dLayer.ExecuteScalar("Select count(X_ItemCode) FROM Ass_AssetMaster  where N_CompanyID=" + AssMasterTableNew.Rows[k]["N_CompanyID"] + " and ltrim(X_ItemCode)='" + X_ItemCode + "'", connection, transaction).ToString());                                  
                                         if(ItemCodeCount>0)
                                         {
                                             transaction.Rollback();
@@ -517,6 +502,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     AssMasterTableNew.Rows[k]["X_ItemCode"]=X_ItemCode;
+                                    AssMasterTableNew.Rows[k]["N_ItemCodeId"]=N_ItemCodeId;
                                 }
                                 N_MasterID=dLayer.SaveData("Ass_AssetMaster","N_ItemID",AssMasterTableNew,connection,transaction); 
                                 if(N_MasterID<=0)
