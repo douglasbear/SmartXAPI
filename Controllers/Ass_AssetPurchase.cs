@@ -403,7 +403,10 @@ namespace SmartxAPI.Controllers
                                 
                                 int nCount=DetailTable.Rows.Count;
                                 for (int j = 0 ;j < nCount;j++)
-                                {
+                                {   DataTable dt=new DataTable();
+                                dt= ds.Tables["details"];
+                                dt.Rows.Clear();
+                                    var newRow = dt.NewRow();
                                     int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
 
                                     DetailTableNew = DetailTable.Clone();
