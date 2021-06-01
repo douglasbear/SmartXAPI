@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                     }
             
                     if(xLoanCloseCode!="")
-                        sqlCommandText = "select *,Name AS X_EmpName from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
+                        sqlCommandText = "select *,Name AS X_EmpName,[Paid Amount] AS n_PaidAmount from vw_PayLoanClose where N_CompanyID=@p1 and Code=@p2";
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", xLoanCloseCode);
@@ -87,14 +87,12 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Warning("No Results Found"));
                     }
                     double N_RefundAmount =0;
-                    if(xLoanCloseCode=="")
+                    if(xLoanCloseCode!="")
                     {
-                        N_RefundAmount=myFunctions.getVAL(dLayer.ExecuteScalar("Select SUM(N_RefundAmount) As N_RefundAmount  From Pay_LoanIssueDetails Where Pay_LoanIssueDetails.N_LoanTransID=" + nLoanTransID + " and  Pay_LoanIssueDetails.N_CompanyID = " + nCompanyId+ "",connection, transaction).ToString());
+                        nLoanTransID=myFunctions.getIntVAL(dt.Rows[0]["N_LoanTransID"].ToString());
                     }
-                    else
-                    {
-                        N_RefundAmount=myFunctions.getVAL(dt.Rows[0]["Paid Amount"].ToString());
-                    }
+                    N_RefundAmount=myFunctions.getVAL(dLayer.ExecuteScalar("Select SUM(N_RefundAmount) As N_RefundAmount  From Pay_LoanIssueDetails Where Pay_LoanIssueDetails.N_LoanTransID=" + nLoanTransID + " and  Pay_LoanIssueDetails.N_CompanyID = " + nCompanyId+ "",connection, transaction).ToString());
+
                     double balance = myFunctions.getVAL(dt.Rows[0]["N_LoanAmount"].ToString())-N_RefundAmount;
                     dt = myFunctions.AddNewColumnToDataTable(dt, "x_Balance", typeof(string), balance);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "n_RefundAmount", typeof(string), N_RefundAmount);

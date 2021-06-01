@@ -280,19 +280,17 @@ namespace SmartxAPI.Controllers
             
             DataTable MasterTable;
             DataTable DetailTable;
-            DataTable DetailTableNew;
             DataTable PurchaseTable = new DataTable();
             DataTable TransactionTable = new DataTable();
-            DataTable TransactionTableNew = new DataTable();
             DataTable AssMasterTable = new DataTable();
+            DataTable DetailTableNew = new DataTable();
             DataTable AssMasterTableNew = new DataTable();
+            DataTable TransactionTableNew = new DataTable();
+
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
-            DetailTableNew = ds.Tables["details"];
-            TransactionTable = ds.Tables["transaction"];
-            TransactionTableNew = ds.Tables["transaction"];
-            AssMasterTable = ds.Tables["assMaster"];
-            AssMasterTableNew = ds.Tables["assMaster"];
+            TransactionTable = ds.Tables["transactions"];
+            AssMasterTable = ds.Tables["assetmaster"];
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -407,14 +405,73 @@ namespace SmartxAPI.Controllers
                                 for (int j = 0 ;j < nCount;j++)
                                 {
                                     int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
+
+                                    DetailTableNew = DetailTable.Clone();
+                                    AssMasterTableNew = AssMasterTable.Clone();
+                                    TransactionTableNew = TransactionTable.Clone();
+
+                                    DetailTableNew.Rows.Clear();
+                                    AssMasterTableNew.Rows.Clear();
+                                    TransactionTableNew.Rows.Clear();
+
+                                    var newRow=DetailTableNew.NewRow();
+                                    var newRow2=AssMasterTableNew.NewRow();
+                                    var newRow3=TransactionTableNew.NewRow();
+
                                     if(Qty>1)
-                                    {
-                                        for (int l = 0 ;l < Qty-1;l++)
+                                    {                                                                            
+                                        for (int l = 0 ;l < Qty;l++)
                                         {
-                                            DetailTableNew.Rows.Add(DetailTable.Rows[j]);
-                                            TransactionTableNew.Rows.Add(TransactionTable.Rows[j]);
-                                            AssMasterTableNew.Rows.Add(AssMasterTable.Rows[j]);
+                                           // newRow.ItemArray=DetailTable.Rows[j].ItemArray;    
+                                            // newRow2.ItemArray=AssMasterTable.Rows[j].ItemArray;    
+                                            // newRow3.ItemArray=TransactionTable.Rows[j].ItemArray;  
+                                            newRow["n_CompanyID"] = DetailTable.Rows[j]["n_CompanyID"];
+                                            newRow["n_AssetInventoryID"] = DetailTable.Rows[j]["n_AssetInventoryID"];
+                                            newRow["n_AssetInventoryDetailsID"] = DetailTable.Rows[j]["n_AssetInventoryDetailsID"];
+                                            newRow["x_ItemName"] = DetailTable.Rows[j]["x_ItemName"];
+                                            newRow["x_Description"] = DetailTable.Rows[j]["x_Description"];
+                                            newRow["n_CategoryID"] = DetailTable.Rows[j]["n_CategoryID"];
+                                            newRow["n_PurchaseQty"] = DetailTable.Rows[j]["n_PurchaseQty"];
+                                            newRow["n_Price"] = DetailTable.Rows[j]["n_Price"];
+                                            newRow["n_LifePeriod"] = DetailTable.Rows[j]["n_LifePeriod"];
+                                            newRow["d_PurchaseDate"] = DetailTable.Rows[j]["d_PurchaseDate"];
+                                            //newRow["d_Entrydate"] = DetailTable.Rows[j]["d_Entrydate"];
+                                            newRow["b_BegningbalEntry"] = DetailTable.Rows[j]["b_BegningbalEntry"];
+                                            newRow["n_FnYearID"] = DetailTable.Rows[j]["n_FnYearID"];
+                                            newRow["n_Bookvalue"] = DetailTable.Rows[j]["n_Bookvalue"];
+                                            newRow["n_BranchID"] = DetailTable.Rows[j]["n_BranchID"];
+                                            newRow["n_LocationID"] = DetailTable.Rows[j]["n_LocationID"];
+                                            newRow["n_CostCentreID"] = DetailTable.Rows[j]["n_CostCentreID"];
+                                            newRow["n_DepreciationAmt"] = DetailTable.Rows[j]["n_DepreciationAmt"];
+                                            newRow["n_TaxCategoryId"] = DetailTable.Rows[j]["n_TaxCategoryId"];
+                                            newRow["n_TaxPercentage1"] = DetailTable.Rows[j]["n_TaxPercentage1"];
+                                            newRow["n_TaxAmt1"] = DetailTable.Rows[j]["n_TaxAmt1"];
+                                            newRow["n_POrderID"] = DetailTable.Rows[j]["n_POrderID"];
+                                            newRow["n_POrderDetailsID"] = DetailTable.Rows[j]["n_POrderDetailsID"];
+                                            newRow["x_ItemCode"] = DetailTable.Rows[j]["x_ItemCode"];
+                                            newRow["n_EmpID"] = DetailTable.Rows[j]["n_EmpID"];
+                                            newRow["n_ProjectID"] = DetailTable.Rows[j]["n_ProjectID"];
+                                            newRow["n_SalvageAmt"] = DetailTable.Rows[j]["n_SalvageAmt"];
+                                            newRow["n_TaxCategoryId2"] = DetailTable.Rows[j]["n_TaxCategoryId2"];
+                                            newRow["n_TaxPercentage2"] = DetailTable.Rows[j]["n_TaxPercentage2"];
+                                            newRow["n_TaxAmt2"] = DetailTable.Rows[j]["n_TaxAmt2"];
+                                            newRow["n_DiscountAmt"] = DetailTable.Rows[j]["n_DiscountAmt"];
+                                            //newRow["n_ItemID"] = DetailTable.Rows[j]["n_ItemID"];
+
+                                            DetailTableNew.Rows.Add(newRow);
+                                            // AssMasterTableNew.Rows.Add(newRow2);
+                                            // TransactionTableNew.Rows.Add(newRow3);
                                         }
+                                    }
+                                    else
+                                    {
+                                        newRow.ItemArray=DetailTable.Rows[j].ItemArray;    
+                                        newRow2.ItemArray=AssMasterTable.Rows[j].ItemArray;    
+                                        newRow3.ItemArray=TransactionTable.Rows[j].ItemArray;    
+
+                                        DetailTableNew.Rows.Add(newRow);
+                                        AssMasterTableNew.Rows.Add(newRow2);
+                                        TransactionTableNew.Rows.Add(newRow3);
                                     }
                                 }
                                 for (int j = 0 ;j < DetailTableNew.Rows.Count;j++)
