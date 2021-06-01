@@ -288,8 +288,11 @@ namespace SmartxAPI.Controllers
             DataTable AssMasterTableNew = new DataTable();
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
+            DetailTableNew =  ds.Tables["details"];
+            AssMasterTableNew = ds.Tables["assetmaster"];
             AssMasterTable = ds.Tables["assetmaster"];
             TransactionTable = ds.Tables["transactions"];
+            TransactionTableNew = ds.Tables["transactions"];
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -402,16 +405,24 @@ namespace SmartxAPI.Controllers
                                 
                                 int nCount=DetailTable.Rows.Count;
                                 for (int j = 0 ;j < nCount;j++)
-                                {
+                                {   DataTable dt=new DataTable();
+                                dt= ds.Tables["details"];
+                                dt.Rows.Clear();
+                                    var newRow = dt.NewRow();
                                     int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
                                     if(Qty>1)
                                     {
                                         for (int l = 0 ;l < Qty-1;l++)
-                                        {
-                                            DetailTableNew.Rows.Add(DetailTable.Rows[j]);
+                                        {   newRow.ItemArray=DetailTable.Rows[j].ItemArray;
+                                            DetailTableNew.Rows.Add(newRow);
                                             TransactionTableNew.Rows.Add(TransactionTable.Rows[j]);
                                             AssMasterTableNew.Rows.Add(AssMasterTable.Rows[j]);
                                         }
+                                    }
+                                    else
+                                    {
+                                         newRow.ItemArray=DetailTable.Rows[j].ItemArray;
+                                            DetailTableNew.Rows.Add(newRow);
                                     }
                                 }
                                 for (int j = 0 ;j < DetailTableNew.Rows.Count;j++)
