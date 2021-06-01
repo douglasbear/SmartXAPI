@@ -289,16 +289,8 @@ namespace SmartxAPI.Controllers
 
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
-<<<<<<< HEAD
             TransactionTable = ds.Tables["transactions"];
             AssMasterTable = ds.Tables["assetmaster"];
-=======
-            DetailTableNew =  ds.Tables["details"];
-            AssMasterTableNew = ds.Tables["assetmaster"];
-            AssMasterTable = ds.Tables["assetmaster"];
-            TransactionTable = ds.Tables["transactions"];
-            TransactionTableNew = ds.Tables["transactions"];
->>>>>>> 5696fdcb09f83aa3d543c3757fd9c3e3e1bf6386
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -414,7 +406,7 @@ namespace SmartxAPI.Controllers
                                 {   DataTable dt=new DataTable();
                                 dt= ds.Tables["details"];
                                 dt.Rows.Clear();
-                                    var newRow = dt.NewRow();
+                                    // var newRow = dt.NewRow();
                                     int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
 
                                     DetailTableNew = DetailTable.Clone();
@@ -430,7 +422,6 @@ namespace SmartxAPI.Controllers
                                     var newRow3=TransactionTableNew.NewRow();
 
                                     if(Qty>1)
-<<<<<<< HEAD
                                     {                                                                            
                                         for (int l = 0 ;l < Qty;l++)
                                         {
@@ -473,19 +464,10 @@ namespace SmartxAPI.Controllers
                                             DetailTableNew.Rows.Add(newRow);
                                             // AssMasterTableNew.Rows.Add(newRow2);
                                             // TransactionTableNew.Rows.Add(newRow3);
-=======
-                                    {
-                                        for (int l = 0 ;l < Qty-1;l++)
-                                        {   newRow.ItemArray=DetailTable.Rows[j].ItemArray;
-                                            DetailTableNew.Rows.Add(newRow);
-                                            TransactionTableNew.Rows.Add(TransactionTable.Rows[j]);
-                                            AssMasterTableNew.Rows.Add(AssMasterTable.Rows[j]);
->>>>>>> 5696fdcb09f83aa3d543c3757fd9c3e3e1bf6386
                                         }
                                     }
                                     else
                                     {
-<<<<<<< HEAD
                                         newRow.ItemArray=DetailTable.Rows[j].ItemArray;    
                                         newRow2.ItemArray=AssMasterTable.Rows[j].ItemArray;    
                                         newRow3.ItemArray=TransactionTable.Rows[j].ItemArray;    
@@ -493,10 +475,6 @@ namespace SmartxAPI.Controllers
                                         DetailTableNew.Rows.Add(newRow);
                                         AssMasterTableNew.Rows.Add(newRow2);
                                         TransactionTableNew.Rows.Add(newRow3);
-=======
-                                         newRow.ItemArray=DetailTable.Rows[j].ItemArray;
-                                            DetailTableNew.Rows.Add(newRow);
->>>>>>> 5696fdcb09f83aa3d543c3757fd9c3e3e1bf6386
                                     }
                                 }
                                 for (int j = 0 ;j < DetailTableNew.Rows.Count;j++)
