@@ -31,18 +31,18 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 1349;//form id of cost center
         }
-         [HttpGet("chart")]
+        [HttpGet("chart")]
         public ActionResult GetCategoryChart()
-    
+
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-          
+
 
             string sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " Order By X_CategoryCode";
-          
+
 
             try
             {
@@ -81,8 +81,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    string DocNo = "";
                     string X_CategoryCode = MasterTable.Rows[0]["x_CategoryCode"].ToString();
                     string X_CategoryDisplay = MasterTable.Rows[0]["x_CategoryDisplay"].ToString();
+                    string N_FnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
                     string N_CompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     int N_CategoryDisplayID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CategoryDisplayID"].ToString());
                     int N_ParentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentID"].ToString());
@@ -111,15 +114,34 @@ namespace SmartxAPI.Controllers
                         //  MasterTable.Rows[0]["x_LevelPattern"] = X_LevelPattern;
 
                     }
+                    DocNo = MasterRow["x_CategoryCode"].ToString();
 
                     if (X_CategoryCode == "@Auto" && N_CategoryDisplayID == 0)
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
-                        Params.Add("N_FormID", this.N_FormID);
-                        //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
-                        X_CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategoryDisplay", "x_CategoryCode", Params, connection, transaction);
-                        if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Category")); }
+                        Params.Add("N_FormID", 1349);
+                        Params.Add("N_YearID", N_FnYearID);
+
+                        while (true)
+                        {
+                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_ItemCategoryDisplay Where X_CategoryCode ='" + DocNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        X_CategoryCode = DocNo;
+
+
+                        if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
                         MasterTable.Rows[0]["x_CategoryCode"] = X_CategoryCode;
+
+                        // Params.Add("N_CompanyID", N_CompanyID);
+                        // Params.Add("N_YearID", N_FnYearID);
+                        // Params.Add("N_FormID", 1349);
+                        // //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        // X_CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategoryDisplay", "x_CategoryCode", Params, connection, transaction);
+                        // if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Category")); }
+                        // MasterTable.Rows[0]["x_CategoryCode"] = X_CategoryCode;
 
 
                     }
@@ -130,7 +152,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["n_CategoryDisplayID"] = 0;
                     }
 
-                    MasterTable.Columns.Remove("n_empid");
+                    MasterTable.Columns.Remove("n_FnYearID");
                     N_CategoryDisplayID = dLayer.SaveData("Inv_ItemCategoryDisplay", "N_CategoryDisplayID", MasterTable, connection, transaction);
                     if (N_CategoryDisplayID <= 0)
                     {
