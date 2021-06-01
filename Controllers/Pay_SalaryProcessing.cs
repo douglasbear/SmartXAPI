@@ -92,10 +92,10 @@ namespace SmartxAPI.Controllers
                         ProParams["N_PAyrunID"] = MainMst.Rows[0]["N_PayRunID"].ToString();
                         payRunID = MainMst.Rows[0]["N_PayRunID"].ToString();
                         ProParams["N_AddBatchID"] = MainMst.Rows[0]["N_RefBatchID"].ToString();
-                        if(MainMst.Rows[0]["N_RefBatchID"].ToString()!="")
-                        nAddDedID = myFunctions.getIntVAL(MainMst.Rows[0]["N_RefBatchID"].ToString());
+                        if (MainMst.Rows[0]["N_RefBatchID"].ToString() != "")
+                            nAddDedID = myFunctions.getIntVAL(MainMst.Rows[0]["N_RefBatchID"].ToString());
                         else
-                        nAddDedID = 0;
+                            nAddDedID = 0;
 
                     }
                     else
@@ -279,7 +279,7 @@ namespace SmartxAPI.Controllers
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
-            
+
             try
             {
                 DataTable MasterTable = ds.Tables["master"];
@@ -371,7 +371,7 @@ namespace SmartxAPI.Controllers
                                 var["N_PayRate"] = Amount;
                                 var["N_TransID"] = N_TransID;
 
-                               
+
 
                             }
                             if (N_TotalSalary < 0)
@@ -393,28 +393,28 @@ namespace SmartxAPI.Controllers
 
                         }
 
-                        if (N_TransDetailsID>0)
-                    {
-                       
-                            dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + nCompanyID + "," + nFnYearId + ",'ESI','" + x_Batch + "'", connection,transaction);
+                        if (N_TransDetailsID > 0)
+                        {
+
+                            dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + nCompanyID + "," + nFnYearId + ",'ESI','" + x_Batch + "'", connection, transaction);
 
                             //---- GOSI Insertion                        
                             if (N_AddDedID == 0)
-                                dLayer.ExecuteNonQuery("SP_Pay_GOSICalc " + nCompanyID + "," + month + "," +year + "," + N_TransID, connection,transaction);
+                                dLayer.ExecuteNonQuery("SP_Pay_GOSICalc " + nCompanyID + "," + month + "," + year + "," + N_TransID, connection, transaction);
                             //-----
 
                             ///Pay By Frequency
-                            dLayer.ExecuteNonQuery("SP_Pay_YearlyPay " + nCompanyID + "," + N_TransID + "," + month + "," + year, connection,transaction);
+                            dLayer.ExecuteNonQuery("SP_Pay_YearlyPay " + nCompanyID + "," + N_TransID + "," + month + "," + year, connection, transaction);
 
 
 
                             //--- Posting
 
-                            dLayer.ExecuteNonQuery("SP_Pay_PayrollProcessing " + nCompanyID + "," + N_TransID + ",'" + dCreatedDate.ToString() + "','" + myFunctions.GetFormatedDate(Convert.ToDateTime(DateTime.Now).ToShortDateString()) + "'," + myFunctions.GetUserID(User) + ",'Cloud','Salary Processing'",connection,transaction);
-                            dLayer.ExecuteNonQuery("SP_Pay_AccrualProcess  " + nCompanyID + "," + month + ", " + year + " , " + N_TransID,connection,transaction);
+                            dLayer.ExecuteNonQuery("SP_Pay_PayrollProcessing " + nCompanyID + "," + N_TransID + ",'" + dCreatedDate.ToString() + "','" + myFunctions.GetFormatedDate(Convert.ToDateTime(DateTime.Now).ToShortDateString()) + "'," + myFunctions.GetUserID(User) + ",'Cloud','Salary Processing'", connection, transaction);
+                            dLayer.ExecuteNonQuery("SP_Pay_AccrualProcess  " + nCompanyID + "," + month + ", " + year + " , " + N_TransID, connection, transaction);
 
-                            
-}
+
+                        }
 
 
 
@@ -442,8 +442,22 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
+                    SortedList dltParams = new SortedList();
+                    dltParams.Add("@nTransID", nTransID);
+                    dltParams.Add("@nFnYearID", nFnYearID);
+                    dltParams.Add("@xBatch", xBatch);
+
+                    int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(*) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
+
+
+                    if (count > 0)
+                    {
+                        return Ok(_api.Error("Unable to delete ,Transactions Exist"));
+
+                    }
+
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + myFunctions.GetCompanyID(User) + "," + nFnYearID + ",'ESI','" + xBatch + "'", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + myFunctions.GetCompanyID(User) + ",@nFnYearID,'ESI',@xBatch", dltParams, connection, transaction);
                     Results = dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FormID = 190", connection, transaction);
 
                     if (Results <= 0)
