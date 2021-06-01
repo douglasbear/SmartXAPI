@@ -272,20 +272,19 @@ namespace SmartxAPI.Controllers
 
                             }
                         }
-                        
+                        // DataSet dataSet = new DataSet();
+                        // dt = _api.Format(dt, "details");
+                        // Images = _api.Format(dt, "Images");
+                        // dataSet.Tables.Add(dt);
+                        // dataSet.Tables.Add(Images);
 
                     }
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
-                DataSet dataSet = new DataSet();
-                        dt = _api.Format(dt, "details");
-                        Images = _api.Format(dt, "Images");
-                        dataSet.Tables.Add(dt);
-                        dataSet.Tables.Add(Images);
 
 
-                return Ok(_api.Success(dataSet));
+                return Ok(_api.Success(dt));
 
             }
             catch (Exception e)

@@ -406,7 +406,7 @@ namespace SmartxAPI.Controllers
                                 {   DataTable dt=new DataTable();
                                 dt= ds.Tables["details"];
                                 dt.Rows.Clear();
-                                    var newRow = dt.NewRow();
+                                    // var newRow = dt.NewRow();
                                     int Qty=myFunctions.getIntVAL(DetailTable.Rows[j]["N_PurchaseQty"].ToString());
 
                                     DetailTableNew = DetailTable.Clone();
