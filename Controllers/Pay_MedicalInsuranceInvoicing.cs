@@ -119,6 +119,7 @@ namespace SmartxAPI.Controllers
         }
     }
 }
+
         // [HttpPost("save")]
         // public ActionResult SaveData([FromBody] DataSet ds)
         // {
@@ -136,10 +137,35 @@ namespace SmartxAPI.Controllers
         //             DataRow MasterRow = MasterTable.Rows[0];
         //             SortedList Params = new SortedList();
         //             int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-        //             int nAdditionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AdditionID"].ToString());
+        //             int nInvoiceID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_InvoiceID"].ToString());
         //             int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-        //             string X_PolicyCode = MasterTable.Rows[0]["x_PolicyCode"].ToString();
+        //             string X_InvoiceCode = MasterTable.Rows[0]["x_InvoiceCode"].ToString();
         //             int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                   
+                
+        //             DocNo = MasterRow["x_PolicyCode"].ToString();
+        //             if (X_InvoiceCode == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", nCompanyID);
+        //                 Params.Add("N_FormID", FormID);
+        //                 Params.Add("N_YearID", nFnYearID);
+        //                 while (true)
+        //                 {
+        //                     DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+        //                     object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_MedicalInsuranceAddition Where X_PolicyCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+        //                     if (N_Result == null)
+        //                         break;
+        //                 }
+        //                 X_InvoiceCode = DocNo;
+        //                 if (X_InvoiceCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+        //                 MasterTable.Rows[0]["x_InvoiceCode"] = X_InvoiceCode;
+
+        //             }
+        //                 if (nAdditionID > 0)
+        //             {
+        //                 dLayer.DeleteData("Pay_MedicalInsuranceAddition", "N_ReceiptId", nAdditionID, "N_CompanyID = " + nCompanyID, connection, transaction);
+        //             }
+
 
 
 
