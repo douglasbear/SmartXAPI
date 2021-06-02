@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
             int ParentID = nParentID;
             string DeptCode = "";
             DataTable dtDept = new DataTable();
-            dtDept = dLayer.ExecuteDataTable("select COUNT(convert(nvarchar(100),X_CategoryCode)) From Inv_ItemCategoryDisplay where N_GroupID =" + ParentID + " and N_CompanyID =@nCompanyID ", ParamList, connection, transaction);
+            dtDept = dLayer.ExecuteDataTable("select COUNT(convert(nvarchar(100),X_CategoryCode)) From Inv_ItemCategoryDisplay where N_ParentID =" + ParentID + " and N_CompanyID =@nCompanyID ", ParamList, connection, transaction);
             int count = myFunctions.getIntVAL(dtDept.Rows[0][0].ToString());
             dtDept = dLayer.ExecuteDataTable("select X_CategoryCode From Inv_ItemCategoryDisplay where N_CategoryDisplayID =" + ParentID + " and N_CompanyID =@nCompanyID ", ParamList, connection, transaction);
             while (true)
