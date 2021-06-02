@@ -137,6 +137,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok( _api.Error("Unable to save...Category Name Exists"));
                     }
+                    
                     else
                     {
                         transaction.Commit();
