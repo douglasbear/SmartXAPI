@@ -105,14 +105,14 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_OrderNo like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_SalesOrderID desc";
+                xSortBy = " order by M_NetAmt desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SalesOrder_Dashboard where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(10) * from vw_SalesOrder_Dashboard where  YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_SalesOrder_Dashboard where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " and N_SalesOrderID not in (select top(" + Count + ") N_SalesOrderID from vw_SalesOrder_Dashboard where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(10) * from vw_SalesOrder_Dashboard where YEAR(D_Entrydate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " and N_SalesOrderID not in (select top(" + Count + ") N_SalesOrderID from vw_SalesOrder_Dashboard where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -161,14 +161,14 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and ([Quotation No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_QuotationId desc";
+                xSortBy = " order by N_BillAmtF desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesQuotationNo_Search where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(10) * from vw_InvSalesQuotationNo_Search where  YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesQuotationNo_Search where YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " and N_QuotationID not in (select top(" + Count + ") N_QuotationID from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(10) * from vw_InvSalesQuotationNo_Search where YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)   " + Searchkey + " and N_QuotationID not in (select top(" + Count + ") N_QuotationID from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
