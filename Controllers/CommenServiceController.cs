@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
                     string username = myFunctions.GetEmailID(User);
-                    int AppID = myFunctions.GetAppID(User);
+                    int AppID = appID;
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
 
@@ -96,7 +96,7 @@ namespace SmartxAPI.Controllers
                     int companyid = nCompanyID;
                     string companyname = xCompanyName;
                     string username = myFunctions.GetEmailID(User);
-                    int AppID = myFunctions.GetAppID(User);
+                    int AppID = appID;
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
 
@@ -256,7 +256,7 @@ namespace SmartxAPI.Controllers
                 int companyid = int.Parse(User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Sid).Value);
                 string companyname = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.StreetAddress).Value;
                 string username = User.Claims.FirstOrDefault(c => c.Type == ClaimTypes.Name).Value;
-                int AppID = myFunctions.GetAppID(User);
+                int AppID = 0;
 
                 var user = _repository.Authenticate(companyid, companyname, username, userid, "RefreshToken", AppID, "", 0, 0);
 

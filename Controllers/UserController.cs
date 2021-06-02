@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
                             transaction = connection.BeginTransaction();
                             SortedList userParams = new SortedList();
                             userParams.Add("@nClientID", nClientID);
-                            userParams.Add("@nAppID", myFunctions.GetAppID(User));
+                            userParams.Add("@nAppID",MasterTable.Rows[0]["n_AppID"].ToString());
                             userParams.Add("@xUserID", MasterTable.Rows[0]["x_UserID"].ToString());
                             userParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                             object userCountinOtherOrg = dLayer.ExecuteScalar("SELECT Count(Sec_User.N_CompanyID) as Count FROM Sec_User LEFT OUTER JOIN Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID  where Sec_User.X_UserID=@xUserID and Acc_Company.N_ClientID<>@nClientID", userParams, connection, transaction);
@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
                             globalUser.Rows[0]["b_Inactive"] = 1;
                             globalUser.Rows[0]["x_Password"] = ".";
                             globalUser.Rows[0]["b_EmailVerified"] = 0;
-                            globalUser.Rows[0]["n_ActiveAppID"] = myFunctions.GetAppID(User);
+                            globalUser.Rows[0]["n_ActiveAppID"] = MasterTable.Rows[0]["n_AppID"].ToString();
 
 
 
@@ -224,6 +224,8 @@ namespace SmartxAPI.Controllers
                             //     return Ok(_api.Error("User Already Registerd With this ID !!!"));
                             // }
                             // MasterTable.Rows[0]["n_UserID"] = globalUserID;
+                            MasterTable.Columns.Remove("n_AppID");
+                            MasterTable.AcceptChanges();
                             nUserID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                             if (nUserID > 0)
                             {
