@@ -300,7 +300,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList;
+                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList;
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
                 MasterTable = ds.Tables["master"];
@@ -311,6 +311,7 @@ namespace SmartxAPI.Controllers
                 AddUnit1 = ds.Tables["addUnit1"];
                 AddUnit2 = ds.Tables["addUnit2"];
                 LocationList = ds.Tables["warehouseDetails"];
+                CategoryList = ds.Tables["categoryListDetails"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID=0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -383,6 +384,15 @@ namespace SmartxAPI.Controllers
                         }
                         LocationList.AcceptChanges();
                         dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
+                    }
+                    if (CategoryList.Rows.Count > 0)
+                    {
+                        foreach (DataRow dRow in CategoryList.Rows)
+                        {
+                            dRow["N_ItemID"] = N_ItemID;
+                        }
+                        CategoryList.AcceptChanges();
+                        dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_CategoryListID", CategoryList, connection, transaction);
                     }
                     //Saving Display Images
                     object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);

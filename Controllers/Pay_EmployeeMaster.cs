@@ -989,6 +989,5 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
     }
 }

@@ -68,6 +68,53 @@ namespace SmartxAPI.Controllers
 
         }
 
+        
+        [HttpGet("list")]
+        public ActionResult GetDepartmentList(string parent)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            string sqlCommandText="";
+            if(parent=="" || parent ==null)
+            {
+
+             sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "   Order By X_CategoryCode";
+            }
+            else{
+
+              sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "  and isnull(N_ParentID,0)=0   Order By X_CategoryCode";
+            }
+            // if (nDivisionID > 0)
+            // {
+            //     Params.Add("@nDivisionID", nDivisionID);
+            //     sqlCommandText = "Select N_CompanyID,N_DepartmentID,N_DivisionID,Code,Description from vw_PayDepartment_Disp Where N_CompanyID=@nCompanyID and N_DivisionID=@nDivisionID order by Code";
+            // }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -198,6 +245,49 @@ namespace SmartxAPI.Controllers
             }
             return DeptCode;
         }
+
+        // [HttpDelete("delete")]
+        // public ActionResult DeleteData(int nCategoryID)
+        // {
+        //     int Results = 0;
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     try
+        //     {
+        //         SortedList QueryParams = new SortedList();
+        //         QueryParams.Add("@nCompanyID", nCompanyID);
+        //         QueryParams.Add("@nCategoryDisplayID", nCategoryID);
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplay where N_CategoryDisplayID=@nCategoryID and N_CompanyID=@nCompanyID ", QueryParams, connection);
+        //             if (Objcount != null)
+        //             {
+        //                 if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
+        //                 {
+        //                     Results = dLayer.DeleteData("Inv_ItemCategoryDisplay", "N_CategoryDisplayID", nCategoryID, "N_CompanyID=" + nCompanyID + "", connection);
+        //                 }
+        //                 else
+        //                 {
+        //                     return Ok(_api.Error("Department Allready Used"));
+        //                 }
+        //             }
+        //         }
+        //         if (Results > 0)
+        //         {
+        //             return Ok(_api.Success("Department/Cost centre deleted"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Error("Unable to delete"));
+        //         }
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(ex));
+        //     }
+
+        // }
 
 
     }
