@@ -179,11 +179,11 @@ namespace SmartxAPI.Controllers
                             }
                             if (nActPrice != null)
                             {
-                                dvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                                dvar["N_ActPrice"] = myFunctions.getVAL(nActPrice.ToString());
                             }
-                            if (nActPrice != null)
+                            if (nActCost != null)
                             {
-                                dvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                                dvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
                             }
 
                             EmployeeTable.AcceptChanges();
@@ -221,11 +221,11 @@ namespace SmartxAPI.Controllers
                             }
                             if (nActPrice != null)
                             {
-                                kvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                                kvar["N_ActPrice"] = myFunctions.getVAL(nActPrice.ToString());
                             }
-                            if (nActPrice != null)
+                            if (nActCost != null)
                             {
-                                kvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                                kvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
                             }
                         }
                         FamilyTable.AcceptChanges();
