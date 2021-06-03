@@ -136,6 +136,21 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFnYearID",nFnYearID);
 
             string sqlCommandText="SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and X_Type in ('I','E')";
+
+            // if (myCompanyID._B_AllBranchData == true)
+            // {
+            //         dba.FillCombo(ref cmbTransActionType, "vw_BatchPosting_Disp", "X_Description", "N_CompanyID =" + myCompanyID._CompanyID + "and X_ID<>'OB' And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID, "X_Description", "ASC");
+            // }
+            // else
+            // {
+            //     if (myCompanyID._LanguageID == 1)
+            //         dba.FillCombo(ref cmbTransActionType, "vw_BatchPosting_Disp", "X_Description", "N_CompanyID =" + myCompanyID._CompanyID + " and X_ID ='OB' And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID + " and N_BranchID=" + myCompanyID._BranchID, "X_Description", "ASC");
+            //    // dba.FillCombo(ref cmbTransActionType, "Acc_VoucherMaster", "X_EntryFrom", "N_CompanyID =" + myCompanyID._CompanyID + " And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID + " and N_BranchID=" + myCompanyID._BranchID, "X_TransType", "ASC");
+            //     else
+            //         dba.FillCombo(ref cmbTransActionType, "vw_BatchPosting_Disp", "X_Description_Ar", "N_CompanyID =" + myCompanyID._CompanyID + " and X_ID<>'OB' And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID + " and N_BranchID=" + myCompanyID._BranchID, "X_Description_Ar", "ASC");
+            // }
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
