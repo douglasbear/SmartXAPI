@@ -646,6 +646,10 @@ namespace SmartxAPI.Controllers
                         if (N_SalesID == 0 && InvoiceNo != "@Auto")
                         {
                             object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                            if (N_DocNumber == null)
+                            {
+                                N_DocNumber = 0;
+                            }
                             if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                             {
                                 transaction.Rollback();
@@ -681,6 +685,21 @@ namespace SmartxAPI.Controllers
                         object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and b_IsSaveDraft=1", connection, transaction);
                         if (N_Resultval != null)
                             InvoiceNo = "@Auto";
+                        if (N_SalesID == 0 && InvoiceNo != "@Auto")
+                        {
+                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                            if (N_DocNumber == null)
+                            {
+                                N_DocNumber = 0;
+                            }
+                            if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Not a valid Doc No"));
+                            }
+
+
+                        }
 
                         if (InvoiceNo == "@Auto")
                         {
