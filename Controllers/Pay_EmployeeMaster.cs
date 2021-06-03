@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Not a valid Employee code"));
+                            return Ok(_api.Error("Employee Code already exist"));
                         }
 
 
