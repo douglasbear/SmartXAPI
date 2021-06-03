@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from Pay_EmploymentType where N_CompanyID=@nCompanyID and N_EmploymentID=@nEmploymentID";
+            string sqlCommandText="SELECT Pay_EmploymentType.*, Gen_Defaults.X_TypeName FROM Pay_EmploymentType INNER JOIN Gen_Defaults ON Pay_EmploymentType.N_TypeID = Gen_Defaults.N_TypeId where Pay_EmploymentType.N_CompanyID=@nCompanyID and Pay_EmploymentType.N_EmploymentID=@nEmploymentID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nEmploymentID",nEmploymentID);
             try{
