@@ -268,13 +268,13 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            return Ok(_api.Error("Department Allready Used"));
+                            return Ok(_api.Error("Category Allready Used"));
                         }
                     }
                 }
                 if (Results > 0)
                 {
-                    return Ok(_api.Success("Department/Cost centre deleted"));
+                    return Ok(_api.Success("Category deleted"));
                 }
                 else
                 {
