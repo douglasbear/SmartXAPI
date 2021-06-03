@@ -198,8 +198,8 @@ namespace SmartxAPI.Controllers
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                    string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
-                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
+                    // string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+                    //  multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
 
 
 
@@ -283,15 +283,15 @@ namespace SmartxAPI.Controllers
                     }
                 }
                 dt.AcceptChanges();
-                multiCategory.AcceptChanges();
+                // multiCategory.AcceptChanges();
                 dt = _api.Format(dt);
-                multiCategory = _api.Format(multiCategory);
+                // multiCategory = _api.Format(multiCategory);
                 DataSet dataSet = new DataSet();
                         dt = _api.Format(dt, "details");
-                        multiCategory = _api.Format(multiCategory, "multiCategory");
+                        // multiCategory = _api.Format(multiCategory, "multiCategory");
                         Images = _api.Format(Images, "Images");
                         dataSet.Tables.Add(dt);
-                        dataSet.Tables.Add(multiCategory);
+                        // dataSet.Tables.Add(multiCategory);
                         dataSet.Tables.Add(Images);
 
 
