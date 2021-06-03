@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    
+
                     OutPut.Add("Details", _api.Format(dt));
                 }
                 if (dt.Rows.Count == 0)
@@ -214,7 +214,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId,int isProfoma)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma)
         {
 
             try
@@ -253,9 +253,9 @@ namespace SmartxAPI.Controllers
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
-                        if(isProfoma==1)
+                        if (isProfoma == 1)
                         {
-                            MasterTable.Rows[0]["B_IsSaveDraft"]=1;
+                            MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
                         }
 
                         string DetailSql = "";
@@ -463,7 +463,7 @@ namespace SmartxAPI.Controllers
             if (objBal != null)
                 BalanceAmt = myFunctions.getVAL(objBal.ToString());
 
-            if ((Math.Round(InvoiceRecievable,2) == Math.Round(BalanceAmt,2)) && (Math.Round(InvoiceRecievable,2) > 0 && Math.Round(BalanceAmt,2) > 0))
+            if ((Math.Round(InvoiceRecievable, 2) == Math.Round(BalanceAmt, 2)) && (Math.Round(InvoiceRecievable, 2) > 0 && Math.Round(BalanceAmt, 2) > 0))
             {
                 TxnStatus["Label"] = "NotPaid";
                 TxnStatus["LabelColor"] = "Red";
@@ -550,7 +550,7 @@ namespace SmartxAPI.Controllers
                 DataTable dtsaleamountdetails; ;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
-                
+
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
                 DataTable Attachment = ds.Tables["attachments"];
 
@@ -587,6 +587,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
+
+                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Transaction date must be in the active Financial Year."));
+                    }
 
                     B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
@@ -635,56 +641,67 @@ namespace SmartxAPI.Controllers
                     // }
                     //saving data
                     InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
-                    if(N_SaveDraft==1)
+                    if (N_SaveDraft == 1)
                     {
-                        if(InvoiceNo == "@Auto")
+                        if (N_SalesID == 0 && InvoiceNo != "@Auto")
                         {
-                        Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", 1346);
-                        while (true)
-                        {
-                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
-                            if (N_Result == null)
-                                break;
+                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                            if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Not a valid Doc No"));
+                            }
+
+
                         }
-                        if (InvoiceNo == "")
+                        if (InvoiceNo == "@Auto")
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to generate Quotation Number"));
-                        }
-                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+                            Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
+                            Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
+                            Params.Add("N_FormID", 1346);
+                            while (true)
+                            {
+                                InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
+                                if (N_Result == null)
+                                    break;
+                            }
+                            if (InvoiceNo == "")
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to generate Quotation Number"));
+                            }
+                            MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
                     }
                     //  InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
-                    
-                    else 
+
+                    else
                     {
-                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID +" and b_IsSaveDraft=1", connection, transaction);
-                        if(N_Resultval!=null)
+                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and b_IsSaveDraft=1", connection, transaction);
+                        if (N_Resultval != null)
                             InvoiceNo = "@Auto";
 
-                        if (InvoiceNo == "@Auto" )
+                        if (InvoiceNo == "@Auto")
                         {
-                            
-                        Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", this.N_FormID);
-                        // Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
-                        while (true)
-                        {
-                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
-                            if (N_Result == null)
-                                break;
-                        }
-                        if (InvoiceNo == "")
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to generate Quotation Number"));
-                        }
-                        MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
+
+                            Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
+                            Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
+                            Params.Add("N_FormID", this.N_FormID);
+                            // Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                            while (true)
+                            {
+                                InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
+                                if (N_Result == null)
+                                    break;
+                            }
+                            if (InvoiceNo == "")
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to generate Quotation Number"));
+                            }
+                            MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
                     }
                     if (N_SalesID > 0)
@@ -834,14 +851,14 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if(N_SaveDraft==0)
+                            if (N_SaveDraft == 0)
                             {
-                            int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
-                            if (N_SalesAmountID <= 0)
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error("Unable to save Sales Invoice!"));
-                            }
+                                int N_SalesAmountID = dLayer.SaveData("Inv_SaleAmountDetails", "n_SalesAmountID", dtsaleamountdetails, connection, transaction);
+                                if (N_SalesAmountID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                }
                             }
                         }
                         bool B_salesOrder = myFunctions.CheckPermission(N_CompanyID, 81, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
@@ -922,8 +939,8 @@ namespace SmartxAPI.Controllers
                             }
                             catch (Exception ex)
                             {
-                                 transaction.Rollback();
-                               return Ok(_api.Error(ex));
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
                             }
                         }
                         //dispatch saving here
@@ -947,7 +964,7 @@ namespace SmartxAPI.Controllers
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID)
         {
-            int Results = 0; 
+            int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

@@ -430,6 +430,18 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nFormID", this.FormID);
                     QueryParams.Add("@nPositionID", myFunctions.getIntVAL(dtMasterTable.Rows[0]["n_PositionID"].ToString()));
 
+                    if (nEmpID == 0 && xEmpCode != "@Auto")
+                    {
+                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from pay_Employee Where X_EmpCode ='" + xEmpCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Not a valid Employee code"));
+                        }
+
+
+                    }
+
                     // Auto Gen
                     if (xEmpCode == "@Auto")
                     {
@@ -447,11 +459,11 @@ namespace SmartxAPI.Controllers
                         X_BtnAction = "UPDATE";
 
                     }
-                    if(dtMasterTable.Rows[0]["N_LedgerID"].ToString()=="0")
+                    if (dtMasterTable.Rows[0]["N_LedgerID"].ToString() == "0")
                     {
-                        object N_LedgerID = dLayer.ExecuteScalar("select N_FieldValue from acc_accountdefaults where X_FieldDescr='Employee Account Ledger' and N_CompanyID = " + nCompanyID +" and n_fnyearid="+nFnYearID , connection, transaction);
-                        if(N_LedgerID!=null)
-                            dtMasterTable.Rows[0]["N_LedgerID"]=N_LedgerID;
+                        object N_LedgerID = dLayer.ExecuteScalar("select N_FieldValue from acc_accountdefaults where X_FieldDescr='Employee Account Ledger' and N_CompanyID = " + nCompanyID + " and n_fnyearid=" + nFnYearID, connection, transaction);
+                        if (N_LedgerID != null)
+                            dtMasterTable.Rows[0]["N_LedgerID"] = N_LedgerID;
                     }
 
 
@@ -884,7 +896,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                return Ok(myFunctions.DecryptString("rL/yh1vu7VA="));
+                return Ok(myFunctions.DecryptString("ipAYoMBl1Kw="));
                 using (SqlConnection Con = new SqlConnection(connectionString))
                 {
                     Con.Open();
