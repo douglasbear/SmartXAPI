@@ -272,19 +272,20 @@ namespace SmartxAPI.Controllers
 
                             }
                         }
-                        // DataSet dataSet = new DataSet();
-                        // dt = _api.Format(dt, "details");
-                        // Images = _api.Format(dt, "Images");
-                        // dataSet.Tables.Add(dt);
-                        // dataSet.Tables.Add(Images);
+                        
 
                     }
                 }
                 dt.AcceptChanges();
                 dt = _api.Format(dt);
+                DataSet dataSet = new DataSet();
+                        dt = _api.Format(dt, "details");
+                        Images = _api.Format(Images, "Images");
+                        dataSet.Tables.Add(dt);
+                        dataSet.Tables.Add(Images);
 
 
-                return Ok(_api.Success(dt));
+                return Ok(_api.Success(dataSet));
 
             }
             catch (Exception e)
@@ -299,7 +300,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList;
+                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList;
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
                 MasterTable = ds.Tables["master"];
@@ -310,7 +311,9 @@ namespace SmartxAPI.Controllers
                 AddUnit1 = ds.Tables["addUnit1"];
                 AddUnit2 = ds.Tables["addUnit2"];
                 LocationList = ds.Tables["warehouseDetails"];
+                CategoryList = ds.Tables["categoryListDetails"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
+                int N_ItemID=0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -335,7 +338,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("i_Image");
 
                     string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemCode='" + ItemCode + "'";
-                    int N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
+                    N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_ItemID <= 0)
                     {
                         transaction.Rollback();
@@ -382,6 +385,15 @@ namespace SmartxAPI.Controllers
                         LocationList.AcceptChanges();
                         dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
                     }
+                    if (CategoryList.Rows.Count > 0)
+                    {
+                        foreach (DataRow dRow in CategoryList.Rows)
+                        {
+                            dRow["N_ItemID"] = N_ItemID;
+                        }
+                        CategoryList.AcceptChanges();
+                        dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_CategoryListID", CategoryList, connection, transaction);
+                    }
                     //Saving Display Images
                     object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
                     string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
@@ -401,6 +413,7 @@ namespace SmartxAPI.Controllers
                             writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
                             dRow["X_ImageName"] = ItemCode + ".jpg";
                             dRow["X_ImageLocation"] = DocumentPath;
+                            dRow["N_ItemID"] = N_ItemID;
 
                         }
                         POS.Columns.Remove("I_Image");
@@ -417,6 +430,7 @@ namespace SmartxAPI.Controllers
                     //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
                     //         dRow["X_ImageName"] = ItemCode + ".jpg";
                     //         dRow["X_ImageLocation"] = DocumentPath;
+                   //          dRow["N_ItemID"] = N_ItemId;
 
                     //     }
                     //     ECOM.Columns.Remove("I_Image");
