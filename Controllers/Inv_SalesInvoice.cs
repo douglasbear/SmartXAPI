@@ -732,55 +732,12 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Sales Invoice!"));
                     }
+                    else
+                    {
                     // if (B_UserLevel)
                     // {
                     //     Inv_WorkFlowCatalog saving code here
-                    // }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
-                    }
-                    int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
-                    if (N_InvoiceDetailId <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Sales Invoice!"));
-                    }
-                    else
-                    {
-
-
-
-                        SortedList StockPostingParams = new SortedList();
-                        StockPostingParams.Add("N_CompanyID", N_CompanyID);
-                        StockPostingParams.Add("N_SalesID", N_SalesID);
-                        StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
-                        StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
-                        if (N_DeliveryNoteID == 0)
-                        {
-                            try
-                            {
-                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                if (ex.Message == "50")
-                                    return Ok(_api.Error("Day Closed"));
-                                else if (ex.Message == "51")
-                                    return Ok(_api.Error("Year Closed"));
-                                else if (ex.Message == "52")
-                                    return Ok(_api.Error("Year Exists"));
-                                else if (ex.Message == "53")
-                                    return Ok(_api.Error("Period Closed"));
-                                else if (ex.Message == "54")
-                                    return Ok(_api.Error("Txn Date"));
-                                else if (ex.Message == "55")
-                                    return Ok(_api.Error("Quantity exceeds!"));
-                                else
-                                    return Ok(_api.Error(ex));
-                            }
-                        }
+                    // }                   
 
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
@@ -884,6 +841,49 @@ namespace SmartxAPI.Controllers
                         }
                         // Warranty Save Code here
                         //optical prescription saving here
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
+                        }
+                        int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
+                        if (N_InvoiceDetailId <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                        }
+                        else
+                        {
+                            SortedList StockPostingParams = new SortedList();
+                            StockPostingParams.Add("N_CompanyID", N_CompanyID);
+                            StockPostingParams.Add("N_SalesID", N_SalesID);
+                            StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
+                            StockPostingParams.Add("N_DeliveryNoteID", N_DeliveryNoteID);
+                            if (N_DeliveryNoteID == 0)
+                            {
+                                try
+                                {
+                                    dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                                }
+                                catch (Exception ex)
+                                {
+                                    transaction.Rollback();
+                                    if (ex.Message == "50")
+                                        return Ok(_api.Error("Day Closed"));
+                                    else if (ex.Message == "51")
+                                        return Ok(_api.Error("Year Closed"));
+                                    else if (ex.Message == "52")
+                                        return Ok(_api.Error("Year Exists"));
+                                    else if (ex.Message == "53")
+                                        return Ok(_api.Error("Period Closed"));
+                                    else if (ex.Message == "54")
+                                        return Ok(_api.Error("Txn Date"));
+                                    else if (ex.Message == "55")
+                                        return Ok(_api.Error("Quantity exceeds!"));
+                                    else
+                                        return Ok(_api.Error(ex));
+                                }
+                            }
+                        }
 
                         if (N_SaveDraft == 0)
                         {
