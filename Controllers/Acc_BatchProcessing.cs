@@ -13,9 +13,9 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("assetSales")]
+    [Route("batchPosting")]
     [ApiController]
-    public class Ass_AssetSales : ControllerBase
+    public class Acc_BatchProcessing : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Ass_AssetSales(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
+        public Acc_BatchProcessing(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
@@ -126,14 +126,15 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("accounts")]
-        public ActionResult AccountList(int nFnYearID)
+        [HttpGet("transType")]
+        public ActionResult TransactionTypeList(int nCompanyId, int nFnYearID,int nBranchID,bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
+
             string sqlCommandText="SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and X_Type in ('I','E')";
             try
             {
