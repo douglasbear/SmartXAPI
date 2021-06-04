@@ -195,18 +195,18 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable To Save"));
                     }
                     foreach (DataRow var in DetailTable.Rows)
-                    {   
+                    {
                         int i = 0;
-                        if(i>0)
+                        if (i > 0)
                         {
-                            i=i+1;
+                            i = i + 1;
                         }
                         else
                         {
-                            i=0;
+                            i = 0;
 
                         }
-                         
+
                         int paycodeID = 0;
                         int n_empid = myFunctions.getIntVAL(var["n_EmpID"].ToString());
                         object Prj = dLayer.ExecuteScalar("Select N_ProjectID From Pay_Employee Where N_EmpID ='" + n_empid + "' and N_CompanyID=" + nCompanyID, QryParams, connection, transaction);
@@ -269,7 +269,7 @@ namespace SmartxAPI.Controllers
 
                         if (B_isPrePaid)
                         {
-                            //SaveAmortization(nInvoiceID, N_MedicalInsID, paycodeID, n_empid, i, "S", false, myFunctions.getIntVAL(nInvoiceDetailsID.ToString()), MasterTable, DetailTable, connection, transaction);
+                            //SaveAmortization(nInvoiceID, N_MedicalInsID, paycodeID, n_empid, i, "S", false, myFunctions.getIntVAL(var["n_InvoiceDetailsID"].ToString()), MasterTable, DetailTable, connection, transaction);
                         }
                         if (B_isInvoice)
                         {
@@ -317,14 +317,16 @@ namespace SmartxAPI.Controllers
         // {
         //     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
         //     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+        //     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+        //     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+        //     //Datetime dtpInvoiceDate = Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString());
+
         //     SortedList EmpParams = new SortedList();
         //     EmpParams.Add("@nCompanyID", nCompanyID);
         //     bool result = false;
         //     int AmortizationID_Loc = 0;
-        //     //if (_type == "A")
-        //     //    AmortizationID_Loc = N_AmortizationID;
-        //     //else if (_type == "P")
-        //     //    AmortizationID_Loc = N_PrePaymentID;
+        //     DataTable amortizationTable;
+
 
 
 
@@ -336,13 +338,7 @@ namespace SmartxAPI.Controllers
         //         int frquency = 0, payid = 0, frequencyCount = 0, N_CategoryID = 0, N_LedgerID = 0;
         //         double AmtSplit = 0;
 
-        //         //object res = dba.ExecuteSclar("select N_PayCodeID from Prj_ProjectParameters Where N_ProjectID =" + N_ProjectID + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
-        //         //if (res != null)
-        //         //    payid = myFunctions.getIntVAL(res.ToString());
 
-        //         //object res1 = dba.ExecuteSclar("select N_Frequency from Pay_PayMaster  Where N_PayID =" + payid + " and N_CompanyID=" + myCompanyID._CompanyID, "TEXT", new DataTable());
-        //         //if (res1 != null)
-        //         //    frequencyCount = myFunctions.getIntVAL(res1.ToString());
         //         if (_type == "I")
         //         {
         //             if (B_OneTme)
@@ -353,7 +349,7 @@ namespace SmartxAPI.Controllers
         //             }
         //             else
         //             {
-        //                 object res = dLayer.ExecuteScalar("select N_IncomeLedgerID FROM Pay_PayMaster WHERE N_PayID =" + _paycodeid + "  AND N_CompanyID =" + nCompanyID,EmpParams, connection, transaction);
+        //                 object res = dLayer.ExecuteScalar("select N_IncomeLedgerID FROM Pay_PayMaster WHERE N_PayID =" + _paycodeid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
         //                 if (res != null)
         //                     N_LedgerID = myFunctions.getIntVAL(res.ToString());
         //             }
@@ -364,33 +360,10 @@ namespace SmartxAPI.Controllers
         //             object DepID = dLayer.ExecuteScalar("select N_DepartmentID FROM Pay_Employee WHERE N_EmpID =" + _empid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
         //             if (DepID != null)
         //                 DepratmentID = myFunctions.getIntVAL(DepID.ToString());
-        //             object res = dLayer.ExecuteScalar("select dbo.SP_GetPayLedgerIdEmployee(" + nCompanyID + "," + nFnYearID+ "," +nFnYearID+ "," + _paycodeid + ",'Expense')", EmpParams, connection, transaction);
+        //             object res = dLayer.ExecuteScalar("select dbo.SP_GetPayLedgerIdEmployee(" + nCompanyID + "," + nFnYearID + "," + nFnYearID + "," + _paycodeid + ",'Expense')", EmpParams, connection, transaction);
         //             if (res != null)
         //                 N_LedgerID = myFunctions.getIntVAL(res.ToString());
         //         }
-
-        //         //if (_type=="A")
-        //         //{
-        //         //    object res = dba.ExecuteSclar("select N_PrePayScheduleID from Inv_PrePaymentScheduleMaster where N_PrePaymentID =" + _additionid + " and N_FormID =1251 and X_EntryType = 'A' and N_EmpID="+_empid+" and N_CompanyID =" + myCompanyID._CompanyID + " and N_fnyearID =" + myCompanyID._FnYearID, "TEXT", new DataTable());
-        //         //    if (res != null)
-        //         //    {
-        //         //        dba.ExecuteNonQuery("delete from Inv_PrePaymentSchedule where N_PrePayScheduleID in(select N_PrePayScheduleID from Inv_PrePaymentScheduleMaster where N_PrePaymentID =" + _additionid + " and N_FormID =1251 and X_EntryType = 'A' and N_EmpID=" + _empid + " and N_CompanyID =" + myCompanyID._CompanyID + " and N_fnyearID =" + myCompanyID._FnYearID + ")", "TEXT", new DataTable());
-        //         //        dba.ExecuteNonQuery("delete from Inv_PrePaymentScheduleMaster where N_PrePaymentID =" + _additionid + " and N_FormID =1251 and X_EntryType = 'A' and N_EmpID=" + _empid + " and N_CompanyID =" + myCompanyID._CompanyID + " and N_fnyearID =" + myCompanyID._FnYearID, "TEXT", new DataTable());
-        //         //        //dba.DeleteData("Inv_PrePaymentSchedule", "N_PrePayScheduleID", N_AmortizationID.ToString(), "");
-        //         //        //dba.DeleteData("Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", N_AmortizationID.ToString(), "N_CompanyID=" + myCompanyID._CompanyID);
-        //         //    }
-        //         //}
-        //         //else if (_type == "P")
-        //         //{
-        //         //    object res = dba.ExecuteSclar("select N_PrePayScheduleID from Inv_PrePaymentScheduleMaster where N_PrePaymentID =" + _additionid + " and N_FormID =1251 and X_EntryType = 'P' and N_CompanyID =" + myCompanyID._CompanyID + " and N_fnyearID =" + myCompanyID._FnYearID, "TEXT", new DataTable());
-        //         //    if (res != null)
-        //         //    {
-        //         //        dba.ExecuteNonQuery("delete from Inv_PrePaymentSchedule where N_PrePayScheduleID in(select N_PrePayScheduleID from Inv_PrePaymentScheduleMaster where N_PrePaymentID =" + _additionid + " and N_FormID =1251 and X_EntryType = 'P' and N_CompanyID =" + myCompanyID._CompanyID + " and N_fnyearID =" + myCompanyID._FnYearID + ")", "TEXT", new DataTable());
-        //         //        dba.ExecuteNonQuery("delete from Inv_PrePaymentScheduleMaster where N_PrePaymentID =" + _additionid + " and N_FormID =1251 and X_EntryType = 'P' and N_CompanyID =" + myCompanyID._CompanyID + " and N_fnyearID =" + myCompanyID._FnYearID, "TEXT", new DataTable());
-        //         //        //dba.DeleteData("Inv_PrePaymentSchedule", "N_PrePayScheduleID", N_AmortizationID.ToString(), "");
-        //         //        //dba.DeleteData("Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", N_AmortizationID.ToString(), "N_CompanyID=" + myCompanyID._CompanyID);
-        //         //    }
-        //         //}
 
 
         //         double amt = 0;
@@ -415,6 +388,9 @@ namespace SmartxAPI.Controllers
         //         object N_AmortizationDetailsID = 0;
         //         object lobjResult = null;
         //         lobjResult = 0;
+        //         String PrjInv = "Insurance Addition";
+
+        //         string qry = "Select " + nCompanyID + " as N_CompanyID," + nFnYearID + " as N_FnYearID," + _additionid + " as N_PrePaymentID," + nBranchID + " as N_BranchID," + nUserID + " as N_UserID ,'" + PrjInv + "' as  X_Type," + 1251 + " as N_FormID," + N_LedgerID + " as N_LedgerID ," + _paycodeid + " as N_PayID ,'" + _type + "' as  X_EntryType," + _empid + " as N_EmpID," + amt + " as N_InvoiceAmt,'" + MasterTable.Rows[0]["D_Date"] + "' as D_Date," + frquency + " as N_Frequency ," + _DetailID + " as N_InvoiceDetailsID ,'" + N_DependentID + "' as  N_DependentID ";
         //         string FieldList = "N_CompanyID, N_FnYearID, N_PrePaymentID, N_BranchID, N_UserID,X_Type,N_FormID,N_LedgerID,N_PayID,X_EntryType,N_EmpID,N_InvoiceAmt,D_Date,N_Frequency,N_InvoiceDetailsID,N_DependentID";
         //         string FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID + "|" + _additionid + "|" + myCompanyID._BranchID + "|" + myCompanyID._UserID + "|'Insurance Addition'|" + MYG.ReturnFormID(this.Text) + "|" + N_LedgerID + "|" + _paycodeid + "|'" + _type + "'|" + _empid + "|" + amt + "|'" + myFunctions.getDateVAL(dtpInvoiceDate.Value.Date) + "'|" + frquency + "|" + _DetailID + "|" + N_DependentID;
         //         string RefField = "";
