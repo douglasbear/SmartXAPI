@@ -200,6 +200,8 @@ namespace SmartxAPI.Controllers
 
                     string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
                      multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
+                     multiCategory = _api.Format(multiCategory, "multiCategory");
+
 
 
 
@@ -285,13 +287,15 @@ namespace SmartxAPI.Controllers
                 dt.AcceptChanges();
                 multiCategory.AcceptChanges();
                 dt = _api.Format(dt);
-                multiCategory = _api.Format(multiCategory);
+                //multiCategory = _api.Format(multiCategory);
+                
                 DataSet dataSet = new DataSet();
                         dt = _api.Format(dt, "details");
-                        multiCategory = _api.Format(multiCategory, "multiCategory");
+                        //multiCategory = _api.Format(multiCategory, "multiCategory");
+                        dataSet.Tables.Add(multiCategory);
                         Images = _api.Format(Images, "Images");
                         dataSet.Tables.Add(dt);
-                        dataSet.Tables.Add(multiCategory);
+                         
                         dataSet.Tables.Add(Images);
 
 
@@ -395,6 +399,7 @@ namespace SmartxAPI.Controllers
                         LocationList.AcceptChanges();
                         dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
                     }
+                     dLayer.DeleteData("Inv_ItemCategoryDisplayMaster", "N_ItemID", N_ItemID, "", connection, transaction);
                     if (CategoryList.Rows.Count > 0)
                     {
                         foreach (DataRow dRow in CategoryList.Rows)
