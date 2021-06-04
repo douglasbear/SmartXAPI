@@ -433,10 +433,14 @@ namespace SmartxAPI.Controllers
                     if (nEmpID == 0 && xEmpCode != "@Auto")
                     {
                         object N_DocNumber = dLayer.ExecuteScalar("Select 1 from pay_Employee Where X_EmpCode ='" + xEmpCode + "' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        if(N_DocNumber==null)
+                        {
+                            N_DocNumber=0;
+                        }
                         if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Not a valid Employee code"));
+                            return Ok(_api.Error("Employee Code already exist"));
                         }
 
 
@@ -453,7 +457,7 @@ namespace SmartxAPI.Controllers
                         dtMasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
                         X_BtnAction = "INSERT";
                     }
-                    else
+                    else if(nEmpID!=0)
                     {
                         //dLayer.DeleteData("pay_Employee", "n_EmpID", nEmpID, "", connection, transaction);
                         X_BtnAction = "UPDATE";

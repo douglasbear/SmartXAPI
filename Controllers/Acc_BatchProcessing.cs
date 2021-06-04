@@ -13,9 +13,9 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("assetSales")]
+    [Route("batchPosting")]
     [ApiController]
-    public class Ass_AssetSales : ControllerBase
+    public class Acc_BatchProcessing : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int N_FormID;
-        public Ass_AssetSales(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
+        public Acc_BatchProcessing(IApiFunctions api, IDataAccessLayer dl, IMyFunctions fun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
@@ -126,15 +126,23 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("accounts")]
-        public ActionResult AccountList(int nFnYearID)
+        [HttpGet("transType")]
+        public ActionResult TransactionTypeList(int nCompanyId, int nFnYearID,int nBranchID,bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText="SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and X_Type in ('I','E')";
+            Params.Add("@nBranchID",nBranchID);
+
+            string sqlCommandText="";
+
+            if (bAllBranchData)
+                sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID";
+            else
+                sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -332,8 +340,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("details")]
-        public ActionResult AssSalesDetails(string xInvoiceNo,int nBranchId, bool bAllBranchData)
+        [HttpGet("details")]
+        public ActionResult AssSalesDetails(string xDescription,int nFnYearID,int nBranchId, bool bAllBranchData,DateTime dDateFrom,DateTime dDateTo)
         {
             try
             {
@@ -347,6 +355,7 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
+                    string xInvoiceNo = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xInvoiceNo", xInvoiceNo);
@@ -380,40 +389,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("assetDetails")]
-        public ActionResult AssSalesDetails(string N_ItemID)
-        {
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    DataSet dt = new DataSet();
-                    SortedList Params = new SortedList();
-                    DataTable MasterTable = new DataTable();
-
-                    string SQLCmd = "";
-
-                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@N_ItemID", N_ItemID);
-
-                    SQLCmd = "Select * from vw_Ass_AssetItemDisp Where N_Status<>2 and N_CompanyID=@nCompanyID and N_ItemID=@N_ItemID";                    
-
-                    MasterTable = dLayer.ExecuteDataTable(SQLCmd, Params, connection);
-                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-
-                    MasterTable = _api.Format(MasterTable, "AssetDetails");
-
-                    dt.Tables.Add(MasterTable);
-                    return Ok(_api.Success(dt));
-                }
-
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
 
        [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID)

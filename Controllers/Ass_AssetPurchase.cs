@@ -193,14 +193,14 @@ namespace SmartxAPI.Controllers
  
         
         [HttpGet("assetList")]
-        public ActionResult ListAssetName(int nFnYearID)
+        public ActionResult ListAssetName()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText="Select * from Vw_AssetDashboard Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID";
+           // Params.Add("@nCompanyID",nCompanyID);
+           // Params.Add("@nFnYearID",nFnYearID);
+            string sqlCommandText="Select * from Vw_AssetDashboard";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

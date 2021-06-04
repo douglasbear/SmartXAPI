@@ -515,6 +515,7 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID <= 0)
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -563,7 +564,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(ex.Message));
                         }
                     }
                     SortedList VendorParams = new SortedList();
