@@ -10,6 +10,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
 using System.Security.Cryptography;
+using System.Net.Mail;
 
 namespace SmartxAPI.Controllers
 {
@@ -182,7 +183,7 @@ namespace SmartxAPI.Controllers
                             transaction = connection.BeginTransaction();
                             SortedList userParams = new SortedList();
                             userParams.Add("@nClientID", nClientID);
-                            userParams.Add("@nAppID",MasterTable.Rows[0]["n_AppID"].ToString());
+                            userParams.Add("@nAppID", MasterTable.Rows[0]["n_AppID"].ToString());
                             userParams.Add("@xUserID", MasterTable.Rows[0]["x_UserID"].ToString());
                             userParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                             object userCountinOtherOrg = dLayer.ExecuteScalar("SELECT Count(Sec_User.N_CompanyID) as Count FROM Sec_User LEFT OUTER JOIN Acc_Company ON Sec_User.N_CompanyID = Acc_Company.N_CompanyID  where Sec_User.X_UserID=@xUserID and Acc_Company.N_ClientID<>@nClientID", userParams, connection, transaction);
@@ -237,7 +238,7 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error("Unable to invite user - App Url Not Found"));
                                 }
                                 // format -> userid + email + clientid + companyid + companyUserID
-                                string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(MasterTable.Rows[0]["x_UserID"].ToString()) + seperator + myFunctions.EncryptString(nClientID.ToString()) + seperator + myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString()) + seperator + myFunctions.EncryptString(nUserID.ToString());
+                                string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(MasterTable.Rows[0]["x_UserID"].ToString()) + seperator + myFunctions.EncryptString(nClientID.ToString());
 
                                 string EmailBody = "<div style='font-size: 18px;font-weight: 400;width: 600px;margin: 0 auto;color: #2d2f36;font-family: sans-serif;'><span style='font-weight: 500;margin: 56px 0 20px;'><span style='color: #2c6af6;'> "
       + "Smartx Erp"
@@ -288,14 +289,10 @@ namespace SmartxAPI.Controllers
             int globalUserID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[0]));
             string emailID = myFunctions.DecryptString(cred[1]);
             int clientID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[2]));
-            int companyID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[3]));
-            int companyUserID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[4]));
 
             SortedList userParams = new SortedList();
             userParams.Add("@nClientID", clientID);
             userParams.Add("@xUserID", emailID);
-            userParams.Add("@nCompanyID", companyID);
-            userParams.Add("@nCompanyUserID", companyUserID);
             userParams.Add("@nglobalUserID", globalUserID);
 
             using (SqlConnection connection = new SqlConnection(connectionString))
@@ -313,38 +310,133 @@ namespace SmartxAPI.Controllers
                         olivoTxn.Rollback();
                         return Ok(_api.Warning("Invitation Code Expired"));
                     }
-
-                    object companyCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_UserID=@nCompanyUserID and N_CompanyID=@nCompanyID and x_UserID=@xUserID", userParams, connection, transaction);
-                    if (myFunctions.getIntVAL(companyCount.ToString()) == 0 || myFunctions.getIntVAL(companyCount.ToString()) > 1)
-                    {
-                        transaction.Rollback();
-                        olivoTxn.Rollback();
-                        return Ok(_api.Warning("Invitation Code Expired"));
-                    }
-
                     string Pwd = myFunctions.EncryptString(password);
                     userParams.Add("@xPassword", Pwd);
-
-                    int res = dLayer.ExecuteNonQuery("Update Sec_User set X_Password=@xPassword,B_Active=1 where N_UserID=@nCompanyUserID and N_CompanyID=@nCompanyID and x_UserID=@xUserID", userParams, connection, transaction);
-                    if (res != 1)
+                    object companyCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where x_UserID=@xUserID", userParams, connection, transaction);
+                    if (myFunctions.getIntVAL(companyCount.ToString()) > 0)
                     {
-                        transaction.Rollback();
-                        olivoTxn.Rollback();
-                        return Ok(_api.Warning("Invitation Code Expired"));
+                        int res = dLayer.ExecuteNonQuery("Update Sec_User set X_Password=@xPassword,B_Active=1 where x_UserID=@xUserID", userParams, connection, transaction);
+                        if (res == 0)
+                        {
+                            transaction.Rollback();
+                            olivoTxn.Rollback();
+                            return Ok(_api.Warning("Invitation Code Expired"));
+                        }
                     }
-                    res = dLayer.ExecuteNonQuery("Update Users set X_Password=@xPassword,B_InActive=0,B_EmailVerified=1 where N_UserID=@nglobalUserID and N_ClientID=@nClientID and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
-                    if (res != 1)
+
+
+
+                    int res2 = dLayer.ExecuteNonQuery("Update Users set X_Password=@xPassword,B_InActive=0,B_EmailVerified=1 where N_UserID=@nglobalUserID and N_ClientID=@nClientID and X_EmailID=@xUserID", userParams, olivoCon, olivoTxn);
+                    if (res2 != 1)
                     {
                         transaction.Rollback();
                         olivoTxn.Rollback();
                         return Ok(_api.Warning("Invitation Code Expired"));
                     }
                     transaction.Commit();
-                        olivoTxn.Commit();
+                    olivoTxn.Commit();
                 }
             }
 
             return Ok(_api.Success("User Verified , please login to continue"));
+        }
+
+
+
+
+
+        [HttpGet("forgotPassword")]
+        public ActionResult VerifyUser(string emailID)
+        {
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    SortedList userParams = new SortedList();
+                    userParams.Add("@xEmail", emailID);
+
+                    object clientID = dLayer.ExecuteScalar("select N_ClientID from Users where X_EmailID=@xEmail", userParams, olivoCon);
+                    object globalUserID = dLayer.ExecuteScalar("select N_UserID from Users where X_EmailID=@xEmail", userParams, olivoCon);
+                    object userName = dLayer.ExecuteScalar("select X_UserName from Users where X_EmailID=@xEmail", userParams, olivoCon);
+                    userParams.Add("@nClientID", clientID);
+
+                    object appUrl = dLayer.ExecuteScalar("select Top 1 X_AppUrl from ClientApps where N_ClientID=@nClientID ", userParams, olivoCon);
+
+                    if (appUrl == null)
+                    {
+                        return Ok(_api.Error("Unable to request - App Url Not Found"));
+                    }
+                    // format -> userid + email + clientid 
+                    string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(emailID) + seperator + myFunctions.EncryptString(clientID.ToString());
+
+                    string EmailBody = "<div style='font-size: 18px;font-weight: 400;width: 600px;margin: 0 auto;color: #2d2f36;font-family: sans-serif;'><span style='font-weight: 500;margin: 56px 0 20px;'><span style='color: #2c6af6;'> "
++ "Forgot Your Password?"
++ "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
++ "</h1><p style='margin: 0 0 24px;'> That's okay, it happens! Click on the button below to reset your password."
++ "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
+                    string EmailSubject = "Olivo Cloud Solutions - Reset Password";
+
+
+                    string ToMail = emailID.ToString();
+                    object companyemail = "";
+                    object companypassword = "";
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=1", connection);
+                        companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=1", connection);
+                        if (ToMail.ToString() != "")
+                        {
+                            if (companyemail.ToString() != "")
+                            {
+                                object body = null;
+                                body = EmailBody;
+                                if (body != null)
+                                {
+                                    body = body.ToString();
+                                }
+                                else
+                                    body = "";
+
+
+                                string Sender = companyemail.ToString();
+                                EmailBody = body.ToString();
+                                string Subject = EmailSubject;
+
+
+
+                                SmtpClient client = new SmtpClient
+                                {
+                                    Host = "smtp.gmail.com",
+                                    Port = 587,
+                                    EnableSsl = true,
+                                    DeliveryMethod = SmtpDeliveryMethod.Network,
+                                    Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                    Timeout = 10000,
+                                };
+
+                                MailMessage message = new MailMessage();
+                                message.To.Add(ToMail.ToString()); // Add Receiver mail Address  
+                                message.From = new MailAddress(Sender);
+                                message.Subject = Subject;
+                                message.Body = EmailBody;
+
+                                message.IsBodyHtml = true; //HTML email  
+                                client.Send(message);
+
+                            }
+                        }
+                    }
+
+
+                }
+                return Ok(_api.Success("Password Reset Mail Send"));
+            }
+            catch (Exception ex)
+            {
+                return StatusCode(403, _api.Error(ex));
+            }
         }
 
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]

@@ -133,7 +133,8 @@ namespace SmartxAPI.Controllers
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
-                                paramList.Add("@xAppUrl", "http://localhost:3000");
+                                // paramList.Add("@xAppUrl", "http://localhost:3000");
+                                paramList.Add("@xAppUrl", "http://oscpl.smartxerp.com");
                                 paramList.Add("@xDBUri", activeDbUri);
                                 paramList.Add("@nUserLimit", appID);
 

@@ -32,13 +32,22 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
-       
-        [AllowAnonymous]
+
+
         [HttpGet("list")]
-        public ActionResult GetAllApps()
+        public ActionResult GetAllApps(bool showAll)
         {
             DataTable dt = new DataTable();
-            string sqlCommandText = "select * from AppMaster where B_Inactive =0 order by N_AppID";
+            int ClientID = myFunctions.GetClientID(User);
+            string sqlCommandText = "select * from (SELECT AppMaster.*, ClientApps.N_ClientID FROM AppMaster LEFT OUTER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID" +
+                                    " WHERE(AppMaster.B_Inactive = 0) and(ClientApps.N_ClientID =" + ClientID + " )" +
+                                    " Union all" +
+                                    " SELECT *, null as N_ClientID FROM AppMaster WHERE N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a order by N_Order";
+
+            if (showAll == false)
+            {
+                sqlCommandText = "SELECT AppMaster.*,ClientApps.N_ClientID FROM AppMaster INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 order by AppMaster.N_Order";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
@@ -64,35 +73,35 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("login")]
-        public ActionResult AutoLogin(int appID,int nCompanyID)
+        public ActionResult AutoLogin(int appID, int nCompanyID)
         {
             DataTable dt = new DataTable();
-                    SortedList res=new SortedList();
+            SortedList res = new SortedList();
             SortedList appParams = new SortedList();
-            appParams.Add("@nClientID",myFunctions.GetClientID(User));
-            appParams.Add("@nAppID",appID);
+            appParams.Add("@nClientID", myFunctions.GetClientID(User));
+            appParams.Add("@nAppID", appID);
             string sqlCommandText = "select X_DBUri,X_AppUrl from ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText,appParams, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, appParams, connection);
                 }
                 if (dt.Rows.Count == 0)
                 {
                     // App not yet registerd...
-                    res.Add("AppStatus","NotRegistered");
-                    res.Add("AppID",appID);
+                    res.Add("AppStatus", "NotRegistered");
+                    res.Add("AppID", appID);
                 }
                 else
                 {
-                    res.Add("AppStatus","Registered");
-                    res.Add("AppID",appID);
+                    res.Add("AppStatus", "Registered");
+                    res.Add("AppID", appID);
 
 
                 }
-                    return Ok(_api.Success(res));
+                return Ok(_api.Success(res));
 
             }
             catch (Exception e)
@@ -101,5 +110,5 @@ namespace SmartxAPI.Controllers
             }
 
         }
-    }       
+    }
 }
