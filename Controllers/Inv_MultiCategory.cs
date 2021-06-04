@@ -259,7 +259,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=@nCategoryID and N_CompanyID=@nCompanyID ", QueryParams, connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where CategoryDisplayID=@nCategoryDisplayID and N_CompanyID=@nCompanyID ", QueryParams, connection);
                     if (Objcount != null)
                     {
                         if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
