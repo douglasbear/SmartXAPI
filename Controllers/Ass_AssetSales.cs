@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
                         SalesParams.Add("@N_AssetInventoryID",N_AssetInventoryID);
                         SalesParams.Add("@nCompanyID",nCompanyID);
                         SalesParams.Add("@nLocationID",nLocationID);
-                        string sqlCommandText="select N_CompanyID,N_FnYearID,X_InvoiceNo AS X_ReceiptNo,D_InvoiceDate AS D_SalesDate,D_EntryDate,N_InvoiceAmt AS N_BillAmt,N_InvoiceAmt AS N_BillAmtF,N_DiscountAmt,N_DiscountAmt AS N_DiscountAmtf,N_CashReceived,N_CashReceived AS N_CashReceivedf,N_UserID,'ASSET SALES' AS X_TransType,4 AS N_SalesType,N_AssetInventoryID AS N_SalesRefID,N_BranchID,@nLocationID AS N_LocationID,N_CustomerID AS N_CustomerId from Ass_SalesMaster where N_CompanyID=@nCompanyID and N_AssetInventoryID=@N_AssetInventoryID";
+                        string sqlCommandText="select N_CompanyID,N_FnYearID,0 As N_SalesId,X_InvoiceNo AS X_ReceiptNo,D_InvoiceDate AS D_SalesDate,D_EntryDate,N_InvoiceAmt AS N_BillAmt,N_InvoiceAmt AS N_BillAmtF,N_DiscountAmt,N_DiscountAmt AS N_DiscountAmtf,N_CashReceived,N_CashReceived AS N_CashReceivedf,N_UserID,'ASSET SALES' AS X_TransType,4 AS N_SalesType,N_AssetInventoryID AS N_SalesRefID,N_BranchID,@nLocationID AS N_LocationID,N_CustomerID AS N_CustomerId from Ass_SalesMaster where N_CompanyID=@nCompanyID and N_AssetInventoryID=@N_AssetInventoryID";
 
                         SalesTable = dLayer.ExecuteDataTable(sqlCommandText, SalesParams, connection,transaction);
                         SalesTable = _api.Format(SalesTable, "Sales");
@@ -258,11 +258,17 @@ namespace SmartxAPI.Controllers
                             SalesAmtParams.Add("@nCompanyID",nCompanyID);
                             SalesAmtParams.Add("@nSChrgAmt",N_SChrgAmt);
                             SalesAmtParams.Add("@nServiceCharge",N_ServiceCharge);
-                            string sqlAmtcmdText="select N_CompanyID,N_BranchID,N_SalesId,N_CustomerID,N_BillAmt AS N_Amount,N_BillAmtF AS N_AmountF,@nSChrgAmt AS N_CommissionAmt,@nSChrgAmt AS N_CommissionAmtF,@nServiceCharge AS N_CommissionPer from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesID=@SalesID";
+                            string sqlAmtcmdText="select N_CompanyID,0 AS ,N_SalesAmountID,N_BranchID,N_SalesId,N_CustomerID,N_BillAmt AS N_Amount,N_BillAmtF AS N_AmountF,@nSChrgAmt AS N_CommissionAmt,@nSChrgAmt AS N_CommissionAmtF,@nServiceCharge AS N_CommissionPer from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesID=@SalesID";
 
                             SalesAmountTable = dLayer.ExecuteDataTable(sqlAmtcmdText, SalesAmtParams, connection);
                             SalesAmountTable = _api.Format(SalesAmountTable, "SalesAmt");
 
+                            int SalesAmtID=dLayer.SaveData("Inv_SaleAmountDetails",",N_SalesAmountID ",SalesAmountTable,connection,transaction); 
+                            if(SalesAmtID<=0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Error"));
+                            }
                         }
                     }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)

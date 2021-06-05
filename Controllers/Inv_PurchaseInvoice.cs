@@ -518,7 +518,9 @@ namespace SmartxAPI.Controllers
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
+                        int UnitID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" and N_CompanyID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" and X_ItemUnit='"+DetailTable.Rows[j]["X_ItemUnit"].ToString()+"'", connection, transaction).ToString());
                         DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
+                        DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)

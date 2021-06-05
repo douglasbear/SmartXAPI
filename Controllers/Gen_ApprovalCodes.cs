@@ -66,13 +66,30 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("userlist")]
-        public ActionResult GetUserlist(int nCompanyId)
+        public ActionResult GetUserlist(int nCompanyId,int nCategoryID,int nAnyUserUsed)
         {
-            DataTable dt = new DataTable();
+            DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
-            //int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Sec_User where N_CompanyID=@p1";
+
+            string sqlCommandText = "";
+            
+            if(nAnyUserUsed==0)
+            {
+                if(nCategoryID!=0)
+                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
+                else
+                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -22 and B_Active=1 and N_UserCategoryID<>1";
+            }
+            else
+            {
+                if(nCategoryID!=0)
+                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and (N_UserCategoryID=@p2 OR N_UserCategoryID<= -22) and B_Active=1 and N_UserCategoryID<>1";
+                else
+                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID <>-11 and B_Active=1 and N_UserCategoryID<>1";
+            }
+
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nCategoryID);
 
 
             try

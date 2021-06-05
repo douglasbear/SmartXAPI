@@ -30,7 +30,7 @@ namespace SmartxAPI.Controllers
             myFunctions = fun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 404;
+            N_FormID = 152;
         }
 
 
@@ -127,29 +127,31 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("transType")]
-        public ActionResult TransactionTypeList(int nCompanyId, int nFnYearID,int nBranchID,bool bAllBranchData)
+        public ActionResult TransactionTypeList(int nCompanyId, int nFnYearID,int nBranchID,bool bAllBranchData,int FormID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
+            Params.Add("@nBranchID",nBranchID);
 
-            string sqlCommandText="SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and X_Type in ('I','E')";
+            string sqlCommandText="";
 
-            // if (myCompanyID._B_AllBranchData == true)
-            // {
-            //         dba.FillCombo(ref cmbTransActionType, "vw_BatchPosting_Disp", "X_Description", "N_CompanyID =" + myCompanyID._CompanyID + "and X_ID<>'OB' And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID, "X_Description", "ASC");
-            // }
-            // else
-            // {
-            //     if (myCompanyID._LanguageID == 1)
-            //         dba.FillCombo(ref cmbTransActionType, "vw_BatchPosting_Disp", "X_Description", "N_CompanyID =" + myCompanyID._CompanyID + " and X_ID ='OB' And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID + " and N_BranchID=" + myCompanyID._BranchID, "X_Description", "ASC");
-            //    // dba.FillCombo(ref cmbTransActionType, "Acc_VoucherMaster", "X_EntryFrom", "N_CompanyID =" + myCompanyID._CompanyID + " And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID + " and N_BranchID=" + myCompanyID._BranchID, "X_TransType", "ASC");
-            //     else
-            //         dba.FillCombo(ref cmbTransActionType, "vw_BatchPosting_Disp", "X_Description_Ar", "N_CompanyID =" + myCompanyID._CompanyID + " and X_ID<>'OB' And B_IsAccPosted=0 and N_FnYearID=" + myCompanyID._FnYearID + " and N_BranchID=" + myCompanyID._BranchID, "X_Description_Ar", "ASC");
-            // }
-
+            if(FormID==152)
+            {
+                if (bAllBranchData)
+                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID";
+                else
+                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+            }
+            else
+            {
+                if (bAllBranchData)
+                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID And B_IsAccPosted=1 and N_FnYearID=@nFnYearID";
+                else
+                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID And B_IsAccPosted=1 and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+            }
 
             try
             {
@@ -348,44 +350,104 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("details")]
-        public ActionResult AssSalesDetails(string xInvoiceNo,int nBranchId, bool bAllBranchData)
+        [HttpGet("details")]
+        public ActionResult AssSalesDetails(string xDescription,int nFnYearID,int nBranchId, bool bAllBranchData,DateTime dDateFrom,DateTime dDateTo,int flag,int FormID,string xRefNo)
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction=connection.BeginTransaction();
                     DataSet dt = new DataSet();
                     SortedList Params = new SortedList();
                     DataTable MasterTable = new DataTable();
-                    DataTable DetailTable = new DataTable();
 
                     string Mastersql = "";
-                    string DetailSql = "";
+                    string X_Trans = "";
+                    if(xRefNo==null)xRefNo="";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("@xInvoiceNo", xInvoiceNo);
+                    Params.Add("@nFnYearID", nFnYearID);
                     Params.Add("@nBranchId", nBranchId);
+                    Params.Add("@flag", flag);
+                    Params.Add("@dDateFrom", dDateFrom);
+                    Params.Add("@dDateTo", dDateTo);
+                    //Params.Add("@xRefNo", xRefNo);
+           
+                    object obj1 = dLayer.ExecuteScalar("Select X_ID from Acc_VoucherTypes where (X_Description='" + xDescription + "' or X_Description_Ar='" + xDescription + "')", connection, transaction);
+                    if (obj1 != null)
+                        X_Trans = obj1.ToString();
 
-                    if (bAllBranchData)
-                        Mastersql = "Select * from vw_Ass_SalesMaster_Disp Where N_CompanyID=@nCompanyID and X_InvoiceNo=@xInvoiceNo";
-                     else
-                        Mastersql = "Select * from vw_Ass_SalesMaster_Disp Where N_CompanyID=@nCompanyID and X_InvoiceNo=@xInvoiceNo and N_BranchID=@nBranchId";
+                    Params.Add("@X_Trans", X_Trans);
 
-                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    if(FormID==152)
+                    {
+                        if (bAllBranchData)
+                            Mastersql = "SP_Acc_BatchProcessing_Disp @flag,@nCompanyID,@nFnYearID,@X_Trans,@dDateFrom,@dDateTo,0";
+                        else
+                            Mastersql = "SP_Acc_BatchProcessing_Disp @flag,@nCompanyID,@nFnYearID,@X_Trans,@dDateFrom,@dDateTo,@nBranchId";
+                    }
+                    else
+                    {
+                        if(flag==0)
+                        {
+                            if (bAllBranchData)
+                                Mastersql = "Select ROW_NUMBER() OVER (ORDER BY D_voucherDate) as 'S/N', N_VoucherID,X_TransType,X_VoucherNo As [Voucher No],Replace(Convert(Varchar(11),D_VoucherDate,106),' ','-') AS [Voucher Date],X_Remarks as [Remarks],X_ReferenceNo As [Reference No], " +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " Else (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount >0)" +                      
+                                            " END As [Debit]," +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " else -1*(Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount <0)" +                                              
+                                            " END As [Credit], CONVERT(bit,0) As [Select] from Acc_VoucherMaster"+
+                                            " Where Acc_VoucherMaster.B_IsAccPosted = 1 and Acc_VoucherMaster.N_CompanyID= @nCompanyID and Acc_VoucherMaster.N_FnYearID = @nFnYearID and Acc_VoucherMaster.X_TransType=@X_Trans And X_ReferenceNo like '%"+xRefNo+"%' Order By Acc_VoucherMaster.D_VoucherDate";
+                            else
+                                Mastersql = "Select ROW_NUMBER() OVER (ORDER BY D_voucherDate) as 'S/N', N_VoucherID,X_TransType,X_VoucherNo As [Voucher No],Replace(Convert(Varchar(11),D_VoucherDate,106),' ','-') AS [Voucher Date],X_Remarks as [Remarks],X_ReferenceNo As [Reference No], " +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " Else (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount >0)" +                                              
+                                            " END As [Debit]," +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " else -1*(Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount <0)" +        
+                                            " END As [Credit], CONVERT(bit,0) As [Select] from Acc_VoucherMaster"+
+                                            " Where Acc_VoucherMaster.B_IsAccPosted = 1 and Acc_VoucherMaster.N_CompanyID= @nCompanyID and Acc_VoucherMaster.N_FnYearID = @nFnYearID and Acc_VoucherMaster.X_TransType=@X_Trans And X_ReferenceNo like '%"+xRefNo+"%' and N_BranchID=@nBranchId  Order By Acc_VoucherMaster.D_VoucherDate";
+                        }
+                        else
+                        {
+                            if (bAllBranchData)
+                                Mastersql = "Select ROW_NUMBER() OVER (ORDER BY D_voucherDate) as 'S/N', N_VoucherID,X_TransType,X_VoucherNo As [Voucher No],Replace(Convert(Varchar(11),D_VoucherDate,106),' ','-') AS [Voucher Date],X_Remarks as [Remarks],X_ReferenceNo As [Reference No], " +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " Else (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount >0)" +                                               
+                                            " END As [Debit]," +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            "Else -1*(Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount <0)" +                                                   
+                                            " END As [Credit], CONVERT(bit,0) As [Select] from Acc_VoucherMaster"+
+                                            " Where Acc_VoucherMaster.B_IsAccPosted = 1 and Acc_VoucherMaster.N_CompanyID= @nCompanyID and Acc_VoucherMaster.N_FnYearID = @nFnYearID and Convert(Varchar(11),D_VoucherDate,23) Between '"+dDateFrom+"' and '"+@dDateTo+"' and Acc_VoucherMaster.X_TransType=@X_Trans And X_ReferenceNo like '%" + xRefNo + "%' Order By Acc_VoucherMaster.D_VoucherDate ";
+                            else
+                                Mastersql = "Select ROW_NUMBER() OVER (ORDER BY D_voucherDate) as 'S/N', N_VoucherID,X_TransType,X_VoucherNo As [Voucher No],Replace(Convert(Varchar(11),D_VoucherDate,106),' ','-') AS [Voucher Date],X_Remarks as [Remarks],X_ReferenceNo As [Reference No], " +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " Else (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount >0)" +                                               
+                                            " END As [Debit]," +
+                                            " Case X_TransType When 'PV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            " When 'RV' then (Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID)" +
+                                            "Else -1*(Select SUM(N_Amount) FRom Acc_VoucherMaster_Details Where N_VoucherID = Acc_VoucherMaster.N_VoucherID and N_Amount <0)" +                                                   
+                                            " END As [Credit], CONVERT(bit,0) As [Select] from Acc_VoucherMaster"+
+                                            " Where Acc_VoucherMaster.B_IsAccPosted = 1 and Acc_VoucherMaster.N_CompanyID= @nCompanyID and Acc_VoucherMaster.N_FnYearID = @nFnYearID and Convert(Varchar(11),D_VoucherDate,23) Between '"+dDateFrom+"' and '"+@dDateTo+"' and Acc_VoucherMaster.X_TransType=@X_Trans And X_ReferenceNo like '%" + xRefNo + "%' and N_BranchID=@nBranchId Order By Acc_VoucherMaster.D_VoucherDate ";
+                        }
+                    }
+
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection,transaction);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int N_AssetInventoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AssetInventoryID"].ToString());
-                    Params.Add("@N_AssetInventoryID", N_AssetInventoryID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
 
-                    DetailSql = "Select *  from vw_Ass_SalesDetails_Disp Where N_CompanyID=@nCompanyID and N_AssetInventoryID=@N_AssetInventoryID";
-
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);
-                    dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
                 }
 
