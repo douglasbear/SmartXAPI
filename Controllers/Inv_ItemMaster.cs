@@ -179,6 +179,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetItemDetails(string xItemCode, int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
+            DataTable multiCategory = new DataTable();
             DataTable dt_LocStock = new DataTable();
             DataTable Images = new DataTable();
             SortedList Params = new SortedList();
@@ -196,6 +197,13 @@ namespace SmartxAPI.Controllers
                     string _sqlQuery = "SELECT * from vw_InvItemMaster where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
+                     multiCategory = _api.Format(multiCategory, "multiCategory");
+
+
+
 
                     if (dt.Rows.Count == 0)
                     {
@@ -277,11 +285,17 @@ namespace SmartxAPI.Controllers
                     }
                 }
                 dt.AcceptChanges();
+                // multiCategory.AcceptChanges();
                 dt = _api.Format(dt);
+                //multiCategory = _api.Format(multiCategory);
+                
                 DataSet dataSet = new DataSet();
                         dt = _api.Format(dt, "details");
+                        //multiCategory = _api.Format(multiCategory, "multiCategory");
+                        dataSet.Tables.Add(multiCategory);
                         Images = _api.Format(Images, "Images");
                         dataSet.Tables.Add(dt);
+                         
                         dataSet.Tables.Add(Images);
 
 
@@ -357,16 +371,66 @@ namespace SmartxAPI.Controllers
                     int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
                     dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
 
+                    int N_SalesUnitID=0,N_PurchaseUnitID=0,N_AddUnitID1=0,N_AddUnitID2=0;
+
                     foreach (DataRow var in SalesUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
                     foreach (DataRow var in PurchaseUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
                     foreach (DataRow var in AddUnit1.Rows) var["n_BaseUnitID"] = BaseUnitID;
                     foreach (DataRow var in AddUnit2.Rows) var["n_BaseUnitID"] = BaseUnitID;
 
-                    int N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
-                    int N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
-                    int N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
-                    int N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
+                    string xBaseUnit=StockUnit.Rows[0]["X_ItemUnit"].ToString();
 
+                    //Purchase Unit
+                    if(PurchaseUnit.Rows.Count>0)
+                    {
+                        if(PurchaseUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                            N_PurchaseUnitID=BaseUnitID;
+                        else
+                            N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
+                    }
+                    else
+                    {
+                        N_PurchaseUnitID=BaseUnitID;
+                    }
+
+                    //Sales Unit
+                    if(SalesUnit.Rows.Count>0)
+                    {
+                        if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                            N_SalesUnitID=BaseUnitID;
+                        else if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                            N_SalesUnitID=N_PurchaseUnitID;
+                        else                      
+                            N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
+                    }
+                    else
+                        N_SalesUnitID=BaseUnitID;
+
+                    //Additional Unit1
+                    if(AddUnit1.Rows.Count>0)
+                    {
+                        if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                            N_AddUnitID1=BaseUnitID;
+                        else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                            N_AddUnitID1=N_PurchaseUnitID;
+                        else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
+                            N_AddUnitID1=N_SalesUnitID;
+                        else
+                            N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
+                    }
+                    
+                    //Additional Unit2
+                    if(AddUnit2.Rows.Count>0)
+                    {
+                        if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                            N_AddUnitID2=BaseUnitID;
+                        else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                            N_AddUnitID2=N_PurchaseUnitID;
+                        else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
+                            N_AddUnitID2=N_SalesUnitID;
+                        else
+                            N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
+                    }
 
                     dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID=" + N_PurchaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
                     if (BaseUnitID <= 0)
@@ -385,6 +449,7 @@ namespace SmartxAPI.Controllers
                         LocationList.AcceptChanges();
                         dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
                     }
+                     dLayer.DeleteData("Inv_ItemCategoryDisplayMaster", "N_ItemID", N_ItemID, "", connection, transaction);
                     if (CategoryList.Rows.Count > 0)
                     {
                         foreach (DataRow dRow in CategoryList.Rows)
@@ -399,7 +464,7 @@ namespace SmartxAPI.Controllers
                     string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
                     DocumentPath = DocumentPath + "DisplayImages";
                     System.IO.Directory.CreateDirectory(DocumentPath);
-
+                    dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
 
                     if (POS.Rows.Count > 0)
                     {
@@ -407,36 +472,39 @@ namespace SmartxAPI.Controllers
                         POS.Columns.Add("X_ImageLocation", typeof(System.String));
                         POS.Columns.Add("N_ImageID", typeof(System.Int32));
 
-
+                        int i=1;
                         foreach (DataRow dRow in POS.Rows)
                         {
-                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
-                            dRow["X_ImageName"] = ItemCode + ".jpg";
+                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-POS-"+i);
+                            dRow["X_ImageName"] = ItemCode+"-POS-"+i + ".jpg";
                             dRow["X_ImageLocation"] = DocumentPath;
                             dRow["N_ItemID"] = N_ItemID;
+                            i++;
 
                         }
                         POS.Columns.Remove("I_Image");
                         dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
 
                     }
-                    // if (ECOM.Rows.Count > 0)
-                    // {
-                    //     ECOM.Columns.Add("X_ImageName", typeof(System.String));
-                    //     ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
-                    //     ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
-                    //     foreach (DataRow dRow in ECOM.Rows)
-                    //     {
-                    //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
-                    //         dRow["X_ImageName"] = ItemCode + ".jpg";
-                    //         dRow["X_ImageLocation"] = DocumentPath;
-                    //         dRow["N_ItemID"] = N_ItemID;
+                    if (ECOM.Rows.Count > 0)
+                    {
+                        ECOM.Columns.Add("X_ImageName", typeof(System.String));
+                        ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
+                        ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
+                        int j=1;
+                        foreach (DataRow dRow in ECOM.Rows)
+                        {
+                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-ECOM-"+j);
+                            dRow["X_ImageName"] = ItemCode+"-ECOM-"+j + ".jpg";
+                            dRow["X_ImageLocation"] = DocumentPath;
+                            dRow["N_ItemID"] = N_ItemID;
+                            j++;
 
-                    //     }
-                    //     ECOM.Columns.Remove("I_Image");
-                    //     dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
+                        }
+                        ECOM.Columns.Remove("I_Image");
+                        dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
 
-                    // }
+                    }
 
                     transaction.Commit();
                 }

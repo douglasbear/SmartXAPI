@@ -380,6 +380,40 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("assetDetails")]
+        public ActionResult AssSalesDetails(string N_ItemID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList Params = new SortedList();
+                    DataTable MasterTable = new DataTable();
+
+                    string SQLCmd = "";
+
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@N_ItemID", N_ItemID);
+
+                    SQLCmd = "Select * from vw_Ass_AssetItemDisp Where N_Status<>2 and N_CompanyID=@nCompanyID and N_ItemID=@N_ItemID";                    
+
+                    MasterTable = dLayer.ExecuteDataTable(SQLCmd, Params, connection);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+                    MasterTable = _api.Format(MasterTable, "AssetDetails");
+
+                    dt.Tables.Add(MasterTable);
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
        [HttpDelete("delete")]
         public ActionResult DeleteData(int nCompanyID,int N_AssetInventoryID)

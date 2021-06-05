@@ -134,8 +134,15 @@ namespace SmartxAPI.Controllers
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
+            Params.Add("@nBranchID",nBranchID);
 
-            string sqlCommandText="SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and X_Type in ('I','E')";
+            string sqlCommandText="";
+
+            if (bAllBranchData)
+                sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID";
+            else
+                sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -333,8 +340,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("details")]
-        public ActionResult AssSalesDetails(string xInvoiceNo,int nBranchId, bool bAllBranchData)
+        [HttpGet("details")]
+        public ActionResult AssSalesDetails(string xDescription,int nFnYearID,int nBranchId, bool bAllBranchData,DateTime dDateFrom,DateTime dDateTo)
         {
             try
             {
@@ -348,6 +355,7 @@ namespace SmartxAPI.Controllers
 
                     string Mastersql = "";
                     string DetailSql = "";
+                    string xInvoiceNo = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xInvoiceNo", xInvoiceNo);
