@@ -430,7 +430,7 @@ namespace SmartxAPI.Controllers
                     //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
                     //         dRow["X_ImageName"] = ItemCode + ".jpg";
                     //         dRow["X_ImageLocation"] = DocumentPath;
-                   //          dRow["N_ItemID"] = N_ItemId;
+                    //         dRow["N_ItemID"] = N_ItemID;
 
                     //     }
                     //     ECOM.Columns.Remove("I_Image");
