@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nCategoryID)
+        public ActionResult DeleteData(int nCategoryDisplayID)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -255,16 +255,16 @@ namespace SmartxAPI.Controllers
             {
                 SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nCompanyID", nCompanyID);
-                QueryParams.Add("@nCategoryDisplayID", nCategoryID);
+                QueryParams.Add("@nCategoryDisplayID", nCategoryDisplayID);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=@nCategoryID and N_CompanyID=@nCompanyID ", QueryParams, connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID="+nCategoryDisplayID+" and N_CompanyID="+nCompanyID+" ", QueryParams, connection);
                     if (Objcount != null)
                     {
                         if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
                         {
-                            Results = dLayer.DeleteData("Inv_ItemCategoryDisplay", "N_CategoryDisplayID", nCategoryID, "N_CompanyID=" + nCompanyID + "", connection);
+                            Results = dLayer.DeleteData("Inv_ItemCategoryDisplay", "N_CategoryDisplayID", nCategoryDisplayID, "N_CompanyID=" + nCompanyID + "", connection);
                         }
                         else
                         {
