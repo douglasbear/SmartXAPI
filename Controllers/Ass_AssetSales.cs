@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
             TransactionTable = ds.Tables["transaction"];
-            AssMasterTable = ds.Tables["assMaster"];
+           
             SortedList Params = new SortedList();
             // Auto Gen
             try
@@ -234,7 +234,7 @@ namespace SmartxAPI.Controllers
                         SalesParams.Add("@nLocationID",nLocationID);
                         string sqlCommandText="select N_CompanyID,N_FnYearID,X_InvoiceNo AS X_ReceiptNo,D_InvoiceDate AS D_SalesDate,D_EntryDate,N_InvoiceAmt AS N_BillAmt,N_InvoiceAmt AS N_BillAmtF,N_DiscountAmt,N_DiscountAmt AS N_DiscountAmtf,N_CashReceived,N_CashReceived AS N_CashReceivedf,N_UserID,'ASSET SALES' AS X_TransType,4 AS N_SalesType,N_AssetInventoryID AS N_SalesRefID,N_BranchID,@nLocationID AS N_LocationID,N_CustomerID AS N_CustomerId from Ass_SalesMaster where N_CompanyID=@nCompanyID and N_AssetInventoryID=@N_AssetInventoryID";
 
-                        SalesTable = dLayer.ExecuteDataTable(sqlCommandText, SalesParams, connection);
+                        SalesTable = dLayer.ExecuteDataTable(sqlCommandText, SalesParams, connection,transaction);
                         SalesTable = _api.Format(SalesTable, "Sales");
 
                         SalesID=dLayer.SaveData("Inv_Sales","N_SalesId",SalesTable,connection,transaction); 
