@@ -464,6 +464,7 @@ namespace SmartxAPI.Controllers
                     string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
                     DocumentPath = DocumentPath + "DisplayImages";
                     System.IO.Directory.CreateDirectory(DocumentPath);
+                    dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
 
                     if (POS.Rows.Count > 0)
                     {
