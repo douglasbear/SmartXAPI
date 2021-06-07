@@ -478,22 +478,16 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Sp_UserList";
-            Params.Add("N_CompanyID", nCompanyId);
+            int  nCompanyId=myFunctions.GetCompanyID(User);
+            Params.Add("@xUserID",xUser);
+            Params.Add("@nCompanyID",nCompanyId);
+            string sqlCommandText = "select * from vw_UserList where x_UserID=@xUserID and N_CompanyID=@nCompanyID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
-                }
-                foreach (DataRow dtRow in dt.Rows)
-                {
-                    if (dtRow["x_UserID"].ToString() != xUser)
-                    {
-                        dtRow.Delete();
-                    }
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
 
                 dt = _api.Format(dt);
