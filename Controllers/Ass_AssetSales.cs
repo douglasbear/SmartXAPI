@@ -258,12 +258,12 @@ namespace SmartxAPI.Controllers
                             SalesAmtParams.Add("@nCompanyID",nCompanyID);
                             SalesAmtParams.Add("@nSChrgAmt",N_SChrgAmt);
                             SalesAmtParams.Add("@nServiceCharge",N_ServiceCharge);
-                            string sqlAmtcmdText="select N_CompanyID,0 AS ,N_SalesAmountID,N_BranchID,N_SalesId,N_CustomerID,N_BillAmt AS N_Amount,N_BillAmtF AS N_AmountF,@nSChrgAmt AS N_CommissionAmt,@nSChrgAmt AS N_CommissionAmtF,@nServiceCharge AS N_CommissionPer from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesID=@SalesID";
+                            string sqlAmtcmdText="select N_CompanyID,0 AS N_SalesAmountID,N_BranchID,N_SalesId,N_CustomerID,N_BillAmt AS N_Amount,N_BillAmtF AS N_AmountF,@nSChrgAmt AS N_CommissionAmt,@nSChrgAmt AS N_CommissionAmtF,@nServiceCharge AS N_CommissionPer from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesID=@SalesID";
 
                             SalesAmountTable = dLayer.ExecuteDataTable(sqlAmtcmdText, SalesAmtParams, connection);
                             SalesAmountTable = _api.Format(SalesAmountTable, "SalesAmt");
 
-                            int SalesAmtID=dLayer.SaveData("Inv_SaleAmountDetails",",N_SalesAmountID ",SalesAmountTable,connection,transaction); 
+                            int SalesAmtID=dLayer.SaveData("Inv_SaleAmountDetails","N_SalesAmountID",SalesAmountTable,connection,transaction); 
                             if(SalesAmtID<=0)
                             {
                                 transaction.Rollback();
