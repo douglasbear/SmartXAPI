@@ -314,10 +314,11 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList;
+                DataTable MasterTable = new DataTable();
+                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList,VariantList;
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
-                MasterTable = ds.Tables["master"];
+                MasterTableNew = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
                 SalesUnit = ds.Tables["salesUnit"];
@@ -326,6 +327,7 @@ namespace SmartxAPI.Controllers
                 AddUnit2 = ds.Tables["addUnit2"];
                 LocationList = ds.Tables["warehouseDetails"];
                 CategoryList = ds.Tables["categoryListDetails"];
+                VariantList = ds.Tables["variantList"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID=0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -335,174 +337,196 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string ItemCode = "";
-                    ItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
+                    int ItemType = 0;
+                    ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
+                    ItemType =myFunctions.getIntVAL( MasterTableNew.Rows[0]["N_CLassID"].ToString());
+
                     if (ItemCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", MasterTable.Rows[0]["N_CompanyId"].ToString());
+                        Params.Add("N_CompanyID", MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID", GeneralTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID", 53);
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
-                        MasterTable.Rows[0]["X_ItemCode"] = ItemCode;
+                        MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
                     }
 
-                    string image = MasterTable.Rows[0]["i_Image"].ToString();
-                    Byte[] imageBitmap = new Byte[image.Length];
-                    imageBitmap = Convert.FromBase64String(image);
-                    MasterTable.Columns.Remove("i_Image");
-
-                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemCode='" + ItemCode + "'";
-                    N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
-                    if (N_ItemID <= 0)
+                    MasterTable = MasterTableNew.Clone();
+                    if(VariantList.Rows.Count>0)
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }
-
-                    if (image.Length > 0)
-                        dLayer.SaveImage("Inv_ItemMaster", "i_Image", imageBitmap, "N_ItemID", N_ItemID, connection, transaction);
-
-                    foreach (DataRow var in StockUnit.Rows) var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in SalesUnit.Rows) var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in PurchaseUnit.Rows) var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in AddUnit1.Rows) var["n_ItemID"] = N_ItemID;
-                    foreach (DataRow var in AddUnit2.Rows) var["n_ItemID"] = N_ItemID;
-
-                    int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
-                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
-
-                    int N_SalesUnitID=0,N_PurchaseUnitID=0,N_AddUnitID1=0,N_AddUnitID2=0;
-
-                    foreach (DataRow var in SalesUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
-                    foreach (DataRow var in PurchaseUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
-                    foreach (DataRow var in AddUnit1.Rows) var["n_BaseUnitID"] = BaseUnitID;
-                    foreach (DataRow var in AddUnit2.Rows) var["n_BaseUnitID"] = BaseUnitID;
-
-                    string xBaseUnit=StockUnit.Rows[0]["X_ItemUnit"].ToString();
-
-                    //Purchase Unit
-                    if(PurchaseUnit.Rows.Count>0)
-                    {
-                        if(PurchaseUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                            N_PurchaseUnitID=BaseUnitID;
-                        else
-                            N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
-                    }
-                    else
-                    {
-                        N_PurchaseUnitID=BaseUnitID;
-                    }
-
-                    //Sales Unit
-                    if(SalesUnit.Rows.Count>0)
-                    {
-                        if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                            N_SalesUnitID=BaseUnitID;
-                        else if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
-                            N_SalesUnitID=N_PurchaseUnitID;
-                        else                      
-                            N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
-                    }
-                    else
-                        N_SalesUnitID=BaseUnitID;
-
-                    //Additional Unit1
-                    if(AddUnit1.Rows.Count>0)
-                    {
-                        if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                            N_AddUnitID1=BaseUnitID;
-                        else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
-                            N_AddUnitID1=N_PurchaseUnitID;
-                        else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
-                            N_AddUnitID1=N_SalesUnitID;
-                        else
-                            N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
-                    }
-                    
-                    //Additional Unit2
-                    if(AddUnit2.Rows.Count>0)
-                    {
-                        if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                            N_AddUnitID2=BaseUnitID;
-                        else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
-                            N_AddUnitID2=N_PurchaseUnitID;
-                        else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
-                            N_AddUnitID2=N_SalesUnitID;
-                        else
-                            N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
-                    }
-
-                    dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID=" + N_PurchaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
-                    if (BaseUnitID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }
-
-                    dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
-                    if (LocationList.Rows.Count > 0)
-                    {
-                        foreach (DataRow dRow in LocationList.Rows)
-                        {
-                            dRow["N_ItemID"] = N_ItemID;
-                        }
-                        LocationList.AcceptChanges();
-                        dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
-                    }
-                     dLayer.DeleteData("Inv_ItemCategoryDisplayMaster", "N_ItemID", N_ItemID, "", connection, transaction);
-                    if (CategoryList.Rows.Count > 0)
-                    {
-                        foreach (DataRow dRow in CategoryList.Rows)
-                        {
-                            dRow["N_ItemID"] = N_ItemID;
-                        }
-                        CategoryList.AcceptChanges();
-                        dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_CategoryListID", CategoryList, connection, transaction);
-                    }
-                    //Saving Display Images
-                    object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-                    string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-                    DocumentPath = DocumentPath + "DisplayImages";
-                    System.IO.Directory.CreateDirectory(DocumentPath);
-
-                    if (POS.Rows.Count > 0)
-                    {
-                        POS.Columns.Add("X_ImageName", typeof(System.String));
-                        POS.Columns.Add("X_ImageLocation", typeof(System.String));
-                        POS.Columns.Add("N_ImageID", typeof(System.Int32));
-
-                        int i=1;
-                        foreach (DataRow dRow in POS.Rows)
-                        {
-                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-POS-"+i);
-                            dRow["X_ImageName"] = ItemCode+"-POS-"+i + ".jpg";
-                            dRow["X_ImageLocation"] = DocumentPath;
-                            dRow["N_ItemID"] = N_ItemID;
-                            i++;
-
-                        }
-                        POS.Columns.Remove("I_Image");
-                        dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
-
-                    }
-                    if (ECOM.Rows.Count > 0)
-                    {
-                        ECOM.Columns.Add("X_ImageName", typeof(System.String));
-                        ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
-                        ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
-                        int j=1;
-                        foreach (DataRow dRow in ECOM.Rows)
-                        {
-                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-ECOM-"+j);
-                            dRow["X_ImageName"] = ItemCode+"-ECOM-"+j + ".jpg";
-                            dRow["X_ImageLocation"] = DocumentPath;
-                            dRow["N_ItemID"] = N_ItemID;
+                        int j =1;
+                        for (int i =0; i<VariantList.Rows.Count ; i++)
+                        { 
+                            var newRow=MasterTable.NewRow();
+                            newRow.ItemArray=MasterTable.Rows[1].ItemArray;
+                            MasterTable.Rows.Add(newRow);
+                            MasterTable.Rows[j]["X_ItemName"]=VariantList.Rows[i]["X_VariantName"].ToString();
+                            MasterTable.Rows[j]["X_Barcode"]=VariantList.Rows[i]["X_VariantBarcode"].ToString();
                             j++;
+                        }
+                    }
+
+                    for (int k = 0 ;k < MasterTable.Rows.Count;k++)
+                    {
+            
+                        string image = MasterTable.Rows[0]["i_Image"].ToString();
+                        Byte[] imageBitmap = new Byte[image.Length];
+                        imageBitmap = Convert.FromBase64String(image);
+                        MasterTable.Columns.Remove("i_Image");
+
+                        string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemCode='" + ItemCode + "'";
+                        N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
+                        if (N_ItemID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save"));
+                        }
+
+                        if (image.Length > 0)
+                            dLayer.SaveImage("Inv_ItemMaster", "i_Image", imageBitmap, "N_ItemID", N_ItemID, connection, transaction);
+
+                        foreach (DataRow var in StockUnit.Rows) var["n_ItemID"] = N_ItemID;
+                        foreach (DataRow var in SalesUnit.Rows) var["n_ItemID"] = N_ItemID;
+                        foreach (DataRow var in PurchaseUnit.Rows) var["n_ItemID"] = N_ItemID;
+                        foreach (DataRow var in AddUnit1.Rows) var["n_ItemID"] = N_ItemID;
+                        foreach (DataRow var in AddUnit2.Rows) var["n_ItemID"] = N_ItemID;
+
+                        int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
+                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+
+                        int N_SalesUnitID=0,N_PurchaseUnitID=0,N_AddUnitID1=0,N_AddUnitID2=0;
+
+                        foreach (DataRow var in SalesUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
+                        foreach (DataRow var in PurchaseUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
+                        foreach (DataRow var in AddUnit1.Rows) var["n_BaseUnitID"] = BaseUnitID;
+                        foreach (DataRow var in AddUnit2.Rows) var["n_BaseUnitID"] = BaseUnitID;
+
+                        string xBaseUnit=StockUnit.Rows[0]["X_ItemUnit"].ToString();
+
+                        //Purchase Unit
+                        if(PurchaseUnit.Rows.Count>0)
+                        {
+                            if(PurchaseUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                                N_PurchaseUnitID=BaseUnitID;
+                            else
+                                N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
+                        }
+                        else
+                        {
+                            N_PurchaseUnitID=BaseUnitID;
+                        }
+
+                        //Sales Unit
+                        if(SalesUnit.Rows.Count>0)
+                        {
+                            if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                                N_SalesUnitID=BaseUnitID;
+                            else if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_SalesUnitID=N_PurchaseUnitID;
+                            else                      
+                                N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
+                        }
+                        else
+                            N_SalesUnitID=BaseUnitID;
+
+                        //Additional Unit1
+                        if(AddUnit1.Rows.Count>0)
+                        {
+                            if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                                N_AddUnitID1=BaseUnitID;
+                            else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID1=N_PurchaseUnitID;
+                            else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID1=N_SalesUnitID;
+                            else
+                                N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
+                        }
+                        
+                        //Additional Unit2
+                        if(AddUnit2.Rows.Count>0)
+                        {
+                            if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
+                                N_AddUnitID2=BaseUnitID;
+                            else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID2=N_PurchaseUnitID;
+                            else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID2=N_SalesUnitID;
+                            else
+                                N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
+                        }
+
+                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_SalesUnitID=" + N_SalesUnitID + ",N_PurchaseUnitID=" + N_PurchaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                        if (BaseUnitID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save"));
+                        }
+
+                        dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
+                        if (LocationList.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in LocationList.Rows)
+                            {
+                                dRow["N_ItemID"] = N_ItemID;
+                            }
+                            LocationList.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
+                        }
+                        dLayer.DeleteData("Inv_ItemCategoryDisplayMaster", "N_ItemID", N_ItemID, "", connection, transaction);
+                        if (CategoryList.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in CategoryList.Rows)
+                            {
+                                dRow["N_ItemID"] = N_ItemID;
+                            }
+                            CategoryList.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_CategoryListID", CategoryList, connection, transaction);
+                        }
+                        //Saving Display Images
+                        object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
+                        string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
+                        DocumentPath = DocumentPath + "DisplayImages";
+                        System.IO.Directory.CreateDirectory(DocumentPath);
+
+                        if (POS.Rows.Count > 0)
+                        {
+                            POS.Columns.Add("X_ImageName", typeof(System.String));
+                            POS.Columns.Add("X_ImageLocation", typeof(System.String));
+                            POS.Columns.Add("N_ImageID", typeof(System.Int32));
+
+                            int i=1;
+                            foreach (DataRow dRow in POS.Rows)
+                            {
+                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-POS-"+i);
+                                dRow["X_ImageName"] = ItemCode+"-POS-"+i + ".jpg";
+                                dRow["X_ImageLocation"] = DocumentPath;
+                                dRow["N_ItemID"] = N_ItemID;
+                                i++;
+
+                            }
+                            POS.Columns.Remove("I_Image");
+                            dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
 
                         }
-                        ECOM.Columns.Remove("I_Image");
-                        dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
+                        if (ECOM.Rows.Count > 0)
+                        {
+                            ECOM.Columns.Add("X_ImageName", typeof(System.String));
+                            ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
+                            ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
+                            int j=1;
+                            foreach (DataRow dRow in ECOM.Rows)
+                            {
+                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-ECOM-"+j);
+                                dRow["X_ImageName"] = ItemCode+"-ECOM-"+j + ".jpg";
+                                dRow["X_ImageLocation"] = DocumentPath;
+                                dRow["N_ItemID"] = N_ItemID;
+                                j++;
 
+                            }
+                            ECOM.Columns.Remove("I_Image");
+                            dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
+
+                        }
                     }
 
                     transaction.Commit();
