@@ -142,13 +142,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetEmployeeLoanDetails(int nLoanID)
+        public ActionResult GetEmployeeLoanDetails(int nLoanID, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
             int companyid = myFunctions.GetCompanyID(User);
+
 
             QueryParams.Add("@nCompanyID", companyid);
             QueryParams.Add("@nLoanID", nLoanID);
@@ -157,9 +158,36 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object count = dLayer.ExecuteScalar("select count(*) From Pay_LoanIssue " +
+                                 " INNER JOIN dbo.Pay_EmployeePaymentDetails ON dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_EmployeePaymentDetails.N_CompanyID AND " +
+                                 " dbo.Pay_LoanIssue.N_LoanTransID = dbo.Pay_EmployeePaymentDetails.N_SalesID and dbo.Pay_EmployeePaymentDetails.N_Entryfrom=212 and Pay_LoanIssue.N_LoanAmount =dbo.Pay_EmployeePaymentDetails.N_Amount " +
+                                 " where Pay_LoanIssue.N_LoanID =" + nLoanID + " and Pay_LoanIssue.N_CompanyID=" + companyid + " and Pay_LoanIssue.N_FnYearID =" + nFnYearID + "", QueryParams, connection);
+
+
+                    object RefundAmount = dLayer.ExecuteScalar("select SUM(N_RefundAmount) from Pay_LoanIssueDetails inner join Pay_LoanIssue on Pay_LoanIssueDetails.N_LoanTransID=Pay_LoanIssue.N_LoanTransID and Pay_LoanIssueDetails.N_CompanyID=Pay_LoanIssue.N_CompanyID where Pay_LoanIssue.N_LoanID =" + nLoanID + " and Pay_LoanIssue.N_CompanyID=" + companyid + " and Pay_LoanIssue.N_FnYearID =" + nFnYearID + "", QueryParams, connection);
+
                     string _sqlQuery = "SELECT Pay_LoanIssue.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position, Pay_Employee.X_EmpNameLocale, Pay_PayMaster.X_Description AS x_LoanType FROM Pay_PayMaster RIGHT OUTER JOIN Pay_LoanIssue ON Pay_PayMaster.N_FnYearID = Pay_LoanIssue.N_FnYearID AND Pay_PayMaster.N_CompanyID = Pay_LoanIssue.N_CompanyID AND Pay_PayMaster.N_PayID = Pay_LoanIssue.N_PayID LEFT OUTER JOIN Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_LoanIssue.N_FnYearID = Pay_Employee.N_FnYearID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    if (RefundAmount != null)
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Amount", typeof(double), myFunctions.getVAL(RefundAmount.ToString()));
+                    }
+                    else
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Amount", typeof(double), 0);
+
+                    }
+                    if (count != null)
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Count", typeof(double), myFunctions.getVAL(count.ToString()));
+                    }
+                    else
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Count", typeof(double), 0);
+
+                    }
 
 
                 }
@@ -468,6 +496,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
+
 
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);

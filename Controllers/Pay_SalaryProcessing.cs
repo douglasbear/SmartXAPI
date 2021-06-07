@@ -371,6 +371,28 @@ namespace SmartxAPI.Controllers
                                 var["N_PayRate"] = Amount;
                                 var["N_TransID"] = N_TransID;
 
+                                  if (var["n_IsLoan"].ToString() == "1")
+                            {
+                                DataTable loanDetails =new DataTable();
+                                SortedList loanParams=new SortedList();
+                                loanParams.Add("@nCompanyID",nCompanyID);
+                                loanParams.Add("@nLoanTransDetailsID", var["n_LoanTransDetailsID"].ToString());
+                                string loanSql="select * from Pay_LoanIssueDetails Where N_CompanyID =@nCompanyID and N_LoanTransDetailsID =@nLoanTransDetailsID";
+                                DataTable dt = dLayer.ExecuteDataTable(loanSql,loanParams,connection,transaction);
+                                if(dt.Rows.Count>0){
+                                    dt.Rows[0]["D_RefundDate"] = dCreatedDate.ToString();
+                                    dt.Rows[0]["N_RefundAmount"] =Amount.ToString();
+                                    dt.Rows[0]["N_PayRunID"] = N_TransID;
+                                    dt.Rows[0]["N_TransDetailsID"] = -1;
+                                    dt.Rows[0]["B_IsLoanClose"] = 0;
+                                int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "n_LoanTransDetailsID", dt, connection, transaction);
+                            
+                                }
+
+
+                                }
+
+
 
 
                             }
@@ -384,6 +406,8 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         DetailsTable.Columns.Remove("n_PayTypeID");
+                        DetailsTable.Columns.Remove("n_IsLoan"); 
+                        DetailsTable.Columns.Remove("n_LoanTransDetailsID"); 
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailsTable, connection, transaction);
                         if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
@@ -393,8 +417,10 @@ namespace SmartxAPI.Controllers
 
                         }
 
+                      
                         if (N_TransDetailsID > 0)
                         {
+                            dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_TransDetailsID ="+N_TransDetailsID+"  Where N_CompanyID =" + nCompanyID + " and N_TransDetailsID=-1 and D_RefundDate = '" + dCreatedDate.ToString()+"'" , connection, transaction);
 
                             dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + nCompanyID + "," + nFnYearId + ",'ESI','" + x_Batch + "'", connection, transaction);
 

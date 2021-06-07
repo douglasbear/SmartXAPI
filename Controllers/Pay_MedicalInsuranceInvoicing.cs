@@ -313,165 +313,143 @@ namespace SmartxAPI.Controllers
                 //dba.DeleteData("Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", N_AmortizationID.ToString(), "N_CompanyID=" + myCompanyID._CompanyID);
             }
         }
-        // private void SaveAmortization(int _additionid, int _policyid, int _paycodeid, int _empid, int _row, string _type, bool B_OneTme, int _DetailID, DataTable MasterTable, DataTable DetailTable, SqlConnection connection, SqlTransaction transaction)
-        // {
-        //     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-        //     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-        //     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
-        //     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
-        //     //Datetime dtpInvoiceDate = Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString());
+        private void SaveAmortization(int _additionid, int _policyid, int _paycodeid, int _empid, int _row, string _type, bool B_OneTme, int _DetailID, DataTable MasterTable, DataTable DetailTable, SqlConnection connection, SqlTransaction transaction)
+        {
+            int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+            int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+            int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+            int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+            //Datetime dtpInvoiceDate = Convert.ToDateTime(MasterTable.Rows[0]["D_Date"].ToString());
 
-        //     SortedList EmpParams = new SortedList();
-        //     EmpParams.Add("@nCompanyID", nCompanyID);
-        //     bool result = false;
-        //     int AmortizationID_Loc = 0;
-        //     DataTable amortizationTable;
+            SortedList EmpParams = new SortedList();
+            EmpParams.Add("@nCompanyID", nCompanyID);
+            bool result = false;
+            int AmortizationID_Loc = 0;
+            DataTable amortizationTable;
 
-
-
-
-        //     int N_DependentID = myFunctions.getIntVAL(DetailTable.Rows[_row]["n_DependenceID"].ToString());
-
-
-        //     try
-        //     {
-        //         int frquency = 0, payid = 0, frequencyCount = 0, N_CategoryID = 0, N_LedgerID = 0;
-        //         double AmtSplit = 0;
-
-
-        //         if (_type == "I")
-        //         {
-        //             if (B_OneTme)
-        //             {
-        //                 object res = dLayer.ExecuteScalar("select N_AmrIncLedgerID FROM Pay_PayMaster WHERE N_PayID =" + _paycodeid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
-        //                 if (res != null)
-        //                     N_LedgerID = myFunctions.getIntVAL(res.ToString());
-        //             }
-        //             else
-        //             {
-        //                 object res = dLayer.ExecuteScalar("select N_IncomeLedgerID FROM Pay_PayMaster WHERE N_PayID =" + _paycodeid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
-        //                 if (res != null)
-        //                     N_LedgerID = myFunctions.getIntVAL(res.ToString());
-        //             }
-        //         }
-        //         if (_type == "S")
-        //         {
-        //             int DepratmentID = 0;
-        //             object DepID = dLayer.ExecuteScalar("select N_DepartmentID FROM Pay_Employee WHERE N_EmpID =" + _empid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
-        //             if (DepID != null)
-        //                 DepratmentID = myFunctions.getIntVAL(DepID.ToString());
-        //             object res = dLayer.ExecuteScalar("select dbo.SP_GetPayLedgerIdEmployee(" + nCompanyID + "," + nFnYearID + "," + nFnYearID + "," + _paycodeid + ",'Expense')", EmpParams, connection, transaction);
-        //             if (res != null)
-        //                 N_LedgerID = myFunctions.getIntVAL(res.ToString());
-        //         }
-
-
-        //         double amt = 0;
-        //         if (_type == "I")
-        //             amt = myFunctions.getVAL(DetailTable.Rows[_row]["n_Price"].ToString());
-        //         else if (_type == "S")
-        //             amt = myFunctions.getVAL(DetailTable.Rows[_row]["n_Cost"].ToString());
-
-        //         DateTime Start = new DateTime();
-        //         DateTime DtpAdd = new DateTime();
-
-        //         DtpAdd = Convert.ToDateTime(DetailTable.Rows[_row]["d_AdditionDate"].ToString());
-        //         DateTime DtpEndDate = Convert.ToDateTime(DetailTable.Rows[_row]["d_EndDate"].ToString()).AddDays(1);
-
-        //         frquency = ((DtpEndDate.Year - DtpAdd.Year) * 12) + DtpEndDate.Month - DtpAdd.Month;
-        //         Start = new DateTime(DtpAdd.Year, DtpAdd.Month, 1);
-        //         if (B_OneTme)
-        //             frquency = 1;
-
-
-        //         object ObjAmortizationID = 0;
-        //         object N_AmortizationDetailsID = 0;
-        //         object lobjResult = null;
-        //         lobjResult = 0;
-        //         String PrjInv = "Insurance Addition";
-
-        //         string qry = "Select " + nCompanyID + " as N_CompanyID," + nFnYearID + " as N_FnYearID," + _additionid + " as N_PrePaymentID," + nBranchID + " as N_BranchID," + nUserID + " as N_UserID ,'" + PrjInv + "' as  X_Type," + 1251 + " as N_FormID," + N_LedgerID + " as N_LedgerID ," + _paycodeid + " as N_PayID ,'" + _type + "' as  X_EntryType," + _empid + " as N_EmpID," + amt + " as N_InvoiceAmt,'" + MasterTable.Rows[0]["D_Date"] + "' as D_Date," + frquency + " as N_Frequency ," + _DetailID + " as N_InvoiceDetailsID ,'" + N_DependentID + "' as  N_DependentID ";
-        //         string FieldList = "N_CompanyID, N_FnYearID, N_PrePaymentID, N_BranchID, N_UserID,X_Type,N_FormID,N_LedgerID,N_PayID,X_EntryType,N_EmpID,N_InvoiceAmt,D_Date,N_Frequency,N_InvoiceDetailsID,N_DependentID";
-        //         string FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID + "|" + _additionid + "|" + myCompanyID._BranchID + "|" + myCompanyID._UserID + "|'Insurance Addition'|" + MYG.ReturnFormID(this.Text) + "|" + N_LedgerID + "|" + _paycodeid + "|'" + _type + "'|" + _empid + "|" + amt + "|'" + myFunctions.getDateVAL(dtpInvoiceDate.Value.Date) + "'|" + frquency + "|" + _DetailID + "|" + N_DependentID;
-        //         string RefField = "";
-        //         string RefFieldDescr = "";
-        //         string DupCriteria = "";
-        //         dba.SaveData(ref lobjResult, "Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", AmortizationID_Loc.ToString(), FieldList, FieldValues, RefField, RefFieldDescr, DupCriteria, "", "N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
-        //         if (myFunctions.getIntVAL(lobjResult.ToString()) > 0)
-        //         {
-        //             ObjAmortizationID = myFunctions.getIntVAL(lobjResult.ToString());
+            DataTable MedIns;
+            DataTable NewTable;
 
 
 
-        //             //if (flxMedicalInsurance.get_TextMatrix(i, mcEmpcode).Trim() == "") continue;
-        //             //if (flxMedicalInsurance.get_TextMatrix(i, mcSelect).Trim() == "") continue;
-        //             //frquency = 3;
-        //             //if (frequencyCount == 1)
-        //             //{
-        //             //    DtpAdd = Convert.ToDateTime(flxMedicalInsurance.get_TextMatrix(i, mcStartDate));
-        //             //    frquency = 1;
-        //             //    Start = new DateTime(DtpAdd.Year, DtpAdd.Month, 1);
-        //             //}
+            int N_DependentID = myFunctions.getIntVAL(DetailTable.Rows[_row]["n_DependenceID"].ToString());
 
-        //             //else
-        //             //{
-        //             DtpAdd = Convert.ToDateTime(flxMedicalInsurance.get_TextMatrix(_row, mcStartDate));
-        //             DtpEndDate = Convert.ToDateTime(flxMedicalInsurance.get_TextMatrix(_row, mcEndDate)).AddDays(1);
 
-        //             frquency = ((DtpEndDate.Year - DtpAdd.Year) * 12) + DtpEndDate.Month - DtpAdd.Month;
-        //             Start = new DateTime(DtpAdd.Year, DtpAdd.Month, 1);
-        //             //}
-        //             if (B_OneTme)
-        //                 frquency = 1;
+            try
+            {
+                int frquency = 0, payid = 0, frequencyCount = 0, N_CategoryID = 0, N_LedgerID = 0;
+                double AmtSplit = 0;
 
-        //             if (_type == "I")
-        //                 AmtSplit = myFunctions.getVAL(flxMedicalInsurance.get_TextMatrix(_row, mcAmt)) / frquency;
-        //             else if (_type == "S")
-        //                 AmtSplit = myFunctions.getVAL(flxMedicalInsurance.get_TextMatrix(_row, mcCost)) / frquency;
+
+                if (_type == "I")
+                {
+                    if (B_OneTme)
+                    {
+                        object res = dLayer.ExecuteScalar("select N_AmrIncLedgerID FROM Pay_PayMaster WHERE N_PayID =" + _paycodeid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
+                        if (res != null)
+                            N_LedgerID = myFunctions.getIntVAL(res.ToString());
+                    }
+                    else
+                    {
+                        object res = dLayer.ExecuteScalar("select N_IncomeLedgerID FROM Pay_PayMaster WHERE N_PayID =" + _paycodeid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
+                        if (res != null)
+                            N_LedgerID = myFunctions.getIntVAL(res.ToString());
+                    }
+                }
+                if (_type == "S")
+                {
+                    int DepratmentID = 0;
+                    object DepID = dLayer.ExecuteScalar("select N_DepartmentID FROM Pay_Employee WHERE N_EmpID =" + _empid + "  AND N_CompanyID =" + nCompanyID, EmpParams, connection, transaction);
+                    if (DepID != null)
+                        DepratmentID = myFunctions.getIntVAL(DepID.ToString());
+                    object res = dLayer.ExecuteScalar("select dbo.SP_GetPayLedgerIdEmployee(" + nCompanyID + "," + nFnYearID + "," + nFnYearID + "," + _paycodeid + ",'Expense')", EmpParams, connection, transaction);
+                    if (res != null)
+                        N_LedgerID = myFunctions.getIntVAL(res.ToString());
+                }
+
+
+                double amt = 0;
+                if (_type == "I")
+                    amt = myFunctions.getVAL(DetailTable.Rows[_row]["n_Price"].ToString());
+                else if (_type == "S")
+                    amt = myFunctions.getVAL(DetailTable.Rows[_row]["n_Cost"].ToString());
+
+                DateTime Start = new DateTime();
+                DateTime DtpAdd = new DateTime();
+
+                DtpAdd = Convert.ToDateTime(DetailTable.Rows[_row]["d_AdditionDate"].ToString());
+                DateTime DtpEndDate = Convert.ToDateTime(DetailTable.Rows[_row]["d_EndDate"].ToString()).AddDays(1);
+
+                frquency = ((DtpEndDate.Year - DtpAdd.Year) * 12) + DtpEndDate.Month - DtpAdd.Month;
+                Start = new DateTime(DtpAdd.Year, DtpAdd.Month, 1);
+                if (B_OneTme)
+                    frquency = 1;
+
+
+                object ObjAmortizationID = 0;
+                object N_AmortizationDetailsID = 0;
+                object lobjResult = null;
+                lobjResult = 0;
+                String PrjInv = "Insurance Addition";
+
+                string qry = "Select " + nCompanyID + " as N_CompanyID," + nFnYearID + " as N_FnYearID," + _additionid + " as N_PrePaymentID," + nBranchID + " as N_BranchID," + nUserID + " as N_UserID ,'" + PrjInv + "' as  X_Type," + 1251 + " as N_FormID," + N_LedgerID + " as N_LedgerID ," + _paycodeid + " as N_PayID ,'" + _type + "' as  X_EntryType," + _empid + " as N_EmpID," + amt + " as N_InvoiceAmt,'" + MasterTable.Rows[0]["D_Date"] + "' as D_Date," + frquency + " as N_Frequency ," + _DetailID + " as N_InvoiceDetailsID ,'" + N_DependentID + "' as  N_DependentID ";
+                amortizationTable = dLayer.ExecuteDataTable(qry, EmpParams, connection, transaction);
+                //string FieldList = "N_CompanyID, N_FnYearID, N_PrePaymentID, N_BranchID, N_UserID,X_Type,N_FormID,N_LedgerID,N_PayID,X_EntryType,N_EmpID,N_InvoiceAmt,D_Date,N_Frequency,N_InvoiceDetailsID,N_DependentID";
+                //string FieldValues = myCompanyID._CompanyID + "|" + myCompanyID._FnYearID + "|" + _additionid + "|" + myCompanyID._BranchID + "|" + myCompanyID._UserID + "|'Insurance Addition'|" + MYG.ReturnFormID(this.Text) + "|" + N_LedgerID + "|" + _paycodeid + "|'" + _type + "'|" + _empid + "|" + amt + "|'" + myFunctions.getDateVAL(dtpInvoiceDate.Value.Date) + "'|" + frquency + "|" + _DetailID + "|" + N_DependentID;
+                lobjResult = dLayer.SaveData("Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", amortizationTable, connection, transaction);
+                // dba.SaveData(ref lobjResult, "Inv_PrePaymentScheduleMaster", "N_PrePayScheduleID", AmortizationID_Loc.ToString(), FieldList, FieldValues, RefField, RefFieldDescr, DupCriteria, "", "N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID=" + myCompanyID._FnYearID);
+                if (myFunctions.getIntVAL(lobjResult.ToString()) > 0)
+                {
+                    ObjAmortizationID = myFunctions.getIntVAL(lobjResult.ToString());
+
+                    DtpAdd = Convert.ToDateTime(DetailTable.Rows[_row]["d_AdditionDate"]);
+                    DtpEndDate = Convert.ToDateTime(DetailTable.Rows[_row]["d_EndDate"]).AddDays(1);
+
+                    frquency = ((DtpEndDate.Year - DtpAdd.Year) * 12) + DtpEndDate.Month - DtpAdd.Month;
+                    Start = new DateTime(DtpAdd.Year, DtpAdd.Month, 1);
+                    //}
+                    if (B_OneTme)
+                        frquency = 1;
+
+                    if (_type == "I")
+                        AmtSplit = myFunctions.getVAL(DetailTable.Rows[_row]["n_Price"].ToString()) / frquency;
+                    else if (_type == "S")
+                        AmtSplit = myFunctions.getVAL(DetailTable.Rows[_row]["n_Cost"].ToString()) / frquency;
 
 
 
 
-        //             for (int j = 1; j <= frquency; j++)
-        //             {
-        //                 if (j > 1)
-        //                 {
-        //                     Start = new DateTime(DtpAdd.AddMonths(1).Year, DtpAdd.AddMonths(j - 1).Month, 1);
-        //                     if (DtpAdd.AddMonths(j - 1).Month == 12) { DtpAdd = DtpAdd.AddYears(1); }
-        //                 }
-        //                 DateTime End = new DateTime(Start.AddMonths(1).Year, Start.AddMonths(1).Month, 1).AddDays(-1);
-        //                 N_AmortizationDetailsID = 0;
-        //                 FieldList = "N_CompanyID,N_PrePaymentID,N_PrePayScheduleID,D_DateFrom,D_DateTo,N_InstAmount,N_RefID,N_PaycodeID";
-        //                 FieldValues = myCompanyID._CompanyID + "|" + _additionid + "|" + ObjAmortizationID + "|'" + myFunctions.getDateVAL(Start) + "'|'" + myFunctions.getDateVAL(End) + "'|" + AmtSplit + "|" + flxMedicalInsurance.get_TextMatrix(_row, mcEmpID) + "|" + _paycodeid;
-        //                 RefField = "";
-        //                 RefFieldDescr = "";
-        //                 DupCriteria = "";
-        //                 dba.SaveData(ref N_AmortizationDetailsID, "Inv_PrePaymentSchedule", "N_PrePaymentDetailsID", N_AmortizationDetailsID.ToString(), FieldList, FieldValues, RefField, RefFieldDescr, DupCriteria, "");
-        //                 if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
-        //                 {
-        //                     pbCompleted = false;
-        //                     //break;
-        //                 }
-        //             }
-        //             //else
-        //             //{
-        //             //    dba.Commit();
-        //             //}
+                    for (int j = 1; j <= frquency; j++)
+                    {
+                        if (j > 1)
+                        {
+                            Start = new DateTime(DtpAdd.AddMonths(1).Year, DtpAdd.AddMonths(j - 1).Month, 1);
+                            if (DtpAdd.AddMonths(j - 1).Month == 12) { DtpAdd = DtpAdd.AddYears(1); }
+                        }
+                        DateTime End = new DateTime(Start.AddMonths(1).Year, Start.AddMonths(1).Month, 1).AddDays(-1);
+                        N_AmortizationDetailsID = 0;
 
-        //             if (pbCompleted)
-        //             {
-        //                 result = true;
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         //dba.Rollback();
-        //         msg.msgError(ex.Message);
-        //         result = false;
-        //     }
+                        string newqry = "Select " + nCompanyID + " as N_CompanyID," + _additionid + " as N_PrePaymentID," + ObjAmortizationID + " as N_PrePayScheduleID,'" + myFunctions.getDateVAL(Start) + "' as D_DateFrom,'" + myFunctions.getDateVAL(End) + "' as D_DateTo ," + AmtSplit + " as  N_InstAmount," + DetailTable.Rows[_row]["n_EmpID"] + " as N_RefID," + _paycodeid + " as N_PaycodeID ";
+                        NewTable = dLayer.ExecuteDataTable(newqry, EmpParams, connection, transaction);
+                        // FieldList  "N_CompanyID,N_PrePaymentID,N_PrePayScheduleID,D_DateFrom,D_DateTo,N_InstAmount,N_RefID,N_PaycodeID";
+                        //FieldValues = myCompanyID._CompanyID + "|" + _additionid + "|" + ObjAmortizationID + "|'" + myFunctions.getDateVAL(Start) + "'|'" + myFunctions.getDateVAL(End) + "'|" + AmtSplit + "|" + flxMedicalInsurance.get_TextMatrix(_row, mcEmpID) + "|" + _paycodeid;
+                        N_AmortizationDetailsID = dLayer.SaveData("Inv_PrePaymentSchedule", "N_PrePaymentDetailsID", NewTable, connection, transaction);
+                        //dba.SaveData(ref N_AmortizationDetailsID, "Inv_PrePaymentSchedule", "N_PrePaymentDetailsID", N_AmortizationDetailsID.ToString(), FieldList, FieldValues, RefField, RefFieldDescr, DupCriteria, "");
+                        if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
+                        {
+                            transaction.Rollback();
+                           // return Ok(_api.Error("Unable To Save Amortization"));
+                        }
+                    }
 
-        // }
+                }
+            }
+            catch (Exception ex)
+            {
+               // return Ok(_api.Error(ex));
+            }
+
+        }
 
 
 

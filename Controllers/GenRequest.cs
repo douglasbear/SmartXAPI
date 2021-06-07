@@ -90,6 +90,8 @@ namespace SmartxAPI.Controllers
                 break;
                  case "assetdepreciationmethod": id=57;
                 break;
+                 case "applicationtype": id=97;
+                break;
 
                 default: return Ok("Invalid Type");
             }
