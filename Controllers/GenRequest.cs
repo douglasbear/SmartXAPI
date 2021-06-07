@@ -134,6 +134,12 @@ namespace SmartxAPI.Controllers
                 break;
                 case "LeadSource": N_FormID=1312;
                 break;
+                case "SubSource": N_FormID=1355;
+                break;
+                case "Priority": N_FormID=1356;
+                break;
+                case "CustomerCategory": N_FormID=1357;
+                break;
                 case "LeadStatus": N_FormID=1313;
                 break;
                  case "District": N_FormID=1273;
