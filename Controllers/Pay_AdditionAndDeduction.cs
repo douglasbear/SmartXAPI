@@ -438,7 +438,7 @@ if (xBatch != null)
                             // if (var["N_SaveChanges"].ToString().Trim() == "" && (var["n_TransDetailsID"].ToString()).Trim() != "") 
                             //     continue;
 
-
+                        
                             double Amount = myFunctions.getVAL(mstVar["n_PayRate"].ToString());
 
                             if (Amount == 0)
