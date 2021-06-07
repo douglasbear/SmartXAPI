@@ -440,7 +440,7 @@ if (xBatch != null)
 
                         
                             double Amount = myFunctions.getVAL(mstVar["n_PayRate"].ToString());
-                            double d2 = (double)DetailsTable.Rows[i]["n_PayRate"];
+                           // double d2 = (double)DetailsTable.Rows[i]["n_PayRate"];
 
                             if (Amount == 0)
                             {
