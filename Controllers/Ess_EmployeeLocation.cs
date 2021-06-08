@@ -40,8 +40,8 @@ namespace SmartxAPI.Controllers
         {
             DataTable location = new DataTable();
             DataTable devices = new DataTable();
-            DataTable Approvals;
-            Approvals = ds.Tables["approval"];
+            DataTable Approvals= new DataTable();
+            // Approvals = ds.Tables["approval"];
             DataRow ApprovalRow = Approvals.Rows[0];
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);

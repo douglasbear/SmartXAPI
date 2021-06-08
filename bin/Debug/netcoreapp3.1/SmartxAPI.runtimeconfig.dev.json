@@ -1,43 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
-=======
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
->>>>>>> b1c0b0625c02155476c7fc2a427c0addfbb075b7
-=======
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
->>>>>>> 1d2a9c900fe92549961845adb6b0e085aa36f35e
-=======
-      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\USER\\.nuget\\packages"
->>>>>>> 6ec6e236ee3e9aaab0fbee9705e3bb7508e46a1c
->>>>>>> a9e22af3ebbc85b237c5b912a2624c743c0fa1ff
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 9969d066756b665b3a9568857b3c706c6afda942
-=======
-      "C:\\Users\\znbm9\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\znbm9\\.nuget\\packages"
->>>>>>> ab4975465d009a2108e124896fa7421da049de0c
->>>>>>> b1a256b148ce51e93e743911b073114427076805
     ]
   }
 }
