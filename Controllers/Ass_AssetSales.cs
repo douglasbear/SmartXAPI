@@ -271,16 +271,6 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                    for (int j = 0 ;j < DetailTable.Rows.Count;j++)
-                    {
-                        DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
-                    }
-                    int N_AssetInventoryDetailsID=dLayer.SaveData("Ass_SalesDetails","N_AssetInventoryDetailsID",DetailTable,connection,transaction);                    
-                    if(N_AssetInventoryDetailsID<=0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Error"));
-                    }
 
                     string X_Type = "";
                     if (TypeID == 288)
@@ -288,22 +278,30 @@ namespace SmartxAPI.Controllers
                     else
                         X_Type = "Sales";
 
-                    for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
-                    {
-                        TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
-                        TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
-                        TransactionTable.Rows[k]["X_Type"]=X_Type;
-                        TransactionTable.Rows[k]["N_AssetInventoryDetailsID"]=DetailTable.Rows[k]["N_AssetInventoryDetailsID"];
-                    }
-                    int N_ActionID=dLayer.SaveData("Ass_Transactions","N_ActionID",TransactionTable,connection,transaction);                    
-                    if(N_ActionID<=0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Error"));
-                    }
-                   
+                    int N_AssetInventoryDetailsID=0,N_ActionID=0;
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                     {
+                        DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
+                    
+                        N_AssetInventoryDetailsID=dLayer.SaveDataWithIndex("Ass_SalesDetails","N_AssetInventoryDetailsID","","",j,DetailTable,connection,transaction);                    
+                        if(N_AssetInventoryDetailsID<=0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Error"));
+                        }
+
+                        TransactionTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
+                        TransactionTable.Rows[j]["X_Reference"]=ReturnNo;
+                        TransactionTable.Rows[j]["X_Type"]=X_Type;
+                        TransactionTable.Rows[j]["N_AssetInventoryDetailsID"]=N_AssetInventoryDetailsID;
+
+                        N_ActionID=dLayer.SaveDataWithIndex("Ass_Transactions","N_ActionID","","",j,TransactionTable,connection,transaction);                    
+                        if(N_ActionID<=0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Error"));
+                        }
+                    
                         if (TypeID == 288)
                             dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=5 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"], connection, transaction);                                  
                         else
