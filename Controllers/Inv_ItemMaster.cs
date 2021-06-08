@@ -199,8 +199,8 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                     string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
-                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
-                     multiCategory = _api.Format(multiCategory, "multiCategory");
+                    multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
+                    multiCategory = _api.Format(multiCategory, "multiCategory");
 
 
 
@@ -280,7 +280,7 @@ namespace SmartxAPI.Controllers
 
                             }
                         }
-                        
+
 
                     }
                 }
@@ -288,15 +288,15 @@ namespace SmartxAPI.Controllers
                 // multiCategory.AcceptChanges();
                 dt = _api.Format(dt);
                 //multiCategory = _api.Format(multiCategory);
-                
+
                 DataSet dataSet = new DataSet();
-                        dt = _api.Format(dt, "details");
-                        //multiCategory = _api.Format(multiCategory, "multiCategory");
-                        dataSet.Tables.Add(multiCategory);
-                        Images = _api.Format(Images, "Images");
-                        dataSet.Tables.Add(dt);
-                         
-                        dataSet.Tables.Add(Images);
+                dt = _api.Format(dt, "details");
+                //multiCategory = _api.Format(multiCategory, "multiCategory");
+                dataSet.Tables.Add(multiCategory);
+                Images = _api.Format(Images, "Images");
+                dataSet.Tables.Add(dt);
+
+                dataSet.Tables.Add(Images);
 
 
                 return Ok(_api.Success(dataSet));
@@ -315,7 +315,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable = new DataTable();
-                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList,VariantList;
+                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList;
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
                 MasterTableNew = ds.Tables["master"];
@@ -329,7 +329,7 @@ namespace SmartxAPI.Controllers
                 CategoryList = ds.Tables["categoryListDetails"];
                 VariantList = ds.Tables["variantList"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
-                int N_ItemID=0;
+                int N_ItemID = 0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -339,7 +339,7 @@ namespace SmartxAPI.Controllers
                     string ItemCode = "";
                     int ItemType = 0;
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
-                    ItemType =myFunctions.getIntVAL( MasterTableNew.Rows[0]["N_CLassID"].ToString());
+                    ItemType = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CLassID"].ToString());
 
                     if (ItemCode == "@Auto")
                     {
@@ -351,36 +351,46 @@ namespace SmartxAPI.Controllers
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
                     }
 
+
+                    //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();
-                    if(VariantList.Rows.Count>0)
+                    if (VariantList.Rows.Count > 0)
                     {
-                        int j =1;
-                        for (int i =0; i<VariantList.Rows.Count ; i++)
-                        { 
-                            var newRow=MasterTable.NewRow();
-                            newRow.ItemArray=MasterTable.Rows[1].ItemArray;
+                        int j = 1;
+                        for (int i = 0; i < VariantList.Rows.Count; i++)
+                        {
+                            var newRow = MasterTable.NewRow();
+                            newRow.ItemArray = MasterTable.Rows[1].ItemArray;
                             MasterTable.Rows.Add(newRow);
-                            MasterTable.Rows[j]["X_ItemName"]=VariantList.Rows[i]["X_VariantName"].ToString();
-                            MasterTable.Rows[j]["X_Barcode"]=VariantList.Rows[i]["X_VariantBarcode"].ToString();
+                            MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_VariantName"].ToString();
+                            MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
                             j++;
                         }
                     }
 
-                    for (int k = 0 ;k < MasterTable.Rows.Count;k++)
+                    for (int k = 0; k < MasterTable.Rows.Count; k++)
                     {
-            
+
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
                         imageBitmap = Convert.FromBase64String(image);
                         MasterTable.Columns.Remove("i_Image");
 
-                        string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemCode='" + ItemCode + "'";
-                        N_ItemID = dLayer.SaveData("Inv_ItemMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
+                        string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + "";  // and X_ItemCode='" + ItemCode + "'";
+                        N_ItemID = dLayer.SaveDataWithIndex("Inv_ItemMaster", "N_ItemID", DupCriteria, "", k, MasterTable, connection, transaction);
                         if (N_ItemID <= 0)
                         {
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to save"));
                         }
+
+                        int N_VariantGrpType = 0;
+                        if (k == 0 && ItemType == 6)
+                            N_VariantGrpType = N_ItemID;
+
+                        if (ItemType == 6)
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_GroupID=" + N_VariantGrpType + "  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+
 
                         if (image.Length > 0)
                             dLayer.SaveImage("Inv_ItemMaster", "i_Image", imageBitmap, "N_ItemID", N_ItemID, connection, transaction);
@@ -392,65 +402,65 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow var in AddUnit2.Rows) var["n_ItemID"] = N_ItemID;
 
                         int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
-                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=N_CompanyID", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
 
-                        int N_SalesUnitID=0,N_PurchaseUnitID=0,N_AddUnitID1=0,N_AddUnitID2=0;
+                        int N_SalesUnitID = 0, N_PurchaseUnitID = 0, N_AddUnitID1 = 0, N_AddUnitID2 = 0;
 
                         foreach (DataRow var in SalesUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
                         foreach (DataRow var in PurchaseUnit.Rows) var["n_BaseUnitID"] = BaseUnitID;
                         foreach (DataRow var in AddUnit1.Rows) var["n_BaseUnitID"] = BaseUnitID;
                         foreach (DataRow var in AddUnit2.Rows) var["n_BaseUnitID"] = BaseUnitID;
 
-                        string xBaseUnit=StockUnit.Rows[0]["X_ItemUnit"].ToString();
+                        string xBaseUnit = StockUnit.Rows[0]["X_ItemUnit"].ToString();
 
                         //Purchase Unit
-                        if(PurchaseUnit.Rows.Count>0)
+                        if (PurchaseUnit.Rows.Count > 0)
                         {
-                            if(PurchaseUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                                N_PurchaseUnitID=BaseUnitID;
+                            if (PurchaseUnit.Rows[0]["X_ItemUnit"].ToString() == xBaseUnit)
+                                N_PurchaseUnitID = BaseUnitID;
                             else
                                 N_PurchaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", PurchaseUnit, connection, transaction);
                         }
                         else
                         {
-                            N_PurchaseUnitID=BaseUnitID;
+                            N_PurchaseUnitID = BaseUnitID;
                         }
 
                         //Sales Unit
-                        if(SalesUnit.Rows.Count>0)
+                        if (SalesUnit.Rows.Count > 0)
                         {
-                            if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                                N_SalesUnitID=BaseUnitID;
-                            else if(SalesUnit.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
-                                N_SalesUnitID=N_PurchaseUnitID;
-                            else                      
+                            if (SalesUnit.Rows[0]["X_ItemUnit"].ToString() == xBaseUnit)
+                                N_SalesUnitID = BaseUnitID;
+                            else if (SalesUnit.Rows[0]["X_ItemUnit"].ToString() == PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_SalesUnitID = N_PurchaseUnitID;
+                            else
                                 N_SalesUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", SalesUnit, connection, transaction);
                         }
                         else
-                            N_SalesUnitID=BaseUnitID;
+                            N_SalesUnitID = BaseUnitID;
 
                         //Additional Unit1
-                        if(AddUnit1.Rows.Count>0)
+                        if (AddUnit1.Rows.Count > 0)
                         {
-                            if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                                N_AddUnitID1=BaseUnitID;
-                            else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
-                                N_AddUnitID1=N_PurchaseUnitID;
-                            else if(AddUnit1.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
-                                N_AddUnitID1=N_SalesUnitID;
+                            if (AddUnit1.Rows[0]["X_ItemUnit"].ToString() == xBaseUnit)
+                                N_AddUnitID1 = BaseUnitID;
+                            else if (AddUnit1.Rows[0]["X_ItemUnit"].ToString() == PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID1 = N_PurchaseUnitID;
+                            else if (AddUnit1.Rows[0]["X_ItemUnit"].ToString() == SalesUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID1 = N_SalesUnitID;
                             else
                                 N_AddUnitID1 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit1, connection, transaction);
                         }
-                        
+
                         //Additional Unit2
-                        if(AddUnit2.Rows.Count>0)
+                        if (AddUnit2.Rows.Count > 0)
                         {
-                            if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==xBaseUnit)
-                                N_AddUnitID2=BaseUnitID;
-                            else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
-                                N_AddUnitID2=N_PurchaseUnitID;
-                            else if(AddUnit2.Rows[0]["X_ItemUnit"].ToString()==SalesUnit.Rows[0]["X_ItemUnit"].ToString())
-                                N_AddUnitID2=N_SalesUnitID;
+                            if (AddUnit2.Rows[0]["X_ItemUnit"].ToString() == xBaseUnit)
+                                N_AddUnitID2 = BaseUnitID;
+                            else if (AddUnit2.Rows[0]["X_ItemUnit"].ToString() == PurchaseUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID2 = N_PurchaseUnitID;
+                            else if (AddUnit2.Rows[0]["X_ItemUnit"].ToString() == SalesUnit.Rows[0]["X_ItemUnit"].ToString())
+                                N_AddUnitID2 = N_SalesUnitID;
                             else
                                 N_AddUnitID2 = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", AddUnit2, connection, transaction);
                         }
@@ -487,6 +497,7 @@ namespace SmartxAPI.Controllers
                         string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
                         DocumentPath = DocumentPath + "DisplayImages";
                         System.IO.Directory.CreateDirectory(DocumentPath);
+                        dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
 
                         if (POS.Rows.Count > 0)
                         {
@@ -494,11 +505,11 @@ namespace SmartxAPI.Controllers
                             POS.Columns.Add("X_ImageLocation", typeof(System.String));
                             POS.Columns.Add("N_ImageID", typeof(System.Int32));
 
-                            int i=1;
+                            int i = 1;
                             foreach (DataRow dRow in POS.Rows)
                             {
-                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-POS-"+i);
-                                dRow["X_ImageName"] = ItemCode+"-POS-"+i + ".jpg";
+                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode + "-POS-" + i);
+                                dRow["X_ImageName"] = ItemCode + "-POS-" + i + ".jpg";
                                 dRow["X_ImageLocation"] = DocumentPath;
                                 dRow["N_ItemID"] = N_ItemID;
                                 i++;
@@ -513,11 +524,11 @@ namespace SmartxAPI.Controllers
                             ECOM.Columns.Add("X_ImageName", typeof(System.String));
                             ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
                             ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
-                            int j=1;
+                            int j = 1;
                             foreach (DataRow dRow in ECOM.Rows)
                             {
-                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-ECOM-"+j);
-                                dRow["X_ImageName"] = ItemCode+"-ECOM-"+j + ".jpg";
+                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode + "-ECOM-" + j);
+                                dRow["X_ImageName"] = ItemCode + "-ECOM-" + j + ".jpg";
                                 dRow["X_ImageLocation"] = DocumentPath;
                                 dRow["N_ItemID"] = N_ItemID;
                                 j++;
