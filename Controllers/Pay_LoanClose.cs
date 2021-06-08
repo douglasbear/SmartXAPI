@@ -175,7 +175,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set B_IsLoanClose =1,N_TransDetailsID="+nLoanCloseID+"  Where N_CompanyID =N_CompanyID and N_LoanTransID=N_LoanTransID and (N_RefundAmount=0 OR N_RefundAmount IS Null)",Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set B_IsLoanClose =1,N_TransDetailsID="+nLoanCloseID+"  Where N_CompanyID ="+nCompanyID+" and N_LoanTransID="+nLoanTransID+" and(N_RefundAmount=0 OR N_RefundAmount IS Null)",Params, connection, transaction);
                     
                         DataTable dt = new DataTable();
                         dt.Clear();

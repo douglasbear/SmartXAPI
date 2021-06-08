@@ -30,36 +30,59 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
-        // [HttpGet("list")]
-        // public ActionResult GetSalaryRevisionList()
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     Params.Add("@nCompanyID", nCompanyID);
-        //     string sqlCommandText = "select * from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID";
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //         }
-        //         dt = api.Format(dt);
-        //         if (dt.Rows.Count == 0)
-        //         {
-        //             return Ok(api.Notice("No Results Found"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(api.Success(dt));
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(e));
-        //     }
-        // }
+        [HttpGet("list")]
+        public ActionResult GetSalaryRevisionList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandCount = "";
+            string Searchkey = "";
+            string Criteria = " where N_CompanyID =@nCompanyID";
+            string sqlCommandText = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_HistoryCode desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + "and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
+            SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from VW_SalaryRivisionDisp where N_CompanyID=@nCompanyID " + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                }
+                // dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
         [HttpGet("defaultdetails")]
         public ActionResult GetSalaryRevisionDefaultDetails(int nEmpID, int nFnYearID, DateTime EffectiveDate)
         {
@@ -257,25 +280,25 @@ namespace SmartxAPI.Controllers
                     dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", pay_EmployeePayHistory, connection, transaction);
 
                     // Other Details
-                        if (Otherinfo.Rows[0]["n_NPositionID"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (Otherinfo.Rows[0]["n_NDepartmentID"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_DepartmentID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (Otherinfo.Rows[0]["n_NProjectID"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_ProjectID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +  N_CompanyID  + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (Otherinfo.Rows[0]["n_NBranchID"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_BranchID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" +  N_CompanyID  + " and N_FnYearID=" +  N_FnYearID, connection, transaction);
-                        if (Otherinfo.Rows[0]["n_NEmpTypeID"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" +  N_FnYearID, connection, transaction);
-                        if (Otherinfo.Rows[0]["n_NLocation"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
-                        if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
-                            dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NPositionID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_PositionID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NDepartmentID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_DepartmentID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NProjectID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_ProjectID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NBranchID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_BranchID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NEmpTypeID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NLocation"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
+                    if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NPositionID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 
 
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
                     //Accrual Save
-                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
+                    dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
 
                     transaction.Commit();
                     SortedList Result = new SortedList();
