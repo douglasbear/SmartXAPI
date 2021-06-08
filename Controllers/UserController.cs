@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
-            string exclude = " and X_UserID<>'Olivo' ";
+            string exclude = " and X_UserID<>'Olivo' and X_UserID LIKE '_%@__%.__%'";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_UserID like '%" + xSearchkey + "%' or X_UserCategory like '%" + xSearchkey + "%' or X_BranchName like '%" + xSearchkey + "%')";
@@ -241,13 +241,13 @@ namespace SmartxAPI.Controllers
                                 string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(MasterTable.Rows[0]["x_UserID"].ToString()) + seperator + myFunctions.EncryptString(nClientID.ToString());
 
                                 string EmailBody = "<div style='font-size: 18px;font-weight: 400;width: 600px;margin: 0 auto;color: #2d2f36;font-family: sans-serif;'><span style='font-weight: 500;margin: 56px 0 20px;'><span style='color: #2c6af6;'> "
-      + "Smartx Erp"
+      + "Olivo Cloud Solutions"
          + "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
-           + " Welcome," + MasterRow["x_UserName"].ToString()
-          + "</h1><p style='margin: 0 0 24px;'>" + myFunctions.GetEmailID(User) + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
-          + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
-                                string EmailSubject = "Olivo Cloud Solutions Invite";
-                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, connection, transaction, dLayer, User);
+           + " Welcome, " + MasterRow["x_UserName"].ToString()
+          + "</h1><p style='margin: 0 0 24px;'>" + myFunctions.GetUserName(User) + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
+          + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Cloud Solutions, All rights reserved.</p></div>";
+                                string EmailSubject = myFunctions.GetCompanyName(User) + " invites you to join their Olivo Cloud Solutions";
+                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer);
 
                             }
                             else
@@ -377,65 +377,14 @@ namespace SmartxAPI.Controllers
 + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
 
-
-                    string ToMail = emailID.ToString();
-                    object companyemail = "";
-                    object companypassword = "";
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=1", connection);
-                        companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=1", connection);
-                        if (ToMail.ToString() != "")
-                        {
-                            if (companyemail.ToString() != "")
-                            {
-                                object body = null;
-                                body = EmailBody;
-                                if (body != null)
-                                {
-                                    body = body.ToString();
-                                }
-                                else
-                                    body = "";
-
-
-                                string Sender = companyemail.ToString();
-                                EmailBody = body.ToString();
-                                string Subject = EmailSubject;
-
-
-
-                                SmtpClient client = new SmtpClient
-                                {
-                                    Host = "smtp.gmail.com",
-                                    Port = 587,
-                                    EnableSsl = true,
-                                    DeliveryMethod = SmtpDeliveryMethod.Network,
-                                    Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
-                                    Timeout = 10000,
-                                };
-
-                                MailMessage message = new MailMessage();
-                                message.To.Add(ToMail.ToString()); // Add Receiver mail Address  
-                                message.From = new MailAddress(Sender);
-                                message.Subject = Subject;
-                                message.Body = EmailBody;
-
-                                message.IsBodyHtml = true; //HTML email  
-                                client.Send(message);
-
-                            }
-                        }
-                    }
-
+                    myFunctions.SendMail( emailID.ToString(), EmailBody, EmailSubject, dLayer);
 
                 }
                 return Ok(_api.Success("Password Reset Mail Send"));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return StatusCode(403, _api.Error("An error occurred while sending mail"));
             }
         }
 

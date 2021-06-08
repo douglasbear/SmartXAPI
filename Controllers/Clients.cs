@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                     DataTable output = dLayer.ExecuteDataTable(sql, Params, cnn);
                     if (output.Rows.Count == 0)
                     {
-                        Res.Add("Message", "Invalid Username or Password");
+                        Res.Add("Message", "Invalid Username or Password!");
                         Res.Add("StatusCode", 0);
                         return Res;
                     }
