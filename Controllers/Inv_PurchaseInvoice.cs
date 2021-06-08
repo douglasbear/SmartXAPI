@@ -515,6 +515,7 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID <= 0)
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -522,6 +523,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
                         DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
+                    DetailTable.Columns.Remove("X_ItemUnit");
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)
                     {
@@ -565,7 +567,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(ex.Message));
                         }
                     }
                     SortedList VendorParams = new SortedList();

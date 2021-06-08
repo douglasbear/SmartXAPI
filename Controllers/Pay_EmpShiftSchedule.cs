@@ -145,46 +145,59 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult ShiftScheduleList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, DateTime d_Date, int nUserID)
         {
-
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@bAllBranchData", bAllBranchData);
-            Params.Add("@nBranchID", nBranchID);
-            Params.Add("@p2", d_Date);
-            string sqlCommandText = "";
-            if (nUserID == 1)
-            {
-                if (bAllBranchData == true)
-                    sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2   )";
-                else
-                    sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID    and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
-
-            }
-            else
-            {
-
-                if (bAllBranchData == true)
-                    sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + nUserID + " AND  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + nUserID + " AND  isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2 AND N_ReportToID=" + nUserID + "  )";
-                else
-                    sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + nUserID + " AND   and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01') N_ReportToID=" + nUserID + " AND  ";
-            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    Params.Add("@bAllBranchData", bAllBranchData);
+                    Params.Add("@nBranchID", nBranchID);
+                    Params.Add("@p2", d_Date);
+                    string sqlCommandText = "";
+
+
+                    if (nUserID == 1)
+                    {
+                        if (bAllBranchData == true)
+                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2   )";
+                        else
+                            sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID    and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
+
+                    }
+                    else
+                    {
+                        object empID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        object nReportToID = dLayer.ExecuteScalar("Select N_SuperVisorID From pay_supervisor Where N_CompanyID =@nCompanyID and N_EmpID=" + myFunctions.getVAL(empID.ToString()) + " ", Params, connection);
+                        if (nReportToID != null)
+                        {
+
+                            if (bAllBranchData == true)
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND  isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2 AND N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + "  )";
+                            else
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND   and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01') N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND  ";
+                        }
+                        else
+                        {
+                            return Ok(_api.Error("No Result found"));
+                        }
+                    }
+
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
                 }
             }
             catch (Exception e)

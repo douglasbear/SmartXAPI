@@ -179,6 +179,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetItemDetails(string xItemCode, int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
+            DataTable multiCategory = new DataTable();
             DataTable dt_LocStock = new DataTable();
             DataTable Images = new DataTable();
             SortedList Params = new SortedList();
@@ -196,6 +197,13 @@ namespace SmartxAPI.Controllers
                     string _sqlQuery = "SELECT * from vw_InvItemMaster where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
+                     multiCategory = _api.Format(multiCategory, "multiCategory");
+
+
+
 
                     if (dt.Rows.Count == 0)
                     {
@@ -277,11 +285,17 @@ namespace SmartxAPI.Controllers
                     }
                 }
                 dt.AcceptChanges();
+                // multiCategory.AcceptChanges();
                 dt = _api.Format(dt);
+                //multiCategory = _api.Format(multiCategory);
+                
                 DataSet dataSet = new DataSet();
                         dt = _api.Format(dt, "details");
+                        //multiCategory = _api.Format(multiCategory, "multiCategory");
+                        dataSet.Tables.Add(multiCategory);
                         Images = _api.Format(Images, "Images");
                         dataSet.Tables.Add(dt);
+                         
                         dataSet.Tables.Add(Images);
 
 
@@ -435,6 +449,7 @@ namespace SmartxAPI.Controllers
                         LocationList.AcceptChanges();
                         dLayer.SaveData("Inv_ItemMasterWHLink", "N_RowID", LocationList, connection, transaction);
                     }
+                     dLayer.DeleteData("Inv_ItemCategoryDisplayMaster", "N_ItemID", N_ItemID, "", connection, transaction);
                     if (CategoryList.Rows.Count > 0)
                     {
                         foreach (DataRow dRow in CategoryList.Rows)
@@ -449,7 +464,7 @@ namespace SmartxAPI.Controllers
                     string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
                     DocumentPath = DocumentPath + "DisplayImages";
                     System.IO.Directory.CreateDirectory(DocumentPath);
-
+                    dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
 
                     if (POS.Rows.Count > 0)
                     {
@@ -457,36 +472,39 @@ namespace SmartxAPI.Controllers
                         POS.Columns.Add("X_ImageLocation", typeof(System.String));
                         POS.Columns.Add("N_ImageID", typeof(System.Int32));
 
-
+                        int i=1;
                         foreach (DataRow dRow in POS.Rows)
                         {
-                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
-                            dRow["X_ImageName"] = ItemCode + ".jpg";
+                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-POS-"+i);
+                            dRow["X_ImageName"] = ItemCode+"-POS-"+i + ".jpg";
                             dRow["X_ImageLocation"] = DocumentPath;
                             dRow["N_ItemID"] = N_ItemID;
+                            i++;
 
                         }
                         POS.Columns.Remove("I_Image");
                         dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
 
                     }
-                    // if (ECOM.Rows.Count > 0)
-                    // {
-                    //     ECOM.Columns.Add("X_ImageName", typeof(System.String));
-                    //     ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
-                    //     ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
-                    //     foreach (DataRow dRow in ECOM.Rows)
-                    //     {
-                    //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode);
-                    //         dRow["X_ImageName"] = ItemCode + ".jpg";
-                    //         dRow["X_ImageLocation"] = DocumentPath;
-                   //          dRow["N_ItemID"] = N_ItemId;
+                    if (ECOM.Rows.Count > 0)
+                    {
+                        ECOM.Columns.Add("X_ImageName", typeof(System.String));
+                        ECOM.Columns.Add("X_ImageLocation", typeof(System.String));
+                        ECOM.Columns.Add("N_ImageID", typeof(System.Int32));
+                        int j=1;
+                        foreach (DataRow dRow in ECOM.Rows)
+                        {
+                            writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode+"-ECOM-"+j);
+                            dRow["X_ImageName"] = ItemCode+"-ECOM-"+j + ".jpg";
+                            dRow["X_ImageLocation"] = DocumentPath;
+                            dRow["N_ItemID"] = N_ItemID;
+                            j++;
 
-                    //     }
-                    //     ECOM.Columns.Remove("I_Image");
-                    //     dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
+                        }
+                        ECOM.Columns.Remove("I_Image");
+                        dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
 
-                    // }
+                    }
 
                     transaction.Commit();
                 }
