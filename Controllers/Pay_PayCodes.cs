@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
             if (id > 0)
                 X_Criteria = "where N_PayTypeID=@p1 and N_CompanyID=@nCompanyID";
 
-            SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetUserID(User) }, { "@nFnYearID", nFnyearID } };
+            SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetCompanyID(User) }, { "@nFnYearID", nFnyearID } };
 
             DataTable dt = new DataTable();
 
