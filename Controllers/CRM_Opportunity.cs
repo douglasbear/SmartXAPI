@@ -32,14 +32,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult OpportunityList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult OpportunityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%')";
@@ -48,11 +48,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_OpportunityID desc";
             else
                 xSortBy = " order by " + xSortBy;
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMOpportunity where N_CompanyID=@p1 " + Searchkey + " and N_OpportunityID not in (select top("+ Count +") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 " + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -91,28 +91,34 @@ namespace SmartxAPI.Controllers
         public ActionResult OpportunityListDetails(string xOpportunityCode)
         {
             DataTable dt = new DataTable();
+            DataTable dtItem = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-  
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
             string sqlCommandText = "select * from vw_CRMOpportunity where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            string sqlCommandTextItem = "select * from vw_CRMProducts where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xOpportunityCode);
+            SortedList Result = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dtItem = dLayer.ExecuteDataTable(sqlCommandTextItem, Params, connection);
                 }
                 dt = api.Format(dt);
+                Result.Add("Details", dt);
+                Result.Add("Items", dtItem);
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(Result));
                 }
             }
             catch (Exception e)
@@ -129,8 +135,9 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
+                DataTable MasterTable, Items;
                 MasterTable = ds.Tables["master"];
+                Items = ds.Tables["Items"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
@@ -150,12 +157,20 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 1302);
                         Params.Add("N_BranchID", nBranchId);
                         OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", Params, connection, transaction);
-                        if (OpportunityCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Opportunity Code")); }
+                        if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Opportunity Code")); }
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
 
 
                     nOpportunityID = dLayer.SaveData("CRM_Opportunity", "n_OpportunityID", MasterTable, connection, transaction);
+                    if (Items.Rows.Count > 0)
+                    {
+                        foreach (DataRow dRow in Items.Rows)
+                        {
+                            dRow["N_OpportunityID"] = nOpportunityID;
+                            dRow["n_CompanyID"] = nCompanyID;
+                        }
+                    }
                     if (nOpportunityID <= 0)
                     {
                         transaction.Rollback();
@@ -163,6 +178,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
+
                         transaction.Commit();
                         return Ok(api.Success("Oppurtunity Created"));
                     }
@@ -174,14 +191,14 @@ namespace SmartxAPI.Controllers
             }
         }
 
-      
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nOpportunityID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -193,9 +210,9 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_OpportunityID",nOpportunityID.ToString());
-                    return Ok(api.Success(res,"Opportunity deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_OpportunityID", nOpportunityID.ToString());
+                    return Ok(api.Success(res, "Opportunity deleted"));
                 }
                 else
                 {

@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*)x as N_Count  from vw_Pay_MedicalInsuranceDeletion where N_CompanyId=@nCompanyId " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_MedicalInsuranceDeletion where N_CompanyId=@nCompanyId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -284,6 +284,9 @@ namespace SmartxAPI.Controllers
                     int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
                     string X_DeletionCode = MasterTable.Rows[0]["x_DeletionCode"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                   // int 
+                    MasterTable.Columns.Remove("n_UserID");
+                    MasterTable.Columns.Remove("n_BranchID");
                     if (nDeletionID > 0)
                     {
                         dLayer.DeleteData("Pay_MedicalInsuranceDeletion", "N_DeletionID", nDeletionID, "N_CompanyID = " + nCompanyID, connection, transaction);
@@ -317,7 +320,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", FormID);
-                        Params.Add("N_FnYearId", nFnYearID);
+                        // Params.Add("N_FnYearId", nFnYearID);
                         while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
@@ -354,7 +357,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
-                    Amortization(nDeletionID, N_AmortizationID, MasterTable, DetailTable, connection, transaction);
+                    Amortization(nDeletionID, nUserID, nBranchID, N_AmortizationID, MasterTable, DetailTable, connection, transaction);
 
 
                     dLayer.ExecuteNonQuery("SP_Inv_VendorDebitNotePosting " + nCompanyID.ToString() + "," + nDeletionID.ToString() + "," + N_MedicalInsID.ToString() + "," + nBranchID.ToString() + "," + nUserID.ToString(), connection, transaction);
@@ -370,13 +373,14 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private void Amortization(int _plPkeyID, int AmortizationID_Loc, DataTable MasterTable, DataTable DetailTable, SqlConnection connection, SqlTransaction transaction)
+        private void Amortization(int _plPkeyID, int nUserID, int nBranchID, int AmortizationID_Loc, DataTable MasterTable, DataTable DetailTable, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
 
                 object ObjAmortizationID = 0;
                 object N_AmortizationDetailsID = 0;
+                int N_PrepaymentID=AmortizationID_Loc;
                 //int  object lobjResult = null;
                 int lobjResult = 0;
                 SortedList Amortization = new SortedList();
@@ -389,15 +393,15 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+               // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
                 int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
-                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+               // int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                 int payid = 0;
                 int piPKeyId = 0;
 
                 Params.Add("@nCompanyID", nCompanyID);
-                Params.Add("@nCompanyID", nCompanyID);
-                EmpParams.Add("@nFnYearID", nFnYearID);
+                Params.Add("@nFnYearID", nFnYearID);
+                EmpParams.Add("@nCompanyID", nCompanyID);
 
 
                 string PrjInv = "PrjInv";
@@ -407,7 +411,7 @@ namespace SmartxAPI.Controllers
 
 
                 amortizationTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
-                lobjResult = dLayer.SaveData("Inv_PrePaymentScheduleMaster", "AmortizationID_Loc", amortizationTable, connection, transaction);
+                lobjResult = dLayer.SaveData("Inv_PrePaymentScheduleMaster", "N_PrepaymentID", amortizationTable, connection, transaction);
                 if (lobjResult > 0)
                 {
                     ObjAmortizationID = myFunctions.getIntVAL(lobjResult.ToString());

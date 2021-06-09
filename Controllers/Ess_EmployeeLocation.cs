@@ -42,7 +42,10 @@ namespace SmartxAPI.Controllers
         public ActionResult OpportunityList(int nEmpID, int nFnYearID,string deviceID)
         {
             DataTable location = new DataTable();
-            DataTable devices = new DataTable();        
+            DataTable devices = new DataTable();
+            DataTable Approvals= new DataTable();
+            // Approvals = ds.Tables["approval"];
+            DataRow ApprovalRow = Approvals.Rows[0];
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
