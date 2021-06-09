@@ -162,13 +162,16 @@ namespace SmartxAPI.Controllers
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Cost", typeof(double), 0);
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActPrice", typeof(double), 0);
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActCost", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "PolicyDays", typeof(int), 0);
+
+
                         foreach (DataRow dvar in EmployeeTable.Rows)
                         {
                             object nPrice = dLayer.ExecuteScalar("Select N_Price From vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
                             object nCost = dLayer.ExecuteScalar("Select N_Cost From  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActPrice = dLayer.ExecuteScalar("select N_ActPrice from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActCost = dLayer.ExecuteScalar("select N_ActCost from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
-
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
                             if (nPrice != null)
                             {
                                 dvar["N_Price"] = myFunctions.getVAL(nPrice.ToString());
@@ -185,6 +188,10 @@ namespace SmartxAPI.Controllers
                             {
                                 dvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
                             }
+                            if (policyDays != null)
+                            {
+                                dvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
+                            }
 
                             EmployeeTable.AcceptChanges();
                             EmployeeTable = _api.Format(EmployeeTable, "EmpTable");
@@ -200,9 +207,12 @@ namespace SmartxAPI.Controllers
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_ActPrice", typeof(double), 0);
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_ActCost", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "PolicyDays", typeof(int), 0);
+
+                        foreach (DataRow dvar in EmployeeTable.Rows)
 
 
-                        if (FamilyTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            if (FamilyTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
                         foreach (DataRow kvar in FamilyTable.Rows)
                         {
@@ -210,7 +220,7 @@ namespace SmartxAPI.Controllers
                             object nCost = dLayer.ExecuteScalar("Select N_Cost From  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActPrice = dLayer.ExecuteScalar("select N_ActPrice from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActCost = dLayer.ExecuteScalar("select N_ActCost from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
-
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
                             if (nPrice != null)
                             {
                                 kvar["N_Price"] = myFunctions.getVAL(nPrice.ToString());
@@ -226,6 +236,10 @@ namespace SmartxAPI.Controllers
                             if (nActCost != null)
                             {
                                 kvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
+                            }
+                            if (policyDays != null)
+                            {
+                                kvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
                             }
                         }
                         FamilyTable.AcceptChanges();
@@ -494,7 +508,7 @@ namespace SmartxAPI.Controllers
                                     TimeSpan diff1 = End - Start;
                                     Days = diff1.TotalDays + 1;
                                     TotAmtSpilt = AmtSplit * Days;
-                                    N_AmortizationDetailsID = 0; 
+                                    N_AmortizationDetailsID = 0;
                                     string newSql = "Select " + nCompanyID + " as N_CompanyID," + _plPkeyID + " as N_PrePaymentID ," + ObjAmortizationID + " as N_PrePayScheduleID," + myFunctions.getDateVAL(Start) + "' as D_DateFrom,'" + myFunctions.getDateVAL(End) + "' as  D_DateTo," + TotAmtSpilt + " as N_InstAmount," + myFunctions.getIntVAL(var["n_EmpID"].ToString()) + " as N_RefID," + payid + " as N_PaycodeID ";
                                     NewTable = dLayer.ExecuteDataTable(newSql, Params, connection, transaction);
                                     N_AmortizationDetailsID = dLayer.SaveData("Inv_PrePaymentSchedule", "N_AmortizationDetailsID.ToString()", NewTable, connection, transaction);
@@ -502,7 +516,7 @@ namespace SmartxAPI.Controllers
                                     if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
                                     {
                                         transaction.Rollback();
-                                       // return Ok(_api.Error("Unable To Save"));
+                                        // return Ok(_api.Error("Unable To Save"));
                                     }
                                     Start = new DateTime(End.AddMonths(1).Year, End.AddMonths(1).Month, 1);
 
@@ -512,22 +526,22 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Commit();
-                            
+
                         }
                     }
 
                 }
 
-              
-  //return Amortization;
+
+                //return Amortization;
             }
-           
+
             catch (Exception ex)
             {
                 //return Ok(_api.Error(ex));
             }
         }
-        
+
     }
 }
 

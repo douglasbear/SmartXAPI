@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult PayEmployeApprovalCode(string xApprovalSettingsCode)
+        public ActionResult PayEmployeApprovalCode(int nApprovalSettingsID)
         {
 
 
@@ -190,16 +190,16 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                     Params.Add("@xApprovalSettingsCode", xApprovalSettingsCode);
-                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and X_ApprovalSettingsCode=@xApprovalSettingsCode  ";
+                     Params.Add("@nApprovalSettingsID", nApprovalSettingsID);
+                    Mastersql = "select * from Sec_ApprovalSettings_Employee where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApprovalSettingsID";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    int ApproovalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalSettingsID"].ToString());
-                    Params.Add("@nApproovalSettingsID", ApproovalSettingsID);
+                    // int ApproovalSettingsID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ApprovalSettingsID"].ToString());
+                    // Params.Add("@nApproovalSettingsID", ApproovalSettingsID);
 
                     MasterTable = _api.Format(MasterTable, "Master");
-                    DetailSql = "select * from vw_Sec_ApprovalSettings_EmployeeDetails where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApproovalSettingsID ";
+                    DetailSql = "select * from vw_Sec_ApprovalSettings_EmployeeDetails where N_CompanyId=@nCompanyID and N_ApprovalSettingsID=@nApprovalSettingsID";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);

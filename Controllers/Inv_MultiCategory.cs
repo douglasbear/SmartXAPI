@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
             int ParentID = nParentID;
             string DeptCode = "";
             DataTable dtDept = new DataTable();
-            dtDept = dLayer.ExecuteDataTable("select COUNT(convert(nvarchar(100),X_CategoryCode)) From Inv_ItemCategoryDisplay where N_GroupID =" + ParentID + " and N_CompanyID =@nCompanyID ", ParamList, connection, transaction);
+            dtDept = dLayer.ExecuteDataTable("select COUNT(convert(nvarchar(100),X_CategoryCode)) From Inv_ItemCategoryDisplay where N_ParentID =" + ParentID + " and N_CompanyID =@nCompanyID ", ParamList, connection, transaction);
             int count = myFunctions.getIntVAL(dtDept.Rows[0][0].ToString());
             dtDept = dLayer.ExecuteDataTable("select X_CategoryCode From Inv_ItemCategoryDisplay where N_CategoryDisplayID =" + ParentID + " and N_CompanyID =@nCompanyID ", ParamList, connection, transaction);
             while (true)
@@ -246,48 +246,48 @@ namespace SmartxAPI.Controllers
             return DeptCode;
         }
 
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nCategoryID)
-        // {
-        //     int Results = 0;
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     try
-        //     {
-        //         SortedList QueryParams = new SortedList();
-        //         QueryParams.Add("@nCompanyID", nCompanyID);
-        //         QueryParams.Add("@nCategoryDisplayID", nCategoryID);
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplay where N_CategoryDisplayID=@nCategoryID and N_CompanyID=@nCompanyID ", QueryParams, connection);
-        //             if (Objcount != null)
-        //             {
-        //                 if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
-        //                 {
-        //                     Results = dLayer.DeleteData("Inv_ItemCategoryDisplay", "N_CategoryDisplayID", nCategoryID, "N_CompanyID=" + nCompanyID + "", connection);
-        //                 }
-        //                 else
-        //                 {
-        //                     return Ok(_api.Error("Department Allready Used"));
-        //                 }
-        //             }
-        //         }
-        //         if (Results > 0)
-        //         {
-        //             return Ok(_api.Success("Department/Cost centre deleted"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(_api.Error("Unable to delete"));
-        //         }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nCategoryDisplayID)
+        {
+            int Results = 0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                SortedList QueryParams = new SortedList();
+                QueryParams.Add("@nCompanyID", nCompanyID);
+                QueryParams.Add("@nCategoryDisplayID", nCategoryDisplayID);
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID="+nCategoryDisplayID+" and N_CompanyID="+nCompanyID+" ", QueryParams, connection);
+                    if (Objcount != null)
+                    {
+                        if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
+                        {
+                            Results = dLayer.DeleteData("Inv_ItemCategoryDisplay", "N_CategoryDisplayID", nCategoryDisplayID, "N_CompanyID=" + nCompanyID + "", connection);
+                        }
+                        else
+                        {
+                            return Ok(_api.Error("Category Allready Used"));
+                        }
+                    }
+                }
+                if (Results > 0)
+                {
+                    return Ok(_api.Success("Category deleted"));
+                }
+                else
+                {
+                    return Ok(_api.Error("Unable to delete"));
+                }
 
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(ex));
-        //     }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
 
-        // }
+        }
 
 
     }
