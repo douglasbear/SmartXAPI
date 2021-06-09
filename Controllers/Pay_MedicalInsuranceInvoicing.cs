@@ -60,61 +60,61 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        //  [HttpGet("dashboardList")]
-        // public ActionResult SalaryPayList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
-        // {
-        //     //int nCompanyId = myFunctions.GetCompanyID(User);
-        //     int nUserID = myFunctions.GetUserID(User);
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     string sqlCommandCount = "";
-        //     int Count = (nPage - 1) * nSizeperpage;
-        //     string sqlCommandText = "";
-        //     string Criteria = "";
-        //     string Searchkey = "";
-        //     if (xSearchkey != null && xSearchkey.Trim() != "")
-        //         Searchkey = "and X_InvoiceCode like '%" + xSearchkey + "%'";
+         [HttpGet("dashboardList")]
+        public ActionResult DashboardList(int nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            //int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Criteria = "";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and X_InvoiceCode like '%" + xSearchkey + "%'";
 
-        //     if (xSortBy == null || xSortBy.Trim() == "")
-        //         xSortBy = " order by N_InvoiceID asc";
-        //     else
-        //         xSortBy = " order by " + xSortBy;
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_InvoiceID asc";
+            else
+                xSortBy = " order by " + xSortBy;
 
-        //     if (Count == 0)
-        //         sqlCommandText = "select top(" + nSizeperpage + ")  N_AdditionID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId  group By  N_InvoiceID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate " + Searchkey + Criteria + xSortBy;
-        //     else
-        //         sqlCommandText = "select top(" + nSizeperpage + ") N_AdditionID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_InvoiceID not in (select top(" + Count + ") N_InvoiceID from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId  group By  N_InvoiceID,X_PolicyCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate  " + Criteria + xSortBy + " ) " + xSortBy;
-        //     Params.Add("@nCompanyId", nCompanyId);
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ")  N_InvoiceID,X_InvoiceCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId  group By  N_InvoiceID,X_InvoiceCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate " + Searchkey + Criteria + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") N_InvoiceID,X_InvoiceCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_InvoiceID not in (select top(" + Count + ") N_InvoiceID from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId  group By  N_InvoiceID,X_InvoiceCode,X_PolicyNo,X_VendorName,X_CardNo,X_StartDate,X_EndDate  " + Criteria + xSortBy + " ) " + xSortBy;
+            Params.Add("@nCompanyId", nCompanyId);
 
-        //     SortedList OutPut = new SortedList();
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+            SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-        //             sqlCommandCount = "select count(*)  as N_Count  from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
-        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-        //             OutPut.Add("Details", _api.Format(dt));
-        //             OutPut.Add("TotalCount", TotalCount);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(_api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(_api.Success(OutPut));
-        //             }
+                    sqlCommandCount = "select count(*)  as N_Count  from vw_MedicalInsuranceInvoiceSearch where N_CompanyID=@nCompanyId " + Searchkey + Criteria;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
 
-        //         }
+                }
 
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(e));
-        //     }
-        // }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
         [HttpGet("employeeDetails")]
         public ActionResult GetEmpDetails(int nAdditionCode, int nFnYearID)
