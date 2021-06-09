@@ -282,7 +282,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection,transaction);
-                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    //if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
                     MasterTable = _api.Format(MasterTable, "Master");
 
