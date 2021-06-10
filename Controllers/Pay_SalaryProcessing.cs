@@ -8,7 +8,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Net.Mail;
-
+using System.Text;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -31,6 +31,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 190;
+            
         }
 
         [HttpGet("empList")]
@@ -276,7 +277,9 @@ namespace SmartxAPI.Controllers
         public void SendEmail(int nTransID, int nCompanyID, DateTime DT)
         {
             DataTable dt = new DataTable();
+            DataTable Paycodes = new DataTable();
             SortedList Params = new SortedList();
+            SortedList ProParams = new SortedList();
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nTransID);
             string sqlCommandText = "Select N_EmpID,X_EmpName,X_EmailID from vw_EmpMail_Disp where N_CompanyId= @p1 and  N_TransID=@p2";
@@ -287,8 +290,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    object companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
-                    object companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+                     ProParams.Add("N_TransID", 0);
+                     ProParams.Add("N_TransID", 0);
+                     ProParams.Add("N_TransID", 0);
+                     ProParams.Add("N_TransID", 0);
+
+
+                    Paycodes = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParams, connection);
+
+
+                    object companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + nCompanyID, Params, connection);
+                    object companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + nCompanyID, Params, connection);
+                    StringBuilder message = new StringBuilder();
 
                     foreach (DataRow MasterVar in dt.Rows)
                     {
@@ -306,14 +319,14 @@ namespace SmartxAPI.Controllers
                             mail.To.Add(Toemail);
                             string Toemailnames = MasterVar["X_EmpName"].ToString();
                             mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
-                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(dsEmpMail.Tables["Pay_Managermails"].Rows[i]["N_EmpId"].ToString()), N_TransID);
+                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID,DT,Paycodes);
                             if (mail.Body == "") continue;
                             mail.IsBodyHtml = true;
                             SmtpServer.Port = 587;
                             SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
                             SmtpServer.EnableSsl = true;
                             SmtpServer.Send(mail);
-                            //message.Length = 0;
+                            message.Length = 0;
                             mail.Body = "";
                             mail.Dispose();
                             // if (X_FormFor == "Send Email Payslip")
@@ -331,6 +344,45 @@ namespace SmartxAPI.Controllers
             {
               
             }
+        }
+        public string Boody(string Toemailnames, int ManagerID, int transID,DateTime DT,DataTable ProParams)
+        {
+            StringBuilder message = new StringBuilder();
+            
+            message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
+            double Total_addn = 0.0;
+            double Total_ddn = 0.0;
+            double Total = 0.0;
+            message = message.Append("Dear " + Toemailnames + ",<br/><br/>");
+            message = message.Append("Your Salary has been Processed,please find the details below; <br/><br/>");
+
+
+            foreach (DataRow var in ProParams.Rows)
+            {
+                double Amount = 0;
+                if (var["N_EmpID"].ToString() != ManagerID.ToString()) continue;
+                if (myFunctions.getIntVAL(var["N_PayTypeID"].ToString()) == 11) continue; // --- TO BLOCK END OF SERVICE AMOUNT
+                Amount = myFunctions.getVAL(var["N_PayRate"].ToString());
+                if (myFunctions.getIntVAL(var["N_Type"].ToString()) == 0)
+                {
+                    Total_addn += Amount;
+                }
+                else
+                    Total_ddn += Amount;
+            }
+            Total = Total_addn - Total_ddn;
+            message = message.Append(DT.ToString("MMM yyyy") + "&nbsp;&nbsp;<br/><br/>");
+            message = message.Append("<table style=font-family:Georgia border=0 align=Left span=7 cellpadding=6 cellspacing=0>");
+            message = message.Append("<col width=300><col width=100>");
+            message = message.Append("<tr><td><b>Additions</td><td><b>" + Total_addn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            //SalaryDetails(ManagerID, 0);
+            message = message.Append("<tr><td> <colspan=3><hr></td><br/><br/>");
+            message = message.Append("<tr><td><b>Deductions</td><td><b>" + Total_ddn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            //SalaryDetails(ManagerID, 1);
+            message = message.Append("<tr><td> <colspan=3><hr></td>");
+            message = message.Append("<tr><td><b>Net Amount</b></td><td><b>" + Total.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            message = message.Append("<tr><left>Sincerly,</left><br><left>" + "" + "</left></table>");
+            return message.ToString();
         }
 
 
