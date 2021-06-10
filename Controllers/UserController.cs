@@ -239,12 +239,13 @@ namespace SmartxAPI.Controllers
                                 }
                                 // format -> userid + email + clientid + companyid + companyUserID
                                 string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(MasterTable.Rows[0]["x_UserID"].ToString()) + seperator + myFunctions.EncryptString(nClientID.ToString());
+                                string userName = dLayer.ExecuteScalar("select X_UserName from Users where N_ClientID=@nClientID and N_UserID=" + myFunctions.GetGlobalUserID(User), userParams, olivoCon, olivoTxn).ToString();
 
                                 string EmailBody = "<div style='font-size: 18px;font-weight: 400;width: 600px;margin: 0 auto;color: #2d2f36;font-family: sans-serif;'><span style='font-weight: 500;margin: 56px 0 20px;'><span style='color: #2c6af6;'> "
       + "Olivo Cloud Solutions"
          + "</span><h1 style='font-size: 32px;font-weight: 600;margin:40px 0 12px;'>"
            + " Welcome, " + MasterRow["x_UserName"].ToString()
-          + "</h1><p style='margin: 0 0 24px;'>" + myFunctions.GetUserName(User) + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
+          + "</h1><p style='margin: 0 0 24px;'>" + userName + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
           + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Cloud Solutions, All rights reserved.</p></div>";
                                 string EmailSubject = myFunctions.GetCompanyName(User) + " invites you to join their Olivo Cloud Solutions";
                                 myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer);
@@ -377,7 +378,7 @@ namespace SmartxAPI.Controllers
 + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
 
-                    myFunctions.SendMail( emailID.ToString(), EmailBody, EmailSubject, dLayer);
+                    myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer);
 
                 }
                 return Ok(_api.Success("Password Reset Mail Send"));
@@ -427,9 +428,9 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int  nCompanyId=myFunctions.GetCompanyID(User);
-            Params.Add("@xUserID",xUser);
-            Params.Add("@nCompanyID",nCompanyId);
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            Params.Add("@xUserID", xUser);
+            Params.Add("@nCompanyID", nCompanyId);
             string sqlCommandText = "select * from vw_UserList where x_UserID=@xUserID and N_CompanyID=@nCompanyID";
             try
             {
