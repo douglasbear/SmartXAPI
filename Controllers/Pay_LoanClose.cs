@@ -228,8 +228,13 @@ namespace SmartxAPI.Controllers
                     row["N_LoanTransDetailsID"] = 0;
                     row["N_RefundAmount"] = 0;
                     Start = Start.AddMonths(1);
+                    if (nPaidAmount == 0 && nRateOfAmount == 0)
+                    {
+                        return Ok(api.Warning("Please Enter Amount"));
 
-                    if (nPaidAmount == 0 && nRateOfAmount != 0)
+                    }
+
+                    else if (nPaidAmount == 0 && nRateOfAmount != 0)
                     {
                         row["N_RefundAmount"] = nRateOfAmount;
                         dt.Rows.Add(row);
@@ -355,7 +360,7 @@ namespace SmartxAPI.Controllers
                                 };
 
                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
-                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
+                    dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
 
                     transaction.Commit();
 
