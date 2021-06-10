@@ -184,7 +184,7 @@ namespace SmartxAPI.Data
                         {
                             Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
                         new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
-                        new Claim(ClaimTypes.Name,loginRes.X_UserName.ToString()),
+                        new Claim(ClaimTypes.Name,loginRes.X_UserFullName.ToString()),
                         new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
                         new Claim(ClaimTypes.GroupSid,loginRes.N_UserCategoryID.ToString()),
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),

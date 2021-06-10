@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-                    return Ok(_api.Success(Ok()));
+                    return Ok(_api.Success(Ok("Payslip Mail Send")));
 
 
 
@@ -595,7 +595,7 @@ namespace SmartxAPI.Controllers
 
                         transaction.Commit();
 
-                        SendEmail(N_TransID, nCompanyID, DateTime.Now, nFnYearId);
+                        // SendEmail(N_TransID, nCompanyID, DateTime.Now, nFnYearId);
                         return Ok(_api.Success("Saved"));
 
                     }
