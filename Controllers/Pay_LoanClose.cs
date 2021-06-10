@@ -206,7 +206,6 @@ namespace SmartxAPI.Controllers
                     dt.Columns.Add("D_RefundDate");
                     dt.Columns.Add("B_IsLoanClose");
                     dt.Columns.Add("N_TransDetailsID");
-                    dt.Columns.Add("N_TransDetailsID");
                     dt.Columns.Add("N_RefundAmount");
 
                     DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
@@ -271,7 +270,6 @@ namespace SmartxAPI.Controllers
                             table.Columns.Add("D_RefundDate");
                             table.Columns.Add("B_IsLoanClose");
                             table.Columns.Add("N_TransDetailsID");
-                            table.Columns.Add("N_TransDetailsID");
                             table.Columns.Add("N_RefundAmount");
 
                             DateTime Start1 = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
@@ -298,7 +296,7 @@ namespace SmartxAPI.Controllers
 
 
                         }
-                        Balance = nBalanceAmount - (nPaidAmount) + nRateOfAmount;
+                        Balance = nBalanceAmount - (nPaidAmount + nRateOfAmount);
                     }
                     if (Balance > 0)
                     {

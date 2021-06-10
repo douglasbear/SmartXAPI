@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_L oanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
