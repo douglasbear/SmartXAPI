@@ -308,6 +308,11 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow MasterVar in dt.Rows)
                     {
+                        
+
+
+
+
                         MailMessage mail = new MailMessage();
                         SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
                         mail.From = new MailAddress(companyemail.ToString());
@@ -319,22 +324,23 @@ namespace SmartxAPI.Controllers
                         string OrderByField = "";
                         if (Toemail != "")
                         {
-                            mail.To.Add(Toemail);
                             string Toemailnames = MasterVar["X_EmpName"].ToString();
-                            mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
-                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
-                            if (mail.Body == "") continue;
-                            mail.IsBodyHtml = true;
-                            SmtpServer.Port = 587;
-                            SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
-                            SmtpServer.EnableSsl = true;
-                            SmtpServer.Send(mail);
-                            message.Length = 0;
-                            mail.Body = "";
-                            mail.Dispose();
-                            // if (X_FormFor == "Send Email Payslip")
-                            //     msg.waitMsg(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Success"));
-                        }
+                            string Body=Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
+                           string Subject="Your salary payments for the month " + DT.ToString("MMM-yyyy");
+                            myFunctions.SendMail(Toemail,Body,Subject,dLayer);
+                            // mail.To.Add(Toemail);
+                            // mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
+                            // mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
+                            // if (mail.Body == "") continue;
+                            // mail.IsBodyHtml = true;
+                            // SmtpServer.Port = 587;
+                            // SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
+                            // SmtpServer.EnableSsl = true;
+                            // SmtpServer.Send(mail);
+                            // message.Length = 0;
+                            // mail.Body = "";
+                            // mail.Dispose();
+                           }
 
                     }
 
