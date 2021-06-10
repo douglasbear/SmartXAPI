@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*)x as N_Count  from vw_Pay_MedicalInsuranceDeletion where N_CompanyId=@nCompanyId " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_MedicalInsuranceDeletion where N_CompanyId=@nCompanyId " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -162,13 +162,16 @@ namespace SmartxAPI.Controllers
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_Cost", typeof(double), 0);
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActPrice", typeof(double), 0);
                         EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActCost", typeof(double), 0);
+                        EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "PolicyDays", typeof(int), 0);
+
+
                         foreach (DataRow dvar in EmployeeTable.Rows)
                         {
                             object nPrice = dLayer.ExecuteScalar("Select N_Price From vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
                             object nCost = dLayer.ExecuteScalar("Select N_Cost From  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActPrice = dLayer.ExecuteScalar("select N_ActPrice from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActCost = dLayer.ExecuteScalar("select N_ActCost from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and N_DependenceID = 0 order by D_AdditionDate Desc ", EmpParams, connection);
-
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
                             if (nPrice != null)
                             {
                                 dvar["N_Price"] = myFunctions.getVAL(nPrice.ToString());
@@ -179,11 +182,15 @@ namespace SmartxAPI.Controllers
                             }
                             if (nActPrice != null)
                             {
-                                dvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                                dvar["N_ActPrice"] = myFunctions.getVAL(nActPrice.ToString());
                             }
-                            if (nActPrice != null)
+                            if (nActCost != null)
                             {
-                                dvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                                dvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
+                            }
+                            if (policyDays != null)
+                            {
+                                dvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
                             }
 
                             EmployeeTable.AcceptChanges();
@@ -200,9 +207,12 @@ namespace SmartxAPI.Controllers
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_Cost", typeof(double), 0);
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_ActPrice", typeof(double), 0);
                         FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "N_ActCost", typeof(double), 0);
+                        FamilyTable = myFunctions.AddNewColumnToDataTable(FamilyTable, "PolicyDays", typeof(int), 0);
+
+                        foreach (DataRow dvar in EmployeeTable.Rows)
 
 
-                        if (FamilyTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            if (FamilyTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
                         foreach (DataRow kvar in FamilyTable.Rows)
                         {
@@ -210,7 +220,7 @@ namespace SmartxAPI.Controllers
                             object nCost = dLayer.ExecuteScalar("Select N_Cost From  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActPrice = dLayer.ExecuteScalar("select N_ActPrice from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
                             object nActCost = dLayer.ExecuteScalar("select N_ActCost from  vw_MedicalInsDeletionEmployee Where N_CompanyID =@nCompanyID  and N_EmpID=" + nEmpID + " and  N_DependenceID =" + xDepId + " order by D_AdditionDate Desc ", EmpParams, connection);
-
+                            object policyDays = dLayer.ExecuteScalar("SELECT  isnull(DATEDIFF(DAY,D_StartDate, D_EndDate),0) AS days from Pay_Medical_Insurance where N_MedicalInsID =" + N_MedicalInsID + " and  N_CompanyID=@nCompanyID", Params, connection);
                             if (nPrice != null)
                             {
                                 kvar["N_Price"] = myFunctions.getVAL(nPrice.ToString());
@@ -221,11 +231,15 @@ namespace SmartxAPI.Controllers
                             }
                             if (nActPrice != null)
                             {
-                                kvar["N_ActPrice"] = myFunctions.getDateVAL(Convert.ToDateTime(nActPrice));
+                                kvar["N_ActPrice"] = myFunctions.getVAL(nActPrice.ToString());
                             }
-                            if (nActPrice != null)
+                            if (nActCost != null)
                             {
-                                kvar["N_ActCost"] = myFunctions.getDateVAL(Convert.ToDateTime(nActCost));
+                                kvar["N_ActCost"] = myFunctions.getVAL(nActCost.ToString());
+                            }
+                            if (policyDays != null)
+                            {
+                                kvar["PolicyDays"] = myFunctions.getVAL(policyDays.ToString());
                             }
                         }
                         FamilyTable.AcceptChanges();
@@ -270,6 +284,9 @@ namespace SmartxAPI.Controllers
                     int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
                     string X_DeletionCode = MasterTable.Rows[0]["x_DeletionCode"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                   // int 
+                    MasterTable.Columns.Remove("n_UserID");
+                    MasterTable.Columns.Remove("n_BranchID");
                     if (nDeletionID > 0)
                     {
                         dLayer.DeleteData("Pay_MedicalInsuranceDeletion", "N_DeletionID", nDeletionID, "N_CompanyID = " + nCompanyID, connection, transaction);
@@ -303,7 +320,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_FormID", FormID);
-                        Params.Add("N_FnYearId", nFnYearID);
+                        // Params.Add("N_FnYearId", nFnYearID);
                         while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
@@ -340,7 +357,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
-                   // Amortization(nDeletionID, N_AmortizationID, MasterTable, connection);
+                    Amortization(nDeletionID, nUserID, nBranchID, N_AmortizationID, MasterTable, DetailTable, connection, transaction);
 
 
                     dLayer.ExecuteNonQuery("SP_Inv_VendorDebitNotePosting " + nCompanyID.ToString() + "," + nDeletionID.ToString() + "," + N_MedicalInsID.ToString() + "," + nBranchID.ToString() + "," + nUserID.ToString(), connection, transaction);
@@ -354,35 +371,182 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+
+
+        private void Amortization(int _plPkeyID, int nUserID, int nBranchID, int AmortizationID_Loc, DataTable MasterTable, DataTable DetailTable, SqlConnection connection, SqlTransaction transaction)
+        {
+            try
+            {
+
+                object ObjAmortizationID = 0;
+                object N_AmortizationDetailsID = 0;
+                int N_PrepaymentID=AmortizationID_Loc;
+                //int  object lobjResult = null;
+                int lobjResult = 0;
+                SortedList Amortization = new SortedList();
+                SortedList Params = new SortedList();
+                SortedList EmpParams = new SortedList();
+
+                DataTable amortizationTable;
+                DataTable MedIns;
+                DataTable NewTable;
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+               // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
+               // int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                int payid = 0;
+                int piPKeyId = 0;
+
+                Params.Add("@nCompanyID", nCompanyID);
+                Params.Add("@nFnYearID", nFnYearID);
+                EmpParams.Add("@nCompanyID", nCompanyID);
+
+
+                string PrjInv = "PrjInv";
+                string A = "A";
+
+                string qry = "Select " + nCompanyID + " as N_CompanyID," + nFnYearID + " as N_FnYearID," + nUserID + " as N_UserID," + nBranchID + " as N_BranchID," + _plPkeyID + " as N_PrePaymentID ,'" + PrjInv + "' as  X_Type," + FormID + " as N_FormID,'" + A + "' as X_EntryType ";
+
+
+                amortizationTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+                lobjResult = dLayer.SaveData("Inv_PrePaymentScheduleMaster", "N_PrepaymentID", amortizationTable, connection, transaction);
+                if (lobjResult > 0)
+                {
+                    ObjAmortizationID = myFunctions.getIntVAL(lobjResult.ToString());
+                    foreach (DataRow var in DetailTable.Rows)
+                    {
+                        double amttotel = 0;
+                        int frquency = 0;
+                        double AmtSplit = 0, TotAmtSpilt = 0;
+                        if (var["n_EmpID"].ToString() == "") continue;
+                        if (myFunctions.getIntVAL(var["n_Price"].ToString()) == 0) continue;
+                        if (myFunctions.getIntVAL(var["n_DependenceID"].ToString()) > 0)
+                        {
+                            int empID1 = myFunctions.getIntVAL(var["n_EmpID"].ToString());
+                            int empcount = 1;
+                            for (int y = 1; y < DetailTable.Rows.Count; y++)
+                            {
+                                if (empID1 == myFunctions.getIntVAL(DetailTable.Rows[y]["n_EmpID"].ToString()) && myFunctions.getIntVAL(DetailTable.Rows[y]["n_DependenceID"].ToString()) == 0)
+                                {
+                                    empcount++;
+                                }
+
+
+                            }
+                            if (empcount > 2)
+                                continue;
+
+
+                        }
+
+                        bool isExists1 = false;
+                        object res1 = null;
+
+                        object lobj1;
+                        object objProj1 = dLayer.ExecuteScalar("select N_ProjectID from Pay_Employee  where N_EmpID=" + myFunctions.getIntVAL(var["n_EmpID"].ToString()) + " and N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, EmpParams, connection, transaction);
+                        if (objProj1 != null)
+                        {
+                            int ProjectID1 = myFunctions.getIntVAL(objProj1.ToString());
+                            object objPaycode1 = dLayer.ExecuteScalar("select N_PaycodeID from Prj_ProjectParameters  where N_ProjectID=" + ProjectID1 + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
+                            if (objPaycode1 != null)
+                            {
+                                payid = myFunctions.getIntVAL(objPaycode1.ToString());
+                                res1 = dLayer.ExecuteScalar("select N_PayID from Pay_PayMaster Where N_PayID =" + payid + " and N_CompanyID=" + nCompanyID + " and B_isInvoice=1 and B_Amortized=1  and N_FnYearID=" + nFnYearID, Params, connection, transaction);
+                                if (res1 != null)
+                                {
+                                    isExists1 = true;
+
+                                }
+
+                            }
+                        }
+                        if (!isExists1) continue;
+                        int employeeid = myFunctions.getIntVAL(var["n_EmpID"].ToString());
+                        for (int z = 1; z < DetailTable.Rows.Count; z++)
+                        {
+                            if (employeeid == myFunctions.getIntVAL(DetailTable.Rows[z]["n_EmpID"].ToString()))
+                            {
+                                amttotel = amttotel + myFunctions.getVAL(DetailTable.Rows[z]["n_Pricce"].ToString());
+
+                            }
+                        }
+
+                        string sql = "Select * From vw_MedicalInsDetailForEmp Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + employeeid + " and N_PaycodeID=" + payid;
+                        MedIns = dLayer.ExecuteDataTable(sql, Params, connection, transaction);
+                        if (MedIns.Rows.Count > 0)
+                        {
+                            // DataRow drow = dsMedIns.Tables["MedIns"].Rows[0];
+                            piPKeyId = myFunctions.getIntVAL(MedIns.Rows[0]["N_ServiceSheetID"].ToString());
+                            double N_Price = amttotel;
+                            DateTime st = Convert.ToDateTime(var["d_DeletionDate"]);
+                            DateTime ed = Convert.ToDateTime(MedIns.Rows[0]["D_EndDate"]);
+
+                            TimeSpan diff = ed - st;
+                            double InsDays = diff.TotalDays + 1;
+                            AmtSplit = -(N_Price / InsDays);
+                            DateTime Start = st;
+                            int freq = 0;
+                            while (st < ed)
+                            {
+                                st = st.AddMonths(1);
+                                freq++;
+                            }
+                            freq = ((ed.Year - st.Year) * 12) + ed.Month - st.Month;
+
+
+                            if (freq > 0)
+                            {
+                                for (int j = 1; j <= freq; j++)
+                                {
+                                    double Days = 0;
+                                    TotAmtSpilt = 0;
+                                    DateTime End = new DateTime(Start.AddMonths(1).Year, Start.AddMonths(1).Month, 1).AddDays(-1);
+
+                                    //DateTime End = new DateTime(Start.Year, Start.Month, Start.Day, 00, 45, 00).AddDays(1);
+                                    TimeSpan diff1 = End - Start;
+                                    Days = diff1.TotalDays + 1;
+                                    TotAmtSpilt = AmtSplit * Days;
+                                    N_AmortizationDetailsID = 0;
+                                    string newSql = "Select " + nCompanyID + " as N_CompanyID," + _plPkeyID + " as N_PrePaymentID ," + ObjAmortizationID + " as N_PrePayScheduleID," + myFunctions.getDateVAL(Start) + "' as D_DateFrom,'" + myFunctions.getDateVAL(End) + "' as  D_DateTo," + TotAmtSpilt + " as N_InstAmount," + myFunctions.getIntVAL(var["n_EmpID"].ToString()) + " as N_RefID," + payid + " as N_PaycodeID ";
+                                    NewTable = dLayer.ExecuteDataTable(newSql, Params, connection, transaction);
+                                    N_AmortizationDetailsID = dLayer.SaveData("Inv_PrePaymentSchedule", "N_AmortizationDetailsID.ToString()", NewTable, connection, transaction);
+
+                                    if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
+                                    {
+                                        transaction.Rollback();
+                                        // return Ok(_api.Error("Unable To Save"));
+                                    }
+                                    Start = new DateTime(End.AddMonths(1).Year, End.AddMonths(1).Month, 1);
+
+                                }
+                            }
+                        }
+                        else
+                        {
+                            transaction.Commit();
+
+                        }
+                    }
+
+                }
+
+
+                //return Amortization;
+            }
+
+            catch (Exception ex)
+            {
+                //return Ok(_api.Error(ex));
+            }
+        }
+
     }
 }
 
 
 
-    //     private SortedList Amortization(int _plPkeyID, int AmortizationID_Loc, DataTable MasterTable, SqlConnection connection)
-    //     {
-
-    //         object ObjAmortizationID = 0;
-    //         object N_AmortizationDetailsID = 0;
-    //         object lobjResult = null;
-    //         lobjResult = 0;
-    //         SortedList Amortization = new SortedList();
-    //         SortedList Params = new SortedList();
-    //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-    //         int nDeletionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DeletionID"].ToString());
-    //         int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-    //         int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
-    //         int N_MedicalInsID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MedicalInsID"].ToString());
-    //          int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
-    //          string PrjInv="PrjInv";
-    //          string A="A";
-
-    //         string qry = " Select " + nCompanyID + " as N_CompanyID," + nFnYearID+ " as N_FnYearID," + nUserID + " as N_UserID," +nBranchID + " as N_BranchID," + _plPkeyID + " as N_PrePaymentID ,'" + PrjInv + "' as  X_Type," + FormID + " as N_FormID,'" + A + "' as X_EntryType ";
-
-
-
-
-  
 
 
 
@@ -391,28 +555,6 @@ namespace SmartxAPI.Controllers
 
 
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-    //     }
-    // }
 
 
 

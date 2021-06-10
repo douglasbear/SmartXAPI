@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
 
 
-     [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult GetEmpReqList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -56,8 +56,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_LoanID desc";
-            else if(xSortBy.Contains("d_LoanIssueDate"))
-                xSortBy =" order by cast(D_LoanIssueDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if (xSortBy.Contains("d_LoanIssueDate"))
+                xSortBy = " order by cast(D_LoanIssueDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        
+
         [HttpGet("typeList")]
         public ActionResult GetLoanTypeList(int? nCompanyID, int nFnYearID)
         {
@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
             sqlCommandText = "select * from Pay_PayMaster where N_PayTypeID=8 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
-            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -142,13 +142,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetEmployeeLoanDetails(int nLoanID)
+        public ActionResult GetEmployeeLoanDetails(int nLoanID, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
             int companyid = myFunctions.GetCompanyID(User);
+
 
             QueryParams.Add("@nCompanyID", companyid);
             QueryParams.Add("@nLoanID", nLoanID);
@@ -157,9 +158,36 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object count = dLayer.ExecuteScalar("select count(*) From Pay_LoanIssue " +
+                                 " INNER JOIN dbo.Pay_EmployeePaymentDetails ON dbo.Pay_LoanIssue.N_CompanyID = dbo.Pay_EmployeePaymentDetails.N_CompanyID AND " +
+                                 " dbo.Pay_LoanIssue.N_LoanTransID = dbo.Pay_EmployeePaymentDetails.N_SalesID and dbo.Pay_EmployeePaymentDetails.N_Entryfrom=212 and Pay_LoanIssue.N_LoanAmount =dbo.Pay_EmployeePaymentDetails.N_Amount " +
+                                 " where Pay_LoanIssue.N_LoanID =" + nLoanID + " and Pay_LoanIssue.N_CompanyID=" + companyid + " and Pay_LoanIssue.N_FnYearID =" + nFnYearID + "", QueryParams, connection);
+
+
+                    object RefundAmount = dLayer.ExecuteScalar("select SUM(N_RefundAmount) from Pay_LoanIssueDetails inner join Pay_LoanIssue on Pay_LoanIssueDetails.N_LoanTransID=Pay_LoanIssue.N_LoanTransID and Pay_LoanIssueDetails.N_CompanyID=Pay_LoanIssue.N_CompanyID where Pay_LoanIssue.N_LoanID =" + nLoanID + " and Pay_LoanIssue.N_CompanyID=" + companyid + " and Pay_LoanIssue.N_FnYearID =" + nFnYearID + "", QueryParams, connection);
+
                     string _sqlQuery = "SELECT Pay_LoanIssue.*,Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName, Pay_Position.X_Position, Pay_Employee.X_EmpNameLocale, Pay_PayMaster.X_Description AS x_LoanType FROM Pay_PayMaster RIGHT OUTER JOIN Pay_LoanIssue ON Pay_PayMaster.N_FnYearID = Pay_LoanIssue.N_FnYearID AND Pay_PayMaster.N_CompanyID = Pay_LoanIssue.N_CompanyID AND Pay_PayMaster.N_PayID = Pay_LoanIssue.N_PayID LEFT OUTER JOIN Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID ON Pay_LoanIssue.N_EmpID = Pay_Employee.N_EmpID AND Pay_LoanIssue.N_CompanyID = Pay_Employee.N_CompanyID AND Pay_LoanIssue.N_FnYearID = Pay_Employee.N_FnYearID where Pay_LoanIssue.N_LoanID=@nLoanID and Pay_LoanIssue.N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    if (RefundAmount != null)
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Amount", typeof(double), myFunctions.getVAL(RefundAmount.ToString()));
+                    }
+                    else
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Amount", typeof(double), 0);
+
+                    }
+                    if (count != null)
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Count", typeof(double), myFunctions.getVAL(count.ToString()));
+                    }
+                    else
+                    {
+                        dt = myFunctions.AddNewColumnToDataTable(dt, "N_Count", typeof(double), 0);
+
+                    }
 
 
                 }
@@ -240,14 +268,23 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(api.Warning("Not Eligible For Loan!"));
                         }
-                        // if(LoanCountLimitExceed(QueryParams,connection,transaction)){
-                        //    return Ok(api.Warning("Loan Limit Exceeded!"));  
-                        // }
+                        if (!checkSalaryProcess(dDateFrom, nCompanyID, dLoanPeriodTo, nFnYearID, nEmpID, QueryParams, connection, transaction))
+                        {
+                            return Ok(api.Warning("Salary Already Processed!"));
+                        }
+                        if (LoanCountLimitExceed(QueryParams, connection, transaction))
+                        {
+                            return Ok(api.Warning("Loan Limit Exceeded!"));
+                        }
+                        if (!checkSalaryProcess(dDateFrom, nCompanyID, dLoanPeriodTo, nFnYearID, nEmpID, QueryParams, connection, transaction))
+                        {
+                            return Ok(api.Warning("Salary Already Processed!"));
+                        }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xLoanID = dLayer.GetAutoNumber("Pay_LoanIssue", "n_LoanID", Params, connection, transaction);
-                        if (xLoanID == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Loan ID")); }
+                        if (xLoanID == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Loan ID")); }
                         MasterTable.Rows[0]["n_LoanID"] = xLoanID;
                     }
                     else
@@ -396,6 +433,38 @@ namespace SmartxAPI.Controllers
             }
             return false;
         }
+        private bool checkSalaryProcess(string fromDate, int nCompanyID, string dLoanPeriodTo, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+            DateTime dtpEffectiveDateFrom = Convert.ToDateTime(fromDate.ToString());
+            DateTime dtpEffectiveDateTo = Convert.ToDateTime(dLoanPeriodTo.ToString());
+            DateTime D_SalaryProcessDate = dtpEffectiveDateFrom;
+
+
+
+            int N_MaxParunID = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select ISNULL(MAX(Pay_PaymentMaster.N_PayRunID),0) AS N_MaxParunID from Pay_PaymentMaster where Pay_PaymentMaster.N_CompanyID=" + nCompanyID, Params, connection, transaction)));
+
+            while (D_SalaryProcessDate <= dtpEffectiveDateTo)
+            {
+                String N_ParunID = D_SalaryProcessDate.Year.ToString("00##") + D_SalaryProcessDate.Month.ToString("0#");
+
+                if ((N_MaxParunID != 0 && N_MaxParunID < myFunctions.getIntVAL(N_ParunID)) || (N_MaxParunID == 0))
+                    break;
+
+                int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and (Pay_PaymentMaster.N_PayRunID = " + N_ParunID + ")", Params, connection, transaction)));
+
+                if (count > 0)
+                {
+                    return false;
+                }
+                D_SalaryProcessDate = D_SalaryProcessDate.AddMonths(1);
+            }
+
+            return true;
+
+
+        }
+
+
         private bool EligibleForLoan(string fromDate, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             object obj = null;
@@ -422,16 +491,17 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("loanListAll")]
-        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID,  string xSearchkey)
+        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID, string xSearchkey)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
+
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nFnYearID", nFnYearID);
-            
+
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")

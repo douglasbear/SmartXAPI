@@ -454,11 +454,17 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open();
+                    connection.Open(); 
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
                     N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
+
+                    if(!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID,Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()),dLayer,connection,transaction))
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Transaction date must be in the active Financial Year."));
+                    }
 
                     if (N_PurchaseID > 0)
                     {
@@ -509,11 +515,15 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID <= 0)
                     {
                         transaction.Rollback();
+                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
+                        int UnitID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" and N_CompanyID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" and X_ItemUnit='"+DetailTable.Rows[j]["X_ItemUnit"].ToString()+"'", connection, transaction).ToString());
                         DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
+                        DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
+                    DetailTable.Columns.Remove("X_ItemUnit");
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)
                     {
@@ -557,7 +567,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(ex.Message));
                         }
                     }
                     SortedList VendorParams = new SortedList();

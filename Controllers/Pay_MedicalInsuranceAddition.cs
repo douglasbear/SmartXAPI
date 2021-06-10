@@ -190,6 +190,28 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     if (nAdditionID > 0)
                     {
+
+                        int flag = 0;
+                        for (int i = 1; i < DetailTable.Rows.Count; i++)
+                        {
+                            if ((DetailTable.Rows[i]["n_EmpID"]) == "") continue;
+                            int EmpID = myFunctions.getIntVAL(DetailTable.Rows[i]["n_EmpID"].ToString());
+
+                            object SalaryProc = dLayer.ExecuteScalar("select * from Pay_PaymentDetails where N_EmpID=" + myFunctions.getIntVAL(EmpID.ToString()) + " and N_PayID =46 and N_CompanyID=" + nCompanyID + " and D_DateTo>='" + myFunctions.getDateVAL(Convert.ToDateTime(DetailTable.Rows[i]["d_StartDate"].ToString())) + "'",Params,connection,transaction);
+                            if (SalaryProc.ToString() != null)
+                                flag += 1;
+                        }
+                        if (flag > 0)
+                        {
+                         
+                            return Ok("Can't update Salary already Processed!");
+                        }
+                    }
+
+
+
+                    if (nAdditionID > 0)
+                    {
                         dLayer.DeleteData("Pay_MedicalInsuranceAddition", "N_ReceiptId", nAdditionID, "N_CompanyID = " + nCompanyID, connection, transaction);
                     }
                     DocNo = MasterRow["x_PolicyCode"].ToString();

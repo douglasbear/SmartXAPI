@@ -524,6 +524,36 @@ namespace SmartxAPI.Controllers
 
         }
 
+                 [HttpGet("paymentType")]
+        public ActionResult GetPaymentType()
+        {
+                string sqlCommandText = "select 'Customer Payment' AS X_PaymentType,'SR' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'SA' AS x_Type";
+                SortedList mParamList = new SortedList() {};
+                DataTable typeTable=new DataTable();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                  
+                    typeTable= dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
+                }
+                typeTable = api.Format(typeTable, "PaymentType");
+                if (typeTable.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(typeTable));
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, api.Error(e));
+            }
+        }
+
         // [HttpGet("dummy")]
         // public ActionResult GetPurchaseInvoiceDummy(int? Id)
         // {

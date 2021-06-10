@@ -55,7 +55,7 @@ namespace SmartxAPI.Data
                 return null;
 
             var password = _context.SecUser
-            .Where(y => y.NCompanyId == companyid && y.XUserId == username )
+            .Where(y => y.NCompanyId == companyid && y.XUserId == username)
             .Select(x => x.XPassword)
             .FirstOrDefault();
 
@@ -164,11 +164,11 @@ namespace SmartxAPI.Data
                 using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
-                    string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, AppMaster.X_AppName FROM Users LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where Users.x_EmailID='" + username+"'";
+                    string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_EmailID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_EmailID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_EmailID ='" + username + "')";
 
                     DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
-                    if(globalInfo.Rows.Count>0)
-                    loginRes.GlobalUserInfo = globalInfo;
+                    if (globalInfo.Rows.Count > 0)
+                        loginRes.GlobalUserInfo = globalInfo;
                 }
 
 
@@ -218,9 +218,33 @@ namespace SmartxAPI.Data
 
                         //     .OrderBy(VwUserMenus => VwUserMenus.NOrder)
                         //     .ToList();
+                        string Modules = "";
+
+                        using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
+                        {
+                            cnn2.Open();
+                            if (AppID != 6)
+                            {
+                                string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
+                                dLayer.ExecuteScalar(appUpdate, cnn2);
+                            }
+
+                            object modulesObj = dLayer.ExecuteScalar("SELECT X_Modules=STUFF  ((SELECT DISTINCT ',' + CAST(N_ModuleID AS VARCHAR(MAX)) FROM AppModules t2 WHERE t2.N_AppID = t1.N_AppID and  t2.N_AppID=" + AppID + " FOR XML PATH('') ),1,1,''  )  FROM AppModules t1  where t1.N_AppID=" + AppID, cnn2);
+                            if (modulesObj == null)
+                            {
+                                Modules = "-1";
+                            }
+                            else
+                            {
+                                Modules = modulesObj.ToString();
+                            }
+
+                        }
+
 
                         string MenuSql = "select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag," +
-    "N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( " + loginRes.X_UserCategoryIDList + " ) and  N_CompanyId=" + loginRes.N_CompanyID + " and B_ShowOnline=1 Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete," +
+    "N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( " + loginRes.X_UserCategoryIDList + " ) and  N_CompanyId=" + loginRes.N_CompanyID + " and B_ShowOnline=1 " +
+    " and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in( " + Modules + ") ) Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete," +
     "B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow order by N_Order ";
 
                         DataTable MenusDTB = dLayer.ExecuteDataTable(MenuSql, connection);

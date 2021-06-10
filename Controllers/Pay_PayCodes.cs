@@ -103,6 +103,7 @@ namespace SmartxAPI.Controllers
                         if (PayCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Pay Code")); }
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
+
                     dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
 
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
@@ -120,7 +121,10 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow Rows in SummaryTable.Rows)
                             {
                                 Rows["n_PayID"] = nPayID;
+                                Rows["n_PerCalcID"] = 0;
+
                             }
+
                             SummaryTable.AcceptChanges();
                             int SummaryID = dLayer.SaveData("Pay_SummaryPercentage", "N_PerCalcID", SummaryTable, connection, transaction);
 
@@ -144,7 +148,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPayCodeList(string type,int nFnyearID)
+        public ActionResult GetPayCodeList(string type, int nFnyearID)
         {
             int id = 0;
             switch (type)
@@ -162,7 +166,7 @@ namespace SmartxAPI.Controllers
             if (id > 0)
                 X_Criteria = "where N_PayTypeID=@p1 and N_CompanyID=@nCompanyID";
 
-            SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetUserID(User) },{"@nFnYearID",nFnyearID} };
+            SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetCompanyID(User) }, { "@nFnYearID", nFnyearID } };
 
             DataTable dt = new DataTable();
 
@@ -217,7 +221,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_PayCode like '%"+xSearchkey+"%'or X_Description like '%"+xSearchkey+"%' or  X_TypeName like '%"+xSearchkey+"%')";
+                Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_PayCode desc";
@@ -225,9 +229,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID="+nCompanyId+" "+ Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=" + nCompanyId + " " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID="+nCompanyId+" "  + Searchkey + " and N_PayID not in (select top(" + Count + ") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_PayID not in (select top(" + Count + ") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
 
 
             SortedList OutPut = new SortedList();
@@ -345,7 +349,7 @@ namespace SmartxAPI.Controllers
             else
             {
 
-                sqlCommandText = "Select X_Method,N_IndexID from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
+                sqlCommandText = "Select * from Pay_PayCalulationMethod where B_Active=1 and N_IndexID in (" + xPerPayMethod + ") order by N_SortOrder";
             }
 
             try

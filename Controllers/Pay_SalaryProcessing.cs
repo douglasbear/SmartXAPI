@@ -7,7 +7,8 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
-
+using System.Net.Mail;
+using System.Text;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -20,6 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
+        StringBuilder message = new StringBuilder();
 
 
         public Pay_SalaryProcessing(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -30,6 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 190;
+
         }
 
         [HttpGet("empList")]
@@ -86,6 +89,16 @@ namespace SmartxAPI.Controllers
                         {
                             ProParams.Add("N_TransID", nBatchID);
                         }
+
+                        year = myFunctions.getIntVAL(MainMst.Rows[0]["N_PayRunID"].ToString().Substring(0, 4));
+                        month = myFunctions.getIntVAL(MainMst.Rows[0]["N_PayRunID"].ToString().Substring(4, 2));
+                        ProParams["N_PAyrunID"] = MainMst.Rows[0]["N_PayRunID"].ToString();
+                        payRunID = MainMst.Rows[0]["N_PayRunID"].ToString();
+                        ProParams["N_AddBatchID"] = MainMst.Rows[0]["N_RefBatchID"].ToString();
+                        if (MainMst.Rows[0]["N_RefBatchID"].ToString() != "")
+                            nAddDedID = myFunctions.getIntVAL(MainMst.Rows[0]["N_RefBatchID"].ToString());
+                        else
+                            nAddDedID = 0;
 
                     }
                     else
@@ -262,6 +275,142 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
+        public void SendEmail(int nTransID, int nCompanyID, DateTime DT,int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            DataTable Paycodes = new DataTable();
+            SortedList Params = new SortedList();
+            SortedList ProParams = new SortedList();
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nTransID);
+            string sqlCommandText = "Select N_EmpID,X_EmpName,X_EmailID from vw_EmpMail_Disp where N_CompanyId= @p1 and  N_TransID=@p2";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    ProParams.Add("N_CompanyID", nCompanyID);
+                    ProParams.Add("N_PayrunID", DT.Year.ToString("00##") + DT.Month.ToString("0#"));
+                    ProParams.Add("N_Month", DT.Month.ToString());
+                    ProParams.Add("N_Year",  DT.Year.ToString());
+                    ProParams.Add("N_FnYearId", nFnYearID);
+                    ProParams.Add("N_Days", DateTime.DaysInMonth(DT.Year, DT.Month));
+                    ProParams.Add("N_BatchID", 1);
+
+                    Paycodes = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParams, connection);
+
+
+                    object companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + nCompanyID, Params, connection);
+                    object companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + nCompanyID, Params, connection);
+                    //StringBuilder message = new StringBuilder();
+
+                    foreach (DataRow MasterVar in dt.Rows)
+                    {
+                        MailMessage mail = new MailMessage();
+                        SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
+                        mail.From = new MailAddress(companyemail.ToString());
+                        DataSet dsMail = new DataSet();
+                        DataTable dtMailDetails = new DataTable();
+                        string condition = "";
+                        string Toemail = MasterVar["X_EmailID"].ToString().Trim();
+                        string expression = "X_Type='TO'";
+                        string OrderByField = "";
+                        if (Toemail != "")
+                        {
+                            mail.To.Add(Toemail);
+                            string Toemailnames = MasterVar["X_EmpName"].ToString();
+                            mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
+                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
+                            if (mail.Body == "") continue;
+                            mail.IsBodyHtml = true;
+                            SmtpServer.Port = 587;
+                            SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
+                            SmtpServer.EnableSsl = true;
+                            SmtpServer.Send(mail);
+                            message.Length = 0;
+                            mail.Body = "";
+                            mail.Dispose();
+                            // if (X_FormFor == "Send Email Payslip")
+                            //     msg.waitMsg(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Success"));
+                        }
+
+                    }
+
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+
+            }
+        }
+        public string Boody(string Toemailnames, int ManagerID, int transID, DateTime DT, DataTable Datatable)
+        {
+            //StringBuilder message = new StringBuilder();
+
+            message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
+            double Total_addn = 0.0;
+            double Total_ddn = 0.0;
+            double Total = 0.0;
+            message = message.Append("Dear " + Toemailnames + ",<br/><br/>");
+            message = message.Append("Your Salary has been Processed,please find the details below; <br/><br/>");
+
+
+            foreach (DataRow var in Datatable.Rows)
+            {
+                double Amount = 0;
+                if (var["N_EmpID"].ToString() != ManagerID.ToString()) continue;
+                if (myFunctions.getIntVAL(var["N_PayTypeID"].ToString()) == 11) continue; // --- TO BLOCK END OF SERVICE AMOUNT
+                Amount = myFunctions.getVAL(var["N_PayRate"].ToString());
+                if (myFunctions.getIntVAL(var["N_Type"].ToString()) == 0)
+                {
+                    Total_addn += Amount;
+                }
+                else
+                    Total_ddn += Amount;
+            }
+            Total = Total_addn - Total_ddn;
+            message = message.Append(DT.ToString("MMM yyyy") + "&nbsp;&nbsp;<br/><br/>");
+            message = message.Append("<table style=font-family:Georgia border=0 align=Left span=7 cellpadding=6 cellspacing=0>");
+            message = message.Append("<col width=300><col width=100>");
+            message = message.Append("<tr><td><b>Additions</td><td><b>" + Total_addn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            SalaryDetails(ManagerID, 0,Datatable);
+            message = message.Append("<tr><td> <colspan=3><hr></td><br/><br/>");
+            message = message.Append("<tr><td><b>Deductions</td><td><b>" + Total_ddn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            SalaryDetails(ManagerID, 1,Datatable);
+            message = message.Append("<tr><td> <colspan=3><hr></td>");
+            message = message.Append("<tr><td><b>Net Amount</b></td><td><b>" + Total.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            message = message.Append("<tr><left>Sincerly,</left><br><left>" + "" + "</left></table>");
+            return message.ToString();
+        }
+        private void SalaryDetails(int ManagerID, int type,DataTable Datatable)
+        {
+            foreach (DataRow var in Datatable.Rows)
+            {
+                double Amount = 0; string PayCode = "";
+                if (var["N_EmpID"].ToString() != ManagerID.ToString()) continue;
+                if (myFunctions.getIntVAL(var["N_PayTypeID"].ToString()) == 11) continue; // --- TO BLOCK END OF SERVICE AMOUNT
+                Amount = myFunctions.getVAL(var["N_PayRate"].ToString());
+                PayCode = var["X_Description"].ToString();
+
+                if (type == 0)
+                {
+                    if (myFunctions.getIntVAL(var["N_Type"].ToString()) == 0)
+                        message = message.Append("<tr><td>" + PayCode + "</td><td>" + Amount.ToString(myCompanyID.DecimalPlaceString) + "</td>");
+                }
+                else
+                {
+                    if (myFunctions.getIntVAL(var["N_Type"].ToString()) != 0)
+                        message = message.Append("<tr><td>" + PayCode + "</td><td>" + Amount.ToString(myCompanyID.DecimalPlaceString) + "</td>");
+                }
+
+            }
+        }
+
 
 
 
@@ -269,6 +418,7 @@ namespace SmartxAPI.Controllers
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
+
             try
             {
                 DataTable MasterTable = ds.Tables["master"];
@@ -278,8 +428,12 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
+                var dCreatedDate = MasterTable.Rows[0]["d_TransDate"].ToString();
                 string x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
                 int N_OldTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
+                int N_AddDedID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_RefBatchID"].ToString());
+                int year = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRunID"].ToString().Substring(0, 4));
+                int month = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRunID"].ToString().Substring(4, 2));
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -356,17 +510,30 @@ namespace SmartxAPI.Controllers
                                 var["N_PayRate"] = Amount;
                                 var["N_TransID"] = N_TransID;
 
-                                //dba.SaveData(ref N_TransDetailsID, "Pay_PaymentDetails", "N_TransDetailsID", myFunctions.getIntVAL(var["N_TransDetailsID"].ToString()).ToString(), FieldList, FieldValues, DupCriteria, "");
+                                if (var["n_IsLoan"].ToString() == "1")
+                                {
+                                    DataTable loanDetails = new DataTable();
+                                    SortedList loanParams = new SortedList();
+                                    loanParams.Add("@nCompanyID", nCompanyID);
+                                    loanParams.Add("@nLoanTransDetailsID", var["n_LoanTransDetailsID"].ToString());
+                                    string loanSql = "select * from Pay_LoanIssueDetails Where N_CompanyID =@nCompanyID and N_LoanTransDetailsID =@nLoanTransDetailsID";
+                                    DataTable dt = dLayer.ExecuteDataTable(loanSql, loanParams, connection, transaction);
+                                    if (dt.Rows.Count > 0)
+                                    {
+                                        dt.Rows[0]["D_RefundDate"] = dCreatedDate.ToString();
+                                        dt.Rows[0]["N_RefundAmount"] = Amount.ToString();
+                                        dt.Rows[0]["N_PayRunID"] = N_TransID;
+                                        dt.Rows[0]["N_TransDetailsID"] = -1;
+                                        dt.Rows[0]["B_IsLoanClose"] = 0;
+                                        int N_LoanTransDeatilsID = dLayer.SaveData("Pay_LoanIssueDetails", "n_LoanTransDetailsID", dt, connection, transaction);
 
-                                // if (var["N_IsLoan"].ToString() == "1")
-                                // {
-                                //     object N_result = null;
-                                //     dba.SaveData(ref N_result, "Pay_LoanIssueDetails", "N_LoanTransDetailsID", myFunctions.getIntVAL(var["N_LoanTransDetailsID"].ToString()).ToString(), "D_RefundDate,N_RefundAmount,N_PayRunID,N_TransDetailsID,B_IsLoanClose", "'" + myFunctions.getDateVAL(dtpCreationDate.Value) + "'|" + Amount.ToString() + "|" + N_TransID + "|" + N_TransDetailsID + "|0", "", "", "N_CompanyID = " + myCompanyID._CompanyID + " and N_LoanTransID = " + var["N_LoanTransID"].ToString());
-                                // }
+                                    }
+
+
+                                }
 
 
 
-                                //--------------------------------------------------------
 
                             }
                             if (N_TotalSalary < 0)
@@ -379,6 +546,8 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         DetailsTable.Columns.Remove("n_PayTypeID");
+                        DetailsTable.Columns.Remove("n_IsLoan");
+                        DetailsTable.Columns.Remove("n_LoanTransDetailsID");
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailsTable, connection, transaction);
                         if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
@@ -389,8 +558,35 @@ namespace SmartxAPI.Controllers
                         }
 
 
+                        if (N_TransDetailsID > 0)
+                        {
+                            dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_TransDetailsID =" + N_TransDetailsID + "  Where N_CompanyID =" + nCompanyID + " and N_TransDetailsID=-1 and D_RefundDate = '" + dCreatedDate.ToString() + "'", connection, transaction);
+
+                            dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + nCompanyID + "," + nFnYearId + ",'ESI','" + x_Batch + "'", connection, transaction);
+
+                            //---- GOSI Insertion                        
+                            if (N_AddDedID == 0)
+                                dLayer.ExecuteNonQuery("SP_Pay_GOSICalc " + nCompanyID + "," + month + "," + year + "," + N_TransID, connection, transaction);
+                            //-----
+
+                            ///Pay By Frequency
+                            dLayer.ExecuteNonQuery("SP_Pay_YearlyPay " + nCompanyID + "," + N_TransID + "," + month + "," + year, connection, transaction);
+
+
+
+                            //--- Posting
+
+                            dLayer.ExecuteNonQuery("SP_Pay_PayrollProcessing " + nCompanyID + "," + N_TransID + ",'" + dCreatedDate.ToString() + "','" + myFunctions.GetFormatedDate(Convert.ToDateTime(DateTime.Now).ToShortDateString()) + "'," + myFunctions.GetUserID(User) + ",'Cloud','Salary Processing'", connection, transaction);
+                            dLayer.ExecuteNonQuery("SP_Pay_AccrualProcess  " + nCompanyID + "," + month + ", " + year + " , " + N_TransID, connection, transaction);
+
+
+                        }
+
+
 
                         transaction.Commit();
+
+                        SendEmail(N_TransID,nCompanyID,  DateTime.Now,nFnYearId);
                         return Ok(_api.Success("Saved"));
 
                     }
@@ -414,8 +610,22 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
 
+                    SortedList dltParams = new SortedList();
+                    dltParams.Add("@nTransID", nTransID);
+                    dltParams.Add("@nFnYearID", nFnYearID);
+                    dltParams.Add("@xBatch", xBatch);
+
+                    int count = myFunctions.getIntVAL(dLayer.ExecuteNonQuery("Select count(*) from Acc_VoucherMaster Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " And N_FnyearID =@nFnYearID and X_TransType = 'ESI' and B_IsAccPosted = 1 and X_ReferenceNo=@xBatch", dltParams, connection, transaction).ToString());
+
+
+                    if (count > 0)
+                    {
+                        return Ok(_api.Error("Unable to delete ,Transactions Exist"));
+
+                    }
+
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  Where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_PayrunID = " + nTransID, connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + myFunctions.GetCompanyID(User) + "," + nFnYearID + ",'ESI','" + xBatch + "'", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_Pay_SalryProcessingVoucher_Del " + myFunctions.GetCompanyID(User) + ",@nFnYearID,'ESI',@xBatch", dltParams, connection, transaction);
                     Results = dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FormID = 190", connection, transaction);
 
                     if (Results <= 0)

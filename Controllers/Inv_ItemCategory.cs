@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID where Inv_ItemCategory.N_CompanyID<>-1";
             Params.Add("@p1", nCompanyId);
@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", myFunctions.GetCompanyID(User));
             Params.Add("@p2", nCategoryId);
             Params.Add("@p3", nFnYearID);
-            
+
 
             try
             {
@@ -124,63 +124,64 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 73);
                         CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") {transaction.Rollback();  return Ok(_api.Error("Unable to generate Category Code")); }
+                        if (CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
                     MasterTable.Columns.Remove("b_IsParent");
-                     string X_Category= MasterTable.Rows[0]["X_Category"].ToString();
-                      string DupCriteria = "X_Category='" + X_Category + "'";
-                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID",DupCriteria,"", MasterTable, connection, transaction);
+                    string X_Category = MasterTable.Rows[0]["X_Category"].ToString();
+                    string DupCriteria = "X_Category='" + X_Category + "'";
+                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Error("Unable to save...Category Name Exists"));
+                        return Ok(_api.Error("Unable to save...Category Name Exists"));
                     }
+
                     else
                     {
                         transaction.Commit();
-                        return Ok( _api.Success("Product Category Saved"));
+                        return Ok(_api.Success("Product Category Saved"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok( _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
-          [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nCategoryID)
         {
             int Results = 0;
-          
+
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
-                object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User),connection);
-                     int Obcount = myFunctions.getIntVAL(Objcount.ToString());
+                    object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
+                    int Obcount = myFunctions.getIntVAL(Objcount.ToString());
                     if (Obcount != 0)
                     {
-                       
-                             return Ok(_api.Error("Unable to Delete.Product category Allready Used"));
-                        }
-                    
-                Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "",connection);
-                if (Results > 0)
-                {
 
-                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString()+"'",connection);
+                        return Ok(_api.Error("Unable to Delete.Product category Allready Used"));
+                    }
 
-                    return Ok(_api.Success("Product category deleted"));
-                }
-                else
-                {
-                    return Ok(_api.Error( "Unable to delete product category"));
-                }
+                    Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "", connection);
+                    if (Results > 0)
+                    {
+
+                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString() + "'", connection);
+
+                        return Ok(_api.Success("Product category deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete product category"));
+                    }
                 }
             }
             catch (Exception ex)

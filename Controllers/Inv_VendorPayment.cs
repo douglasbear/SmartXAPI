@@ -185,6 +185,8 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    connection.Open();
+                    //SqlTransaction transaction = connection.BeginTransaction();
                     if (bShowAllbranch == true)
                         sql = "SELECT  -1 * ISNULL( Sum(n_Amount),0)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and  D_TransDate<=@dTransDate";
                     else
@@ -305,7 +307,7 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 int n_PayReceiptID=0;
                 string PayReceiptNo = "";
-int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -320,10 +322,16 @@ int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString
                     }
                     var x_VoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+                    double nAmount=0,nAmountF=0;string xDesc="";
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
-
                     n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
                     string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
+                    nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
+                    nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
+                    xDesc = Master["x_Desc"].ToString();
+                    MasterTable.Columns.Remove("n_Amount");
+                    MasterTable.Columns.Remove("n_AmountF");
+                    MasterTable.Columns.Remove("x_Desc");
 
                     transaction = connection.BeginTransaction();
 
@@ -379,6 +387,58 @@ int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString
                         transaction.Rollback();
                         return Ok(api.Error("Error"));
                     }
+                    if(x_Type=="PA")
+                    {
+                        // DataTable dt = new DataTable();
+                        // dt.Clear();
+                        // dt.Columns.Add("N_CompanyID");
+                        // dt.Columns.Add("N_PayReceiptId");
+                        // dt.Columns.Add("N_InventoryId");
+                        // dt.Columns.Add("N_DiscountAmt");
+                        // dt.Columns.Add("N_DiscountAmtF");
+                        // dt.Columns.Add("N_Amount");
+                        // dt.Columns.Add("X_Description");
+                        // dt.Columns.Add("N_BranchID");
+                        // dt.Columns.Add("X_TransType");
+                        // dt.Columns.Add("N_AmountF");
+                        // dt.Columns.Add("N_AmtPaidFromAdvanceF");
+                        // dt.Columns.Add("N_CurrencyID");
+                        // dt.Columns.Add("N_ExchangeRate");
+
+                        DetailTable.Clear();
+
+                        DataRow row = DetailTable.NewRow();
+
+                        row["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
+                        row["N_PayReceiptId"] =n_PayReceiptID;
+                        row["N_InventoryId"] =n_PayReceiptID;
+                        row["N_DiscountAmt"] =0;
+                        row["N_DiscountAmtF"] =0;
+                        row["N_Amount"] =nAmount;
+                        row["X_Description"] =xDesc;
+                        row["N_BranchID"] =myFunctions.getIntVAL(Master["N_BranchID"].ToString());
+                        row["X_TransType"] =x_Type;
+                        row["N_AmountF"] =nAmountF;
+                        row["N_AmtPaidFromAdvanceF"] =0;
+                        row["N_CurrencyID"] =myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
+                        row["N_ExchangeRate"] =myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
+                        
+                        DetailTable.Rows.Add(row);
+                        // DetailTable.Rows[0]["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
+                        // DetailTable.Rows[0]["N_PayReceiptId"] =n_PayReceiptID;
+                        // DetailTable.Rows[0]["N_InventoryId"] =n_PayReceiptID;
+                        // DetailTable.Rows[0]["N_DiscountAmt"] =0;
+                        // DetailTable.Rows[0]["N_DiscountAmtF"] =0;
+                        // DetailTable.Rows[0]["N_Amount"] =nAmount;
+                        // DetailTable.Rows[0]["X_Description"] =xDesc;
+                        // DetailTable.Rows[0]["N_BranchID"] =myFunctions.getIntVAL(Master["N_BranchID"].ToString());
+                        // DetailTable.Rows[0]["X_TransType"] =x_Type;
+                        // DetailTable.Rows[0]["N_AmountF"] =nAmountF;
+                        // DetailTable.Rows[0]["N_AmtPaidFromAdvanceF"] =0;
+                        // DetailTable.Rows[0]["N_CurrencyID"] =myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
+                        // DetailTable.Rows[0]["N_ExchangeRate"] =myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
+                    }
+
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["n_PayReceiptID"] = n_PayReceiptID;
@@ -437,10 +497,35 @@ if(n_PayReceiptID>0)
             }
         }
 
-
-
-
-
+        [HttpGet("paymentType")]
+        public ActionResult GetPaymentType()
+        {
+                string sqlCommandText = "select 'Vendor Payment' AS X_PaymentType,'PP' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'PA' AS x_Type";
+                SortedList mParamList = new SortedList() {};
+                DataTable typeTable=new DataTable();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                  
+                    typeTable= dLayer.ExecuteDataTable(sqlCommandText, mParamList,connection);
+                }
+                typeTable = api.Format(typeTable, "PaymentType");
+                if (typeTable.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(typeTable));
+                }
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, api.Error(e));
+            }
+        }
 
         //  [HttpGet("dummy")]
         // public ActionResult GetPurchaseInvoiceDummy(int? Id)
