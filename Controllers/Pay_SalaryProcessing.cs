@@ -275,7 +275,8 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
-        public void SendEmail(int nTransID, int nCompanyID, DateTime DT,int nFnYearID)
+        [HttpGet("sendEmail")]
+        public ActionResult SendEmail(int nTransID, int nCompanyID, DateTime dProcessDate, int nFnYearID)
         {
             DataTable dt = new DataTable();
             DataTable Paycodes = new DataTable();
@@ -292,11 +293,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     ProParams.Add("N_CompanyID", nCompanyID);
-                    ProParams.Add("N_PayrunID", DT.Year.ToString("00##") + DT.Month.ToString("0#"));
-                    ProParams.Add("N_Month", DT.Month.ToString());
-                    ProParams.Add("N_Year",  DT.Year.ToString());
+                    ProParams.Add("N_PayrunID", dProcessDate.Year.ToString("00##") + dProcessDate.Month.ToString("0#"));
+                    ProParams.Add("N_Month", dProcessDate.Month.ToString());
+                    ProParams.Add("N_Year", dProcessDate.Year.ToString());
                     ProParams.Add("N_FnYearId", nFnYearID);
-                    ProParams.Add("N_Days", DateTime.DaysInMonth(DT.Year, DT.Month));
+                    ProParams.Add("N_Days", DateTime.DaysInMonth(dProcessDate.Year, dProcessDate.Month));
                     ProParams.Add("N_BatchID", 1);
 
                     Paycodes = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParams, connection);
@@ -308,6 +309,11 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow MasterVar in dt.Rows)
                     {
+
+
+
+
+
                         MailMessage mail = new MailMessage();
                         SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
                         mail.From = new MailAddress(companyemail.ToString());
@@ -319,24 +325,26 @@ namespace SmartxAPI.Controllers
                         string OrderByField = "";
                         if (Toemail != "")
                         {
-                            mail.To.Add(Toemail);
                             string Toemailnames = MasterVar["X_EmpName"].ToString();
-                            mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
-                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
-                            if (mail.Body == "") continue;
-                            mail.IsBodyHtml = true;
-                            SmtpServer.Port = 587;
-                            SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
-                            SmtpServer.EnableSsl = true;
-                            SmtpServer.Send(mail);
-                            message.Length = 0;
-                            mail.Body = "";
-                            mail.Dispose();
-                            // if (X_FormFor == "Send Email Payslip")
-                            //     msg.waitMsg(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Success"));
+                            string Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, dProcessDate, Paycodes);
+                            string Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                            // mail.To.Add(Toemail);
+                            // mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
+                            // mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
+                            // if (mail.Body == "") continue;
+                            // mail.IsBodyHtml = true;
+                            // SmtpServer.Port = 587;
+                            // SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
+                            // SmtpServer.EnableSsl = true;
+                            // SmtpServer.Send(mail);
+                            // message.Length = 0;
+                            // mail.Body = "";
+                            // mail.Dispose();
                         }
 
                     }
+                    return Ok(_api.Success(Ok()));
 
 
 
@@ -345,6 +353,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
+                return BadRequest(_api.Error(e));
 
             }
         }
@@ -378,16 +387,16 @@ namespace SmartxAPI.Controllers
             message = message.Append("<table style=font-family:Georgia border=0 align=Left span=7 cellpadding=6 cellspacing=0>");
             message = message.Append("<col width=300><col width=100>");
             message = message.Append("<tr><td><b>Additions</td><td><b>" + Total_addn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
-            SalaryDetails(ManagerID, 0,Datatable);
+            SalaryDetails(ManagerID, 0, Datatable);
             message = message.Append("<tr><td> <colspan=3><hr></td><br/><br/>");
             message = message.Append("<tr><td><b>Deductions</td><td><b>" + Total_ddn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
-            SalaryDetails(ManagerID, 1,Datatable);
+            SalaryDetails(ManagerID, 1, Datatable);
             message = message.Append("<tr><td> <colspan=3><hr></td>");
             message = message.Append("<tr><td><b>Net Amount</b></td><td><b>" + Total.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
-            message = message.Append("<tr><left>Sincerly,</left><br><left>" + "" + "</left></table>");
+            message = message.Append("<tr><left>Sincerly,</left><br><left>" + myFunctions.GetUserName(User) + "</left></table>");
             return message.ToString();
         }
-        private void SalaryDetails(int ManagerID, int type,DataTable Datatable)
+        private void SalaryDetails(int ManagerID, int type, DataTable Datatable)
         {
             foreach (DataRow var in Datatable.Rows)
             {
@@ -586,7 +595,7 @@ namespace SmartxAPI.Controllers
 
                         transaction.Commit();
 
-                        SendEmail(N_TransID,nCompanyID,  DateTime.Now,nFnYearId);
+                        SendEmail(N_TransID, nCompanyID, DateTime.Now, nFnYearId);
                         return Ok(_api.Success("Saved"));
 
                     }
