@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetEmpReqList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int empID)
+        public ActionResult GetEmpReqList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int empID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -49,8 +49,14 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
+            if(empID!=0 && empID!= null)
+            {
+                sqlCommandText = "select * from vw_Pay_LoanIssueList where  N_EmpID="+empID+" and N_CompanyID="+nCompanyID+" ";
+            }
+
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (N_LoanID like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%')";
 
@@ -60,12 +66,13 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by cast(D_LoanIssueDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
-
+         if(empID==0 || empID== null)
+        {
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_L oanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
-
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+        }
             SortedList OutPut = new SortedList();
 
             try
@@ -73,14 +80,14 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                     object nEmpID;
-                    if (empID == 0 || empID == null)
+                    object nEmpID;
+                    if(empID==0 || empID==null)
                     {
-                         nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                     nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     }
                     else
                     {
-                        nEmpID = empID;
+                        nEmpID=empID;
                     }
                     if (nEmpID != null)
                     {
