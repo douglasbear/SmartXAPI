@@ -272,6 +272,11 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
+        public void SendEmail(int N_TransID)
+        {
+
+
+        }
 
 
 
