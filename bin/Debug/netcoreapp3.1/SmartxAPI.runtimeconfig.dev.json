@@ -1,63 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> fc038d9cacd26c2411081e7032e4574924b1bb97
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
->>>>>>> d5dbd85bf05e9305f94acf0f912ab883465025e9
-=======
-<<<<<<< HEAD
-      "C:\\Users\\znbm9\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\znbm9\\.nuget\\packages"
->>>>>>> ab4975465d009a2108e124896fa7421da049de0c
->>>>>>> b1a256b148ce51e93e743911b073114427076805
->>>>>>> b19cbe73fca7cac101be96a89595ab4150b61b26
-=======
-      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\linju scaria\\.nuget\\packages"
->>>>>>> 9a4703310a001c0f7011a00f92658f63b86a865d
->>>>>>> 2daabcbd823332129a2a240d26a24a5ba812a29b
->>>>>>> fc038d9cacd26c2411081e7032e4574924b1bb97
-<<<<<<< HEAD
->>>>>>> 28a18c840393aa939a134e2c58c64a812d7e3ca8
-=======
-=======
-      "C:\\Users\\znbm9\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\znbm9\\.nuget\\packages"
->>>>>>> 859f45bd88ed2fe44406ad6674443adda64f4a9b
->>>>>>> 2fb9995f15790cfd814319f486ffb0b331885916
     ]
   }
 }
