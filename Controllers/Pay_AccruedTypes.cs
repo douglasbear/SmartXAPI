@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("Dashboardlist")]
-        public ActionResult PayAccruedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult PayAccruedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nCountryID )
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 " + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 and N_CountryID="+nCountryID+" " + Searchkey + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + xSortBy + " ) " + xSortBy;
 

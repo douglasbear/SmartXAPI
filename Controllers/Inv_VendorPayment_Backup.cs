@@ -305,7 +305,7 @@
 //                 SortedList Params = new SortedList();
 //                 int n_PayReceiptID=0;
 //                 string PayReceiptNo = "";
-//                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+// int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
 //                 using (SqlConnection connection = new SqlConnection(connectionString))
 //                 {
 //                     connection.Open();
@@ -320,16 +320,10 @@
 //                     }
 //                     var x_VoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
 //                     DataRow Master = MasterTable.Rows[0];
-//                     double nAmount=0,nAmountF=0;string xDesc="";
 //                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
+
 //                     n_PayReceiptID = myFunctions.getIntVAL(Master["n_PayReceiptID"].ToString());
 //                     string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
-//                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
-//                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
-//                     xDesc = Master["x_Desc"].ToString();
-//                     MasterTable.Columns.Remove("n_Amount");
-//                     MasterTable.Columns.Remove("n_AmountF");
-//                     MasterTable.Columns.Remove("x_Desc");
 
 //                     transaction = connection.BeginTransaction();
 
@@ -385,25 +379,6 @@
 //                         transaction.Rollback();
 //                         return Ok(api.Error("Error"));
 //                     }
-//                     if(x_Type=="PA")
-//                     {
-//                         DetailTable.Rows.Clear();
-                        
-//                         DetailTable.Rows[0]["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
-//                         DetailTable.Rows[0]["N_PayReceiptId"] =n_PayReceiptID;
-//                         DetailTable.Rows[0]["N_InventoryId"] =n_PayReceiptID;
-//                         DetailTable.Rows[0]["N_DiscountAmt"] =0;
-//                         DetailTable.Rows[0]["N_DiscountAmtF"] =0;
-//                         DetailTable.Rows[0]["N_Amount"] =nAmount;
-//                         DetailTable.Rows[0]["X_Description"] =xDesc;
-//                         DetailTable.Rows[0]["N_BranchID"] =myFunctions.getIntVAL(Master["N_BranchID"].ToString());
-//                         DetailTable.Rows[0]["X_TransType"] =x_Type;
-//                         DetailTable.Rows[0]["N_AmountF"] =nAmountF;
-//                         DetailTable.Rows[0]["N_AmtPaidFromAdvanceF"] =0;
-//                         DetailTable.Rows[0]["N_CurrencyID"] =myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
-//                         DetailTable.Rows[0]["N_ExchangeRate"] =myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
-//                     }
-
 //                     for (int j = 0; j < DetailTable.Rows.Count; j++)
 //                     {
 //                         DetailTable.Rows[j]["n_PayReceiptID"] = n_PayReceiptID;
@@ -462,6 +437,8 @@
 //             }
 //         }
 
+
+
 //         [HttpGet("paymentType")]
 //         public ActionResult GetPaymentType()
 //         {
@@ -491,6 +468,7 @@
 //                 return StatusCode(403, api.Error(e));
 //             }
 //         }
+
 
 //         //  [HttpGet("dummy")]
 //         // public ActionResult GetPurchaseInvoiceDummy(int? Id)
