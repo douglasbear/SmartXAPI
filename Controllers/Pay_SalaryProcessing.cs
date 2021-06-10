@@ -21,6 +21,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
+        StringBuilder message = new StringBuilder();
 
 
         public Pay_SalaryProcessing(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -31,7 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 190;
-            
+
         }
 
         [HttpGet("empList")]
@@ -274,7 +275,7 @@ namespace SmartxAPI.Controllers
                 return BadRequest(_api.Error(e));
             }
         }
-        public void SendEmail(int nTransID, int nCompanyID, DateTime DT)
+        public void SendEmail(int nTransID, int nCompanyID, DateTime DT,int nFnYearID)
         {
             DataTable dt = new DataTable();
             DataTable Paycodes = new DataTable();
@@ -290,18 +291,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                     ProParams.Add("N_TransID", 0);
-                     ProParams.Add("N_TransID", 0);
-                     ProParams.Add("N_TransID", 0);
-                     ProParams.Add("N_TransID", 0);
-
+                    ProParams.Add("N_CompanyID", nCompanyID);
+                    ProParams.Add("N_PayrunID", DT.Year.ToString("00##") + DT.Month.ToString("0#"));
+                    ProParams.Add("N_Month", DT.Month.ToString());
+                    ProParams.Add("N_Year",  DT.Year.ToString());
+                    ProParams.Add("N_FnYearId", nFnYearID);
+                    ProParams.Add("N_Days", DateTime.DaysInMonth(DT.Year, DT.Month));
+                    ProParams.Add("N_BatchID", 1);
 
                     Paycodes = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParams, connection);
 
 
                     object companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + nCompanyID, Params, connection);
                     object companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + nCompanyID, Params, connection);
-                    StringBuilder message = new StringBuilder();
+                    //StringBuilder message = new StringBuilder();
 
                     foreach (DataRow MasterVar in dt.Rows)
                     {
@@ -319,7 +322,7 @@ namespace SmartxAPI.Controllers
                             mail.To.Add(Toemail);
                             string Toemailnames = MasterVar["X_EmpName"].ToString();
                             mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
-                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID,DT,Paycodes);
+                            mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
                             if (mail.Body == "") continue;
                             mail.IsBodyHtml = true;
                             SmtpServer.Port = 587;
@@ -335,20 +338,20 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    
+
 
                 }
 
             }
             catch (Exception e)
             {
-              
+
             }
         }
-        public string Boody(string Toemailnames, int ManagerID, int transID,DateTime DT,DataTable ProParams)
+        public string Boody(string Toemailnames, int ManagerID, int transID, DateTime DT, DataTable Datatable)
         {
-            StringBuilder message = new StringBuilder();
-            
+            //StringBuilder message = new StringBuilder();
+
             message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
             double Total_addn = 0.0;
             double Total_ddn = 0.0;
@@ -357,7 +360,7 @@ namespace SmartxAPI.Controllers
             message = message.Append("Your Salary has been Processed,please find the details below; <br/><br/>");
 
 
-            foreach (DataRow var in ProParams.Rows)
+            foreach (DataRow var in Datatable.Rows)
             {
                 double Amount = 0;
                 if (var["N_EmpID"].ToString() != ManagerID.ToString()) continue;
@@ -375,15 +378,39 @@ namespace SmartxAPI.Controllers
             message = message.Append("<table style=font-family:Georgia border=0 align=Left span=7 cellpadding=6 cellspacing=0>");
             message = message.Append("<col width=300><col width=100>");
             message = message.Append("<tr><td><b>Additions</td><td><b>" + Total_addn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
-            //SalaryDetails(ManagerID, 0);
+            SalaryDetails(ManagerID, 0,Datatable);
             message = message.Append("<tr><td> <colspan=3><hr></td><br/><br/>");
             message = message.Append("<tr><td><b>Deductions</td><td><b>" + Total_ddn.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
-            //SalaryDetails(ManagerID, 1);
+            SalaryDetails(ManagerID, 1,Datatable);
             message = message.Append("<tr><td> <colspan=3><hr></td>");
             message = message.Append("<tr><td><b>Net Amount</b></td><td><b>" + Total.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
             message = message.Append("<tr><left>Sincerly,</left><br><left>" + "" + "</left></table>");
             return message.ToString();
         }
+        private void SalaryDetails(int ManagerID, int type,DataTable Datatable)
+        {
+            foreach (DataRow var in Datatable.Rows)
+            {
+                double Amount = 0; string PayCode = "";
+                if (var["N_EmpID"].ToString() != ManagerID.ToString()) continue;
+                if (myFunctions.getIntVAL(var["N_PayTypeID"].ToString()) == 11) continue; // --- TO BLOCK END OF SERVICE AMOUNT
+                Amount = myFunctions.getVAL(var["N_PayRate"].ToString());
+                PayCode = var["X_Description"].ToString();
+
+                if (type == 0)
+                {
+                    if (myFunctions.getIntVAL(var["N_Type"].ToString()) == 0)
+                        message = message.Append("<tr><td>" + PayCode + "</td><td>" + Amount.ToString(myCompanyID.DecimalPlaceString) + "</td>");
+                }
+                else
+                {
+                    if (myFunctions.getIntVAL(var["N_Type"].ToString()) != 0)
+                        message = message.Append("<tr><td>" + PayCode + "</td><td>" + Amount.ToString(myCompanyID.DecimalPlaceString) + "</td>");
+                }
+
+            }
+        }
+
 
 
 
@@ -558,6 +585,8 @@ namespace SmartxAPI.Controllers
 
 
                         transaction.Commit();
+
+                        SendEmail(N_TransID,nCompanyID,  DateTime.Now,nFnYearId);
                         return Ok(_api.Success("Saved"));
 
                     }
