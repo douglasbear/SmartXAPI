@@ -692,13 +692,13 @@ namespace SmartxAPI.Controllers
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
-                    if (Criteria == "")
+                    if (Criteria == "" && CompanyData != "")
                     {
                         Criteria = Criteria + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
                     }
-                    else
+                    else if ( CompanyData != "")
                     {
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
