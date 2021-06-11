@@ -10,6 +10,7 @@ using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using System.Text;
 using System.IO;
+using System.Threading.Tasks;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -863,7 +864,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("loadCSV")]
-        public ActionResult loadCSV()
+        public async Task<IActionResult> loadCSV(string x_Batch)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -898,19 +899,28 @@ namespace SmartxAPI.Controllers
                     }
                 }
 
-                X_WpsFileName = X_WpsPath;
-                System.Diagnostics.Process.Start(X_WpsPath);
-                return Ok();
+                X_WpsFileName = X_WpsPath+"\\"+x_Batch+".csv";
+
+
+                var path =X_WpsFileName;
+  
+                var memory = new MemoryStream();  
+               using (var stream = new FileStream(path, System.IO.FileMode.Open))  
+               {  
+                await stream.CopyToAsync(memory);  
+                }  
+                memory.Position = 0;  
+                return File(memory, _api.GetContentType(path), Path.GetFileName(path));
             }
 
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
         [HttpGet("sendEmail")]
-        public ActionResult SendEmail(int nTransID, int nCompanyID, DateTime dProcessDate, int nFnYearID)
+        public ActionResult SendEmail(int nTransID, int nCompanyID, DateTime dProcessDate, int nFnYearID,int nType)
         {
             DataTable dt = new DataTable();
             DataTable Paycodes = new DataTable();
@@ -939,15 +949,9 @@ namespace SmartxAPI.Controllers
 
                     object companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + nCompanyID, Params, connection);
                     object companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + nCompanyID, Params, connection);
-                    //StringBuilder message = new StringBuilder();
 
                     foreach (DataRow MasterVar in dt.Rows)
                     {
-
-
-
-
-
                         MailMessage mail = new MailMessage();
                         SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
                         mail.From = new MailAddress(companyemail.ToString());
@@ -957,30 +961,20 @@ namespace SmartxAPI.Controllers
                         string Toemail = MasterVar["X_EmailID"].ToString().Trim();
                         string expression = "X_Type='TO'";
                         string OrderByField = "";
+                        string Subject ="";
                         if (Toemail != "")
                         {
                             string Toemailnames = MasterVar["X_EmpName"].ToString();
-                            string Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, dProcessDate, Paycodes);
-                            string Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
+                            string Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, dProcessDate, Paycodes,nType);
+                            if(nType==1)
+                                Subject = "PAYSLIP (For Your Review)";
+                            else
+                                Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
                             myFunctions.SendMail(Toemail, Body, Subject, dLayer);
-                            // mail.To.Add(Toemail);
-                            // mail.Subject = "Your salary payments for the month " + DT.ToString("MMM-yyyy");
-                            // mail.Body = Boody(Toemailnames, myFunctions.getIntVAL(MasterVar["N_EmpId"].ToString()), nTransID, DT, Paycodes);
-                            // if (mail.Body == "") continue;
-                            // mail.IsBodyHtml = true;
-                            // SmtpServer.Port = 587;
-                            // SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
-                            // SmtpServer.EnableSsl = true;
-                            // SmtpServer.Send(mail);
-                            // message.Length = 0;
-                            // mail.Body = "";
-                            // mail.Dispose();
                         }
 
                     }
                     return Ok(_api.Success(Ok("Payslip Mail Send")));
-
-
 
                 }
 
@@ -991,10 +985,8 @@ namespace SmartxAPI.Controllers
 
             }
         }
-        public string Boody(string Toemailnames, int ManagerID, int transID, DateTime DT, DataTable Datatable)
+        public string Boody(string Toemailnames, int ManagerID, int transID, DateTime DT, DataTable Datatable,int nType)
         {
-            //StringBuilder message = new StringBuilder();
-
             message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
             double Total_addn = 0.0;
             double Total_ddn = 0.0;
@@ -1027,6 +1019,8 @@ namespace SmartxAPI.Controllers
             SalaryDetails(ManagerID, 1, Datatable);
             message = message.Append("<tr><td> <colspan=3><hr></td>");
             message = message.Append("<tr><td><b>Net Amount</b></td><td><b>" + Total.ToString(myCompanyID.DecimalPlaceString) + "</b></td>");
+            if(nType==1)
+                message = message.Append("<tr><td><i>Please reply to the department if any Concern rises in your review.</i></td>");
             message = message.Append("<tr><left>Sincerly,</left><br><left>" + myFunctions.GetUserName(User) + "</left></table>");
             return message.ToString();
         }
