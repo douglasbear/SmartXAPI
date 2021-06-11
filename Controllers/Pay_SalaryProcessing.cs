@@ -880,13 +880,13 @@ namespace SmartxAPI.Controllers
                     {
                         if (!Directory.Exists(N_Result.ToString() + "\\" + myCompanyID._WpsFolder))
                             Directory.CreateDirectory(N_Result.ToString() + "\\" + myCompanyID._WpsFolder);
-                        X_WpsPath = N_Result.ToString() + "\\" + myCompanyID._WpsFolder + "\\";
+                        X_WpsPath = N_Result.ToString() + "\\" + myCompanyID._WpsFolder ;
                     }
                     else if (myCompanyID._DocumtPath != "")
                     {
                         if (!Directory.Exists(myCompanyID._DocumtPath + myCompanyID._WpsFolder))
                             Directory.CreateDirectory(myCompanyID._DocumtPath + myCompanyID._WpsFolder);
-                        X_WpsPath = myCompanyID._DocumtPath + myCompanyID._WpsFolder + "\\";
+                        X_WpsPath = myCompanyID._DocumtPath + myCompanyID._WpsFolder ;
                     }
                     else
                     {
@@ -894,7 +894,7 @@ namespace SmartxAPI.Controllers
                         string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
                         if (!Directory.Exists(DocumentPath + myCompanyID._WpsFolder))
                             Directory.CreateDirectory(DocumentPath + myCompanyID._WpsFolder);
-                        X_WpsPath = DocumentPath + "\\" + myCompanyID._WpsFolder + "\\";
+                        X_WpsPath = DocumentPath + "\\" + myCompanyID._WpsFolder ;
 
                     }
                 }
