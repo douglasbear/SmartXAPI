@@ -373,8 +373,8 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p2", BankID);
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                X_WpsFileName = X_WpsPath + FileCreateTime + ".csv";
-                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
+                X_WpsFileName = X_WpsPath + x_batchID + ".csv";
+                string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -444,7 +444,7 @@ namespace SmartxAPI.Controllers
 
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                X_WpsFileName = X_WpsPath + FileCreateTime + ".txt";
+                X_WpsFileName = X_WpsPath + x_batchID + ".txt";
 
                 string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -513,7 +513,8 @@ namespace SmartxAPI.Controllers
                 FileCreateDate = DateTime.Now.ToString("yyyyMMdd");
                 FileCreateTime = DateTime.Now.ToString("HHmm");
                 SalaryProcessCode = dtPayrun.ToString("yyyyMM");
-                X_WpsFileName = X_WpsPath + FileCreateDate + "-" + FileCreateTime + ".txt";
+                //X_WpsFileName = X_WpsPath + FileCreateDate + "-" + FileCreateTime + ".txt";
+                X_WpsFileName = X_WpsPath + x_batchID + ".txt";
                 StringBuilder sb = new StringBuilder();
                 SortedList Params = new SortedList();
                 Params.Add("@p1", nCompanyID);
@@ -907,7 +908,7 @@ namespace SmartxAPI.Controllers
                 var memory = new MemoryStream();  
                using (var stream = new FileStream(path, System.IO.FileMode.Open))  
                {  
-                await stream.CopyToAsync(memory);  
+                 await stream.CopyToAsync(memory);  
                 }  
                 memory.Position = 0;  
                 return File(memory, _api.GetContentType(path), Path.GetFileName(path));
@@ -1224,7 +1225,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         transaction.Commit();
-                        GenerateCSVFiles(1, nCompanyID, x_Batch, nFnYearId, N_TotalSalary.ToString(), Convert.ToDateTime(dCreatedDate.ToString()), Convert.ToDateTime(d_SalFromDate), Convert.ToDateTime(d_SalToDate));
+                        GenerateCSVFiles(nBankID, nCompanyID, x_Batch, nFnYearId, N_TotalSalary.ToString(), Convert.ToDateTime(dCreatedDate.ToString()), Convert.ToDateTime(d_SalFromDate), Convert.ToDateTime(d_SalToDate));
                         return Ok(_api.Success("Saved"));
 
                     }
