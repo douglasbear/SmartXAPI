@@ -577,7 +577,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
-                int nBranchID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int nBranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                 int N_NextApproverID = 0;
 
                 
@@ -716,9 +716,9 @@ namespace SmartxAPI.Controllers
                     // SaveDocs(Attachment, objEmpCode.ToString(), objEmpName.ToString(), nEmpID, x_VacationGroupCode, n_VacationGroupID,User, connection, transaction);
                     myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
 
-
-                    transaction.Commit();
                     myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
+                    
+                    transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_RequestCode", x_VacationGroupCode.ToString());
                     return Ok(api.Success(res, "Leave Request saved"));
