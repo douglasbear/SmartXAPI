@@ -285,18 +285,22 @@ namespace SmartxAPI.Controllers
                     {
                         if (!EligibleForLoan(dDateFrom, QueryParams, connection, transaction))
                         {
+                            transaction.Rollback();
                             return Ok(api.Warning("Not Eligible For Loan!"));
                         }
                         if (!checkSalaryProcess(dDateFrom, nCompanyID, dLoanPeriodTo, nFnYearID, nEmpID, QueryParams, connection, transaction))
                         {
+                            transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
                         }
                         if (LoanCountLimitExceed(QueryParams, connection, transaction))
                         {
+                            transaction.Rollback();
                             return Ok(api.Warning("Loan Limit Exceeded!"));
                         }
                         if (!checkSalaryProcess(dDateFrom, nCompanyID, dLoanPeriodTo, nFnYearID, nEmpID, QueryParams, connection, transaction))
                         {
+                            transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
                         }
                         Params.Add("N_CompanyID", nCompanyID);
