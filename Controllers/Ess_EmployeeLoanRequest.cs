@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetEmpReqList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEmpReqList(string xReqType, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int empID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -49,8 +49,14 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
+            if (empID != 0 && empID != null)
+            {
+                sqlCommandText = "select * from vw_Pay_LoanIssueList where  N_EmpID=" + empID + " and N_CompanyID=" + nCompanyID + " ";
+            }
+
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (N_LoanID like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%')";
 
@@ -60,12 +66,13 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by cast(D_LoanIssueDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
-
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
-
+            if (empID == 0 || empID == null)
+            {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + xSortBy + " ) " + xSortBy;
+            }
             SortedList OutPut = new SortedList();
 
             try
@@ -73,7 +80,15 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    object nEmpID;
+                    if (empID == 0 || empID == null)
+                    {
+                        nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    }
+                    else
+                    {
+                        nEmpID = empID;
+                    }
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
@@ -238,6 +253,10 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nEmpID", nEmpID);
                 int N_NextApproverID = 0;
                 //QueryParams.Add("@nLoanTransID", nLoanTransID);
+              
+                MasterTable.Columns.Remove("n_Amount");
+
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -421,13 +440,17 @@ namespace SmartxAPI.Controllers
         private bool LoanCountLimitExceed(SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             int N_EmpLoanCount = 0, N_LoanLimitCount = 0;
-            object obj = dLayer.ExecuteScalar("SELECT isnull(N_LoanCountLimit,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID", Params, connection, transaction);
+            object obj = dLayer.ExecuteScalar("SELECT isnull(N_LoanCountLimit,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpId =@nEmpID", Params, connection, transaction);
             if (obj != null)
                 N_LoanLimitCount = myFunctions.getIntVAL(obj.ToString());
-            object EmpLoanCount = dLayer.ExecuteScalar("SELECT isnull(COUNT(N_LoanTransID),0) From Pay_LoanIssue Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID", Params, connection, transaction);
+            object EmpLoanCount = dLayer.ExecuteScalar("SELECT isnull(COUNT(N_LoanTransID),0) From Pay_LoanIssue Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpId =@nEmpID", Params, connection, transaction);
             if (EmpLoanCount != null)
                 N_EmpLoanCount = myFunctions.getIntVAL(EmpLoanCount.ToString());
-            if ((N_EmpLoanCount + 1) > N_LoanLimitCount && N_EmpLoanCount != 0)
+            if(N_LoanLimitCount==0)
+            {
+                return false;
+            }
+            else if ((N_EmpLoanCount + 1) > N_LoanLimitCount && N_EmpLoanCount != 0)
             {
                 return true;
             }

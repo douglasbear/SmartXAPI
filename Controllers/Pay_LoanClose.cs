@@ -206,7 +206,6 @@ namespace SmartxAPI.Controllers
                     dt.Columns.Add("D_RefundDate");
                     dt.Columns.Add("B_IsLoanClose");
                     dt.Columns.Add("N_TransDetailsID");
-                    dt.Columns.Add("N_TransDetailsID");
                     dt.Columns.Add("N_RefundAmount");
 
                     DateTime Start = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
@@ -229,8 +228,13 @@ namespace SmartxAPI.Controllers
                     row["N_LoanTransDetailsID"] = 0;
                     row["N_RefundAmount"] = 0;
                     Start = Start.AddMonths(1);
+                    if (nPaidAmount == 0 && nRateOfAmount == 0)
+                    {
+                        return Ok(api.Warning("Please Enter Amount"));
 
-                    if (nPaidAmount == 0 && nRateOfAmount != 0)
+                    }
+
+                    else if (nPaidAmount == 0 && nRateOfAmount != 0)
                     {
                         row["N_RefundAmount"] = nRateOfAmount;
                         dt.Rows.Add(row);
@@ -271,7 +275,6 @@ namespace SmartxAPI.Controllers
                             table.Columns.Add("D_RefundDate");
                             table.Columns.Add("B_IsLoanClose");
                             table.Columns.Add("N_TransDetailsID");
-                            table.Columns.Add("N_TransDetailsID");
                             table.Columns.Add("N_RefundAmount");
 
                             DateTime Start1 = new DateTime(Convert.ToDateTime(dDateFrom.ToString()).Year, Convert.ToDateTime(dDateFrom.ToString()).Month, 1);
@@ -298,7 +301,7 @@ namespace SmartxAPI.Controllers
 
 
                         }
-                        Balance = nBalanceAmount - (nPaidAmount) + nRateOfAmount;
+                        Balance = nBalanceAmount - (nPaidAmount + nRateOfAmount);
                     }
                     if (Balance > 0)
                     {
@@ -357,7 +360,7 @@ namespace SmartxAPI.Controllers
                                 };
 
                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
-                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
+                    dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosing", ClosingParams, connection, transaction);
 
                     transaction.Commit();
 
