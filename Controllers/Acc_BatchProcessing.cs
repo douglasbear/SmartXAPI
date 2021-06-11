@@ -48,16 +48,16 @@ namespace SmartxAPI.Controllers
             if(FormID==152)
             {
                 if (bAllBranchData)
-                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID";
+                    sqlCommandText="SELECT X_ID,X_Description,X_Description_Ar,X_TransType FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID group by X_ID,X_Description,X_Description_Ar,X_TransType";
                 else
-                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+                    sqlCommandText="SELECT X_ID,X_Description,X_Description_Ar,X_TransType FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID and X_ID<>'OB' and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID group by X_ID,X_Description,X_Description_Ar,X_TransType";
             }
             else
             {
                 if (bAllBranchData)
-                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID And B_IsAccPosted=1 and N_FnYearID=@nFnYearID";
+                    sqlCommandText="SELECT X_ID,X_Description,X_Description_Ar,X_TransType FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID And B_IsAccPosted=1 and N_FnYearID=@nFnYearID group by X_ID,X_Description,X_Description_Ar,X_TransType";
                 else
-                    sqlCommandText="SELECT * FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID And B_IsAccPosted=1 and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+                    sqlCommandText="SELECT X_ID,X_Description,X_Description_Ar,X_TransType FROM vw_BatchPosting_Disp WHERE N_CompanyID=@nCompanyID And B_IsAccPosted=1 and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID group by X_ID,X_Description,X_Description_Ar,X_TransType";
             }
 
             try
