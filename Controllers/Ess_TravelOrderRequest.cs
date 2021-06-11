@@ -25,6 +25,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyReminders myReminders;
         private readonly string connectionString;
         private readonly int FormID;
 
@@ -171,6 +172,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
                 int N_NextApproverID=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -208,6 +210,17 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
+
+                    try
+                    {
+                        myReminders.ReminderDelete(dLayer, nRequestID, this.FormID, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
                     MasterTable.AcceptChanges();
 
@@ -220,7 +233,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                       N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["B_ExitReEntryRequired"].ToString())!=0)
+                            myReminders.ReminderSet(dLayer, 22, nRequestID, MasterTable.Rows[0]["D_DateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
+                            
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         DataTable Files = ds.Tables["files"];
                         if (Files.Rows.Count > 0)
                         {
