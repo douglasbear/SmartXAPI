@@ -631,6 +631,8 @@ namespace SmartxAPI.Controllers
                     }
 
                     MasterTable.Rows[0]["N_VacTypeID"] =DetailTable.Rows[0]["N_VacTypeID"];
+                    MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    MasterTable.Columns.Remove("N_Procstatus");
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
