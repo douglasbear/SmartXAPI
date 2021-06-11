@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 and N_CountryID=" + nCountryID + " " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + "  and N_CountryID=" + nCountryID + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " and N_CountryID=" + nCountryID + " " + xSortBy + " ) " + xSortBy;
 
 
 
