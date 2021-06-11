@@ -25,6 +25,7 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
+        private readonly IMyReminders myReminders;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
@@ -575,6 +576,7 @@ namespace SmartxAPI.Controllers
                 var x_VacationGroupCode = MasterRow["x_VacationGroupCode"].ToString();
                 int n_VacationGroupID = myFunctions.getIntVAL(MasterRow["n_VacationGroupID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
+                int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
@@ -630,6 +632,16 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
 
+                    try
+                    {
+                        myReminders.ReminderDelete(dLayer, n_VacationGroupID, this.FormID, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error("Unable to save"));
+                    }
+
                     MasterTable.Rows[0]["N_VacTypeID"] =DetailTable.Rows[0]["N_VacTypeID"];
                     MasterTable.Columns.Remove("N_ApprovalLevelID");
                     MasterTable.Columns.Remove("N_Procstatus");
@@ -641,15 +653,18 @@ namespace SmartxAPI.Controllers
                     {
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
 
-
-
+                        int IsExitReEntry=0;
                         foreach (DataRow var in Benifits.Rows)
                         {
                             bool ticketSelected = false;
                             if (!myFunctions.getBoolVAL(var["Mark"].ToString())) continue;
                             ticketSelected = true;
 
-
+                            if(IsExitReEntry==0)
+                            {
+                                if(var["X_Type"].ToString()=="E")
+                                    IsExitReEntry=1;
+                            }
 
                             SortedList benifitParam = new SortedList();
                             benifitParam.Add("@nVacTypeID", myFunctions.getIntVAL(var["N_VacTypeID"].ToString()));
@@ -695,6 +710,12 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             return Ok(api.Error("Unable to save"));
+                        }
+                        else
+                        {
+                            if(IsExitReEntry!=0)
+                                myReminders.ReminderSet(dLayer, 23, n_VacationGroupID, DetailTable.Rows[0]["d_VacDateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
+                          
                         }
                     }
                     else
