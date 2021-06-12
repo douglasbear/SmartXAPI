@@ -84,6 +84,9 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPayID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayID"].ToString());
+                int nPayTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayTypeID"].ToString());
+                var d_Entrydate = MasterTable.Rows[0]["d_Entrydate"].ToString();
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -135,6 +138,35 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                        else
+                        {
+                            DataTable dt = new DataTable();
+                            dt.Clear();
+                            dt.Columns.Add("n_PayID");
+                            dt.Columns.Add("n_PerCalcID");
+                            dt.Columns.Add("N_CompanyID");
+                            dt.Columns.Add("N_PayTypeID");
+                            dt.Columns.Add("D_EntryDate");
+
+                            DataRow row = dt.NewRow();
+                            row["n_PayID"] = nPayID;
+                            row["n_PerCalcID"] = 0;
+                            row["N_CompanyID"] = nCompanyID;
+                            row["N_PayTypeID"] = 1;
+                            row["D_EntryDate"] = d_Entrydate;
+
+                            dt.Rows.Add(row);
+                            int SummaryID = dLayer.SaveData("Pay_SummaryPercentage", "N_PerCalcID", dt, connection, transaction);
+
+                            if (SummaryID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error("Unable to save"));
+                            }
+
+
+                        }
+
                         transaction.Commit();
                         return Ok(api.Success("Paycode Created"));
                     }

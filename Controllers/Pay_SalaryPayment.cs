@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
