@@ -237,7 +237,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if(myFunctions.getIntVAL(MasterTable.Rows[0]["B_ExitReEntryRequired"].ToString())!=0)
+                        if(MasterTable.Rows[0]["B_ExitReEntryRequired"].ToString()=="True")
                             myReminders.ReminderSet(dLayer, 22, nRequestID, MasterTable.Rows[0]["D_DateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
                             
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
