@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                         batchParams.Add("@nFnYearID", nFnYearID);
                         batchParams.Add("@xBatch", xBatch);
                         batchParams.Add("@nBranchID", nBranchID);
-                        MainMst = dLayer.ExecuteDataTable("SELECT Pay_PaymentMaster.*, Acc_BankMaster.X_BankName FROM Pay_PaymentMaster LEFT OUTER JOIN Acc_BankMaster ON Pay_PaymentMaster.N_CompanyID = Acc_BankMaster.N_CompanyID WHERE (Pay_PaymentMaster.N_CompanyID = @nCompanyID) AND (Pay_PaymentMaster.N_FnYearID = @nFnYearID) AND (Pay_PaymentMaster.X_Batch = @xBatch)", batchParams, connection);
+                        MainMst = dLayer.ExecuteDataTable("SELECT Pay_PaymentMaster.*, Acc_BankMaster.X_BankName FROM Pay_PaymentMaster LEFT OUTER JOIN Acc_BankMaster ON Pay_PaymentMaster.N_CompanyID = Acc_BankMaster.N_CompanyID WHERE (Pay_PaymentMaster.N_CompanyID = @nCompanyID) AND (Pay_PaymentMaster.N_FnYearID = @nFnYearID) AND (Pay_PaymentMaster.X_Batch = @xBatch)  AND (Pay_PaymentMaster.N_BankID = Acc_BankMaster.N_BankID)", batchParams, connection);
                         if (MainMst.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
@@ -1259,6 +1259,7 @@ namespace SmartxAPI.Controllers
 
                     if (count > 0)
                     {
+                        transaction.Rollback();
                         return Ok(_api.Error("Unable to delete ,Transactions Exist"));
 
                     }
