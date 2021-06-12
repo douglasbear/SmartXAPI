@@ -30,13 +30,14 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
 
 
-        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
+        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf,IMyReminders myRem)
         {
             dLayer = dl;
             api = _api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1235;
+            myReminders=myRem;
         }
 
 
@@ -211,14 +212,17 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
 
-                    try
+                    if(nRequestID>0)
                     {
-                        myReminders.ReminderDelete(dLayer, nRequestID, this.FormID, connection, transaction);
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        try
+                        {
+                            myReminders.ReminderDelete(dLayer, nRequestID, this.FormID, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save"));
+                        }
                     }
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);

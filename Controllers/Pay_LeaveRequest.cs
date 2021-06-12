@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
         private readonly IMyAttachments myAttachments;
 
-        public Pay_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Pay_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,IMyReminders myRem)
         {
             dLayer = dl;
             api = apiFun;
@@ -39,6 +39,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 210;
+            myReminders=myRem;
         }
 
 
@@ -632,14 +633,18 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
 
-                    try
+                    if(n_VacationGroupID>0)
                     {
-                        myReminders.ReminderDelete(dLayer, n_VacationGroupID, this.FormID, connection, transaction);
-                    }
-                    catch (Exception ex)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        try
+                        {
+                            myReminders.ReminderDelete(dLayer, n_VacationGroupID, this.FormID, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save"));
+                        }
+
                     }
 
                     MasterTable.Rows[0]["N_VacTypeID"] =DetailTable.Rows[0]["N_VacTypeID"];
@@ -713,7 +718,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if(IsExitReEntry!=0)
+                            //if(IsExitReEntry!=0)
                                 myReminders.ReminderSet(dLayer, 23, n_VacationGroupID, DetailTable.Rows[0]["d_VacDateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
                           
                         }
