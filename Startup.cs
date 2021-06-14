@@ -70,6 +70,8 @@ namespace SmartxAPI
             services.AddScoped<IApiFunctions,ApiFunctions>();
             services.AddScoped<IMyFunctions,MyFunctions>();
             services.AddScoped<IMyAttachments,MyAttachments>();
+            services.AddScoped<IMyReminders,MyReminders>();
+
             
             
         }
