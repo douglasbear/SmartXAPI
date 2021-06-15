@@ -83,7 +83,10 @@ namespace SmartxAPI.Controllers
                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
                 int N_FormID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReferId"].ToString());
                 int nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
-
+                if(N_FormID==1155)
+                {
+                    N_FormID=455;
+                }
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();

@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("Dashboardlist")]
-        public ActionResult PayAccruedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult PayAccruedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCountryID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -111,9 +111,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 " + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 and N_CountryID=" + nCountryID + " " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + "  and N_CountryID=" + nCountryID + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " and N_CountryID=" + nCountryID + " " + xSortBy + " ) " + xSortBy;
 
 
 
@@ -187,7 +187,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult PayAccruedDetails(string xVacCode, int nVacTypeID)
+        public ActionResult PayAccruedDetails(string xVacCode, int nVacTypeID, int nCountryID)
         {
 
 
@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xVacCode", xVacCode);
-                    Mastersql = "select * from vw_PayVacationType_Web where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode  ";
+                    Mastersql = "select * from vw_PayVacationType_Web where N_CompanyId=@nCompanyID and x_VacCode=@xVacCode and N_CountryID=" + nCountryID + "  ";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -252,9 +252,10 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
 
-                    int n_VacTypeID = myFunctions.getIntVAL(MasterRow["N_VacTypeID"].ToString());
+                    int n_VacTypeID = myFunctions.getIntVAL(MasterRow["N_VacTypeID"].ToString()); 
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    DateTime dtpModDate = Convert.ToDateTime(MasterTable.Rows[0]["d_ModifiedDate"].ToString());
 
                     string x_VacCode = MasterRow["X_VacCode"].ToString();
                     var values = MasterTable.Rows[0]["X_VacCode"].ToString();
@@ -264,14 +265,35 @@ namespace SmartxAPI.Controllers
                         object objVacationStarted;
                         MasterTable.Columns.Remove("n_FnYearId");
 
-                        objVacationStarted = dLayer.ExecuteScalar("select 1 FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        if (objVacationStarted != null)
+                        object LastProcessed = null;
+                        LastProcessed = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction);
+                        if (LastProcessed != null)
                         {
+                            DateTime DtpDate = Convert.ToDateTime(dLayer.ExecuteScalar("select MAX(D_VacSanctionDate) FRom Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID, connection, transaction));
+                            var ProcessDate = DtpDate;
+                            var Moddate = dtpModDate;
+                            if (Moddate < ProcessDate)
+                            {
 
-                            return Ok(_api.Error("Transaction started!!!"));
+                                 return Ok(_api.Error("Cannot save by this Date!!!!!!"));
+
+                            }
 
 
                         }
+
+
+
+
+
+                        // objVacationStarted = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                        // if (objVacationStarted != null)
+                        // {
+
+                        //     return Ok(_api.Error("Transaction started!!!"));
+
+
+                        // }
 
 
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
