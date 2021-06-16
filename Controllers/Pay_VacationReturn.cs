@@ -65,8 +65,7 @@ namespace SmartxAPI.Controllers
                     {
                         DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate from Pay_VacationDetails Where N_VacationGroupID ="+var["N_VacationGroupID"].ToString()+"", connection);
                    if(VacDate.Rows.Count>0){
-                    var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
-                    var["D_VacDateTo"] =Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString());
+                    var["X_VacType"] = var["X_VacType"].ToString() + " [" +Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString()).ToString("dd-MMM-yyyy") +" To "+ Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString()).ToString("dd-MMM-yyyy") +"]";
                     var["D_ReturnDate"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());}
                     }
                     dt.AcceptChanges();
