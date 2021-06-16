@@ -67,6 +67,7 @@ namespace SmartxAPI.Controllers
                    if(VacDate.Rows.Count>0){
                     var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
                     var["D_VacDateTo"] =Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString());
+                    var["X_VacType"] = var["X_VacType"].ToString() + " [" +Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString()).ToString("dd-MMM-yyyy") +" To "+ Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString()).ToString("dd-MMM-yyyy") +"]";
                     var["D_ReturnDate"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());}
                     }
                     dt.AcceptChanges();
