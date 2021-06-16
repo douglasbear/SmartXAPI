@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
                 break;
                 case "SubmissionType": N_FormID=1123;
                 break;
-                case "SeparationReason": N_FormID=1155;
+                case "SeparationReason": N_FormID=455;
                 break;
                  case "Rating": N_FormID=9;
                 break;

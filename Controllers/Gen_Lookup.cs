@@ -86,6 +86,10 @@ namespace SmartxAPI.Controllers
                 if(MasterTable.Columns.Contains("n_Sort"))
                  nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
 
+                if(N_FormID==1155)
+                {
+                    N_FormID=455;
+                }
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
