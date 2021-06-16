@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("details")]
         public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
-        {
+        { 
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
             DataSet ds = new DataSet();
