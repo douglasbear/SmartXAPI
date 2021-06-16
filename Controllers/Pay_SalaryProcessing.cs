@@ -234,7 +234,8 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' or x_BankName like '%" + xSearchkey + "%' or x_AddDedBatch like '%" + xSearchkey + "%' ) ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PayRunID desc,cast(Batch as Numeric) desc";
+            xSortBy = " order by N_PayRunID desc,cast(Batch as Numeric) desc";
+                // xSortBy = " order by batch desc,D_TransDate desc";
             else
                 xSortBy = " order by " + xSortBy;
 
