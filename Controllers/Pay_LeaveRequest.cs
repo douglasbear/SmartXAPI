@@ -627,7 +627,7 @@ namespace SmartxAPI.Controllers
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
+                        return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
                     }
 
                     if (x_VacationGroupCode == "@Auto")
@@ -647,7 +647,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
-
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     if(n_VacationGroupID>0)
                     {
                         try
