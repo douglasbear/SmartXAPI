@@ -253,8 +253,8 @@ namespace SmartxAPI.Controllers
                 QueryParams.Add("@nEmpID", nEmpID);
                 int N_NextApproverID = 0;
                 //QueryParams.Add("@nLoanTransID", nLoanTransID);
-              
-                MasterTable.Columns.Remove("n_Amount");
+                if(MasterTable.Columns.Contains("n_Amount"))
+                    MasterTable.Columns.Remove("n_Amount");
 
 
 
