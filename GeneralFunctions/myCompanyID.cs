@@ -91,7 +91,7 @@ namespace SmartxAPI
         // public static string _LocationName;
         public static int _LocationID = 0;
         // public static string _DBBackupToZipFileName;
-        // public static string _CurrencyName;
+        public static string _CurrencyName;
         public static int _CurrencyID = 0;
         //public static bool _B_AllLocationData = true;
 
