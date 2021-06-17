@@ -627,12 +627,12 @@ namespace SmartxAPI.Controllers
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
+                        return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
                     }
 
                     if (x_VacationGroupCode == "@Auto")
                     {
-                        if (!checkSalaryProcess(DetailTable, nCompanyID, nFnYearID, nEmpID,EmpParams, connection, transaction))
+                        if (!checkSalaryProcess(DetailTable, nCompanyID, nFnYearID, nEmpID, EmpParams, connection, transaction))
                         {
                             transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
@@ -652,7 +652,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
-
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     if (n_VacationGroupID > 0)
                     {
                         try
@@ -668,8 +668,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     MasterTable.Rows[0]["N_VacTypeID"] = DetailTable.Rows[0]["N_VacTypeID"];
-                    MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    MasterTable.Columns.Remove("N_Procstatus");
+                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if (MasterTable.Columns.Contains("N_Procstatus"))
+                        MasterTable.Columns.Remove("N_Procstatus");
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
@@ -940,10 +942,10 @@ namespace SmartxAPI.Controllers
 
                 if (var["d_VacDateFrom"].ToString() == "" || var["d_VacDateTo"].ToString() == "") continue;
 
-                if (checkperiod(Convert.ToDateTime(dDateTo),nCompanyID, nFnYearID,nEmpID,Params,connection,transaction))
+                if (checkperiod(Convert.ToDateTime(dDateTo), nCompanyID, nFnYearID, nEmpID, Params, connection, transaction))
                 {
                     String Todate = Convert.ToDateTime(dDateTo).Year.ToString("00##") + Convert.ToDateTime(dDateTo).Month.ToString("0#");
-                    int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" +nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and (Pay_PaymentMaster.N_PayRunID >= " + Todate + ")", Params, connection, transaction)));
+                    int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and (Pay_PaymentMaster.N_PayRunID >= " + Todate + ")", Params, connection, transaction)));
                     if (count > 0)
                     {
                         return false;
@@ -953,17 +955,17 @@ namespace SmartxAPI.Controllers
             }
             return true;
         }
-    private bool checkperiod(DateTime dateVAL,int nCompanyID,int nFnYearID,int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction) 
+        private bool checkperiod(DateTime dateVAL, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
 
             String Todate = dateVAL.Year.ToString("00##") + dateVAL.Month.ToString("0#");
-            object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " +nCompanyID + " and X_Group='Payroll'",  Params, connection, transaction); ;
+            object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + nCompanyID + " and X_Group='Payroll'", Params, connection, transaction); ;
             if (Periodvalue == null) return true;
             DateTime dtStartDate = new DateTime(dateVAL.Year, dateVAL.Month, 1);
             int days = DateTime.DaysInMonth(dateVAL.Year, dateVAL.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
             DateTime SalToDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
             Todate = SalToDate > dateVAL ? Todate : (myFunctions.getIntVAL(Todate) + 1).ToString();
-            int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID  + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and '" + Todate + "' = Pay_PaymentMaster.N_PayRunID", Params, connection, transaction)));
+            int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and '" + Todate + "' = Pay_PaymentMaster.N_PayRunID", Params, connection, transaction)));
             if (count > 0)
             {
                 return true;
@@ -974,7 +976,7 @@ namespace SmartxAPI.Controllers
 
 
 
-        
+
 
     }
 }
