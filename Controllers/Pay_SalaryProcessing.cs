@@ -960,6 +960,7 @@ namespace SmartxAPI.Controllers
                             else
                                 Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
                             myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                            message.Clear();
                         }
 
                     }
