@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("code")]
-        public ActionResult GetCode(string docNo, int nFnYearID, int formID)
+        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string additionalCode)
         {
             try
             {
@@ -76,6 +76,11 @@ namespace SmartxAPI.Controllers
                         newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
                         if (newCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
                     }
+                    if (formID == 188)
+                    {
+                        newCode =additionalCode+"-"+newCode;
+                    }
+
                     SortedList output = new SortedList();
                     output.Add("newCode", newCode);
 
