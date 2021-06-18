@@ -331,11 +331,10 @@ namespace SmartxAPI.Controllers
                             SmtpServer.EnableSsl = true;
                             SmtpServer.Send(mail);
                             message.Length = 0;
+                            message = null;
                             mail.Body = "";
                             mail.Dispose();
-                            // if (X_FormFor == "Send Email Payslip")
-                            //     msg.waitMsg(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Success"));
-                        }
+                       }
 
                     }
 
@@ -583,11 +582,7 @@ namespace SmartxAPI.Controllers
 
                         }
 
-
-
                         transaction.Commit();
-
-                        SendEmail(N_TransID,nCompanyID,  DateTime.Now,nFnYearId);
                         return Ok(_api.Success("Saved"));
 
                     }
