@@ -58,18 +58,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt=myFunctions.AddNewColumnToDataTable(dt,"D_VacDateFrom",typeof(DateTime),null);
-                    dt=myFunctions.AddNewColumnToDataTable(dt,"D_VacDateTo",typeof(DateTime),null);
-                    dt=myFunctions.AddNewColumnToDataTable(dt,"D_ReturnDate",typeof(DateTime),null);
-                    dt=myFunctions.AddNewColumnToDataTable(dt,"X_VacDetails",typeof(String),"");
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateFrom", typeof(DateTime), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "D_VacDateTo", typeof(DateTime), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "D_ReturnDate", typeof(DateTime), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "X_VacDetails", typeof(String), "");
                     foreach (DataRow var in dt.Rows)
                     {
-                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate from Pay_VacationDetails Where N_VacationGroupID ="+var["N_VacationGroupID"].ToString()+"", connection);
-                   if(VacDate.Rows.Count>0){
-                    var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
-                    var["D_VacDateTo"] =Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString());
-                    var["X_VacDetails"] = var["X_VacType"].ToString() + " [" +Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString()).ToString("dd-MMM-yyyy") +" To "+ Convert.ToDateTime( VacDate.Rows[0]["ToDate"].ToString()).ToString("dd-MMM-yyyy") +"]";
-                    var["D_ReturnDate"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());}
+                        DataTable VacDate = dLayer.ExecuteDataTable("Select Min(D_VacDateFrom) As FromDate ,Max(D_VacDateTo) as ToDate from Pay_VacationDetails Where N_VacationGroupID =" + var["N_VacationGroupID"].ToString() + "", connection);
+                        if (VacDate.Rows.Count > 0)
+                        {
+                            var["D_VacDateFrom"] = Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString());
+                            var["D_VacDateTo"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());
+                            var["X_VacDetails"] = var["X_VacType"].ToString() + " [" + Convert.ToDateTime(VacDate.Rows[0]["FromDate"].ToString()).ToString("dd-MMM-yyyy") + " To " + Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString()).ToString("dd-MMM-yyyy") + "]";
+                            var["D_ReturnDate"] = Convert.ToDateTime(VacDate.Rows[0]["ToDate"].ToString());
+                        }
                     }
                     dt.AcceptChanges();
                 }
@@ -162,8 +164,63 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+        [HttpGet("Dashboardlist")]
+        public ActionResult PayVacationList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            Params.Add("@p1", nCompanyId);
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+
+                Searchkey = " and (X_VacationReturnCode like '%" + xSearchkey + "%'or X_EmpName like'%" + xSearchkey + "%')";
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by ReturnId desc";
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationReturn where N_CompanyID=@p1 and  " + Searchkey + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationReturn where N_CompanyID=" + nCompanyId + "  " + Searchkey + " and ReturnId not in (select top(" + Count + ") ReturnId from vw_PayVacationReturn where N_CompanyID=" + nCompanyId + "  " + xSortBy + " ) " + xSortBy;
 
 
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayVacationReturn where N_CompanyID=@p1" + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return BadRequest(_api.Error(e));
+            }
+        }
 
 
     }
