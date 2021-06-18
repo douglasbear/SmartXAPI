@@ -76,7 +76,11 @@ namespace SmartxAPI.Controllers
                         newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
                         if (newCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
                     }
-                    if (formID == 188 && (additionalCode !=null || additionalCode!="" ))
+                    if(additionalCode==null || additionalCode== "")
+                    {
+                        newCode=newCode;
+                    }
+                   else
                     {
                         newCode =additionalCode+"-"+newCode;
                     }
