@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                         pay_EmployeeAlerts = dLayer.ExecuteDataTable(empAlertSql, Params, connection);
 
                         DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Pay_Employee.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Pay_Employee.Rows[0]["N_EmpID"].ToString()), this.FormID, myFunctions.getIntVAL(Pay_Employee.Rows[0]["N_FnYearID"].ToString()), User, connection);
- 
+
 
                         Result.Add("pay_Employee", Pay_Employee);
                         Result.Add("pay_EmployeeSub", pay_EmployeeSub);
@@ -224,7 +224,7 @@ namespace SmartxAPI.Controllers
                         Result.Add("pay_EmployeeAlerts", pay_EmployeeAlerts);
                         Result.Add("attachments", Attachements);
 
-                     
+
 
 
 
@@ -252,10 +252,10 @@ namespace SmartxAPI.Controllers
             Params.Add("@nBranchID", nBranchID);
             Params.Add("@nCountryID", nCountryID);
 
-            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID order by X_Type desc";
+            string accrualSql = " select N_vacTypeID,Name,N_Accrued,X_Type,X_Period,B_InActive from [vw_PayAccruedCode_List] Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID and isnull(B_InActive,0)=0 order by X_Type desc";
             string paySetupSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID  and (N_PayTypeID <>11 and N_PayTypeID <>12 and N_PayTypeID <>14) and N_FnYearID=@nFnYearID  and N_PaymentID=5 and (N_Paymethod=0 or N_Paymethod=3) and B_InActive=0";
             // string payBenifitsSql = "Select * from vw_PayMaster Where  N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
-            string payBenifitsSql = "Select * from vw_PayMaster Where ( N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID) order by N_PayTypeID";
+            string payBenifitsSql = "Select * from vw_PayMaster Where ( N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID) and isnull(B_InActive,0)=0 order by N_PayTypeID";
             string PayCodeSql = "Select * From [vw_Pay_Sal4perPaycodes] Where N_CompanyID=@nCompanyID and N_FnyearID =@nFnYearID";
             string payOthInfoSql = "Select N_OtherCode,X_subject from Acc_OtherInformationMaster Where  N_CompanyID=@nCompanyID and  N_FormID=188";
             try
@@ -737,7 +737,7 @@ namespace SmartxAPI.Controllers
 
                         //ATTACHMENT SAVING
                         myAttachments.SaveAttachment(dLayer, Attachment, xEmpCode, nEmpID, dtMasterTable.Rows[0]["x_EmpName"].ToString(), xEmpCode, nEmpID, "Employee", User, connection, transaction);
-                        
+
 
                         transaction.Commit();
                         return Ok(value: _api.Success("Employee Information Saved"));
@@ -752,14 +752,22 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("managerList")]
-        public ActionResult GetManagerList(int nFnYearID)
+        public ActionResult GetManagerList(int nFnYearID, string byDeptManager)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            string sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
+            string sqlCommandText = "";
+            if (byDeptManager != null && byDeptManager != "")
+            {
+                sqlCommandText = "Select N_CompanyID,N_FnYearID,B_InActive,N_EmpID,X_EmpCode as [Employee Code],X_EmpName as [Employee Name] from Pay_Employee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  B_inactive <> 1 order by X_EmpCode";
+            }
+            else
+            {
+                sqlCommandText = "Select N_CompanyID,N_SupervisorID,N_EmpID,Code,N_BranchID,N_FnYearID,[Employee Code],[Employee Name],Description from vw_Supervisor_ReportTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by [Employee Code]";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
