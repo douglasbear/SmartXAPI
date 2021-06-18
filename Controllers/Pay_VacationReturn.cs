@@ -29,7 +29,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 463;
+            FormID = 1361;//463;
         }
 
         [HttpGet("vacationList")]
@@ -102,6 +102,10 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
 
@@ -117,6 +121,9 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+
+                    int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -126,24 +133,49 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string X_VacationReturnCode = MasterTable.Rows[0]["X_VacationReturnCode"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+
+
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", N_CompanyID);
+                    EmpParams.Add("@nEmpID", nEmpID);
+                    EmpParams.Add("@nFnYearID", N_FnYearID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
+                    object objEmpCode = dLayer.ExecuteScalar("Select X_EmpCode From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
+
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
+                    {
+                        int N_PkeyID = N_VacationReturnID;
+                        string X_Criteria = "N_VacationReturnID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_VacationMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_PkeyID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_VacationReturnID, "VACATION RETURN", X_VacationReturnCode, dLayer, connection, transaction, User);
+                        return Ok(_api.Success("Request Approved " + "-" + X_VacationReturnCode));
+                    }
+
                     if (X_VacationReturnCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
-                        Params.Add("N_FormID", this.FormID);
+                        Params.Add("N_FormID", 463);
                         X_VacationReturnCode = dLayer.GetAutoNumber("Pay_VacationReturn", "X_VacationReturnCode", Params, connection, transaction);
                         if (X_VacationReturnCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["X_VacationReturnCode"] = X_VacationReturnCode;
 
                     }
 
-
+MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    
                     N_VacationReturnID = dLayer.SaveData("Pay_VacationReturn", "n_VacationReturnID", MasterTable, connection, transaction);
                     if (N_VacationReturnID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Vacation Return"));
                     }
+
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_VacationReturnID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+
 
 
                     int N_QuotationDetailId = dLayer.SaveData("Pay_VacationDetails", "N_VacationID", DetailTable, connection, transaction);
@@ -152,7 +184,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save Vacation Return"));
                     }
-
+                    transaction.Commit();
                     SortedList Result = new SortedList();
                     Result.Add("N_VacationReturnID", N_VacationReturnID);
                     Result.Add("X_VacationReturnCode", X_VacationReturnCode);
