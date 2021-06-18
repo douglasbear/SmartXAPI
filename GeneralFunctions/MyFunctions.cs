@@ -805,7 +805,7 @@ namespace SmartxAPI.GeneralFunctions
                         Response["lblText"] = Status["X_MsgStatus"].ToString();
                         Response["lblText"] = Response["lblText"].ToString().Replace("#NAME", xLastUserName);
                         if (xEntryTime.Trim() != "")
-                            xEntryTime = Convert.ToDateTime(xEntryTime).ToString("dd/MM/yyyy HH:mm:ss");
+                            xEntryTime = Convert.ToDateTime(xEntryTime).ToString("dd/MM/yyyy HH:mm");
                         Response["lblText"] = Response["lblText"].ToString().Replace("#DATE", xEntryTime);
                     }
 
