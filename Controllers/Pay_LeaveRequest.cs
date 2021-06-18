@@ -12,6 +12,8 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Text;
+
 
 namespace SmartxAPI.Controllers
 {
@@ -31,7 +33,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
         private readonly IMyAttachments myAttachments;
 
-        public Pay_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,IMyReminders myRem)
+        public Pay_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt, IMyReminders myRem)
         {
             dLayer = dl;
             api = apiFun;
@@ -39,7 +41,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 210;
-            myReminders=myRem;
+            myReminders = myRem;
         }
 
 
@@ -69,8 +71,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,X_VacationGroupCode desc";
-            else if(xSortBy.Contains("vacationRequestDate"))
-                xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if (xSortBy.Contains("vacationRequestDate"))
+                xSortBy = " order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -90,13 +92,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object nEmpID;
-                     if (empID == 0 || empID == null)
+                    if (empID == 0 || empID == null)
                     {
-                     nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                        nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     }
                     else
                     {
-                         nEmpID = empID;
+                        nEmpID = empID;
                     }
                     if (nEmpID != null)
                     {
@@ -151,8 +153,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,cast(X_VacationGroupCode as numeric) desc";
-            else if(xSortBy.Contains("vacationRequestDate"))
-                xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if (xSortBy.Contains("vacationRequestDate"))
+                xSortBy = " order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -166,7 +168,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft  From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID  " + isAdjestmentCriteria + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID "+ isAdjestmentCriteria +"   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID " + isAdjestmentCriteria + "   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -596,7 +598,11 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                int nDeligateID = myFunctions.getIntVAL(MasterRow["n_deligateid"].ToString());
                 int N_NextApproverID = 0;
+                string xEmail = MasterRow["x_Email"].ToString();
+                bool N_SaveDraft = myFunctions.getBoolVAL(MasterRow["B_IsSaveDraft"].ToString());
+
 
 
 
@@ -648,7 +654,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
 
-                    if(n_VacationGroupID>0)
+                    if (n_VacationGroupID > 0)
                     {
                         try
                         {
@@ -662,7 +668,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    MasterTable.Rows[0]["N_VacTypeID"] =DetailTable.Rows[0]["N_VacTypeID"];
+                    MasterTable.Rows[0]["N_VacTypeID"] = DetailTable.Rows[0]["N_VacTypeID"];
                     MasterTable.Columns.Remove("N_ApprovalLevelID");
                     MasterTable.Columns.Remove("N_Procstatus");
                     MasterTable.AcceptChanges();
@@ -673,17 +679,17 @@ namespace SmartxAPI.Controllers
                     {
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
 
-                        int IsExitReEntry=0;
+                        int IsExitReEntry = 0;
                         foreach (DataRow var in Benifits.Rows)
                         {
                             bool ticketSelected = false;
                             if (!myFunctions.getBoolVAL(var["Mark"].ToString())) continue;
                             ticketSelected = true;
 
-                            if(IsExitReEntry==0)
+                            if (IsExitReEntry == 0)
                             {
-                                if(var["X_Type"].ToString()=="E")
-                                    IsExitReEntry=1;
+                                if (var["X_Type"].ToString() == "E")
+                                    IsExitReEntry = 1;
                             }
 
                             SortedList benifitParam = new SortedList();
@@ -734,8 +740,8 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             //if(IsExitReEntry!=0)
-                                myReminders.ReminderSet(dLayer, 23, n_VacationGroupID, DetailTable.Rows[0]["d_VacDateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
-                          
+                            myReminders.ReminderSet(dLayer, 23, n_VacationGroupID, DetailTable.Rows[0]["d_VacDateFrom"].ToString(), this.FormID, N_UserID, User, connection, transaction);
+
                         }
                     }
                     else
@@ -758,7 +764,22 @@ namespace SmartxAPI.Controllers
                     myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
 
                     myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
-                    
+                    //Send Replace Mail
+                    if (!N_SaveDraft)
+                    {
+                        string Body = "", Toemail = "", Subject = "Request Letter for Employee Replacement";
+                        object mail = dLayer.ExecuteScalar("select x_Email from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                        if (mail != null)
+                            Toemail = mail.ToString();
+                        if (Toemail != "")
+                        {
+                            object ReplaceEmployee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                            object Employee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nEmpID + " and n_CompanyID="+nCompanyID, Params, connection);
+                            Body = Boody(ReplaceEmployee.ToString(), Employee.ToString());
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                        }
+                    }
+
                     transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_RequestCode", x_VacationGroupCode.ToString());
@@ -769,6 +790,15 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(ex));
             }
+        }
+        public string Boody(string ReplaceEmployee, string Employee)
+        {
+            StringBuilder message = new StringBuilder();
+            message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
+            message = message.Append("Dear " + ReplaceEmployee + ",<br/><br/>");
+            message = message.Append("You are Requested to Work as an Replacement Employee in place of " + Employee + "<br/><br/>");
+            message = message.Append("<tr><left>Sincerly,</left><br><left>" + myFunctions.GetUserName(User) + "</left></table>");
+            return message.ToString();
         }
 
 
