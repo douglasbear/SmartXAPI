@@ -302,7 +302,47 @@ if(DetailTable.Rows.Count>0){
                 return BadRequest(_api.Error(e));
             }
         }
+        // [HttpDelete("delete")]
+        // public ActionResult DeleteData(string xVacationReturnCode, int nFnYearID,int nCompanyID)
+        // {
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             DataTable TransData = new DataTable();
+        //             SortedList ParamList = new SortedList();
+        //             ParamList.Add("@xVacationReturnCode", xVacationReturnCode);
+        //             ParamList.Add("@nFnYearID", nFnYearID);
+        //             ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+        //             int N_EmpID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_EmpID From Pay_VacationReturn Where X_VacationReturnCode='" + xVacationReturnCode + "'and N_CompanyID =" + nCompanyID, ParamList,connection));
+        //             object obj;
+        //             obj = dba.ExecuteSclar("Select N_VacationReturnID From Pay_VacationReturn Where X_VacationReturnCode='" + xVacationReturnCode + "'and N_CompanyID =" +nCompanyID,  ParamList,connection);
+        //             if (obj == null)
+        //             {
+        //                 msg.msgError((MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "VacationReturnCode")));
+        //                 return;
+        //             }
+        //             else
+        //                 N_VacationReturnID = Convert.ToInt16(obj);
 
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+        //         }
+        //     }
+        // }
     }
 }
