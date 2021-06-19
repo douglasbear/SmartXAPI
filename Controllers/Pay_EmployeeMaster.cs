@@ -794,27 +794,39 @@ namespace SmartxAPI.Controllers
         [HttpGet("reportingToList")]
         public ActionResult GetReportingToList(int nFnYearID)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nFnYearID", nFnYearID);
-            string sqlCommandText = "Select N_CompanyID, N_BranchID, N_FnYearID, N_EmpID, X_EmpCode, X_EmpName, N_Status from vw_ReportingTo Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by X_EmpCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    Params.Add("@nCompanyID", nCompanyID);
+                    Params.Add("@nFnYearID", nFnYearID);
+                    if (nFnYearID == 0)
+                    {
+                        object nFnYearIDto = dLayer.ExecuteScalar("select max(N_FnYearID) from Acc_Fnyear where N_CompanyID=" + nCompanyID,  Params, connection, transaction);
+                        nFnYearID = myFunctions.getIntVAL(nFnYearIDto.ToString());
+                    }
+                    string sqlCommandText = "Select N_CompanyID, N_BranchID, N_FnYearID, N_EmpID, X_EmpCode, X_EmpName, N_Status from vw_ReportingTo Where N_CompanyID=@nCompanyID and N_FnYearID="+nFnYearID+" and N_Status not in(2,3) order by X_EmpCode";
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success(dt));
+                    }
                 }
             }
             catch (Exception e)

@@ -76,13 +76,13 @@ namespace SmartxAPI.Controllers
                         newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
                         if (newCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
                     }
-                    if(additionalCode==null || additionalCode== "")
+                    if (additionalCode == null || additionalCode == "")
                     {
-                        newCode=newCode;
+                        newCode = newCode;
                     }
-                   else
+                    else
                     {
-                        newCode =additionalCode+"-"+newCode;
+                        newCode = additionalCode + "-" + newCode;
                     }
 
                     SortedList output = new SortedList();
