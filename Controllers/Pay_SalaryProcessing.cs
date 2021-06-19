@@ -973,6 +973,7 @@ namespace SmartxAPI.Controllers
                             else
                                 Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
                             myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                            message=null;
                         }
 
                     }
@@ -1068,6 +1069,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
                 int nBankID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BankID"].ToString());
+                int IsSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
                 var dCreatedDate = MasterTable.Rows[0]["d_TransDate"].ToString();
                 string x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
                 var d_SalFromDate = MasterTable.Rows[0]["d_TransDate"].ToString();
@@ -1201,7 +1203,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (N_TransDetailsID > 0)
+                        if (N_TransDetailsID > 0 && IsSaveDraft==0)
                         {
                             dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_TransDetailsID =" + N_TransDetailsID + "  Where N_CompanyID =" + nCompanyID + " and N_TransDetailsID=-1 and D_RefundDate = '" + dCreatedDate.ToString() + "'", connection, transaction);
 

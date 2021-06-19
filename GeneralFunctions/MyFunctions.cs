@@ -405,6 +405,13 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         nApprovalID = this.getIntVAL(objApproval.ToString());
                         ApprovalParams["@nApprovalID"] = nApprovalID;
+                    }else{
+                         object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                    if (ApprovalCode != null)
+                    {
+                        nApprovalID = this.getIntVAL(ApprovalCode.ToString());
+                        ApprovalParams["@nApprovalID"] = nApprovalID;
+                    }
                     }
 
                 }
