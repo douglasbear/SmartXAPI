@@ -366,7 +366,7 @@ namespace SmartxAPI.Controllers
                         if (ButtonTag == "6" || ButtonTag == "0")
                         {
                             if (nVacTypeID != 0)
-                                dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", myFunctions.getIntVAL(TransRow["N_VacationGroupID"].ToString()), "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_VouchererID=" + nVacationReturnID, connection, transaction);
+                                dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", myFunctions.getIntVAL(TransRow["N_VacationGroupID"].ToString()), "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_VoucherID=" + nVacationReturnID, connection, transaction);
 
                             dLayer.DeleteData("Pay_VacationReturn", "N_VacationReturnID", nVacationReturnID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
                         }
