@@ -457,12 +457,13 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("employeeSalaryDetails")]
-        public ActionResult EmployeeSalary(DateTime dtpEndDate, int nFnYearID, int nEmpID)
+        public ActionResult EmployeeSalary(DateTime dtpEndDate, int nFnYearID, int nEmpID, int n_ServiceEndSettingsID, string byEmp)
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    connection.Open();
                     DataSet dt = new DataSet();
                     //DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
@@ -474,21 +475,37 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "SELECT * FROM Pay_EmployeePayHistory where N_EmpID=" + nEmpID + " and D_EffectiveDate = (select MAX(D_EffectiveDate) from Pay_EmployeePayHistory where N_EmpID = " + nEmpID + " and N_PayID=1) and N_PayID=1";
 
                     DataTable EmployeeTable = new DataTable();
-                    // DataTable RelationTable = new DataTable();
+                    DataTable RelationTable = new DataTable();
 
                     EmployeeTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     if (EmployeeTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
 
-                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ActualAmount", typeof(double), 0);
-                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_DiffAmount", typeof(double), 0);
-                    // object obj = dLayer.ExecuteScalar("Select dbo.[SP_GetEOSAmount](" + nCompanyID + "," + nEmpID + "," + dtpEndDate.Year.ToString("00##") + dtpEndDate.Month.ToString("0#") + "," + nFnYearID + ",0)", Params, connection);
-
-                    // if (obj != null)
-                    // {
-                    //     EmployeeTable.Rows[0]["N_ActualAmount"] = myFunctions.getVAL(obj.ToString());
-                    // }
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_AdjustAmount", typeof(double), 0);
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "X_ServiceEnd", typeof(string), "");
+                    if (n_ServiceEndSettingsID == 0)
+                    {
+                        n_ServiceEndSettingsID = 1;
+                    }
+                    object obj = dLayer.ExecuteScalar("Select dbo.[SP_GetEOSAmount_Settings](" + myCompanyID._CompanyID + "," + nEmpID + "," + dtpEndDate.Year.ToString("00##") + dtpEndDate.Month.ToString("0#") + "," + myCompanyID._FnYearID + ",0," + n_ServiceEndSettingsID + ")", Params, connection);
+                    if (obj != null)
+                    {
+                        EmployeeTable.Rows[0]["N_AdjustAmount"] = myFunctions.getVAL(obj.ToString());
+                    }
+                    if (byEmp == "emp")
+                    {
+                        object obj1 = dLayer.ExecuteScalar("select X_ServiceEndStatusDesc from vw_ServiceEndSettings where N_ServiceEndID=1", Params, connection);
+                        if (obj1 != null)
+                        {
+                            EmployeeTable.Rows[0]["X_ServiceEnd"] = obj1.ToString();
+                        }
+                    }
+                    else
+                    {
+                        EmployeeTable.Rows[0]["X_ServiceEnd"] = "choosen";
+                    }
                     EmployeeTable.AcceptChanges();
                     EmployeeTable = api.Format(EmployeeTable, "EmpTable");
+
 
                     dt.Tables.Add(EmployeeTable);
                     return Ok(api.Success(dt));

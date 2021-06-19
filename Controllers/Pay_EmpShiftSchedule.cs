@@ -160,30 +160,42 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", d_Date);
                     string sqlCommandText = "";
 
-
-                    if (nUserID == 1)
+                    bool B_ShowManagerWise = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("1260", "ShowManagerWiseEmployee", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+                    if (B_ShowManagerWise == false)
                     {
                         if (bAllBranchData == true)
                             sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2   )";
                         else
                             sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID    and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
-
                     }
                     else
                     {
-                        object empID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
-                        object nReportToID = dLayer.ExecuteScalar("Select N_SuperVisorID From pay_supervisor Where N_CompanyID =@nCompanyID and N_EmpID=" + myFunctions.getVAL(empID.ToString()) + " ", Params, connection);
-                        if (nReportToID != null)
-                        {
 
+                        object userCategory = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                        if (myFunctions.getIntVAL(userCategory.ToString()) == 2)
+                        {
                             if (bAllBranchData == true)
-                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND  isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2 AND N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + "  )";
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and   isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2   )";
                             else
-                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND   and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01') N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString())  + " AND  ";
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID    and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01')  ";
+
                         }
                         else
                         {
-                            return Ok(_api.Error("No Result found"));
+                            object empID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User Where N_CompanyID =@nCompanyID and N_UserID=" + nUserID + " ", Params, connection);
+                            object nReportToID = dLayer.ExecuteScalar("Select N_SuperVisorID From pay_supervisor Where N_CompanyID =@nCompanyID and N_EmpID=" + myFunctions.getVAL(empID.ToString()) + " ", Params, connection);
+                            if (nReportToID != null)
+                            {
+
+                                if (bAllBranchData == true)
+                                    sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString()) + " AND  (D_Date=@p2) union  Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,X_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString()) + " AND  isnull(D_Date,'1900-01-01')='1900-01-01' and N_EmpID not in (select N_EmpID from vw_Pay_Empshiftdetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and D_Date=@p2 AND N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString()) + "  )";
+                                else
+                                    sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],N_ReportToID,Name,X_Position,X_Division,X_Department,X_BranchName,N_GroupID,x_GroupName,D_Date,D_PeriodFrom,D_PeriodTo,D_In1,D_Out1,D_In2,D_Out2 from vw_Pay_Empshiftdetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString()) + " AND   and (N_BranchID=0 or N_BranchID=@nBranchID) and (D_Date=@p2 or   isnull(D_Date,'1900-01-01')='1900-01-01') N_ReportToID=" + myFunctions.getVAL(nReportToID.ToString()) + " AND  ";
+                            }
+                            else
+                            {
+                                return Ok(_api.Error("No Result found"));
+                            }
                         }
                     }
 

@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
         private readonly IMyAttachments myAttachments;
 
-        public Pay_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt,IMyReminders myRem)
+        public Pay_LeaveRequest(IDataAccessLayer dl, IApiFunctions apiFun, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt, IMyReminders myRem)
         {
             dLayer = dl;
             api = apiFun;
@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 210;
-            myReminders=myRem;
+            myReminders = myRem;
         }
 
 
@@ -69,8 +69,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,X_VacationGroupCode desc";
-            else if(xSortBy.Contains("vacationRequestDate"))
-                xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if (xSortBy.Contains("vacationRequestDate"))
+                xSortBy = " order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -90,13 +90,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     object nEmpID;
-                     if (empID == 0 || empID == null)
+                    if (empID == 0 || empID == null)
                     {
-                     nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                        nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
                     }
                     else
                     {
-                         nEmpID = empID;
+                        nEmpID = empID;
                     }
                     if (nEmpID != null)
                     {
@@ -151,8 +151,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,cast(X_VacationGroupCode as numeric) desc";
-            else if(xSortBy.Contains("vacationRequestDate"))
-                xSortBy =" order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if (xSortBy.Contains("vacationRequestDate"))
+                xSortBy = " order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("details")]
         public ActionResult GetEmployeeVacationDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
-        { 
+        {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
             DataSet ds = new DataSet();
@@ -633,11 +633,16 @@ namespace SmartxAPI.Controllers
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
+                        return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
                     }
 
                     if (x_VacationGroupCode == "@Auto")
                     {
+                        if (!checkSalaryProcess(DetailTable, nCompanyID, nFnYearID, nEmpID, EmpParams, connection, transaction))
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Warning("Salary Already Processed!"));
+                        }
 
 
                         Params.Add("N_CompanyID", nCompanyID);
@@ -653,8 +658,8 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
-
-                    if(n_VacationGroupID>0)
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
+                    if (n_VacationGroupID > 0)
                     {
                         try
                         {
@@ -668,9 +673,11 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    MasterTable.Rows[0]["N_VacTypeID"] =DetailTable.Rows[0]["N_VacTypeID"];
-                    MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    MasterTable.Columns.Remove("N_Procstatus");
+                    MasterTable.Rows[0]["N_VacTypeID"] = DetailTable.Rows[0]["N_VacTypeID"];
+                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if (MasterTable.Columns.Contains("N_Procstatus"))
+                        MasterTable.Columns.Remove("N_Procstatus");
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
@@ -679,17 +686,17 @@ namespace SmartxAPI.Controllers
                     {
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
 
-                        int IsExitReEntry=0;
+                        int IsExitReEntry = 0;
                         foreach (DataRow var in Benifits.Rows)
                         {
                             bool ticketSelected = false;
                             if (!myFunctions.getBoolVAL(var["Mark"].ToString())) continue;
                             ticketSelected = true;
 
-                            if(IsExitReEntry==0)
+                            if (IsExitReEntry == 0)
                             {
-                                if(var["X_Type"].ToString()=="E")
-                                    IsExitReEntry=1;
+                                if (var["X_Type"].ToString() == "E")
+                                    IsExitReEntry = 1;
                             }
 
                             SortedList benifitParam = new SortedList();
@@ -740,8 +747,8 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             //if(IsExitReEntry!=0)
-                                myReminders.ReminderSet(dLayer, 23, n_VacationGroupID, DetailTable.Rows[0]["d_VacDateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
-                          
+                            myReminders.ReminderSet(dLayer, 23, n_VacationGroupID, DetailTable.Rows[0]["d_VacDateFrom"].ToString(), this.FormID, N_UserID, User, connection, transaction);
+
                         }
                     }
                     else
@@ -764,7 +771,7 @@ namespace SmartxAPI.Controllers
                     myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
 
                     myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
-                    
+
                     transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("x_RequestCode", x_VacationGroupCode.ToString());
@@ -929,6 +936,51 @@ namespace SmartxAPI.Controllers
         //         }
         //     }
         // }
+
+        private bool checkSalaryProcess(DataTable DetailTable, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+            foreach (DataRow var in DetailTable.Rows)
+            {
+                var dDateFrom = var["d_VacDateFrom"].ToString();
+                var dDateTo = var["d_VacDateTo"].ToString();
+                DateTime DateFrom = Convert.ToDateTime(dDateFrom.ToString());
+                DateTime DateTo = Convert.ToDateTime(dDateTo.ToString());
+
+                if (var["d_VacDateFrom"].ToString() == "" || var["d_VacDateTo"].ToString() == "") continue;
+
+                if (checkperiod(Convert.ToDateTime(dDateTo), nCompanyID, nFnYearID, nEmpID, Params, connection, transaction))
+                {
+                    String Todate = Convert.ToDateTime(dDateTo).Year.ToString("00##") + Convert.ToDateTime(dDateTo).Month.ToString("0#");
+                    int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and (Pay_PaymentMaster.N_PayRunID >= " + Todate + ")", Params, connection, transaction)));
+                    if (count > 0)
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            return true;
+        }
+        private bool checkperiod(DateTime dateVAL, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+
+            String Todate = dateVAL.Year.ToString("00##") + dateVAL.Month.ToString("0#");
+            object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + nCompanyID + " and X_Group='Payroll'", Params, connection, transaction); ;
+            if (Periodvalue == null) return true;
+            DateTime dtStartDate = new DateTime(dateVAL.Year, dateVAL.Month, 1);
+            int days = DateTime.DaysInMonth(dateVAL.Year, dateVAL.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+            DateTime SalToDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+            Todate = SalToDate > dateVAL ? Todate : (myFunctions.getIntVAL(Todate) + 1).ToString();
+            int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and '" + Todate + "' = Pay_PaymentMaster.N_PayRunID", Params, connection, transaction)));
+            if (count > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+
 
 
 
