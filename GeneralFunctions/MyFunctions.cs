@@ -400,6 +400,13 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         nApprovalID = this.getIntVAL(objApproval.ToString());
                         ApprovalParams["@nApprovalID"] = nApprovalID;
+                    }else{
+                         object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                    if (ApprovalCode != null)
+                    {
+                        nApprovalID = this.getIntVAL(ApprovalCode.ToString());
+                        ApprovalParams["@nApprovalID"] = nApprovalID;
+                    }
                     }
 
                 }
@@ -798,7 +805,7 @@ namespace SmartxAPI.GeneralFunctions
                         Response["lblText"] = Status["X_MsgStatus"].ToString();
                         Response["lblText"] = Response["lblText"].ToString().Replace("#NAME", xLastUserName);
                         if (xEntryTime.Trim() != "")
-                            xEntryTime = Convert.ToDateTime(xEntryTime).ToString("dd/MM/yyyy HH:mm:ss");
+                            xEntryTime = Convert.ToDateTime(xEntryTime).ToString("dd/MM/yyyy HH:mm");
                         Response["lblText"] = Response["lblText"].ToString().Replace("#DATE", xEntryTime);
                     }
 
