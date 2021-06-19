@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("code")]
-        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string additionalCode)
+        public ActionResult GetCode(string docNo, int nFnYearID, int formID, string xDescription)
         {
             try
             {
@@ -70,20 +70,32 @@ namespace SmartxAPI.Controllers
 
                     if (docNo == "@Auto" || docNo == "new")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearID);
-                        Params.Add("N_FormID", formID);
-                        newCode = dLayer.GetAutoNumber(masterTable, column, Params, connection, transaction);
-                        if (newCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
+                        if (xDescription == null || xDescription == "")
+                        {
+                            Params.Add("N_CompanyID", nCompanyID);
+                            Params.Add("N_YearID", nFnYearID);
+                            Params.Add("N_FormID", 188);
+                            Params.Add("X_Type", "");
+                        }
+                        else
+                        {
+                            Params.Add("N_CompanyID", nCompanyID);
+                            Params.Add("N_YearID", nFnYearID);
+                            Params.Add("N_FormID", 188);
+                            Params.Add("X_Type", xDescription);
+                        }
+
+                        while (true)
+                        {
+
+                            newCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate_New", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_Employee Where X_EmpCode ='" + newCode + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
                     }
-                    if (additionalCode == null || additionalCode == "")
-                    {
-                        newCode = newCode;
-                    }
-                    else
-                    {
-                        newCode = additionalCode + "-" + newCode;
-                    }
+
+
 
                     SortedList output = new SortedList();
                     output.Add("newCode", newCode);
