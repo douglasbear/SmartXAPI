@@ -948,21 +948,9 @@ namespace SmartxAPI.Controllers
 
                     Paycodes = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParams, connection);
 
-
-                    object companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + nCompanyID, Params, connection);
-                    object companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + nCompanyID, Params, connection);
-
                     foreach (DataRow MasterVar in dt.Rows)
                     {
-                        MailMessage mail = new MailMessage();
-                        SmtpClient SmtpServer = new SmtpClient("smtp.gmail.com");
-                        mail.From = new MailAddress(companyemail.ToString());
-                        DataSet dsMail = new DataSet();
-                        DataTable dtMailDetails = new DataTable();
-                        string condition = "";
                         string Toemail = MasterVar["X_EmailID"].ToString().Trim();
-                        string expression = "X_Type='TO'";
-                        string OrderByField = "";
                         string Subject ="";
                         if (Toemail != "")
                         {
@@ -973,7 +961,7 @@ namespace SmartxAPI.Controllers
                             else
                                 Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
                             myFunctions.SendMail(Toemail, Body, Subject, dLayer);
-                            message=null;
+                            message.Clear();
                         }
 
                     }
