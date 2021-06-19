@@ -604,10 +604,12 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
-                int nDeligateID = myFunctions.getIntVAL(MasterRow["n_deligateid"].ToString());
+                int nDeligateID =0;
+                if(MasterTable.Columns.Contains("n_deligateid"))
+                nDeligateID = myFunctions.getIntVAL(MasterRow["n_deligateid"].ToString());
+
                 int N_NextApproverID = 0;
                 string xEmail = MasterRow["x_Email"].ToString();
-                bool N_SaveDraft = myFunctions.getBoolVAL(MasterRow["B_IsSaveDraft"].ToString());
 
 
 
@@ -778,20 +780,23 @@ namespace SmartxAPI.Controllers
 
                     myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
                     //Send Replace Mail
-                    if (!N_SaveDraft)
-                    {
-                        string Body = "", Toemail = "", Subject = "Request Letter for Employee Replacement";
-                        object mail = dLayer.ExecuteScalar("select x_Email from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
-                        if (mail != null)
-                            Toemail = mail.ToString();
-                        if (Toemail != "")
-                        {
-                            object ReplaceEmployee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
-                            object Employee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nEmpID + " and n_CompanyID="+nCompanyID, Params, connection);
-                            Body = Boody(ReplaceEmployee.ToString(), Employee.ToString());
-                            myFunctions.SendMail(Toemail, Body, Subject, dLayer);
-                        }
-                    }
+
+                // bool N_SaveDraft = myFunctions.getBoolVAL(MasterRow["B_IsSaveDraft"].ToString());
+
+                    // if (nDeligateID!=0)
+                    // {
+                    //     string Body = "", Toemail = "", Subject = "Request Letter for Employee Replacement";
+                    //     object mail = dLayer.ExecuteScalar("select x_Email from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //     if (mail != null)
+                    //         Toemail = mail.ToString();
+                    //     if (Toemail != "")
+                    //     {
+                    //         object ReplaceEmployee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //         object Employee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nEmpID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //         Body = Boody(ReplaceEmployee.ToString(), Employee.ToString());
+                    //         myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                    //     }
+                    // }
 
                     transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
