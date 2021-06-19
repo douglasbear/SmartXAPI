@@ -986,11 +986,11 @@ namespace SmartxAPI.Controllers
                     DataTable Employee = dLayer.ExecuteDataTable(EmployeeSql, Params, connection, transaction);
 
                     object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" + Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" + Employee.Rows[0]["n_loanledgerid"] + ")", Params, connection, transaction);
-                    if (EmployeeLedger != null)
-                        return Ok(_api.Error("Can't delete,it has been used"));
+                    // if (EmployeeLedger != null)
+                    //     return Ok(_api.Error("Can't delete,it has been used"));
 
-                    else
-                    {
+                    // else
+                    // {
                         object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
                         if (obj != null)
                         {
@@ -1027,7 +1027,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
 
 
-                    }
+                    
                     transaction.Commit();
                 }
                 return Ok(_api.Success("Employee Deleted"));
