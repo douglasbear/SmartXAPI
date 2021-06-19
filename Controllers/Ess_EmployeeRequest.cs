@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select N_RequestTypeID,X_RequestTypeDesc from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
+            string sqlCommandText = "select N_RequestTypeID,X_RequestTypeDesc,N_CategoryID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
