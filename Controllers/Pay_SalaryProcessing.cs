@@ -332,11 +332,10 @@ namespace SmartxAPI.Controllers
                             SmtpServer.Send(mail);
                             message = null;
                             message.Length = 0;
+                            message = null;
                             mail.Body = "";
                             mail.Dispose();
-                            // if (X_FormFor == "Send Email Payslip")
-                            //     msg.waitMsg(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Success"));
-                        }
+                       }
 
                     }
 
@@ -584,8 +583,6 @@ namespace SmartxAPI.Controllers
 
 
                         }
-
-
 
                         transaction.Commit();
                         return Ok(_api.Success("Saved"));
