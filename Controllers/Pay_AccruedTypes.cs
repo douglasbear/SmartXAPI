@@ -253,6 +253,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
 
                     int n_VacTypeID = myFunctions.getIntVAL(MasterRow["N_VacTypeID"].ToString()); 
+                    int N_CountryID = myFunctions.getIntVAL(MasterRow["N_CountryID"].ToString()); 
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     DateTime dtpModDate = Convert.ToDateTime(MasterTable.Rows[0]["d_ModifiedDate"].ToString());
@@ -283,62 +284,9 @@ namespace SmartxAPI.Controllers
                         }
 
 
-
-
-
-                        // objVacationStarted = dLayer.ExecuteScalar("select 1 From Pay_VacationDetails Where N_VacTypeID= " + n_VacTypeID + " and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-                        // if (objVacationStarted != null)
-                        // {
-
-                        //     return Ok(_api.Error("Transaction started!!!"));
-
-
-                        // }
-
-
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
-                        if (MasterTable.Rows[0]["X_Period"].ToString() == "Monthly" || MasterTable.Rows[0]["X_Period"].ToString() == "Monthly/شهرية")
-                        {
-                            MasterTable.Rows[0]["X_Period"] = "M";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Period"].ToString() == "Yearly" || MasterTable.Rows[0]["X_Period"].ToString() == "Yearly/سنوي")
-                        {
-                            MasterTable.Rows[0]["X_Period"] = "Y";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Period"].ToString() == "None")
-                        {
-                            MasterTable.Rows[0]["X_Period"] = "N";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Period"].ToString() == "One Time")
-                        {
-                            MasterTable.Rows[0]["X_Period"] = "O";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Leave")
-                        {
-                            MasterTable.Rows[0]["X_Type"] = "B";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Tickets")
-                        {
-                            MasterTable.Rows[0]["X_Type"] = "T";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Allowance")
-                        {
-                            MasterTable.Rows[0]["X_Type"] = "A";
-
-                        }
-                        if (MasterTable.Rows[0]["X_Type"].ToString() == "Exit Re-Entry")
-                        {
-                            MasterTable.Rows[0]["X_Type"] = "E";
-
-                        }
-
+                      
 
 
                     }
@@ -356,7 +304,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }
-                    string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "'";
+                    string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "' and N_CountryID="+N_CountryID+"";
 
 
                     n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria, "", MasterTable, connection, transaction);

@@ -305,11 +305,14 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
                         }
-                        object loanLimitAmount =dLayer.ExecuteScalar("SELECT isnull(N_LoanAmountLimit,0) From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
-                        if (!checkMaxAmount(n_LoanAmount, nCompanyID, nFnYearID, nEmpID, QueryParams, connection, transaction))
+                        object loanLimitAmount = dLayer.ExecuteScalar("SELECT isnull(N_LoanAmountLimit,0) From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
+                        if (myFunctions.getVAL(loanLimitAmount.ToString()) > 0)
                         {
-                            transaction.Rollback();
-                            return Ok(api.Warning("Maximum Loan Amount is"  + " : "  + loanLimitAmount.ToString()));
+                            if (!checkMaxAmount(n_LoanAmount, nCompanyID, nFnYearID, nEmpID, QueryParams, connection, transaction))
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Warning("Maximum Loan Amount is" + " : " + loanLimitAmount.ToString()));
+                            }
                         }
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
