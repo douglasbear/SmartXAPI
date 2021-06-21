@@ -425,67 +425,40 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-
+        
         [HttpGet("costCenterDetails")]
-        public ActionResult CostCenterDetails(int? nCompanyId, int nFnYearId, string xVoucherNo, string xTransType)
+        private ActionResult FillCostCentreValues(int nFormID,int nCompanyID,int nFnYearID,int nVoucherID)
         {
-            DataSet dt = new DataSet();
-            SortedList Params = new SortedList();
+            DataTable CostCenterTable;
 
-            string sqlCommandText = "Select * from Acc_VoucherMaster left outer join Acc_MastLedger on Acc_VoucherMaster.N_DefLedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster.N_FnYearID=Acc_MastLedger.N_FnYearID and Acc_VoucherMaster.N_CompanyID=Acc_MastLedger.N_CompanyID    Where  Acc_VoucherMaster.X_VoucherNo=@VoucherNo and Acc_VoucherMaster.N_CompanyID=@CompanyID and X_TransType=@TransType  AND Acc_VoucherMaster.N_FnYearID =@FnYearID Order By D_VoucherDate";
-            Params.Add("@CompanyID", nCompanyId);
-            Params.Add("@FnYearID", nFnYearId);
-            Params.Add("@VoucherNo", xVoucherNo);
-            Params.Add("@TransType", xTransType);
-            int nFormID = 0;
-
-            if (xTransType.ToLower() == "pv")
-                nFormID = 1;
-            else if (xTransType.ToLower() == "rv")
-                nFormID = 2;
-            else if (xTransType.ToLower() == "jv")
-                nFormID = 3;
+            int N_Flag = 0;
+            if (nFormID == 44 || nFormID == 45)
+                N_Flag = 0;
+            else
+                N_Flag = 1;
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    DataTable Voucher = new DataTable();
-                    Voucher = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    Voucher = api.Format(Voucher, "Master");
-                    dt.Tables.Add(Voucher);
-                    int nVoucherID = myFunctions.getIntVAL(Voucher.Rows[0]["N_VoucherID"].ToString());
-                    Params.Add("@VoucherID", nVoucherID);
 
-                    string sqlCommandText2 = "Select Acc_VoucherMaster_Details.*,Acc_MastLedger.*,Acc_MastGroup.X_Type,Acc_TaxCategory.X_DisplayName,Acc_TaxCategory.N_Amount,Acc_CashFlowCategory.X_Description AS X_TypeCategory from Acc_VoucherMaster_Details inner join Acc_MastLedger on Acc_VoucherMaster_Details.N_LedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster_Details.N_CompanyID=Acc_MastLedger.N_CompanyID inner join Acc_MastGroup On Acc_MastLedger.N_GroupID=Acc_MastGroup.N_GroupID and Acc_MastLedger.N_CompanyID=Acc_MastGroup.N_CompanyID  and Acc_MastLedger.N_FnYearID=Acc_MastGroup.N_FnYearID  LEFT OUTER JOIN Acc_TaxCategory ON Acc_VoucherMaster_Details.N_TaxCategoryID1 = Acc_TaxCategory.N_PkeyID LEFT OUTER JOIN Acc_CashFlowCategory on Acc_VoucherMaster_Details.N_TypeID=Acc_CashFlowCategory.N_CategoryID Where N_VoucherID =@VoucherID and Acc_VoucherMaster_Details.N_CompanyID=@CompanyID and Acc_MastGroup.N_FnYearID=@FnYearID";
-                    DataTable VoucherDetails = new DataTable();
-                    VoucherDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
-                    VoucherDetails = api.Format(VoucherDetails, "details");
-                    dt.Tables.Add(VoucherDetails);
-
-                    DataTable Acc_CostCentreTrans = new DataTable();
                     SortedList ProParams = new SortedList();
-                    ProParams.Add("N_CompanyID", nCompanyId);
-                    ProParams.Add("N_FnYearID", nFnYearId);
+                    ProParams.Add("N_CompanyID", nCompanyID);
+                    ProParams.Add("N_FnYearID", nFnYearID);
                     ProParams.Add("N_VoucherID", nVoucherID);
-                    ProParams.Add("N_Flag", nFormID);
+                    ProParams.Add("N_Flag", N_Flag);
 
-                    Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp", ProParams, connection);
-                    Acc_CostCentreTrans = api.Format(Acc_CostCentreTrans, "costCenterTrans");
-                    dt.Tables.Add(Acc_CostCentreTrans);
-
+                    CostCenterTable = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp", ProParams, connection);
+                    CostCenterTable = api.Format(CostCenterTable, "costCenterTrans");
 
                 }
-                return Ok(api.Success(dt));
-
+                return Ok(api.Success(CostCenterTable));
             }
             catch (Exception e)
             {
                 return Ok(api.Error(e));
             }
         }
-
-
     }
 }
