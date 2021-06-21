@@ -67,6 +67,18 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteScalarPro("Sp_CreateInvoiceCounter", proParams2, connection, transaction);
 
                     }
+                    else if (bCreateEmpSeries == "False")
+                    {
+                        string xDescription = MasterTable.Rows[0]["x_Description"].ToString();
+                        string InvoiceCounter = "select * from Inv_InvoiceCounter where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "  and N_FormID=" + 188 + " and X_Type='" + xDescription + "' ";
+                        DataTable InvoiceTale = new DataTable();
+                        InvoiceTale = dLayer.ExecuteDataTable(InvoiceCounter, Params, connection,transaction);
+                        if (InvoiceTale.Rows.Count != 0)
+                        {
+                            dLayer.ExecuteNonQuery("DELETE FROM Inv_InvoiceCounter WHERE N_CompanyID =" + nCompanyID + " and  N_FnYearID=" + nFnYearID + " and N_FormID=" + 188 + " and X_Type='" + xDescription + "' ", Params, connection, transaction);
+                        }
+
+                    }
                     if (xEmploymentCode == "@Auto")
                     {
 
