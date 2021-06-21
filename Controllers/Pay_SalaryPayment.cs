@@ -294,7 +294,7 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and Receipt No like '%" + xSearchkey + "%'";
+                Searchkey = "and ([Receipt No] like '%" + xSearchkey + "%' or [Employee Name] like '%" + xSearchkey + "%' or [Date] like '%" + xSearchkey + "%' or X_PaymentMethod like '%" + xSearchkey + "%' or X_BankName like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ReceiptID desc";
