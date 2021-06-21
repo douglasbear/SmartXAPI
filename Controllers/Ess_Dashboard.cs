@@ -51,6 +51,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandDailyLogin = "SELECT MAX(D_In) as D_In,MAX(D_Out) as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,case when Max(D_In)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_In) end,case when Max(D_Out)='00:00:00.0000000' then  Convert(Time, GetDate()) else Max(D_Out) end), '19000101')  AS TIME) AS duration from Pay_TimeSheetImport where N_EmpID=@p3 and D_Date=@today";
             string EnableLeave = "select N_Value from Gen_Settings where X_Group='EssOnline' and N_CompanyID=@p1";
             string WorkerHours="select top(7) D_Date,N_EmpID,convert(varchar(5),DateDiff(s, D_In, D_Out)/3600)+':'+convert(varchar(5),DateDiff(s, D_In, D_Out)%3600/60)+':'+convert(varchar(5),(DateDiff(s, D_In, D_Out)%60)) as [hh:mm:ss] from Pay_TimeSheetImport where N_EmpID = @p3 order by D_Date desc";
+            string sqlPendingLeaveApproval="select count(*) as N_Count From vw_PayVacationList where N_CompanyID=@p1 and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='LEAVE REQUEST' and N_NextApproverID=@p4)";
 
 DateTime date = DateTime.Today;
             Params.Add("@p1", nCompanyID);
@@ -93,12 +94,14 @@ DateTime date = DateTime.Today;
                     if(EnableLeaveData.ToString()=="1")
                          TotalVacation = dLayer.ExecuteScalar(sqlCommandVacation, Params, connection);
                     object PendingVacation = dLayer.ExecuteScalar(sqlCommandPendingVacation, Params, connection);
+                    object PendingLeaveApproval = dLayer.ExecuteScalar(sqlPendingLeaveApproval, Params, connection);
                     
 
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Loan", typeof(string), Loan);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "Vacation", typeof(string), TotalVacation);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingVacation", typeof(string), PendingVacation);
                     DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "EnableLeave", typeof(string), EnableLeaveData);
+                    DashboardDetails = myFunctions.AddNewColumnToDataTable(DashboardDetails, "PendingLeaveApproval", typeof(string), PendingLeaveApproval);
                     DataRow row = DashboardDetails.NewRow();
                     DashboardDetails.Rows.Add(row);
                     DashboardDetails.AcceptChanges();

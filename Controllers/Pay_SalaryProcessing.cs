@@ -330,6 +330,7 @@ namespace SmartxAPI.Controllers
                             SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
                             SmtpServer.EnableSsl = true;
                             SmtpServer.Send(mail);
+                            message = null;
                             message.Length = 0;
                             message = null;
                             mail.Body = "";
@@ -428,6 +429,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
+                int IsSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
                 var dCreatedDate = MasterTable.Rows[0]["d_TransDate"].ToString();
                 string x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
                 int N_OldTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
@@ -558,7 +560,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (N_TransDetailsID > 0)
+                        if (N_TransDetailsID > 0 && IsSaveDraft==0)
                         {
                             dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_TransDetailsID =" + N_TransDetailsID + "  Where N_CompanyID =" + nCompanyID + " and N_TransDetailsID=-1 and D_RefundDate = '" + dCreatedDate.ToString() + "'", connection, transaction);
 
