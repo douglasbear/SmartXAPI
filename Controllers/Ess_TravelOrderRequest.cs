@@ -25,17 +25,19 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyReminders myReminders;
         private readonly string connectionString;
         private readonly int FormID;
 
 
-        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
+        public Ess_TravelOrderRequest(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf,IMyReminders myRem)
         {
             dLayer = dl;
             api = _api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1235;
+            myReminders=myRem;
         }
 
 
@@ -70,9 +72,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID" + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved'" + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Pay_EmpBussinessTripRequestList where  N_EmpID=@nEmpID and N_CompanyID=@nCompanyID'" + xSortBy + " ) " + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -86,7 +88,7 @@ namespace SmartxAPI.Controllers
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                        sqlCommandCount = "select count(*) as N_Count From vw_Pay_EmpBussinessTripRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status='Approved' " + Searchkey + "";
+                        sqlCommandCount = "select count(*) as N_Count From vw_Pay_EmpBussinessTripRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID " + Searchkey + "";
                         object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                         OutPut.Add("Details", api.Format(dt));
                         OutPut.Add("TotalCount", TotalCount);
@@ -171,6 +173,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
                 int N_NextApproverID=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -208,6 +211,20 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Pay_EmpBussinessTripRequest", "n_RequestID", nRequestID, "", connection, transaction);
                     }
+
+                    if(nRequestID>0)
+                    {
+                        try
+                        {
+                            myReminders.ReminderDelete(dLayer, nRequestID, this.FormID, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save"));
+                        }
+                    }
+
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
                     MasterTable.AcceptChanges();
 
@@ -220,7 +237,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                       N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        if(MasterTable.Rows[0]["B_ExitReEntryRequired"].ToString()=="True")
+                            myReminders.ReminderSet(dLayer, 22, nRequestID, MasterTable.Rows[0]["D_DateFrom"].ToString(), this.FormID,N_UserID,User, connection, transaction);
+                            
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "Travel Order Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         DataTable Files = ds.Tables["files"];
                         if (Files.Rows.Count > 0)
                         {

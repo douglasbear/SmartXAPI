@@ -231,17 +231,18 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' ) ";
+                Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' or x_BankName like '%" + xSearchkey + "%' or x_AddDedBatch like '%" + xSearchkey + "%' ) ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by batch desc,D_TransDate desc";
+            xSortBy = " order by N_PayRunID desc,cast(Batch as Numeric) desc";
+                // xSortBy = " order by batch desc,D_TransDate desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ")  n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate,x_BankName,x_AddDedBatch from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_TransID not in (select top(" + Count + ") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 ) " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ") n_CompanyID,N_TransID,batch as x_Batch,[Payrun ID] as x_PayrunText,d_TransDate,x_BankName,x_AddDedBatch from vw_PayTransaction_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_TransID not in (select top(" + Count + ") N_TransID from vw_PayTransaction_Disp where N_CompanyID=@p1 ) " + Searchkey;
 
 
             SortedList OutPut = new SortedList();
@@ -329,6 +330,7 @@ namespace SmartxAPI.Controllers
                             SmtpServer.Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString());   // From address
                             SmtpServer.EnableSsl = true;
                             SmtpServer.Send(mail);
+                            message = null;
                             message.Length = 0;
                             mail.Body = "";
                             mail.Dispose();
@@ -428,6 +430,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nPayRunID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayrunID"].ToString());
+                int IsSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSaveDraft"].ToString());
                 var dCreatedDate = MasterTable.Rows[0]["d_TransDate"].ToString();
                 string x_Batch = MasterTable.Rows[0]["x_Batch"].ToString();
                 int N_OldTransID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TransID"].ToString());
@@ -558,7 +561,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (N_TransDetailsID > 0)
+                        if (N_TransDetailsID > 0 && IsSaveDraft==0)
                         {
                             dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set N_TransDetailsID =" + N_TransDetailsID + "  Where N_CompanyID =" + nCompanyID + " and N_TransDetailsID=-1 and D_RefundDate = '" + dCreatedDate.ToString() + "'", connection, transaction);
 
@@ -585,8 +588,6 @@ namespace SmartxAPI.Controllers
 
 
                         transaction.Commit();
-
-                        SendEmail(N_TransID,nCompanyID,  DateTime.Now,nFnYearId);
                         return Ok(_api.Success("Saved"));
 
                     }
