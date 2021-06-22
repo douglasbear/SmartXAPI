@@ -31,6 +31,34 @@ namespace SmartxAPI.Controllers
             FormID = 890;
         }
 
+        [HttpGet("modeoftransaction")]
+        public ActionResult GetTransactionList(int nAirportID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "select * from Ffw_Gen_Defaults where N_DefaultId=8 order by N_TypeId";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult GetPortDetails(int nAirportID)
         {
@@ -74,7 +102,6 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nAirportID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AirportID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xAirportCode = MasterTable.Rows[0]["x_AirportCode"].ToString();
@@ -83,7 +110,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
                     if (xAirportCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_CompanyID", 1);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xAirportCode = dLayer.GetAutoNumber("Ffw_Airport", "x_AirportCode", Params, connection, transaction);
