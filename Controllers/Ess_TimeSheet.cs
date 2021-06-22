@@ -554,15 +554,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("timesheetLog")]
-        public ActionResult GetTimesheetLog(int nEmpID,DateTime dEventDate)
+        public ActionResult GetTimesheetLog(string xEmpCode,DateTime dEventDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nEmpID", nEmpID);
+            Params.Add("@nEmpCode", xEmpCode);
             Params.Add("@dEventDate", dEventDate);
-            string sqlCommandText="select * from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate order by D_In,D_Out";
+            // string sqlCommandText="select * from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate order by D_In,D_Out";
+            string sqlCommandText="select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode order by TransactionTime asc";
             SortedList OutPut = new SortedList();
             try
             {
@@ -570,7 +569,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
-                    string sqlCommandCount="select count(*) as N_Count from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate";
+                    string sqlCommandCount="select count(1) as N_Count from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
 

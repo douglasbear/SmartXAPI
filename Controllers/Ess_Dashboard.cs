@@ -52,8 +52,8 @@ namespace SmartxAPI.Controllers
             string EnableLeave = "select N_Value from Gen_Settings where X_Group='EssOnline' and N_CompanyID=@p1";
             string WorkerHours="select top(7) D_Date,N_EmpID,convert(varchar(5),DateDiff(s, D_In, D_Out)/3600)+':'+convert(varchar(5),DateDiff(s, D_In, D_Out)%3600/60)+':'+convert(varchar(5),(DateDiff(s, D_In, D_Out)%60)) as [hh:mm:ss] from Pay_TimeSheetImport where N_EmpID = @p3 order by D_Date desc";
             string sqlPendingLeaveApproval="select count(*) as N_Count From vw_PayVacationList where N_CompanyID=@p1 and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@p1 and N_FnYearID=@p2 and X_Type='LEAVE REQUEST' and N_NextApproverID=@p4)";
-
-DateTime date = DateTime.Today;
+            string sqlLastApproval="SELECT      Top(1) vw_ApprovalSummary.*,vw_PayVacationDetails_Disp.VacTypeId ,vw_PayVacationDetails_Disp.[Vacation Type], vw_PayVacationDetails_Disp.D_VacDateFrom, vw_PayVacationDetails_Disp.D_VacDateTo, vw_PayVacationDetails_Disp.N_VacDays FROM vw_ApprovalSummary INNER JOIN vw_PayVacationDetails_Disp ON vw_ApprovalSummary.N_CompanyID = vw_PayVacationDetails_Disp.N_CompanyID AND  vw_ApprovalSummary.N_FnYearID = vw_PayVacationDetails_Disp.N_FnYearID AND vw_ApprovalSummary.N_TransID = vw_PayVacationDetails_Disp.N_VacationGroupID AND vw_ApprovalSummary.X_Type='LEAVE REQUEST' where vw_ApprovalSummary.N_CompanyID=@p1 and vw_ApprovalSummary.N_ActionUserID=@p4 and vw_ApprovalSummary.N_ProcStatusID<>6 and vw_ApprovalSummary.N_ActionUserID<>vw_ApprovalSummary.N_ReqUserID and vw_ApprovalSummary.X_Type='LEAVE REQUEST'  ORDER BY vw_ApprovalSummary.X_ActionDate DESC";
+            DateTime date = DateTime.Today;
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
             Params.Add("@p3", nEmpID);
@@ -66,6 +66,7 @@ DateTime date = DateTime.Today;
             DataTable NextLeaveDetails = new DataTable();
             DataTable DailyLogin = new DataTable();
             DataTable WorkedHours = new DataTable();
+            DataTable LastApproval = new DataTable();
 
             try
             {
@@ -130,6 +131,9 @@ DateTime date = DateTime.Today;
                     WorkedHours = dLayer.ExecuteDataTable(WorkerHours, Params, connection);
                     WorkedHours = api.Format(WorkedHours, "Worked Hour");
 
+                    LastApproval = dLayer.ExecuteDataTable(sqlLastApproval, Params, connection);
+                    LastApproval = api.Format(LastApproval, "LastApproval");
+
 
                 }
                 dt.Tables.Add(EmployeeDetails);
@@ -139,6 +143,7 @@ DateTime date = DateTime.Today;
                 dt.Tables.Add(NextLeaveDetails);
                 dt.Tables.Add(DailyLogin);
                 dt.Tables.Add(WorkedHours);
+                dt.Tables.Add(LastApproval);
 
                 return Ok(api.Success(dt));
 
