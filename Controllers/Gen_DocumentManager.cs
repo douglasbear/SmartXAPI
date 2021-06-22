@@ -27,11 +27,13 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
         private readonly string reportPath;
         private readonly string startupPath;
-        public Gen_DocumentManager(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        private readonly IMyAttachments myAttachments;
+        public Gen_DocumentManager(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 0;
             reportPath = conf.GetConnectionString("ReportPath");
@@ -109,6 +111,30 @@ namespace SmartxAPI.Controllers
             }
             memory.Position = 0;
             return File(memory, api.GetContentType(path), Path.GetFileName(path));
+        }
+
+
+
+        [HttpPost("saveGeneralDocs")]
+        public ActionResult SaveEmployeeGeneralDocuments([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable Attachment = ds.Tables["attachments"];
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    myAttachments.SaveAttachment(dLayer, Attachment, "0", 0 , "General Documents", "0", 0, "General Documents", User, connection, transaction);
+
+                }
+                return Ok(api.Success("Documents Updated"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
         }
 
 
