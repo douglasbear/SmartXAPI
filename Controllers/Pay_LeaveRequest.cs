@@ -134,7 +134,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("leaveListAll")]
-        public ActionResult GetLeaveRequestList(int nPage, int nSizeperpage, int nFnyearID, string xSearchkey, string xSortBy, bool isAdjestment)
+        public ActionResult GetLeaveRequestList(int nPage, int nSizeperpage, int nFnyearID, string xSearchkey, string xSortBy, bool isAdjestment,bool isMyApprovals)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -159,18 +159,24 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             string isAdjestmentCriteria = "  and B_IsAdjustEntry<>1 ";
+            string isMyApprovalsCriteria = "";
 
             if (isAdjestment == true)
             {
                 isAdjestmentCriteria = "  and B_IsAdjustEntry=1 ";
             }
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft  From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID  " + isAdjestmentCriteria + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID " + isAdjestmentCriteria + "   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft ) " + xSortBy;
+            if(isMyApprovals){
+    isMyApprovalsCriteria = " and N_VacationGroupID in ( select N_TransID from vw_ApprovalPending where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID and X_Type='LEAVE REQUEST' and N_NextApproverID="+myFunctions.GetUserID(User)+") ";
+}
+    
 
-            SortedList OutPut = new SortedList();
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft  From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID  " + isAdjestmentCriteria + isMyApprovalsCriteria + Searchkey + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,min(d_VacDateFrom) as d_VacDateFrom,max(d_VacDateTo) as d_VacDateTo,x_VacRemarks,X_CurrentStatus,sum(abs(N_VacDays)) as N_VacDays,ISNULL(B_IsSaveDraft,0) AS B_IsSaveDraft From vw_PayVacationList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnyearID " + isAdjestmentCriteria + isMyApprovalsCriteria  + Searchkey + " and N_VacationGroupID not in (select top(" + Count + ") N_VacationGroupID from vw_PayVacationList where  N_CompanyID=@nCompanyID "+ isAdjestmentCriteria + isMyApprovalsCriteria  +"   group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft  " + xSortBy + "  group by [Emp Name],x_VacationGroupCode,vacationRequestDate,x_VacType,x_VacRemarks,X_CurrentStatus,B_IsSaveDraft ) " + xSortBy;
+
+        SortedList OutPut = new SortedList();
 
             try
             {
@@ -598,10 +604,12 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
-                int nDeligateID = myFunctions.getIntVAL(MasterRow["n_deligateid"].ToString());
+                int nDeligateID =0;
+                if(MasterTable.Columns.Contains("n_deligateid"))
+                nDeligateID = myFunctions.getIntVAL(MasterRow["n_deligateid"].ToString());
+
                 int N_NextApproverID = 0;
                 string xEmail = MasterRow["x_Email"].ToString();
-                bool N_SaveDraft = myFunctions.getBoolVAL(MasterRow["B_IsSaveDraft"].ToString());
 
 
 
@@ -633,11 +641,16 @@ namespace SmartxAPI.Controllers
                         myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
-                        return Ok(api.Success("Leave Request Updated " + "-" + x_VacationGroupCode));
+                        return Ok(api.Success("Leave Request Approved " + "-" + x_VacationGroupCode));
                     }
 
                     if (x_VacationGroupCode == "@Auto")
                     {
+                        if (!checkSalaryProcess(DetailTable, nCompanyID, nFnYearID, nEmpID, EmpParams, connection, transaction))
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Warning("Salary Already Processed!"));
+                        }
 
 
                         Params.Add("N_CompanyID", nCompanyID);
@@ -653,7 +666,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_VacationMaster", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                         dLayer.DeleteData("Pay_VacationDetails", "n_VacationGroupID", n_VacationGroupID, "", connection, transaction);
                     }
-
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
                     if (n_VacationGroupID > 0)
                     {
                         try
@@ -669,8 +682,10 @@ namespace SmartxAPI.Controllers
                     }
 
                     MasterTable.Rows[0]["N_VacTypeID"] = DetailTable.Rows[0]["N_VacTypeID"];
-                    MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    MasterTable.Columns.Remove("N_Procstatus");
+                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if (MasterTable.Columns.Contains("N_Procstatus"))
+                        MasterTable.Columns.Remove("N_Procstatus");
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
@@ -765,20 +780,23 @@ namespace SmartxAPI.Controllers
 
                     myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
                     //Send Replace Mail
-                    if (!N_SaveDraft)
-                    {
-                        string Body = "", Toemail = "", Subject = "Request Letter for Employee Replacement";
-                        object mail = dLayer.ExecuteScalar("select x_Email from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
-                        if (mail != null)
-                            Toemail = mail.ToString();
-                        if (Toemail != "")
-                        {
-                            object ReplaceEmployee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
-                            object Employee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nEmpID + " and n_CompanyID="+nCompanyID, Params, connection);
-                            Body = Boody(ReplaceEmployee.ToString(), Employee.ToString());
-                            myFunctions.SendMail(Toemail, Body, Subject, dLayer);
-                        }
-                    }
+
+                // bool N_SaveDraft = myFunctions.getBoolVAL(MasterRow["B_IsSaveDraft"].ToString());
+
+                    // if (nDeligateID!=0)
+                    // {
+                    //     string Body = "", Toemail = "", Subject = "Request Letter for Employee Replacement";
+                    //     object mail = dLayer.ExecuteScalar("select x_Email from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //     if (mail != null)
+                    //         Toemail = mail.ToString();
+                    //     if (Toemail != "")
+                    //     {
+                    //         object ReplaceEmployee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //         object Employee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nEmpID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //         Body = Boody(ReplaceEmployee.ToString(), Employee.ToString());
+                    //         myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                    //     }
+                    // }
 
                     transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
@@ -953,6 +971,51 @@ namespace SmartxAPI.Controllers
         //         }
         //     }
         // }
+
+        private bool checkSalaryProcess(DataTable DetailTable, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+            foreach (DataRow var in DetailTable.Rows)
+            {
+                var dDateFrom = var["d_VacDateFrom"].ToString();
+                var dDateTo = var["d_VacDateTo"].ToString();
+                DateTime DateFrom = Convert.ToDateTime(dDateFrom.ToString());
+                DateTime DateTo = Convert.ToDateTime(dDateTo.ToString());
+
+                if (var["d_VacDateFrom"].ToString() == "" || var["d_VacDateTo"].ToString() == "") continue;
+
+                if (checkperiod(Convert.ToDateTime(dDateTo), nCompanyID, nFnYearID, nEmpID, Params, connection, transaction))
+                {
+                    String Todate = Convert.ToDateTime(dDateTo).Year.ToString("00##") + Convert.ToDateTime(dDateTo).Month.ToString("0#");
+                    int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and (Pay_PaymentMaster.N_PayRunID >= " + Todate + ")", Params, connection, transaction)));
+                    if (count > 0)
+                    {
+                        return false;
+                    }
+                    return true;
+                }
+            }
+            return true;
+        }
+        private bool checkperiod(DateTime dateVAL, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
+        {
+
+            String Todate = dateVAL.Year.ToString("00##") + dateVAL.Month.ToString("0#");
+            object Periodvalue = dLayer.ExecuteScalar("Select N_Value from Gen_Settings Where X_Description ='Period Settings' and N_CompanyID= " + nCompanyID + " and X_Group='Payroll'", Params, connection, transaction); ;
+            if (Periodvalue == null) return true;
+            DateTime dtStartDate = new DateTime(dateVAL.Year, dateVAL.Month, 1);
+            int days = DateTime.DaysInMonth(dateVAL.Year, dateVAL.Month) - myFunctions.getIntVAL(Periodvalue.ToString());
+            DateTime SalToDate = dtStartDate.AddDays(myFunctions.getIntVAL(days.ToString()) - 1);
+            Todate = SalToDate > dateVAL ? Todate : (myFunctions.getIntVAL(Todate) + 1).ToString();
+            int count = myFunctions.getIntVAL(Convert.ToString(dLayer.ExecuteScalar("select 1 from Pay_PaymentDetails inner join Pay_PaymentMaster on Pay_PaymentDetails.N_TransID= Pay_PaymentMaster.N_TransID  where Pay_PaymentDetails.N_CompanyID=" + nCompanyID + " and Pay_PaymentMaster.N_FnYearID=" + nFnYearID + "and Pay_PaymentDetails.N_EmpID =" + nEmpID.ToString() + " and '" + Todate + "' = Pay_PaymentMaster.N_PayRunID", Params, connection, transaction)));
+            if (count > 0)
+            {
+                return true;
+            }
+            return false;
+        }
+
+
+
 
 
 

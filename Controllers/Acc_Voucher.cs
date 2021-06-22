@@ -425,7 +425,40 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+        
+        [HttpGet("costCenterDetails")]
+        private ActionResult FillCostCentreValues(int nFormID,int nCompanyID,int nFnYearID,int nVoucherID)
+        {
+            DataTable CostCenterTable;
 
+            int N_Flag = 0;
+            if (nFormID == 44 || nFormID == 45)
+                N_Flag = 0;
+            else
+                N_Flag = 1;
 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    SortedList ProParams = new SortedList();
+                    ProParams.Add("N_CompanyID", nCompanyID);
+                    ProParams.Add("N_FnYearID", nFnYearID);
+                    ProParams.Add("N_VoucherID", nVoucherID);
+                    ProParams.Add("N_Flag", N_Flag);
+
+                    CostCenterTable = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp", ProParams, connection);
+                    CostCenterTable = api.Format(CostCenterTable, "costCenterTrans");
+
+                }
+                return Ok(api.Success(CostCenterTable));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
     }
 }
