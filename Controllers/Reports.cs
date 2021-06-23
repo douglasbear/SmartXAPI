@@ -437,6 +437,22 @@ namespace SmartxAPI.Controllers
                         RPTLocation = reportLocation + "printing/";
                         ReportName = "JournalVoucher_VAT";
                     }
+                     if (nFormID == 1229)//leave
+                    {
+                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='RV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
+                        TableName = "vw_AccVoucherJrnlCC";
+
+                        RPTLocation = reportLocation + "printing/";
+                        ReportName = "ReceiptVoucher_VAT";
+                    }
+                    if (nFormID == 1226)//loan
+                    {
+                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
+                        TableName = "vw_AccVoucherJrnlCC";
+
+                        RPTLocation = reportLocation + "printing/";
+                        ReportName = "JournalVoucher_VAT";
+                    }
 
 
                     var client = new HttpClient(handler);
