@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 DataTable dtSupervisor;
                 MasterTable = ds.Tables["master"];
-                dtSupervisor = ds.Tables["supervisor"]; 
+                dtSupervisor = ds.Tables["supervisor"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -85,27 +85,31 @@ namespace SmartxAPI.Controllers
                     int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int N_PositionID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PositionID"].ToString());
                     int N_SupervisorID = myFunctions.getIntVAL(dtSupervisor.Rows[0]["n_SupervisorID"].ToString());
-                    int N_IsSupervisor=myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
+                    int N_IsSupervisor = myFunctions.getIntVAL(MasterTable.Rows[0]["b_IsSupervisor"].ToString());
                     bool B_IsSupervisor = false;
-                    if(N_IsSupervisor==1)B_IsSupervisor=true;
+                    if (N_IsSupervisor == 1) B_IsSupervisor = true;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nPositionID", N_PositionID);
 
                     if (X_PositionCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
-                         Params.Add("N_YearID", N_FnYearID);
+                        Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.FormID);
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
                         if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Job title Code")); }
                         MasterTable.Rows[0]["x_PositionCode"] = X_PositionCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearID");
+
+
+                    //string DupCriteria = "N_CompanyID=" + N_CompanyID + " and(X_PositionCode='" + X_PositionCode + "' OR X_Position='" + X_Position + "')";
+                   
                     N_PositionID = dLayer.SaveData("Pay_Position", "N_PositionID", MasterTable, connection, transaction);
                     if (N_PositionID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error("Duplicate Exist"));
                     }
                     else
                     {
@@ -113,8 +117,11 @@ namespace SmartxAPI.Controllers
                         dtSupervisor.Rows[0]["n_SupervisorID"] = N_SupervisorID;
                         dtSupervisor.Rows[0]["x_SupervisorCode"] = X_PositionCode;
 
-                       if (B_IsSupervisor)
+                        if (B_IsSupervisor)
+                        {
+                            dLayer.ExecuteNonQuery("DELETE FROM Pay_Supervisor WHERE N_CompanyID =" + N_CompanyID + " and x_SupervisorCode= "+X_PositionCode+" and N_PositionID="+N_PositionID+"", Params, connection, transaction);
                             N_SupervisorID = dLayer.SaveData("Pay_Supervisor", "N_SupervisorID", dtSupervisor, connection, transaction);
+                        }
                         else
                             dLayer.DeleteData("Pay_Supervisor", "N_SupervisorID", N_SupervisorID, "N_CompanyID=" + N_CompanyID + "", connection, transaction);
 
@@ -128,7 +135,7 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(ex));
             }
-        }        
+        }
 
         [HttpGet("details")]
         public ActionResult GetJobTitleDetails(int nPositionID)
@@ -165,7 +172,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPositionID,int nCompanyID)
+        public ActionResult DeleteData(int nPositionID, int nCompanyID)
         {
             int Results = 0;
             try

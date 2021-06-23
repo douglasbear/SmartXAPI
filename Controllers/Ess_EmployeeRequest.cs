@@ -119,7 +119,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "select N_RequestTypeID,X_RequestTypeDesc,N_CategoryID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
+            string sqlCommandText = "select * from [vw_Pay_EmployeeRequest] where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
+            //string sqlCommandText = "select N_RequestTypeID,X_RequestTypeDesc,N_CategoryID from Pay_EmployeeRequestType where N_CompanyID=@nCompanyID and N_RequestTypeID <> 2004 and N_RequestTypeID<>2003";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -275,15 +276,21 @@ namespace SmartxAPI.Controllers
                         if (xReqCode == null || xReqCode == "") { xReqCode = "1"; }
                         MasterTable.Rows[0]["X_RequestCode"] = xReqCode;
                     }
-
+                   
 
                     if (nRequestID > 0)
                     {
                         dLayer.DeleteData("Pay_EmpAnyRequest", "N_RequestID", nRequestID, "", connection, transaction);
                     }
+                     if(MasterTable.Columns.Contains("B_IsSaveDraft"))
+                    {
+                        
+                            MasterTable.Columns.Remove("B_IsSaveDraft");
+                        
+                    }
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
-
+                   
                     nRequestID = dLayer.SaveData("Pay_EmpAnyRequest", "N_RequestID", MasterTable, connection, transaction);
                     if (nRequestID <= 0)
                     {
