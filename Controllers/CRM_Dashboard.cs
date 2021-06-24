@@ -317,8 +317,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
- [HttpGet("opportunitylist")]
-        public ActionResult OpportunityList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+ [HttpGet("opportunitylist1")]
+        public ActionResult OpportunityList1(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
