@@ -52,6 +52,7 @@ namespace SmartxAPI.Controllers
             string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + "";
             string sqlPreviousRevenue = "SELECT COUNT(*) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + "";
             string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QtoQRevenue where N_CompanyID = " + nCompanyID + " and N_FnyearID =" + nFnYearId + " group by quarter";
+            string sqlTargetRevenue = "SELECT (Cast(REPLACE(N_TargetAmount,',','') as Numeric(10,2)) ) as TotalAmount FROM Inv_Salesman WHERE N_CompanyID = " + nCompanyID + "  N_SalesmanID =" + nSalesmanId + "";
 
             SortedList Data = new SortedList();
             DataTable CurrentLead = new DataTable();
@@ -64,6 +65,7 @@ namespace SmartxAPI.Controllers
             DataTable Win = new DataTable();
             DataTable Lose = new DataTable();
             DataTable QuarterlyRevenue = new DataTable();
+            DataTable TargetRevenue = new DataTable();
 
             object LeadLastMonth = "";
             object CustomerLastMonth = "";
@@ -135,6 +137,7 @@ namespace SmartxAPI.Controllers
                 if (Lose.Rows.Count > 0) Data.Add("loseData", Lose);
                 if (CurrentRevenue.Rows.Count > 0) Data.Add("revenueData", CurrentRevenue);
                 if (QuarterlyRevenue.Rows.Count > 0) Data.Add("quarterlyRevenueData", QuarterlyRevenue);
+                if (TargetRevenue.Rows.Count > 0) Data.Add("targetRevenuewData", TargetRevenue);
 
                 return Ok(api.Success(Data));
 
