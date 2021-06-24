@@ -82,7 +82,10 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
                 int N_FormID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReferId"].ToString());
-                int nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
+                int nSort = 0;
+                if(MasterTable.Columns.Contains("n_Sort"))
+                 nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
+
                 if(N_FormID==1155)
                 {
                     N_FormID=455;

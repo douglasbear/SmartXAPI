@@ -110,7 +110,7 @@ namespace SmartxAPI.GeneralFunctions
 
                             }
 
-                            if (dsAttachment.Rows[i]["X_Filename"].ToString() != s + "\\" + payCode + "\\" + dsAttachment.Rows[i]["X_File"].ToString())
+                            if (dsAttachment.Rows[i]["X_Filename"].ToString() != dsAttachment.Rows[i]["X_File"].ToString())
                             {
                                 try
                                 {
@@ -124,6 +124,8 @@ namespace SmartxAPI.GeneralFunctions
                                     string extension = System.IO.Path.GetExtension(dsAttachment.Rows[i]["X_File"].ToString());
                                     CopyFiles(dLayer, dsAttachment.Rows[i]["X_File"].ToString(), dsAttachment.Rows[i]["X_Subject"].ToString(), N_FolderID, true, dsAttachment.Rows[i]["X_Category"].ToString(), dsAttachment.Rows[i]["FileData"].ToString(), s, fileCode, N_AttachmentID, FormID, ExpiryDate, N_remCategory, payId, partyId, 0, User, transaction, connection);
                                     dsAttachment.Rows[i]["X_refName"] = s + fileCode + extension;
+                                    dsAttachment.Rows[i]["X_Filename"] = dsAttachment.Rows[i]["X_File"].ToString();
+
                                 }
                                 catch (Exception ex)
                                 {

@@ -22,6 +22,8 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string masterDBConnectionString;
+
 
         public Acc_Company(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -29,24 +31,45 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
         }
 
         //GET api/Company/list
-        [AllowAnonymous]
+        // [AllowAnonymous]
         [HttpGet("list")]
         public ActionResult GetAllCompanys()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode from Acc_Company where B_Inactive =@p1 order by X_CompanyName";
-            Params.Add("@p1", 0);
+            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode,I_Logo,X_Country from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
+            Params.Add("@inactive", 0);
+            Params.Add("@nClientID", myFunctions.GetClientID(User));
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "I_CompanyLogo", typeof(string), null);
+
+                    foreach (DataRow row in dt.Rows)
+                    {
+                        if (row["I_Logo"] != null)
+                        {
+                            string ImageData = row["I_Logo"].ToString();
+                            if (ImageData != "")
+                            {
+                                byte[] Image = (byte[])row["I_Logo"];
+                                row["I_CompanyLogo"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
+                            }
+                        }
+                    }
+                    dt.Columns.Remove("I_Logo");
+
+                    dt.AcceptChanges();
+
+
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -65,19 +88,19 @@ namespace SmartxAPI.Controllers
 
         }
 
-       
+
 
         [HttpGet("details")]
-        public ActionResult GetCompanyInfo(int nCompanyID,int nFnYearID)
+        public ActionResult GetCompanyInfo(int nCompanyID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
 
-            string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName FROM Acc_Company LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=@p3 ";
+            string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName FROM Acc_Company LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
-            Params.Add("@p3", nFnYearID);
+            Params.Add("@nClientID", myFunctions.GetClientID(User));
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -90,10 +113,10 @@ namespace SmartxAPI.Controllers
 
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
 
-                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=@p3  and  N_CompanyID=@p2", Params, connection);
+                    DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
                     {
-                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=@p3  and  N_CompanyID=@p2", Params, connection);
+                        FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     }
 
                     Output.Add("CompanyInfo", dt);
@@ -159,8 +182,8 @@ namespace SmartxAPI.Controllers
                 GeneralTable = ds.Tables["general"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
-                
-                
+
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -175,16 +198,16 @@ namespace SmartxAPI.Controllers
                         if (CompanyCode.ToString() == "") { return Ok(api.Warning("Unable to generate Company Code")); }
                         MasterTable.Rows[0]["x_CompanyCode"] = CompanyCode;
                     }
-                      Params.Add("@p1", xUserName);
-                      Params.Add("@p2", xPassword);
-                      object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
-                      
-                     int Obcount = myFunctions.getIntVAL(count.ToString());
-                    if (Obcount == 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(api.Warning("Unable to save.Password Mismatch"));
-                     }
+                    Params.Add("@p1", xUserName);
+                    Params.Add("@p2", xPassword);
+                    //   object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
+
+                    //  int Obcount = myFunctions.getIntVAL(count.ToString());
+                    // if (Obcount == 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(api.Warning("Unable to save.Password Mismatch"));
+                    //  }
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
                     string footer = myFunctions.ContainColumn("i_Footer", MasterTable) ? MasterTable.Rows[0]["i_Footer"].ToString() : "";
                     string header = myFunctions.ContainColumn("i_Header", MasterTable) ? MasterTable.Rows[0]["i_Header"].ToString() : "";
@@ -206,7 +229,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
 
                     //object paswd=myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())
-                    
+
 
                     int N_CompanyId = dLayer.SaveData("Acc_Company", "N_CompanyID", MasterTable, connection, transaction);
                     if (N_CompanyId <= 0)
@@ -223,6 +246,16 @@ namespace SmartxAPI.Controllers
                         if (header.Length > 0)
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
+                        string pwd = "";
+                        using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
+                        {
+                            cnn.Open();
+                            string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
+
+                            pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
+                        }
+
+
                         if (values == "@Auto")
                         {
                             SortedList proParams1 = new SortedList(){
@@ -230,7 +263,7 @@ namespace SmartxAPI.Controllers
                                         {"X_ModuleCode","500"},
                                         {"N_UserID",0},
                                         {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
-                                        {"X_AdminPwd",myFunctions.EncryptString(GeneralTable.Rows[0]["x_AdminPwd"].ToString())},
+                                        {"X_AdminPwd",pwd},
                                         {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 

@@ -437,6 +437,22 @@ namespace SmartxAPI.Controllers
                         RPTLocation = reportLocation + "printing/";
                         ReportName = "JournalVoucher_VAT";
                     }
+                     if (nFormID == 1229)//leave
+                    {
+                        critiria = "{Vw_VacationApprovalSlip_Rpt.N_VacationGroupID}=" + nPkeyID;
+                        TableName = "Vw_VacationApprovalSlip_Rpt";
+
+                        RPTLocation = reportLocation + "printing/";
+                        ReportName = "Leaveapprovalslip";
+                    }
+                    if (nFormID == 1226)//loan
+                    {
+                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
+                        TableName = "vw_AccVoucherJrnlCC";
+
+                        RPTLocation = reportLocation + "printing/";
+                        ReportName = "JournalVoucher_VAT";
+                    }
 
 
                     var client = new HttpClient(handler);
@@ -692,13 +708,13 @@ namespace SmartxAPI.Controllers
 
                         //{table.fieldname} in {?Start date} to {?End date}
                     }
-                    if (Criteria == "")
+                    if (Criteria == "" && CompanyData != "")
                     {
                         Criteria = Criteria + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
                     }
-                    else
+                    else if ( CompanyData != "")
                     {
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")

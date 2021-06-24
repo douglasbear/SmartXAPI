@@ -16,11 +16,12 @@ namespace SmartxAPI.Profiles
             CreateMap<MenuDto, ChildMenuDto>();
             CreateMap<ChildMenuDto, MenuDto>();
 
-            CreateMap<SP_LOGIN, UserDto>();
-            CreateMap<SP_LOGIN, FnYearDto>();
-            CreateMap<SP_LOGIN, CompanyDto>();
-            CreateMap<SP_LOGIN, TokenDto>();
-            CreateMap<SP_LOGIN, LoginResponseDto>()
+            CreateMap<SP_LOGIN_CLOUD, UserDto>();
+            CreateMap<SP_LOGIN_CLOUD, FnYearDto>();
+            CreateMap<SP_LOGIN_CLOUD, CompanyDto>();
+            CreateMap<SP_LOGIN_CLOUD, TokenDto>();
+            
+            CreateMap<SP_LOGIN_CLOUD, LoginResponseDto>()
             .ForMember(dest => dest.UserData, opt => opt.MapFrom(src =>src))
             .ForMember(dest => dest.FnYearData, opt => opt.MapFrom(src =>src))
             .ForMember(dest => dest.CompanyData, opt => opt.MapFrom(src =>src))

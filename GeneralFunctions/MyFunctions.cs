@@ -26,9 +26,14 @@ namespace SmartxAPI.GeneralFunctions
     public class MyFunctions : IMyFunctions
     {
         private readonly string ApprovalLink;
+        private readonly string masterDBConnectionString;
+        private readonly IConfiguration config;
         public MyFunctions(IConfiguration conf)
         {
             ApprovalLink = conf.GetConnectionString("ApprovalLink");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            config = conf;
+
         }
 
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection)
@@ -161,7 +166,7 @@ namespace SmartxAPI.GeneralFunctions
 
         public bool getBoolVAL(string val)
         {
-            if (val==null || val.Trim() == "")
+            if (val == null || val.Trim() == "")
                 return false;
             else
                 return Convert.ToBoolean(val);
@@ -306,7 +311,7 @@ namespace SmartxAPI.GeneralFunctions
             return dt;
         }
 
-        public bool CheckClosedYear(int nCompanyID,int nFnYearID,IDataAccessLayer dLayer, SqlConnection connection)
+        public bool CheckClosedYear(int nCompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
@@ -319,7 +324,7 @@ namespace SmartxAPI.GeneralFunctions
                 return false;
         }
 
-        public bool CheckActiveYearTransaction(int nCompanyID,int nFnYearID,DateTime dTransDate,IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DateTime dStart;
             DateTime dEnd;
@@ -328,8 +333,8 @@ namespace SmartxAPI.GeneralFunctions
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            dStart=Convert.ToDateTime(dLayer.ExecuteScalar("select D_Start from Acc_FnYear where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", Params, connection,transaction));
-            dEnd=Convert.ToDateTime(dLayer.ExecuteScalar("select D_End from Acc_FnYear where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", Params, connection,transaction));
+            dStart = Convert.ToDateTime(dLayer.ExecuteScalar("select D_Start from Acc_FnYear where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", Params, connection, transaction));
+            dEnd = Convert.ToDateTime(dLayer.ExecuteScalar("select D_End from Acc_FnYear where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", Params, connection, transaction));
 
             if (dTransDate < dStart || dTransDate > dEnd)
                 return false;
@@ -381,9 +386,9 @@ namespace SmartxAPI.GeneralFunctions
             ApprovalParams.Add("@nGroupID", nGroupID);
             ApprovalParams.Add("@loggedInUserID", loggedInUserID);
 
-            object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID="+nCompanyID+" and N_UserID="+loggedInUserID, ApprovalParams, connection);
-                    
-            objUserCategory = objUserCategory !=null?objUserCategory:0;
+            object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
+
+            objUserCategory = objUserCategory != null ? objUserCategory : 0;
 
 
             if (nApprovalID == 0)
@@ -683,7 +688,7 @@ namespace SmartxAPI.GeneralFunctions
                     if (nUsrCatID == 0)
                         SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
                     else
-                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in ("+objUserCategory+")", ApprovalParams, connection);
+                        SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in (" + objUserCategory + ")", ApprovalParams, connection);
 
 
                     if (SecUserLevel.Rows.Count > 0)
@@ -968,6 +973,82 @@ namespace SmartxAPI.GeneralFunctions
                 return BCCMail.ToString();
             else
                 return "";
+        }
+
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer)
+        {
+
+            try
+            {
+                ToMail = ToMail.ToString();
+                object companyemail = "";
+                object companypassword = "";
+
+                // companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, connection, transaction);
+                // companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, connection, transaction);
+                using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
+                {
+                    olivCnn.Open();
+                    companyemail = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailAddress'", olivCnn);
+                    companypassword = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailPassword'", olivCnn);
+
+                }
+                if (ToMail.ToString() != "")
+                {
+                    if (companyemail.ToString() != "")
+                    {
+                        object body = null;
+                        string MailBody;
+                        body = Body;
+                        if (body != null)
+                        {
+                            body = body.ToString();
+                        }
+                        else
+                            body = "";
+
+
+                        string Sender = companyemail.ToString();
+                        MailBody = body.ToString();
+                        string Subject = Subjectval;
+
+
+
+                        SmtpClient client = new SmtpClient
+                        {
+                            Host = "smtp.gmail.com",
+                            Port = 587,
+                            EnableSsl = true,
+                            DeliveryMethod = SmtpDeliveryMethod.Network,
+                            Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                            Timeout = 10000,
+                        };
+
+                        MailMessage message = new MailMessage();
+                        message.To.Add(ToMail.ToString()); // Add Receiver mail Address  
+                        message.From = new MailAddress(Sender);
+                        message.Subject = Subject;
+                        message.Body = MailBody;
+
+                        message.IsBodyHtml = true; //HTML email  
+                        // string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
+                        // if (CC != "")
+                        //     message.CC.Add(CC);
+
+                        // string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
+                        // if (Bcc != "")
+                        //     message.Bcc.Add(Bcc);
+                        client.Send(message);
+
+                    }
+                }
+                return true;
+            }
+
+            catch (Exception ie)
+            {
+                return false;
+            }
         }
 
         public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
@@ -1266,15 +1347,15 @@ namespace SmartxAPI.GeneralFunctions
             return X_Message;
         }
 
-public bool ContainColumn(string columnName, DataTable table)
-{
-    DataColumnCollection columns = table.Columns;        
-    if (columns.Contains(columnName))
-    {
-      return true;
-    }
-      return false;
-}
+        public bool ContainColumn(string columnName, DataTable table)
+        {
+            DataColumnCollection columns = table.Columns;
+            if (columns.Contains(columnName))
+            {
+                return true;
+            }
+            return false;
+        }
         public DataTable ListToTable(SortedList List)
         {
             DataTable ResultTable = new DataTable();
@@ -1304,11 +1385,33 @@ public bool ContainColumn(string columnName, DataTable table)
         {
             return User.FindFirst(ClaimTypes.StreetAddress)?.Value;
         }
+        public string GetEmailID(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.Email)?.Value;
+        }
         public int GetUserCategory(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
         }
+        public int GetClientID(ClaimsPrincipal User)
+        {
+            return this.getIntVAL(User.FindFirst(ClaimTypes.PrimaryGroupSid)?.Value);
+        }
 
+        public int GetGlobalUserID(ClaimsPrincipal User)
+        {
+            return this.getIntVAL(User.FindFirst(ClaimTypes.PrimarySid)?.Value);
+        }
+
+        public string GetConnectionString(ClaimsPrincipal User)
+        {
+            return config.GetConnectionString(User.FindFirst(ClaimTypes.Uri)?.Value);
+        }
+
+        public string GetUserName(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.Name)?.Value;
+        }
 
 
     }
@@ -1353,11 +1456,19 @@ public bool ContainColumn(string columnName, DataTable table)
         public int GetCompanyID(ClaimsPrincipal User);
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+        public int GetClientID(ClaimsPrincipal User);
+        public int GetGlobalUserID(ClaimsPrincipal User);
+        public string GetUserName(ClaimsPrincipal User);
+        public string GetEmailID(ClaimsPrincipal User);
+
+
+        public string GetConnectionString(ClaimsPrincipal User);
 
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
-        public bool CheckActiveYearTransaction(int nCompanyID,int nFnYearID,DateTime dTransDate,IDataAccessLayer dLayer, SqlConnection connection,SqlTransaction transaction);
+        public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
     }
 }

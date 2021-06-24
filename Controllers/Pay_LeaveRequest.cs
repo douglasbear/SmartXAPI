@@ -12,6 +12,8 @@ using System.IO;
 using System.Threading.Tasks;
 using System.Net.Http;
 using System.Security.Claims;
+using System.Text;
+
 
 namespace SmartxAPI.Controllers
 {
@@ -602,7 +604,13 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
+                int nDeligateID =0;
+                if(MasterTable.Columns.Contains("n_deligateid"))
+                nDeligateID = myFunctions.getIntVAL(MasterRow["n_deligateid"].ToString());
+
                 int N_NextApproverID = 0;
+                string xEmail = MasterRow["x_Email"].ToString();
+
 
 
 
@@ -771,6 +779,24 @@ namespace SmartxAPI.Controllers
                     myAttachments.SaveAttachment(dLayer, Attachment, x_VacationGroupCode, n_VacationGroupID, objEmpName.ToString(), objEmpCode.ToString(), nEmpID, "Employee", User, connection, transaction);
 
                     myFunctions.SendApprovalMail(N_NextApproverID, FormID, n_VacationGroupID, "LEAVE REQUEST", x_VacationGroupCode, dLayer, connection, transaction, User);
+                    //Send Replace Mail
+
+                // bool N_SaveDraft = myFunctions.getBoolVAL(MasterRow["B_IsSaveDraft"].ToString());
+
+                    // if (nDeligateID!=0)
+                    // {
+                    //     string Body = "", Toemail = "", Subject = "Request Letter for Employee Replacement";
+                    //     object mail = dLayer.ExecuteScalar("select x_Email from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //     if (mail != null)
+                    //         Toemail = mail.ToString();
+                    //     if (Toemail != "")
+                    //     {
+                    //         object ReplaceEmployee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nDeligateID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //         object Employee = dLayer.ExecuteScalar("select x_Empname from pay_employee where n_empid=" + nEmpID + " and n_CompanyID="+nCompanyID, Params, connection);
+                    //         Body = Boody(ReplaceEmployee.ToString(), Employee.ToString());
+                    //         myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                    //     }
+                    // }
 
                     transaction.Commit();
                     Dictionary<string, string> res = new Dictionary<string, string>();
@@ -785,6 +811,15 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(ex));
             }
+        }
+        public string Boody(string ReplaceEmployee, string Employee)
+        {
+            StringBuilder message = new StringBuilder();
+            message = message.Append("<body style='font-family:Georgia; font-size:9pt;'>");
+            message = message.Append("Dear " + ReplaceEmployee + ",<br/><br/>");
+            message = message.Append("You are Requested to Work as an Replacement Employee in place of " + Employee + "<br/><br/>");
+            message = message.Append("<tr><left>Sincerly,</left><br><left>" + myFunctions.GetUserName(User) + "</left></table>");
+            return message.ToString();
         }
 
 

@@ -1,5 +1,4 @@
 using SmartxAPI.Data;
-using SmartxAPI.Dtos.Login;
 using Microsoft.AspNetCore.Mvc;
 using System;
 using SmartxAPI.GeneralFunctions;
@@ -7,126 +6,122 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using Microsoft.AspNetCore.Authorization;
-using Microsoft.AspNetCore.Authentication.JwtBearer;
+using Microsoft.Extensions.Options;
+using Microsoft.IdentityModel.Tokens;
+using System.Security.Claims;
+using System.IdentityModel.Tokens.Jwt;
+using SmartxAPI.Profiles;
+using System.Text;
+using System.Security.Cryptography;
 
 namespace SmartxAPI.Controllers
 {
-    
+
     [Route("clients")]
     [ApiController]
     public class Clients : ControllerBase
     {
-        private readonly ISec_UserRepo _repository;
+        private readonly ICommenServiceRepo _repository;
         private readonly IApiFunctions _api;
-
+        private readonly AppSettings _appSettings;
+        private readonly IConfiguration config;
         private readonly IMyFunctions myFunctions;
         private readonly IDataAccessLayer dLayer;
         private readonly string connectionString;
-        private readonly string olivoClientConnectionString;
+        private readonly string masterDBConnectionString;
 
-        public Clients(ISec_UserRepo repository, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
+        public Clients(ICommenServiceRepo repository, IOptions<AppSettings> appSettings, IApiFunctions api, IMyFunctions myFun, IDataAccessLayer dl, IConfiguration conf)
         {
-            _repository = repository;
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
+            _appSettings = appSettings.Value;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            olivoClientConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            config = conf;
+            _repository = repository;
         }
-        [HttpPost("login")]
-        public ActionResult Authenticate([FromBody] Sec_AuthenticateDto model)
-        {
-            try
-            {
-                string ipAddress = "";
-                if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                var password = myFunctions.EncryptString(model.Password);
-                //var password = model.Password;
-                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress,model.AppType);
-
-                if (user == null) { return Ok(_api.Warning("Username or password is incorrect")); }
-
-                return Ok(user);
-            }
-            catch (Exception ex)
-            {
-                return Ok(_api.Error(ex));
-            }
-        }
-
-        //GET api/User/list?...
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("list")]
-        public ActionResult GetUserList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Sp_UserList";
-            Params.Add("N_CompanyID", nCompanyId);
-            // Params.Add("N_UserId", userid);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                    return Ok(_api.Warning("No Results Found"));
-                else
-                {
-                    dt.Columns.Remove("X_Password");
-                    dt.AcceptChanges();
-                    return Ok(_api.Success(dt));
-                }
-
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.Error(e));
-            }
-        }
-        //Save....
-        [HttpPost("save")]
+        [HttpPost("register")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
             {
-                DataTable MasterTable;
+                DataTable MasterTable, UserTable, AppTable;
                 MasterTable = ds.Tables["master"];
+                UserTable = ds.Tables["user"];
+                // AppTable = ds.Tables["app"];
+
+                string pwd = UserTable.Rows[0]["x_Password"].ToString();
+                DataRow MasterRow = MasterTable.Rows[0];
+
+                string email = MasterRow["x_EmailID"].ToString();
                 
-               
-                using (SqlConnection connection = new SqlConnection(connectionString))
+
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction;
 
-
                     transaction = connection.BeginTransaction();
-                    MasterTable.Columns.Add("x_Password", typeof(System.String));
-                    DataRow MasterRow = MasterTable.Rows[0];
-                    string Password =MasterRow["x_UserID"].ToString();
-                    Password=myFunctions.EncryptString(Password);
-                    MasterTable.Rows[0]["x_Password"] = Password;
-                    int Result = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
-                    if (Result > 0)
+
+                    SortedList paramList = new SortedList();
+                    paramList.Add("@emailID", email);
+                    int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(1) from Users where x_EmailID=@emailID", paramList, connection, transaction).ToString());
+                    if (count > 0)
                     {
-                        //MULTI COMPANY USER CREATION
+                        return Ok(_api.Warning("Email id already exists !!!"));
                     }
-                    else
+                    string Password = myFunctions.EncryptString(pwd);
+                    MasterTable.Rows[0]["b_Inactive"] = true;
+                    MasterTable.Rows[0]["n_UserLimit"] = 1;
+                    int ClientID = dLayer.SaveData("ClientMaster", "N_ClientID", MasterTable, connection, transaction);
+                    if (ClientID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error("Something went wrong"));
                     }
+
+
+                    // AppTable.Rows[0]["N_ClientID"] = ClientID;
+                    UserTable.Rows[0]["b_Inactive"] = true;
+
+                    // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "X_DBUri", typeof(string), ConnString);
+                    // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_UserLimit", typeof(int), 5);
+                    // AppTable = myFunctions.AddNewColumnToDataTable(AppTable, "N_RefID", typeof(int), 0);
+                    // AppTable.AcceptChanges();
+                    // int N_RefID = dLayer.SaveData("ClientApps", "N_RefID", AppTable, connection, transaction);
+                    // if (N_RefID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error("Something went wrong"));
+                    // }
+
+                    UserTable.Rows[0]["N_ClientID"] = ClientID;
+                    UserTable.Rows[0]["x_Password"] = Password;
+                    UserTable.Rows[0]["b_EmailVerified"] = false;
+                    UserTable.Rows[0]["b_Inactive"] = true;
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
+
+                    int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
+                    if (UserID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Something went wrong"));
+                    }
+
                     transaction.Commit();
                 }
-                 return Ok(_api.Success("User Saved"));
+                SortedList Res = Login(email, pwd, "Registration");
+                if (Res["StatusCode"].ToString() == "0")
+                {
+                    return Ok(_api.Error(Res["Message"].ToString()));
+                }
+
+                Res["Message"] = "Client Registration Success";
+                Res["AppStatus"] = "Registered";
+
+
+                return Ok(_api.Success(Res, Res["Message"].ToString()));
             }
             catch (Exception ex)
             {
@@ -134,127 +129,217 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpGet("all")]
-        public ActionResult GetCustomer(int nFnYearId)
+        [HttpPost("login")]
+        public ActionResult Authenticate([FromBody] DataSet ds)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            
-            string sqlCommandText="select * from Sec_user";
-            
-
-            try{
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-                }
-                     if(dt.Rows.Count==0)
-                    {
-                       return Ok(_api.Warning("No Results Found"));
-                    }else{
-                    return Ok(_api.Success(dt));
-
-                    }
-                }catch(Exception e){
-                    return BadRequest(_api.Error(e));
-                }
-        }
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-         [HttpGet("details")]
-        public ActionResult GetUserListDetails(string xUser)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int  nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "Sp_UserList";
-            Params.Add("N_CompanyID", nCompanyId);
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTablePro(sqlCommandText, Params, connection);
-                }
-                foreach (DataRow dtRow in dt.Rows)
+                    DataTable UserTable = ds.Tables["user"];
+                    var password = UserTable.Rows[0]["password"].ToString();
+                    var emailID = UserTable.Rows[0]["emailID"].ToString();
+
+
+                    if (emailID == null || password == null) { return Ok(_api.Warning("Username or password is incorrect")); }
+
+                    SortedList Res = Login(emailID, password, "Login");
+                    if (Res["StatusCode"].ToString() == "0")
                     {
-                        if(dtRow["x_UserID"].ToString()!=xUser)
-                        {
-                            dtRow.Delete();
-                        }
+                        return Ok(_api.Error(Res["Message"].ToString()));
                     }
 
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                    return Ok(_api.Warning("No Results Found"));
-                else
+                    return Ok(_api.Success(Res));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+
+        private SortedList Login(string emailID, string password, string Type)
+        {
+            SortedList Res = new SortedList();
+
+            try
+            {
+                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
-                    dt.Columns.Remove("X_Password");
-                    dt.AcceptChanges();
-                    return Ok(_api.Success(dt));
+                    cnn.Open();
+                    password = myFunctions.EncryptString(password);
+                    string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_EmailID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_EmailID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_EmailID =@emailID and Users.x_Password=@xPassword)";
+
+                    SortedList Params = new SortedList();
+                    Params.Add("@emailID", emailID);
+                    Params.Add("@xPassword", password);
+                    DataTable output = dLayer.ExecuteDataTable(sql, Params, cnn);
+                    if (output.Rows.Count == 0)
+                    {
+                        Res.Add("Message", "Invalid Username or Password!");
+                        Res.Add("StatusCode", 0);
+                        return Res;
+                    }
+
+                    if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null && output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
+                    {
+                        int companyid = 0;
+                        string companyname = "";
+                        string uri = output.Rows[0]["X_DBUri"].ToString();
+
+                        using (SqlConnection connection = new SqlConnection(config.GetConnectionString(uri)))
+                        {
+                            connection.Open();
+                            SortedList paramList = new SortedList();
+                            paramList.Add("@nClientID", myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString()));
+                            DataTable companyDt = dLayer.ExecuteDataTable("select N_CompanyID,X_CompanyName from Acc_Company where N_ClientID=@nClientID", paramList, connection);
+                            if (companyDt.Rows.Count == 0)
+                            {
+                                Res.Add("Message", "Something went wrong");
+                                Res.Add("StatusCode", 0);
+                                return Res;
+                            }
+                            companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
+                            companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
+                        }
+                        int nClientID = myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString());
+                        int nGlobalUserID = myFunctions.getIntVAL(output.Rows[0]["N_UserID"].ToString());
+                        var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()), uri, nClientID, nGlobalUserID);
+                        Res.Add("UserInfo", user);
+                        Res.Add("StatusCode", 1);
+                        Res.Add("Type", "User");
+                        Res.Add("Message", "Login Success");
+                        return Res;
+                    }
+
+
+                    var tokenHandler = new JwtSecurityTokenHandler();
+                    var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+                    var tokenDescriptor = new SecurityTokenDescriptor
+                    {
+                        Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
+                        new Claim(ClaimTypes.PrimarySid,output.Rows[0]["N_UserID"].ToString()),
+                        new Claim(ClaimTypes.PrimaryGroupSid,output.Rows[0]["N_ClientID"].ToString()),
+                        new Claim(ClaimTypes.Email,output.Rows[0]["X_EmailID"].ToString()),
+                        new Claim(ClaimTypes.Role,""),
+                        new Claim(ClaimTypes.GroupSid,"0"),
+                        new Claim(ClaimTypes.StreetAddress,""),
+                        new Claim(ClaimTypes.Sid,"-1"),
+                        new Claim(ClaimTypes.Version,"V0.1"),
+                        new Claim(ClaimTypes.System,"0"),
+                        new Claim(ClaimTypes.Uri,output.Rows[0]["X_DBUri"].ToString())
+
+                    }),
+                        Expires = DateTime.UtcNow.AddDays(2),
+                        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                    };
+                    var token = tokenHandler.CreateToken(tokenDescriptor);
+                    var reToken = generateRefreshToken();
+                    SortedList tokenSet = new SortedList();
+
+                    tokenSet.Add("Token", tokenHandler.WriteToken(token));
+                    tokenSet.Add("Expiry", DateTime.UtcNow.AddDays(2));
+                    tokenSet.Add("RefreshToken", reToken);
+                    tokenSet.Add("n_AppID", "0");
+                    dLayer.ExecuteScalar("Update Users set X_Token='" + reToken + "' where N_UserID=" + output.Rows[0]["N_UserID"].ToString(), cnn);
+
+                    SortedList User = new SortedList();
+                    User.Add("Token", tokenSet);
+                    User.Add("UserData", output);
+                    Res.Add("UserInfo", User);
+                    Res.Add("Type", "Client");
+                    Res.Add("StatusCode", 1);
+                    Res.Add("Message", "Login Success");
+                    return Res;
+                }
+            }
+            catch (Exception ex)
+            {
+                if(ex.Message=="InactiveUser")
+                Res.Add("Message", "User Inactive");
+else
+                Res.Add("Message", "Something went wrong");
+
+
+                Res.Add("StatusCode", 0);
+                return Res;
+            }
+        }
+
+        private string generateRefreshToken()
+        {
+            using (var rngCryptoServiceProvider = new RNGCryptoServiceProvider())
+            {
+                var randomBytes = new byte[64];
+                rngCryptoServiceProvider.GetBytes(randomBytes);
+                return Convert.ToBase64String(randomBytes);
+            }
+        }
+
+
+
+
+        [HttpGet("language")]
+        public ActionResult LanguageList()
+        {
+            DataTable dt = new DataTable();
+
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable("Select * from LanguageMaster", olivoCon);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+
                 }
 
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
-        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nUserId)
+
+        [HttpGet("country")]
+        public ActionResult CountryList()
+        {
+            DataTable dt = new DataTable();
+
+            try
             {
-                int Results = 0;
-                SortedList Params = new SortedList();
-                
-                int nCompanyID = myFunctions.GetCompanyID(User);
-                string sqlCategory="Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
-                string sqlTrans="select COUNT(*) from vw_UserTransaction where n_userid=@p2";
-                string sqlUser="select X_UserID from sec_user where n_userid=@p2";
-                Params.Add("@p1", nCompanyID);
-                Params.Add("@p2", nUserId);
-                try
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
                 {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                    connection.Open();
-                    object User = dLayer.ExecuteScalar(sqlUser, Params, connection);
-                    Params.Add("@p3", User.ToString());
-                    object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
-                    if(Category==null)
-                        return Ok(_api.Error("Unable to delete User"));
-                    else if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
-                        return Ok(_api.Error("Unable to delete User"));
-                    else
-                        {
-                            int N_CountTransUser=0;
-                            object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
-                            N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
-                            if (N_CountTransUser > 0)
-                                return Ok(_api.Error("Unable to delete User"));
-                        }
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable("Select * from CountryMaster", olivoCon);
 
-                    Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "",connection);
-            
-                    if (Results > 0)
+                    if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Success("User deleted"));
+                        return Ok(_api.Warning("No Results Found"));
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete User"));
+                        return Ok(_api.Success(dt));
                     }
 
                 }
-                }
-                catch (Exception ex)
-                {
-                    return Ok(_api.Error(ex));
-                }
-
 
             }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
     }
 }

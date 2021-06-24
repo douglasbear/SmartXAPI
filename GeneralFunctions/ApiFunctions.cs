@@ -9,7 +9,9 @@ using AutoMapper;
 using Microsoft.AspNetCore.Hosting;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-
+using System.Linq;
+using Newtonsoft.Json;
+using Newtonsoft.Json.Linq;
 namespace SmartxAPI.GeneralFunctions
 {
     public class ApiFunctions : IApiFunctions
@@ -83,6 +85,10 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(string message)
         {
             return (new { type = "success", Message = message, Data = "" });
+        }
+        public object Success(dynamic data)
+        {
+            return (new { type = "success", Message = "", Data = data });
         }
         public object Notice(string message)
         {
@@ -215,6 +221,8 @@ namespace SmartxAPI.GeneralFunctions
 
 
 
+
+
     }
 
     public interface IApiFunctions
@@ -229,6 +237,7 @@ namespace SmartxAPI.GeneralFunctions
         public DataTable Format(DataTable dt);
         public object Error(string message);
         public object Success(DataTable dataTable);
+        public object Success(dynamic data);
         public object Success(DataTable dataTable, string message);
         public object Success(Dictionary<DataRow, DataTable> dictionary, string message);
         public object Success(Dictionary<string, string> dictionary, string message);
