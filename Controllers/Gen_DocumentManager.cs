@@ -127,6 +127,7 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     myAttachments.SaveAttachment(dLayer, Attachment, "0", 0 , "General Documents", "0", 0, "General Documents", User, connection, transaction);
+                    transaction.Commit();
 
                 }
                 return Ok(api.Success("Documents Updated"));
@@ -136,6 +137,29 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
         }
+
+        
+
+          [HttpGet("getAttachments")]
+        public ActionResult GetSalesInvoiceDetails(int nTransID, int nPartyID, int nFormID, int nFnYearID)
+        {
+
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, nPartyID,nTransID,nFormID,nFnYearID, User, Con);
+                    Attachments = api.Format(Attachments, "attachments");
+                    return Ok(api.Success(Attachments));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
 
 
     }
