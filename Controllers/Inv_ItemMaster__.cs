@@ -176,7 +176,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetItemDetails(string xItemCode, int nLocationID, int nBranchID)
+        public ActionResult GetItemDetails(int nItemID, int nLocationID, int nBranchID)
         {
             DataTable dt = new DataTable();
             DataTable multiCategory = new DataTable();
@@ -184,21 +184,21 @@ namespace SmartxAPI.Controllers
             DataTable Images = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            int N_ItemID=nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@xItemCode", xItemCode);
+            QueryParams.Add("@nItemID", N_ItemID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT * from vw_InvItemMaster where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+                    string _sqlQuery = "SELECT * from vw_InvItemMaster where N_ItemID=@nItemID and N_CompanyID=@nCompanyID";
 
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                    string multiqry = "SELECT * from vw_ItemCategoryDisplay where X_ItemCode=@xItemCode and N_CompanyID=@nCompanyID";
+                    string multiqry = "SELECT * from vw_ItemCategoryDisplay where N_ItemID=@nItemID and N_CompanyID=@nCompanyID";
                     multiCategory = dLayer.ExecuteDataTable(multiqry, QueryParams, connection);
                     multiCategory = _api.Format(multiCategory, "multiCategory");
 
@@ -210,8 +210,8 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Notice("No Results Found"));
                     }
                     int N_BranchID = nBranchID;
-                    int N_ItemID = myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString());
-                    QueryParams.Add("@nItemID", dt.Rows[0]["N_ItemID"].ToString());
+                    // int N_ItemID = myFunctions.getIntVAL(dt.Rows[0]["N_ItemID"].ToString());
+                    // QueryParams.Add("@nItemID", dt.Rows[0]["N_ItemID"].ToString());
                     QueryParams.Add("@nLocationID", nLocationID);
                     QueryParams.Add("@xStockUnit", dt.Rows[0]["X_StockUnit"].ToString());
                     double OpeningStock = 0;
@@ -355,11 +355,12 @@ namespace SmartxAPI.Controllers
 
                     //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();
-                    if (VariantList.Rows.Count > 0)
-                    {
-                        var ActRow = MasterTable.NewRow();
+                     var ActRow = MasterTable.NewRow();
                             ActRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
                             MasterTable.Rows.Add(ActRow);
+                    if (VariantList.Rows.Count > 0)
+                    {
+                       
                         int j = 1;
                         for (int i = 0; i < VariantList.Rows.Count; i++)
                         {
@@ -378,6 +379,7 @@ namespace SmartxAPI.Controllers
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
                         imageBitmap = Convert.FromBase64String(image);
+                          MasterTable.Rows[k]["i_Image"]  ="";
                         //MasterTable.Columns.Remove("i_Image");
 
                         string DupCriteria ="";// "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_ItemID="+N_ItemID;  // and X_ItemCode='" + ItemCode + "'";
