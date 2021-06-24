@@ -102,6 +102,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nAirportID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AirportID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xAirportCode = MasterTable.Rows[0]["x_AirportCode"].ToString();
@@ -110,7 +111,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
                     if (xAirportCode == "@Auto")
                     {
-                        Params.Add("N_CompanyID", 1);
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xAirportCode = dLayer.GetAutoNumber("Ffw_Airport", "x_AirportCode", Params, connection, transaction);
