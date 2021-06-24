@@ -257,7 +257,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
+                if(ex.Message=="InactiveUser")
+                Res.Add("Message", "User Inactive");
+else
                 Res.Add("Message", "Something went wrong");
+
+
                 Res.Add("StatusCode", 0);
                 return Res;
             }

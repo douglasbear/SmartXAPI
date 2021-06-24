@@ -8,7 +8,7 @@ using SmartxAPI.Models;
 
 namespace SmartxAPI.Dtos.SP
 {
-    public partial class SP_LOGIN
+    public partial class SP_LOGIN_CLOUD
     {
         [Key]
         public int N_UserID { get; set; }

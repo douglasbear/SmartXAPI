@@ -183,6 +183,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
+                    SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
+                    dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
                     if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
                     N_PurchaseID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString());
@@ -222,6 +224,7 @@ namespace SmartxAPI.Controllers
                         // int nPaymentMethod = mastr
                     }
 
+
                     dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
@@ -240,11 +243,12 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private SortedList StatusSetup(int nSalesID, int nFnYearID, SqlConnection connection)
+        private SortedList StatusSetup(int nPurchaseID, int nFnYearID, bool showAllBranch, DataTable dtPurchaseInvoice, SqlConnection connection)
         {
 
-            object objInvoiceRecievable = null, objBal = null;
-            double InvoiceRecievable = 0, BalanceAmt = 0;
+
+
+          
             SortedList TxnStatus = new SortedList();
             TxnStatus.Add("Label", "");
             TxnStatus.Add("LabelColor", "");
@@ -253,179 +257,101 @@ namespace SmartxAPI.Controllers
             TxnStatus.Add("SaveEnabled", true);
             TxnStatus.Add("ReceiptNumbers", "");
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int N_PaymentMethod = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PaymentMethod"].ToString());
+            string x_InvoiceNo = (dtPurchaseInvoice.Rows[0]["x_InvoiceNo"].ToString());
+            int n_BranchId = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["n_BranchId"].ToString());
+            string x_TransType = (dtPurchaseInvoice.Rows[0]["x_TransType"].ToString());
+            int n_LocationID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["n_LocationID"].ToString());
+            bool b_AllowCashPay = myFunctions.getBoolVAL(dtPurchaseInvoice.Rows[0]["b_AllowCashPay"].ToString());
+            int n_VendorID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["n_VendorID"].ToString());
+            object objPaid = null, objBal = null;
+            double InvoicePaidAmt = 0, BalanceAmt = 0;
+            string PurchaseID = "";
 
-            objInvoiceRecievable = dLayer.ExecuteScalar("SELECT isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=" + nSalesID + " and Inv_Sales.N_CompanyID=" + nCompanyID, connection);
-            objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + nSalesID + " and X_Type='SALES' and N_CompanyID=" + nCompanyID, connection);
+            if (N_PaymentMethod == 2)
+            {
+                objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + nPurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", connection);
+            }
+            else
+            {
+                if (showAllBranch == true)
+                    objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='" + x_TransType + "'", connection);
+                else
+                    objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and N_BranchId=" + n_BranchId + " and N_LocationID =" + n_LocationID + "  and X_TransType='" + x_TransType + "'", connection);
+            }
 
 
-            object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0) =0 and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
-            object RetQtyDrft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =" + nSalesID + " and Isnull(B_IsSaveDraft,0)=1 and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
+            if (objPaid == null && N_PaymentMethod == 2 && b_AllowCashPay)
+            {
+                if (showAllBranch == true)
+                    objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='" + x_TransType + "'", connection);
+                else
+                    objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and N_BranchId=" + n_BranchId + " and N_LocationID =" + n_LocationID + "  and X_TransType='" + x_TransType + "'", connection);
+            }
+
+            objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + n_VendorID + " and N_CompanyID=" + nCompanyID + " and N_PurchaseID = " + nPurchaseID, connection);
+            object RetQty = dLayer.ExecuteScalar("select Isnull(Count(N_CreditNoteId),0) from Inv_PurchaseReturnMaster where  N_PurchaseId=" + nPurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection);
 
 
-            if (objInvoiceRecievable != null)
-                InvoiceRecievable = myFunctions.getVAL(objInvoiceRecievable.ToString());
+
+            if (objPaid != null)
+                InvoicePaidAmt = myFunctions.getVAL(objPaid.ToString());
             if (objBal != null)
                 BalanceAmt = myFunctions.getVAL(objBal.ToString());
 
-            if ((InvoiceRecievable == BalanceAmt) && (InvoiceRecievable > 0 && BalanceAmt > 0))
+
+
+
+
+
+            if (InvoicePaidAmt == 0)
             {
-                TxnStatus["Label"] = "NotPaid";
-                TxnStatus["LabelColor"] = "Red";
-                TxnStatus["Alert"] = "";
+                if (myFunctions.getIntVAL(RetQty.ToString()) > 0)
+                {
+                    if (BalanceAmt == 0)
+                    {
+                        TxnStatus["Label"] = "Paid";
+                        TxnStatus["LabelColor"] = "Green";
+                        TxnStatus["Alert"] = "";
+                    }
+                    else
+                    {
+
+                        //IF PAYMENT DONE
+                        TxnStatus["Label"] = "NotPaid";
+                        TxnStatus["LabelColor"] = "Red";
+                        TxnStatus["Alert"] = "";
+                    }
+                }
+
+                else
+                {
+                    TxnStatus["Label"] = "NotPaid";
+                    TxnStatus["LabelColor"] = "Red";
+                    TxnStatus["Alert"] = "";
+                }
             }
             else
             {
                 if (BalanceAmt == 0)
                 {
-                    //IF PAYMENT DONE
                     TxnStatus["Label"] = "Paid";
                     TxnStatus["LabelColor"] = "Green";
-                    TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
-
-
-                    //IF PAYMENT DONE AND HAVING RETURN
-                    if (RetQty != null && myFunctions.getIntVAL(RetQty.ToString()) > 0)
-                    {
-                        TxnStatus["SaveEnabled"] = false;
-                        TxnStatus["DeleteEnabled"] = false;
-                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Paid(Return)";
-                        TxnStatus["LabelColor"] = "Green";
-                    }
-                    else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
-                    {
-                        TxnStatus["SaveEnabled"] = true;
-                        TxnStatus["DeleteEnabled"] = false;
-                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Paid(Return)";
-                        TxnStatus["LabelColor"] = "Green";
-                    }
+                    TxnStatus["Alert"] = "";
                 }
                 else
                 {
-                    //IF HAVING BALANCE AMOUNT
-                    TxnStatus["Alert"] = "Customer Receipt is Processed for this Invoice.";
-                    TxnStatus["Label"] = "ParPaid";
+                    TxnStatus["Label"] = "Partially Paid";
                     TxnStatus["LabelColor"] = "Green";
-
-                    //IF HAVING BALANCE AMOUNT AND HAVING RETURN
-                    if (RetQty != null && myFunctions.getIntVAL(RetQty.ToString()) > 0)
-                    {
-                        TxnStatus["SaveEnabled"] = false;
-                        TxnStatus["DeleteEnabled"] = false;
-                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Partially Paid(Return)";
-                        TxnStatus["LabelColor"] = "Green";
-                    }
-                    else if (RetQtyDrft != null && myFunctions.getIntVAL(RetQtyDrft.ToString()) > 0)
-                    {
-                        TxnStatus["SaveEnabled"] = true;
-                        TxnStatus["DeleteEnabled"] = false;
-                        TxnStatus["Alert"] = "Sales Return Processed for this invoice.";
-                        TxnStatus["Label"] = "Partially Paid(Return)";
-                        TxnStatus["LabelColor"] = "Green";
-                    }
+                    TxnStatus["Alert"] = "";
                 }
-
-
-                //PAYMENT NO DISPLAY IN TOP LABEL ON MOUSE HOVER
-                DataTable Receipts = dLayer.ExecuteDataTable("SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='SR' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + nSalesID, connection);
-                string InvoiceNos = "";
-                foreach (DataRow var in Receipts.Rows)
-                {
-                    InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
-                }
-                char[] trim = { ',', ' ' };
-                if (InvoiceNos != "")
-                    TxnStatus["ReceiptNumbers"] = InvoiceNos.ToString().TrimEnd(trim);
-
             }
+
+
 
             return TxnStatus;
         }
 
-        //  private SortedList StatusSetup(int PurchaseID, int nFnYearID,int nPaymentMethod, SqlConnection connection)
-        //         {
-
-        //             object objPaid = null, objBal = null;
-        //             double InvoicePaidAmt = 0, BalanceAmt = 0;
-        //             SortedList TxnStatus = new SortedList();
-        //             TxnStatus.Add("Label", "");
-        //             TxnStatus.Add("LabelColor", "");
-        //             TxnStatus.Add("Alert", "");
-        //             TxnStatus.Add("DeleteEnabled", true);
-        //             TxnStatus.Add("SaveEnabled", true);
-        //             TxnStatus.Add("ReceiptNumbers", "");
-        //             int nCompanyID = myFunctions.GetCompanyID(User);
-
-        //             if (nPaymentMethod == 2)
-        //                 objPaid = dba.ExecuteSclar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + PurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", "TEXT", new DataTable());
-        //             else
-        //             {
-        //                 if (myCompanyID._B_AllBranchData == true && B_LocationChange)
-        //                     objPaid = dba.ExecuteSclar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + txtInvNo.Text.Trim() + "' and N_FnYearID=" + N_FnYearID + " and X_TransType='" + X_TransType + "'", "TEXT", new DataTable());
-        //                 else
-        //                     objPaid = dba.ExecuteSclar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + txtInvNo.Text.Trim() + "' and N_FnYearID=" + N_FnYearID + " and N_BranchId=" + myCompanyID._BranchID + " and N_LocationID =" + myCompanyID._LocationID + "  and X_TransType='" + X_TransType + "'", "TEXT", new DataTable());
-        //             }
-
-
-        //             objBal = dba.ExecuteSclar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + N_VendorID + " and N_CompanyID=1 and N_PurchaseID = " + N_PurchaseId, "TEXT", new DataTable());
-        //             object RetQty = dba.ExecuteSclar("select Isnull(Count(N_CreditNoteId),0) from Inv_PurchaseReturnMaster where  N_PurchaseId=" + N_PurchaseId + " and N_CompanyID=" + myCompanyID._CompanyID + " and N_FnYearID=" + N_FnYearID, "TEXT", new DataTable());
-
-
-
-        //             if (objPaid != null)
-        //                 InvoicePaidAmt = myFunctions.getVAL(objPaid.ToString());
-        //             if (objBal != null)
-        //                 BalanceAmt = myFunctions.getVAL(objBal.ToString());
-
-        //             if (InvoicePaidAmt == 0)
-        //             {
-        //                 if (myFunctions.getIntVAL(RetQty.ToString()) > 0)
-        //                 {
-        //                     if (BalanceAmt == 0)
-        //                     {
-
-        //                         StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Paid"), Color.SeaGreen);
-        //                     }
-        //                     else
-        //                     {
-        //                         StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "ParPaid"), Color.SeaGreen);
-        //                     }
-
-        //                 }
-        //                 else
-        //                 {
-        //                     if (B_AllowCashPay && N_VendorTypeID == 2)
-        //                     {
-        //                         grpPaymentMethod.Visible = true;
-        //                         if (N_PaymentMethod == 1)
-        //                             rbCash.Checked = true;
-        //                         else
-        //                             rbCredit.Checked = true;
-        //                     }
-        //                     StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "NotPaid"), Color.Red);
-        //                     toolTip1.SetToolTip(this.lblstatus, "");
-        //                 }
-        //             }
-        //             else
-        //             {
-        //                 if (BalanceAmt == 0)
-        //                     StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Paid"), Color.SeaGreen);
-        //                 else
-        //                     StatusSetting(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "ParPaid"), Color.SeaGreen);
-
-        //                 dba.FillDataSet(ref dsPurchase, "Inv_ReciptNos", "SELECT  dbo.Inv_PayReceipt.X_VoucherNo FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.N_InventoryId =" + N_PurchaseId, "TEXT", new DataTable());
-        //                 string InvoiceNos = "";
-        //                 foreach (DataRow var in dsPurchase.Tables["Inv_ReciptNos"].Rows)
-        //                 {
-        //                     InvoiceNos += var["X_VoucherNo"].ToString() + " , ";
-        //                 }
-        //                 char[] trim = { ',', ' ' };
-        //                 toolTip1.SetToolTip(this.lblstatus, "Payment No: " + InvoiceNos.ToString().TrimEnd(trim));
-
-        //             }
-        //         }
 
 
 
@@ -454,13 +380,13 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                    connection.Open(); 
+                    connection.Open();
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
                     N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
 
-                    if(!myFunctions.CheckActiveYearTransaction(nCompanyID,nFnYearID,Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()),dLayer,connection,transaction))
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Transaction date must be in the active Financial Year."));
@@ -519,7 +445,7 @@ namespace SmartxAPI.Controllers
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        int UnitID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" and N_CompanyID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" and X_ItemUnit='"+DetailTable.Rows[j]["X_ItemUnit"].ToString()+"'", connection, transaction).ToString());
+                        int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
                         DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
                         DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }

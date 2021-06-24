@@ -54,17 +54,6 @@ namespace SmartxAPI.Data
             if (string.IsNullOrEmpty(companyid.ToString()) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userid.ToString()))
                 return null;
 
-            var password = _context.SecUser
-            .Where(y => y.NCompanyId == companyid && y.XUserId == username)
-            .Select(x => x.XPassword)
-            .FirstOrDefault();
-
-            // var loginRes = _context.SP_LOGIN.FromSqlRaw<SP_LOGIN>("SP_LOGIN @p0,@p1,@p2,@p3", companyname, "", username, password)
-            // .ToList()
-            // .FirstOrDefault();
-
-
-
             using (SqlConnection connection = new SqlConnection(uri != "" ? config.GetConnectionString(uri) : connectionString))
             {
                 connection.Open();
@@ -73,14 +62,12 @@ namespace SmartxAPI.Data
                     {
                         {"X_CompanyName",companyname},
                         {"X_FnYearDescr",""},
-                        {"X_LoginName",username},
-                        {"X_Pwd",password.ToString()},
-                        {"X_AppType",AppID==2?"ESS":"ERP"}
+                        {"X_LoginName",username}
                     };
-                DataTable loginDt = dLayer.ExecuteDataTablePro("SP_LOGIN", paramsList, connection);
-                //var loginRes = new List<SP_LOGIN>();  
+                DataTable loginDt = dLayer.ExecuteDataTablePro("SP_LOGIN_CLOUD", paramsList, connection);
+
                 var loginRes = (from DataRow dr in loginDt.Rows
-                                select new SP_LOGIN()
+                                select new SP_LOGIN_CLOUD()
                                 {
                                     N_UserID = Convert.ToInt32(dr["N_UserID"]),
                                     X_UserName = dr["X_UserName"].ToString(),
