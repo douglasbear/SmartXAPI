@@ -336,6 +336,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
+                      int N_VariantGrpType = 0;
                     string ItemCode = "";
                     int ItemType = 0;
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
@@ -356,11 +357,14 @@ namespace SmartxAPI.Controllers
                     MasterTable = MasterTableNew.Clone();
                     if (VariantList.Rows.Count > 0)
                     {
+                        var ActRow = MasterTable.NewRow();
+                            ActRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
+                            MasterTable.Rows.Add(ActRow);
                         int j = 1;
                         for (int i = 0; i < VariantList.Rows.Count; i++)
                         {
                             var newRow = MasterTable.NewRow();
-                            newRow.ItemArray = MasterTable.Rows[1].ItemArray;
+                            newRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
                             MasterTable.Rows.Add(newRow);
                             MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_VariantName"].ToString();
                             MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
@@ -374,9 +378,9 @@ namespace SmartxAPI.Controllers
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
                         imageBitmap = Convert.FromBase64String(image);
-                        MasterTable.Columns.Remove("i_Image");
+                        //MasterTable.Columns.Remove("i_Image");
 
-                        string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + "";  // and X_ItemCode='" + ItemCode + "'";
+                        string DupCriteria ="";// "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_ItemID="+N_ItemID;  // and X_ItemCode='" + ItemCode + "'";
                         N_ItemID = dLayer.SaveDataWithIndex("Inv_ItemMaster", "N_ItemID", DupCriteria, "", k, MasterTable, connection, transaction);
                         if (N_ItemID <= 0)
                         {
@@ -384,7 +388,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to save"));
                         }
 
-                        int N_VariantGrpType = 0;
+                      
                         if (k == 0 && ItemType == 6)
                             N_VariantGrpType = N_ItemID;
 
