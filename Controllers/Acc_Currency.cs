@@ -197,9 +197,10 @@ namespace SmartxAPI.Controllers
                      MasterTable.Columns.Remove("n_FnYearId");
                       MasterTable.Columns.Remove("n_BranchId");
 
+                    string X_CurrencyName= MasterTable.Rows[0]["X_CurrencyName"].ToString();
+                    string DupCriteria = "X_CurrencyName='" + X_CurrencyName + "'";
 
-
-                    nCurrencyID = dLayer.SaveData("Acc_CurrencyMaster", "N_CurrencyID", MasterTable, connection, transaction);
+                    nCurrencyID = dLayer.SaveData("Acc_CurrencyMaster", "N_CurrencyID",DupCriteria,"", MasterTable, connection, transaction);
                     if (nCurrencyID <= 0)
                     {
                         transaction.Rollback();
