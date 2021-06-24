@@ -9,6 +9,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
 =======
@@ -49,7 +50,22 @@
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
 >>>>>>> 2ede928926a52421c8f29d14ce56b68faee23d35
+<<<<<<< HEAD
 >>>>>>> 2d4625717b875e70aad3ecf12790bb5cb4e81a75
+=======
+=======
+
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages",
+
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages",
+
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+
+>>>>>>> 4fe756651b98781222f89f312ba134e64c1491cd
+>>>>>>> 4fcb18cd1e433a5ea72e3a86a4cc59c6287af8f4
     ]
   }
 }
