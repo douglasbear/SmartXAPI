@@ -80,10 +80,10 @@ namespace SmartxAPI.Controllers
             {
                 DateCol = "X_RequestDate";
                 if (bShowAllBranch)
-                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 and N_ActionUserID<>N_ReqUserID";
+                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 and N_ActionUserID<>N_ReqUserID and X_CurrentAction<>'Delete'";
                 else
                 {
-                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 and N_ActionUserID<>N_ReqUserID";
+                    sqlCommandText = "select * from vw_ApprovalSummary where N_CompanyID=@p1 and N_ActionUserID=@p2 and N_ProcStatusID<>6 and N_ActionUserID<>N_ReqUserID and X_CurrentAction<>'Delete'";
                     Params.Add("@p3", N_Branchid);
                 }
 
