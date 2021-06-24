@@ -20,7 +20,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly string reportPath;
+        private readonly string ReportLocation;
 
 
 
@@ -30,7 +30,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            reportPath = conf.GetConnectionString("ReportPath");
+            ReportLocation = conf.GetConnectionString("ReportLocation");
         }
 
 
@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             dt = myFunctions.AddNewColumnToDataTable(dt,"x_PrintTemplate",typeof(string),"");
             Params.Add("@p1", nCompanyId);
-            string Path = reportPath + "printing/Salesinvoice/VAT/";
+            string Path = ReportLocation + "printing/Salesinvoice/VAT/";
 
             try
             {
