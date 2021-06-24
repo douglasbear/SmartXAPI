@@ -382,6 +382,178 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpPost("updateEmployee")]
+        public ActionResult UpdateEmployee([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                SortedList Params = new SortedList();
+                DataRow MasterRow = MasterTable.Rows[0];
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
+                var X_EmpUpdateCode = MasterRow["X_EmpUpdateCode"].ToString();
+                int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
+                int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+                int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int nEmpUpdateID = myFunctions.getIntVAL(MasterRow["N_EmpUpdateID"].ToString());
+                int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
+                int N_NextApproverID=0;
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", nCompanyID);
+                    EmpParams.Add("@nEmpID", nEmpID);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
+
+                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID>0)
+                    {
+                        int N_PkeyID = nEmpUpdateID;
+                        string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Pay_EmployeeUpdate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nEmpUpdateID,"EMPLOYEE",X_EmpUpdateCode,dLayer,connection,transaction,User);
+                        return Ok(_api.Success("Employee update Approved" + "-" + X_EmpUpdateCode));
+                    }
+                    if (X_EmpUpdateCode == "@Auto")
+                    {
+                        Params.Add("@nCompanyID", nCompanyID);
+                        object objReqCode = dLayer.ExecuteScalar("Select ISNULL(max(isnull(X_EmpUpdateCode,0)),1000)+1 as X_EmpUpdateCode from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID", Params, connection, transaction);
+                        if (objReqCode.ToString() == "" || objReqCode.ToString() == null) { X_EmpUpdateCode = "1"; }
+                        else
+                        {
+                            X_EmpUpdateCode = objReqCode.ToString();
+                        }
+                        MasterTable.Rows[0]["X_EmpUpdateCode"] = X_EmpUpdateCode;
+                    }
+                    if(nEmpUpdateID>0)
+                    {
+                        dLayer.DeleteData("Pay_EmployeeUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
+                    }
+
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
+                    MasterTable.AcceptChanges();
+
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    nEmpUpdateID = dLayer.SaveData("Pay_EmployeeUpdate", "N_EmpUpdateID", MasterTable, connection, transaction);
+                    if (nEmpUpdateID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+  
+                        int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=nEmpUpdateID", EmpParams, connection, transaction).ToString());
+
+                        transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nEmpUpdateID,"EMPLOYEE",X_EmpUpdateCode,dLayer,connection,transaction,User);
+                    }
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("X_EmpUpdateCode", X_EmpUpdateCode.ToString());
+                    return Ok(_api.Success(res, "Employee Update Requested"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+        [HttpGet("updatedDetails")]
+        public ActionResult GetUpdatedDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@xVacationGroupCode", xVacationGroupCode);
+            QueryParams.Add("@nBranchID", nBranchID);
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (bShowAllBranchData == true)
+                        Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_TransType=1";
+                    else
+                        Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_BranchID=@nBranchID and N_TransType=1";
+
+
+                    _sqlQuery = "Select * from vw_PayVacationMaster Where " + Condition + "";
+
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Master = _api.Format(Master, "master");
+
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
+                        QueryParams.Add("@nEmpID", Master.Rows[0]["N_EmpID"].ToString());
+
+
+                        ds.Tables.Add(Master);
+                        Condition = "";
+                        if (bShowAllBranchData == true)
+                            Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
+                        else
+                            Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_BranchID=@nBranchID  and N_TransType=1 and X_Type='B'";
+
+                        _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,1) As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Detail = _api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+
+                        // DataTable benifits = FillCodeList(companyid, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), connection);
+
+                        // ds.Tables.Add(_api.Format(benifits, "benifits"));
+                        // ds.Tables.Add(Detail);
+
+
+                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachements = _api.Format(Attachements, "attachments");
+                        ds.Tables.Add(Attachements);
+
+                        return Ok(_api.Success(ds));
+                    }
+
+
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
 
         //Save....
         [HttpPost("save")]
