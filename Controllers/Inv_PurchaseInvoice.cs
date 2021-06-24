@@ -339,6 +339,12 @@ namespace SmartxAPI.Controllers
                     TxnStatus["LabelColor"] = "Green";
                     TxnStatus["Alert"] = "";
                 }
+                else
+                {
+                    TxnStatus["Label"] = "Partially Paid";
+                    TxnStatus["LabelColor"] = "Green";
+                    TxnStatus["Alert"] = "";
+                }
             }
 
 
