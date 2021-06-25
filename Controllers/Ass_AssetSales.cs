@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
                     else
                         X_Type = "Sales";
 
-                    for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
+                    for (int k = 0 ;k < TransactionTable.Rows.Count;k++) 
                     {
                         TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
                         TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
