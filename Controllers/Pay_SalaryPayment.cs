@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
 
                     for (int j = 0; j < temp.Length; j++)
                     {
-                        sql1 = "Select * from vw_SalaryPaid_Disp where N_ReceiptID=@nReceiptID  and N_CompanyID =@nCompanyID  and N_PaymentId =" + temp[j] + "";
+                        sql1 = "Select N_TransID as N_SalesID,N_DueAmount as N_TotalDueAmount,N_InvoiceDueAmt as N_DueAmount,* from vw_SalaryPaid_Disp where N_ReceiptID=@nReceiptID  and N_CompanyID =@nCompanyID  and N_PaymentId =" + temp[j] + "";
 
 
 
