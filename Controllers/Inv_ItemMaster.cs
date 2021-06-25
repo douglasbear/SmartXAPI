@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
             DataTable Images = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-            int N_ItemID=nItemID;
+            int N_ItemID = nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
@@ -318,7 +318,7 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList;
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
-                MasterTableNew = ds.Tables["master"]; 
+                MasterTableNew = ds.Tables["master"];
                 GeneralTable = ds.Tables["general"];
                 StockUnit = ds.Tables["stockUnit"];
                 SalesUnit = ds.Tables["salesUnit"];
@@ -336,7 +336,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // Auto Gen
-                      int N_VariantGrpType = 0;
+                    int N_VariantGrpType = 0;
                     string ItemCode = "";
                     int ItemType = 0;
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
@@ -355,12 +355,12 @@ namespace SmartxAPI.Controllers
 
                     //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();
-                     var ActRow = MasterTable.NewRow();
-                            ActRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
-                            MasterTable.Rows.Add(ActRow);
+                    var ActRow = MasterTable.NewRow();
+                    ActRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
+                    MasterTable.Rows.Add(ActRow);
                     if (VariantList.Rows.Count > 0)
                     {
-                       
+
                         int j = 1;
                         for (int i = 0; i < VariantList.Rows.Count; i++)
                         {
@@ -379,10 +379,10 @@ namespace SmartxAPI.Controllers
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
                         imageBitmap = Convert.FromBase64String(image);
-                          MasterTable.Rows[k]["i_Image"]  ="";
+                        MasterTable.Rows[k]["i_Image"] = "";
                         //MasterTable.Columns.Remove("i_Image");
 
-                        string DupCriteria ="";// "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_ItemID="+N_ItemID;  // and X_ItemCode='" + ItemCode + "'";
+                        string DupCriteria = "";// "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_ItemID="+N_ItemID;  // and X_ItemCode='" + ItemCode + "'";
                         N_ItemID = dLayer.SaveDataWithIndex("Inv_ItemMaster", "N_ItemID", DupCriteria, "", k, MasterTable, connection, transaction);
                         if (N_ItemID <= 0)
                         {
@@ -390,10 +390,16 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to save"));
                         }
 
-                      
-                        if (k == 0 && ItemType == 6)
-                            N_VariantGrpType = N_ItemID;
 
+                        if (k == 0 && ItemType == 6)
+                        {
+                            N_VariantGrpType = N_ItemID;
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 0  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                        }
+                        else
+                        {
+                            dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 1  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                        }
                         if (ItemType == 6)
                             dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_GroupID=" + N_VariantGrpType + "  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
 
