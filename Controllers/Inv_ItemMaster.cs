@@ -369,6 +369,7 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows.Add(newRow);
                             MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_VariantName"].ToString();
                             MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
+                            MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_VariantPrice"].ToString();
                             j++;
                         }
                     }
