@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                 }
-                SortedList Res = Login(email, pwd, "Registration");
+                SortedList Res = Login(email, pwd, "Registration",0);
                 if (Res["StatusCode"].ToString() == "0")
                 {
                     return Ok(_api.Error(Res["Message"].ToString()));
@@ -140,11 +140,12 @@ namespace SmartxAPI.Controllers
                     DataTable UserTable = ds.Tables["user"];
                     var password = UserTable.Rows[0]["password"].ToString();
                     var emailID = UserTable.Rows[0]["emailID"].ToString();
+                    int appType = myFunctions.getIntVAL( UserTable.Rows[0]["appType"].ToString());
 
 
                     if (emailID == null || password == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
-                    SortedList Res = Login(emailID, password, "Login");
+                    SortedList Res = Login(emailID, password, "Login",appType);
                     if (Res["StatusCode"].ToString() == "0")
                     {
                         return Ok(_api.Error(Res["Message"].ToString()));
@@ -160,7 +161,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private SortedList Login(string emailID, string password, string Type)
+        private SortedList Login(string emailID, string password, string Type,int appType)
         {
             SortedList Res = new SortedList();
 
@@ -181,6 +182,9 @@ namespace SmartxAPI.Controllers
                         Res.Add("Message", "Invalid Username or Password!");
                         Res.Add("StatusCode", 0);
                         return Res;
+                    }
+                    if(appType>0){
+                        output.Rows[0]["N_ActiveAppID"] =appType;
                     }
 
                     if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null && output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
