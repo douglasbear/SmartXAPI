@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
 
             string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP)";
-            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
+            string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
             string sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
 
              string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_InvSalesInvoiceNo_Search group by Customer order by COUNT(*) Desc";
