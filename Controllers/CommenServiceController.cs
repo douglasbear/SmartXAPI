@@ -223,7 +223,7 @@ namespace SmartxAPI.Controllers
                         tokenSet.Add("Token", tokenHandler.WriteToken(token));
                         tokenSet.Add("Expiry", DateTime.UtcNow.AddDays(2));
                         tokenSet.Add("RefreshToken", reToken);
-                        tokenSet.Add("n_AppID", "0");
+                        tokenSet.Add("n_AppID", appID);
                         dLayer.ExecuteScalar("Update Users set X_Token='" + reToken + "' where N_UserID=" + output.Rows[0]["N_UserID"].ToString(), olivCnn);
 
                         SortedList SLUser = new SortedList();

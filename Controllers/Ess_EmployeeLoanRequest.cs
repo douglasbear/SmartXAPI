@@ -392,8 +392,12 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nLoanTransID, int nFnYearID,int nFormID)
+        public ActionResult DeleteData(int nLoanTransID, int nFnYearID,int nFormID, string comments)
         {
+                        if (comments == null)
+            {
+                comments = "";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -420,7 +424,7 @@ namespace SmartxAPI.Controllers
 
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nLoanTransID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2001, User, dLayer, connection));
-                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_LoanTransID=" + nLoanTransID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;

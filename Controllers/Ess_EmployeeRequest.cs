@@ -289,6 +289,11 @@ namespace SmartxAPI.Controllers
                         
                     }
 
+                    if(MasterTable.Columns.Contains("N_ApprovalLevelID")){
+
+                            MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    }
+
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                    
                     nRequestID = dLayer.SaveData("Pay_EmpAnyRequest", "N_RequestID", MasterTable, connection, transaction);
@@ -379,8 +384,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nRequestID, int nFnYearID)
+        public ActionResult DeleteData(int nRequestID, int nFnYearID, string comments)
         {
+                                    if (comments == null)
+            {
+                comments = "";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -408,7 +417,7 @@ namespace SmartxAPI.Controllers
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), myFunctions.getIntVAL(TransRow["N_RequestType"].ToString()), User, dLayer, connection));
-                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_RequestID=" + nRequestID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
