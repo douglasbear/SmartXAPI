@@ -210,7 +210,7 @@ namespace SmartxAPI.Data
                         using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
                             cnn2.Open();
-                            if (AppID != 6)
+                            if (AppID != 6 && AppID != 8)
                             {
                                 string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                 dLayer.ExecuteScalar(appUpdate, cnn2);
