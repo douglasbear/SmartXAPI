@@ -31,12 +31,7 @@ namespace SmartxAPI.GeneralFunctions
             object Result = 0;
             string path = "";
             string s = "";
-            if(dsAttachment.Rows.Count==0){
-                return;
-            }
-            DataRow AttachmentRow = dsAttachment.Rows[0];
-            int FormID = myFunctions.getIntVAL(AttachmentRow["n_FormID"].ToString());
-            int FnYearID = myFunctions.getIntVAL(AttachmentRow["n_FnYearID"].ToString());
+
             int nCompanyID = myFunctions.GetCompanyID(User);
             string xCompanyName = myFunctions.GetCompanyName(User);
             int N_AttachmentID = 0;
@@ -45,11 +40,36 @@ namespace SmartxAPI.GeneralFunctions
             int N_FolderID = 0;
             object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
             string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
+
+
+
+
             if (dsAttachment.Rows.Count > 0)
             {
+                if (dsAttachment.Columns.Contains("deleted"))
+                {
+                    for (int x = dsAttachment.Rows.Count - 1; x >= 0; x--)
+                    {
+                        DataRow dr = dsAttachment.Rows[x];
+                        if (myFunctions.getBoolVAL(dr["deleted"].ToString()) == true)
+                        {
+                            dLayer.DeleteData("Dms_ScreenAttachments", "N_AttachmentID", myFunctions.getIntVAL(dr["N_AttachmentID"].ToString()), "", connection, transaction);
+                            dr.Delete();
+                        }
+                    }
+                    dsAttachment.Columns.Remove("deleted");
+                    dsAttachment.AcceptChanges();
 
-                            string X_DMSSubFolder = FormID + "//" + partycode + "-" + partyname;
-                            string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
+                }
+                if(dsAttachment.Rows.Count == 0){
+                    return;
+                }
+                DataRow AttachmentRow = dsAttachment.Rows[0];
+                int FormID = myFunctions.getIntVAL(AttachmentRow["n_FormID"].ToString());
+                int FnYearID = myFunctions.getIntVAL(AttachmentRow["n_FnYearID"].ToString());
+
+                string X_DMSSubFolder = FormID + "//" + partycode + "-" + partyname;
+                string X_folderName = X_DMSMainFolder + "//" + X_DMSSubFolder;
 
                 N_FolderID = DocFolderInsert(dLayer, xCompanyName + "//" + X_folderName + "//" + payCode + "//", 1, 0, FormID, User, connection, transaction);
                 if (DocumentPath != "")
@@ -66,6 +86,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
+
                     for (int i = 0; i <= dsAttachment.Rows.Count - 1; i++)
                     {
 
@@ -89,6 +110,8 @@ namespace SmartxAPI.GeneralFunctions
                             }
                             N_AttachmentID = myFunctions.getIntVAL(dsAttachment.Rows[i]["N_AttachmentID"].ToString());
                         }
+
+
                         string FileType = "";
                         if (dsAttachment.Rows[i]["X_Extension"].ToString() != "")
                             FileType = "File";
@@ -138,7 +161,7 @@ namespace SmartxAPI.GeneralFunctions
                                 object obj1 = dLayer.ExecuteScalar("select N_ReminderID from DMS_MasterFiles Where X_refName = '" + Path.GetFileName(dsAttachment.Rows[i]["X_refName"].ToString()) + "' and N_CompanyID = " + nCompanyID, connection, transaction);
                                 if (obj1.ToString() != "")
                                 {
-                                    dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                                    dLayer.ExecuteNonQuery("update Gen_Reminder set D_ExpiryDate = '" + Convert.ToDateTime(ExpiryDate).ToString("dd/MMM/yyyy") + "' ,N_RemCategoryID=" + N_remCategory + " where N_ReminderID=" + myFunctions.getIntVAL(obj1.ToString()) + " and N_CompanyID=" + nCompanyID, connection, transaction);
                                 }
                                 else
                                 {
@@ -375,9 +398,10 @@ namespace SmartxAPI.GeneralFunctions
                 if (var["x_refName"] != null)
                 {
                     var path = var["x_refName"].ToString();
-                    if(File.Exists(path)){
-                    Byte[] bytes = File.ReadAllBytes(path);
-                    var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
+                    if (File.Exists(path))
+                    {
+                        Byte[] bytes = File.ReadAllBytes(path);
+                        var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
                     }
                 }
 
