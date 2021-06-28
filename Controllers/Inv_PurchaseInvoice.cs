@@ -183,13 +183,18 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-                    SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
-                    dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
+
+
                     if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
                     N_PurchaseID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString());
                     N_POrderID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_POrderID"].ToString());
+                    if (nPurchaseNO != null)
 
+                    {
+                        SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
+                    }
 
                     //PURCHASE INVOICE DETAILS
                     bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
@@ -248,7 +253,7 @@ namespace SmartxAPI.Controllers
 
 
 
-          
+
             SortedList TxnStatus = new SortedList();
             TxnStatus.Add("Label", "");
             TxnStatus.Add("LabelColor", "");
@@ -326,8 +331,8 @@ namespace SmartxAPI.Controllers
 
                 else
                 {
-                    TxnStatus["Label"] = "NotPaid";
-                    TxnStatus["LabelColor"] = "Red";
+                    TxnStatus["Label"] = "Not Paid ";
+                    TxnStatus["LabelColor"] = "Green";
                     TxnStatus["Alert"] = "";
                 }
             }
