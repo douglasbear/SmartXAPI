@@ -1108,39 +1108,15 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
         [AllowAnonymous]
-        [HttpGet("dummy")]
-        public ActionResult GetVoucherDummy(string id)
+        [HttpPost("dummy")]
+        public ActionResult GetVoucherDummy([FromBody] DataSet ds)
         {
+            DataTable master= ds.Tables["master"];
             try
             {
-                return Ok(myFunctions.DecryptString("GMyUUIMUBAY="));
-                using (SqlConnection Con = new SqlConnection(connectionString))
-                {
-                    Con.Open();
-                    string sqlCommandText = "select * from Pay_EmploymentHistory";
-                    SortedList mParamList = new SortedList() { { "@p1", id } };
-                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
-                    masterTable = _api.Format(masterTable, "Pay_EmployeeEducation");
-
-                    // string sqlCommandText2 = "select * from Pay_EmpAddlInfo where N_EmpID=@p1";
-                    // SortedList dParamList = new SortedList() { { "@p1", id } };
-                    // DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
-                    // detailTable = _api.Format(detailTable, "Pay_EmpAddlInfo");
-
-                    // string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
-                    // DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
-                    // dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
-
-                    //if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                    DataSet dataSet = new DataSet();
-                    dataSet.Tables.Add(masterTable);
-                    // dataSet.Tables.Add(detailTable);
-                    //dataSet.Tables.Add(dtAmountDetails);
-
-                    return Ok(dataSet);
-
-                }
+                return Ok(myFunctions.DecryptString(master.Rows[0]["pwd"].ToString()));
             }
             catch (Exception e)
             {
