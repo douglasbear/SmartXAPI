@@ -401,7 +401,7 @@ namespace SmartxAPI.Controllers
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nEmpUpdateID = myFunctions.getIntVAL(MasterRow["N_EmpUpdateID"].ToString());
                 int N_UserID = myFunctions.getIntVAL(MasterRow["N_UserID"].ToString());
-                int N_NextApproverID=0;
+                int N_NextApproverID = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -413,14 +413,14 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
-                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID>0)
+                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0)
                     {
                         int N_PkeyID = nEmpUpdateID;
                         string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmployeeUpdate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nEmpUpdateID,"EMPLOYEE",X_EmpUpdateCode,dLayer,connection,transaction,User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Employee update Approved" + "-" + X_EmpUpdateCode));
                     }
                     if (X_EmpUpdateCode == "@Auto")
@@ -434,7 +434,7 @@ namespace SmartxAPI.Controllers
                         }
                         MasterTable.Rows[0]["X_EmpUpdateCode"] = X_EmpUpdateCode;
                     }
-                    if(nEmpUpdateID>0)
+                    if (nEmpUpdateID > 0)
                     {
                         dLayer.DeleteData("Pay_EmployeeUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
                     }
@@ -453,11 +453,11 @@ namespace SmartxAPI.Controllers
                     {
                         EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-  
-                        int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=nEmpUpdateID", EmpParams, connection, transaction).ToString());
+
+                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nEmpUpdateID,"EMPLOYEE",X_EmpUpdateCode,dLayer,connection,transaction,User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
                     }
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("X_EmpUpdateCode", X_EmpUpdateCode.ToString());
@@ -652,6 +652,12 @@ namespace SmartxAPI.Controllers
                             dtMasterTable.Rows[0]["N_LedgerID"] = N_LedgerID;
                     }
 
+                    string empImage = myFunctions.ContainColumn("i_Employe_Image", dtMasterTable) ? dtMasterTable.Rows[0]["i_Employe_Image"].ToString() : "";
+                    Byte[] empImageBitmap = new Byte[empImage.Length];
+                    empImageBitmap = Convert.FromBase64String(empImage);
+                    if (myFunctions.ContainColumn("i_Employe_Image", dtMasterTable))
+                        dtMasterTable.Columns.Remove("i_Employe_Image");
+
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + xEmpCode.Trim() + "'";
                     string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
@@ -663,6 +669,9 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (empImage.Length > 0)
+                            dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
+
                         nSavedEmpID = nEmpID;
                         QueryParams.Add("@nSavedEmpID", nEmpID);
                         //inserting to [Log_ScreenActivity
@@ -980,13 +989,13 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nFnYearID", nFnYearID);
                     if (nFnYearID == 0)
                     {
-                        object nFnYearIDto = dLayer.ExecuteScalar("select max(N_FnYearID) from Acc_Fnyear where N_CompanyID=" + nCompanyID,  Params, connection, transaction);
+                        object nFnYearIDto = dLayer.ExecuteScalar("select max(N_FnYearID) from Acc_Fnyear where N_CompanyID=" + nCompanyID, Params, connection, transaction);
                         nFnYearID = myFunctions.getIntVAL(nFnYearIDto.ToString());
                     }
-                    string sqlCommandText = "Select N_CompanyID, N_BranchID, N_FnYearID, N_EmpID, X_EmpCode, X_EmpName, N_Status from vw_ReportingTo Where N_CompanyID=@nCompanyID and N_FnYearID="+nFnYearID+" and N_Status not in(2,3) order by X_EmpCode";
+                    string sqlCommandText = "Select N_CompanyID, N_BranchID, N_FnYearID, N_EmpID, X_EmpCode, X_EmpName, N_Status from vw_ReportingTo Where N_CompanyID=@nCompanyID and N_FnYearID=" + nFnYearID + " and N_Status not in(2,3) order by X_EmpCode";
 
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
 
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
@@ -1099,39 +1108,15 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
         [AllowAnonymous]
-        [HttpGet("dummy")]
-        public ActionResult GetVoucherDummy(string id)
+        [HttpPost("dummy")]
+        public ActionResult GetVoucherDummy([FromBody] DataSet ds)
         {
+            DataTable master= ds.Tables["master"];
             try
             {
-                return Ok(myFunctions.DecryptString("GMyUUIMUBAY="));
-                using (SqlConnection Con = new SqlConnection(connectionString))
-                {
-                    Con.Open();
-                    string sqlCommandText = "select * from Pay_EmploymentHistory";
-                    SortedList mParamList = new SortedList() { { "@p1", id } };
-                    DataTable masterTable = dLayer.ExecuteDataTable(sqlCommandText, mParamList, Con);
-                    masterTable = _api.Format(masterTable, "Pay_EmployeeEducation");
-
-                    // string sqlCommandText2 = "select * from Pay_EmpAddlInfo where N_EmpID=@p1";
-                    // SortedList dParamList = new SortedList() { { "@p1", id } };
-                    // DataTable detailTable = dLayer.ExecuteDataTable(sqlCommandText2, dParamList, Con);
-                    // detailTable = _api.Format(detailTable, "Pay_EmpAddlInfo");
-
-                    // string sqlCommandText3 = "select * from Inv_SaleAmountDetails where N_SalesId=@p1";
-                    // DataTable dtAmountDetails = dLayer.ExecuteDataTable(sqlCommandText3, dParamList, Con);
-                    // dtAmountDetails = _api.Format(dtAmountDetails, "saleamountdetails");
-
-                    //if (detailTable.Rows.Count == 0) { return Ok(new { }); }
-                    DataSet dataSet = new DataSet();
-                    dataSet.Tables.Add(masterTable);
-                    // dataSet.Tables.Add(detailTable);
-                    //dataSet.Tables.Add(dtAmountDetails);
-
-                    return Ok(dataSet);
-
-                }
+                return Ok(myFunctions.DecryptString(master.Rows[0]["pwd"].ToString()));
             }
             catch (Exception e)
             {
@@ -1163,43 +1148,43 @@ namespace SmartxAPI.Controllers
 
                     // else
                     // {
-                        object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
-                        if (obj != null)
-                        {
-                            return Ok(_api.Error("Unpaid Dues Exists"));
-                        }
+                    object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
+                    if (obj != null)
+                    {
+                        return Ok(_api.Error("Unpaid Dues Exists"));
+                    }
 
-                        DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
-                        if (SalaryLedger.Rows.Count > 0)
+                    DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
+                    if (SalaryLedger.Rows.Count > 0)
+                    {
+                        if (SalaryLedger.Rows[0]["X_EmpName"].ToString() == SalaryLedger.Rows[0]["X_LedgerName"].ToString())
                         {
-                            if (SalaryLedger.Rows[0]["X_EmpName"].ToString() == SalaryLedger.Rows[0]["X_LedgerName"].ToString())
-                            {
-                                dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(SalaryLedger.Rows[0]["N_LedgerID"].ToString()), "", connection, transaction);
-                            }
+                            dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(SalaryLedger.Rows[0]["N_LedgerID"].ToString()), "", connection, transaction);
                         }
-                        DataTable LoanLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LoanLedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LoanLedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
-                        if (LoanLedger.Rows.Count > 0)
+                    }
+                    DataTable LoanLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LoanLedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LoanLedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
+                    if (LoanLedger.Rows.Count > 0)
+                    {
+                        if (LoanLedger.Rows[0]["X_EmpName"].ToString() + " " + "Loan" == LoanLedger.Rows[0]["X_LedgerName"].ToString())
                         {
-                            if (LoanLedger.Rows[0]["X_EmpName"].ToString() + " " + "Loan" == LoanLedger.Rows[0]["X_LedgerName"].ToString())
-                            {
-                                dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(LoanLedger.Rows[0]["N_LoanLedgerID"].ToString()), "", connection, transaction);
-                            }
+                            dLayer.DeleteData("Acc_Mastledger", "N_LedgerID", myFunctions.getIntVAL(LoanLedger.Rows[0]["N_LoanLedgerID"].ToString()), "", connection, transaction);
                         }
-                        //Delete
-                        dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeeAlerts", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeePayHistory", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_VacationDetails", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Web_Pay_EmployeeLogin", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Inv_Salesman", "N_EmpRefID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Sec_User", "N_UserID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_EmployeeAttachments", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
+                    }
+                    //Delete
+                    dLayer.DeleteData("Pay_PaySetup", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_EmployeeAlerts", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_EmployeePayHistory", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_VacationDetails", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Web_Pay_EmployeeLogin", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Inv_Salesman", "N_EmpRefID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Sec_User", "N_UserID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_EmployeeAttachments", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
+                    dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
 
 
-                    
+
                     transaction.Commit();
                 }
                 return Ok(_api.Success("Employee Deleted"));

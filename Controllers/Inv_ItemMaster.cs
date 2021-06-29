@@ -368,8 +368,11 @@ namespace SmartxAPI.Controllers
                             newRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
                             MasterTable.Rows.Add(newRow);
                             MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_VariantName"].ToString();
-                            MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
-                            MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_VariantPrice"].ToString();
+                            if (VariantList.Rows[i]["X_VariantBarcode"].ToString() != "")
+                                MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
+                            if (VariantList.Rows[i]["N_VariantPrice"].ToString() != "")
+                                MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_VariantPrice"].ToString();
+                            MasterTable.Rows[j]["N_CLassID"] = "2";
                             j++;
                         }
                     }
@@ -401,7 +404,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQuery("update  Inv_ItemMaster set B_Show = 1  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
                         }
-                        if (ItemType == 6)
+                        if (ItemType == 6 || k > 0)
                             dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_GroupID=" + N_VariantGrpType + "  where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
 
 
@@ -413,6 +416,10 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow var in PurchaseUnit.Rows) var["n_ItemID"] = N_ItemID;
                         foreach (DataRow var in AddUnit1.Rows) var["n_ItemID"] = N_ItemID;
                         foreach (DataRow var in AddUnit2.Rows) var["n_ItemID"] = N_ItemID;
+
+                        if (k > 0)
+                            foreach (DataRow var in StockUnit.Rows) var["N_SellingPrice"] = MasterTable.Rows[k]["N_Rate"].ToString();
+
 
                         int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
                         dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);

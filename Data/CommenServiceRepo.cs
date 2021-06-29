@@ -147,15 +147,17 @@ namespace SmartxAPI.Data
 
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
-
+                string xGlobalUserID="";
                 using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
-                    string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_EmailID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_EmailID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_EmailID ='" + username + "')";
+                    string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
 
                     DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
-                    if (globalInfo.Rows.Count > 0)
+                    if (globalInfo.Rows.Count > 0){
                         loginRes.GlobalUserInfo = globalInfo;
+                        xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
+                        }
                 }
 
 
@@ -180,6 +182,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.System,AppID.ToString()),
                         new Claim(ClaimTypes.PrimarySid,globalUserID.ToString()),
                         new Claim(ClaimTypes.PrimaryGroupSid,clientID.ToString()),
+                        new Claim(ClaimTypes.UserData,xGlobalUserID.ToString()),
                         new Claim(ClaimTypes.Email,username),
                         new Claim(ClaimTypes.Uri,uri)
                     }),
@@ -210,7 +213,7 @@ namespace SmartxAPI.Data
                         using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
                             cnn2.Open();
-                            if (AppID != 6)
+                            if (AppID != 6 && AppID != 8)
                             {
                                 string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                 dLayer.ExecuteScalar(appUpdate, cnn2);
@@ -344,6 +347,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.GroupSid,loginRes.N_UserCategoryID.ToString()),
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
+                        new Claim(ClaimTypes.UserData,xGlobalUserID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
                         new Claim(ClaimTypes.System,AppID.ToString())
                     }),

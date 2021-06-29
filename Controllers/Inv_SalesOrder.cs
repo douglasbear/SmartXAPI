@@ -176,8 +176,11 @@ namespace SmartxAPI.Controllers
                     DetailParams.Add("@nCompanyID", nCompanyID);
                     object N_SalesOrderTypeID = dLayer.ExecuteScalar("Select N_OrderTypeID from Inv_SalesOrder where N_SalesOrderId=@nSOrderID and N_CompanyID=@nCompanyID", DetailParams, connection);
                     DetailParams.Add("@nSalesOrderTypeID", N_SalesOrderTypeID);
+                    if(!MasterTable.Columns.Contains("N_OrderTypeID"))
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_OrderTypeID", typeof(string), N_SalesOrderTypeID);
+                    if(!MasterTable.Columns.Contains("SalesOrderType"))
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderType", typeof(string), "");
+                    if(!MasterTable.Columns.Contains("D_ContractEndDate"))
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_ContractEndDate", typeof(string), null);
                     MasterTable.Rows[0]["SalesOrderType"] = "";
                     if (N_SalesOrderTypeID.ToString() != "")
