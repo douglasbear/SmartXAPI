@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
             string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP) and N_SalesmanID =" + nSalesmanId + "";
             string sqlPreviousRevenue = "SELECT COUNT(*) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate())) and N_SalesmanID =" + nSalesmanId + "";
             string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QtoQRevenue where N_CompanyID = " + nCompanyID + " and N_FnyearID =" + nFnYearId + " group by quarter";
-            string sqlTargetRevenue = "SELECT (Cast(REPLACE(N_TargetAmount,',','') as Numeric(10,2)) ) as TotalAmount FROM Inv_Salesman WHERE N_CompanyID = " + nCompanyID + "  N_SalesmanID =" + nSalesmanId + "";
+            string sqlTargetRevenue = "SELECT (Cast(REPLACE(N_TargetAmount,',','') as Numeric(10,2)) ) as TotalAmount FROM Inv_Salesman WHERE N_CompanyID = " + nCompanyID + " and  N_SalesmanID =" + nSalesmanId + "";
 
             SortedList Data = new SortedList();
             DataTable CurrentLead = new DataTable();
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
                     CurrentRevenue = dLayer.ExecuteDataTable(sqlCurrentRevenue, Params, connection);
                     RevenueLastMonth = dLayer.ExecuteDataTable(sqlPreviousRevenue, Params, connection);
                     QuarterlyRevenue = dLayer.ExecuteDataTable(sqlQuarterlyRevenue, Params, connection);
-
+                    TargetRevenue = dLayer.ExecuteDataTable(sqlTargetRevenue, Params, connection);
                     if (myFunctions.getVAL(LeadLastMonth.ToString()) != 0)
                         LeadPercentage = ((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString()) - myFunctions.getVAL(LeadLastMonth.ToString())) / myFunctions.getVAL(LeadLastMonth.ToString()) * 100).ToString();
                     if (myFunctions.getVAL(CustomerLastMonth.ToString()) != 0)
@@ -316,8 +316,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("opportunitylist")]
-        public ActionResult OpportunityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("opportunitylist1")]
+        public ActionResult OpportunityList1(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();

@@ -405,13 +405,15 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         nApprovalID = this.getIntVAL(objApproval.ToString());
                         ApprovalParams["@nApprovalID"] = nApprovalID;
-                    }else{
-                         object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
-                    if (ApprovalCode != null)
-                    {
-                        nApprovalID = this.getIntVAL(ApprovalCode.ToString());
-                        ApprovalParams["@nApprovalID"] = nApprovalID;
                     }
+                    else
+                    {
+                        object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        if (ApprovalCode != null)
+                        {
+                            nApprovalID = this.getIntVAL(ApprovalCode.ToString());
+                            ApprovalParams["@nApprovalID"] = nApprovalID;
+                        }
                     }
 
                 }
@@ -870,10 +872,32 @@ namespace SmartxAPI.GeneralFunctions
                     N_SaveDraft = 0;
                 else
                     N_SaveDraft = 1;
+                if (MasterTable.Columns.Contains("N_ApprovalLevelId"))
+                {
+                    MasterTable.Rows[0]["N_ApprovalLevelId"] = N_userLevel;
+                }
+                else
+                {
+                    MasterTable = this.AddNewColumnToDataTable(MasterTable, "N_ApprovalLevelId", typeof(int), N_userLevel);
+                }
 
-                MasterTable = this.AddNewColumnToDataTable(MasterTable, "N_ApprovalLevelId", typeof(int), N_userLevel);
-                MasterTable = this.AddNewColumnToDataTable(MasterTable, "N_ProcStatus", typeof(int), N_ProcStatus);
-                MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), N_SaveDraft);
+                if (MasterTable.Columns.Contains("N_ProcStatus"))
+                {
+                    MasterTable.Rows[0]["N_ProcStatus"] = N_ProcStatus;
+                }
+                else
+                {
+                    MasterTable = this.AddNewColumnToDataTable(MasterTable, "N_ProcStatus", typeof(int), N_ProcStatus);
+                }
+
+                if (MasterTable.Columns.Contains("B_IssaveDraft"))
+                {
+                    MasterTable.Rows[0]["B_IssaveDraft"] = N_SaveDraft;
+                }
+                else
+                {
+                    MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), N_SaveDraft);
+                }
             }
             else if (N_IsApprovalSystem == 0)
             {

@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
             string sqlCurrentRevenue = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE MONTH(D_EntryDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_EntryDate) = YEAR(CURRENT_TIMESTAMP)";
             string sqlPreviousRevenue ="SELECT COUNT(*) as N_LastMonth,sum(Cast(REPLACE(N_ExpRevenue,',','') as Numeric(10,2)) ) as TotalAmount FROM CRM_Opportunity WHERE DATEPART(m, D_EntryDate) = DATEPART(m, DATEADD(m, -1, getdate()))";
             string sqlTopSalesman ="select top(5) X_SalesmanName as X_SalesmanName, N_TotRevenue N_Percentage from vw_InvSalesmanRevenue where N_CompanyID = "+nCompanyID+" order by N_TotRevenue Desc";
-            string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QtoQRevenue where N_CompanyID = "+nCompanyID+" and N_FnyearID ="+nFnYearId+" group by quarter";
+            string sqlQuarterlyRevenue = "select sum(N_TotAmt) as N_Amount,quarter from vw_QuarterlyRevenue where N_CompanyID = "+nCompanyID+" and N_FnyearID ="+nFnYearId+" group by quarter";
 
             SortedList Data=new SortedList();
             DataTable CurrentLead = new DataTable();
@@ -317,8 +317,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
- [HttpGet("opportunitylist")]
-        public ActionResult OpportunityList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+ [HttpGet("opportunitylist1")]
+        public ActionResult OpportunityList1(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
