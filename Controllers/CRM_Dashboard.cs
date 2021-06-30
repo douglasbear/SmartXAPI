@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
 
 
                     if(myFunctions.getVAL(LeadLastMonth.ToString())!=0)
-                        LeadPercentage=((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString()))/myFunctions.getVAL(LeadLastMonth.ToString())*100).ToString();
+                        LeadPercentage=((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString())*100)/myFunctions.getVAL(LeadLastMonth.ToString())).ToString();
                     if(myFunctions.getVAL(CustomerLastMonth.ToString())!=0)
                         CustomerPercentage=((myFunctions.getVAL(CurrentCustomer.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(CustomerLastMonth.ToString()))/myFunctions.getVAL(CustomerLastMonth.ToString())*100).ToString();
                   if(myFunctions.getVAL(RevenueLastMonth.ToString())!=0)
