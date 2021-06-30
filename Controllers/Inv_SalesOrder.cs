@@ -147,6 +147,18 @@ namespace SmartxAPI.Controllers
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
+
+                        if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerId"].ToString()) == 0)
+                        {
+                            object CustomerID = dLayer.ExecuteScalar("select N_CustomerId from Inv_Customer where N_CompanyID=@nCompanyID and N_CrmCompanyID=" + MasterTable.Rows[0]["n_CrmCompanyID"].ToString(), Params, connection);
+                            object CustomerName = dLayer.ExecuteScalar("select X_CustomerName from Inv_Customer where N_CompanyID=@nCompanyID and N_CrmCompanyID=" + MasterTable.Rows[0]["n_CrmCompanyID"].ToString(), Params, connection);
+                            if (CustomerID != null)
+                            {
+                                MasterTable.Rows[0]["N_CustomerId"] = CustomerID.ToString();
+                                MasterTable.Rows[0]["X_CustomerName"] = CustomerName.ToString();
+                            }
+
+                        }
                         DetailSql = "";
                         DetailSql = "select * from vw_Inv_SalesQuotationDetails_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
