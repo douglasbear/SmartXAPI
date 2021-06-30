@@ -34,78 +34,44 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["Crm_Leads"];
-
-                int nCompanyID = 1;
+                DataTable Mastertable = new DataTable();
+                int nCompanyID = myFunctions.GetCompanyID(User);
                 int nFnYearId = 1;
-                int nLeadID = 0;
+                int nMasterID = 0;
+                string xTableName = "";
+                SortedList Params = new SortedList();
+                Params.Add("N_CompanyID", nCompanyID);
+                Params.Add("N_FnYearID", nFnYearId);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList Params = new SortedList();
-                    // Auto Gen
-                    string LeadCode = "";
-                    var values = "@Auto";
-                    Params.Add("N_CompanyID", nCompanyID);
-                    Params.Add("N_YearID", nFnYearId);
-                    Params.Add("N_FormID", 1305);
-                    // foreach (DataRow dRow in MasterTable.Rows)
-                    // {
-                    // if (values == "@Auto")
-                    // {
+                    foreach (DataTable dt in ds.Tables)
+                    {
+                        if (dt.TableName == "Customer List")
+                        {
+                            Mastertable = ds.Tables["Customer List"];
+                            Mastertable.Columns.Add("Pkey_Code");
+                            xTableName = "Mig_Customers";
+                            Params.Add("X_Type", "customer");
 
-                    //     LeadCode = dLayer.GetAutoNumber("CRM_Leads", "X_LeadCode", Params, connection, transaction);
-                    //     if (LeadCode == "") { transaction.Rollback(); return Ok(); }
-                    //     MasterTable.Rows[0]["X_LeadCode"] = LeadCode;
-                    // }
-                    nLeadID = dLayer.SaveData("CRM_Leads", "N_LeadID", MasterTable, connection, transaction);
-                    // }
-                    if (nLeadID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }
-                    else
-                    {
-                        transaction.Commit();
-                        return Ok(_api.Success("Lead Created"));
+                        }
+                        if (Mastertable.Rows.Count > 0)
+                        {
+                            dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
+                            nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+                            if (nMasterID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                        }
                     }
 
-                    // connection.Open();
-                    // SqlTransaction transaction = connection.BeginTransaction();
-
-                    // SortedList Params = new SortedList();
-                    // // Auto Gen
-                    // string LocationCode = "";
-                    // var values = MasterTable.Rows[0]["X_LocationCode"].ToString();
-                    // if (values == "@Auto")
-                    // {
-                    //     Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                    //     Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
-                    //     Params.Add("N_FormID", 450);
-                    //     Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
-                    //     LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
-                    //     if (LocationCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Location Code")); }
-                    //     MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
-                    // }
-
-                    // MasterTable.Columns.Remove("n_FnYearId");
-                    // MasterTable.Columns.Remove("b_isSubLocation");
-                    // int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
-                    // if (N_LocationID <= 0)
-                    // {
-                    //     transaction.Rollback();
-                    //     return Ok(_api.Warning("Unable to save"));
-                    // }
-                    // else
-                    // {
-                    //     transaction.Commit();
-                    //     return Ok();
-                    // }
+                    transaction.Commit();
                 }
+                return Ok(_api.Success("Uploaded"));
             }
             catch (Exception ex)
             {
