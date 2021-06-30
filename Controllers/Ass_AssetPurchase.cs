@@ -615,6 +615,7 @@ namespace SmartxAPI.Controllers
           [HttpGet("poDetails")]
         public ActionResult PODetails(string xPOrderNo,int nFnYearID)
         {
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -628,7 +629,7 @@ namespace SmartxAPI.Controllers
                     string Mastersql = "";
                     string DetailSql = "";
 
-                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@xPOrderNo", xPOrderNo);
                     Params.Add("@nFnYearID", nFnYearID);
 
