@@ -309,7 +309,8 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(dt);
 
                 dataSet.Tables.Add(Images);
-
+                dataSet.Tables.Add(dtVariantList);
+                dataSet.Tables.Add(dtItemUnits);
 
                 return Ok(_api.Success(dataSet));
 
@@ -382,11 +383,11 @@ namespace SmartxAPI.Controllers
                             {
                                 newRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
                                 MasterTable.Rows.Add(newRow);
-                                MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_VariantName"].ToString();
-                                if (VariantList.Rows[i]["X_VariantBarcode"].ToString() != "")
-                                    MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
-                                if (VariantList.Rows[i]["N_VariantPrice"].ToString() != "")
-                                    MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_VariantPrice"].ToString();
+                                MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_ItemName"].ToString();
+                                if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
+                                    MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
+                                if (VariantList.Rows[i]["N_Rate"].ToString() != "")
+                                    MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_Rate"].ToString();
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
                             }
                             else
