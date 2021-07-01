@@ -399,6 +399,7 @@ namespace SmartxAPI.Controllers
                 X_Condn = " and N_CompanyID=@nCompanyID and B_ReceiptVoucher='True'";
 
             string PaymentType = dLayer.ExecuteScalar("Select X_PayMethod from Acc_PaymentMethodMaster  where  B_isDefault='True'" + X_Condn,Params,connection).ToString();
+            int nType =myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_TypeID from Acc_PaymentMethodMaster where  B_isDefault='True'" + X_Condn,Params, connection).ToString());
             int N_BehID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_PaymentMethodID from Acc_PaymentMethodMaster where  B_isDefault='True'" + X_Condn,Params, connection).ToString());
             string FieldName = "V " + N_BehID;
 
@@ -410,7 +411,8 @@ namespace SmartxAPI.Controllers
                     DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
                         SortedList Default = new SortedList(){
                             {"defultPaymentMethodID",N_BehID},
-                            {"defultPaymentMethod",PaymentType}
+                            {"defultPaymentMethod",PaymentType},
+                            {"defultPaymentMethodType",nType}
                         };
                         SortedList OutPut = new SortedList(){
                             {"settings",api.Format(Details)},
