@@ -459,8 +459,8 @@ namespace SmartxAPI.Controllers
                     {
                         EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-
-                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
+  
+                        int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);

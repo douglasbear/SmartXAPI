@@ -176,6 +176,8 @@ namespace SmartxAPI.Controllers
                 break;
                 case "Pricetype": N_FormID=3;
                 break;
+                case "CrmWorkType": N_FormID=1360;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_ReferId=@p1 order by n_Sort ASC";

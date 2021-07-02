@@ -167,6 +167,7 @@ namespace SmartxAPI.Controllers
 
                 int nClientID = myFunctions.GetClientID(User);
                 int globalUserID, userID, nUserID, nGlobalUserID = 0;
+                               
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -190,7 +191,8 @@ namespace SmartxAPI.Controllers
                         userParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                         userParams.Add("@nGlobalUserID", globalUser.Rows[0]["n_UserID"].ToString());
                         userParams.Add("@xEmailID", globalUser.Rows[0]["x_EmailID"].ToString());
-
+                       
+                        
                         string skipUserSql = "";
 
                         if (nGlobalUserID == 0)
@@ -275,8 +277,10 @@ namespace SmartxAPI.Controllers
                         globalUser.Rows[0]["x_Password"] = xPwd;
 
 
-
+                        
                         globalUserID = dLayer.SaveData("Users", "n_UserID", globalUser, olivoCon, olivoTxn);
+
+                       
                         if (globalUserID <= 0)
                         {
                             transaction.Rollback();
