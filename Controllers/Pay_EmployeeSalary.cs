@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             Params.Add("@p1", nCompanyID);
 
-            string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 order by X_Type desc";
+            string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and isnull(N_CountryID,0)=1 order by X_Type desc";
 
             SortedList OutPut = new SortedList();
 

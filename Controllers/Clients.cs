@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
                 DataRow MasterRow = MasterTable.Rows[0];
 
                 string email = MasterRow["x_EmailID"].ToString();
-                
+
 
                 using (SqlConnection connection = new SqlConnection(masterDBConnectionString))
                 {
@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                     string Password = myFunctions.EncryptString(pwd);
                     MasterTable.Rows[0]["b_Inactive"] = true;
                     MasterTable.Rows[0]["n_UserLimit"] = 1;
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AdminUserID", typeof(string),email );
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_AdminUserID", typeof(string), email);
 
                     int ClientID = dLayer.SaveData("ClientMaster", "N_ClientID", MasterTable, connection, transaction);
                     if (ClientID <= 0)
@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                     UserTable.Rows[0]["b_EmailVerified"] = false;
                     UserTable.Rows[0]["b_Inactive"] = true;
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string),email );
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
 
 
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                 }
-                SortedList Res = Login(email, pwd, "Registration",0);
+                SortedList Res = Login(email, pwd, "Registration", 0);
                 if (Res["StatusCode"].ToString() == "0")
                 {
                     return Ok(_api.Error(Res["Message"].ToString()));
@@ -144,12 +144,12 @@ namespace SmartxAPI.Controllers
                     DataTable UserTable = ds.Tables["user"];
                     var password = UserTable.Rows[0]["password"].ToString();
                     var emailID = UserTable.Rows[0]["emailID"].ToString();
-                    int appType = myFunctions.getIntVAL( UserTable.Rows[0]["appType"].ToString());
+                    int appType = myFunctions.getIntVAL(UserTable.Rows[0]["appType"].ToString());
 
 
                     if (emailID == null || password == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
-                    SortedList Res = Login(emailID, password, "Login",appType);
+                    SortedList Res = Login(emailID, password, "Login", appType);
                     if (Res["StatusCode"].ToString() == "0")
                     {
                         return Ok(_api.Error(Res["Message"].ToString()));
@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private SortedList Login(string emailID, string password, string Type,int appType)
+        private SortedList Login(string emailID, string password, string Type, int appType)
         {
             SortedList Res = new SortedList();
 
@@ -176,7 +176,6 @@ namespace SmartxAPI.Controllers
                     cnn.Open();
                     password = myFunctions.EncryptString(password);
                     string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_AdminUserID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID =@emailID and Users.x_Password=@xPassword)";
-
                     SortedList Params = new SortedList();
                     Params.Add("@emailID", emailID);
                     Params.Add("@xPassword", password);
@@ -187,8 +186,9 @@ namespace SmartxAPI.Controllers
                         Res.Add("StatusCode", 0);
                         return Res;
                     }
-                    if(appType>0){
-                        output.Rows[0]["N_ActiveAppID"] =appType;
+                    if (appType > 0)
+                    {
+                        output.Rows[0]["N_ActiveAppID"] = appType;
                     }
 
                     if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null && output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
@@ -202,7 +202,10 @@ namespace SmartxAPI.Controllers
                             connection.Open();
                             SortedList paramList = new SortedList();
                             paramList.Add("@nClientID", myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString()));
-                            DataTable companyDt = dLayer.ExecuteDataTable("select N_CompanyID,X_CompanyName from Acc_Company where N_ClientID=@nClientID", paramList, connection);
+                            paramList.Add("@emailID", emailID);
+                            string sqlCompany = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName FROM Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where Acc_Company.N_ClientID=@nClientID and Sec_User.X_UserID=@emailID";
+
+                            DataTable companyDt = dLayer.ExecuteDataTable(sqlCompany, paramList, connection);
                             if (companyDt.Rows.Count == 0)
                             {
                                 Res.Add("Message", "Something went wrong.");
@@ -266,10 +269,10 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                if(ex.Message=="InactiveUser")
-                Res.Add("Message", "User Inactive");
-else
-                Res.Add("Message", "Something went wrong..");
+                if (ex.Message == "InactiveUser")
+                    Res.Add("Message", "User Inactive");
+                else
+                    Res.Add("Message", "Something went wrong..");
 
 
                 Res.Add("StatusCode", 0);

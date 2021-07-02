@@ -439,7 +439,13 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_EmployeeUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
                     }
 
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
+                   // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
+                   if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if (MasterTable.Columns.Contains("N_Procstatus"))
+                        MasterTable.Columns.Remove("N_Procstatus");
+                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
+                        MasterTable.Columns.Remove("B_IsSaveDraft");
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
@@ -453,8 +459,8 @@ namespace SmartxAPI.Controllers
                     {
                         EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-
-                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=nEmpUpdateID", EmpParams, connection, transaction).ToString());
+  
+                        int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
                         transaction.Commit();
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
@@ -471,10 +477,10 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("updatedDetails")]
-        public ActionResult GetUpdatedDetails(string xVacationGroupCode, int nBranchID, bool bShowAllBranchData)
+        public ActionResult GetUpdatedDetails(string xEmpUpdateCode, int nFnYearID)
         {
             DataTable Master = new DataTable();
-            DataTable Detail = new DataTable();
+            //DataTable Detail = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
@@ -482,8 +488,8 @@ namespace SmartxAPI.Controllers
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@xVacationGroupCode", xVacationGroupCode);
-            QueryParams.Add("@nBranchID", nBranchID);
+            QueryParams.Add("@xEmpUpdateCode", xEmpUpdateCode);
+            QueryParams.Add("@nFnYearID", nFnYearID);
             string Condition = "";
             string _sqlQuery = "";
             try
@@ -492,13 +498,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    if (bShowAllBranchData == true)
-                        Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_TransType=1";
-                    else
-                        Condition = "n_Companyid=@nCompanyID and X_VacationGroupCode =@xVacationGroupCode and N_BranchID=@nBranchID and N_TransType=1";
+                    Condition = "n_Companyid=@nCompanyID and X_EmpUpdateCode =@xEmpUpdateCode";
 
-
-                    _sqlQuery = "Select * from vw_PayVacationMaster Where " + Condition + "";
+                    _sqlQuery = "Select * from vw_PayEmployeeUpdate Where " + Condition + "";
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
@@ -510,36 +512,26 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
-                        QueryParams.Add("@nEmpID", Master.Rows[0]["N_EmpID"].ToString());
+                        // QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
+                        // QueryParams.Add("@nEmpID", Master.Rows[0]["N_EmpID"].ToString());
 
 
                         ds.Tables.Add(Master);
-                        Condition = "";
-                        if (bShowAllBranchData == true)
-                            Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
-                        else
-                            Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_BranchID=@nBranchID  and N_TransType=1 and X_Type='B'";
+                        // Condition = "";
+                        // Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
+                   
 
-                        _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,1) As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
-                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        // _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,1) As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
+                        // Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                        Detail = _api.Format(Detail, "details");
-                        if (Detail.Rows.Count == 0)
-                        {
-                            return Ok(_api.Notice("No Results Found"));
-                        }
-
-                        // DataTable benifits = FillCodeList(companyid, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), connection);
-
-                        // ds.Tables.Add(_api.Format(benifits, "benifits"));
-                        // ds.Tables.Add(Detail);
+                        // Detail = _api.Format(Detail, "details");
+                        // if (Detail.Rows.Count == 0)
+                        // {
+                        //     return Ok(_api.Notice("No Results Found"));
+                        // }
 
 
-                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                        Attachements = _api.Format(Attachements, "attachments");
-                        ds.Tables.Add(Attachements);
-
+                       
                         return Ok(_api.Success(ds));
                     }
 
@@ -551,6 +543,71 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpDelete("approvalUpdate")]
+        public ActionResult DeleteUpdatedData(int nEmpUpdateID, int nFnYearID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nEmpUpdateID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_EmpID,0) as N_EmpID,X_EmpUpdateCode from Pay_EmployeeUpdate where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpUpdateID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                    int EmpID = myFunctions.getIntVAL(TransRow["N_EmpID"].ToString());
+                    SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    EmpParams.Add("@nEmpID", EmpID);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
+
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nEmpUpdateID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+                    SqlTransaction transaction = connection.BeginTransaction(); ;
+
+                    string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                    if(ProcStatus!=6||ProcStatus!=0)
+                    {
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, TransRow["X_EmpUpdateCode"].ToString(), ProcStatus, "Pay_EmployeeUpdate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
+                        if (status != "Error")
+                        {
+                            transaction.Commit();
+                            return Ok(_api.Success("Employee Update " + status + " Successfully"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete Employee Update"));
+                        }
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to delete Employee Update"));
+                    }
+
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
         }
 

@@ -157,84 +157,60 @@ namespace SmartxAPI.Controllers
         [HttpGet("lookup/{type}")]
         public ActionResult GetLookup(string type)
         {
-            int N_FormID = 0;
-            switch (type)
-            {
-                case "VendorType":
-                    N_FormID = 52;
-                    break;
-                case "Stage":
-                    N_FormID = 1310;
-                    break;
-                case "Industry":
-                    N_FormID = 1311;
-                    break;
-                case "LeadSource":
-                    N_FormID = 1312;
-                    break;
-                case "SubSource":
-                    N_FormID = 1355;
-                    break;
-                case "Priority":
-                    N_FormID = 1356;
-                    break;
-                case "CustomerCategory":
-                    N_FormID = 1357;
-                    break;
-                case "CrmItem":
-                    N_FormID = 1358;
-                    break;
-                case "LeadStatus":
-                    N_FormID = 1313;
-                    break;
-                case "District":
-                    N_FormID = 1273;
-                    break;
-                case "Ownership":
-                    N_FormID = 1314;
-                    break;
-                case "BloodGroup":
-                    N_FormID = 14;
-                    break;
-                case "DrivingLicence":
-                    N_FormID = 1208;
-                    break;
-                case "WorkLocation":
-                    N_FormID = 1332;
-                    break;
-                case "EducationType":
-                    N_FormID = 28;
-                    break;
-                case "serviceType":
-                    N_FormID = 1151;
-                    break;
-                case "WorkType":
-                    N_FormID = 1121;
-                    break;
-                case "ProjectType":
-                    N_FormID = 1048;
-                    break;
-                case "EnquiryType":
-                    N_FormID = 1100;
-                    break;
-                case "SubmissionType":
-                    N_FormID = 1123;
-                    break;
-                case "SeparationReason":
-                    N_FormID = 455;
-                    break;
-                case "Rating":
-                    N_FormID = 9;
-                    break;
-                case "Purpose":
-                    N_FormID = 51;
-                    break;
-                case "InsuranceClass":
-                    N_FormID = 17;
-                    break;
-                case "Pricetype":
-                    N_FormID = 3;
-                    break;
+            int N_FormID=0;           
+            switch(type){
+                case "VendorType": N_FormID=52;
+                break;
+                case "Stage": N_FormID=1310;
+                break;
+                case "Industry": N_FormID=1311;
+                break;
+                case "LeadSource": N_FormID=1312;
+                break;
+                case "SubSource": N_FormID=1355;
+                break;
+                case "Priority": N_FormID=1356;
+                break;
+                case "CustomerCategory": N_FormID=1357;
+                break;
+                case "CrmItem": N_FormID=1358;
+                break;
+                case "LeadStatus": N_FormID=1313;
+                break;
+                 case "District": N_FormID=1273;
+                break;
+                case "Ownership": N_FormID=1314;
+                break;
+                case "BloodGroup": N_FormID=14;
+                break;
+                case "DrivingLicence": N_FormID=1208;
+                break;
+                case "WorkLocation": N_FormID=1332;
+                break;
+                case "EducationType": N_FormID=28;
+                break;
+                case "serviceType": N_FormID=1151;
+                break;
+                case "WorkType": N_FormID=1121;
+                break;
+                case "ProjectType": N_FormID=1048;
+                break;
+                case "EnquiryType": N_FormID=1100;
+                break;
+                case "SubmissionType": N_FormID=1123;
+                break;
+                case "SeparationReason": N_FormID=455;
+                break;
+                 case "Rating": N_FormID=9;
+                break;
+                case "Purpose": N_FormID=51;
+                break;
+                case "InsuranceClass": N_FormID=17;
+                break;
+                case "Pricetype": N_FormID=3;
+                break;
+                case "CrmWorkType": N_FormID=1360;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria = "N_ReferId=@p1 order by n_Sort ASC";
