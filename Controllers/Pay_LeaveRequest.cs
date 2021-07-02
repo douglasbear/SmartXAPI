@@ -694,6 +694,14 @@ namespace SmartxAPI.Controllers
                     {
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "LEAVE REQUEST", n_VacationGroupID, x_VacationGroupCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
 
+                        SortedList draftParam = new SortedList();
+                            draftParam.Add("@nCompanyID", nCompanyID);
+                            draftParam.Add("@nVacationGroupID", n_VacationGroupID);
+                        object saveDraft = dLayer.ExecuteScalar("select ISNULL(B_isSaveDraft,0) from Pay_VacationMaster where N_VacationGroupID= @nVacationGroupID and N_CompanyID= @nCompanyID", draftParam, connection, transaction);
+                        int isSaveDraft = 0;
+                        if (saveDraft != null && myFunctions.getBoolVAL(saveDraft.ToString()))
+                            isSaveDraft = 1;
+
                         int IsExitReEntry = 0;
                         foreach (DataRow var in Benifits.Rows)
                         {
@@ -744,6 +752,11 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["n_VacationGroupID"] = n_VacationGroupID;
                             DetailTable.Rows[j]["X_VacationCode"] = x_VacationGroupCode;
+
+                            if(isSaveDraft!=0)
+                                DetailTable.Rows[j]["B_IsSaveDraft"] = 1;
+                            else
+                                DetailTable.Rows[j]["B_IsSaveDraft"] = 0;
                         }
 
                         int DetailID = dLayer.SaveData("Pay_VacationDetails", "n_VacationID", DetailTable, connection, transaction);
