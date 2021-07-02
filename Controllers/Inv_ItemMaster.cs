@@ -267,7 +267,7 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "n_POrderQty", typeof(string), purchaseQty);
 
 
-                    string variant = "SELECT * from Inv_ItemMaster where N_ItemID<>@nItemID and N_GroupID = @nItemID and N_CompanyID=@nCompanyID";
+                    string variant = "SELECT * from vw_InvItemMaster where N_ItemID<>@nItemID and N_GroupID = @nItemID and N_CompanyID=@nCompanyID";
                     dtVariantList = dLayer.ExecuteDataTable(variant, QueryParams, connection);
                     dtVariantList = _api.Format(dtVariantList, "variantList");
 
