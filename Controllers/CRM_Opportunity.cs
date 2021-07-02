@@ -135,13 +135,14 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, Items;
+                DataTable MasterTable, Items, Activity;
                 MasterTable = ds.Tables["master"];
                 Items = ds.Tables["Items"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
+                int nWActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WActivityID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -179,6 +180,19 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
+                        if (nWActivityID > 0)
+                        {
+                            Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID, Params, connection);
+                            if (Activity.Rows.Count > 0)
+                            {
+                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_OpportunityID", typeof(int), 0);
+                                foreach (DataRow var in Activity.Rows)
+                                {
+                                    var["N_OpportunityID"] = nOpportunityID;
+                                }
+                                dLayer.SaveData("CRM_Activity", "n_ActivityID", Items, connection, transaction);
+                            }
+                        }
 
                         transaction.Commit();
                         return Ok(api.Success("Oppurtunity Created"));
