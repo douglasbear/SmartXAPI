@@ -57,6 +57,7 @@ namespace SmartxAPI.GeneralFunctions
                             dr.Delete();
                         }
                     }
+                    if(dsAttachment.Columns.Contains("deleted"))
                     dsAttachment.Columns.Remove("deleted");
                     dsAttachment.AcceptChanges();
 
