@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                 DataTable CostCenterTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
-                CostCenterTable = ds.Tables["costcenter"];
+                CostCenterTable = ds.Tables["segmentTable"];
                 InfoTable = ds.Tables["info"];
                 SortedList Params = new SortedList();
 
