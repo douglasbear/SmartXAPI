@@ -31,6 +31,10 @@ namespace SmartxAPI.Controllers
         private readonly string reportApi;
         private readonly string reportPath;
         private readonly string reportLocation;
+        string RPTLocation = "";
+        string ReportName = "";
+        string critiria = "";
+        string TableName = "";
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
         public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -185,39 +189,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpGet("getreport")]
-        // public async Task<IActionResult> GetReport(string reportName, string critiria)
-        // {
-        //     //var client = new HttpClient();
-
-        //     var handler = new HttpClientHandler
-        //     {
-        //         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
-        //     };
-        //     var client = new HttpClient(handler);
-        //     //HttpClient client = new HttpClient(clientHandler);
-
-        //     var path = client.GetAsync("https://localhost:4439/api/report?reportname=" + reportName + "&critiria=" + critiria + "&con=" + connectionString);
-
-        //     path.Wait();
-        //     string ReportPath = "C:\\" + reportName.Trim() + ".pdf";
-        //     var memory = new MemoryStream();
-
-        //     using (var stream = new FileStream(ReportPath, FileMode.Open))
-        //     {
-        //         await stream.CopyToAsync(memory);
-        //     }
-        //     memory.Position = 0;
-        //     return File(memory, _api.GetContentType(ReportPath), Path.GetFileName(ReportPath));
-
-
-
-        //     // ReportPath="C:\\"+ reportName + ".pdf";
-        //     // Stream fileStream = System.IO.File.Open(ReportPath, FileMode.Open);
-        //     // if(fileStream==null){return StatusCode(403,"Report Generation Error");}
-        //     // return File(fileStream, "application/octet-stream",reportName+".pdf");
-        // }
-
 
         [HttpGet("getreport")]
         public IActionResult GetModuleReports(string reportName, string critiria)
@@ -237,7 +208,7 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var random = RandomString();
                     var dbName = connection.Database;
-                    string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random +"&x_comments=&x_Reporttitle=&extention=pdf";;
+                    string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf"; ;
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
@@ -248,13 +219,67 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            QueryParams.Add("@nCompanyId", nCompanyId);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@nFormID", nFormID);
+            RPTLocation = "";
+            critiria = "";
+            TableName = "";
+            ReportName = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId and Acc_FnYear.N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                    if(ObjTaxType.ToString()=="")
+                        ObjTaxType="Vat";
+                    string TaxType = ObjTaxType.ToString();
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if(ObjPath!=null)
+                    {
+                        if(ObjPath.ToString()!="")
+                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                        else
+                            RPTLocation = reportLocation + "printing/";
+                    }
+                    object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    critiria = "{" + Templatecritiria + "}=" + nPkeyID;
+                    
+                    object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if(Othercritiria!=null)
+                    {
+                        if(Othercritiria.ToString()!="")
+                            critiria = critiria + "and "+Othercritiria.ToString();
+
+                    }
+                    TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
+
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    ReportName = ObjReportName.ToString();
+                    ReportName = ReportName.Remove(ReportName.Length - 4);
+
+                    return true;
+                }
+            }
+            catch(Exception e)
+            {
+                return false;
+
+            }
+
+        }
 
         [HttpGet("getscreenprint")]
         public IActionResult GetModulePrint(int nFormID, int nPkeyID, int nFnYearID)
         {
-            string RPTLocation = reportLocation;
-            string ReportName = "";
-            string critiria = "";
             SortedList QueryParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -267,205 +292,45 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@p1", nCompanyId);
                     QueryParams.Add("@p2", nFormID);
                     QueryParams.Add("@p3", nFnYearID);
-                    string TableName = "";
                     var handler = new HttpClientHandler
                     {
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
+  
+                    // if (nFormID == 1229)//leave
+                    // {
+                    //     critiria = "{Vw_VacationApprovalSlip_Rpt.N_VacationGroupID}=" + nPkeyID;
+                    //     TableName = "Vw_VacationApprovalSlip_Rpt";
 
-                    object ObjPath = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@p1 and Acc_FnYear.N_FnYearID=@p3", QueryParams, connection, transaction);
-                    string TaxType = ObjPath + "/";
-                    if (nFormID == 80)
+                    //     RPTLocation = reportLocation + "printing/";
+                    //     ReportName = "Leaveapprovalslip";
+                    // }
+                    // if (nFormID == 1226)//loan
+                    // {
+                    //     critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
+                    //     TableName = "vw_AccVoucherJrnlCC";
+
+                    //     RPTLocation = reportLocation + "printing/";
+                    //     ReportName = "JournalVoucher_VAT";
+                    // }
+                    if (LoadReportDetails(nFnYearID, nFormID, nPkeyID))
                     {
-                        critiria = "{Inv_SalesQuotation.N_QuotationId}=" + nPkeyID;
-                        RPTLocation = reportLocation + "printing/quotation/vat/";
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
-                        if (Template != null)
+                        var client = new HttpClient(handler);
+                        var dbName = connection.Database;
+                        var random = RandomString();
+                        if (TableName != "" && critiria != "")
                         {
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
+                            critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
-                        else
-                            ReportName = "Sales_Quatation";
+                        string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        var path = client.GetAsync(URL);
+                        path.Wait();
+                        return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                     }
-                    if (nFormID == 81)
+                    else
                     {
-                        critiria = "{vw_InvSalesOrderDetails.N_SalesOrderId}=" + nPkeyID;
-                        TableName = "vw_InvSalesOrderDetails";
-                        RPTLocation = reportLocation + "printing/SalesOrder/" + TaxType;
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "Sales_order";
+                         return Ok(_api.Error("Report Generation Failed"));
                     }
-                    if (nFormID == 884)
-                    {
-                        critiria = "{vw_InvDeliveryNoteDetails.N_DeliveryNoteID}=" + nPkeyID;
-                        TableName = "vw_InvDeliveryNoteDetails";
-
-                        RPTLocation = reportLocation + "printing/deliverynote/vat/";
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate'", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "Sales_DeliveryNote";
-                    }
-
-                    if (nFormID == 64)
-                    {
-                        critiria = "{Inv_Sales.N_SalesId}=" + nPkeyID;
-                        TableName = "Inv_Sales";
-
-                        RPTLocation = reportLocation + "printing/salesinvoice/" + TaxType;
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "SalesInvoice";
-                    }
-                    if (nFormID == 55)
-                    {
-                        critiria = "{vw_InvSalesReturn_rpt.N_DebitNoteId}=" + nPkeyID;
-                        TableName = "vw_InvSalesReturn_rpt";
-
-                        RPTLocation = reportLocation + "printing/SalesReturn/vat/";
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "Sales_Return";
-                    }
-                    if (nFormID == 66)
-                    {
-                        critiria = "{vw_InvPartyBalance.N_AccType}=2 and {vw_InvCustomerPayment_rpt.N_PayReceiptId}=" + nPkeyID;
-                        TableName = "vw_InvPartyBalance";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "CustomerReceiptVoucher";
-                    }
-                    //Purchase Module
-                    if (nFormID == 65)
-                    {
-                        critiria = "{vw_InvPurchaseDetailsView_Rpt.N_PurchaseId}=" + nPkeyID;
-                        TableName = "vw_InvPurchaseDetailsView_Rpt";
-
-                        RPTLocation = reportLocation + "printing/PurchaseInvoice/" + TaxType;
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "PurchaseEntry_invoice";
-                    }
-                    if (nFormID == 82)
-                    {
-                        critiria = "{Inv_PurchaseOrder.N_POrderID}=" + nPkeyID;
-                        TableName = "Inv_PurchaseOrder";
-
-                        RPTLocation = reportLocation + "printing/PurchaseOrder/" + TaxType;
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "Purchase_order";
-                    }
-                    if (nFormID == 68)
-                    {
-                        critiria = "{Inv_PurchaseReturnMaster.N_CreditNoteId}=" + nPkeyID;
-                        TableName = "Inv_PurchaseReturnMaster";
-
-                        RPTLocation = reportLocation + "printing/PurchaseReturn/vat/";
-                        object Template = dLayer.ExecuteScalar("SELECT X_Value FROM Gen_Settings WHERE N_CompanyID =@p1 AND X_Group = @p2 AND X_Description = 'PrintTemplate' and N_UserCategoryID=2", QueryParams, connection, transaction);
-                        if (Template != null)
-                        {
-                            ReportName = Template.ToString();
-                            ReportName = ReportName.Remove(ReportName.Length - 4);
-                        }
-                        else
-                            ReportName = "Purchase_Return";
-                    }
-                    if (nFormID == 67)
-                    {
-                        critiria = "{vw_InvVendorPayment_rpt.N_PayReceiptId}=" + nPkeyID + " and {vw_InvPartyBalance.N_AccType}=1";
-                        TableName = "vw_InvVendorPayment_rpt";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "VendorPaymentVoucher";
-                    }
-                    //Finance Module
-                    if (nFormID == 44)
-                    {
-                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='PV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
-                        TableName = "vw_AccVoucherJrnlCC";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "PaymentVoucher_VAT";
-                    }
-                    if (nFormID == 45)
-                    {
-                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='RV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
-                        TableName = "vw_AccVoucherJrnlCC";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "ReceiptVoucher_VAT";
-                    }
-                    if (nFormID == 46)
-                    {
-                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
-                        TableName = "vw_AccVoucherJrnlCC";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "JournalVoucher_VAT";
-                    }
-                     if (nFormID == 1229)//leave
-                    {
-                        critiria = "{Vw_VacationApprovalSlip_Rpt.N_VacationGroupID}=" + nPkeyID;
-                        TableName = "Vw_VacationApprovalSlip_Rpt";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "Leaveapprovalslip";
-                    }
-                    if (nFormID == 1226)//loan
-                    {
-                        critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
-                        TableName = "vw_AccVoucherJrnlCC";
-
-                        RPTLocation = reportLocation + "printing/";
-                        ReportName = "JournalVoucher_VAT";
-                    }
-
-
-                    var client = new HttpClient(handler);
-                    var dbName = connection.Database;
-                    var random = RandomString();
-                    if (TableName != "" && critiria != "")
-                    {
-                        critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
-                    }
-                    string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
-                    var path = client.GetAsync(URL);
-                    path.Wait();
-                    return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                 }
             }
             catch (Exception e)
@@ -475,7 +340,7 @@ namespace SmartxAPI.Controllers
 
         }
 
-       [HttpGet("shiftSchedulePrint")]
+        [HttpGet("shiftSchedulePrint")]
         public IActionResult GetshiftSchedulePrint(int nFormID, DateTime dPeriodFrom, DateTime dPeriodTo, int nFnYearID, string xCriteria, int nDepartmentID)
         {
             string RPTLocation = reportLocation;
@@ -509,7 +374,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (xCriteria == "department")
                         {
-                            
+
                             critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "') and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
                             TableName = "vw_Pay_Empshiftdetails";
 
@@ -525,7 +390,7 @@ namespace SmartxAPI.Controllers
                             TableName = "vw_Pay_Empshiftdetails";
 
 
-                            RPTLocation = reportLocation + "printing/"; 
+                            RPTLocation = reportLocation + "printing/";
                             ReportName = "Employee_ShiftSchedule";
 
 
@@ -533,7 +398,7 @@ namespace SmartxAPI.Controllers
                         }
                         var client = new HttpClient(handler);
                         var dbName = connection.Database;
-                        
+
                         if (TableName != "" && critiria != "")
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
@@ -541,7 +406,7 @@ namespace SmartxAPI.Controllers
                         string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
                         var path = client.GetAsync(URL);
                         path.Wait();
-                        
+
                     }
                     return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                 }
@@ -590,7 +455,7 @@ namespace SmartxAPI.Controllers
                 String UserData = "";
 
                 var dbName = "";
-                string Extention="";
+                string Extention = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -714,7 +579,7 @@ namespace SmartxAPI.Controllers
                         if (YearData != "")
                             Criteria = Criteria + " and " + YearData + "=" + FnYearID;
                     }
-                    else if ( CompanyData != "")
+                    else if (CompanyData != "")
                     {
                         Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
                         if (YearData != "")
@@ -735,11 +600,11 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention="+Extention;//+ connectionString;
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
-                return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + "."+Extention} }));
+                return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + "." + Extention } }));
                 //string RptPath = reportPath + reportName.Trim() + ".pdf";
                 // var memory = new MemoryStream();
 

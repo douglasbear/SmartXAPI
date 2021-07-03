@@ -338,7 +338,8 @@ namespace SmartxAPI.Controllers
                     }
                     MasterTable.Columns.Remove("n_Amount");
                     MasterTable.Columns.Remove("n_AmountF");
-                    MasterTable.Columns.Remove("x_Desc");
+                    if (MasterTable.Columns.Contains("x_Desc"))
+                        MasterTable.Columns.Remove("x_Desc");
 
                     transaction = connection.BeginTransaction();
 

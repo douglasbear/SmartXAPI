@@ -7,6 +7,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.IO;
 
 namespace SmartxAPI.Controllers
 {
@@ -19,6 +20,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string ReportLocation;
 
 
 
@@ -28,16 +30,17 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            ReportLocation = conf.GetConnectionString("ReportLocation");
         }
 
 
         //GET api/productcategory/list?....
         [HttpGet("list")]
-        public ActionResult GetTerminal()
+        public ActionResult GetTerminalList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
             string sqlCommandText = "select * from vw_InvTerminal where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
@@ -48,6 +51,41 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+        [HttpGet("printlist")]
+        public ActionResult GetTerminalPrintList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            dt = myFunctions.AddNewColumnToDataTable(dt,"x_PrintTemplate",typeof(string),"");
+            Params.Add("@p1", nCompanyId);
+            string Path = ReportLocation + "printing/Salesinvoice/VAT/";
+
+            try
+            {
+                string[] files = Directory.GetFiles(Path);
+                int row = 0;
+                foreach (string file in files)
+                {
+
+                    dt.Rows.Add();
+                    dt.Rows[row]["x_PrintTemplate"] = System.IO.Path.GetFileName(file);
+                    row = row + 1;
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -74,7 +112,7 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@p1", myFunctions.GetCompanyID(User));
             Params.Add("@p2", nTerminalID);
-            
+
 
             try
             {
@@ -113,7 +151,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    
+
                     int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
                     SortedList Params = new SortedList();
                     // Auto Gen
@@ -125,31 +163,31 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 895);
                         TerminalCode = dLayer.GetAutoNumber("Inv_Terminal", "X_TerminalCode", Params, connection, transaction);
-                        if (TerminalCode == "") {transaction.Rollback();  return Ok(_api.Error("Unable to generate Terminal Code")); }
+                        if (TerminalCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Terminal Code")); }
                         MasterTable.Rows[0]["X_TerminalCode"] = TerminalCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
                     int N_TerminalID = dLayer.SaveData("Inv_Terminal", "N_TerminalID", MasterTable, connection, transaction);
                     if (N_TerminalID <= 0)
                     {
-                         transaction.Rollback();
-                        return Ok( _api.Error("Unable to save"));
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
                     }
                     else
                     {
                         dLayer.SaveData("Inv_Terminaldetails", "N_SettingsID", DetailTable, connection, transaction);
                         transaction.Commit();
-                        return Ok( _api.Success("Terminal Saved"));
+                        return Ok(_api.Success("Terminal Saved"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok( _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
-          [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nTerminalID)
         {
             int Results = 0;
@@ -159,15 +197,15 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                Results = dLayer.DeleteData("Inv_Terminal", "N_TerminalID", nTerminalID, "",connection);
-                if (Results > 0)
-                {
-                    return Ok(_api.Success("Terminal deleted"));
-                }
-                else
-                {
-                    return Ok(_api.Error( "Unable to delete Terminal"));
-                }
+                    Results = dLayer.DeleteData("Inv_Terminal", "N_TerminalID", nTerminalID, "", connection);
+                    if (Results > 0)
+                    {
+                        return Ok(_api.Success("Terminal deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Unable to delete Terminal"));
+                    }
                 }
             }
             catch (Exception ex)
