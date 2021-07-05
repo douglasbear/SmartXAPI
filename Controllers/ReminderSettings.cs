@@ -31,6 +31,36 @@ namespace SmartxAPI.Controllers
             FormID = 978;
         }
 
+        [HttpGet("list")]
+        public ActionResult GetReminderSettingsList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyID);
+            string sqlCommandText = "select * from Gen_ReminderSettings where N_CompanyID=@p1";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpGet("module")]
         public ActionResult GetModuleList(int nLanguageId, string xUserCategory)
         {
@@ -42,9 +72,9 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", xUserCategory);
             string sqlCommandText = "";
             if (xUserCategory=="Olivo") {
-                sqlCommandText = "select N_MenuID,X_Module from vw_UserMenus_List where N_CompanyID=@p1 and N_LanguageId=@p2 and N_ParentMenuID=0 and X_ControlNo='0' group by N_MenuID,X_Module";
+                sqlCommandText = "select N_MenuID as N_ModuleID,X_Module from vw_UserMenus_List where N_CompanyID=@p1 and N_LanguageId=@p2 and N_ParentMenuID=0 and X_ControlNo='0' group by N_MenuID,X_Module";
             } else {
-                sqlCommandText = "select N_MenuID,X_Module from vw_UserMenus_List where N_CompanyID=@p1 and N_LanguageId=@p2 and X_UserCategory=@p3 and N_ParentMenuID=0 and X_ControlNo='0' group by N_MenuID,X_Module";
+                sqlCommandText = "select N_MenuID as N_ModuleID,X_Module from vw_UserMenus_List where N_CompanyID=@p1 and N_LanguageId=@p2 and X_UserCategory=@p3 and N_ParentMenuID=0 and X_ControlNo='0' group by N_MenuID,X_Module";
             }
             try
             {
@@ -112,7 +142,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nLanguageId);
             Params.Add("@p3", nMenuID);
-            string sqlCommandText = "select * from vw_Gen_ReminderFields where N_CompanyID=@p1 and N_LanguageId=@p3 and N_FormID=@p3";
+            string sqlCommandText = "select * from vw_Gen_ReminderFields where N_CompanyID=@p1 and N_LanguageId=@p2 and N_FormID=@p3";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -162,6 +192,48 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    object Result = 0;
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    string xSubject = MasterTable.Rows[0]["x_Subject"].ToString();
+                    int nCategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CategoryID"].ToString());
+                    int nID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ID"].ToString());
+                    int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nID);
+                    Params.Add("@p3", nFormID);
+
+                    dLayer.ExecuteNonQuery("Update Gen_ReminderSettings Set X_Subject='" + xSubject + "', N_CategoryID='" + nCategoryID +"' where N_CompanyID=@p1 and N_ID=@p2 and N_FormID=@p3 ", Params, connection, transaction);
+
+                    if (MasterTable.Rows.Count < 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+                    else {
+                        transaction.Commit();
+                        return Ok(_api.Success("Reminder Settings Saved"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
             }
         }
 
