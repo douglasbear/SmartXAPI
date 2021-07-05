@@ -731,7 +731,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nItemID", nItemID);
                     int classID = 0;
-                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                     if (res != null)
                         classID = myFunctions.getIntVAL(res.ToString());
 
