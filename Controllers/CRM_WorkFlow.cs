@@ -164,9 +164,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
                         foreach (DataRow var in DetailsTable.Rows)
                         {
                             var["N_WActivityID"] = nWActivityID;
+                            var["N_FnYearID"] = nFnYearId;
                         }
                         dLayer.SaveData("CRM_WorkflowActivities", "N_WActivityDetailID", DetailsTable, connection, transaction);
                         transaction.Commit();
