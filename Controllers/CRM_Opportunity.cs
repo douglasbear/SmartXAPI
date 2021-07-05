@@ -143,6 +143,9 @@ namespace SmartxAPI.Controllers
                 int nOpportunityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_OpportunityID"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nWActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WActivityID"].ToString());
+                int nTaskOwner = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesmanID"].ToString());
+                string X_ContactEmail = MasterTable.Rows[0]["X_Email"].ToString();
+                string X_ContactNumber = MasterTable.Rows[0]["X_Mobile"].ToString();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -182,13 +185,32 @@ namespace SmartxAPI.Controllers
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
                         if (nWActivityID > 0)
                         {
-                            Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID, Params, connection);
+                            Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID, Params, connection, transaction);
                             if (Activity.Rows.Count > 0)
                             {
-                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_OpportunityID", typeof(int), 0);
+                                SortedList AParams = new SortedList();
+                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactEmail", typeof(string), "");
+                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactNumber", typeof(string), "");
+                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "x_ActivityCode", typeof(string), "");
+                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_TaskOwner", typeof(int), 0);
+                                Activity = myFunctions.AddNewColumnToDataTable(Activity, "n_ActivityID", typeof(int), 0);
+                                string ActivityCode = "";
+                                AParams.Add("N_CompanyID", nCompanyID);
+                                AParams.Add("N_YearID", nFnYearId);
+                                AParams.Add("N_FormID", 1307);
                                 foreach (DataRow var in Activity.Rows)
                                 {
-                                    var["N_OpportunityID"] = nOpportunityID;
+
+                                    ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
+                                    if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
+                                    var["x_ActivityCode"] = ActivityCode;
+
+                                    var["N_RelatedTo"] = 294;
+                                    var["N_ReffID"] = nOpportunityID;
+                                    var["X_ContactEmail"] = X_ContactEmail;
+                                    var["X_ContactNumber"] = X_ContactNumber;
+                                    var["N_TaskOwner"] = nTaskOwner;
+                                    var["n_ActivityID"] = 0;
                                 }
                                 dLayer.SaveData("CRM_Activity", "n_ActivityID", Items, connection, transaction);
                             }

@@ -98,8 +98,6 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_CRMWorkflow where N_CompanyID=@p1 and X_WActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
