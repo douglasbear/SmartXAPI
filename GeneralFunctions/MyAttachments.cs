@@ -3,6 +3,7 @@ using System.Collections;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -391,6 +392,7 @@ namespace SmartxAPI.GeneralFunctions
 
             DataTable ImageData = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection);
             ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "FileData", typeof(string), null);
+            ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "TempFileName", typeof(string), null);
 
             if (ImageData.Rows.Count > 0)
             {
@@ -407,6 +409,9 @@ namespace SmartxAPI.GeneralFunctions
                     if (File.Exists(path))
                     {
                         Byte[] bytes = File.ReadAllBytes(path);
+                        var random = RandomString();
+                        File.Copy(path, reportPath+random+"."+var["x_Extension"].ToString());
+                        var["TempFileName"] = random+"."+var["x_Extension"].ToString();
                         var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
                     }
                 }
@@ -416,6 +421,14 @@ namespace SmartxAPI.GeneralFunctions
 
             return ImageData;
 
+        }
+        private static Random random = new Random();
+
+        public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
 
