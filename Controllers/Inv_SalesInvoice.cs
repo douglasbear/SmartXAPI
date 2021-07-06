@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
                     
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey +"%')";
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true)
@@ -78,12 +78,19 @@ namespace SmartxAPI.Controllers
                     }
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_SalesId desc";
+                   
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
                         {
                             case "invoiceNo":
                                 xSortBy = "N_SalesId " + xSortBy.Split(" ")[1];
+                                break;
+                            case "invoiceDate":
+                                xSortBy = "[Invoice Date] as DateTime " + xSortBy.Split(" ")[1];
+                                break;
+                            case "x_BillAmt":
+                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
