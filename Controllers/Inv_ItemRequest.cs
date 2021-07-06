@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("settings")]
-        private ActionResult CheckSettings(string FormID,int nBranchID,bool bAllBranchData)
+        public ActionResult CheckSettings(string FormID,int nBranchID,bool bAllBranchData)
         {
             double N_decimalPlace=0;
             bool  B_MultipleLocation=false,B_LocationRequired=false,B_IsPartNoInGrid=false,B_DeptEnable=false,B_DelDays=false,B_Remarks=false,B_CustomerProjectEnabled=false;
@@ -498,7 +498,96 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(e));
             }
-        }        
+        }    
+        
+ [HttpGet("empUserList")]
+        public ActionResult GetEmpUser(int nDepartmentID, int nFnYearID, bool bAllBranchData, int nBranchID)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string sqlCommandText = "";
+            if (nDepartmentID > 0)
+            {
+                if (bAllBranchData == true)
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser where N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + " and N_DepartmentID =" + nDepartmentID;
+                else
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser where N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + " and (N_BranchID=0 OR N_BranchID=" + nBranchID + ") and N_DepartmentID =" + nDepartmentID;
+            }
+            else
+            {
+                if (bAllBranchData == true)
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + "";
+                else
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + " and (N_BranchID=0 OR N_BranchID=" + nBranchID + ")";
+            }
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpGet("department")]
+        public ActionResult GetDepartment(string xLevelPattern)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+
+
+            string sqlCommandText = "";
+            
+
+            if (xLevelPattern != "")
+               sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + " and  X_LevelPattern like '" + xLevelPattern + "%' and isnull(B_Inactive,0)<>1";
+            else
+                sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + " and isnull(B_Inactive,0)<>1";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+
+        }
+  
 
     }
 }
