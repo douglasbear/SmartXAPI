@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
-        private readonly int FormID = 198;
+        private readonly int FormID = 618;
         public Inv_RequestforQuotation(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
@@ -107,11 +107,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
-                    DataTable MultiVendorTabe;
+                    DataTable MultiVendorTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    MultiVendorTabe = ds.Tables["vendorDetails"];
+                    MultiVendorTable = ds.Tables["vendorDetails"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -119,53 +119,53 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string X_QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+                    int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
 
-                    if (nQuotationID > 0)
+                    if (MasterTable.Columns.Contains("nFormID"))
+                        MasterTable.Columns.Remove("nFormID");
+                    MasterTable.AcceptChanges();
+
+                    if (nFormID == 618)
                     {
-                        // SortedList deleteParams = new SortedList()
-                        //     {
-                        //         {"N_CompanyID",nCompanyID},
-
-                        //         {"N_ReceiptId",nReceiptID}
-                        //     };
-                        dLayer.DeleteData("Inv_VendorRequestDetails", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
-                        dLayer.DeleteData("Inv_VendorRequest", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
-                    }
-                    DocNo = MasterRow["x_QuotationNo"].ToString();
-                    if (X_QuotationNo == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_FormID", FormID);
-                        Params.Add("N_YearID", nFnYearID);
-
-                        while (true)
+                        if (nQuotationID > 0)
                         {
-                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_VendorRequest Where X_ReceiptNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
-                            if (N_Result == null)
-                                break;
+                            dLayer.DeleteData("Inv_RFQVendorList", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                            dLayer.DeleteData("Inv_VendorRequestDetails", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
+                            dLayer.DeleteData("Inv_VendorRequest", "N_QuotationID", nQuotationID, "N_CompanyID = " + nCompanyID, connection, transaction);
                         }
-                        X_QuotationNo = DocNo;
+                        DocNo = MasterRow["x_QuotationNo"].ToString();
+                        if (X_QuotationNo == "@Auto")
+                        {
+                            Params.Add("N_CompanyID", nCompanyID);
+                            Params.Add("N_FormID", nFormID);
+                            Params.Add("N_YearID", nFnYearID);
 
+                            while (true)
+                            {
+                                DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_VendorRequest Where X_ReceiptNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                if (N_Result == null)
+                                    break;
+                            }
+                            X_QuotationNo = DocNo;
 
-                        if (X_QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
-                        MasterTable.Rows[0]["x_QuotationNo"] = X_QuotationNo;
+                            if (X_QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                            MasterTable.Rows[0]["x_QuotationNo"] = X_QuotationNo;
+                        }
 
-                    }
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nFnYearID + " and X_ReceiptNo='" + X_QuotationNo + "'";
-                    string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nFnYearID;
-                    nQuotationID = dLayer.SaveData("Inv_VendorRequest", "N_QuotationID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
-                    if (nQuotationID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
-                    }
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    {
-                        DetailTable.Rows[j]["n_QuotationID"] = nQuotationID;
-                    }
-                    if (FormID == 1049)
-                    {
+                        string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nFnYearID + " and X_ReceiptNo='" + X_QuotationNo + "'";
+                        string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nFnYearID;
+                        nQuotationID = dLayer.SaveData("Inv_VendorRequest", "N_QuotationID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
+                        if (nQuotationID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable To Save"));
+                        }
+                        for (int j = 0; j < DetailTable.Rows.Count; j++)
+                        {
+                            DetailTable.Rows[j]["n_QuotationID"] = nQuotationID;
+                        }
+                    
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
 
@@ -173,24 +173,146 @@ namespace SmartxAPI.Controllers
                             if (n_QuotationDetailsID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok("Unable to save Accrual Code");
+                                return Ok("Unable to save ");
                             }
 
-                            if (MultiVendorTabe.Rows.Count > 0)
+                            if (MultiVendorTable.Rows.Count > 0)
                             {
-                                // MultiVendorTabe.Rows[ ]
-
+                                for (int k = 0; k < MultiVendorTable.Rows.Count; k++)
+                                {
+                                    if(myFunctions.getIntVAL(MultiVendorTable.Rows[k]["n_RowID"].ToString())==j)
+                                    {
+                                        MultiVendorTable.Rows[k]["N_QuotationID"] = nQuotationID;
+                                        MultiVendorTable.Rows[k]["N_QuotationDetailsID"] = n_QuotationDetailsID;
+                                    }
+                                }
                             }
                         }
+                        if (MultiVendorTable.Rows.Count > 0)
+                        {
+                            if (MultiVendorTable.Columns.Contains("n_RowID"))
+                                MultiVendorTable.Columns.Remove("n_RowID");
+                            MultiVendorTable.AcceptChanges();
+
+                            int N_VendorListID = dLayer.SaveData("Inv_RFQVendorList", "N_VendorListID", DupCriteria, X_Criteria, MultiVendorTable, connection, transaction);
+                        }
+                        transaction.Commit();
+                        return Ok(_api.Success("RFQ Saved"));
                     }
-                    transaction.Commit();
-                    return Ok(_api.Success("Asset Purchase Saved"));
+                    else
+                    {
+                        return Ok(_api.Success("RFQ Saved"));
+                    }
+                    
                 }
             }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
+        }
+
+           
+        [HttpGet("details")]
+        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataTable VendorListMaster = new DataTable();
+            DataTable VendorListDetails = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@X_QuotationNo", X_QuotationNo);
+            QueryParams.Add("@nBranchID", nBranchID);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if(nFormID==168)
+                    {
+                        if (bShowAllBranchData == true)
+                            Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo";
+                        else
+                            Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo and N_BranchID=@nBranchID";
+
+
+                        _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
+
+                        Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Master = _api.Format(Master, "master");
+
+                        if (Master.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+                        else
+                        {
+                            QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
+
+                            ds.Tables.Add(Master);
+
+                            _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID";
+                            Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                            Detail = _api.Format(Detail, "details");
+                            if (Detail.Rows.Count == 0)
+                            {
+                                return Ok(_api.Notice("No Results Found"));
+                            }
+                            ds.Tables.Add(Detail);
+
+                            VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                            VendorListDetails = _api.Format(VendorListDetails, "vendorList");
+                            ds.Tables.Add(VendorListDetails);
+
+                            return Ok(_api.Success(ds));
+                        }
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(ds));
+                    }
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        public DataTable GetVendorListTable(int nQuotationID,int nVendorID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
+        {
+            DataTable VendorListDetails = new DataTable();
+            string sqlCommand="";
+
+            SortedList Params = new SortedList();
+            Params.Add("@nQuotationID", nQuotationID);
+            Params.Add("@nCompanyID", N_CompanyID);
+            Params.Add("@nVendorID", nVendorID);
+
+            if(nVendorID!=0)
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID";
+            else
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID";
+
+            VendorListDetails = dLayer.ExecuteDataTable(sqlCommand, Params, connection);
+
+            VendorListDetails = _api.Format(VendorListDetails, "vendorList");
+
+
+            return VendorListDetails;
         }
 
     }
