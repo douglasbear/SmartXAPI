@@ -29,12 +29,31 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(int? nCompanyId)
+       public ActionResult GetLocationDetails(int? nCompanyId, string prs,bool bLocationRequired,bool bAllBranchData,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
+            string sqlCommandText = "";
+            if (prs == null || prs == "")
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
+            else
+            {
+                if (!bLocationRequired)
+                {
+                    if (bAllBranchData == true)
+                       sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
+                    
+                    else
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" +nCompanyId + " and  N_BranchID=" + nBranchID;
+                    
+                }
+                else
+                {
+                   sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
+                }
+            }
+
             Params.Add("@p1", nCompanyId);
 
             try
@@ -46,7 +65,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found" ));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -55,10 +74,9 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
-
 
 
         [HttpGet("listdetails")]

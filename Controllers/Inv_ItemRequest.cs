@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("settings")]
-        private ActionResult CheckSettings(string FormID,int nBranchID,bool bAllBranchData)
+        public ActionResult CheckSettings(string FormID,int nBranchID,bool bAllBranchData)
         {
             double N_decimalPlace=0;
             bool  B_MultipleLocation=false,B_LocationRequired=false,B_IsPartNoInGrid=false,B_DeptEnable=false,B_DelDays=false,B_Remarks=false,B_CustomerProjectEnabled=false;
@@ -233,16 +233,297 @@ namespace SmartxAPI.Controllers
             }
             return true;
         }
+ 
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nPRSID,int nSalesOrderID,int nFnYearID)
+        {
+            int Results = 0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection,transaction);
+                    Results=dLayer.DeleteData("Inv_PRS", "N_PRSID", nPRSID, "N_CompanyID=" + nCompanyID + " and N_PRSID=" + nPRSID, connection,transaction);
 
-        [HttpGet("listdetails")]
-        public ActionResult GetItemUnitListDetails(int? nCompanyId, int? nItemUnitID)
+                    if(nSalesOrderID>0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                            {"N_CompanyID",nCompanyID},
+                            {"N_YearID",nFnYearID},
+                            {"N_SalesOrderID",nSalesOrderID}};
+
+                        dLayer.ExecuteNonQueryPro("SP_SalesOrderProcessUpdate", DeleteParams, connection, transaction);
+                    }
+                
+                    if (Results > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(api.Success( "Request deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Warning("Unable to delete Request"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+        }
+
+        //Save....
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+
+            DataTable MasterTable;
+            DataTable DetailTable;
+            MasterTable = ds.Tables["master"];
+            DetailTable = ds.Tables["details"];
+            // DataTable Approvals;
+            // Approvals = ds.Tables["approval"];
+            SortedList Params = new SortedList();
+            // Auto Gen
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    string X_PRSNo = "",X_TransType="";
+                    int N_PRSID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PRSID"].ToString());
+                    int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int N_FormID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FormID"].ToString());
+                    int N_SalesOrderId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderId"].ToString());
+                    int N_TransTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransTypeID"].ToString());
+                    int N_UserID = myFunctions.GetUserID(User);
+                    int N_NextApproverID=0;
+                   // if(N_FormID==556)
+                    var values = MasterTable.Rows[0]["X_PRSNo"].ToString();
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID",N_CompanyID);
+                        Params.Add("N_YearID",N_FnYearID);
+                        Params.Add("N_FormID", N_FormID);
+                        Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        X_PRSNo = dLayer.GetAutoNumber("Inv_PRS", "X_PRSNo", Params, connection, transaction);
+                        if (X_PRSNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Request Number")); }
+                        MasterTable.Rows[0]["X_PRSNo"] = X_PRSNo;
+                    }
+
+                    if (N_PRSID > 0)
+                    {
+                       dLayer.DeleteData("Inv_PRSDetails", "N_PRSID", N_PRSID, "N_CompanyID=" + N_CompanyID + " and N_PRSID=" + N_PRSID, connection, transaction);
+                       dLayer.DeleteData("Inv_PRS", "N_PRSID", N_PRSID, "N_CompanyID=" + N_CompanyID + " and N_PRSID=" + N_PRSID, connection, transaction);
+                    }
+
+                    N_PRSID = dLayer.SaveData("Inv_PRS", "N_PRSID", MasterTable, connection, transaction);
+                    if (N_PRSID <= 0)
+                    {
+                        transaction.Rollback();
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_PRSID"] = N_PRSID;
+                    }
+                    int N_PRSDetailsID = dLayer.SaveData("Inv_PRSDetails", "N_PRSDetailsID", DetailTable, connection, transaction);
+
+                    if(N_SalesOrderId>0)
+                    {
+                        SortedList QueryParams = new SortedList();
+                        QueryParams.Add("@N_TransTypeID", N_TransTypeID);
+                        QueryParams.Add("@N_SalesOrderId", N_SalesOrderId);
+                        QueryParams.Add("@N_CompanyID", N_CompanyID);
+                        QueryParams.Add("@N_FnYearID", N_FnYearID);
+
+                        dLayer.ExecuteNonQuery("Update Inv_SalesOrder set N_Processed=1,N_TranTypeID=@N_TransTypeID Where N_SalesOrderId=@N_SalesOrderId and N_CompanyID=@N_CompanyID and N_FnYearID=@N_FnYearID", QueryParams, connection, transaction);
+                    }
+
+                    transaction.Commit();
+
+                    SortedList Result = new SortedList();
+                    Result.Add("N_PRSID", N_PRSID);
+                    Result.Add("X_PRSNo", X_PRSNo);
+                    return Ok(api.Success(Result, "Request Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+        }
+
+        
+        [HttpGet("details")]
+        public ActionResult GetRequestDetails(string  xPRSNo,int nFnYearID,int N_LocationID, int nBranchID, bool bShowAllBranchData)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@xPRSNo", xPRSNo);
+            QueryParams.Add("@nBranchID", nBranchID);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@N_LocationID", N_LocationID);
+            string Condition = "";
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (bShowAllBranchData == true)
+                        Condition = "n_Companyid=@nCompanyID and X_PRSNo =@xPRSNo and N_FnYearID=@nFnYearID";
+                    else
+                        Condition = "n_Companyid=@nCompanyID and X_PRSNo =@xPRSNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+
+
+                    _sqlQuery = "Select * from vw_Inv_SRSDetails Where " + Condition + "";
+
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Master = api.Format(Master, "master");
+
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        QueryParams.Add("@N_PRSID", Master.Rows[0]["N_PRSID"].ToString());
+
+                        ds.Tables.Add(Master);
+
+                        _sqlQuery = "Select *,dbo.SP_Cost(vw_InvPRSDetails.N_ItemID,vw_InvPRSDetails.N_CompanyID,'') As N_UnitLPrice,dbo.[SP_GenGetStock](vw_InvPRSDetails.N_ItemID,@N_LocationID,'','location' ) as Stock,dbo.[SP_Stock](vw_InvPRSDetails.N_ItemID ) as BranchStock from vw_InvPRSDetails Where vw_InvPRSDetails.N_CompanyID=@nCompanyID and vw_InvPRSDetails.N_PRSID=@N_PRSID";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Detail = api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+
+
+                        // DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_VacationGroupID"].ToString()), this.FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        // Attachements = api.Format(Attachements, "attachments");
+                        // ds.Tables.Add(Attachements);
+
+                        return Ok(api.Success(ds));
+                    }
+
+
+                }
+
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+     [HttpGet("soDetails")]
+        public ActionResult GetSODetails(string xOrderNo ,int nFnYearID,int N_LocationID, int nBranchID, bool bShowAllBranchData)
+        {
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@xOrderNo", xOrderNo);
+            QueryParams.Add("@nBranchID", nBranchID);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@N_LocationID", N_LocationID);
+
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (bShowAllBranchData == true)
+                        _sqlQuery = "SP_InvSalesOrder_Disp @nCompanyID,@xOrderNo,0,0";
+                    else
+                        _sqlQuery = "SP_InvSalesOrder_Disp @nCompanyID,@xOrderNo,0,@nBranchID";
+
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Master = api.Format(Master, "master");
+
+                    if (Master.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        QueryParams.Add("@N_SalesOrderID", Master.Rows[0]["N_SalesOrderID"].ToString());
+
+                        ds.Tables.Add(Master);
+
+                        _sqlQuery = "SP_InvSalesOrderDtls_Disp @nCompanyID,@N_SalesOrderID,@nFnYearID,0,@N_LocationID";
+                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        Detail = api.Format(Detail, "details");
+                        if (Detail.Rows.Count == 0)
+                        {
+                            return Ok(api.Notice("No Results Found"));
+                        }
+                        ds.Tables.Add(Detail);
+
+                        return Ok(api.Success(ds));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }    
+        
+ [HttpGet("empUserList")]
+        public ActionResult GetEmpUser(int nDepartmentID, int nFnYearID, bool bAllBranchData, int nBranchID)
+
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
 
-            string sqlCommandText = "select * from vw_InvItemUnit_Disp where N_CompanyID=@p1 and N_ItemUnitID=@p2 order by ItemCode";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nItemUnitID);
+            string sqlCommandText = "";
+            if (nDepartmentID > 0)
+            {
+                if (bAllBranchData == true)
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser where N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + " and N_DepartmentID =" + nDepartmentID;
+                else
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser where N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + " and (N_BranchID=0 OR N_BranchID=" + nBranchID + ") and N_DepartmentID =" + nDepartmentID;
+            }
+            else
+            {
+                if (bAllBranchData == true)
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + "";
+                else
+                    sqlCommandText = "Select *  from vw_PayEmployeeUser N_CompanyID=" + nCompanyID + " and (N_Status = 0 OR N_Status = 1) and N_FnYearID=" + nFnYearID + " and (N_BranchID=0 OR N_BranchID=" + nBranchID + ")";
+            }
 
             try
             {
@@ -254,7 +535,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
+                    return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
@@ -266,143 +547,47 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+        [HttpGet("department")]
+        public ActionResult GetDepartment(string xLevelPattern)
 
-        //Save....
-        [HttpPost("Save")]
-        public ActionResult SaveData([FromBody] DataSet ds)
         {
-            try
-            {
-                DataTable MasterTable;
-                MasterTable = ds.Tables["master"];
-
-                SortedList Params = new SortedList();
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
-                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "'";
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
-                    if (N_ItemUnitID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok( api.Warning("Unit Already Exist"));
-                    }
-                    else
-                    {
-                        transaction.Commit();
-                    }
-                    return Ok( api.Success("Unit Created"));
-                }
-                
-
-            }
-
-            catch (Exception ex)
-            {
-                return Ok(api.Error(ex));
-            }
-        }
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
 
 
-        [HttpGet("itemwiselist")]
-        public ActionResult GetItemWiseUnitList( string baseUnit, int itemId)
-        {
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            if (baseUnit == null) { baseUnit = ""; }
-            try
-            {
-                SortedList mParamsList = new SortedList()
-                    {
-                        {"@N_CompanyID",nCompanyId},
-                        {"@X_ItemUnit",baseUnit},
-                        {"@N_ItemID",itemId}
-                    };
-                DataTable masterTable = new DataTable();
+            string sqlCommandText = "";
+            
 
-string sql = " Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit,Inv_ItemUnit.N_ItemUnitID,Inv_ItemMaster.N_PurchaseCost from Inv_ItemUnit Left Outer join Inv_ItemUnit as Base On Inv_ItemUnit.N_BaseUnitID=Base.N_ItemUnitID inner join Inv_ItemMaster ON Inv_ItemUnit.N_ItemID=Inv_ItemMaster.N_ItemID and Inv_ItemUnit.N_CompanyID=Inv_ItemMaster.N_CompanyID where Base.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0 UNION Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit,Inv_ItemUnit.N_ItemUnitID,Inv_ItemMaster.N_PurchaseCost from Inv_ItemUnit inner join Inv_ItemMaster ON Inv_ItemUnit.N_ItemID=Inv_ItemMaster.N_ItemID and Inv_ItemUnit.N_CompanyID=Inv_ItemMaster.N_CompanyID where Inv_ItemUnit.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0";
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
-                    // masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
-                }
-
-
-                if (masterTable.Rows.Count == 0) { return Ok(api.Notice("No Data Found")); }
-                return Ok(api.Success(masterTable));
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(e));
-            }
-        }
-
-
-        [HttpGet("itemUnitList")]
-        public ActionResult GetItemUnitList( string baseUnit, int itemId)
-        {
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            if (baseUnit == null) { baseUnit = ""; }
-            try
-            {
-                SortedList mParamsList = new SortedList()
-                    {
-                        {"@N_CompanyID",nCompanyId},
-                        {"@X_ItemUnit",baseUnit},
-                        {"@N_ItemID",itemId}
-                    };
-                DataTable masterTable = new DataTable();
-
-string sql = " Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit from Inv_ItemUnit Left Outer join Inv_ItemUnit as Base On Inv_ItemUnit.N_BaseUnitID=Base.N_ItemUnitID where Base.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0 UNION Select X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit from Inv_ItemUnit where X_ItemUnit=@X_ItemUnit and N_CompanyID=@N_CompanyID and N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0";
-
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
-                    // masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
-                }
-
-
-                if (masterTable.Rows.Count == 0) { return Ok(api.Notice("No Data Found")); }
-                return Ok(api.Success(masterTable));
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(e));
-            }
-        }
-
-        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nItemUnitID)
-        {
-            int Results = 0;
+            if (xLevelPattern != "")
+               sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + " and  X_LevelPattern like '" + xLevelPattern + "%' and isnull(B_Inactive,0)<>1";
+            else
+                sqlCommandText = "Select *  from vw_PayDepartment_Disp Where N_CompanyID= " + nCompanyID + " and isnull(B_Inactive,0)<>1";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                Results = dLayer.DeleteData("Inv_ItemUnit", "N_ItemUnitID", nItemUnitID, "",connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                if (Results > 0)
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Success( "Product Unit deleted"));
+                    return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Warning("Unable to delete product Unit"));
+                    return Ok(api.Success(dt));
                 }
-
             }
-            catch (Exception ex)
+            catch (Exception e)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(e));
             }
-
 
         }
+  
+
     }
 }
