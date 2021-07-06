@@ -109,8 +109,8 @@ namespace SmartxAPI.Controllers
                     {
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
-                                           
-                            int n_QuotationDetailsID = dLayer.SaveDataWithIndex("Inv_VendorRequestDetails", "n_QuotationDetailsID","","",j,DetailTable, connection, transaction);
+
+                            int n_QuotationDetailsID = dLayer.SaveDataWithIndex("Inv_VendorRequestDetails", "n_QuotationDetailsID", "", "", j, DetailTable, connection, transaction);
                             if (n_QuotationDetailsID <= 0)
                             {
                                 transaction.Rollback();
@@ -119,17 +119,22 @@ namespace SmartxAPI.Controllers
 
                             if (MultiVendorTabe.Rows.Count > 0)
                             {
-                                MultiVendorTabe.Rows[ ]
+                                // MultiVendorTabe.Rows[ ]
 
                             }
                         }
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Asset Purchase Saved"));
+                }
+            }
             catch (Exception ex)
             {
                 return Ok(_api.Error(ex));
             }
         }
-
-
-
     }
 }
+
+
+
