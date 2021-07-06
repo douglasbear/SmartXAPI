@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
                 case "applicationtype":
                     id = 97;
                     break;
-                case "defaultUnitType":
+                case "defaultunittype":
                     id = 104;
                     break;
 

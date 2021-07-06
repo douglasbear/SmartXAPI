@@ -267,7 +267,7 @@ namespace SmartxAPI.Controllers
                     dt = myFunctions.AddNewColumnToDataTable(dt, "n_POrderQty", typeof(string), purchaseQty);
 
 
-                    string variant = "SELECT * from Inv_ItemMaster where N_ItemID<>@nItemID and N_GroupID = @nItemID and N_CompanyID=@nCompanyID";
+                    string variant = "SELECT * from vw_InvItemMaster where N_ItemID<>@nItemID and N_GroupID = @nItemID and N_CompanyID=@nCompanyID";
                     dtVariantList = dLayer.ExecuteDataTable(variant, QueryParams, connection);
                     dtVariantList = _api.Format(dtVariantList, "variantList");
 
@@ -309,6 +309,8 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(dt);
 
                 dataSet.Tables.Add(Images);
+                dataSet.Tables.Add(dtItemUnits);
+                dataSet.Tables.Add(dtVariantList);
 
 
                 return Ok(_api.Success(dataSet));
@@ -382,11 +384,11 @@ namespace SmartxAPI.Controllers
                             {
                                 newRow.ItemArray = MasterTableNew.Rows[0].ItemArray;
                                 MasterTable.Rows.Add(newRow);
-                                MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_VariantName"].ToString();
-                                if (VariantList.Rows[i]["X_VariantBarcode"].ToString() != "")
-                                    MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_VariantBarcode"].ToString();
-                                if (VariantList.Rows[i]["N_VariantPrice"].ToString() != "")
-                                    MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_VariantPrice"].ToString();
+                                MasterTable.Rows[j]["X_ItemName"] = VariantList.Rows[i]["X_ItemName"].ToString();
+                                if (VariantList.Rows[i]["X_Barcode"].ToString() != "")
+                                    MasterTable.Rows[j]["X_Barcode"] = VariantList.Rows[i]["X_Barcode"].ToString();
+                                if (VariantList.Rows[i]["N_Rate"].ToString() != "")
+                                    MasterTable.Rows[j]["N_Rate"] = VariantList.Rows[i]["N_Rate"].ToString();
                                 MasterTable.Rows[j]["N_CLassID"] = "2";
                             }
                             else
@@ -400,6 +402,20 @@ namespace SmartxAPI.Controllers
 
                     for (int k = 0; k < MasterTable.Rows.Count; k++)
                     {
+                        SortedList QueryParams = new SortedList();
+                        QueryParams.Add("@nCompanyID", nCompanyID);
+                        QueryParams.Add("@nItemID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString()));
+                        QueryParams.Add("@xItemName", MasterTable.Rows[0]["X_ItemName"].ToString());
+                        int count = 0;
+                        object res = dLayer.ExecuteScalar("Select count(*) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                        if (res != null)
+                            count = myFunctions.getIntVAL(res.ToString());
+
+                        if (count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save, Product name alrady exist"));
+                        }
 
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
@@ -730,7 +746,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nItemID", nItemID);
                     int classID = 0;
-                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                     if (res != null)
                         classID = myFunctions.getIntVAL(res.ToString());
 
@@ -738,7 +754,7 @@ namespace SmartxAPI.Controllers
                     {
                         string Items = "SELECT N_ItemID from Inv_ItemMaster where N_GroupID = @nItemID and N_CompanyID=@nCompanyID";
 
-                        dtItems = dLayer.ExecuteDataTable(Items, QueryParams, connection);
+                        dtItems = dLayer.ExecuteDataTable(Items, QueryParams, connection,transaction);
                     }
                     else
                     {
