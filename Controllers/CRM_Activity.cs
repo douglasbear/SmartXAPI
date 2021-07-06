@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,bool bySalesMan)
+        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bySalesMan)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -44,8 +44,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
-            string Criteria ="";
-            if(bySalesMan==true){
+            string Criteria = "";
+            if (bySalesMan == true)
+            {
                 Criteria = " and N_UserID=@nUserID ";
             }
             string Searchkey = "";
@@ -74,7 +75,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria ;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -160,8 +161,15 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
-                        if (ActivityCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
+                        if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
+                    }
+                    if(MasterTable.Rows[0]["N_RelatedTo"].ToString()=="294")
+                    {
+                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0))+1 from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection);
+                        if(Count!=null)
+                            MasterTable.Rows[0]["N_Order"]=Count.ToString();
+
                     }
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
@@ -173,10 +181,12 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        if  (bClosed=="1" && xStatus=="Closed"){
+                        if (bClosed == "1" && xStatus == "Closed")
+                        {
                             return Ok(api.Success("Activity Closed"));
                         }
-                        else{
+                        else
+                        {
                             return Ok(api.Success("Activity Created"));
                         }
                     }

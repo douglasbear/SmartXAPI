@@ -295,6 +295,7 @@ namespace SmartxAPI.Controllers
                         //     return Ok(_api.Error("User Already Registerd With this ID !!!"));
                         // }
                         // MasterTable.Rows[0]["n_UserID"] = globalUserID;
+                        if(MasterTable.Columns.Contains("n_AppID"))
                         MasterTable.Columns.Remove("n_AppID");
                         MasterTable.AcceptChanges();
                         userID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);

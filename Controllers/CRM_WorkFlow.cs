@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_WActivityCode like'%" + xSearchkey + "%'or X_WActivityCode like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_WActivityCode like'%" + xSearchkey + "%'or X_WActivity like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_WActivityID desc";
@@ -98,8 +98,6 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_CRMWorkflow where N_CompanyID=@p1 and X_WActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -166,9 +164,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
                         foreach (DataRow var in DetailsTable.Rows)
                         {
                             var["N_WActivityID"] = nWActivityID;
+                            var["N_FnYearID"] = nFnYearId;
                         }
                         dLayer.SaveData("CRM_WorkflowActivities", "N_WActivityDetailID", DetailsTable, connection, transaction);
                         transaction.Commit();

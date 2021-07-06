@@ -230,14 +230,17 @@ namespace SmartxAPI.Controllers
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
+                        if(DetailTable.Columns.Contains("X_Assignee"))
                         DetailTable.Columns.Remove("X_Assignee");
                     }
                     if (DetailTable.Rows[0]["n_ClosedUserID"].ToString() != "0" && DetailTable.Rows[0]["n_ClosedUserID"].ToString() != "")
                     {
+                        if(DetailTable.Columns.Contains("x_ClosedUser"))
                         DetailTable.Columns.Remove("x_ClosedUser");
                     }
                     if (DetailTable.Rows[0]["n_SubmitterID"].ToString() != "0" && DetailTable.Rows[0]["n_SubmitterID"].ToString() != "")
                     {
+                        if(DetailTable.Columns.Contains("x_Submitter"))
                         DetailTable.Columns.Remove("x_Submitter");
                     }
 

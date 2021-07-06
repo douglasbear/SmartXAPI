@@ -305,7 +305,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
                         }
-                        object loanLimitAmount = dLayer.ExecuteScalar("SELECT isnull(N_LoanAmountLimit,0) From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
+                        object loanLimitAmount = dLayer.ExecuteScalar("SELECT isnull(max(N_LoanAmountLimit),0) From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
                         if (myFunctions.getVAL(loanLimitAmount.ToString()) > 0)
                         {
                             if (!checkMaxAmount(n_LoanAmount, nCompanyID, nFnYearID, nEmpID, QueryParams, connection, transaction))
@@ -459,7 +459,7 @@ namespace SmartxAPI.Controllers
         private bool LoanCountLimitExceed(SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             int N_EmpLoanCount = 0, N_LoanLimitCount = 0;
-            object obj = dLayer.ExecuteScalar("SELECT isnull(N_LoanCountLimit,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpId =@nEmpID", Params, connection, transaction);
+            object obj = dLayer.ExecuteScalar("SELECT isnull(max(N_LoanCountLimit),0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpId =@nEmpID", Params, connection, transaction);
             if (obj != null)
                 N_LoanLimitCount = myFunctions.getIntVAL(obj.ToString());
             object EmpLoanCount = dLayer.ExecuteScalar("SELECT isnull(COUNT(N_LoanTransID),0) From Pay_LoanIssue Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpId =@nEmpID", Params, connection, transaction);
@@ -513,7 +513,7 @@ namespace SmartxAPI.Controllers
             double N_EmpLoanEligible = 0;
             DateTime D_HireDate = DateTime.Now;
 
-            obj = dLayer.ExecuteScalar("SELECT isnull(N_LoanEligible,0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
+            obj = dLayer.ExecuteScalar("SELECT isnull(max(N_LoanEligible),0) From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
             if (obj != null)
                 N_EmpLoanEligible = myFunctions.getVAL(obj.ToString());
             object EmpHireDate = dLayer.ExecuteScalar("SELECT D_HireDate From Pay_Employee Where N_CompanyID=@nCompanyID and N_EmpId =@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
@@ -533,7 +533,7 @@ namespace SmartxAPI.Controllers
         }
         private bool checkMaxAmount(double n_LoanAmount, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
-            object N_LoanLimitAmount1 = dLayer.ExecuteScalar("SELECT isnull(N_LoanAmountLimit,0) From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
+            object N_LoanLimitAmount1 = dLayer.ExecuteScalar("SELECT isnull(max(N_LoanAmountLimit),0) From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
             string xLoanLimitAmountS = N_LoanLimitAmount1.ToString();
             double N_LoanLimitAmount = myFunctions.getVAL(N_LoanLimitAmount1.ToString());
 

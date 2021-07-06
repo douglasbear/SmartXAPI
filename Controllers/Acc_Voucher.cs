@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                 DataTable CostCenterTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
-                CostCenterTable = ds.Tables["costcenter"];
+                CostCenterTable = ds.Tables["segmentTable"];
                 InfoTable = ds.Tables["info"];
                 SortedList Params = new SortedList();
 
@@ -266,12 +266,27 @@ namespace SmartxAPI.Controllers
                         LogParams.Add("X_Remark", "");
 
                         //dLayer.ExecuteNonQuery("SP_Log_SysActivity ",LogParams,connection,transaction);
-
+                        int N_InvoiceDetailId=0;
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
                             DetailTable.Rows[j]["N_VoucherId"] = N_VoucherID;
+                        
+                            N_InvoiceDetailId = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","","",j, DetailTable, connection, transaction);
+
+                            if(N_InvoiceDetailId>0)
+                            {
+                                for (int k = 0; k < CostCenterTable.Rows.Count; k++)
+                                {
+                                    if(false)
+                                    {
+                                        CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
+                                        CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+
+                                        int N_SegmentId = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID","","",k, CostCenterTable, connection, transaction);
+                                    }
+                                }
+                            }
                         }
-                        int N_InvoiceDetailId = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
 
                         if (N_InvoiceDetailId > 0)
                         {

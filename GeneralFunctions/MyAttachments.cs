@@ -3,6 +3,7 @@ using System.Collections;
 using System.Data;
 using System.Globalization;
 using System.IO;
+using System.Linq;
 using System.Security.Claims;
 using System.Security.Cryptography;
 using System.Text;
@@ -57,6 +58,7 @@ namespace SmartxAPI.GeneralFunctions
                             dr.Delete();
                         }
                     }
+                    if(dsAttachment.Columns.Contains("deleted"))
                     dsAttachment.Columns.Remove("deleted");
                     dsAttachment.AcceptChanges();
 
@@ -207,11 +209,16 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         if (ExpiryDate == "")
                         {
+                            if(dsAttachment.Columns.Contains("D_ExpiryDate"))
                             dsAttachment.Columns.Remove("D_ExpiryDate");
+                            if(dsAttachment.Columns.Contains("N_RemCategoryID"))
                             dsAttachment.Columns.Remove("N_RemCategoryID");
                         }
+                            if(dsAttachment.Columns.Contains("FileData"))
                         dsAttachment.Columns.Remove("FileData");
+                            if(dsAttachment.Columns.Contains("x_RemCategory"))
                         dsAttachment.Columns.Remove("x_RemCategory");
+                            if(dsAttachment.Columns.Contains("x_Category"))
                         dsAttachment.Columns.Remove("x_Category");
                         dsAttachment.AcceptChanges();
                         dLayer.SaveData("Dms_ScreenAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
@@ -385,6 +392,7 @@ namespace SmartxAPI.GeneralFunctions
 
             DataTable ImageData = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection);
             ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "FileData", typeof(string), null);
+            ImageData = myFunctions.AddNewColumnToDataTable(ImageData, "TempFileName", typeof(string), null);
 
             if (ImageData.Rows.Count > 0)
             {
@@ -401,6 +409,9 @@ namespace SmartxAPI.GeneralFunctions
                     if (File.Exists(path))
                     {
                         Byte[] bytes = File.ReadAllBytes(path);
+                        var random = RandomString();
+                        File.Copy(path, reportPath+random+"."+var["x_Extension"].ToString());
+                        var["TempFileName"] = random+"."+var["x_Extension"].ToString();
                         var["FileData"] = "data:" + api.GetContentType(path) + ";base64," + Convert.ToBase64String(bytes);
                     }
                 }
@@ -410,6 +421,14 @@ namespace SmartxAPI.GeneralFunctions
 
             return ImageData;
 
+        }
+        private static Random random = new Random();
+
+        public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
 

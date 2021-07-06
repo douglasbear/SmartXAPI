@@ -145,6 +145,7 @@ namespace SmartxAPI.Controllers
                 int N_GroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
                 string X_Operation = MasterTable.Rows[0]["x_Operation"].ToString();
                 string X_LedgerName= MasterTable.Rows[0]["X_LedgerName"].ToString();
+                if(MasterTable.Columns.Contains("x_Operation"))
                 MasterTable.Columns.Remove("x_Operation");
                 string X_LedgerCode = "";
                 MasterTable.AcceptChanges();
@@ -222,6 +223,7 @@ namespace SmartxAPI.Controllers
                 int N_ParentGroupID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentGroup"].ToString());
                 string X_Operation = MasterTable.Rows[0]["x_Operation"].ToString();
                 string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
+                if(MasterTable.Columns.Contains("x_Operation"))
                 MasterTable.Columns.Remove("x_Operation");
                 string X_GroupCode = MasterTable.Rows[0]["x_GroupCode"].ToString();
                 string X_GroupName = MasterTable.Rows[0]["x_GroupName"].ToString();
