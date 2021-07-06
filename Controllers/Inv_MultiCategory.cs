@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
                             N_Position = 1;
                         else
                         {
-                            object ObjNextLevelID = dLayer.ExecuteScalar("select isnull(N_Position,0)+1 from Inv_ItemCategoryDisplay where N_CategoryDisplayID=" + N_ParentID + "  and N_CompanyID= @nCompanyID ", QueryParams, connection, transaction);
+                            object ObjNextLevelID = dLayer.ExecuteScalar("select isnull(max(N_Position),0)+1 from Inv_ItemCategoryDisplay where N_CategoryDisplayID=" + N_ParentID + "  and N_CompanyID= @nCompanyID ", QueryParams, connection, transaction);
                             if (ObjNextLevelID == null)
                                 N_Position = 0;
                             else

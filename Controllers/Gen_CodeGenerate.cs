@@ -70,28 +70,41 @@ namespace SmartxAPI.Controllers
 
                     if (docNo == "@Auto" || docNo == "new")
                     {
-                        if (xDescription == null || xDescription == "")
+                        if (formID == 188)
+                        {
+                            if (xDescription == null || xDescription == "")
+                            {
+                                Params.Add("N_CompanyID", nCompanyID);
+                                Params.Add("N_YearID", nFnYearID);
+                                Params.Add("N_FormID", 188);
+                                Params.Add("X_Type", "");
+                            }
+                            else
+                            {
+                                Params.Add("N_CompanyID", nCompanyID);
+                                Params.Add("N_YearID", nFnYearID);
+                                Params.Add("N_FormID", 188);
+                                Params.Add("X_Type", xDescription);
+                            }
+
+                            while (true)
+                            {
+
+                                newCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate_New", Params, connection, transaction).ToString();
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_Employee Where X_EmpCode ='" + newCode + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                                if (N_Result == null)
+                                    break;
+                            }
+                        }
+                        else if (formID == 64)
                         {
                             Params.Add("N_CompanyID", nCompanyID);
                             Params.Add("N_YearID", nFnYearID);
-                            Params.Add("N_FormID", 188);
-                            Params.Add("X_Type", "");
-                        }
-                        else
-                        {
-                            Params.Add("N_CompanyID", nCompanyID);
-                            Params.Add("N_YearID", nFnYearID);
-                            Params.Add("N_FormID", 188);
-                            Params.Add("X_Type", xDescription);
-                        }
-
-                        while (true)
-                        {
-
-                            newCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate_New", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Pay_Employee Where X_EmpCode ='" + newCode + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
-                            if (N_Result == null)
-                                break;
+                            Params.Add("N_FormID", 64);
+            
+                            newCode = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
+                            if (newCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate ")); }
+                            
                         }
                     }
 

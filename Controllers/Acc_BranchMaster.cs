@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                     int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
-
+                    if(MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
                     if (xBranchCode == "@Auto")

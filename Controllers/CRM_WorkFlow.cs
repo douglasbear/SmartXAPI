@@ -14,17 +14,16 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("activity")]
+    [Route("workflow")]
     [ApiController]
-    public class CRM_Activity : ControllerBase
+    public class CRM_WorkFlow : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-
-        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public CRM_WorkFlow(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -35,35 +34,28 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bySalesMan)
+        public ActionResult WorkFlowList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
+            int nCompanyId = myFunctions.GetCompanyID(User);
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
-            string Criteria = "";
-            if (bySalesMan == true)
-            {
-                Criteria = " and N_UserID=@nUserID ";
-            }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_WActivityCode like'%" + xSearchkey + "%'or X_WActivity like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_activityid desc";
+                xSortBy = " order by N_WActivityID desc";
             else
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from CRM_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from CRM_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " and N_WActivityID not in (select top(" + Count + ") N_WActivityID from CRM_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
-            Params.Add("@nUserID", nUserID);
 
             SortedList OutPut = new SortedList();
 
@@ -75,7 +67,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria;
+                    sqlCommandCount = "select count(*) as N_Count  from CRM_WorkflowMaster where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -98,16 +90,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ActivityListDetails(string xActivityCode)
+        public ActionResult WorkFlowListDetails(string xActivityCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
+            string sqlCommandText = "select * from vw_CRMWorkflow where N_CompanyID=@p1 and X_WActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -133,6 +123,7 @@ namespace SmartxAPI.Controllers
 
 
 
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -140,12 +131,12 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable DetailsTable;
                 MasterTable = ds.Tables["master"];
+                DetailsTable = ds.Tables["details"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-                int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActivityID"].ToString());
-                string bClosed = MasterTable.Rows[0]["b_Closed"].ToString();
-                string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
+                int nWActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WActivityID"].ToString());
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -154,41 +145,35 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string ActivityCode = "";
-                    var values = MasterTable.Rows[0]["x_ActivityCode"].ToString();
+                    var values = MasterTable.Rows[0]["X_WActivityCode"].ToString();
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
-                        ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
+                        ActivityCode = dLayer.GetAutoNumber("CRM_WorkflowMaster", "X_WActivityCode", Params, connection, transaction);
                         if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
-                        MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
-                    }
-                    if(MasterTable.Rows[0]["N_RelatedTo"].ToString()=="294")
-                    {
-                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0))+1 from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection);
-                        if(Count!=null)
-                            MasterTable.Rows[0]["N_Order"]=Count.ToString();
-
+                        MasterTable.Rows[0]["X_WActivityCode"] = ActivityCode;
                     }
 
-                    nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
-                    if (nActivityID <= 0)
+                    nWActivityID = dLayer.SaveData("CRM_WorkflowMaster", "N_WActivityID", MasterTable, connection, transaction);
+                    if (nWActivityID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
                     else
                     {
+                        DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
+                        foreach (DataRow var in DetailsTable.Rows)
+                        {
+                            var["N_WActivityID"] = nWActivityID;
+                            var["N_FnYearID"] = nFnYearId;
+                        }
+                        dLayer.SaveData("CRM_WorkflowActivities", "N_WActivityDetailID", DetailsTable, connection, transaction);
                         transaction.Commit();
-                        if (bClosed == "1" && xStatus == "Closed")
-                        {
-                            return Ok(api.Success("Activity Closed"));
-                        }
-                        else
-                        {
-                            return Ok(api.Success("Activity Created"));
-                        }
+
+                        return Ok(api.Success("Workflow Created"));
                     }
                 }
             }
@@ -199,41 +184,41 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpDelete("delete")]
-        public ActionResult DeleteData(int nActivityID)
-        {
+        // [HttpDelete("delete")]
+        // public ActionResult DeleteData(int nOpportunityID)
+        // {
 
-            int Results = 0;
-            try
-            {
+        //     int Results = 0;
+        //     try
+        //     {
+        //         SortedList Params = new SortedList();
+
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+        //             transaction.Commit();
+        //         }
+        //         if (Results > 0)
+        //         {
+        //             Dictionary<string, string> res = new Dictionary<string, string>();
+        //             res.Add("N_OpportunityID", nOpportunityID.ToString());
+        //             return Ok(api.Success(res, "Opportunity deleted"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Error("Unable to delete Opportunity"));
+        //         }
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(api.Error(ex));
+        //     }
 
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("CRM_Activity", "N_ActivityID", nActivityID, "", connection, transaction);
-                    transaction.Commit();
-                }
-                if (Results > 0)
-                {
-                    Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("N_ActivityID", nActivityID.ToString());
-                    return Ok(api.Success(res, "Activity deleted"));
-                }
-                else
-                {
-                    return Ok(api.Error("Unable to delete Activity"));
-                }
 
-            }
-            catch (Exception ex)
-            {
-                return Ok(api.Error(ex));
-            }
-
-
-
-        }
+        // }
     }
 }

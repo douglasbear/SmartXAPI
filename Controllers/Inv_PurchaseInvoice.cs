@@ -45,47 +45,74 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetPurchaseInvoiceList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            DataTable dt = new DataTable();
-            DataTable CountTable = new DataTable();
-            SortedList Params = new SortedList();
-            DataSet dataSet = new DataSet();
-            string sqlCommandText = "";
-            string sqlCommandCount = "";
-            string Searchkey = "";
-
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%')";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_PurchaseID desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0])
-                {
-                    case "invoiceNo":
-                        xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
-                        break;
-                    default: break;
-                }
-                xSortBy = " order by " + xSortBy;
-            }
-            int Count = (nPage - 1) * nSizeperpage;
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
-
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            SortedList OutPut = new SortedList();
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable dt = new DataTable();
+                    DataTable CountTable = new DataTable();
+                    SortedList Params = new SortedList();
+                    DataSet dataSet = new DataSet();
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+                    string X_TransType = "PURCHASE";
+                    bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%')";
+
+                    if (CheckClosedYear == false)
+                    {
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0 ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + "and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0  and N_BranchID=" + nBranchID + "";
+                        }
+                    }
+                    else
+                    {
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0 ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + "and X_TransType='" + X_TransType + "' and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and N_PurchaseType = 0  and N_BranchID=" + nBranchID + "";
+                        }
+                    }
+
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_PurchaseID desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "invoiceNo":
+                                xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                    int Count = (nPage - 1) * nSizeperpage;
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nFnYearId);
+                    SortedList OutPut = new SortedList();
+
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
@@ -100,14 +127,15 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     OutPut.Add("TotalSum", TotalSum);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(OutPut));
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
                 }
             }
             catch (Exception e)
@@ -183,13 +211,18 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-                    SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
-                    dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
+
+
                     if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
                     N_PurchaseID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString());
                     N_POrderID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_POrderID"].ToString());
+                    if (nPurchaseNO != null)
 
+                    {
+                        SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
+                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
+                    }
 
                     //PURCHASE INVOICE DETAILS
                     bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
@@ -248,7 +281,7 @@ namespace SmartxAPI.Controllers
 
 
 
-          
+
             SortedList TxnStatus = new SortedList();
             TxnStatus.Add("Label", "");
             TxnStatus.Add("LabelColor", "");
@@ -268,9 +301,22 @@ namespace SmartxAPI.Controllers
             double InvoicePaidAmt = 0, BalanceAmt = 0;
             string PurchaseID = "";
 
+
+            string PurchaseSql = "Select N_PurchaseID from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='PURCHASE'";
+            DataTable PurchaseTable = dLayer.ExecuteDataTable(PurchaseSql, connection);
+            foreach (DataRow kvar in PurchaseTable.Rows)
+            {
+                PurchaseID += PurchaseID == "" ? kvar["N_PurchaseID"].ToString() : " , " + kvar["N_PurchaseID"].ToString();
+
+            }
+
+
+
+
             if (N_PaymentMethod == 2)
             {
-                objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + nPurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", connection);
+               
+                objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  isnull(dbo.Inv_PayReceipt.B_IsDraft,0) <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + PurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", connection);
             }
             else
             {
@@ -281,7 +327,7 @@ namespace SmartxAPI.Controllers
             }
 
 
-            if (objPaid == null && N_PaymentMethod == 2 && b_AllowCashPay)
+            if (objPaid == null && N_PaymentMethod == 2 )
             {
                 if (showAllBranch == true)
                     objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='" + x_TransType + "'", connection);
@@ -317,7 +363,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                        //IF PAYMENT DONE
+                       
                         TxnStatus["Label"] = "NotPaid";
                         TxnStatus["LabelColor"] = "Red";
                         TxnStatus["Alert"] = "";
@@ -326,8 +372,8 @@ namespace SmartxAPI.Controllers
 
                 else
                 {
-                    TxnStatus["Label"] = "NotPaid";
-                    TxnStatus["LabelColor"] = "Red";
+                    TxnStatus["Label"] = "Not Paid ";
+                    TxnStatus["LabelColor"] = "Green";
                     TxnStatus["Alert"] = "";
                 }
             }

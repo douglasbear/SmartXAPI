@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("modeoftransaction")]
-        public ActionResult GetTransactionList(int nAirportID)
+        public ActionResult GetTransactionList()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -60,14 +60,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetPortDetails(int nAirportID)
+        public ActionResult GetPortDetails(string xAirportCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_AirPort where N_CompanyId=@p1 and N_IrportID=@nBranchID";
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nAirportID);
+            string sqlCommandText = "select * from vw_AirPort where X_AirportCode=@p1";
+            Params.Add("@p1", xAirportCode);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -106,7 +104,7 @@ namespace SmartxAPI.Controllers
                     int nAirportID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AirportID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xAirportCode = MasterTable.Rows[0]["x_AirportCode"].ToString();
-
+if(MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
                     if (xAirportCode == "@Auto")

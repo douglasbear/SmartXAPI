@@ -235,8 +235,11 @@ namespace SmartxAPI.Controllers
                 case "Pricetype":
                     N_FormID = 3;
                     break;
-                default: return Ok("Invalid Type");
+                     case "CrmWorkType": N_FormID=1360;
+                break;
+           
             }
+        
             string X_Criteria = "N_ReferId=@p1 order by n_Sort ASC";
             SortedList param = new SortedList() { { "@p1", N_FormID } };
 

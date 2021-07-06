@@ -246,7 +246,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             double N_SChrgAmt = 0,N_ServiceCharge=0;
-                            object ServiceCharge =dLayer.ExecuteScalar("Select ISNULL(N_ServiceCharge , 0) from Inv_Customer where N_CustomerID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), connection, transaction);                                  
+                            object ServiceCharge =dLayer.ExecuteScalar("Select ISNULL(max(N_ServiceCharge) , 0) from Inv_Customer where N_CustomerID=" + nCompanyID + " and N_CompanyID=" + nCompanyID + "and N_FnYearID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString()), connection, transaction);                                  
                             N_ServiceCharge=myFunctions.getVAL(ServiceCharge.ToString());
                             if(N_ServiceCharge>0)
                             {
@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
                     else
                         X_Type = "Sales";
 
-                    for (int k = 0 ;k < TransactionTable.Rows.Count;k++)
+                    for (int k = 0 ;k < TransactionTable.Rows.Count;k++) 
                     {
                         TransactionTable.Rows[k]["N_AssetInventoryID"]=N_AssetInventoryID;
                         TransactionTable.Rows[k]["X_Reference"]=ReturnNo;
