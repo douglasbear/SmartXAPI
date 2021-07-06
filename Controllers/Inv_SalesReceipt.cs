@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and and B_YearEndProcess=0 and (X_type='SR' OR X_type='SA')" ;
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and (X_type='SR' OR X_type='SA')" ;
                         }
                         else
                         {
