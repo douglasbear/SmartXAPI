@@ -15,7 +15,7 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("Requestforquotation")]
     [ApiController]
-    public class Inv_RequestforQuotation : ControllerBase
+    public class Inv_RequestForQuotation : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -23,7 +23,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly int FormID = 198;
-        public Inv_RequestforQuotation(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Inv_RequestForQuotation(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             dLayer = dl;
             _api = api;
