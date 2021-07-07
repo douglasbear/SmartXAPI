@@ -164,13 +164,13 @@ namespace SmartxAPI.Controllers
                         if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
                     }
-                    if(MasterTable.Rows[0]["N_RelatedTo"].ToString()=="294")
-                    {
-                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0))+1 from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection);
-                        if(Count!=null)
-                            MasterTable.Rows[0]["N_Order"]=Count.ToString();
+                    // if(MasterTable.Rows[0]["N_RelatedTo"].ToString()=="294")
+                    // {
+                    //     object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0))+1 from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection);
+                    //     if(Count!=null)
+                    //         MasterTable.Rows[0]["N_Order"]=Count.ToString();
 
-                    }
+                    // }
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
                     if (nActivityID <= 0)

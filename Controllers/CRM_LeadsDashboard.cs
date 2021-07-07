@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
                     // Client = dLayer.ExecuteDataTable(sqlCommandClient, Params, connection);
 
                     ActivitiesList = api.Format(ActivitiesList, "ActivitiesList");
-                    LeadsList = api.Format(ActivitiesList, "LeadsList");
+                    LeadsList = api.Format(LeadsList, "LeadsList");
                     // Client = api.Format(ActivitiesList, "Client");
 
 
