@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "N_SalesId " + xSortBy.Split(" ")[1];
                                 break;
                             case "invoiceDate":
-                                xSortBy = "[Invoice Date] as DateTime " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast([Invoice Date] as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "x_BillAmt":
                                 xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];

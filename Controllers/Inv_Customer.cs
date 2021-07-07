@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_CustomerCode like '%" + xSearchkey + "%' or X_ContactName like '%" + xSearchkey + "%' or X_Address like '%" + xSearchkey + "%' or X_PhoneNo1 like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_CustomerID desc";
+                xSortBy = " order by N_CustomerID,X_CustomerCode desc";
             else
             {
              xSortBy = " order by " + xSortBy;
