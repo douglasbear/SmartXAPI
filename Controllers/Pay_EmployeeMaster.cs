@@ -504,7 +504,7 @@ namespace SmartxAPI.Controllers
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                    Master = _api.Format(Master, "master");
+                    Master = _api.Format(Master, "pay_Employee");
 
                     if (Master.Rows.Count == 0)
                     {
