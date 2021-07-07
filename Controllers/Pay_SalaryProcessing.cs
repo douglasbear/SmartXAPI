@@ -1178,8 +1178,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                        if(DetailsTable.Columns.Contains("n_PayTypeID"))
                         DetailsTable.Columns.Remove("n_PayTypeID");
+                        if(DetailsTable.Columns.Contains("n_IsLoan"))
                         DetailsTable.Columns.Remove("n_IsLoan");
+                        if(DetailsTable.Columns.Contains("n_LoanTransDetailsID"))
                         DetailsTable.Columns.Remove("n_LoanTransDetailsID");
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DetailsTable, connection, transaction);

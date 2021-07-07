@@ -10,6 +10,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Net.Mail;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -184,6 +185,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
         }
+
         [HttpGet("list")]
         public ActionResult TemplateList()
         {
@@ -230,6 +232,82 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(e));
             }
+        }
+        [HttpGet("details")]
+        public ActionResult TemplateListDetails(string x_TemplateCode)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "";
+
+
+            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and x_TemplateCode=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", x_TemplateCode);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+         [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTemplateID)
+        {
+
+            int Results = 0;
+            try
+            {
+
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Gen_MailTemplates", "N_TemplateID", nTemplateID, "", connection, transaction);
+                    transaction.Commit();
+                }
+                if (Results > 0)
+                {
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_TemplateID", nTemplateID.ToString());
+                    return Ok(api.Success(res, "Email Template deleted"));
+                }
+                else
+                {
+                    return Ok(api.Error("Unable to delete Email Template"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+
         }
 
 

@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                     int nAirportID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AirportID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xAirportCode = MasterTable.Rows[0]["x_AirportCode"].ToString();
-
+if(MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
                     if (xAirportCode == "@Auto")

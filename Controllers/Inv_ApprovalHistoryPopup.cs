@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText="";
 
-            sqlCommandText="SELECT * FROM vw_ApprovalHistoryPopup WHERE N_CompanyID=@nCompanyID and X_TransType=@xTransType and N_TransID=@nTransID and X_TransCode=@xTransCode";
+            sqlCommandText="SELECT * FROM vw_ApprovalHistoryPopup WHERE N_CompanyID=@nCompanyID and X_TransType=@xTransType and N_TransID=@nTransID and X_TransCode=@xTransCode order by D_ActionDate";
 
             try
             {

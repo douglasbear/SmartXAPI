@@ -24,18 +24,18 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int N_FormID = 452;
 
-         public Ass_ItemMaster(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
-        
+        public Ass_ItemMaster(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-           // FormID = 188;
+            // FormID = 188;
         }
 
 
-    [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult ItemMasterList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -90,9 +90,9 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-     
 
-     [HttpPost("save")]
+
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -105,26 +105,26 @@ namespace SmartxAPI.Controllers
                 string xItemCode = MasterTable.Rows[0]["X_ItemCode"].ToString();
                 int nAddlInfoID = myFunctions.getIntVAL(ExpiryTable.Rows[0]["N_AddlInfoID"].ToString());
                 int nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString());
-                
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                   
-                    String DupCriteria ="X_ItemCode= '" + xItemCode + "' and N_CompanyID=" + nCompanyID;
+
+                    String DupCriteria = "X_ItemCode= '" + xItemCode + "' and N_CompanyID=" + nCompanyID;
                     nItemID = dLayer.SaveData("Ass_AssetMaster", "N_ItemID", DupCriteria, "", MasterTable, connection, transaction);
-                    if(nItemID<=0)
+                    if (nItemID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-                    if(nItemID>0)
+                    if (nItemID > 0)
                     {
-                       dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "N_CompanyID=" + nCompanyID , connection,transaction);
+                        dLayer.DeleteData("Ass_AssetAddlInfo", "N_ItemID", nItemID, "N_CompanyID=" + nCompanyID, connection, transaction);
                     }
 
                     nAddlInfoID = dLayer.SaveData("Ass_AssetAddlInfo", "n_AddlInfoID", ExpiryTable, connection, transaction);
-                   
+
                     if (nAddlInfoID <= 0)
                     {
                         transaction.Rollback();
@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 SortedList Params = new SortedList();
-               
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -176,9 +176,9 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
         }
-             
- [HttpGet("details")]
-        public ActionResult ItemMasterListDetails(string xItemCode,int nBranchID,bool bAllBranchData)
+
+        [HttpGet("details")]
+        public ActionResult ItemMasterListDetails(string xItemCode, int nBranchID, bool bAllBranchData)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -187,11 +187,11 @@ namespace SmartxAPI.Controllers
             DataTable DeprTable = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            int nItemID=0;
-            string sqlCommandText="";
-            string ExpirysqlCommand="";
-            string HistorysqlCommand="";
-            string DeprsqlCommand="";
+            int nItemID = 0;
+            string sqlCommandText = "";
+            string ExpirysqlCommand = "";
+            string HistorysqlCommand = "";
+            string DeprsqlCommand = "";
 
             string Condn = "";
             if (bAllBranchData)
@@ -199,11 +199,11 @@ namespace SmartxAPI.Controllers
             else
                 Condn = "X_ItemCode=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
 
-            sqlCommandText = "select * from vw_AssetMaster where "+Condn+"";
+            sqlCommandText = "select * from vw_AssetMaster where " + Condn + "";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xItemCode);
             Params.Add("@p3", nBranchID);
-            
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    MasterTable = api.Format(MasterTable,"Master");
+                    MasterTable = api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
                     nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_itemID"].ToString());
 
@@ -219,29 +219,63 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p4", nItemID);
                     HistoryTable = dLayer.ExecuteDataTable(HistorysqlCommand, Params, connection);
 
-                    HistoryTable = api.Format(HistoryTable,"History");
+                    HistoryTable = api.Format(HistoryTable, "History");
 
                     ExpirysqlCommand = "Select * From vw_AssetAddlInfo Where N_CompanyID=@p1 and N_ItemID=@p4";
                     ExpiryTable = dLayer.ExecuteDataTable(ExpirysqlCommand, Params, connection);
 
-                    ExpiryTable = api.Format(ExpiryTable,"Expiry");
+                    ExpiryTable = api.Format(ExpiryTable, "Expiry");
 
-                    DeprsqlCommand = "Select Max(D_EndDate) as LastRunDate,COUNT(D_RunDate) as DepreciationCount,Sum(DATEDIFF(D,D_StartDate ,D_EndDate )) as DepreciationDays from Ass_Depreciation where N_ItemID=@p4 and N_CompanyID=@p1" ;
+                    DeprsqlCommand = "Select Max(D_EndDate) as LastRunDate,COUNT(D_RunDate) as DepreciationCount,Sum(DATEDIFF(D,D_StartDate ,D_EndDate )) as DepreciationDays from Ass_Depreciation where N_ItemID=@p4 and N_CompanyID=@p1";
                     DeprTable = dLayer.ExecuteDataTable(DeprsqlCommand, Params, connection);
 
-                    DeprTable = api.Format(DeprTable,"Depreciation");
+                    DeprTable = api.Format(DeprTable, "Depreciation");
                 }
-                
+
                 if (MasterTable.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                    dt.Tables.Add(MasterTable); 
-                    dt.Tables.Add(HistoryTable); 
-                    dt.Tables.Add(ExpiryTable); 
-                    dt.Tables.Add(DeprTable); 
+                    dt.Tables.Add(MasterTable);
+                    dt.Tables.Add(HistoryTable);
+                    dt.Tables.Add(ExpiryTable);
+                    dt.Tables.Add(DeprTable);
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpGet("assetList")]
+        public ActionResult GetassetList()
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+           
+            string sqlCommandText = "Select *  from vw_AssetMaster Where N_CompanyID= " + nCompanyID + "";
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
                     return Ok(api.Success(dt));
                 }
             }
@@ -251,16 +285,17 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
         [HttpGet("defaults")]
         public ActionResult ExpiryDefaults()
         {
             DataTable dt = new DataTable();
             int nCompanyId = myFunctions.GetCompanyID(User);
             SortedList Params = new SortedList();
-            string sqlCommandText="";
+            string sqlCommandText = "";
 
-            sqlCommandText =  "Select * From Gen_Defaults where N_DefaultId= 51";
-            
+            sqlCommandText = "Select * From Gen_Defaults where N_DefaultId= 51";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -269,14 +304,14 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
                 }
-                
+
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 else
                 {
-                   // dt.Tables.Add(dt); 
+                    // dt.Tables.Add(dt); 
                     return Ok(api.Success(dt));
                 }
             }
@@ -291,16 +326,16 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyID=myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nFnYearID",nFnYearID);
-            string sqlCommandText="Select * from Acc_CostCentreMaster Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID";
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            string sqlCommandText = "Select * from Acc_CostCentreMaster Where N_CompanyID=@nCompanyID and N_FnyearID=@nFnYearID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

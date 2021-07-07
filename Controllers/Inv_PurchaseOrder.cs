@@ -36,65 +36,93 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetPurchaseOrderList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "";
-            string sqlCommandCount = "";
-            string Searchkey = "";
-
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
-
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_POrderID desc";
-            else
-            {
-                switch (xSortBy.Split(" ")[0]){
-                    case "orderNo" : xSortBy ="N_POrderID " + xSortBy.Split(" ")[1] ;
-                    break;
-                    default : break;
-                }
-            xSortBy = " order by " + xSortBy;
-            }
-            if (Count == 0)
-                sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
-            SortedList OutPut = new SortedList();
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+                    bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_POrderID desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "orderNo":
+                                xSortBy = "N_POrderID " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                    if (CheckClosedYear == false)
+                    {
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess =0";
+                        }
+                    }
+                    else
+                    {
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess =0";
+                        }
+                    }
+
+                    if (Count == 0)
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_POrderID not in(select top(" + Count + ") N_POrderID from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nFnYearId);
+                    SortedList OutPut = new SortedList();
+
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    string TotalCount="0";
-                    string TotalSum="0";
-                    if(Summary.Rows.Count>0){
-                    DataRow drow = Summary.Rows[0];
-                    TotalCount = drow["N_Count"].ToString();
-                    TotalSum = drow["TotalAmount"].ToString();
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
                     }
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     OutPut.Add("TotalSum", TotalSum);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(OutPut));
-                }
 
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
             }
             catch (Exception e)
             {
@@ -161,7 +189,7 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
-            if(xPRSNo==null)xPRSNo="";
+            if (xPRSNo == null) xPRSNo = "";
             string Mastersql = "";
 
             if (bAllBranchData == true)
@@ -177,7 +205,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", xPOrderId);
-           
+
 
             try
             {
@@ -249,9 +277,9 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()),myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()),this.FormID,myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()),User,connection);
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
-                    
+
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(DetailTable);
                 }
@@ -275,7 +303,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
-                int N_POrderID=0; var X_POrderNo="";
+                int N_POrderID = 0; var X_POrderNo = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -292,8 +320,8 @@ namespace SmartxAPI.Controllers
                     DataRow Master = MasterTable.Rows[0];
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyId"].ToString());
 
-                     N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
-                     if (N_POrderID > 0)
+                    N_POrderID = myFunctions.getIntVAL(Master["n_POrderID"].ToString());
+                    if (N_POrderID > 0)
                     {
                         if (CheckProcessed(N_POrderID))
                             return Ok(api.Error("Transaction Started!"));
@@ -390,35 +418,35 @@ namespace SmartxAPI.Controllers
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        int UnitID =myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString())+" and N_CompanyID="+myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString())+" and X_ItemUnit='"+DetailTable.Rows[j]["X_ItemUnit"].ToString()+"'", connection, transaction).ToString());
+                        int UnitID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit where N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_ItemID"].ToString()) + " and N_CompanyID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["N_CompanyID"].ToString()) + " and X_ItemUnit='" + DetailTable.Rows[j]["X_ItemUnit"].ToString() + "'", connection, transaction).ToString());
                         DetailTable.Rows[j]["n_POrderID"] = N_POrderID;
                         DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_PurchaseOrderDetailId = dLayer.SaveData("Inv_PurchaseOrderDetails", "n_POrderDetailsID", DetailTable, connection, transaction);
 
-                        SortedList VendorParams = new SortedList();
-                        VendorParams.Add("@nVendorID", N_VendorID);
-                        DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
-                        if (VendorInfo.Rows.Count > 0)
+                    SortedList VendorParams = new SortedList();
+                    VendorParams.Add("@nVendorID", N_VendorID);
+                    DataTable VendorInfo = dLayer.ExecuteDataTable("Select X_VendorCode,X_VendorName from Inv_Vendor where N_VendorID=@nVendorID", VendorParams, connection, transaction);
+                    if (VendorInfo.Rows.Count > 0)
+                    {
+                        try
                         {
-                            try
-                            {
-                                myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID,  "Vendor Document", User, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                transaction.Rollback();
-                                return Ok(api.Error(ex));
-                            }
+                            myAttachments.SaveAttachment(dLayer, Attachment, PorderNo, N_POrderID, VendorInfo.Rows[0]["X_VendorName"].ToString().Trim(), VendorInfo.Rows[0]["X_VendorCode"].ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
                         }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(ex));
+                        }
+                    }
 
                     transaction.Commit();
                 }
                 SortedList Result = new SortedList();
-                Result.Add("n_POrderID",N_POrderID);
-                Result.Add("x_POrderNo",X_POrderNo);
-                return Ok(api.Success(Result,"Purchase Order Saved"));
+                Result.Add("n_POrderID", N_POrderID);
+                Result.Add("x_POrderNo", X_POrderNo);
+                return Ok(api.Success(Result, "Purchase Order Saved"));
             }
             catch (Exception ex)
             {
@@ -429,17 +457,17 @@ namespace SmartxAPI.Controllers
         private bool CheckProcessed(int nPOrderID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
-                        using (SqlConnection connection = new SqlConnection(connectionString))
+            using (SqlConnection connection = new SqlConnection(connectionString))
             {
                 connection.Open();
-            object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=" + nCompanyId + " and N_TransID=" + nPOrderID + " and N_FormID=82",connection);
-            if (AdvancePRProcessed != null)
-            {
-                if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                object AdvancePRProcessed = dLayer.ExecuteScalar("Select COUNT(N_TransID) From Inv_PaymentRequest Where  N_CompanyID=" + nCompanyId + " and N_TransID=" + nPOrderID + " and N_FormID=82", connection);
+                if (AdvancePRProcessed != null)
                 {
-                    return true;
+                    if (myFunctions.getIntVAL(AdvancePRProcessed.ToString()) > 0)
+                    {
+                        return true;
+                    }
                 }
-            }
             }
             return false;
         }
