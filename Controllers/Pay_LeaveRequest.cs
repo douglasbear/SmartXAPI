@@ -953,6 +953,7 @@ namespace SmartxAPI.Controllers
                         if (ButtonTag == "6" || ButtonTag == "0")
                         {
                             dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", n_VacationGroupID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
+                            dLayer.DeleteData("Dms_ScreenAttachments", "N_TransID", n_VacationGroupID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_FormID=210 and N_PartyID="+EmpID, connection, transaction);
                         }
 
                         transaction.Commit();
