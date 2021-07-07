@@ -281,6 +281,11 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+
+                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                        VendorListDetails = _api.Format(VendorListDetails, "vendorList");
+                        ds.Tables.Add(VendorListDetails);
+
                         return Ok(_api.Success(ds));
                     }
                 }
@@ -292,7 +297,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        public DataTable GetVendorListTable(int nQuotationID,int nVendorID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
+        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable VendorListDetails = new DataTable();
             string sqlCommand="";
