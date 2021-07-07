@@ -238,26 +238,28 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
                     object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId and Acc_FnYear.N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
-                    if(ObjTaxType.ToString()=="")
-                        ObjTaxType="Vat";
+                    if (ObjTaxType == null)
+                        ObjTaxType = "";
+                    if (ObjTaxType.ToString() == "")
+                        ObjTaxType = "Vat";
                     string TaxType = ObjTaxType.ToString();
 
                     object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    if(ObjPath!=null)
+                    if (ObjPath != null)
                     {
-                        if(ObjPath.ToString()!="")
+                        if (ObjPath.ToString() != "")
                             RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
                         else
                             RPTLocation = reportLocation + "printing/";
                     }
                     object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     critiria = "{" + Templatecritiria + "}=" + nPkeyID;
-                    
+
                     object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    if(Othercritiria!=null)
+                    if (Othercritiria != null)
                     {
-                        if(Othercritiria.ToString()!="")
-                            critiria = critiria + "and "+Othercritiria.ToString();
+                        if (Othercritiria.ToString() != "")
+                            critiria = critiria + "and " + Othercritiria.ToString();
 
                     }
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
@@ -269,7 +271,7 @@ namespace SmartxAPI.Controllers
                     return true;
                 }
             }
-            catch(Exception e)
+            catch (Exception e)
             {
                 return false;
 
@@ -296,7 +298,7 @@ namespace SmartxAPI.Controllers
                     {
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
-  
+
                     // if (nFormID == 1229)//leave
                     // {
                     //     critiria = "{Vw_VacationApprovalSlip_Rpt.N_VacationGroupID}=" + nPkeyID;
@@ -329,7 +331,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                         return Ok(_api.Error("Report Generation Failed"));
+                        return Ok(_api.Error("Report Generation Failed"));
                     }
                 }
             }

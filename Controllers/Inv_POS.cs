@@ -974,7 +974,7 @@ object obj;
 
                 bool B_SPRiceType = false;
 
-                object objSPrice = dLayer.ExecuteScalar("Select Isnull(N_Value,0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'", Params, connection);
+                object objSPrice = dLayer.ExecuteScalar("Select Isnull(max(N_Value),0) from Gen_Settings where N_CompanyID=@nCompanyID and X_Group='Inventory' and X_Description='Selling Price Calculation'", Params, connection);
                 if (objSPrice != null)
                 {
                     if (myFunctions.getIntVAL(objSPrice.ToString()) == 4)
