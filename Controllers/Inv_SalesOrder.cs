@@ -63,6 +63,12 @@ namespace SmartxAPI.Controllers
                             case "orderNo":
                                 xSortBy = "N_SalesOrderId " + xSortBy.Split(" ")[1];
                                 break;
+                             case "orderDate":
+                                xSortBy = "Cast([Order Date] as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "n_Amount":
+                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;

@@ -234,7 +234,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult TemplateListDetails(string x_TemplateCode)
+        public ActionResult TemplateListDetails(string n_TemplateID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -243,9 +243,9 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
 
 
-            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and x_TemplateCode=@p2";
+            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and N_TemplateID=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", x_TemplateCode);
+            Params.Add("@p2", n_TemplateID);
 
             SortedList OutPut = new SortedList();
 
