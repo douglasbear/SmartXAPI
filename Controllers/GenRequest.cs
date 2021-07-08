@@ -38,9 +38,10 @@ namespace SmartxAPI.Controllers
        
         //GET api/Projects/list
         [HttpGet("defults/{type}") ]
-        public ActionResult GetDefults (string type)
+        public ActionResult GetDefults (string type,string X_TypeCode)
         {
             int id=0;
+            if(X_TypeCode ==null)X_TypeCode="";
             switch(type.ToLower()){
                 case "locationtype": id=1;
                 break;
@@ -86,17 +87,19 @@ namespace SmartxAPI.Controllers
                 break;
                 case "insurancetype": id=49;
                 break;
-                 case "assetcurrentstatus": id=46;
+                case "assetcurrentstatus": id=46;
                 break;
-                 case "assetdepreciationmethod": id=57;
+                case "assetdepreciationmethod": id=57;
                 break;
-                 case "applicationtype": id=97;
+                case "applicationtype": id=97;
                 break;
-
+                case "media": id=28;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
-            SortedList param = new SortedList(){{"@p1",id}};
+            if(X_TypeCode!="")X_Criteria=X_Criteria+ " and X_TypeCode=@p2";
+            SortedList param = new SortedList(){{"@p1",id},{"@p2",X_TypeCode}};
             
             DataTable dt=new DataTable();
             
