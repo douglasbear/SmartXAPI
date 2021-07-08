@@ -121,8 +121,8 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
 
-                    if (MasterTable.Columns.Contains("nFormID"))
-                        MasterTable.Columns.Remove("nFormID");
+                    if (MasterTable.Columns.Contains("n_FormID"))
+                        MasterTable.Columns.Remove("n_FormID");
                     MasterTable.AcceptChanges();
 
                     if (nFormID == 618)
@@ -153,8 +153,8 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows[0]["x_QuotationNo"] = X_QuotationNo;
                         }
 
-                        string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nFnYearID + " and X_ReceiptNo='" + X_QuotationNo + "'";
-                        string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_AcYearID=" + nFnYearID;
+                        string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_QuotationNo='" + X_QuotationNo + "'";
+                        string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         nQuotationID = dLayer.SaveData("Inv_VendorRequest", "N_QuotationID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
                         if (nQuotationID <= 0)
                         {
