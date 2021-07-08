@@ -67,7 +67,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("@p4", N_Quotationid);
                         InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
                         InvoiceList = api.Format(InvoiceList, "InvoiceList");
-                         dt.Tables.Add(InvoiceList);
+                        dt.Tables.Add(InvoiceList);
                     }
 
                     ActivitiesList = dLayer.ExecuteDataTable(sqlCommandActivitiesList, Params, connection);
@@ -80,14 +80,14 @@ namespace SmartxAPI.Controllers
                     LeadsList = api.Format(LeadsList, "LeadsList");
                     ContactList = api.Format(ContactList, "ContactList");
                     QuotationList = api.Format(QuotationList, "QuotationList");
-                    
+
 
 
                     dt.Tables.Add(ActivitiesList);
                     dt.Tables.Add(LeadsList);
                     dt.Tables.Add(ContactList);
                     dt.Tables.Add(QuotationList);
-                   
+
                     return Ok(api.Success(dt));
 
                 }
@@ -97,6 +97,38 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+        [HttpGet("update")]
+        public ActionResult ActivityUpdate(string xActivityCode, bool bFlag)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            if (bFlag)
+                sqlCommandText = "update crm_activity set b_closed=1,x_status='Closed'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
+            else
+                sqlCommandText = "update crm_activity set b_closed=0,x_status='Active'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", xActivityCode);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
+                }
+                return Ok(api.Warning("Transaction Saved"));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
     }
 }
 
