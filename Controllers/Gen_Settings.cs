@@ -215,8 +215,8 @@ namespace SmartxAPI.Controllers
 
         }
 
-        [HttpPost("saveSettings")]
-        public ActionResult SaveSettingsData([FromBody] DataSet ds)
+        [HttpGet("saveSettings")]
+        public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue)
         {
             try
             {
@@ -224,14 +224,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    DataTable MasterTable;
-                    MasterTable = ds.Tables["master"];
-                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                    int nFormID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FormID"].ToString());
-                    string xDescription = MasterTable.Rows[0]["x_Description"].ToString();
-                    int nValue = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Value"].ToString());
-
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     SortedList ParamSettings_Ins = new SortedList();
+                    
                     ParamSettings_Ins.Add("N_CompanyID", nCompanyID);
                     ParamSettings_Ins.Add("X_Group", nFormID);
                     ParamSettings_Ins.Add("X_Description", xDescription);
