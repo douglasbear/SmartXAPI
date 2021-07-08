@@ -215,6 +215,42 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("saveSettings")]
+        public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList ParamSettings_Ins = new SortedList();
+                    
+                    ParamSettings_Ins.Add("N_CompanyID", nCompanyID);
+                    ParamSettings_Ins.Add("X_Group", nFormID);
+                    ParamSettings_Ins.Add("X_Description", xDescription);
+                    ParamSettings_Ins.Add("N_Value",nValue);
+                    ParamSettings_Ins.Add("X_Value",xValue);
+
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", ParamSettings_Ins, connection, transaction);
+                        return Ok(_api.Success("Terms & Conditions Saved"));
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save!"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
 
 
         
