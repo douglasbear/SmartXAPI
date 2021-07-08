@@ -581,7 +581,51 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("location")]
+        public ActionResult GetLocation(int nMainLocID,int nBranchID,bool bAllBranchData)
 
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nMainLocID", nMainLocID);
+            Params.Add("@nBranchID", nBranchID);
+
+            string sqlCommandText = "";
+            string sqlCondition = "";
+            
+            if(nMainLocID>0)
+                sqlCondition=" and (N_MainLocationID = @nMainLocID or N_LocationID=@nMainLocID )";
+
+            if (bAllBranchData)
+               sqlCommandText = "Select *  from vw_InvLocation Where N_CompanyID= @nCompanyID "+sqlCondition;
+            else
+                sqlCommandText = "Select *  from vw_InvLocation Where N_CompanyID= @nCompanyID and N_BranchID=@nBranchID "+sqlCondition;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+
+        }
+  
 
     }
 }
