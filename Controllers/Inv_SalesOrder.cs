@@ -205,10 +205,6 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList DetailParams = new SortedList();
                     int N_OthTaxCategoryID = myFunctions.getIntVAL(MasterRow["N_OthTaxCategoryID"].ToString());
-                    DetailParams.Add("@nOthTaxCategoryID", N_OthTaxCategoryID);
-
-                    object X_OtherTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=@nOthTaxCategoryID", DetailParams, connection);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_DisplayName", typeof(string), X_OtherTax);
                     int N_SOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
 
                     DetailParams.Add("@nSOrderID", N_SOrderID);
