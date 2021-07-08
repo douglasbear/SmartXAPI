@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("saveSettings")]
-        public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue)
+        public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue)
         {
             try
             {
@@ -231,6 +231,7 @@ namespace SmartxAPI.Controllers
                     ParamSettings_Ins.Add("X_Group", nFormID);
                     ParamSettings_Ins.Add("X_Description", xDescription);
                     ParamSettings_Ins.Add("N_Value",nValue);
+                    ParamSettings_Ins.Add("X_Value",xValue);
 
                     try
                     {
