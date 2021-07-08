@@ -143,7 +143,7 @@ namespace SmartxAPI.Controllers
                             while (true)
                             {
                                 DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_VendorRequest Where X_ReceiptNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                                object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_VendorRequest Where x_QuotationNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                                 if (N_Result == null)
                                     break;
                             }
