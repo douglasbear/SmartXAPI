@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandActivitiesList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandLeadsList = "select * from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
-            string sqlCommandContactList = "Select * from vw_CRMCustomer where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
             string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_quotationid=@p4";
 
@@ -66,6 +66,8 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@p4", N_Quotationid);
                         InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
+                        InvoiceList = api.Format(InvoiceList, "InvoiceList");
+                         dt.Tables.Add(InvoiceList);
                     }
 
                     ActivitiesList = dLayer.ExecuteDataTable(sqlCommandActivitiesList, Params, connection);
@@ -77,15 +79,15 @@ namespace SmartxAPI.Controllers
                     ActivitiesList = api.Format(ActivitiesList, "ActivitiesList");
                     LeadsList = api.Format(LeadsList, "LeadsList");
                     ContactList = api.Format(ContactList, "ContactList");
-                    QuotationList = api.Format(ContactList, "QuotationList");
-                    InvoiceList = api.Format(ContactList, "InvoiceList");
+                    QuotationList = api.Format(QuotationList, "QuotationList");
+                    
 
 
                     dt.Tables.Add(ActivitiesList);
                     dt.Tables.Add(LeadsList);
                     dt.Tables.Add(ContactList);
                     dt.Tables.Add(QuotationList);
-                    dt.Tables.Add(InvoiceList);
+                   
                     return Ok(api.Success(dt));
 
                 }
