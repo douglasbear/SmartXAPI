@@ -77,22 +77,18 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and and B_YearEndProcess=0";
+                            Searchkey = Searchkey + " and B_YearEndProcess=0";
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess =0";
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " and B_YearEndProcess =0";
                         }
                     }
                     else
                     {
-                        if (bAllBranchData == true)
+                        if (bAllBranchData == false)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " ";
-                        }
-                        else
-                        {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " ";
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
                         }
                     }
                     if (Count == 0)
