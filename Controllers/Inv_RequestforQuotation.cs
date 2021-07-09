@@ -34,7 +34,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, bool bAllBranchData, int nBranchID, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetRFQList(int nFnYearId, int nPage, bool bAllBranchData, int nBranchID, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -49,17 +49,17 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
-                    string X_TransType = "";
+                    string sqlCondition = "";
                     
                  
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by D_RequestDate  desc";
+                        xSortBy = " order by [Quotation No]  desc";
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
                         {
                             case "invoiceNo":
-                                xSortBy = "D_RequestDate " + xSortBy.Split(" ")[1];
+                                xSortBy = "[Quotation No] " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -67,16 +67,25 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (myCompanyID._B_AllBranchData == true)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_RequestQuotation_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey + " " + xSortBy;
+                        sqlCondition="N_CompanyID=@p1 and N_FnYearID=@p2";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_RequestQuotation_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and n_branchid= "   + xSearchkey + xSortBy + " ) " + xSortBy;
+                        sqlCondition="N_CompanyID=@p1 and N_FnYearID=@p2 and n_branchid=@p3";
+
+                    if (myCompanyID._B_AllBranchData == true)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvVendorRequestNo_Search where "+sqlCondition+"  " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvVendorRequestNo_Search where "+sqlCondition+" "   + xSearchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvVendorRequestNo_Search where " + sqlCondition + " " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
                     Params.Add("@p3",nBranchID);
 
                     SortedList OutPut = new SortedList();
-
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_InvVendorRequestNo_Search where " + sqlCondition + " " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(_api.Warning("No Results Found"));

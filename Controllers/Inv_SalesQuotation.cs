@@ -440,6 +440,10 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
 
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -454,6 +458,7 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+                    int N_NextApproverID=0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -461,13 +466,29 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
 
-
                     bool B_SalesEnquiry = myFunctions.CheckPermission(N_CompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction);
-
 
                     // Auto Gen
                     string QuotationNo = MasterTable.Rows[0]["x_QuotationNo"].ToString();
                     DataRow Master = MasterTable.Rows[0];
+
+                    SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", N_CompanyID);
+                    CustParams.Add("@N_CustomerID", N_CustomerID);
+                    CustParams.Add("@nFnYearID", N_FnYearID);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+
+                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && N_QuotationID>0)
+                    {
+                        int N_PkeyID = N_QuotationID;
+                        string X_Criteria = "n_QuotationID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_SalesQuotation", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID=myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,N_PkeyID,"Sales Quotation",QuotationNo,dLayer,connection,transaction,User);
+                        return Ok(_api.Success("Sales Quotation Approval updated" + "-" + QuotationNo));
+                    }
+
                     if (QuotationNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", Master["n_CompanyId"].ToString());
