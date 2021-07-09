@@ -236,6 +236,7 @@ namespace SmartxAPI.Controllers
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", ParamSettings_Ins, connection, transaction);
+                        transaction.Commit();
                         return Ok(_api.Success("Terms & Conditions Saved"));
                     }
                     catch (Exception ex)

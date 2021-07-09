@@ -153,7 +153,7 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows[0]["x_QuotationNo"] = X_QuotationNo;
                         }
 
-                        string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_QuotationNo='" + X_QuotationNo + "'";
+                        string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and x_QuotationNo='" + X_QuotationNo + "'";
                         string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         nQuotationID = dLayer.SaveData("Inv_VendorRequest", "N_QuotationID", DupCriteria, X_Criteria, MasterTable, connection, transaction);
                         if (nQuotationID <= 0)
@@ -290,6 +290,101 @@ namespace SmartxAPI.Controllers
                     }
                 }
 
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+          
+        [HttpGet("prsList")]
+        public ActionResult GetPRSList(bool bAllBranchData, int nBranchID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nBranchID", nBranchID);
+
+            string sqlCommandText = "";
+            if (bAllBranchData == true)
+                sqlCommandText = "Select *  from vw_PrsPoMrn_GroupBy where N_CompanyID=@nCompanyID and N_Type=2";
+            else
+                sqlCommandText = "Select *  from vw_PrsPoMrn_GroupBy where N_CompanyID=@nCompanyID and and N_Type=2 and N_BranchID=@nBranchID";
+ 
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+        [HttpGet("prsDetails")]
+        public ActionResult GetPRSDetails(string xPRSNo)
+        {
+            DataTable Detail = new DataTable();
+            DataSet ds = new DataSet();
+            SortedList Params = new SortedList();
+            SortedList QueryParams = new SortedList();
+
+            string[] temp = xPRSNo.Split(',');
+            string X_PRSID="";
+            int companyid = myFunctions.GetCompanyID(User);
+
+            QueryParams.Add("@nCompanyID", companyid);
+
+            string _sqlQuery = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                   // SqlTransaction transaction = connection.BeginTransaction();
+
+                    for (int i = 0; i < temp.Length; i++)
+                    {
+                        int  N_PRSID=0;
+                        object  PRSID =dLayer.ExecuteScalar("Select N_PRSID from Inv_PRS Where Inv_PRS.N_CompanyID=" + companyid + " and X_PRSNo='" + temp[i] + "'", connection);
+                        if(PRSID!=null)
+                        {
+                            N_PRSID=myFunctions.getIntVAL(PRSID.ToString());
+                            if (X_PRSID == "")
+                                X_PRSID = N_PRSID.ToString();
+                            else
+                                X_PRSID = X_PRSID + "," + N_PRSID.ToString();
+                        }
+                    }
+                    QueryParams.Add("@X_PRSID", X_PRSID);
+
+                    _sqlQuery = "Select * from vw_PrsPoMrn_Detail Where N_CompanyID=@nCompanyID and N_PRSID in (@X_PRSID)";
+                    Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Detail = _api.Format(Detail, "prsDetails");
+                    if (Detail.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    ds.Tables.Add(Detail);
+
+                    return Ok(_api.Success(ds));
+                }
             }
             catch (Exception e)
             {
