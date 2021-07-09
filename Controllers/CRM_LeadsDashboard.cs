@@ -40,33 +40,54 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandActivitiesList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandLeadsList = "select * from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
-            // string sqlCommandClient = "Select * from vw_CRMCustomer where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
+            string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_quotationid=@p4";
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", xOpportunityCode);
 
             DataTable ActivitiesList = new DataTable();
             DataTable LeadsList = new DataTable();
-            DataTable Client = new DataTable();
+            DataTable ContactList = new DataTable();
+            DataTable QuotationList = new DataTable();
+            DataTable InvoiceList = new DataTable();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
+                    Params.Add("@p3", N_OpportunityID);
+
+                    object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
+                    if (N_Quotationid != null)
+                    {
+                        Params.Add("@p4", N_Quotationid);
+                        InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
+                        InvoiceList = api.Format(InvoiceList, "InvoiceList");
+                        dt.Tables.Add(InvoiceList);
+                    }
 
                     ActivitiesList = dLayer.ExecuteDataTable(sqlCommandActivitiesList, Params, connection);
                     LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
-                    // Client = dLayer.ExecuteDataTable(sqlCommandClient, Params, connection);
+                    ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
+                    QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
+
 
                     ActivitiesList = api.Format(ActivitiesList, "ActivitiesList");
                     LeadsList = api.Format(LeadsList, "LeadsList");
-                    // Client = api.Format(ActivitiesList, "Client");
+                    ContactList = api.Format(ContactList, "ContactList");
+                    QuotationList = api.Format(QuotationList, "QuotationList");
+
 
 
                     dt.Tables.Add(ActivitiesList);
                     dt.Tables.Add(LeadsList);
-                    // dt.Tables.Add(Client);
+                    dt.Tables.Add(ContactList);
+                    dt.Tables.Add(QuotationList);
+
                     return Ok(api.Success(dt));
 
                 }
@@ -76,6 +97,38 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+        [HttpGet("update")]
+        public ActionResult ActivityUpdate(string xActivityCode, bool bFlag)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            if (bFlag)
+                sqlCommandText = "update crm_activity set b_closed=1,x_status='Closed'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
+            else
+                sqlCommandText = "update crm_activity set b_closed=0,x_status='Active'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", xActivityCode);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
+                }
+                return Ok(api.Warning("Transaction Saved"));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
     }
 }
 

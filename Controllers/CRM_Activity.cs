@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_activityid desc";
+                xSortBy = " order by n_activityid";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -130,6 +130,8 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+        
 
 
 
