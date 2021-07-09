@@ -510,6 +510,15 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                     }
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + QuotationNo + "'";
+
+                     if(MasterTable.Columns.Contains("B_IsSaveDraft"))
+                        MasterTable.Columns.Remove("B_IsSaveDraft");
+                    if(MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if(MasterTable.Columns.Contains("N_ProcStatus"))
+                        MasterTable.Columns.Remove("N_ProcStatus");
+
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_QuotationID <= 0)
                     {
@@ -520,6 +529,8 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_QuotationID"] = N_QuotationID;
                     }
+
+                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
 
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
@@ -560,6 +571,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,N_QuotationID,"Sales Quotation",QuotationNo,dLayer,connection,transaction,User);
                     }
                     SortedList Result = new SortedList();
                     Result.Add("n_QuotationID", N_QuotationID);
@@ -773,25 +785,63 @@ namespace SmartxAPI.Controllers
                         objOrderProcessed = 0;
                     if (myFunctions.getIntVAL(objSalesProcessed.ToString()) == 0 && myFunctions.getIntVAL(objOrderProcessed.ToString()) == 0)
                     {
-                        SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyID},
-                                {"X_TransType","SALES QUOTATION"},
-                                {"N_VoucherID",N_QuotationID},
-                                {"N_UserID",nUserID},
-                                {"X_SystemName","WebRequest"},
-                                {"N_BranchID",nBranchID}};
-                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
-                        if (Results <= 0)
+                        DataTable TransData = new DataTable();
+                        SortedList ParamList = new SortedList();
+                        ParamList.Add("@nTransID", N_QuotationID);
+                        ParamList.Add("@nFnYearID", nFnYearID);
+                        ParamList.Add("@nCompanyID", nCompanyID);
+                        string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
+                        TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                        if (TransData.Rows.Count == 0)
+                        {
+                            return Ok(_api.Error("Transaction not Found"));
+                        }
+                        DataRow TransRow = TransData.Rows[0];
+                        int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
+                        SortedList CustParams = new SortedList();
+                        CustParams.Add("@nCompanyID", nCompanyID);
+                        CustParams.Add("@N_CustomerID", N_CustomerID);
+                        CustParams.Add("@nFnYearID", nFnYearID);
+                        object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+
+                        DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                        Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+                        //SqlTransaction transaction = connection.BeginTransaction(); ;
+
+                        string X_Criteria = "N_QuotationID=" + N_QuotationID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                        string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                        int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
+                        if (status != "Error")
+                        {
+                            transaction.Commit();
+                            return Ok(_api.Success("Sales Quotation " + status + " Successfully"));
+                        }
+                        else
                         {
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to delete Sales Quotation"));
                         }
-                        else
-                        {
-                            transaction.Commit();
-                            return Ok(_api.Success("Sales Quotation deleted"));
+                        // SortedList DeleteParams = new SortedList(){
+                        //         {"N_CompanyID",nCompanyID},
+                        //         {"X_TransType","SALES QUOTATION"},
+                        //         {"N_VoucherID",N_QuotationID},
+                        //         {"N_UserID",nUserID},
+                        //         {"X_SystemName","WebRequest"},
+                        //         {"N_BranchID",nBranchID}};
+                        // Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                        // if (Results <= 0)
+                        // {
+                        //     transaction.Rollback();
+                        //     return Ok(_api.Error("Unable to delete Sales Quotation"));
+                        // }
+                        // else
+                        // {
+                        //     transaction.Commit();
+                        //     return Ok(_api.Success("Sales Quotation deleted"));
 
-                        }
+                        // }
                     }
                     else
                     {
