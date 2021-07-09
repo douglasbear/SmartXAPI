@@ -63,6 +63,12 @@ namespace SmartxAPI.Controllers
                             case "orderNo":
                                 xSortBy = "N_SalesOrderId " + xSortBy.Split(" ")[1];
                                 break;
+                             case "orderDate":
+                                xSortBy = "Cast([Order Date] as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "n_Amount":
+                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -104,7 +110,7 @@ namespace SmartxAPI.Controllers
                     SortedList OutPut = new SortedList();
 
 
-                    
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesOrderNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
@@ -205,10 +211,6 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList DetailParams = new SortedList();
                     int N_OthTaxCategoryID = myFunctions.getIntVAL(MasterRow["N_OthTaxCategoryID"].ToString());
-                    DetailParams.Add("@nOthTaxCategoryID", N_OthTaxCategoryID);
-
-                    object X_OtherTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=@nOthTaxCategoryID", DetailParams, connection);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_DisplayName", typeof(string), X_OtherTax);
                     int N_SOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
 
                     DetailParams.Add("@nSOrderID", N_SOrderID);
