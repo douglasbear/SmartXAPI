@@ -109,7 +109,16 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-                    return Ok("SUCCESS");
+                    Master.Columns.Remove("x_TemplateCode");
+                    Master.Columns.Remove("x_TemplateName");
+                    Master.Columns.Remove("n_TemplateID");
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
+  
+                    dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
+                    transaction.Commit();
+
+                    return Ok(api.Success("Email Send"));
+                    
 
                 }
             }
