@@ -538,8 +538,9 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(ex));
                             }
                         }
-                        transaction.Commit();
                     }
+                        transaction.Commit();
+
                     SortedList Result = new SortedList();
                     Result.Add("n_QuotationID", N_QuotationID);
                     Result.Add("x_QuotationNo", QuotationNo);
