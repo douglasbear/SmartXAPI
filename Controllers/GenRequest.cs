@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
-            SortedList param = new SortedList(){{"@p1",id},{"@p2",X_TypeCode}};
+            SortedList param = new SortedList(){{"@p1",id}};
             if(X_TypeCode!=""){
                 X_Criteria=X_Criteria+ " and X_TypeCode=@p2";
                 param.Add("@p2",X_TypeCode);
