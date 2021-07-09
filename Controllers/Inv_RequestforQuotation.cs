@@ -67,9 +67,9 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (myCompanyID._B_AllBranchData == true)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_RequestQuotation_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvVendorRequestNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_RequestQuotation_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 and n_branchid= "   + xSearchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvVendorRequestNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and n_branchid= "   + xSearchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
