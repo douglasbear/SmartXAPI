@@ -43,6 +43,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
             string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_quotationid=@p4";
+            string sqlCommandMailLogList = "Select * from Gen_MailLog where N_CompanyID=@p1 and N_OpportunityID=@p3";
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", xOpportunityCode);
@@ -52,6 +53,7 @@ namespace SmartxAPI.Controllers
             DataTable ContactList = new DataTable();
             DataTable QuotationList = new DataTable();
             DataTable InvoiceList = new DataTable();
+            DataTable MailLogList = new DataTable();
 
             try
             {
@@ -74,12 +76,14 @@ namespace SmartxAPI.Controllers
                     LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
                     ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
                     QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
+                    MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
 
 
                     ActivitiesList = api.Format(ActivitiesList, "ActivitiesList");
                     LeadsList = api.Format(LeadsList, "LeadsList");
                     ContactList = api.Format(ContactList, "ContactList");
                     QuotationList = api.Format(QuotationList, "QuotationList");
+                    MailLogList = api.Format(MailLogList, "MailLogList");
 
 
 
@@ -87,6 +91,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(LeadsList);
                     dt.Tables.Add(ContactList);
                     dt.Tables.Add(QuotationList);
+                    dt.Tables.Add(MailLogList);
 
                     return Ok(api.Success(dt));
 
@@ -119,7 +124,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
                 }
-                return Ok(api.Warning("Transaction Saved"));
+                return Ok(api.Warning("Activity Updated"));
 
             }
             catch (Exception e)
