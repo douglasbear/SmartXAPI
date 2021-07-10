@@ -766,7 +766,7 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID, int nBranchID, int nFnYearID)
+        public ActionResult DeleteData(int N_QuotationID, int nBranchID, int nFnYearID,string comments)
         {
             int Results = 0;
             try
@@ -807,7 +807,7 @@ namespace SmartxAPI.Controllers
                         object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
                         DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
-                        Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+                        Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                         //SqlTransaction transaction = connection.BeginTransaction(); ;
 
                         string X_Criteria = "N_QuotationID=" + N_QuotationID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
