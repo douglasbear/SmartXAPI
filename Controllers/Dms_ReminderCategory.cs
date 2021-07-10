@@ -281,6 +281,46 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int N_CategoryID)
+        {
+            int Results = 0;
+            int companyid = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                        connection.Open();
+
+                    if (N_CategoryID > 0)
+                    {
+                        dLayer.DeleteData("Dms_RemRecepientList", "N_CategoryID", N_CategoryID, "N_CompanyID=" + companyid + " and N_CategoryID=" + N_CategoryID, connection);
+                        dLayer.DeleteData("Dms_ReminderCategoryDetails", "N_CategoryID", N_CategoryID, "N_CompanyID=" + companyid + " and N_CategoryID=" + N_CategoryID, connection);
+                    Results= dLayer.DeleteData("Dms_ReminderCategory", "N_CategoryID", N_CategoryID, "N_CompanyID=" + companyid + " and N_CategoryID=" + N_CategoryID, connection);
+                    
+                        if (Results > 0)
+                        {
+                            return Ok(api.Success( "Reminder Category deleted"));
+                        }
+                        else
+                        {
+                            return Ok(api.Warning("Unable to delete Reminder Category"));
+                        }
+                    }
+                    else
+                    {
+                        return Ok(api.Warning("Unable to delete Reminder Category"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+        }
         
 
     }
