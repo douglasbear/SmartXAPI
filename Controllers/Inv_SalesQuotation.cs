@@ -748,8 +748,12 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID, int nBranchID, int nFnYearID)
+        public ActionResult DeleteData(int n_QuotationId, int nBranchID, int nFnYearID, string comments)
         {
+            if (comments == null)
+            {
+                comments = "";
+            }
             int Results = 0;
             try
             {
@@ -761,8 +765,8 @@ namespace SmartxAPI.Controllers
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    object objSalesProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + " and B_IsSaveDraft = 0", connection, transaction);
-                    object objOrderProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesOrderId,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + "", connection, transaction);
+                    object objSalesProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + n_QuotationId + " and B_IsSaveDraft = 0", connection, transaction);
+                    object objOrderProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesOrderId,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + n_QuotationId + "", connection, transaction);
                     if (objSalesProcessed == null)
                         objSalesProcessed = 0;
                     if (objOrderProcessed == null)
@@ -772,7 +776,7 @@ namespace SmartxAPI.Controllers
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType","SALES QUOTATION"},
-                                {"N_VoucherID",N_QuotationID},
+                                {"N_VoucherID",n_QuotationId},
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
                                 {"N_BranchID",nBranchID}};
