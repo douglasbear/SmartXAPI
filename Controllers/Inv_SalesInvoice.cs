@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey +"%')";
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true)
@@ -78,12 +78,19 @@ namespace SmartxAPI.Controllers
                     }
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_SalesId desc";
+                   
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
                         {
                             case "invoiceNo":
                                 xSortBy = "N_SalesId " + xSortBy.Split(" ")[1];
+                                break;
+                            case "invoiceDate":
+                                xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                            case "x_BillAmt":
+                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -238,7 +245,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma,int nQuotationID)
         {
 
             try
@@ -306,8 +313,7 @@ namespace SmartxAPI.Controllers
 
                         return Ok(_api.Success(dsSalesInvoice));
 
-
-                    }
+                    }else
                     if (nSalesOrderID > 0)
                     {
 
@@ -323,6 +329,28 @@ namespace SmartxAPI.Controllers
 
                         string DetailSql = "";
                         DetailSql = "select * from vw_SalesOrderDetailsToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+
+                    }else
+                    if (nQuotationID > 0)
+                    {
+
+                        QueryParamsList.Add("@nQuotationID", nQuotationID);
+                        string Mastersql = "select * from vw_QuotationToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        if (isProfoma == 1)
+                        {
+                            MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                        }
+
+                        string DetailSql = "";
+                        DetailSql = "select * from vw_QuotationDetailsToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);

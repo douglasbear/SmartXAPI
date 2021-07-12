@@ -63,6 +63,12 @@ namespace SmartxAPI.Controllers
                             case "orderNo":
                                 xSortBy = "N_SalesOrderId " + xSortBy.Split(" ")[1];
                                 break;
+                             case "orderDate":
+                                xSortBy = "Cast([Order Date] as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "n_Amount":
+                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -205,13 +211,6 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList DetailParams = new SortedList();
                     int N_OthTaxCategoryID = myFunctions.getIntVAL(MasterRow["N_OthTaxCategoryID"].ToString());
-                    DetailParams.Add("@nOthTaxCategoryID", N_OthTaxCategoryID);
-
-                    object X_OtherTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=@nOthTaxCategoryID", DetailParams, connection);
-                    if (X_OtherTax != null)
-                    {
-                        MasterTable.Rows[0]["X_DisplayName"] = X_OtherTax.ToString();
-                    }
                     int N_SOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderId"].ToString());
 
                     DetailParams.Add("@nSOrderID", N_SOrderID);

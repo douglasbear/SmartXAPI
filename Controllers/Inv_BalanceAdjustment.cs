@@ -59,10 +59,15 @@ namespace SmartxAPI.Controllers
             else
             {
              switch (xSortBy.Split(" ")[0]){
-                   case "adjustmentDate" : xSortBy =" [Adjustment Date] " + xSortBy.Split(" ")[1] ;
-                   break;
+                  
                    case "customerName" : xSortBy =" [Customer Name] " + xSortBy.Split(" ")[1] ;
                    break;
+                   case "adjustmentDate":
+                    xSortBy = "Cast([Adjustment Date] as DateTime )" + xSortBy.Split(" ")[1];
+                    break;
+                   case "netAmount":
+                    xSortBy = "Cast(REPLACE(netAmount,',','') as Numeric(10,2))" + xSortBy.Split(" ")[1];
+                    break; 
                    default : break;
                }
              xSortBy = " order by " + xSortBy;

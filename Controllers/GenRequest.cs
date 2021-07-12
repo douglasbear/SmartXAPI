@@ -13,19 +13,19 @@ using System.Threading.Tasks;
 
 namespace SmartxAPI.Controllers
 {
-    [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("general")]
     [ApiController]
-    
-    
-    
+
+
+
     public class GenDefults : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        
+
 
         public GenDefults(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -35,12 +35,13 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-       
+
         //GET api/Projects/list
         [HttpGet("defults/{type}") ]
-        public ActionResult GetDefults (string type)
+        public ActionResult GetDefults (string type,string X_TypeCode)
         {
             int id=0;
+            if(X_TypeCode ==null)X_TypeCode="";
             switch(type.ToLower()){
                 case "locationtype": id=1;
                 break;
@@ -86,17 +87,25 @@ namespace SmartxAPI.Controllers
                 break;
                 case "insurancetype": id=49;
                 break;
-                 case "assetcurrentstatus": id=46;
+                case "assetcurrentstatus": id=46;
                 break;
-                 case "assetdepreciationmethod": id=57;
+                case "assetdepreciationmethod": id=57;
                 break;
-                 case "applicationtype": id=97;
+                case "applicationtype": id=97;
                 break;
-
+                                case "defaultunittype":
+                    id = 104;
+                    break;
+                case "media": id=28;
+                break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria="N_DefaultId=@p1";
             SortedList param = new SortedList(){{"@p1",id}};
+            if(X_TypeCode!=""){
+                X_Criteria=X_Criteria+ " and X_TypeCode=@p2";
+                param.Add("@p2",X_TypeCode);
+            }
             
             DataTable dt=new DataTable();
             
@@ -106,23 +115,26 @@ namespace SmartxAPI.Controllers
                                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, param, connection);
                 }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(api.Notice("No Results Found"));
-                        }
-                        else{
-                            return Ok(api.Success(dt));
-                        }
-                
-            }catch(Exception e){
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
                 return Ok(api.Error(e));
-            }   
+            }
         }
 
-        [HttpGet("lookup/{type}") ]
-        public ActionResult GetLookup (string type)
+        [HttpGet("lookup/{type}")]
+        public ActionResult GetLookup(string type)
         {
             int N_FormID=0;           
             switch(type){
@@ -180,51 +192,56 @@ namespace SmartxAPI.Controllers
                 break;
                 default: return Ok("Invalid Type");
             }
-            string X_Criteria="N_ReferId=@p1 order by n_Sort ASC";
-            SortedList param = new SortedList(){{"@p1",N_FormID}};
-            
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="select * from Gen_LookupTable where "+X_Criteria;
-                
-            try{
-                 using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
-                }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(api.Notice("No Results Found"));
-                        }else{
-                            return Ok(api.Success(dt));
-                        }
-                
-            }catch(Exception e){
-                return Ok(api.Error(e));
-            }   
-        }
+            string X_Criteria = "N_ReferId=@p1 order by n_Sort ASC";
+            SortedList param = new SortedList() { { "@p1", N_FormID } };
 
+            DataTable dt = new DataTable();
 
+            string sqlCommandText = "select * from Gen_LookupTable where " + X_Criteria;
 
-
-[HttpGet("file")]
-  public async Task<IActionResult> Download(string filename)  
-  {  
-      if (filename == null)  
-          return Content("filename not present");  
-
-          var path ="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                          SortedList param = new SortedList();
-                param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-                DataTable tblDetails = dLayer.ExecuteDataTable("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection);
-                path = tblDetails.Rows[0]["X_Value"].ToString();
-                  }
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, param, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
+
+
+        [HttpGet("file")]
+        public async Task<IActionResult> Download(string filename)
+        {
+            if (filename == null)
+                return Content("filename not present");
+
+            var path = "";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SortedList param = new SortedList();
+                    param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    DataTable tblDetails = dLayer.ExecuteDataTable("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection);
+                    path = tblDetails.Rows[0]["X_Value"].ToString();
+                }
 
 
             }
@@ -232,19 +249,19 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(e));
             }
-       path = path + filename;
-  
-      var memory = new MemoryStream();  
-      using (var stream = new FileStream(path, FileMode.Open))  
-      {  
-          await stream.CopyToAsync(memory);  
-      }  
-      memory.Position = 0;  
-      return File(memory, api.GetContentType(path), Path.GetFileName(path));  
-  }
-    
+            path = path + filename;
 
-       
+            var memory = new MemoryStream();
+            using (var stream = new FileStream(path, FileMode.Open))
+            {
+                await stream.CopyToAsync(memory);
+            }
+            memory.Position = 0;
+            return File(memory, api.GetContentType(path), Path.GetFileName(path));
+        }
+
+
+
     }
-     
+
 }

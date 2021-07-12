@@ -74,8 +74,8 @@ namespace SmartxAPI.Controllers
                             " LEFT OUTER JOIN Pay_Department ON Pay_Employee.N_DepartmentID = Pay_Department.N_DepartmentID and Pay_Employee.N_FnYearID = Pay_Department.N_FnYearID " +
                             " WHERE Pay_Employee.N_EmpID = @nEmpID AND Pay_Employee.N_CompanyID = @nCompanyID and Pay_Employee.N_FnYearID = @nFnYearID";
 
-                    string _Earnings="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
-                    string _Deduction="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 1 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
+                    string _Earnings="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 0 and N_PayTypeID<>11 and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
+                    string _Deduction="select X_paycodeDescription,N_Payrate from vw_Pay_EmployeePayments_RPT where N_Type = 1  and  X_PayrunText =@xPayrun  and N_CompanyID  = @nCompanyID and  N_EmpID =@nEmpID";
 
 
                     Params.Add("@nCompanyID", nCompanyID);

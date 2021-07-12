@@ -64,6 +64,12 @@ namespace SmartxAPI.Controllers
                             case "receiptNo":
                                 xSortBy = "N_PayReceiptId " + xSortBy.Split(" ")[1];
                                 break;
+                            case "date":
+                                xSortBy = "Cast(date as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "amount":
+                                xSortBy = "Cast(REPLACE(amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;        
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;

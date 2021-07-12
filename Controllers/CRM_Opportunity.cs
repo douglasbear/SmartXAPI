@@ -208,7 +208,7 @@ namespace SmartxAPI.Controllers
                                 object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection,transaction);
                                 foreach (DataRow var in Activity.Rows)
                                 {
-                                    ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
+                                    ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
                                     if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                                     var["x_ActivityCode"] = ActivityCode;
                                     var["N_RelatedTo"] = 294;

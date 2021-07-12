@@ -21,13 +21,17 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string masterDBConnectionString;
 
         public Frm_Usercategory(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
-            connectionString = conf.GetConnectionString("SmartxConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");            
+            masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+
+
         }
         [HttpGet("list")]
         public ActionResult GetCategoryList()
@@ -35,7 +39,28 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_UserRole_Disp where N_CompanyID=@p1 and category!='Olivo' order by Code DESC";
+            int nClientID = myFunctions.GetClientID(User);
+            string appsSql = "SELECT Top(1) X_AppsIDList=STUFF  ((SELECT DISTINCT ',' + CAST(N_AppID AS VARCHAR(MAX)) FROM ClientApps t2 WHERE t2.N_ClientID = "+nClientID+" FOR XML PATH('') ),1,1,''  )  FROM ClientApps t1  where t1.N_ClientID="+nClientID;
+            
+            string Apps = "";
+
+                        using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
+                        {
+                            cnn2.Open();
+                            object appsObj = dLayer.ExecuteScalar(appsSql, cnn2);
+                            if (appsObj == null)
+                            {
+                                Apps = "-1";
+                            }
+                            else
+                            {
+                                Apps = appsObj.ToString();
+                            }
+
+                        }
+                         
+
+            string sqlCommandText = "SELECT X_UserCategory AS Category, X_UserCategoryCode AS Code, N_UserCategoryID, N_CompanyID,N_AppID FROM dbo.Sec_UserCategory where N_CompanyID=@p1 and X_UserCategory!='Olivo'  order by Code DESC";
             Params.Add("@p1", nCompanyId);
 
             try
