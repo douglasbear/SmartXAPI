@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandActivitiesList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            string sqlCommandActivitiesList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2 order by N_Order";
             string sqlCommandLeadsList = "select * from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
             string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
@@ -115,6 +115,34 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "update crm_activity set b_closed=0,x_status='Active'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xActivityCode);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
+                }
+                return Ok(api.Warning("Activity Updated"));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpGet("notesupdate")]
+        public ActionResult NotesUpdate(string xActivityCode, string xnotes)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            sqlCommandText = "update crm_activity set X_Notes=@p3 where N_CompanyID=@p1 and X_ActivityCode=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", xActivityCode);
+            Params.Add("@p3", xnotes);
 
 
             try
