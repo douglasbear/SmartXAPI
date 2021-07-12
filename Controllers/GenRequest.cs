@@ -192,6 +192,7 @@ namespace SmartxAPI.Controllers
                 break;
                 default: return Ok("Invalid Type");
             }
+        
             string X_Criteria = "N_ReferId=@p1 order by n_Sort ASC";
             SortedList param = new SortedList() { { "@p1", N_FormID } };
 
