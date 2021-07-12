@@ -43,6 +43,10 @@ namespace SmartxAPI.Controllers
 
             string sqlMonthWiseData = "select X_Month,N_Expense,N_Income from vw_IncomeExpenseMonthWise where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
             string sqlIncomeExpense = "select (select CAST(CONVERT(VARCHAR, CAST(sum(ABS(N_Amount)) AS MONEY), 1) AS VARCHAR) from vw_AccVoucherDetailsMonthWise where X_Type='I' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_Income, (select CAST(CONVERT(VARCHAR, CAST(sum(ABS(N_Amount)) AS MONEY), 1) AS VARCHAR)  from vw_AccVoucherDetailsMonthWise where X_Type='E' and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_Expense";
+            string sqlAssetLiability = "SELECT Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,ABS (sum(Acc_VoucherDetails.N_Amount)) as  N_Amount,vw_AccMastLedger.X_Type FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.X_Type in ('A','L') and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"   and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+"  group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.X_Type ";
+            string sqlCashBalance = "SELECT sum(Acc_VoucherDetails.N_Amount) as  N_Amount,vw_AccMastLedger.N_CashBahavID FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.N_CashBahavID =4 and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"  and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+" group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.N_CashBahavID ";
+            string sqlBankBalance = "SELECT sum(Acc_VoucherDetails.N_Amount) as  N_Amount,vw_AccMastLedger.N_CashBahavID FROM   Acc_VoucherDetails INNER JOIN vw_AccMastLedger ON Acc_VoucherDetails.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_VoucherDetails.N_LedgerID = vw_AccMastLedger.N_LedgerID AND Acc_VoucherDetails.N_FnYearID = vw_AccMastLedger.N_FnYearID where  vw_AccMastLedger.N_CashBahavID =5 and Acc_VoucherDetails.N_CompanyID ="+nCompanyID+"  and Acc_VoucherDetails.N_FnYearID = "+nFnYearId+" group by Acc_VoucherDetails.N_CompanyID,Acc_VoucherDetails.N_FnYearID,vw_AccMastLedger.N_CashBahavID ";
+
             // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
             // "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             // string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
@@ -54,6 +58,9 @@ namespace SmartxAPI.Controllers
             DataTable ProfitMargin = new DataTable();
             DataTable MonthWiseData = new DataTable();
             DataTable IncomeExpense = new DataTable();
+            DataTable AssetLiability = new DataTable();
+            DataTable CashBalance = new DataTable();
+            DataTable BankBalance = new DataTable();
 
             try
             {
@@ -66,6 +73,9 @@ namespace SmartxAPI.Controllers
                     ProfitMargin = dLayer.ExecuteDataTable(sqlProfitMargin, Params, connection);
                     MonthWiseData = dLayer.ExecuteDataTable(sqlMonthWiseData, Params, connection);
                     IncomeExpense = dLayer.ExecuteDataTable(sqlIncomeExpense, Params, connection);
+                    AssetLiability = dLayer.ExecuteDataTable(sqlAssetLiability, Params, connection);
+                    CashBalance = dLayer.ExecuteDataTable(sqlCashBalance, Params, connection);
+                    BankBalance = dLayer.ExecuteDataTable(sqlBankBalance, Params, connection);
                 }
 
 
@@ -74,6 +84,9 @@ namespace SmartxAPI.Controllers
                 ProfitMargin.AcceptChanges();
                 MonthWiseData.AcceptChanges();
                 IncomeExpense.AcceptChanges();
+                AssetLiability.AcceptChanges();
+                CashBalance.AcceptChanges();
+                BankBalance.AcceptChanges();
 
 
                 if (Receivables.Rows.Count > 0) Data.Add("receivableData", Receivables);
@@ -81,6 +94,9 @@ namespace SmartxAPI.Controllers
                 if (ProfitMargin.Rows.Count > 0) Data.Add("profitMarginData", ProfitMargin);
                 if (MonthWiseData.Rows.Count > 0) Data.Add("monthWiseData", MonthWiseData);
                 if (IncomeExpense.Rows.Count > 0) Data.Add("incomeExpenseData", IncomeExpense);
+                if (AssetLiability.Rows.Count > 0) Data.Add("assetLiabilityData", AssetLiability);
+                if (CashBalance.Rows.Count > 0) Data.Add("cashBalanceData", CashBalance);
+                if (BankBalance.Rows.Count > 0) Data.Add("bankBalanceData", BankBalance);
 
 
                 return Ok(api.Success(Data));
