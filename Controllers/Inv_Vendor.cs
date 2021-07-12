@@ -244,6 +244,13 @@ namespace SmartxAPI.Controllers
                         if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
+
+                    if(MasterTable.Columns.Contains("b_DirPosting")){
+                        MasterTable.Rows[0]["b_DirPosting"] = 0;
+                    }else{
+                       MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"b_DirPosting",typeof(int),0); 
+                    }
+                    
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + xVendorCode + "'";
                     string X_Crieteria="N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                     nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID",DupCriteria,X_Crieteria, MasterTable, connection, transaction);

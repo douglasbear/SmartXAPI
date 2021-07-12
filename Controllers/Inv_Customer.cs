@@ -181,6 +181,14 @@ namespace SmartxAPI.Controllers
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
+
+                    
+                    if(MasterTable.Columns.Contains("b_DirPosting")){
+                        MasterTable.Rows[0]["b_DirPosting"] = 0;
+                    }else{
+                       MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"b_DirPosting",typeof(int),0); 
+                    }
+                    
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_CustomerCode='" + CustomerCode + "'";
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria,X_Criteria,MasterTable, connection, transaction);
