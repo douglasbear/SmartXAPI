@@ -406,7 +406,7 @@ namespace SmartxAPI.Controllers
                         QueryParams.Add("@nItemID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString()));
                         QueryParams.Add("@xItemName", MasterTable.Rows[0]["X_ItemName"].ToString());
                         int count = 0;
-                        object res = dLayer.ExecuteScalar("Select count(*) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                        object res = dLayer.ExecuteScalar("Select count(*) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                         if (res != null)
                             count = myFunctions.getIntVAL(res.ToString());
 
