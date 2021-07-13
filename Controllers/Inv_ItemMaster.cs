@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             int _unitID = 0;
-                            object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = " + StockUnit.Rows[0]["x_ItemUnit"].ToString() + " and B_BaseUnit = 1  N_CompanyID=@nCompanyID", QueryParams, connection);
+                            object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + StockUnit.Rows[0]["x_ItemUnit"].ToString() + "' and B_BaseUnit = 1  N_CompanyID=@nCompanyID", QueryParams, connection);
                             if (unitID != null)
                                 _unitID = myFunctions.getIntVAL(unitID.ToString());
                             foreach (DataRow var in StockUnit.Rows) var["n_ItemUnitID"] = _unitID;
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
                             for (int l = 0; l < ItemUnits.Rows.Count; l++)
                             {
                                 int _unitID = 0;
-                                object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = " + ItemUnits.Rows[l]["x_ItemUnit"].ToString() + " and isnull(n_DefaultType,0) =" + ItemUnits.Rows[l]["n_DefaultType"].ToString() + " and  N_CompanyID=@nCompanyID", QueryParams, connection);
+                                object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + ItemUnits.Rows[l]["x_ItemUnit"].ToString() + "' and isnull(n_DefaultType,0) =" + ItemUnits.Rows[l]["n_DefaultType"].ToString() + " and  N_CompanyID=@nCompanyID", QueryParams, connection);
                                 if (unitID != null)
                                     _unitID = myFunctions.getIntVAL(unitID.ToString());
                                 ItemUnits.Rows[l]["n_ItemUnitID"] = _unitID;
@@ -787,7 +787,7 @@ namespace SmartxAPI.Controllers
 
                     if (classID == 6)
                     {
-                        dLayer.ExecuteScalar("delete from Inv_ItemUnit where N_ItemUnitID in (select N_ItemUnitID from Inv_ItemUnit where N_itemID in (select N_ItemID from Inv_ItemMaster where N_GroupID = " + nItemID + " and N_CompanyID = " + nCompanyID + ") and X_ItemUnit = " + xUnitName + " and isnull(N_DefaultType,0) = " + nDefaultType + " and N_CompanyID =" + nCompanyID + ") and  N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.ExecuteScalar("delete from Inv_ItemUnit where N_ItemUnitID in (select N_ItemUnitID from Inv_ItemUnit where N_itemID in (select N_ItemID from Inv_ItemMaster where N_GroupID = " + nItemID + " and N_CompanyID = " + nCompanyID + ") and X_ItemUnit = '" + xUnitName + "' and isnull(N_DefaultType,0) = " + nDefaultType + " and N_CompanyID =" + nCompanyID + ") and  N_CompanyID=" + nCompanyID, connection, transaction);
                     }
                     else
                     {
