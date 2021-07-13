@@ -285,7 +285,37 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-  
+
+        [HttpGet("VendorList")]
+        public ActionResult GetVendorList(int N_QuotationDetailsID,int N_FnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@N_QuotationDetailsID", N_QuotationDetailsID);
+            Params.Add("@N_FnYearID", N_FnYearID);
+
+            string sqlCommandText = "";
+
+            sqlCommandText = "Select *  from vw_RFQVendorListDetails where N_CompanyID=@nCompanyID and N_FnYearID=@N_FnYearID and N_QuotationDetailsID=@N_QuotationDetailsID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                return Ok(api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
 
     }
 }

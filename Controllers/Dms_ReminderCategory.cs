@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
             }
             else//--Notification--
             {
-                sqlCommandText = "Select X_UserID,X_UserName,X_UserCategory  from vw_PayEmployeeUser N_CompanyID=@nCompanyID and X_UserCategory<>'Olivo'";             
+                sqlCommandText = "Select X_UserID,X_UserName,X_UserCategory  from vw_UserReminderRecepient where N_CompanyID=@nCompanyID and X_UserCategory<>'Olivo'";             
             }
 
             try
