@@ -634,7 +634,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPurchaseID,string comments)
+        public ActionResult DeleteData(int nPurchaseID,int nFnYearID,string comments)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -647,8 +647,38 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nPurchaseID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_VendorID,0) as N_VendorID,X_InvoiceNo from Inv_Purchase where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PurchaseID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    int VendorID = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
+
+                    SortedList VendParams = new SortedList();
+                    VendParams.Add("@nCompanyID", nCompanyID);
+                    VendParams.Add("@N_VendorID", VendorID);
+                    VendParams.Add("@nFnYearID", nFnYearID);
+                    object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection);
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nPurchaseID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList DeleteParams = new SortedList(){
+
+                    string X_Criteria = "N_PurchaseID=" + nPurchaseID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+                    //myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString())
+                    if (ButtonTag == "6" || ButtonTag == "0")
+                    {
+                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType","PURCHASE"},
                                 {"N_VoucherID",nPurchaseID},
@@ -656,13 +686,30 @@ namespace SmartxAPI.Controllers
                                 {"X_SystemName","WebRequest"},
                                 {"@B_MRNVisible","0"}};
 
-                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                    if (Results <= 0)
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to Delete PurchaseInvoice"));
+                        }
+
+                    }
+                    else
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to Delete PurchaseInvoice"));
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "PURCHASE", nPurchaseID, TransRow["X_InvoiceNo"].ToString(), ProcStatus, "Inv_Purchase", X_Criteria, objVendorName.ToString(), User, dLayer, connection, transaction);
+                        if (status != "Error")
+                        {
+                            transaction.Commit();
+                            return Ok(_api.Success("Leave Request " + status + " Successfully"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to delete Leave Request"));
+                        }
                     }
 
+                   
                     transaction.Commit();
                     return Ok(_api.Success("Purchase invoice deleted"));
 
