@@ -180,6 +180,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow var in MasterTable.Rows)
                     {
                         dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + N_Order + " where N_CompanyID=@p1 and X_ActivityCode=" + var["x_ActivityCode"].ToString(), Params, connection);
+                        N_Order++;
                     }
                 }
                 return Ok(api.Success("Order Updated"));
