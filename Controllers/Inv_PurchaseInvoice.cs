@@ -502,7 +502,19 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            if (ex.Message.Contains("50"))
+                                return Ok(_api.Error( "DayClosed"));
+                            else if (ex.Message.Contains("51"))
+                                return Ok(_api.Error( "YearClosed"));
+                            else if (ex.Message.Contains("52"))
+                                return Ok(_api.Error( "YearExists"));
+                            else if (ex.Message.Contains("53"))
+                                return Ok(_api.Error( "PeriodClosed"));
+                            else if (ex.Message.Contains("54"))
+                                return Ok(_api.Error( "TxnDate"));
+                            else if (ex.Message.Contains("55"))
+                                return Ok(_api.Error( "TransactionStarted"));
+                            return Ok(_api.Error(ex.Message));
                         }
                     }
 

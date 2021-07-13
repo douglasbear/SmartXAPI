@@ -114,6 +114,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int N_CategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CategoryID"].ToString());
                     int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
+                    int nCompanyID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string CategoryCode = "";
@@ -130,7 +131,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.Columns.Remove("N_FnYearId");
                     MasterTable.Columns.Remove("b_IsParent");
                     string X_Category = MasterTable.Rows[0]["X_Category"].ToString();
-                    string DupCriteria = "X_Category='" + X_Category + "'";
+                    string DupCriteria = "X_Category='" + X_Category + "' and N_CompanyID="+nCompanyID+"";
                     N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {

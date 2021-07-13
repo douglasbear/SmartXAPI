@@ -275,16 +275,16 @@ namespace SmartxAPI.Controllers
 
                             if(N_InvoiceDetailId>0)
                             {
-                                for (int k = 0; k < CostCenterTable.Rows.Count; k++)
-                                {
-                                    if(false)
-                                    {
-                                        CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
-                                        CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+                                // for (int k = 0; k < CostCenterTable.Rows.Count; k++)
+                                // {
+                                //     if(false)
+                                //     {
+                                //         CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
+                                //         CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
 
-                                        int N_SegmentId = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID","","",k, CostCenterTable, connection, transaction);
-                                    }
-                                }
+                                //         int N_SegmentId = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID","","",k, CostCenterTable, connection, transaction);
+                                //     }
+                                // }
                             }
                         }
 

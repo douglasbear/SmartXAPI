@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
             }
             else//--Notification--
             {
-                sqlCommandText = "Select X_UserID,X_UserName,X_UserCategory  from vw_UserReminderRecepient where N_CompanyID=@nCompanyID and X_UserCategory<>'Olivo'";             
+                sqlCommandText = "Select X_UserID,X_UserName,X_UserCategory from vw_UserReminderRecepient where N_CompanyID=@nCompanyID and X_UserCategory<>'Olivo'";             
             }
 
             try
@@ -220,7 +220,7 @@ namespace SmartxAPI.Controllers
         }
         
         [HttpGet("details")]
-        public ActionResult GetCategoryDetails(string  X_CategoryCode)
+        public ActionResult GetCategoryDetails(int nCategoryID)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -232,7 +232,7 @@ namespace SmartxAPI.Controllers
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@X_CategoryCode", X_CategoryCode);
+            QueryParams.Add("@N_CategoryID", nCategoryID);
             string _sqlQuery = "";
             try
             {
@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    _sqlQuery = "Select * from vw_DmsReminderCategory Where N_CompanyID=@nCompanyID and X_CategoryCode=@X_CategoryCode";
+                    _sqlQuery = "Select * from vw_DmsReminderCategory Where N_CompanyID=@nCompanyID and N_CategoryID=@N_CategoryID";
 
                     Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
@@ -252,11 +252,9 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        QueryParams.Add("@N_CategoryID", Master.Rows[0]["N_CategoryID"].ToString());
-
                         ds.Tables.Add(Master);
 
-                        _sqlQuery = "Select * from vw_DmsReminderCategoryDetails Where N_CompanyID=@nCompanyID and N_CategoryID=@N_CategoryID";
+                        _sqlQuery = "Select * from vw_DmsReminderCategoryDetails Where N_CategoryID=@N_CategoryID";
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                         Detail = api.Format(Detail, "details");
