@@ -63,6 +63,12 @@ namespace SmartxAPI.Controllers
                             case "x_DebitNoteNo":
                                 xSortBy = "N_DebitNoteId " + xSortBy.Split(" ")[1];
                                 break;
+                             case "d_ReturnDate":
+                                xSortBy = "Cast(D_ReturnDate as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "n_TotalPaidAmountF":
+                                xSortBy = "Cast(REPLACE(n_TotalPaidAmountF,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;    
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -71,22 +77,18 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and and B_YearEndProcess=0";
+                            Searchkey = Searchkey + " and B_YearEndProcess=0";
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess =0";
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " and B_YearEndProcess =0";
                         }
                     }
                     else
                     {
-                        if (bAllBranchData == true)
+                        if (bAllBranchData == false)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " ";
-                        }
-                        else
-                        {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " ";
+                            Searchkey = Searchkey + " and N_BranchID=" + nBranchID + " ";
                         }
                     }
                     if (Count == 0)

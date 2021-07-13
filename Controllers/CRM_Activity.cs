@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_activityid desc";
+                xSortBy = " order by n_activityid";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -133,6 +133,8 @@ namespace SmartxAPI.Controllers
 
 
 
+
+
         //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
@@ -164,11 +166,17 @@ namespace SmartxAPI.Controllers
                         if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
                     }
-                    if(MasterTable.Rows[0]["N_RelatedTo"].ToString()=="294")
+                    if (MasterTable.Rows[0]["N_RelatedTo"].ToString() == "294")
                     {
-                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0))+1 from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection);
-                        if(Count!=null)
-                            MasterTable.Rows[0]["N_Order"]=Count.ToString();
+                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection,transaction);
+                        if (Count != null)
+                        {
+                            
+                            int NOrder=myFunctions.getIntVAL(Count.ToString())+1;
+                            dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order="+Count, Params, connection,transaction);
+                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                            MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                        }
 
                     }
 

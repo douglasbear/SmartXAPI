@@ -10,6 +10,7 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Net.Mail;
+using System.Collections.Generic;
 
 namespace SmartxAPI.Controllers
 {
@@ -50,7 +51,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = Master.Rows[0];
                     SortedList Params = new SortedList();
                     string Toemail = "";
-                    string Email = MasterRow["X_ClientMail"].ToString();
+                    string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["X_Subject"].ToString();
                     Toemail = Email.ToString();
@@ -108,7 +109,16 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-                    return Ok("SUCCESS");
+                    Master.Columns.Remove("x_TemplateCode");
+                    Master.Columns.Remove("x_TemplateName");
+                    Master.Columns.Remove("n_TemplateID");
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
+  
+                    dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
+                    transaction.Commit();
+
+                    return Ok(api.Success("Email Send"));
+                    
 
                 }
             }
@@ -183,6 +193,130 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(ex));
             }
+        }
+
+        [HttpGet("list")]
+        public ActionResult TemplateList()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandCount = "";
+
+            string sqlCommandText = "";
+            string Criteria = "";
+
+
+            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCommandCount = "select count(*) as N_Count  from Gen_MailTemplates where N_CompanyID=@p1";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpGet("details")]
+        public ActionResult TemplateListDetails(string n_TemplateID)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "";
+
+
+            sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and N_TemplateID=@p2";
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", n_TemplateID);
+
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+         [HttpDelete("delete")]
+        public ActionResult DeleteData(int nTemplateID)
+        {
+
+            int Results = 0;
+            try
+            {
+
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Gen_MailTemplates", "N_TemplateID", nTemplateID, "", connection, transaction);
+                    transaction.Commit();
+                }
+                if (Results > 0)
+                {
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_TemplateID", nTemplateID.ToString());
+                    return Ok(api.Success(res, "Email Template deleted"));
+                }
+                else
+                {
+                    return Ok(api.Error("Unable to delete Email Template"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
+
+
+
         }
 
 

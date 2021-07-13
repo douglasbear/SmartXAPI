@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("defults/{type}")]
-        public ActionResult GetDefults(string type)
+        public ActionResult GetDefults(string type, string X_TypeCode)
         {
             int id = 0;
             switch (type.ToLower())
@@ -121,11 +121,18 @@ namespace SmartxAPI.Controllers
                 case "defaultunittype":
                     id = 104;
                     break;
-
+                case "media":
+                    id = 28;
+                    break;
                 default: return Ok("Invalid Type");
             }
             string X_Criteria = "N_DefaultId=@p1";
             SortedList param = new SortedList() { { "@p1", id } };
+            if (X_TypeCode != "")
+            {
+                X_Criteria = X_Criteria + " and X_TypeCode=@p2";
+                param.Add("@p2", X_TypeCode);
+            }
 
             DataTable dt = new DataTable();
 
@@ -235,11 +242,12 @@ namespace SmartxAPI.Controllers
                 case "Pricetype":
                     N_FormID = 3;
                     break;
-                     case "CrmWorkType": N_FormID=1360;
-                break;
-           
+                case "CrmWorkType":
+                    N_FormID = 1360;
+                    break;
+                default: return Ok("Invalid Type");
             }
-        
+
             string X_Criteria = "N_ReferId=@p1 order by n_Sort ASC";
             SortedList param = new SortedList() { { "@p1", N_FormID } };
 
