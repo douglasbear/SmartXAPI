@@ -377,7 +377,7 @@ namespace SmartxAPI.Controllers
                         if (xCriteria == "department")
                         {
 
-                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "') and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
+                            critiria = "{vw_Pay_Empshiftdetails.D_Date}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_Date}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "') and  {vw_Pay_Empshiftdetails.N_DepartmentID}=" + nDepartmentID + "";
                             TableName = "vw_Pay_Empshiftdetails";
 
 
@@ -388,7 +388,7 @@ namespace SmartxAPI.Controllers
                         }
                         else if (xCriteria == "all")
                         {
-                            critiria = "{vw_Pay_Empshiftdetails.D_PeriodFrom}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_PeriodTo}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "')";
+                            critiria = "{vw_Pay_Empshiftdetails.D_Date}>=Date('" + dPeriodFrom.Year + "," + dPeriodFrom.Month + "," + dPeriodFrom.Day + "') and {vw_Pay_Empshiftdetails.D_Date}<=Date('" + dPeriodTo.Year + "," + dPeriodTo.Month + "," + dPeriodTo.Day + "')";
                             TableName = "vw_Pay_Empshiftdetails";
 
 
