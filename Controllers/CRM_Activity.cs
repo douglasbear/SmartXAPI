@@ -23,14 +23,16 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
+        private readonly IMyReminders myReminders;
 
-        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public CRM_Activity(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyReminders myRem)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1307;
+            myReminders = myRem;
         }
 
 
@@ -148,6 +150,7 @@ namespace SmartxAPI.Controllers
                 int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActivityID"].ToString());
                 string bClosed = MasterTable.Rows[0]["b_Closed"].ToString();
                 string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
+                int nUserID = myFunctions.GetUserID(User);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -168,12 +171,12 @@ namespace SmartxAPI.Controllers
                     }
                     if (MasterTable.Rows[0]["N_RelatedTo"].ToString() == "294")
                     {
-                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection,transaction);
+                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection, transaction);
                         if (Count != null)
                         {
-                            
-                            int NOrder=myFunctions.getIntVAL(Count.ToString())+1;
-                            dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order="+Count, Params, connection,transaction);
+
+                            int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                            dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
                             MasterTable.Rows[0]["N_Order"] = Count.ToString();
                         }
@@ -181,6 +184,20 @@ namespace SmartxAPI.Controllers
                     }
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
+                    if (nActivityID > 0)
+                    {
+                        try
+                        {
+                            myReminders.ReminderDelete(dLayer, nActivityID, this.FormID, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error("Unable to save"));
+                        }
+                    }
+
+
                     if (nActivityID <= 0)
                     {
                         transaction.Rollback();
@@ -188,6 +205,57 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        DataTable dtSave = new DataTable();
+                        dtSave.Clear();
+                        dtSave.Columns.Add("N_CompanyID");
+                        dtSave.Columns.Add("N_FormID");
+                        dtSave.Columns.Add("N_PartyID");
+                        dtSave.Columns.Add("X_Subject");
+                        dtSave.Columns.Add("X_Title");
+                        dtSave.Columns.Add("D_ExpiryDate");
+                        dtSave.Columns.Add("N_RemCategoryID");
+                        dtSave.Columns.Add("B_IsAttachment");
+                        dtSave.Columns.Add("N_SettingsID");
+                        dtSave.Columns.Add("N_UserID");
+                        dtSave.Columns.Add("N_ReminderId");
+                        if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
+                        {
+                            DataRow row = dtSave.NewRow();
+                            row["N_ReminderId"] = 0;
+                            row["N_CompanyID"] = myFunctions.GetCompanyID(User);
+                            row["N_FormID"] = this.FormID;
+                            row["N_PartyID"] = nActivityID;
+                            row["X_Subject"] = "Activity";
+                            row["X_Title"] = "Activity";
+                            row["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
+                            row["B_IsAttachment"] = 0;
+                            row["N_SettingsID"] = 0;
+                            row["N_UserID"] = nUserID;
+                            if (MasterTable.Columns.Contains("B_IsReminder"))
+                            {
+                                if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
+                                {
+                                    row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ReminderCategoryID"].ToString();
+                                }
+                            }
+                            if (MasterTable.Columns.Contains("b_IsAutoMail"))
+                            {
+                                if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
+                                {
+                                    row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
+                                }
+                            }
+
+                            dtSave.Rows.Add(row);
+                        }
+
+                        myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
+
+                        // if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
+                        //     myReminders.ReminderSet(dLayer, 24, nActivityID, MasterTable.Rows[0]["D_ScheduleDate"].ToString(), this.FormID, nUserID, User, connection, transaction);
+                        // if (MasterTable.Rows[0]["B_IsAutoMail"].ToString() == "True")
+                        //     myReminders.ReminderSet(dLayer, 25, nActivityID, MasterTable.Rows[0]["D_ScheduleDate"].ToString(), this.FormID, nUserID, User, connection, transaction);
+
                         transaction.Commit();
                         if (bClosed == "1" && xStatus == "Closed")
                         {
