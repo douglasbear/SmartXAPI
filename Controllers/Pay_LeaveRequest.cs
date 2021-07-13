@@ -589,7 +589,7 @@ namespace SmartxAPI.Controllers
                 DetailTable = ds.Tables["details"];
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
-                DataRow ApprovalRow = Approvals.Rows[0];
+                DataRow ApprovalRow = Approvals.Rows[0]; 
                 DataTable Attachment = ds.Tables["attachments"];
 
                 DataTable Benifits = ds.Tables["benifits"];
