@@ -125,8 +125,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
+                    string payCode = Attachment.Rows[0]["x_TransCode"].ToString();
+                    int payId = myFunctions.getIntVAL(Attachment.Rows[0]["n_TransID"].ToString());
+                    string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
+                    int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
+                    string folderName= Attachment.Rows[0]["x_FolderName"].ToString();
+                    string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
+
+                    Attachment.Columns.Remove("x_FolderName");
+                    Attachment.Columns.Remove("x_PartyName");
+                    Attachment.Columns.Remove("x_PartyCode");
+                    Attachment.Columns.Remove("x_TransCode");
+                    Attachment.AcceptChanges();
+
+
                     SqlTransaction transaction = connection.BeginTransaction();
-                    myAttachments.SaveAttachment(dLayer, Attachment, "0", 0 , "General Documents", "0", 0, "General Documents", User, connection, transaction);
+                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyName, partyCode, partyID, folderName, User, connection, transaction);
                     transaction.Commit();
 
                 }
