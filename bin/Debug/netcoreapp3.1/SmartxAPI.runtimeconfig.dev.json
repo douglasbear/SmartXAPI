@@ -4,6 +4,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 <<<<<<< HEAD
 <<<<<<< HEAD
@@ -54,6 +55,10 @@
       "C:\\Users\\USER\\.nuget\\packages"
 >>>>>>> 87d1a6a39b052d2dbe1e5901d7b51e68994f23ef
 >>>>>>> d341d46800b3e023c7f39fb17df480de4e53ef43
+=======
+      "C:\\Users\\znbm9\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\znbm9\\.nuget\\packages"
+>>>>>>> d3bf56b13066113bc99e0c774a563d02e48f5bf7
     ]
   }
 }
