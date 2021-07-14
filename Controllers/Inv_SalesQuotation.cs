@@ -458,7 +458,7 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    int N_NextApproverID=0;
+                    int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -478,14 +478,14 @@ namespace SmartxAPI.Controllers
                     CustParams.Add("@nFnYearID", N_FnYearID);
                     object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
-                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && N_QuotationID>0)
+                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && N_QuotationID > 0)
                     {
                         int N_PkeyID = N_QuotationID;
                         string X_Criteria = "n_QuotationID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Inv_SalesQuotation", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID=myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_PkeyID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,N_PkeyID,"Sales Quotation",QuotationNo,dLayer,connection,transaction,User);
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_PkeyID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                         return Ok(_api.Success("Sales Quotation Approval updated" + "-" + QuotationNo));
                     }
 
@@ -510,12 +510,13 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
                     }
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + QuotationNo + "'";
+                    MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
 
-                     if(MasterTable.Columns.Contains("B_IsSaveDraft"))
+                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
                         MasterTable.Columns.Remove("B_IsSaveDraft");
-                    if(MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
                         MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    if(MasterTable.Columns.Contains("N_ProcStatus"))
+                    if (MasterTable.Columns.Contains("N_ProcStatus"))
                         MasterTable.Columns.Remove("N_ProcStatus");
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
@@ -570,10 +571,10 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(ex));
                             }
                         }
-                        transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,N_QuotationID,"Sales Quotation",QuotationNo,dLayer,connection,transaction,User);
+                        //transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID, FormID, N_QuotationID, "Sales Quotation", QuotationNo, dLayer, connection, transaction, User);
                     }
-                        transaction.Commit();
+                    transaction.Commit();
 
                     SortedList Result = new SortedList();
                     Result.Add("n_QuotationID", N_QuotationID);
@@ -766,19 +767,49 @@ namespace SmartxAPI.Controllers
 
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int N_QuotationID, int nBranchID, int nFnYearID,string comments)
+        public ActionResult DeleteData(int N_QuotationID, int nBranchID, int nFnYearID, string comments)
         {
+            if (comments == null)
+            {
+                comments = "";
+            }
             int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
 
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    ParamList.Add("@nTransID", N_QuotationID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+                    int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
+                    SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", nCompanyID);
+                    CustParams.Add("@N_CustomerID", N_CustomerID);
+                    CustParams.Add("@nFnYearID", nFnYearID);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+               
                     object objSalesProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + " and B_IsSaveDraft = 0", connection, transaction);
                     object objOrderProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesOrderId,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + "", connection, transaction);
                     if (objSalesProcessed == null)
@@ -787,27 +818,7 @@ namespace SmartxAPI.Controllers
                         objOrderProcessed = 0;
                     if (myFunctions.getIntVAL(objSalesProcessed.ToString()) == 0 && myFunctions.getIntVAL(objOrderProcessed.ToString()) == 0)
                     {
-                        DataTable TransData = new DataTable();
-                        SortedList ParamList = new SortedList();
-                        ParamList.Add("@nTransID", N_QuotationID);
-                        ParamList.Add("@nFnYearID", nFnYearID);
-                        ParamList.Add("@nCompanyID", nCompanyID);
-                        string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
-                        TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
-                        if (TransData.Rows.Count == 0)
-                        {
-                            return Ok(_api.Error("Transaction not Found"));
-                        }
-                        DataRow TransRow = TransData.Rows[0];
-                        int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
-                        SortedList CustParams = new SortedList();
-                        CustParams.Add("@nCompanyID", nCompanyID);
-                        CustParams.Add("@N_CustomerID", N_CustomerID);
-                        CustParams.Add("@nFnYearID", nFnYearID);
-                        object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
-                        DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
-                        Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                         //SqlTransaction transaction = connection.BeginTransaction(); ;
 
                         string X_Criteria = "N_QuotationID=" + N_QuotationID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
