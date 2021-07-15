@@ -419,8 +419,53 @@ namespace SmartxAPI.Controllers
                         string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmployeeUpdate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        transaction.Commit();
+                         EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
+                        int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
+
+                        if(N_SaveDraft==0)
+                        {
+                             SortedList QueryParams = new SortedList();
+                            QueryParams.Add("@N_CompanyID", nCompanyID);
+                            QueryParams.Add("@nEmpID", nEmpID);
+                            QueryParams.Add("@nFnYearID", nFnYearID);
+                            QueryParams.Add("@X_EmpName", MasterTable.Rows[0]["X_EmpName"].ToString());
+                            QueryParams.Add("@X_Address", MasterTable.Rows[0]["X_Address"].ToString());
+                            QueryParams.Add("@X_City", MasterTable.Rows[0]["X_City"].ToString());
+                            QueryParams.Add("@X_State", MasterTable.Rows[0]["X_State"].ToString());
+                            QueryParams.Add("@X_ZipCode", MasterTable.Rows[0]["X_ZipCode"].ToString());
+                            QueryParams.Add("@X_Country", MasterTable.Rows[0]["X_Country"].ToString());
+                            QueryParams.Add("@X_Phone1", MasterTable.Rows[0]["X_Phone1"].ToString());
+                            QueryParams.Add("@X_Phone2", MasterTable.Rows[0]["X_Phone2"].ToString());
+                            QueryParams.Add("@X_EmailID", MasterTable.Rows[0]["X_EmailID"].ToString());
+                            QueryParams.Add("@N_DepartmentID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_DepartmentID"].ToString()));
+                            QueryParams.Add("@N_ReportToID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReportToID"].ToString()));
+                            QueryParams.Add("@N_UserID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()));
+                            QueryParams.Add("@X_NickName", MasterTable.Rows[0]["X_NickName"].ToString());
+                            QueryParams.Add("@X_AlternateName", MasterTable.Rows[0]["X_AlternateName"].ToString());
+                            QueryParams.Add("@X_PassportNo", MasterTable.Rows[0]["X_PassportNo"].ToString());
+                            QueryParams.Add("@D_PassportExpiry",MasterTable.Rows[0]["D_PassportExpiry"].ToString());
+                            QueryParams.Add("@X_IqamaNo", MasterTable.Rows[0]["X_IqamaNo"].ToString());
+                            QueryParams.Add("@D_IqamaExpiry", MasterTable.Rows[0]["D_IqamaExpiry"].ToString());
+                            QueryParams.Add("@X_MaritalStatus", MasterTable.Rows[0]["X_MaritalStatus"].ToString());
+                            QueryParams.Add("@X_EmpImageNAme", MasterTable.Rows[0]["X_EmpImageNAme"].ToString());
+                            // QueryParams.Add("@I_Employe_Image", MasterTable.Rows[0]["I_Employe_Image"].ToString());
+                            // QueryParams.Add("@I_Employe_Sign", MasterTable.Rows[0]["I_Employe_Sign"].ToString());
+                            QueryParams.Add("@X_Email2", MasterTable.Rows[0]["X_Email2"].ToString());
+                            QueryParams.Add("@X_EmrgncyContact", MasterTable.Rows[0]["X_EmrgncyContact"].ToString());
+                            QueryParams.Add("@X_IqamaRefName", MasterTable.Rows[0]["X_IqamaRefName"].ToString());
+                            QueryParams.Add("@X_PassportRefName", MasterTable.Rows[0]["X_PassportRefName"].ToString());
+                            QueryParams.Add("@X_TelExt", MasterTable.Rows[0]["X_TelExt"].ToString());
+                            QueryParams.Add("@N_BankID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BankID"].ToString()));
+                            QueryParams.Add("@X_BankAccountNo", MasterTable.Rows[0]["X_BankAccountNo"].ToString());
+                            QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
+                            QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
+
+                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                        }
+
+                        
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
+                        transaction.Commit();
                         return Ok(_api.Success("Employee update Approved" + "-" + X_EmpUpdateCode));
                     }
                     if (X_EmpUpdateCode == "@Auto")
@@ -438,6 +483,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Pay_EmployeeUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
                     }
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
 
                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
@@ -480,7 +526,7 @@ namespace SmartxAPI.Controllers
                             QueryParams.Add("@N_DepartmentID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_DepartmentID"].ToString()));
                             QueryParams.Add("@N_ReportToID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReportToID"].ToString()));
                             QueryParams.Add("@N_UserID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()));
-                            QueryParams.Add("@X_EmailID", MasterTable.Rows[0]["X_EmailID"].ToString());
+
                             QueryParams.Add("@X_NickName", MasterTable.Rows[0]["X_NickName"].ToString());
                             QueryParams.Add("@X_AlternateName", MasterTable.Rows[0]["X_AlternateName"].ToString());
                             QueryParams.Add("@X_PassportNo", MasterTable.Rows[0]["X_PassportNo"].ToString());
@@ -489,8 +535,8 @@ namespace SmartxAPI.Controllers
                             QueryParams.Add("@D_IqamaExpiry", MasterTable.Rows[0]["D_IqamaExpiry"].ToString());
                             QueryParams.Add("@X_MaritalStatus", MasterTable.Rows[0]["X_MaritalStatus"].ToString());
                             QueryParams.Add("@X_EmpImageNAme", MasterTable.Rows[0]["X_EmpImageNAme"].ToString());
-                            QueryParams.Add("@I_Employe_Image", MasterTable.Rows[0]["I_Employe_Image"].ToString());
-                            QueryParams.Add("@I_Employe_Sign", MasterTable.Rows[0]["I_Employe_Sign"].ToString());
+                            // QueryParams.Add("@I_Employe_Image", MasterTable.Rows[0]["I_Employe_Image"].ToString());
+                            // QueryParams.Add("@I_Employe_Sign", MasterTable.Rows[0]["I_Employe_Sign"].ToString());
                             QueryParams.Add("@X_Email2", MasterTable.Rows[0]["X_Email2"].ToString());
                             QueryParams.Add("@X_EmrgncyContact", MasterTable.Rows[0]["X_EmrgncyContact"].ToString());
                             QueryParams.Add("@X_IqamaRefName", MasterTable.Rows[0]["X_IqamaRefName"].ToString());
@@ -501,7 +547,7 @@ namespace SmartxAPI.Controllers
                             QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
                             QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
 
-                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country-@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, I_Employe_Image=@I_Employe_Image, I_Employe_Sign=@I_Employe_Sign, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod-@N_SalaryPayMethod where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
                         }
 
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
@@ -589,7 +635,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("approvalUpdate")]
-        public ActionResult DeleteUpdatedData(int nEmpUpdateID, int nFnYearID)
+        public ActionResult DeleteUpdatedData(int nEmpUpdateID, int nFnYearID,string comments)
         {
             try
             {
@@ -615,16 +661,16 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
 
-
-                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nEmpUpdateID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 0, User, dLayer, connection));
-                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), "");
+//this.FormID
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 1228, nEmpUpdateID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 1228, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction(); ;
 
                     string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    if(ProcStatus!=6||ProcStatus!=0)
+                    if(ProcStatus!=6 && ProcStatus!=0)
                     {
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "EMPLOYEE", nEmpUpdateID, TransRow["X_EmpUpdateCode"].ToString(), ProcStatus, "Pay_EmployeeUpdate", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
