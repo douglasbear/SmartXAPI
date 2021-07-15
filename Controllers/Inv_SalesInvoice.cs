@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey +"%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%')";
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true)
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_SalesId desc";
-                   
+
                     else
                     {
                         switch (xSortBy.Split(" ")[0])
@@ -245,7 +245,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma,int nQuotationID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID)
         {
 
             try
@@ -279,8 +279,8 @@ namespace SmartxAPI.Controllers
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxAmtF", typeof(double), 0);
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DisplayName", typeof(string), null);
                             MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxPercentage", typeof(int), 0);
-                           
-                           
+
+
 
                             string sql1 = "Select * from Inv_SalesOrder  where N_SalesOrderID=" + (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString())) + " and N_CompanyId=" + nCompanyId + "";
                             DataTable AdditionalTable = dLayer.ExecuteDataTable(sql1, QueryParamsList, Con);
@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
                             MasterTable.Rows[0]["n_DiscountAmtF"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_DiscountAmtF"].ToString());
                             MasterTable.Rows[0]["n_TaxAmtF"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_TaxAmtF"].ToString());
                             MasterTable.Rows[0]["n_TaxPercentage"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_TaxPercentage"].ToString());
-                            
+
 
                             int N_OthTaxCategoryID = myFunctions.getIntVAL(AdditionalTable.Rows[0]["N_TaxCategoryID"].ToString());
                             string X_OtherTax1 = "";
@@ -296,7 +296,7 @@ namespace SmartxAPI.Controllers
                             if (X_OtherTax != null)
                                 X_OtherTax1 = X_OtherTax.ToString();
                             MasterTable.Rows[0]["x_DisplayName"] = X_OtherTax1;
-       
+
 
                         }
 
@@ -313,7 +313,8 @@ namespace SmartxAPI.Controllers
 
                         return Ok(_api.Success(dsSalesInvoice));
 
-                    }else
+                    }
+                    else
                     if (nSalesOrderID > 0)
                     {
 
@@ -335,7 +336,8 @@ namespace SmartxAPI.Controllers
                         dsSalesInvoice.Tables.Add(DetailTable);
                         return Ok(_api.Success(dsSalesInvoice));
 
-                    }else
+                    }
+                    else
                     if (nQuotationID > 0)
                     {
 
@@ -1111,6 +1113,8 @@ namespace SmartxAPI.Controllers
                                 {"@nBranchID",nBranchID}};
 
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+
+
                         if (Results <= 0)
                         {
                             transaction.Rollback();
@@ -1125,6 +1129,7 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                             // }                        
                             dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+
                             if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                             {
                                 // transaction.Rollback();
@@ -1146,7 +1151,18 @@ namespace SmartxAPI.Controllers
                         else
                             return Ok(_api.Error("Unable to delete!"));
                     }
-                    //Attachment delete code here
+                    //Invoice Counter Reset
+                     SortedList Params = new SortedList(){
+                                {"@nCompanyID",nCompanyID},
+                                {"@nFnYearID",nFnYearID},
+                                {"@nSalesID",nInvoiceID}};
+
+                    object InvoiceNO = dLayer.ExecuteScalar("select X_ReceiptNO from inv_sales where n_salesid=" + nInvoiceID + " and N_CompanyID=" + nCompanyID, Params, connection);
+                    object LastInvoiceNO = dLayer.ExecuteScalar("select top(1) N_lastUsedNo from inv_invoicecounter where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection);
+                    if (InvoiceNO == LastInvoiceNO)
+                    {
+                        dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
+                    }
 
                     transaction.Commit();
                     return Ok(_api.Success("Sales invoice deleted"));
