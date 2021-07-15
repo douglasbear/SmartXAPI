@@ -161,6 +161,37 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("orderupdate")]
+        public ActionResult OrderUpdate([FromBody] DataSet ds)
+        {
+
+            DataTable MasterTable;
+            MasterTable = ds.Tables["master"];
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyId);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int N_Order = 1;
+                    foreach (DataRow var in MasterTable.Rows)
+                    {
+                        dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + N_Order + " where N_CompanyID=@p1 and X_ActivityCode=" + var["x_ActivityCode"].ToString(), Params, connection);
+                        N_Order++;
+                    }
+                }
+                return Ok(api.Success("Order Updated"));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
 
     }
 }

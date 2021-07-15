@@ -309,8 +309,9 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(dt);
 
                 dataSet.Tables.Add(Images);
-                dataSet.Tables.Add(dtVariantList);
                 dataSet.Tables.Add(dtItemUnits);
+                dataSet.Tables.Add(dtVariantList);
+
 
                 return Ok(_api.Success(dataSet));
 
@@ -401,6 +402,20 @@ namespace SmartxAPI.Controllers
 
                     for (int k = 0; k < MasterTable.Rows.Count; k++)
                     {
+                        SortedList QueryParams = new SortedList();
+                        QueryParams.Add("@nCompanyID", nCompanyID);
+                        QueryParams.Add("@nItemID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString()));
+                        QueryParams.Add("@xItemName", MasterTable.Rows[0]["X_ItemName"].ToString());
+                        int count = 0;
+                        object res = dLayer.ExecuteScalar("Select count(*) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
+                        if (res != null)
+                            count = myFunctions.getIntVAL(res.ToString());
+
+                        if (count > 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save, Product name alrady exist"));
+                        }
 
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
@@ -445,8 +460,23 @@ namespace SmartxAPI.Controllers
                             foreach (DataRow var in StockUnit.Rows) var["N_SellingPrice"] = MasterTable.Rows[k]["N_Rate"].ToString();
 
 
-                        int BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
+                        int BaseUnitID = 0;
+                        if (k == 0)
+                            BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
+                        else
+                        {
+                            int _unitID = 0;
+                            object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + StockUnit.Rows[0]["x_ItemUnit"].ToString() + "' and B_BaseUnit = 1  N_CompanyID=@nCompanyID", QueryParams, connection);
+                            if (unitID != null)
+                                _unitID = myFunctions.getIntVAL(unitID.ToString());
+                            foreach (DataRow var in StockUnit.Rows) var["n_ItemUnitID"] = _unitID;
+                            BaseUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", StockUnit, connection, transaction);
+
+                        }
+
+
                         dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+
 
                         foreach (DataRow var in ItemUnits.Rows) var["n_BaseUnitID"] = BaseUnitID;
 
@@ -458,9 +488,21 @@ namespace SmartxAPI.Controllers
                         // foreach (DataRow var in AddUnit2.Rows) var["n_BaseUnitID"] = BaseUnitID;
 
                         string xBaseUnit = StockUnit.Rows[0]["X_ItemUnit"].ToString();
+                        if (k == 0)
+                            dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", ItemUnits, connection, transaction);
+                        else
+                        {
+                            for (int l = 0; l < ItemUnits.Rows.Count; l++)
+                            {
+                                int _unitID = 0;
+                                object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + ItemUnits.Rows[l]["x_ItemUnit"].ToString() + "' and isnull(n_DefaultType,0) =" + ItemUnits.Rows[l]["n_DefaultType"].ToString() + " and  N_CompanyID=@nCompanyID", QueryParams, connection);
+                                if (unitID != null)
+                                    _unitID = myFunctions.getIntVAL(unitID.ToString());
+                                ItemUnits.Rows[l]["n_ItemUnitID"] = _unitID;
+                                dLayer.SaveDataWithIndex("Inv_ItemUnit", "N_ItemUnitID", "", "", l, ItemUnits, connection, transaction);
 
-                        dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", ItemUnits, connection, transaction);
-
+                            }
+                        }
                         // //Purchase Unit
                         // if (PurchaseUnit.Rows.Count > 0)
                         // {
@@ -713,7 +755,54 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        [HttpDelete("unitDelete")]
+        public ActionResult DeleteUnit(int nUnitID, int nItemID, string xUnitName, int nDefaultType, int nFnYearID)
+        {
 
+
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable dtItems = new DataTable();
+                    SortedList QueryParams = new SortedList();
+                    QueryParams.Add("@nCompanyID", nCompanyID);
+                    QueryParams.Add("@nItemID", nItemID);
+                    object usedCheck = null;
+                    usedCheck = dLayer.ExecuteScalar("Select N_ItemID From vw_InvStock_Status Where N_ItemID= @nItemID and (Type<>'O' and Type<>'PO' and Type<>'SO') and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                    if (usedCheck != null)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Can't be delete,It has been used!"));
+                    }
+
+                    int classID = 0;
+                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                    if (res != null)
+                        classID = myFunctions.getIntVAL(res.ToString());
+
+                    if (classID == 6)
+                    {
+                        dLayer.ExecuteScalar("delete from Inv_ItemUnit where N_ItemUnitID in (select N_ItemUnitID from Inv_ItemUnit where N_itemID in (select N_ItemID from Inv_ItemMaster where N_GroupID = " + nItemID + " and N_CompanyID = " + nCompanyID + ") and X_ItemUnit = '" + xUnitName + "' and isnull(N_DefaultType,0) = " + nDefaultType + " and N_CompanyID =" + nCompanyID + ") and  N_CompanyID=" + nCompanyID, connection, transaction);
+                    }
+                    else
+                    {
+                        dLayer.ExecuteScalar("delete from Inv_ItemUnit where N_ItemUnitID = " + nUnitID + " and N_CompanyID = " + nCompanyID + "", connection, transaction);
+                    }
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Unit deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error("Can't be delete,It has been used!"));
+            }
+        }
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nItemID, int nFnYearID)
@@ -731,7 +820,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nItemID", nItemID);
                     int classID = 0;
-                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
+                    object res = dLayer.ExecuteScalar("Select N_ClassID from Inv_ItemMaster where N_ItemID = @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (res != null)
                         classID = myFunctions.getIntVAL(res.ToString());
 
@@ -739,7 +828,7 @@ namespace SmartxAPI.Controllers
                     {
                         string Items = "SELECT N_ItemID from Inv_ItemMaster where N_GroupID = @nItemID and N_CompanyID=@nCompanyID";
 
-                        dtItems = dLayer.ExecuteDataTable(Items, QueryParams, connection);
+                        dtItems = dLayer.ExecuteDataTable(Items, QueryParams, connection, transaction);
                     }
                     else
                     {

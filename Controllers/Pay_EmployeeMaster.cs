@@ -462,8 +462,50 @@ namespace SmartxAPI.Controllers
   
                         int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
-                        transaction.Commit();
+                        if(N_SaveDraft==0)
+                        {
+                             SortedList QueryParams = new SortedList();
+                            QueryParams.Add("@N_CompanyID", nCompanyID);
+                            QueryParams.Add("@nEmpID", nEmpID);
+                            QueryParams.Add("@nFnYearID", nFnYearID);
+                            QueryParams.Add("@X_EmpName", MasterTable.Rows[0]["X_EmpName"].ToString());
+                            QueryParams.Add("@X_Address", MasterTable.Rows[0]["X_Address"].ToString());
+                            QueryParams.Add("@X_City", MasterTable.Rows[0]["X_City"].ToString());
+                            QueryParams.Add("@X_State", MasterTable.Rows[0]["X_State"].ToString());
+                            QueryParams.Add("@X_ZipCode", MasterTable.Rows[0]["X_ZipCode"].ToString());
+                            QueryParams.Add("@X_Country", MasterTable.Rows[0]["X_Country"].ToString());
+                            QueryParams.Add("@X_Phone1", MasterTable.Rows[0]["X_Phone1"].ToString());
+                            QueryParams.Add("@X_Phone2", MasterTable.Rows[0]["X_Phone2"].ToString());
+                            QueryParams.Add("@X_EmailID", MasterTable.Rows[0]["X_EmailID"].ToString());
+                            QueryParams.Add("@N_DepartmentID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_DepartmentID"].ToString()));
+                            QueryParams.Add("@N_ReportToID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReportToID"].ToString()));
+                            QueryParams.Add("@N_UserID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()));
+                            QueryParams.Add("@X_EmailID", MasterTable.Rows[0]["X_EmailID"].ToString());
+                            QueryParams.Add("@X_NickName", MasterTable.Rows[0]["X_NickName"].ToString());
+                            QueryParams.Add("@X_AlternateName", MasterTable.Rows[0]["X_AlternateName"].ToString());
+                            QueryParams.Add("@X_PassportNo", MasterTable.Rows[0]["X_PassportNo"].ToString());
+                            QueryParams.Add("@D_PassportExpiry",MasterTable.Rows[0]["D_PassportExpiry"].ToString());
+                            QueryParams.Add("@X_IqamaNo", MasterTable.Rows[0]["X_IqamaNo"].ToString());
+                            QueryParams.Add("@D_IqamaExpiry", MasterTable.Rows[0]["D_IqamaExpiry"].ToString());
+                            QueryParams.Add("@X_MaritalStatus", MasterTable.Rows[0]["X_MaritalStatus"].ToString());
+                            QueryParams.Add("@X_EmpImageNAme", MasterTable.Rows[0]["X_EmpImageNAme"].ToString());
+                            QueryParams.Add("@I_Employe_Image", MasterTable.Rows[0]["I_Employe_Image"].ToString());
+                            QueryParams.Add("@I_Employe_Sign", MasterTable.Rows[0]["I_Employe_Sign"].ToString());
+                            QueryParams.Add("@X_Email2", MasterTable.Rows[0]["X_Email2"].ToString());
+                            QueryParams.Add("@X_EmrgncyContact", MasterTable.Rows[0]["X_EmrgncyContact"].ToString());
+                            QueryParams.Add("@X_IqamaRefName", MasterTable.Rows[0]["X_IqamaRefName"].ToString());
+                            QueryParams.Add("@X_PassportRefName", MasterTable.Rows[0]["X_PassportRefName"].ToString());
+                            QueryParams.Add("@X_TelExt", MasterTable.Rows[0]["X_TelExt"].ToString());
+                            QueryParams.Add("@N_BankID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BankID"].ToString()));
+                            QueryParams.Add("@X_BankAccountNo", MasterTable.Rows[0]["X_BankAccountNo"].ToString());
+                            QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
+                            QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
+
+                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country-@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, I_Employe_Image=@I_Employe_Image, I_Employe_Sign=@I_Employe_Sign, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod-@N_SalaryPayMethod where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                        }
+
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
+                        transaction.Commit();
                     }
                     Dictionary<string, string> res = new Dictionary<string, string>();
                     res.Add("X_EmpUpdateCode", X_EmpUpdateCode.ToString());
