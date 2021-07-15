@@ -51,9 +51,43 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName == "Customer List")
                         {
                             Mastertable = ds.Tables["Customer List"];
+                            foreach (DataColumn col in Mastertable.Columns)
+                            {
+                                col.ColumnName = col.ColumnName.Replace(" ", "_");
+                                col.ColumnName = col.ColumnName.Replace("*", "");
+                            }
                             Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Customers";
                             Params.Add("X_Type", "customer");
+
+                        }
+                        if (dt.TableName == "Vendor List")
+                        {
+                            
+                            Mastertable = ds.Tables["Vendor List"];
+                            foreach (DataColumn col in Mastertable.Columns)
+                            {
+                                col.ColumnName = col.ColumnName.Replace(" ", "_");
+                                col.ColumnName = col.ColumnName.Replace("*", "");
+                            }
+                            Mastertable.Columns.Add("Pkey_Code");
+                            xTableName = "Mig_Vendors";
+                            Params.Add("X_Type", "vendor");
+
+                        }
+                        if (dt.TableName == "Product List")
+                        {
+                           
+                            Mastertable = ds.Tables["Product List"];
+                            foreach (DataColumn col in Mastertable.Columns)
+                            {
+                                col.ColumnName = col.ColumnName.Trim().Replace(" ", "_");
+                                col.ColumnName = col.ColumnName.Trim().Replace("*", "");
+                                col.ColumnName = col.ColumnName.Trim().Replace("/", "_");
+                            }
+                            Mastertable.Columns.Add("Pkey_Code");
+                            xTableName = "Mig_Items";
+                            Params.Add("X_Type", "product");
 
                         }
                         if (Mastertable.Rows.Count > 0)
@@ -66,6 +100,8 @@ namespace SmartxAPI.Controllers
                                 transaction.Rollback();
                                 return Ok(_api.Error("Unable to save"));
                             }
+                            Mastertable.Clear();
+                            Params.Remove("X_Type");
                         }
                     }
 

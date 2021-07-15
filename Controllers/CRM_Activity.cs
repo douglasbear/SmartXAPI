@@ -218,38 +218,41 @@ namespace SmartxAPI.Controllers
                         dtSave.Columns.Add("N_SettingsID");
                         dtSave.Columns.Add("N_UserID");
                         dtSave.Columns.Add("N_ReminderId");
-                        if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
-                        {
-                            DataRow row = dtSave.NewRow();
-                            row["N_ReminderId"] = 0;
-                            row["N_CompanyID"] = myFunctions.GetCompanyID(User);
-                            row["N_FormID"] = this.FormID;
-                            row["N_PartyID"] = nActivityID;
-                            row["X_Subject"] = "Activity";
-                            row["X_Title"] = "Activity";
-                            row["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
-                            row["B_IsAttachment"] = 0;
-                            row["N_SettingsID"] = 0;
-                            row["N_UserID"] = nUserID;
-                            if (MasterTable.Columns.Contains("B_IsReminder"))
-                            {
-                                if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
-                                {
-                                    row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ReminderCategoryID"].ToString();
-                                }
-                            }
-                            if (MasterTable.Columns.Contains("b_IsAutoMail"))
-                            {
-                                if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
-                                {
-                                    row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
-                                }
-                            }
 
+                        DataRow row = dtSave.NewRow();
+                        row["N_ReminderId"] = 0;
+                        row["N_CompanyID"] = myFunctions.GetCompanyID(User);
+                        row["N_FormID"] = this.FormID;
+                        row["N_PartyID"] = nActivityID;
+                        row["X_Subject"] = "Activity";
+                        row["X_Title"] = "Activity";
+                        row["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
+                        row["B_IsAttachment"] = 0;
+                        row["N_SettingsID"] = 0;
+                        row["N_UserID"] = nUserID;
+                        if (MasterTable.Columns.Contains("B_IsReminder"))
+                        {
+                            if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
+                            {
+                                row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ReminderCategoryID"].ToString();
+                            }
                             dtSave.Rows.Add(row);
+                            myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
+                        }
+                        if (MasterTable.Columns.Contains("b_IsAutoMail"))
+                        {
+                            if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
+                            {
+                                row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
+                            }
+                            dtSave.Rows.Add(row);
+                            myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
                         }
 
-                        myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
+
+
+
+                        
 
                         // if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
                         //     myReminders.ReminderSet(dLayer, 24, nActivityID, MasterTable.Rows[0]["D_ScheduleDate"].ToString(), this.FormID, nUserID, User, connection, transaction);
