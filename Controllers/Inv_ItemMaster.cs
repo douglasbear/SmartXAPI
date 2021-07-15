@@ -404,8 +404,8 @@ namespace SmartxAPI.Controllers
                     {
                         SortedList QueryParams = new SortedList();
                         QueryParams.Add("@nCompanyID", nCompanyID);
-                        QueryParams.Add("@nItemID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemID"].ToString()));
-                        QueryParams.Add("@xItemName", MasterTable.Rows[0]["X_ItemName"].ToString());
+                        QueryParams.Add("@nItemID", myFunctions.getIntVAL(MasterTable.Rows[k]["N_ItemID"].ToString()));
+                        QueryParams.Add("@xItemName", MasterTable.Rows[k]["X_ItemName"].ToString());
                         int count = 0;
                         object res = dLayer.ExecuteScalar("Select count(*) as count from Inv_ItemMaster where X_ItemName =@xItemName and N_ItemID <> @nItemID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                         if (res != null)
@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             int _unitID = 0;
-                            object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + StockUnit.Rows[0]["x_ItemUnit"].ToString() + "' and B_BaseUnit = 1  N_CompanyID=@nCompanyID", QueryParams, connection);
+                            object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + StockUnit.Rows[0]["x_ItemUnit"].ToString() + "' and B_BaseUnit = 1  and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                             if (unitID != null)
                                 _unitID = myFunctions.getIntVAL(unitID.ToString());
                             foreach (DataRow var in StockUnit.Rows) var["n_ItemUnitID"] = _unitID;
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
                             for (int l = 0; l < ItemUnits.Rows.Count; l++)
                             {
                                 int _unitID = 0;
-                                object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + ItemUnits.Rows[l]["x_ItemUnit"].ToString() + "' and isnull(n_DefaultType,0) =" + ItemUnits.Rows[l]["n_DefaultType"].ToString() + " and  N_CompanyID=@nCompanyID", QueryParams, connection);
+                                object unitID = dLayer.ExecuteScalar("select N_ItemUnitID from inv_itemunit  where N_ItemID = " + N_ItemID + " and X_ItemUnit = '" + ItemUnits.Rows[l]["x_ItemUnit"].ToString() + "' and isnull(n_DefaultType,0) =" + ItemUnits.Rows[l]["n_DefaultType"].ToString() + " and  N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                                 if (unitID != null)
                                     _unitID = myFunctions.getIntVAL(unitID.ToString());
                                 ItemUnits.Rows[l]["n_ItemUnitID"] = _unitID;
