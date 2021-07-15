@@ -640,7 +640,11 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 DataTable dtsaleamountdetails; ;
                 MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
+                DetailTable = ds.Tables["details"]; 
+
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
 
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
                 DataTable Attachment = ds.Tables["attachments"];
@@ -670,7 +674,7 @@ namespace SmartxAPI.Controllers
                     int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
-
+                    int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -732,6 +736,35 @@ namespace SmartxAPI.Controllers
                     // }
                     //saving data
                     InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
+
+                    SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", N_CompanyID);
+                    CustParams.Add("@N_CustomerID", N_CustomerID);
+                    CustParams.Add("@nFnYearID", N_FnYearID);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                    object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_SalesID>0)
+                    {
+                        int N_PkeyID = N_SalesID;
+                        string X_Criteria = "N_SalesID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_Sales", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "SALES", N_PkeyID, InvoiceNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID="+N_CompanyID+" and N_FnYearID="+N_FnYearID, connection, transaction).ToString());
+                        if (N_SaveDraft == 0)
+                        {
+                            
+                        }
+                            
+                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "SALES", InvoiceNo, dLayer, connection, transaction, User);
+                        transaction.Commit();
+                        return Ok(_api.Success("Sales Approved " + "-" + InvoiceNo));
+                    }
+
+
                     if (N_SaveDraft == 1)
                     {
                         if (N_SalesID == 0 && InvoiceNo != "@Auto")
