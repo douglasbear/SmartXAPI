@@ -5,6 +5,7 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 >>>>>>> 0c0a71a9a8af898b33f9e1a24476f7e2f9bedc93
 <<<<<<< HEAD
@@ -93,6 +94,10 @@
       "C:\\Users\\LENOVO\\.nuget\\packages"
 >>>>>>> 95e4247a8cb23520823f3c0c84fbdc3409bd4976
 >>>>>>> 0c0510dcd4fb5097cca0a6475671f45d8c79ecd3
+=======
+      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\USER\\.nuget\\packages"
+>>>>>>> 7c44e4661517eab4830d274bdfdd59b2cb1e1bef
     ]
   }
 }
