@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or invoiceNetAmt like '%" + xSearchkey + "%')";
 
                     if (CheckClosedYear == false)
                     {
@@ -97,6 +97,12 @@ namespace SmartxAPI.Controllers
                         {
                             case "invoiceNo":
                                 xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
+                                break;
+                             case "invoiceDate":
+                                xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                            case "invoiceNetAmt":
+                                xSortBy = "Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
