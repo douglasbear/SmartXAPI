@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Quotation No] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Quotation No] like '%" + xSearchkey + "%' or X_CustomerName like '%" + xSearchkey + "%' or x_BranchName like '%" + xSearchkey + "%' or cast([Quotation Date] as Varchar) like '%" + xSearchkey + "%' or Cast(d_RfqRefDate as Varchar) like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or n_AmountF like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_QuotationId desc";
