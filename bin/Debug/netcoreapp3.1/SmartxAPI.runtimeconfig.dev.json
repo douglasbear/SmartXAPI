@@ -1,8 +1,98 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0c0a71a9a8af898b33f9e1a24476f7e2f9bedc93
+<<<<<<< HEAD
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+=======
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+>>>>>>> 877472b61282a71720eccd5e29a94415d07f0b8b
+=======
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
+>>>>>>> 95e4247a8cb23520823f3c0c84fbdc3409bd4976
+<<<<<<< HEAD
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> 40e0044f3422d77d7f1637eb967e288d4d8ef636
+=======
+>>>>>>> 0c0a71a9a8af898b33f9e1a24476f7e2f9bedc93
+=======
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+>>>>>>> d341d46800b3e023c7f39fb17df480de4e53ef43
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+=======
+      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\USER\\.nuget\\packages"
+<<<<<<< HEAD
+>>>>>>> 47576aa928f599a1939dd6cc00c5cb29085ad94c
+=======
+      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\LENOVO\\.nuget\\packages"
+>>>>>>> 6bde789aebd20cd72f4e0d90047bde79fe083199
+=======
+>>>>>>> 58849d84b12f68075db7d8449e4492d77f8cd784
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> 93487ef54f6a36465d24f391b781ebe4daa1bca4
+=======
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+>>>>>>> 174fe571f5579e3bc9d602c886184e3e998ea6cf
+>>>>>>> cb663dd74dffb3269c5d7e0ddc3df38531e507c2
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> fda25d3f6ddcf98d8c73853daf28148005fa4f53
+=======
+      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\USER\\.nuget\\packages"
+>>>>>>> 562e03e11136ac9478d508e23db32185498efac6
+=======
+      "C:\\Users\\znbm9\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\znbm9\\.nuget\\packages"
+>>>>>>> 7ae67434ec1fdad6bdf94368faa6c7825f903c6c
+=======
+      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\USER\\.nuget\\packages"
+>>>>>>> 87d1a6a39b052d2dbe1e5901d7b51e68994f23ef
+>>>>>>> d341d46800b3e023c7f39fb17df480de4e53ef43
+=======
+      "C:\\Users\\znbm9\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\znbm9\\.nuget\\packages"
+>>>>>>> d3bf56b13066113bc99e0c774a563d02e48f5bf7
+>>>>>>> 8fe14b20eff7eab01ead005162786c8b0b01ae02
+=======
+      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\LENOVO\\.nuget\\packages"
+>>>>>>> 95e4247a8cb23520823f3c0c84fbdc3409bd4976
+>>>>>>> 0c0510dcd4fb5097cca0a6475671f45d8c79ecd3
     ]
   }
 }

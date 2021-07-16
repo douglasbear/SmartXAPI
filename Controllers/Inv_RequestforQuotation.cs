@@ -231,7 +231,7 @@ namespace SmartxAPI.Controllers
                                 MultiVendorTable.Columns.Remove("n_RowID");
                             MultiVendorTable.AcceptChanges();
 
-                            int N_VendorListID = dLayer.SaveData("Inv_RFQVendorList", "N_VendorListID", DupCriteria, X_Criteria, MultiVendorTable, connection, transaction);
+                            int N_VendorListID = dLayer.SaveData("Inv_RFQVendorList", "N_VendorListID", "", "", MultiVendorTable, connection, transaction);
                         }
                         transaction.Commit();
                         return Ok(_api.Success("RFQ Saved"));
@@ -328,7 +328,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    if(nFormID==168)
+                    if(nFormID==618)
                     {
                         if (bShowAllBranchData == true)
                             Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo";
@@ -362,9 +362,9 @@ namespace SmartxAPI.Controllers
                             }
                             ds.Tables.Add(Detail);
 
-                            VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
-                            VendorListDetails = _api.Format(VendorListDetails, "vendorList");
-                            ds.Tables.Add(VendorListDetails);
+                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                                VendorListDetails = _api.Format(VendorListDetails, "vendorList");
+                                ds.Tables.Add(VendorListDetails);
 
                             return Ok(_api.Success(ds));
                         }
