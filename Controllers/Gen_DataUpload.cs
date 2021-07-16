@@ -88,10 +88,14 @@ namespace SmartxAPI.Controllers
                             Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Items";
                             Params.Add("X_Type", "product");
+                            Mastertable.Columns.Add("N_CompanyID");
+                            Mastertable.Rows[0]["N_CompanyID"]=1;
 
                         }
+                        
                         if (Mastertable.Rows.Count > 0)
                         {
+                            
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
                             dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
