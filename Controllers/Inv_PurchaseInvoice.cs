@@ -416,9 +416,9 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
-            DataTable Approvals;
-            Approvals = ds.Tables["approval"];
-            DataRow ApprovalRow = Approvals.Rows[0];
+            // DataTable Approvals;
+            // Approvals = ds.Tables["approval"];
+            // DataRow ApprovalRow = Approvals.Rows[0];
             DataTable Attachment = ds.Tables["attachments"];
             SortedList Params = new SortedList();
             // Auto Gen
@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
                     transaction = connection.BeginTransaction();
                     N_PurchaseID = myFunctions.getIntVAL(masterRow["n_PurchaseID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
-                    int N_NextApproverID = 0;
+                    // int N_NextApproverID = 0;
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
                     {
@@ -453,25 +453,25 @@ namespace SmartxAPI.Controllers
                         if (CheckProcessed(N_PurchaseID))
                             return Ok(_api.Error("Transaction Started!"));
                     }
-                    SortedList VendParams = new SortedList();
-                    VendParams.Add("@nCompanyID", nCompanyID);
-                    VendParams.Add("@N_VendorID", N_VendorID);
-                    VendParams.Add("@nFnYearID", nFnYearID);
-                    object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
-                    object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+                    // SortedList VendParams = new SortedList();
+                    // VendParams.Add("@nCompanyID", nCompanyID);
+                    // VendParams.Add("@N_VendorID", N_VendorID);
+                    // VendParams.Add("@nFnYearID", nFnYearID);
+                    // object objVendorName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
+                    // object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
 
 
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID>0)
-                    {
-                        int N_PkeyID = N_PurchaseID;
-                        string X_Criteria = "N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
-                        myFunctions.UpdateApproverEntry(Approvals, "Inv_Purchase", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
-                        myAttachments.SaveAttachment(dLayer, Attachment, values, N_PurchaseID, objVendorName.ToString().Trim(), objVendorCode.ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
-                        transaction.Commit();
-                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
-                        return Ok(_api.Success("Purchase Approved " + "-" + values));
-                    }
+                    // if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID>0)
+                    // {
+                    //     int N_PkeyID = N_PurchaseID;
+                    //     string X_Criteria = "N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    //     myFunctions.UpdateApproverEntry(Approvals, "Inv_Purchase", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                    //     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
+                    //     myAttachments.SaveAttachment(dLayer, Attachment, values, N_PurchaseID, objVendorName.ToString().Trim(), objVendorCode.ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
+                    //     transaction.Commit();
+                    //     myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
+                    //     return Ok(_api.Success("Purchase Approved " + "-" + values));
+                    // }
 
                     if (values == "@Auto")
                     {
@@ -524,15 +524,15 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
-                        MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    if (MasterTable.Columns.Contains("N_Procstatus"))
-                        MasterTable.Columns.Remove("N_Procstatus");
-                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
-                        MasterTable.Columns.Remove("B_IsSaveDraft");
-                    MasterTable.AcceptChanges();
+                    // if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                    //     MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    // if (MasterTable.Columns.Contains("N_Procstatus"))
+                    //     MasterTable.Columns.Remove("N_Procstatus");
+                    // if (MasterTable.Columns.Contains("B_IsSaveDraft"))
+                    //     MasterTable.Columns.Remove("B_IsSaveDraft");
+                    // MasterTable.AcceptChanges();
 
-                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    // MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     N_PurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
 
@@ -542,7 +542,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable to save Purchase Invoice!"));
                     }
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
+                    // N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -612,7 +612,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(ex));
                         }
                     }
-                    myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
+                    // myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
 
                     transaction.Commit();
                 }

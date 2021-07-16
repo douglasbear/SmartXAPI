@@ -12,7 +12,7 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("itemRequest")]
+    [Route("rfqDecision")]
     [ApiController]
     public class Inv_RFQDecision : ControllerBase
     {
@@ -287,18 +287,18 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("VendorList")]
-        public ActionResult GetVendorList(int N_QuotationDetailsID,int N_FnYearID)
+        public ActionResult GetVendorList(int nQuotationDetailsID,int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@N_QuotationDetailsID", N_QuotationDetailsID);
-            Params.Add("@N_FnYearID", N_FnYearID);
+            Params.Add("@nQuotationDetailsID", nQuotationDetailsID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             string sqlCommandText = "";
 
-            sqlCommandText = "Select *  from vw_RFQVendorListDetails where N_CompanyID=@nCompanyID and N_FnYearID=@N_FnYearID and N_QuotationDetailsID=@N_QuotationDetailsID";
+            sqlCommandText = "Select * from vw_RFQVendorListDetails where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationDetailsID=@nQuotationDetailsID";
 
             try
             {

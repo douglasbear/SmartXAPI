@@ -3,6 +3,29 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 0c0a71a9a8af898b33f9e1a24476f7e2f9bedc93
+<<<<<<< HEAD
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+=======
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+>>>>>>> 877472b61282a71720eccd5e29a94415d07f0b8b
+=======
+      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\LENOVO\\.nuget\\packages"
+>>>>>>> 95e4247a8cb23520823f3c0c84fbdc3409bd4976
+<<<<<<< HEAD
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> 40e0044f3422d77d7f1637eb967e288d4d8ef636
+=======
+>>>>>>> 0c0a71a9a8af898b33f9e1a24476f7e2f9bedc93
+=======
       "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\linju scaria\\.nuget\\packages"
 =======
@@ -69,6 +92,7 @@
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
 >>>>>>> 95e4247a8cb23520823f3c0c84fbdc3409bd4976
+>>>>>>> 0c0510dcd4fb5097cca0a6475671f45d8c79ecd3
     ]
   }
 }

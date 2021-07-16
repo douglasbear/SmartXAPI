@@ -944,7 +944,7 @@ namespace SmartxAPI.Controllers
                     ProParams.Add("N_Year", dProcessDate.Year.ToString());
                     ProParams.Add("N_FnYearId", nFnYearID);
                     ProParams.Add("N_Days", DateTime.DaysInMonth(dProcessDate.Year, dProcessDate.Month));
-                    ProParams.Add("N_BatchID", 1);
+                    ProParams.Add("N_BatchID", 0);
 
                     Paycodes = dLayer.ExecuteDataTablePro("SP_Pay_SelSalaryDetailsForProcess", ProParams, connection);
 
@@ -965,7 +965,7 @@ namespace SmartxAPI.Controllers
                         }
 
                     }
-                    return Ok(_api.Success(Ok("Payslip Mail Send")));
+                    return Ok(_api.Success("Payslip Mail Send"));
 
                 }
 
