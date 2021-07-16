@@ -179,6 +179,7 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             OutPut.Add("totalAmtDue", 0);
             OutPut.Add("totalBalance", 0);
+            OutPut.Add("advanceAmount", 0);
             OutPut.Add("txnStarted", false);
             if (bShowAllbranch == true)
             {
@@ -277,12 +278,20 @@ namespace SmartxAPI.Controllers
 
                 PayReceipt = myFunctions.AddNewColumnToDataTable(PayReceipt, "n_DueAmount", typeof(double), 0);
 
+
                 if (PayReceipt.Rows.Count > 0)
                 {
                     double N_ListedAmtTotal = 0;
                     foreach (DataRow dr in PayReceipt.Rows)
                     {
-
+                        // object payrcptid = dr["n_PayReceiptID"].ToString();
+                        // if(payrcptid!=null)
+                        // {
+                        //     if(payrcptid.ToString() == nPayReceiptID.ToString()&& dr["x_Type"].ToString() == "PA"){
+                        //         OutPut["advanceAmount"] = myFunctions.getVAL(dr["n_Amount"].ToString());
+                        //     }
+                        // }
+                        
                         double N_InvoiceDueAmt = myFunctions.getVAL(dr["N_Amount"].ToString()) + myFunctions.getVAL(dr["N_BalanceAmount"].ToString()) + myFunctions.getVAL(dr["N_DiscountAmt"].ToString());// +myFunctions.getVAL(dr["N_DiscountAmt"].ToString());
                         N_ListedAmtTotal += N_InvoiceDueAmt;
                         if (N_InvoiceDueAmt == 0) { dr.Delete(); continue; }
