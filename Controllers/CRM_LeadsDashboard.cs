@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("orderupdate")]
+        [HttpPost("orderupdate")]
         public ActionResult OrderUpdate([FromBody] DataSet ds)
         {
 
