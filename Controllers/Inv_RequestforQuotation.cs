@@ -371,6 +371,18 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        _sqlQuery = "Select * from vw_RFQVendorListMaster Where N_CompanyID=@nCompanyID and X_InwardsCode=@X_QuotationNo";
+
+                        VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        VendorListMaster = _api.Format(VendorListMaster, "vendorMaster");
+
+                        if (Master.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+
+                        ds.Tables.Add(VendorListMaster);
 
                         VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
                         VendorListDetails = _api.Format(VendorListDetails, "vendorList");
