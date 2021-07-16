@@ -18,6 +18,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System;
 
 namespace SmartxAPI.Controllers
 
@@ -104,9 +105,9 @@ namespace SmartxAPI.Controllers
                     }
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -114,6 +115,52 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_DueDays", typeof(string), "");
+                    foreach (DataRow var in dt.Rows)
+                    {
+                        object objPaid = null;
+                        double InvoicePaidAmt = 0;
+                        double BalanceAmt = 0;
+
+                        if (myFunctions.getIntVAL(var["N_PaymentMethod"].ToString()) == 2)
+                            objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + var["N_PurchaseID"] + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", Params, connection);
+                        else
+                        {
+                            if (myCompanyID._B_AllBranchData == true)
+                                objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + var["Invoice No"] + "' and N_FnYearID=" + var["N_FnYearID"] + " and X_TransType='" + X_TransType + "'", Params, connection);
+                            else
+                                objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + var["Invoice No"] + "' and N_FnYearID=" + var["N_FnYearID"] + " and N_BranchId=" + var["N_BranchID"] + " and N_LocationID =" + var["N_LocationID"] + "  and X_TransType='" + X_TransType + "'", Params, connection);
+                        }
+                        if (objPaid == null && myFunctions.getIntVAL(var["N_PaymentMethod"].ToString()) == 2)
+                        {
+                            if (myCompanyID._B_AllBranchData == true)
+                                objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + var["Invoice No"] + "' and N_FnYearID=" + var["N_FnYearID"] + " and X_TransType='" + X_TransType + "'", Params, connection);
+                            else
+                                objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + myCompanyID._CompanyID + " and X_InvoiceNo='" + var["Invoice No"] + "' and N_FnYearID=" + var["N_FnYearID"] + " and N_BranchId=" + var["N_BranchID"] + " and N_LocationID =" + var["N_LocationID"] + "  and X_TransType='" + X_TransType + "'", Params, connection);
+                        }
+
+                        object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID=1 and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
+
+
+                        if (objPaid != null)
+                            InvoicePaidAmt = myFunctions.getVAL(objPaid.ToString());
+
+                        if (objBal != null)
+                        {
+                            BalanceAmt = myFunctions.getVAL(objBal.ToString());
+                            var["N_BalanceAmt"] = BalanceAmt;
+                        }
+                        var InvoiceDate = Convert.ToDateTime(var["Invoice Date"].ToString());
+                        var DueDate = InvoiceDate.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
+                        if (DueDate > DateTime.Now)
+                        {
+                            var DueDays = (InvoiceDate - DateTime.Now).TotalDays;
+                            var["N_DueDays"] = DueDays + " Days";
+                        }
+                    }
+
+
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
@@ -315,7 +362,7 @@ namespace SmartxAPI.Controllers
 
             if (N_PaymentMethod == 2)
             {
-               
+
                 objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  isnull(dbo.Inv_PayReceipt.B_IsDraft,0) <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + PurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", connection);
             }
             else
@@ -327,7 +374,7 @@ namespace SmartxAPI.Controllers
             }
 
 
-            if (objPaid == null && N_PaymentMethod == 2 )
+            if (objPaid == null && N_PaymentMethod == 2)
             {
                 if (showAllBranch == true)
                     objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='" + x_TransType + "'", connection);
@@ -363,7 +410,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                       
+
                         TxnStatus["Label"] = "NotPaid";
                         TxnStatus["LabelColor"] = "Red";
                         TxnStatus["Alert"] = "";
@@ -503,17 +550,17 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             if (ex.Message.Contains("50"))
-                                return Ok(_api.Error( "DayClosed"));
+                                return Ok(_api.Error("DayClosed"));
                             else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error( "YearClosed"));
+                                return Ok(_api.Error("YearClosed"));
                             else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error( "YearExists"));
+                                return Ok(_api.Error("YearExists"));
                             else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error( "PeriodClosed"));
+                                return Ok(_api.Error("PeriodClosed"));
                             else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error( "TxnDate"));
+                                return Ok(_api.Error("TxnDate"));
                             else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error( "TransactionStarted"));
+                                return Ok(_api.Error("TransactionStarted"));
                             return Ok(_api.Error(ex.Message));
                         }
                     }
@@ -646,7 +693,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPurchaseID,string comments)
+        public ActionResult DeleteData(int nPurchaseID, string comments)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
