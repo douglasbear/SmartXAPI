@@ -381,7 +381,7 @@ namespace SmartxAPI.Controllers
                             TableName = "vw_Pay_Empshiftdetails";
 
 
-                            RPTLocation = reportLocation + "printing";
+                            RPTLocation = reportLocation + "printing/";
                             ReportName = "Employee_ShiftSchedule";
 
 

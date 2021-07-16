@@ -63,12 +63,12 @@ namespace SmartxAPI.Controllers
                             case "x_DebitNoteNo":
                                 xSortBy = "N_DebitNoteId " + xSortBy.Split(" ")[1];
                                 break;
-                             case "d_ReturnDate":
+                            case "d_ReturnDate":
                                 xSortBy = "Cast(D_ReturnDate as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "n_TotalPaidAmountF":
                                 xSortBy = "Cast(REPLACE(n_TotalPaidAmountF,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
-                                break;    
+                                break;
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -227,6 +227,17 @@ namespace SmartxAPI.Controllers
 
                     SalesReturn = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SalesReturn = _api.Format(SalesReturn, "Master");
+                    if (xReceiptNo != "" && xReceiptNo != null)
+                    {
+                        object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + SalesReturn.Rows[0]["N_TaxCategoryID"] + " and N_CompanyID=" + nCompanyId, Params, connection);
+                        if (MainTax != null)
+                        {
+                            SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "x_DisplayName", typeof(string), null);
+
+                            SalesReturn.Rows[0]["x_DisplayName"] = MainTax.ToString();
+                            SalesReturn.AcceptChanges();
+                        }
+                    }
                     dt.Tables.Add(SalesReturn);
 
                     int N_DebitNoteId = myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString());
