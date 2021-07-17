@@ -183,7 +183,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             var types = GetMimeTypes();
             var ext = Path.GetExtension(path).ToLowerInvariant();
+            if(types.ContainsKey(ext))
             return types[ext];
+            else
+            return "unknow";
         }
 
         public Dictionary<string, string> GetMimeTypes()

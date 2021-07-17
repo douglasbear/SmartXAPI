@@ -133,15 +133,15 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("notesupdate")]
-        public ActionResult NotesUpdate(string xActivityCode, string xnotes)
+        public ActionResult NotesUpdate(string xOpportunityCode, string xnotes)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-            sqlCommandText = "update crm_activity set X_Notes=@p3 where N_CompanyID=@p1 and X_ActivityCode=@p2";
+            sqlCommandText = "update crm_opportunity set X_Notes=@p3 where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xActivityCode);
+            Params.Add("@p2", xOpportunityCode);
             Params.Add("@p3", xnotes);
 
 
@@ -152,7 +152,38 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
                 }
-                return Ok(api.Warning("Activity Updated"));
+                return Ok(api.Warning("Notes Updated"));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+        [HttpPost("orderupdate")]
+        public ActionResult OrderUpdate([FromBody] DataSet ds)
+        {
+
+            DataTable MasterTable;
+            MasterTable = ds.Tables["master"];
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyId);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int N_Order = 1;
+                    foreach (DataRow var in MasterTable.Rows)
+                    {
+                        dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + N_Order + " where N_CompanyID=@p1 and X_ActivityCode=" + var["x_ActivityCode"].ToString(), Params, connection);
+                        N_Order++;
+                    }
+                }
+                return Ok(api.Success("Order Updated"));
 
             }
             catch (Exception e)
