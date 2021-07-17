@@ -125,22 +125,26 @@ namespace SmartxAPI.Controllers
                         if (objBal != null)
                         {
                             BalanceAmt = myFunctions.getVAL(objBal.ToString());
-                            var["N_BalanceAmt"] = BalanceAmt;
-                        }
-                        if (myFunctions.getIntVAL(var["N_InvDueDays"].ToString()) > 0)
-                        {
-                            DateTime dtInvoice = new DateTime();
-                            DateTime dtDuedate = new DateTime();
-                            dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
-                            dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
-                            if (DateTime.Now > dtDuedate)
+                            if (BalanceAmt > 0)
                             {
-                                var DueDays = (DateTime.Now - dtDuedate).TotalDays;
-                                string Due_Days =  Math.Truncate(DueDays).ToString();
-                                if(Due_Days!="0")
-                                    var["N_DueDays"] = Due_Days.ToString() + " Days";
+                                var["N_BalanceAmt"] = BalanceAmt;
+                                if (myFunctions.getIntVAL(var["N_InvDueDays"].ToString()) > 0)
+                                {
+                                    DateTime dtInvoice = new DateTime();
+                                    DateTime dtDuedate = new DateTime();
+                                    dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
+                                    dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
+                                    if (DateTime.Now > dtDuedate)
+                                    {
+                                        var DueDays = (DateTime.Now - dtDuedate).TotalDays;
+                                        string Due_Days = Math.Truncate(DueDays).ToString();
+                                        if (Due_Days != "0")
+                                            var["N_DueDays"] = Due_Days.ToString() + " Days";
+                                    }
+                                }
                             }
                         }
+
                     }
 
 
