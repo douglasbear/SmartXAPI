@@ -109,6 +109,33 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_DueDays", typeof(string), "");
+                    double BalanceAmt = 0;
+                    foreach (DataRow var in dt.Rows)
+                    {
+                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myCompanyID._CompanyID, Params, connection);
+                        if (objBal != null)
+                        {
+                            BalanceAmt = myFunctions.getVAL(objBal.ToString());
+                            var["N_BalanceAmt"] = BalanceAmt;
+                        }
+                        if (myFunctions.getIntVAL(var["N_InvDueDays"].ToString()) > 0)
+                        {
+                            DateTime dtInvoice = new DateTime();
+                            DateTime dtDuedate = new DateTime();
+                            dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
+                            dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
+                            if (DateTime.Now > dtDuedate)
+                            {
+                                var DueDays = (DateTime.Now - dtDuedate).TotalDays;
+                                string Due_Days = Math.Truncate(DueDays).ToString();
+                                if(Due_Days!="0")
+                                    var["N_DueDays"] = Due_Days.ToString() + " Days";
+                            }
+                        }
+                    }
+
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
@@ -1162,6 +1189,9 @@ namespace SmartxAPI.Controllers
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)
         {
+            if(comments==null){
+                comments="";
+            }
             int Results = 0;
             try
             {

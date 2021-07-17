@@ -241,7 +241,7 @@ namespace SmartxAPI.Controllers
                     if (ObjTaxType == null)
                         ObjTaxType = "";
                     if (ObjTaxType.ToString() == "")
-                        ObjTaxType = "Vat";
+                        ObjTaxType = "none";
                     string TaxType = ObjTaxType.ToString();
 
                     object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
