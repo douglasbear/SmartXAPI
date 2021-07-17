@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
             // else if (cmbItemSearchBy.SelectedIndex == 2)
             //     xType = "N_ReOrderQty";
             // else
-            //     xType = "No Stock";
+            //     xType = "NoStock";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -79,24 +79,24 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData == true)
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID =@nCompanyID";
-                            else if (xType == "No Stock")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_CurrStock = 0 ";
-                            else if (xType == "N_MinQty")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID";
+                            else if (xType == "NoStock")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock=0 ";
+                            else if (xType == "MinimumQty")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty";
                             else
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty";
                         }
                         else
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID";
-                            else if (xType == "No Stock")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID and  N_CurrStock = 0 ";
-                            else if (xType == "N_MinQty")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                            else if (xType == "NoStock")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock = 0 ";
+                            else if (xType == "MinimumQty")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty";
                             else
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty";
                         }
                     }
                     else
@@ -117,24 +117,24 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData == true)
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID =@nCompanyID";
-                            else if (xType == "No Stock")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_CurrStock = 0 ";
-                            else if (xType == "N_MinQty")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID";
+                            else if (xType == "NoStock")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock = 0 ";
+                            else if (xType == "MinimumQty")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_MinQty";
                             else
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_CurrStock <= N_ReOrderQty";
                         }
                         else
                         {
                             if (xType == "All")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID";
-                            else if (xType == "No Stock")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID and  N_CurrStock = 0 ";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID";
+                            else if (xType == "NoStock")
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and  N_CurrStock=0 ";
                             else if (xType == "N_MinQty")
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_MinQty";
                             else
-                                X_Crieteria = " N_CompanyID =@nCompanyID and N_LocationID =@nLocationID and N_CurrStock <=@xType";
+                                X_Crieteria = " N_CompanyID=@nCompanyID and N_LocationID=@nLocationID and N_CurrStock <= N_ReOrderQty";
                         }
                     }
                     string sqlCommandText = "Select " + X_VisibleFieldList + " from " + X_TableName + " where " + X_Crieteria + " Order by " + X_OrderByField;
@@ -156,11 +156,5 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-
-    
-
-
-
-
         }
     }
