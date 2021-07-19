@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                             if (BalanceAmt > 0)
                             {
                                 var["N_BalanceAmt"] = BalanceAmt;
-                                if (myFunctions.getIntVAL(var["N_InvDueDays"].ToString()) > 0)
+                                if (var["N_InvDueDays"].ToString() != "")
                                 {
                                     DateTime dtInvoice = new DateTime();
                                     DateTime dtDuedate = new DateTime();
@@ -138,8 +138,7 @@ namespace SmartxAPI.Controllers
                                     {
                                         var DueDays = (DateTime.Now - dtDuedate).TotalDays;
                                         string Due_Days = Math.Truncate(DueDays).ToString();
-                                        if (Due_Days != "0")
-                                            var["N_DueDays"] = Due_Days.ToString() + " Days";
+                                        var["N_DueDays"] = Due_Days.ToString() + " days";
                                     }
                                 }
                             }
