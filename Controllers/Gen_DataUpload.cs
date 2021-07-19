@@ -102,16 +102,18 @@ namespace SmartxAPI.Controllers
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(dt.TableName +" Uploaded Error"));
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
+                            transaction.Commit();
+                            return Ok(_api.Success(dt.TableName +" Uploaded"));
                         }
                     }
                     if (Mastertable.Rows.Count > 0)
                     {
                         transaction.Commit();
-                        return Ok(_api.Success("Uploaded"));
+                        return Ok(_api.Success("Uploaded Completed"));
                     }
                     else
                     {
