@@ -65,5 +65,94 @@ namespace SmartxAPI.Controllers
         }
 
        
+         [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                MasterTable = ds.Tables["master"];
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
+              
+                int nManufacturerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ItemManufacturerID"].ToString());
+              
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    // Auto Gen
+                  
+                    nManufacturerID = dLayer.SaveData("Inv_ItemManufacturer", "N_ItemManufacturerID", MasterTable, connection, transaction);
+                    if (nManufacturerID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Brand Master Created"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return BadRequest(_api.Error(ex));
+            }
+        }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nManufacturerID)
+        {
+             int Results=0;
+            try
+            {
+              using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                Results=dLayer.DeleteData("Inv_ItemManufacturer","N_ItemManufacturerID",nManufacturerID,"",connection);
+                if(Results>0){
+                    return Ok(_api.Success("Deleted Sucessfully" ));
+                }else{
+                    return Ok(_api.Warning("Unable to delete" ));
+                }
+                }
+                
+            }
+            catch (Exception ex)
+                {
+                    return Ok(_api.Error(ex));
+                }
+        }
+
+          [HttpGet("Details") ]
+        public ActionResult GetManufacturerDetails (int nManufacturerID,int nCompanyID)
+          
+        {   DataTable dt=new DataTable();
+            SortedList Params = new SortedList();
+           //  int nCompanyID=myFunctions.GetCompanyID(User);
+               string sqlCommandText="select * from Inv_ItemManufacturer where N_CompanyID=@nCompanyID  and N_ItemManufacturerID=@nManufacturerID ";
+               Params.Add("@nCompanyID",nCompanyID);
+               Params.Add("@nManufacturerID",nManufacturerID);
+            
+            try{
+                    using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
+                }
+                    if(dt.Rows.Count==0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }else{
+                            return Ok(_api.Success(dt));
+                        }
+                
+            }catch(Exception e){
+                return Ok(_api.Error(e));
+            }   
+        }
     }
 }

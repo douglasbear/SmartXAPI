@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             }
             else {
                 if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or x_VendorName like '%"+ xSearchkey + "%' or [Net Amount] like '%"+ xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or Netamt like '%"+ xSearchkey + "%')";
             }
             
 
@@ -70,6 +70,7 @@ namespace SmartxAPI.Controllers
                    case "netAmount":
                     xSortBy = "Cast(REPLACE([Net Amount],',','') as Numeric(10,2))" + xSortBy.Split(" ")[1];
                     break; 
+                   
                    default : break;
                }
              xSortBy = " order by " + xSortBy;
@@ -121,7 +122,8 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    //return Ok(_api.Warning("No Results Found"));
+                     return Ok(_api.Success(OutPut));
                 }
                 else
                 {

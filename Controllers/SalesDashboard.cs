@@ -36,7 +36,9 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
-
+           
+            
+                     
             string sqlCurrentOrder = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
             string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,CAST(CONVERT(varchar, CAST(sum(Cast(REPLACE(X_BillAmt,',','') as Numeric(10,2)) ) AS Money), 1) AS   varchar) AS  TotalAmount  FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
             string sqlCurrentQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
@@ -60,28 +62,33 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    CurrentOrder = dLayer.ExecuteDataTable(sqlCurrentOrder, Params, connection);
+                     bool B_customer = myFunctions.CheckPermission(nCompanyID, 1302, "Administrator", "X_UserCategory", dLayer, connection);
+                     CurrentOrder = dLayer.ExecuteDataTable(sqlCurrentOrder, Params, connection);
                     CurrentInvoice = dLayer.ExecuteDataTable(sqlCurrentInvoice, Params, connection);
                     CurrentQuotation = dLayer.ExecuteDataTable(sqlCurrentQuotation, Params, connection);
                     CurrentCustomer = dLayer.ExecuteDataTable(sqlCustomerbySource, Params, connection);
                     OpenOpportunities = dLayer.ExecuteDataTable(sqlPipelineoppotunity, Params, connection);
+                     if(B_customer) 
+                     { 
+                     Data.Add("permision",true);
+                    }
+
                 }
 
-
+                
                 CurrentOrder.AcceptChanges();
                 CurrentInvoice.AcceptChanges();
                 CurrentQuotation.AcceptChanges();
                 CurrentCustomer.AcceptChanges();
                 OpenOpportunities.AcceptChanges();
-
+               
 
                 if (CurrentOrder.Rows.Count > 0) Data.Add("orderData", CurrentOrder);
                 if (CurrentInvoice.Rows.Count > 0) Data.Add("invoiceData", CurrentInvoice);
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("customerbySource", CurrentCustomer);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("opportunityData", CurrentCustomer);
-
+               
 
                 return Ok(api.Success(Data));
 

@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_VendorName like '%" + xSearchkey + "%' or X_VendorCode like '%" + xSearchkey + "%' or X_ContactName like '%" + xSearchkey + "%' or X_Address like '%" + xSearchkey + "%' or X_VendorType like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_VendorName like '%" + xSearchkey + "%' or X_VendorCode like '%" + xSearchkey + "%' or X_ContactName like '%" + xSearchkey + "%' or X_Address like '%" + xSearchkey + "%' or X_VendorType like '%" + xSearchkey + "%'or X_Country like '%" + xSearchkey + "%'or X_CurrencyName like '%" + xSearchkey + "%' or x_PhoneNo1 like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VendorID desc";
@@ -190,7 +190,8 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                       // return Ok(_api.Warning("No Results Found"));
+                        return Ok(_api.Success(OutPut));
                     }
                     else
                     {
