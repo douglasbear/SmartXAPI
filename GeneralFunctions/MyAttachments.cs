@@ -10,21 +10,30 @@ using System.Text;
 using System.Text.RegularExpressions;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
+using System.Globalization;
+using System.Security;
+using System.Security.Cryptography;
+using System.Net;
+using System.Net.Mail;
+using System.Windows;
+
 
 namespace SmartxAPI.GeneralFunctions
 {
     public class MyAttachments : IMyAttachments
     {
         private readonly IMyFunctions myFunctions;
+        private readonly IMyReminders myReminder;
         private readonly string reportPath;
         private readonly IApiFunctions api;
         private readonly string startupPath;
-        public MyAttachments(IApiFunctions apifun, IMyFunctions myFun, IConfiguration conf)
+        public MyAttachments(IApiFunctions apifun, IMyFunctions myFun, IConfiguration conf,IMyReminders rem)
         {
             api = apifun;
             myFunctions = myFun;
             reportPath = conf.GetConnectionString("ReportPath");
             startupPath = conf.GetConnectionString("StartupPath");
+            myReminder=rem;
         }
 
         public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_DMSMainFolder, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
@@ -431,16 +440,83 @@ namespace SmartxAPI.GeneralFunctions
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
+        public void DeleteAttachment(IDataAccessLayer dLayer, int type, DataSet dsAttachment, int nPartyID,int nFnYearID, int formId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
+        {
+            try
+            {
+                string s = "";
+                string X_fileType = "";
+                int nCompanyID = myFunctions.GetCompanyID(User);
+                // if (myCompanyID._DocumtPath != "")
+                // {
+                //     if (!Directory.Exists(myCompanyID._DocumtPath + myCompanyID._DocumtFolder))
+                //         Directory.CreateDirectory(myCompanyID._DocumtPath + myCompanyID._DocumtFolder);
+                //     s = myCompanyID._DocumtPath + myCompanyID._DocumtFolder + "\\";
+                // }
+                // else
+                //     s = Application.StartupPath + myCompanyID._DocumtFolder + "\\";
+                if (type == 1)
+                {
+                    for (int i = 0; i <= dsAttachment.Tables["Attachment"].Rows.Count - 1; i++)
+                    {
+                        if (dsAttachment.Tables["Attachment"].Rows[i]["X_Extension"].ToString() != "")
+                            X_fileType = "File";
+                        else
+                            X_fileType = "Folder";
+                        if (X_fileType == "File")
+                        {
 
+                            try
+                            {
+                                object obj = dLayer.ExecuteScalar("Select N_FileID From DMS_MasterFiles Where X_refName='" + Path.GetFileName(dsAttachment.Tables["Attachment"].Rows[i]["X_refName"].ToString()) + "' and N_CompanyID =" + nCompanyID, connection, transaction);
+                                if (obj != null)
+                                {
+                                    object objReminder = dLayer.ExecuteScalar("Select N_ReminderID From DMS_MasterFiles Where N_FileID=" + myFunctions.getIntVAL(obj.ToString()) + " and N_CompanyID =" + nCompanyID, connection, transaction);
+                                    dLayer.DeleteData("DMS_MasterFiles", "N_FileID",myFunctions.getIntVAL(obj.ToString()), "X_refName='" + Path.GetFileName(dsAttachment.Tables["Attachment"].Rows[i]["X_refName"].ToString()) + "' and N_CompanyID=" + nCompanyID, connection, transaction);
+                                    if (objReminder != null)
+                                        if (objReminder != null)
+                                            myReminder.ReminderDelete(dLayer, myFunctions.getIntVAL(objReminder.ToString()),connection,transaction);
+                                    //File.Delete(dsAttachment.Tables["Attachment"].Rows[i]["X_refName"].ToString());
+                                }
+                            }
+                            catch (Exception ex)
+                            {
 
+                            }
+                        }
+                        // else if (X_fileType == "Folder")
+                        // {
+                        //     object obj;
+                        //     obj = dLayer.ExecuteScalar("Select N_FolderID From DMS_MasterFolder Where X_Path='" + dsAttachment.Tables["Attachment"].Rows[i]["X_refName"].ToString() + "' and X_Name='" + dsAttachment.Tables["Attachment"].Rows[i]["X_File"].ToString() + "' and N_CompanyID =" + myCompanyID._CompanyID,connection,transaction);
+                        //     if (obj != null)
+                        //     {
+                        //         deleteList(dLayer, myFunctions.getIntVAL(obj.ToString()), s, 1,connection,transaction);
+                        //     }
+                        // }
 
+                    }
+                    if (formId == 113)
+                        dLayer.DeleteData("Acc_CompanyAttachments", "N_CompanyID", nCompanyID, "N_FnyearID=" + nFnYearID,connection,transaction);
+                    else
+                        dLayer.DeleteData("Dms_ScreenAttachments", "N_PartyID", nPartyID, "N_FormID=" + formId + " and N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID,connection,transaction);
+
+                    dLayer.DeleteData("Gen_Reminder", "N_PartyID", nPartyID, "N_FormID=" + formId + " and N_CompanyID=" + nCompanyID,connection,transaction);
+                   
+                }
+            }
+            catch (Exception ex)
+            {
+              
+            }
+        }
     }
-
+        
 
 
     public interface IMyAttachments
     {
         public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_folderName, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction);
+        public void DeleteAttachment(IDataAccessLayer dLayer, int type, DataSet dsAttachment, int nPartyID,int nFnYearID, int formId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection);
         public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID, int FnYearID, ClaimsPrincipal User, SqlConnection connection);
 
     }
