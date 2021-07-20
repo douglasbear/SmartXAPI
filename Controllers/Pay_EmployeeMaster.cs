@@ -402,6 +402,7 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
+                DataTable Attachment = ds.Tables["attachments"];
 
                 var X_EmpUpdateCode = MasterRow["X_EmpUpdateCode"].ToString();
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
@@ -585,6 +586,15 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error("Unable to save"));
                                 }
                             }
+
+                            if (Attachment.Rows.Count > 0)
+                            {         
+                                foreach (DataRow dRow in Attachment.Rows)
+                                {
+                                    dRow["n_FormID"] = 188;
+                                }
+                                myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, "Employee", User, connection, transaction);
+                            }
                         }
                         
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
@@ -694,6 +704,15 @@ namespace SmartxAPI.Controllers
                                 transaction.Rollback();
                                 return Ok(_api.Error("Unable to save"));
                             }
+                        }
+
+                        if (Attachment.Rows.Count > 0)
+                        {         
+                            foreach (DataRow dRow in Attachment.Rows)
+                            {
+                                dRow["n_FormID"] = 1228;
+                            }
+                            myAttachments.SaveAttachment(dLayer, Attachment, X_EmpUpdateCode, nEmpUpdateID, MasterTable.Rows[0]["x_EmpName"].ToString(), X_EmpUpdateCode, nEmpUpdateID, "Employee Update", User, connection, transaction);
                         }
 
                         if(N_SaveDraft==0)
@@ -853,6 +872,15 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error("Unable to save"));
                                 }
                             }
+
+                            if (Attachment.Rows.Count > 0)
+                            {         
+                                foreach (DataRow dRow in Attachment.Rows)
+                                {
+                                    dRow["n_FormID"] = 188;
+                                }
+                                myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, "Employee", User, connection, transaction);
+                            }
                         }
 
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
@@ -920,22 +948,25 @@ namespace SmartxAPI.Controllers
                         Contacts_sqlQuery = "Select * from vw_ContactUpdateDetails where N_CompanyID =@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
                         Dependence_sqlQuery = "Select * from Pay_EmployeeDependenceUpdate Inner Join Pay_Relation on Pay_EmployeeDependenceUpdate.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependenceUpdate.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependenceUpdate.N_CompanyID=@nCompanyID and Pay_EmployeeDependenceUpdate.N_EmpUpdateID=@nEmpUpdateID and Pay_EmployeeDependenceUpdate.N_EmpID=@nEmpID";
                         Edu_sqlQuery = "Select * from Pay_EmployeeEducationUpdate where N_CompanyID =@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
-                        History_sqlQuery = "Select * from Pay_EmploymentHistoryUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
+                        History_sqlQuery = "Select * from Pay_EmploymentHistoryUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";                        
 
                         Contacts = dLayer.ExecuteDataTable(Contacts_sqlQuery, QueryParams, connection);
                         Dependence  = dLayer.ExecuteDataTable(Dependence_sqlQuery, QueryParams, connection);
                         Education = dLayer.ExecuteDataTable(Edu_sqlQuery, QueryParams, connection);
                         History  = dLayer.ExecuteDataTable(History_sqlQuery, QueryParams, connection);
+                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), 1228, nFnYearID, User, connection);
 
-                        Contacts = _api.Format(Contacts, "contacts");
-                        Dependence = _api.Format(Dependence, "dependence");
-                        Education = _api.Format(Education, "education");
-                        History = _api.Format(History, "history");
+                        Contacts = _api.Format(Contacts, "pay_EmployeeSub");
+                        Dependence = _api.Format(Dependence, "pay_EmployeeDependence");
+                        Education = _api.Format(Education, "pay_EmployeeEducation");
+                        History = _api.Format(History, "pay_EmploymentHistory");
+                        Attachements = _api.Format(Attachements, "attachments");
 
                         ds.Tables.Add(Contacts);
                         ds.Tables.Add(Dependence);
                         ds.Tables.Add(Education);
                         ds.Tables.Add(History);
+                        ds.Tables.Add(Attachements);
 
                         return Ok(_api.Success(ds));
                     }
