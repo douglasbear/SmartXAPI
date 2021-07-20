@@ -440,13 +440,24 @@ namespace SmartxAPI.GeneralFunctions
               .Select(s => s[random.Next(s.Length)]).ToArray());
         }
 
-        public void DeleteAttachment(IDataAccessLayer dLayer, int type, DataTable dsAttachment, int nPartyID,int nFnYearID, int formId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
+        public void DeleteAttachment(IDataAccessLayer dLayer, int type,int nTransID, int nPartyID,int nFnYearID, int formId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         {
             try
             {
                 string s = "";
                 string X_fileType = "";
                 int nCompanyID = myFunctions.GetCompanyID(User);
+
+                SortedList AttachmentParam = new SortedList(){
+                                    {"PartyID", nPartyID},
+                                    {"PayID", nTransID},
+                                    {"FormID", formId},
+                                    {"CompanyID", myFunctions.GetCompanyID(User)},
+                                    {"FnyearID",nFnYearID}
+                                    };
+
+                DataTable dsAttachment = dLayer.ExecuteDataTablePro("SP_VendorAttachments", AttachmentParam, connection,transaction);
+
                 // if (myCompanyID._DocumtPath != "")
                 // {
                 //     if (!Directory.Exists(myCompanyID._DocumtPath + myCompanyID._DocumtFolder))
@@ -516,7 +527,7 @@ namespace SmartxAPI.GeneralFunctions
     public interface IMyAttachments
     {
         public void SaveAttachment(IDataAccessLayer dLayer, DataTable dsAttachment, string payCode, int payId, string partyname, string partycode, int partyId, string X_folderName, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction);
-        public void DeleteAttachment(IDataAccessLayer dLayer, int type, DataTable dsAttachment, int nPartyID,int nFnYearID, int formId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection);
+        public void DeleteAttachment(IDataAccessLayer dLayer, int type,int nTransID, int nPartyID,int nFnYearID, int formId,ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection);
         public DataTable ViewAttachment(IDataAccessLayer dLayer, int PartyId, int TransID, int FormID, int FnYearID, ClaimsPrincipal User, SqlConnection connection);
 
     }
