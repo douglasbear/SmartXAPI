@@ -1515,7 +1515,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nEmpID, int nFnyearID,DataTable dsAttachment)
+        public ActionResult DeleteData(int nEmpID, int nFnyearID)
         {
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -1573,7 +1573,7 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
                     dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
 
-                    myAttachments.DeleteAttachment(dLayer, 1,dsAttachment,nEmpID, nFnyearID, FormID,User, transaction, connection);
+                    myAttachments.DeleteAttachment(dLayer, 1,nEmpID,nEmpID, nFnyearID, FormID,User, transaction, connection);
 
                     transaction.Commit();
                 }
