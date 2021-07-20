@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Order No] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or Cast([Order Date] as VarChar) like '%" + xSearchkey + "%'or N_Amount like '%" + xSearchkey + "%' or X_Description like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_POrderID desc";
@@ -61,6 +61,12 @@ namespace SmartxAPI.Controllers
                         {
                             case "orderNo":
                                 xSortBy = "N_POrderID " + xSortBy.Split(" ")[1];
+                                break;
+                                case "orderDate":
+                                xSortBy = "Cast([Order Date] as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                            case "n_Amount":
+                                xSortBy = "Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -115,7 +121,8 @@ namespace SmartxAPI.Controllers
 
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
+                        //return Ok(api.Warning(OutPut));
                     }
                     else
                     {

@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%')";
+                Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Vendor Name] like '%" + xSearchkey + "%' or Cast(Date as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%" + xSearchkey + "%' or amount like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_PayReceiptId desc";
@@ -57,6 +57,12 @@ namespace SmartxAPI.Controllers
                         break;
                     case "receiptNo":
                         xSortBy = "N_PayReceiptId " + xSortBy.Split(" ")[1];
+                        break;
+                    case "date":
+                         xSortBy = "Cast([Date] as DateTime ) " + xSortBy.Split(" ")[1];
+                        break;
+                    case "amount":
+                        xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                         break;
                     default: break;
                 }
@@ -103,7 +109,9 @@ namespace SmartxAPI.Controllers
                 // dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
+                    return Ok(api.Success(OutPut));
+                   // return Ok(api.Warning("No Results Found"));
+                    
                 }
                 else
                 {

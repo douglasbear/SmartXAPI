@@ -45,11 +45,11 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             if (nPartyType ==1){
                 if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or x_VendorName like '%"+ xSearchkey + "%' or [Net Amount] like '%"+ xSearchkey + "%')";
             }
             else {
                 if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or X_VendorName like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or Netamt like '%"+ xSearchkey + "%')";
             }
             
 
@@ -62,12 +62,15 @@ namespace SmartxAPI.Controllers
                   
                    case "customerName" : xSortBy =" [Customer Name] " + xSortBy.Split(" ")[1] ;
                    break;
+                   case "invoiceNo" : xSortBy =" [Invoice No] " + xSortBy.Split(" ")[1] ;
+                   break;
                    case "adjustmentDate":
-                    xSortBy = "Cast([Adjustment Date] as DateTime )" + xSortBy.Split(" ")[1];
+                   xSortBy = "Cast([Adjustment Date] as DateTime )" + xSortBy.Split(" ")[1];
                     break;
                    case "netAmount":
-                    xSortBy = "Cast(REPLACE(netAmount,',','') as Numeric(10,2))" + xSortBy.Split(" ")[1];
+                    xSortBy = "Cast(REPLACE([Net Amount],',','') as Numeric(10,2))" + xSortBy.Split(" ")[1];
                     break; 
+                   
                    default : break;
                }
              xSortBy = " order by " + xSortBy;
@@ -119,7 +122,8 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found"));
+                    //return Ok(_api.Warning("No Results Found"));
+                     return Ok(_api.Success(OutPut));
                 }
                 else
                 {
