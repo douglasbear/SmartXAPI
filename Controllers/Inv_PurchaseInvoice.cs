@@ -315,7 +315,7 @@ namespace SmartxAPI.Controllers
 
             if (N_PaymentMethod == 2)
             {
-               
+
                 objPaid = dLayer.ExecuteScalar("SELECT  isnull(Sum(dbo.Inv_PayReceiptDetails.N_Amount),0) as PaidAmount FROM  dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  isnull(dbo.Inv_PayReceipt.B_IsDraft,0) <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (" + PurchaseID + ") group by dbo.Inv_PayReceiptDetails.N_PayReceiptId", connection);
             }
             else
@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
             }
 
 
-            if (objPaid == null && N_PaymentMethod == 2 )
+            if (objPaid == null && N_PaymentMethod == 2)
             {
                 if (showAllBranch == true)
                     objPaid = dLayer.ExecuteScalar("Select N_CashPaid from vw_Inv_PurchaseDisp Where N_CompanyID=" + nCompanyID + " and X_InvoiceNo='" + x_InvoiceNo + "' and N_FnYearID=" + nFnYearID + " and X_TransType='" + x_TransType + "'", connection);
@@ -363,7 +363,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
-                       
+
                         TxnStatus["Label"] = "NotPaid";
                         TxnStatus["LabelColor"] = "Red";
                         TxnStatus["Alert"] = "";
@@ -455,7 +455,7 @@ namespace SmartxAPI.Controllers
                     object objVendorCode = dLayer.ExecuteScalar("Select X_VendorCode From Inv_Vendor where N_VendorID=@N_VendorID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", VendParams, connection, transaction);
 
 
-                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID>0)
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_PurchaseID > 0)
                     {
                         int N_PkeyID = N_PurchaseID;
                         string X_Criteria = "N_PurchaseID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
@@ -463,7 +463,7 @@ namespace SmartxAPI.Controllers
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PkeyID, values, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
                         myAttachments.SaveAttachment(dLayer, Attachment, values, N_PurchaseID, objVendorName.ToString().Trim(), objVendorCode.ToString(), N_VendorID, "Vendor Document", User, connection, transaction);
 
-                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID, connection, transaction).ToString());
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
                         if (N_SaveDraft == 0)
                         {
                             try
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
                                 return Ok(_api.Error(ex.Message));
                             }
                         }
-                            
+
                         myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "PURCHASE", values, dLayer, connection, transaction, User);
                         transaction.Commit();
                         return Ok(_api.Success("Purchase Approved " + "-" + values));
@@ -537,30 +537,30 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             if (ex.Message.Contains("50"))
-                                return Ok(_api.Error( "DayClosed"));
+                                return Ok(_api.Error("DayClosed"));
                             else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error( "YearClosed"));
+                                return Ok(_api.Error("YearClosed"));
                             else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error( "YearExists"));
+                                return Ok(_api.Error("YearExists"));
                             else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error( "PeriodClosed"));
+                                return Ok(_api.Error("PeriodClosed"));
                             else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error( "TxnDate"));
+                                return Ok(_api.Error("TxnDate"));
                             else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error( "TransactionStarted"));
+                                return Ok(_api.Error("TransactionStarted"));
                             return Ok(_api.Error(ex.Message));
                         }
                     }
+                    MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
+                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if (MasterTable.Columns.Contains("N_Procstatus"))
+                        MasterTable.Columns.Remove("N_Procstatus");
+                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
+                        MasterTable.Columns.Remove("B_IsSaveDraft");
+                    MasterTable.AcceptChanges();
 
-                    // if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
-                    //     MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    // if (MasterTable.Columns.Contains("N_Procstatus"))
-                    //     MasterTable.Columns.Remove("N_Procstatus");
-                    // if (MasterTable.Columns.Contains("B_IsSaveDraft"))
-                    //     MasterTable.Columns.Remove("B_IsSaveDraft");
-                    // MasterTable.AcceptChanges();
-
-                    // MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
                     N_PurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
 
@@ -571,7 +571,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
-                    N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID, connection, transaction).ToString());
+                    N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction).ToString());
 
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -681,7 +681,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPurchaseID,int nFnYearID,string comments)
+        public ActionResult DeleteData(int nPurchaseID, int nFnYearID, string comments)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -724,7 +724,7 @@ namespace SmartxAPI.Controllers
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
                     if (ButtonTag == "6" || ButtonTag == "0")
                     {
-                         SortedList DeleteParams = new SortedList(){
+                        SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType","PURCHASE"},
                                 {"N_VoucherID",nPurchaseID},
@@ -746,16 +746,16 @@ namespace SmartxAPI.Controllers
                         if (status != "Error")
                         {
                             transaction.Commit();
-                            return Ok(_api.Success("Leave Request " + status + " Successfully"));
+                            return Ok(_api.Success("Purchase Invoice " + status + " Successfully"));
                         }
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete Leave Request"));
+                            return Ok(_api.Error("Unable to delete Purchase Invoice"));
                         }
                     }
 
-                   
+
                     transaction.Commit();
                     return Ok(_api.Success("Purchase invoice deleted"));
 

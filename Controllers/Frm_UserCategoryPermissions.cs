@@ -131,81 +131,218 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        // [HttpGet("fillData")]
-        // public ActionResult GetScreen(string perModules, string permUserCategory)
-        // {
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-
-        //             int nCompanyID = myFunctions.GetCompanyID(User);
-        //             DataSet dt = new DataSet();
-        //             DataTable SecUserPermissions = new DataTable();
-        //             DataTable SecAllMenus = new DataTable();
-
-        //             SortedList Params = new SortedList();
-        //             SortedList PostingParam = new SortedList();
-        //             SortedList secParams = new SortedList();
-        //             Params.Add("@nCompanyID", nCompanyID);
-        //             secParams.Add("N_CompanyID", nCompanyID);
-        //             secParams.Add("x_UserCategory", "permUserCategory");
-        //             secParams.Add("N_MenuID", N_MenuID);
-        //             dba.FillDataSet(ref dsPpermissions, "Sec_AllMenus", "SP_Sec_UserMenus_Sel " + myCompanyID._CompanyID + ",'" + myCompanyID._UserCategoryName + "'," + N_MenuID + "," + myCompanyID._LanguageID, "TEXT", new DataTable());
+        [HttpGet("fillData")]
+        public ActionResult GetScreen(string perModules, string permUserCategory, int nLanguageID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    string x_UserCategoryName = "";
+                    int userCategoryID = myFunctions.GetUserCategory(User);
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
 
 
+                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCatgory from Sec_UserCategory Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+                    if (x_UserCategory != null)
+                    {
+                        x_UserCategoryName = x_UserCategory.ToString();
+                    }
 
 
+                    DataTable SecUserPermissions = new DataTable();
+                    DataTable SecAllMenus = new DataTable();
 
 
-        //             int N_MenuID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_MenuID from vw_UserMenusAll_Disp where X_Text='" + perModules + "' and N_ParentMenuID=0", Params, connection).ToString());
-        //             PostingParam.Add("@nCompanyID", nCompanyID);
-        //             PostingParam.Add("@xUserCategory", "permUserCategory");
-        //             PostingParam.Add("@nMenuID", N_MenuID);
-        //             string SecUsersql="SP_InvSalesOrderDtls_Disp @nCompanyID,@xUserCategory,@nMenuID";
-        //             SecUserPermissions = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
-        //             SecUserPermissions = _api.Format(SecUserPermissions, "SecUserPermissions");
-        //             transaction.Commit();
-        //             return Ok(_api.Success(""));
-        //         }
+                    SortedList PostingParam = new SortedList();
+                    SortedList secParams = new SortedList();
+                    int N_MenuID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_MenuID from vw_UserMenusAll_Disp where X_Text='" + perModules + "' and N_ParentMenuID=0", Params, connection).ToString());
 
 
 
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(e));
-        //     }
-        // }
+                    secParams.Add("@nCompanyID", nCompanyID);
+                    secParams.Add("@xUserCategory", "x_UserCategoryName");
+                    secParams.Add("@nMenuID", N_MenuID);
+                    secParams.Add("@nLanguageID", nLanguageID);
+                    string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID";
+                    SecAllMenus = dLayer.ExecuteDataTable(SecAllSql, PostingParam, connection);
+                    SecAllMenus = _api.Format(SecAllMenus, "SecAllMenus");
+
+
+
+
+
+                    PostingParam.Add("@nCompanyID", nCompanyID);
+                    PostingParam.Add("@xUserCategory", "permUserCategory");
+                    PostingParam.Add("@nMenuID", N_MenuID);
+                    string SecUsersql = "SP_InvSalesOrderDtls_Disp @nCompanyID,@xUserCategory,@nMenuID";
+                    SecUserPermissions = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
+                    SecUserPermissions = _api.Format(SecUserPermissions, "SecUserPermissions");
+
+
+                    dt.Tables.Add(SecUserPermissions);
+                    dt.Tables.Add(SecAllMenus);
+
+
+
+                    return Ok(_api.Success(""));
+                }
+
+
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+
+
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    SortedList Params = new SortedList();
+
+                    int N_UserCategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryID"].ToString());
+                    int N_MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MenuID"].ToString());
+                    int flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
+                    int N_IsAdmin = myFunctions.getIntVAL(MasterTable.Rows[0]["n_IsAdmin"].ToString());
+
+                    dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + N_MenuID, connection, transaction);
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                        foreach (DataRow Rows in DetailTable.Rows)
+                        {
+                            dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + Rows["n_MenuID"], connection, transaction);
+
+                        }
+                    }
+                    if (DetailTable.Rows.Count > 0)
+                    {
+
+                        int nInternalID = dLayer.SaveData("Sec_UserPrevileges", "N_InternalID", DetailTable, connection, transaction);
+
+                        if (nInternalID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save"));
+                        }
+                    }
+
+
+                    if (flag == 1)
+                    {
+                        DataTable dt = new DataTable();
+                        dt.Clear();
+                        dt.Columns.Add("N_InternalID");
+                        dt.Columns.Add("N_MenuID");
+                        dt.Columns.Add("N_UserCategoryID");
+                        dt.Columns.Add("B_Visible");
+                        dt.Columns.Add("B_Save");
+                        dt.Columns.Add("B_Edit");
+                        dt.Columns.Add("B_Delete");
+
+
+                        DataRow row = dt.NewRow();
+                        row["N_InternalID"] = 0;
+                        row["N_MenuID"] = N_MenuID;
+                        row["N_UserCategoryID"] = N_UserCategoryID;
+                        row["B_Visible"] = 1;
+                        row["B_Save"] = 0;
+                        row["B_Edit"] = 0;
+                        row["B_Delete"] = 0;
+                        dt.Rows.Add(row);
+
+                        int N_InternalID = dLayer.SaveData("Sec_UserPrevileges", "N_InternalID", dt, connection, transaction);
+                        if (N_InternalID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to save"));
+                        }
+
+
+                    }
+                    if (N_IsAdmin == 1)
+                    {
+                        dLayer.ExecuteNonQuery("delete from Sec_UserPrevileges where N_UserCategoryID not in (select N_UserCategoryID from Sec_UserCategory where X_UserCategory in ('Olivo','Administrator') and N_CompanyID=" + nCompanyID + ") and N_MenuID not in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID=" + N_UserCategoryID + ")and N_MenuID in (select N_MenuID from Sec_Menus where N_ParentMenuID=" + N_MenuID + ")", Params, connection, transaction);
+                    }
+                    transaction.Commit();
+                }
+                return Ok(_api.Success("Saved"));
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
     }
 }
-// [HttpPost("save")]
-// public ActionResult SaveData([FromBody] DataSet ds)
-// {
-//     try
-//     {
-//         using (SqlConnection connection = new SqlConnection(connectionString))
-//         {
-//             connection.Open();
-//             SqlTransaction transaction = connection.BeginTransaction();
-//             DataTable MasterTable;
-//             DataTable DetailTable;
-//             MasterTable = ds.Tables["master"];
-//             DetailTable = ds.Tables["details"];
-//             DataRow MasterRow = MasterTable.Rows[0];
-//             SortedList Params = new SortedList();
-//             int N_UserCategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryID"].ToString());
-//             int N_MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_MenuID"].ToString());
-//             dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + N_MenuID, connection, transaction);
-//             if (DetailTable.Rows.Count > 0)
-//             {
-//                 foreach (DataRow Rows in DetailTable.Rows)
-//                 {
-//                     dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID.ToString(), "N_MenuID=" + Rows["n_MenuID"],connection, transaction);
 
-//                 }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 
