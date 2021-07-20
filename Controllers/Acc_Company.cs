@@ -42,9 +42,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode,I_Logo,X_Country from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
+            // string sqlCommandText = "select N_CompanyId as nCompanyId,X_CompanyName as xCompanyName,X_CompanyCode as xCompanyCode,I_Logo,X_Country from Acc_Company where B_Inactive =@inactive and N_ClientID=@nClientID order by X_CompanyName";
+            string sqlCommandText = "select Acc_Company.N_CompanyId as nCompanyId,Acc_Company.X_CompanyName as xCompanyName,Acc_Company.X_CompanyCode as xCompanyCode,Acc_Company.I_Logo,Acc_Company.X_Country "+
+ " from Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where B_Inactive =@inactive and N_ClientID=@nClientID and Sec_User.X_UserID=@xUserID order by X_CompanyName";
             Params.Add("@inactive", 0);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
+            Params.Add("@xUserID", myFunctions.GetUserLoginName(User));
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

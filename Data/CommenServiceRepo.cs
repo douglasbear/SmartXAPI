@@ -184,6 +184,7 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.PrimaryGroupSid,clientID.ToString()),
                         new Claim(ClaimTypes.UserData,xGlobalUserID.ToString()),
                         new Claim(ClaimTypes.Email,username),
+                        new Claim(ClaimTypes.Upn,username),
                         new Claim(ClaimTypes.Uri,uri)
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),

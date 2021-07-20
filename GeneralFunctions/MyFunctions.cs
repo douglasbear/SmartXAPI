@@ -1408,11 +1408,15 @@ namespace SmartxAPI.GeneralFunctions
         }
         public int GetCompanyID(ClaimsPrincipal User)
         {
-            return this.getIntVAL(User.FindFirst(ClaimTypes.Sid)?.Value);
+            object cmpID=User.FindFirst(ClaimTypes.Sid)?.Value;
+            if(cmpID==null) cmpID=0;
+            return this.getIntVAL(cmpID.ToString());
         }
         public string GetCompanyName(ClaimsPrincipal User)
         {
-            return User.FindFirst(ClaimTypes.StreetAddress)?.Value;
+            object cmpName=User.FindFirst(ClaimTypes.StreetAddress)?.Value;
+            if(cmpName==null) cmpName="";
+            return cmpName.ToString();
         }
         public string GetEmailID(ClaimsPrincipal User)
         {
@@ -1440,6 +1444,11 @@ namespace SmartxAPI.GeneralFunctions
         public string GetUserName(ClaimsPrincipal User)
         {
             return User.FindFirst(ClaimTypes.Name)?.Value;
+        }
+
+        public string GetUserLoginName(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.Upn)?.Value;
         }
 
 
@@ -1488,6 +1497,7 @@ namespace SmartxAPI.GeneralFunctions
         public int GetClientID(ClaimsPrincipal User);
         public int GetGlobalUserID(ClaimsPrincipal User);
         public string GetUserName(ClaimsPrincipal User);
+        public string GetUserLoginName(ClaimsPrincipal User);
         public string GetEmailID(ClaimsPrincipal User);
 
 

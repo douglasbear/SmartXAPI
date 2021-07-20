@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
                             SortedList paramList = new SortedList();
                             paramList.Add("@nClientID", myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString()));
                             paramList.Add("@emailID", emailID);
-                            string sqlCompany = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName FROM Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where Acc_Company.N_ClientID=@nClientID and Sec_User.X_UserID=@emailID";
+                            string sqlCompany = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName FROM Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where Acc_Company.N_ClientID=@nClientID and Sec_User.X_UserID=@emailID  order by B_IsDefault Desc";
 
                             DataTable companyDt = dLayer.ExecuteDataTable(sqlCompany, paramList, connection);
                             if (companyDt.Rows.Count == 0)
@@ -235,6 +235,7 @@ namespace SmartxAPI.Controllers
                         new Claim(ClaimTypes.PrimaryGroupSid,output.Rows[0]["N_ClientID"].ToString()),
                         new Claim(ClaimTypes.Email,output.Rows[0]["X_EmailID"].ToString()),
                         new Claim(ClaimTypes.UserData,output.Rows[0]["X_UserID"].ToString()),
+                        new Claim(ClaimTypes.Upn,emailID),
                         new Claim(ClaimTypes.Role,""),
                         new Claim(ClaimTypes.GroupSid,"0"),
                         new Claim(ClaimTypes.StreetAddress,""),

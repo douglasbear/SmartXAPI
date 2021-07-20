@@ -388,7 +388,15 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
+                DataTable ContactsTable;
+                DataTable DependenceTable;
+                DataTable EduTable;
+                DataTable HistoryTable;
                 MasterTable = ds.Tables["master"];
+                ContactsTable = ds.Tables["contacts"];
+                DependenceTable = ds.Tables["dependence"];
+                EduTable = ds.Tables["education"];
+                HistoryTable = ds.Tables["history"];
                 SortedList Params = new SortedList();
                 DataRow MasterRow = MasterTable.Rows[0];
                 DataTable Approvals;
@@ -459,8 +467,100 @@ namespace SmartxAPI.Controllers
                             QueryParams.Add("@X_BankAccountNo", MasterTable.Rows[0]["X_BankAccountNo"].ToString());
                             QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
                             QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
+                            QueryParams.Add("@N_BranchID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
+                            QueryParams.Add("@N_NationalityID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_NationalityID"].ToString()));
+                            QueryParams.Add("@X_Nationality",MasterTable.Rows[0]["X_Nationality"].ToString());
 
-                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod,N_BranchID=@N_BranchID,N_NationalityID=@N_NationalityID,X_Nationality=@X_Nationality where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+
+                            //Update Contacts
+                            if(myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString())>0)
+                            {
+                                QueryParams.Add("@N_ContactDetailsID",myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()));
+
+                                string ContactQry="update Pay_EmployeeSub set X_EmergencyContctPerson="+ContactsTable.Rows[0]["X_EmergencyContctPerson"].ToString()+", X_EmergencyContctPersonH="+ContactsTable.Rows[0]["X_EmergencyContctPersonH"].ToString()+", X_EmergencyRelation="+ContactsTable.Rows[0]["X_EmergencyRelation"].ToString()+", X_EmergencyRelationH="+ContactsTable.Rows[0]["X_EmergencyRelationH"].ToString()+", X_EmergencyEmail="+ContactsTable.Rows[0]["X_EmergencyEmail"].ToString()+", X_EmergencyEmailH="+ContactsTable.Rows[0]["X_EmergencyEmailH"].ToString()+","
+                                                    +"X_EmergencyAddress="+ContactsTable.Rows[0]["X_EmergencyAddress"].ToString()+", X_EmergencyAddressH="+ContactsTable.Rows[0]["X_EmergencyAddressH"].ToString()+", X_EmergencyNum="+ContactsTable.Rows[0]["X_EmergencyNum"].ToString()+", X_EmergencyNumH="+ContactsTable.Rows[0]["X_EmergencyNumH"].ToString()+", X_EmergencyTelNo="+ContactsTable.Rows[0]["X_EmergencyTelNo"].ToString()+", X_EmergencyPOBoxNo="+ContactsTable.Rows[0]["X_EmergencyPOBoxNo"].ToString()+","
+                                                    +" X_EmergencyCity="+ContactsTable.Rows[0]["X_EmergencyCity"].ToString()+", X_EmergencyTelNoH="+ContactsTable.Rows[0]["X_EmergencyTelNoH"].ToString()+", X_EmergencyPOBoxNoH="+ContactsTable.Rows[0]["X_EmergencyPOBoxNoH"].ToString()+", X_EmergencyCityH="+ContactsTable.Rows[0]["X_EmergencyCityH"].ToString()+", X_WCAddress="+ContactsTable.Rows[0]["X_WCAddress"].ToString()+", X_WCCity="+ContactsTable.Rows[0]["X_WCCity"].ToString()+", X_WCMobileNo="+ContactsTable.Rows[0]["X_WCMobileNo"].ToString()+","
+                                                    +" X_WCTelNo="+ContactsTable.Rows[0]["X_WCTelNo"].ToString()+", X_WCEmail="+ContactsTable.Rows[0]["X_WCEmail"].ToString()+", X_WCPOBoxNo="+ContactsTable.Rows[0]["X_WCPOBoxNo"].ToString()+", X_HCAddress="+ContactsTable.Rows[0]["X_HCAddress"].ToString()+", X_HCCity="+ContactsTable.Rows[0]["X_HCCity"].ToString()+", X_HCMobileNo="+ContactsTable.Rows[0]["X_HCMobileNo"].ToString()+", X_HCTelNo="+ContactsTable.Rows[0]["X_HCTelNo"].ToString()+", "
+                                                    +"X_HCEmail="+ContactsTable.Rows[0]["X_HCEmail"].ToString()+", X_HCPOBoxNo="+ContactsTable.Rows[0]["X_HCPOBoxNo"].ToString()+", X_KinContctPerson="+ContactsTable.Rows[0]["X_KinContctPerson"].ToString()+", X_KinRelation="+ContactsTable.Rows[0]["X_KinRelation"].ToString()+", X_KinContactNo="+ContactsTable.Rows[0]["X_KinContactNo"].ToString()+", X_KinTelNo="+ContactsTable.Rows[0]["X_KinTelNo"].ToString()+", X_KinEmail="+ContactsTable.Rows[0]["X_KinEmail"].ToString()+","
+                                                    +" X_KinAddress="+ContactsTable.Rows[0]["X_KinAddress"].ToString()+", X_KinPOBoxNo="+ContactsTable.Rows[0]["X_KinPOBoxNo"].ToString()+", X_KinCity="+ContactsTable.Rows[0]["X_KinCity"].ToString()+", X_KinCountry="+ContactsTable.Rows[0]["X_KinCountry"].ToString()+", N_KinCountryID="+myFunctions.getIntVAL(ContactsTable.Rows[0]["N_KinCountryID"].ToString())+", X_RefName="+ContactsTable.Rows[0]["X_RefName"].ToString()+", "
+                                                    +"X_RefRelation="+ContactsTable.Rows[0]["X_RefRelation"].ToString()+", X_RefRelationInfo="+ContactsTable.Rows[0]["X_RefRelationInfo"].ToString()+", X_PrevRefName="+ContactsTable.Rows[0]["X_PrevRefName"].ToString()+", X_PrevRefJob="+ContactsTable.Rows[0]["X_PrevRefJob"].ToString()+", X_PrevRefDepartment="+ContactsTable.Rows[0]["X_PrevRefDepartment"].ToString()+", X_PrevRefCompany="+ContactsTable.Rows[0]["X_PrevRefCompany"].ToString()+", X_PrevRefContactNo="+ContactsTable.Rows[0]["X_PrevRefContactNo"].ToString()+", X_PrevRefEmail="+ContactsTable.Rows[0]["X_PrevRefEmail"].ToString()+" "
+                                                    +" where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_ContactDetailsID=@N_ContactDetailsID";
+                                                    
+                                dLayer.ExecuteNonQuery(ContactQry, QueryParams, connection, transaction);
+                            }
+                            else
+                            {
+                                if (ContactsTable.Columns.Contains("N_ContactDetailsUpdateID"))
+                                    ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
+                                if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
+                                    ContactsTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
+                                if (nContactsID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
+
+                            //Update Dependencies
+                            dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nEmpID, "", connection, transaction);
+
+                            if (DependenceTable.Rows.Count > 0)
+                            {         
+                                if (DependenceTable.Columns.Contains("N_DependenceUpdateID"))
+                                    DependenceTable.Columns.Remove("N_DependenceUpdateID");
+                                if (DependenceTable.Columns.Contains("N_EmpUpdateID"))
+                                    DependenceTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_ContactDetailsID", DependenceTable, connection, transaction);
+                                if (nDependenceID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
+
+                             //Update Education
+                            dLayer.DeleteData("Pay_EmployeeEducation", "N_EmpID", nEmpID, "", connection, transaction);
+
+                            if (EduTable.Rows.Count > 0)
+                            {         
+                                if (EduTable.Columns.Contains("N_EduUpdateID"))
+                                    EduTable.Columns.Remove("N_EduUpdateID");
+                                if (EduTable.Columns.Contains("N_EmpUpdateID"))
+                                    EduTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nEduID = dLayer.SaveData("Pay_EmployeeEducation", "N_EduID", EduTable, connection, transaction);
+                                if (nEduID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
+
+                             //Update History
+                            dLayer.DeleteData("Pay_EmploymentHistory", "N_EmpID", nEmpID, "", connection, transaction);
+
+                            if (HistoryTable.Rows.Count > 0)
+                            {         
+                                if (HistoryTable.Columns.Contains("N_JobUpdateID"))
+                                    HistoryTable.Columns.Remove("N_JobUpdateID");
+                                if (HistoryTable.Columns.Contains("N_EmpUpdateID"))
+                                    HistoryTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nEduID = dLayer.SaveData("Pay_EmploymentHistory", "N_JobID", HistoryTable, connection, transaction);
+                                if (nEduID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
                         }
 
                         
@@ -481,6 +581,10 @@ namespace SmartxAPI.Controllers
                     }
                     if (nEmpUpdateID > 0)
                     {
+                        dLayer.DeleteData("Pay_EmployeeSubUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmployeeDependenceUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmploymentHistoryUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
+                        dLayer.DeleteData("Pay_EmployeeEducationUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
                         dLayer.DeleteData("Pay_EmployeeUpdate", "N_EmpUpdateID", nEmpUpdateID, "", connection, transaction);
                     }
                     MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
@@ -508,9 +612,47 @@ namespace SmartxAPI.Controllers
   
                         int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
+                        if (ContactsTable.Rows.Count > 0)
+                        {                          
+                            int nContactsUpdateID = dLayer.SaveData("Pay_EmployeeSubUpdate", "N_ContactDetailsUpdateID", ContactsTable, connection, transaction);
+                            if (nContactsUpdateID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                        }
+                        if (DependenceTable.Rows.Count > 0)
+                        {                          
+                            int nDependenceUpdateID = dLayer.SaveData("Pay_EmployeeDependenceUpdate", "N_ContactDetailsUpdateID", DependenceTable, connection, transaction);
+                            if (nDependenceUpdateID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                        }
+                         if (EduTable.Rows.Count > 0)
+                        {                          
+                            int nEduUpdateID = dLayer.SaveData("Pay_EmployeeEducationUpdate", "N_EduUpdateID", EduTable, connection, transaction);
+                            if (nEduUpdateID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                        }
+                         if (HistoryTable.Rows.Count > 0)
+                        {                          
+                            int nHistoryUpdateID = dLayer.SaveData("Pay_EmploymentHistoryUpdate", "N_JobUpdateID", HistoryTable, connection, transaction);
+                            if (nHistoryUpdateID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                        }
+
                         if(N_SaveDraft==0)
                         {
-                             SortedList QueryParams = new SortedList();
+                            //Update Master
+                            SortedList QueryParams = new SortedList();
                             QueryParams.Add("@N_CompanyID", nCompanyID);
                             QueryParams.Add("@nEmpID", nEmpID);
                             QueryParams.Add("@nFnYearID", nFnYearID);
@@ -546,8 +688,100 @@ namespace SmartxAPI.Controllers
                             QueryParams.Add("@X_BankAccountNo", MasterTable.Rows[0]["X_BankAccountNo"].ToString());
                             QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
                             QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
+                            QueryParams.Add("@N_BranchID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
+                            QueryParams.Add("@N_NationalityID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_NationalityID"].ToString()));
+                             QueryParams.Add("@X_Nationality",MasterTable.Rows[0]["X_Nationality"].ToString());
 
-                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod,N_BranchID=@N_BranchID,N_NationalityID=@N_NationalityID,X_Nationality=@X_Nationality where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+
+                            //Update Contacts
+                            if(myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString())>0)
+                            {
+                                QueryParams.Add("@N_ContactDetailsID",myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()));
+
+                                string ContactQry="update Pay_EmployeeSub set X_EmergencyContctPerson="+ContactsTable.Rows[0]["X_EmergencyContctPerson"].ToString()+", X_EmergencyContctPersonH="+ContactsTable.Rows[0]["X_EmergencyContctPersonH"].ToString()+", X_EmergencyRelation="+ContactsTable.Rows[0]["X_EmergencyRelation"].ToString()+", X_EmergencyRelationH="+ContactsTable.Rows[0]["X_EmergencyRelationH"].ToString()+", X_EmergencyEmail="+ContactsTable.Rows[0]["X_EmergencyEmail"].ToString()+", X_EmergencyEmailH="+ContactsTable.Rows[0]["X_EmergencyEmailH"].ToString()+","
+                                                    +"X_EmergencyAddress="+ContactsTable.Rows[0]["X_EmergencyAddress"].ToString()+", X_EmergencyAddressH="+ContactsTable.Rows[0]["X_EmergencyAddressH"].ToString()+", X_EmergencyNum="+ContactsTable.Rows[0]["X_EmergencyNum"].ToString()+", X_EmergencyNumH="+ContactsTable.Rows[0]["X_EmergencyNumH"].ToString()+", X_EmergencyTelNo="+ContactsTable.Rows[0]["X_EmergencyTelNo"].ToString()+", X_EmergencyPOBoxNo="+ContactsTable.Rows[0]["X_EmergencyPOBoxNo"].ToString()+","
+                                                    +" X_EmergencyCity="+ContactsTable.Rows[0]["X_EmergencyCity"].ToString()+", X_EmergencyTelNoH="+ContactsTable.Rows[0]["X_EmergencyTelNoH"].ToString()+", X_EmergencyPOBoxNoH="+ContactsTable.Rows[0]["X_EmergencyPOBoxNoH"].ToString()+", X_EmergencyCityH="+ContactsTable.Rows[0]["X_EmergencyCityH"].ToString()+", X_WCAddress="+ContactsTable.Rows[0]["X_WCAddress"].ToString()+", X_WCCity="+ContactsTable.Rows[0]["X_WCCity"].ToString()+", X_WCMobileNo="+ContactsTable.Rows[0]["X_WCMobileNo"].ToString()+","
+                                                    +" X_WCTelNo="+ContactsTable.Rows[0]["X_WCTelNo"].ToString()+", X_WCEmail="+ContactsTable.Rows[0]["X_WCEmail"].ToString()+", X_WCPOBoxNo="+ContactsTable.Rows[0]["X_WCPOBoxNo"].ToString()+", X_HCAddress="+ContactsTable.Rows[0]["X_HCAddress"].ToString()+", X_HCCity="+ContactsTable.Rows[0]["X_HCCity"].ToString()+", X_HCMobileNo="+ContactsTable.Rows[0]["X_HCMobileNo"].ToString()+", X_HCTelNo="+ContactsTable.Rows[0]["X_HCTelNo"].ToString()+", "
+                                                    +"X_HCEmail="+ContactsTable.Rows[0]["X_HCEmail"].ToString()+", X_HCPOBoxNo="+ContactsTable.Rows[0]["X_HCPOBoxNo"].ToString()+", X_KinContctPerson="+ContactsTable.Rows[0]["X_KinContctPerson"].ToString()+", X_KinRelation="+ContactsTable.Rows[0]["X_KinRelation"].ToString()+", X_KinContactNo="+ContactsTable.Rows[0]["X_KinContactNo"].ToString()+", X_KinTelNo="+ContactsTable.Rows[0]["X_KinTelNo"].ToString()+", X_KinEmail="+ContactsTable.Rows[0]["X_KinEmail"].ToString()+","
+                                                    +" X_KinAddress="+ContactsTable.Rows[0]["X_KinAddress"].ToString()+", X_KinPOBoxNo="+ContactsTable.Rows[0]["X_KinPOBoxNo"].ToString()+", X_KinCity="+ContactsTable.Rows[0]["X_KinCity"].ToString()+", X_KinCountry="+ContactsTable.Rows[0]["X_KinCountry"].ToString()+", N_KinCountryID="+myFunctions.getIntVAL(ContactsTable.Rows[0]["N_KinCountryID"].ToString())+", X_RefName="+ContactsTable.Rows[0]["X_RefName"].ToString()+", "
+                                                    +"X_RefRelation="+ContactsTable.Rows[0]["X_RefRelation"].ToString()+", X_RefRelationInfo="+ContactsTable.Rows[0]["X_RefRelationInfo"].ToString()+", X_PrevRefName="+ContactsTable.Rows[0]["X_PrevRefName"].ToString()+", X_PrevRefJob="+ContactsTable.Rows[0]["X_PrevRefJob"].ToString()+", X_PrevRefDepartment="+ContactsTable.Rows[0]["X_PrevRefDepartment"].ToString()+", X_PrevRefCompany="+ContactsTable.Rows[0]["X_PrevRefCompany"].ToString()+", X_PrevRefContactNo="+ContactsTable.Rows[0]["X_PrevRefContactNo"].ToString()+", X_PrevRefEmail="+ContactsTable.Rows[0]["X_PrevRefEmail"].ToString()+" "
+                                                    +" where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_ContactDetailsID=@N_ContactDetailsID";
+
+                                dLayer.ExecuteNonQuery(ContactQry, QueryParams, connection, transaction);
+                            }
+                            else
+                            {
+                                if (ContactsTable.Columns.Contains("N_ContactDetailsUpdateID"))
+                                    ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
+                                if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
+                                    ContactsTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
+                                if (nContactsID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
+
+                            //Update Dependencies
+                            dLayer.DeleteData("Pay_EmployeeDependence", "N_EmpID", nEmpID, "", connection, transaction);
+
+                            if (DependenceTable.Rows.Count > 0)
+                            {         
+                                if (DependenceTable.Columns.Contains("N_DependenceUpdateID"))
+                                    DependenceTable.Columns.Remove("N_DependenceUpdateID");
+                                if (DependenceTable.Columns.Contains("N_EmpUpdateID"))
+                                    DependenceTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_ContactDetailsID", DependenceTable, connection, transaction);
+                                if (nDependenceID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
+
+                             //Update Education
+                            dLayer.DeleteData("Pay_EmployeeEducation", "N_EmpID", nEmpID, "", connection, transaction);
+
+                            if (EduTable.Rows.Count > 0)
+                            {         
+                                if (EduTable.Columns.Contains("N_EduUpdateID"))
+                                    EduTable.Columns.Remove("N_EduUpdateID");
+                                if (EduTable.Columns.Contains("N_EmpUpdateID"))
+                                    EduTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nEduID = dLayer.SaveData("Pay_EmployeeEducation", "N_EduID", EduTable, connection, transaction);
+                                if (nEduID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
+
+                             //Update History
+                            dLayer.DeleteData("Pay_EmploymentHistory", "N_EmpID", nEmpID, "", connection, transaction);
+
+                            if (HistoryTable.Rows.Count > 0)
+                            {         
+                                if (HistoryTable.Columns.Contains("N_JobUpdateID"))
+                                    HistoryTable.Columns.Remove("N_JobUpdateID");
+                                if (HistoryTable.Columns.Contains("N_EmpUpdateID"))
+                                    HistoryTable.Columns.Remove("N_EmpUpdateID");
+                                ContactsTable.AcceptChanges();
+
+                                int nEduID = dLayer.SaveData("Pay_EmploymentHistory", "N_JobID", HistoryTable, connection, transaction);
+                                if (nEduID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error("Unable to save"));
+                                }
+                            }
                         }
 
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
@@ -568,7 +802,10 @@ namespace SmartxAPI.Controllers
         public ActionResult GetUpdatedDetails(string xEmpUpdateCode, int nFnYearID)
         {
             DataTable Master = new DataTable();
-            //DataTable Detail = new DataTable();
+            DataTable Contacts = new DataTable();
+            DataTable Dependence = new DataTable();
+            DataTable Education = new DataTable();
+            DataTable History = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
@@ -580,6 +817,10 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nFnYearID", nFnYearID);
             string Condition = "";
             string _sqlQuery = "";
+            string Contacts_sqlQuery = "";
+            string Dependence_sqlQuery = "";
+            string Edu_sqlQuery = "";
+            string History_sqlQuery = "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -600,26 +841,31 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        // QueryParams.Add("@nVacationGroupID", Master.Rows[0]["N_VacationGroupID"].ToString());
-                        // QueryParams.Add("@nEmpID", Master.Rows[0]["N_EmpID"].ToString());
-
+                        QueryParams.Add("@nEmpID", Master.Rows[0]["N_EmpID"].ToString());
+                        QueryParams.Add("@nEmpUpdateID", Master.Rows[0]["N_EmpUpdateID"].ToString());
 
                         ds.Tables.Add(Master);
-                        // Condition = "";
-                        // Condition = "n_Companyid=@nCompanyID and N_VacationGroupID =@nVacationGroupID and N_TransType=1 and X_Type='B'";
-                   
 
-                        // _sqlQuery = "Select *,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,2) As n_AvailDays,dbo.Fn_CalcAvailDays(N_CompanyID,VacTypeId,@nEmpID,D_VacDateFrom,N_VacationGroupID,1) As n_AvailUptoDays from vw_PayVacationDetails_Disp Where " + Condition + "";
-                        // Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        Contacts_sqlQuery = "Select * from vw_ContactUpdateDetails where N_CompanyID =@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
+                        Dependence_sqlQuery = "Select * from Pay_EmployeeDependenceUpdate Inner Join Pay_Relation on Pay_EmployeeDependenceUpdate.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependenceUpdate.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependenceUpdate.N_CompanyID=@nCompanyID and Pay_EmployeeDependenceUpdate.N_EmpUpdateID=@nEmpUpdateID and Pay_EmployeeDependenceUpdate.N_EmpID=@nEmpID";
+                        Edu_sqlQuery = "Select * from Pay_EmployeeEducationUpdate where N_CompanyID =@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
+                        History_sqlQuery = "Select * from Pay_EmploymentHistoryUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
 
-                        // Detail = _api.Format(Detail, "details");
-                        // if (Detail.Rows.Count == 0)
-                        // {
-                        //     return Ok(_api.Notice("No Results Found"));
-                        // }
+                        Contacts = dLayer.ExecuteDataTable(Contacts_sqlQuery, QueryParams, connection);
+                        Dependence  = dLayer.ExecuteDataTable(Dependence_sqlQuery, QueryParams, connection);
+                        Education = dLayer.ExecuteDataTable(Edu_sqlQuery, QueryParams, connection);
+                        History  = dLayer.ExecuteDataTable(History_sqlQuery, QueryParams, connection);
 
+                        Contacts = _api.Format(Contacts, "contacts");
+                        Dependence = _api.Format(Dependence, "dependence");
+                        Education = _api.Format(Education, "education");
+                        History = _api.Format(History, "history");
 
-                       
+                        ds.Tables.Add(Contacts);
+                        ds.Tables.Add(Dependence);
+                        ds.Tables.Add(Education);
+                        ds.Tables.Add(History);
+
                         return Ok(_api.Success(ds));
                     }
 
@@ -661,7 +907,6 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
 
-//this.FormID
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, 1228, nEmpUpdateID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 1228, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction(); ;
@@ -1270,7 +1515,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nEmpID, int nFnyearID)
+        public ActionResult DeleteData(int nEmpID, int nFnyearID,DataSet dsAttachment)
         {
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -1328,7 +1573,7 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
                     dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
 
-
+                    myAttachments.DeleteAttachment(dLayer, 1,dsAttachment,nEmpID, nFnyearID, FormID,User, transaction, connection);
 
                     transaction.Commit();
                 }

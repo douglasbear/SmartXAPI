@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     int userid = myFunctions.GetUserID(User);
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
-                    string username = myFunctions.GetEmailID(User);
+                    string username = myFunctions.GetUserLoginName(User);
                     int AppID = appID;
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
                     int userid = 0;
                     int companyid = nCompanyID;
                     string companyname = xCompanyName;
-                    string username = myFunctions.GetEmailID(User);
+                    string username = myFunctions.GetUserLoginName(User);
                     int AppID = appID;
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
@@ -111,10 +111,9 @@ namespace SmartxAPI.Controllers
                     // int userid = myFunctions.GetUserID(User);
                     int clientID = myFunctions.GetClientID(User);
                     int GlobalUserID = myFunctions.GetGlobalUserID(User);
-                    string username = myFunctions.GetEmailID(User);
-                    int companyid = 0;
-                    string companyname = "";
-
+                    string username = myFunctions.GetUserLoginName(User);
+                    int companyid = myFunctions.GetCompanyID(User);
+                    string companyname = myFunctions.GetCompanyName(User);
                     string activeDbUri = "ObConnection";
 
 
@@ -148,22 +147,28 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                             connectionString = cofig.GetConnectionString(activeDbUri);
-                            using (SqlConnection cnn = new SqlConnection(connectionString))
+                            if(companyid>0)
                             {
-                                cnn.Open();
-
-                                DataTable companyDt = dLayer.ExecuteDataTable("select N_CompanyID,X_CompanyName from Acc_Company where N_ClientID=@nClientID", paramList, cnn);
-                                if (companyDt.Rows.Count == 0)
+                                using (SqlConnection cnn = new SqlConnection(connectionString))
                                 {
-                                    object isAdmin = dLayer.ExecuteScalar("SELECT Count(N_ClientID) as Count FROM clientMaster where N_ClientID=@nClientID and X_EmailID=@xEmailID", paramList, olivCnn);
-                                    if (myFunctions.getIntVAL(isAdmin.ToString()) == 0)
+                                    cnn.Open();
+                                    string cmpSql = "select Acc_Company.N_CompanyID,Acc_Company.X_CompanyName from Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID " +
+                                " where Acc_Company.N_ClientID=@nClientID and  Sec_User.X_UserID=@xEmailID  order by B_IsDefault Desc ";
+                                    DataTable companyDt = dLayer.ExecuteDataTable(cmpSql, paramList, cnn);
+                                    if (companyDt.Rows.Count == 0)
                                     {
-                                        return Ok(_api.Warning("Error"));
+                                        object isAdmin = dLayer.ExecuteScalar("SELECT Count(N_ClientID) as Count FROM clientMaster where N_ClientID=@nClientID and X_EmailID=@xEmailID", paramList, olivCnn);
+                                        if (myFunctions.getIntVAL(isAdmin.ToString()) == 0)
+                                        {
+                                            return Ok(_api.Warning("Error"));
+                                        }
+                                        return Ok(_api.Error("CompanyNotFound"));
                                     }
-                                    return Ok(_api.Error("CompanyNotFound"));
+                                    companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
+                                    companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
                                 }
-                                companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
-                                companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
+                            }else{
+                                return Ok(_api.Error("CompanyNotFound"));
                             }
                         }
                     }
@@ -182,11 +187,11 @@ namespace SmartxAPI.Controllers
                     SortedList Res = new SortedList();
                     int clientID = myFunctions.GetClientID(User);
                     int GlobalUserID = myFunctions.GetGlobalUserID(User);
-                    string username = myFunctions.GetEmailID(User);
+                    string username = myFunctions.GetUserLoginName(User);
                     using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
                     {
                         olivCnn.Open();
-                        string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, AppMaster.X_AppName FROM Users LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where Users.x_EmailID=@emailID and Users.N_ClientID=@nClientID ";
+                        string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_AdminUserID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE Users.x_UserID=@emailID and Users.N_ClientID=@nClientID ";
                         SortedList Params = new SortedList();
                         Params.Add("@emailID", username);
                         Params.Add("@nClientID", clientID);
@@ -204,6 +209,7 @@ namespace SmartxAPI.Controllers
                         new Claim(ClaimTypes.PrimarySid,output.Rows[0]["N_UserID"].ToString()),
                         new Claim(ClaimTypes.PrimaryGroupSid,output.Rows[0]["N_ClientID"].ToString()),
                         new Claim(ClaimTypes.Email,output.Rows[0]["X_EmailID"].ToString()),
+                        new Claim(ClaimTypes.Upn,username),
                         new Claim(ClaimTypes.Role,""),
                         new Claim(ClaimTypes.GroupSid,"0"),
                         new Claim(ClaimTypes.StreetAddress,""),

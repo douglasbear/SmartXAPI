@@ -109,6 +109,36 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_DueDays", typeof(string), "");
+                    double BalanceAmt = 0;
+                    foreach (DataRow var in dt.Rows)
+                    {
+                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myCompanyID._CompanyID, Params, connection);
+                        if (objBal != null)
+                        {
+                            BalanceAmt = myFunctions.getVAL(objBal.ToString());
+                            if (BalanceAmt > 0)
+                            {
+                                var["N_BalanceAmt"] = BalanceAmt;
+                                if (var["N_InvDueDays"].ToString() != "")
+                                {
+                                    DateTime dtInvoice = new DateTime();
+                                    DateTime dtDuedate = new DateTime();
+                                    dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
+                                    dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
+                                    if (DateTime.Now > dtDuedate)
+                                    {
+                                        var DueDays = (DateTime.Now - dtDuedate).TotalDays;
+                                        string Due_Days = Math.Truncate(DueDays).ToString();
+                                        var["N_DueDays"] = Due_Days.ToString() + " days";
+                                    }
+                                }
+                            }
+                        }
+
+                    }
+
                     sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
@@ -644,6 +674,10 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
 
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
                 DataTable Attachment = ds.Tables["attachments"];
 
@@ -672,7 +706,7 @@ namespace SmartxAPI.Controllers
                     int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
-
+                    int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
@@ -734,6 +768,74 @@ namespace SmartxAPI.Controllers
                     // }
                     //saving data
                     InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
+
+                    SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", N_CompanyID);
+                    CustParams.Add("@N_CustomerID", N_CustomerID);
+                    CustParams.Add("@nFnYearID", N_FnYearID);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                    object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+
+
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_SalesID > 0)
+                    {
+                        int N_PkeyID = N_SalesID;
+                        string X_Criteria = "N_SalesID=" + N_PkeyID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID;
+                        myFunctions.UpdateApproverEntry(Approvals, "Inv_Sales", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "SALES", N_PkeyID, InvoiceNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+                        if (N_SaveDraft == 0)
+                        {
+                            SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", N_CompanyID);
+                            PostingParam.Add("X_InventoryMode", "SALES");
+                            PostingParam.Add("N_InternalID", N_SalesID);
+                            PostingParam.Add("N_UserID", N_UserID);
+                            PostingParam.Add("X_SystemName", "ERP Cloud");
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(ex));
+                            }
+                            bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
+                            if (B_AmtpaidEnable)
+                            {
+                                if (!B_DirectPosting)
+                                {
+                                    if (myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()) > 0)
+                                    {
+                                        SortedList ParamCustomerRcpt_Ins = new SortedList();
+                                        ParamCustomerRcpt_Ins.Add("N_CompanyID", N_CompanyID);
+                                        ParamCustomerRcpt_Ins.Add("N_Fn_Year", N_FnYearID);
+                                        ParamCustomerRcpt_Ins.Add("N_SalesId", N_SalesID);
+                                        ParamCustomerRcpt_Ins.Add("N_Amount", myFunctions.getVAL(MasterRow["N_CashReceived"].ToString()));
+                                        try
+                                        {
+                                            dLayer.ExecuteNonQueryPro("SP_CustomerRcpt_Ins", ParamCustomerRcpt_Ins, connection, transaction);
+                                        }
+                                        catch (Exception ex)
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                        }
+                                    }
+                                }
+
+                            }
+                        }
+
+                        myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PkeyID, "SALES", InvoiceNo, dLayer, connection, transaction, User);
+                        transaction.Commit();
+                        return Ok(_api.Success("Sales Approved " + "-" + InvoiceNo));
+                    }
+
+
                     if (N_SaveDraft == 1)
                     {
                         if (N_SalesID == 0 && InvoiceNo != "@Auto")
@@ -837,6 +939,16 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_BranchID=" + N_BranchID, connection, transaction);
 
                     }
+                    MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
+                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
+                        MasterTable.Columns.Remove("N_ApprovalLevelID");
+                    if (MasterTable.Columns.Contains("N_Procstatus"))
+                        MasterTable.Columns.Remove("N_Procstatus");
+                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
+                        MasterTable.Columns.Remove("B_IsSaveDraft");
+                    MasterTable.AcceptChanges();
+
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_ReceiptNo='" + InvoiceNo + "' and N_FnyearID=" + N_FnYearID;
                     N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_SalesID <= 0)
@@ -853,6 +965,10 @@ namespace SmartxAPI.Controllers
 
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
+
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "SALES", N_SalesID, InvoiceNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Inv_Sales where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction).ToString());
+
                         DataTable dtloyalitypoints = ds.Tables["loyalitypoints"];
                         int N_IsSave = 1;
                         int N_CurrentSalesID = 0;
@@ -1074,14 +1190,46 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID)
+        public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)
         {
+            if(comments==null){
+                comments="";
+            }
             int Results = 0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nInvoiceID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    int N_CustomerId = myFunctions.getIntVAL(TransRow["N_CustomerId"].ToString());
+
+                    SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", nCompanyID);
+                    CustParams.Add("@N_CustomerID", N_CustomerId);
+                    CustParams.Add("@nFnYearID", nFnYearID);
+                    SortedList Params = new SortedList(){
+                                {"@nCompanyID",nCompanyID},
+                                {"@nFnYearID",nFnYearID},
+                                {"@nSalesID",nInvoiceID}};
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+                    object objCustCode = dLayer.ExecuteScalar("Select X_CustomerCode From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+                    object InvoiceNO = dLayer.ExecuteScalar("select X_ReceiptNO from inv_sales where n_salesid=" + nInvoiceID + " and N_CompanyID=" + nCompanyID, Params, connection);
+                    object LastInvoiceNO = dLayer.ExecuteScalar("select top(1) N_lastUsedNo from inv_invoicecounter where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection);
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nInvoiceID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
@@ -1094,51 +1242,75 @@ namespace SmartxAPI.Controllers
                         objPaymentProcessed = 0;
                     if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0 && myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) == 0)
                     {
-                        SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyID},
-                                {"N_UserID",nUserID},
-                                {"X_TransType","SALES"},
-                                {"X_SystemName","WebRequest"},
-                                {"N_VoucherID",nInvoiceID}};
+                        string X_Criteria = "N_SalesID=" + nInvoiceID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                        string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                        int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
                         SortedList QueryParams = new SortedList(){
-                                {"@nCompanyID",nCompanyID},
-                                {"@nFnYearID",nFnYearID},
-                                {"@nUserID",nUserID},
-                                {"@xTransType","SALES"},
-                                {"@xSystemName","WebRequest"},
-                                {"@nSalesID",nInvoiceID},
-                                {"@nPartyID",nCustomerID},
-                                {"@nQuotationID",nQuotationID},
-                                {"@nBranchID",nBranchID}};
+                                    {"@nCompanyID",nCompanyID},
+                                    {"@nFnYearID",nFnYearID},
+                                    {"@nUserID",nUserID},
+                                    {"@xTransType","SALES"},
+                                    {"@xSystemName","WebRequest"},
+                                    {"@nSalesID",nInvoiceID},
+                                    {"@nPartyID",nCustomerID},
+                                    {"@nQuotationID",nQuotationID},
+                                    {"@nBranchID",nBranchID}};
 
-                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-
-
-                        if (Results <= 0)
+                        if (ButtonTag == "6" || ButtonTag == "0")
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete sales Invoice"));
+                            SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_UserID",nUserID},
+                                    {"X_TransType","SALES"},
+                                    {"X_SystemName","WebRequest"},
+                                    {"N_VoucherID",nInvoiceID}};
+
+                            Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                            if (Results <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to delete sales Invoice"));
+                            }
+                            else
+                            {
+                                dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                //   if (N_AmtSplit == 1)
+                                //     {                                                
+                                dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                // }                        
+                                dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+                                if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
+                                {
+                                    // transaction.Rollback();
+                                    // return Ok(_api.Error("Unable to delete sales Invoice"));
+                                }
+                                if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
+                                    if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
+                                        if (nQuotationID > 0)
+                                            dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
+
+                            }
                         }
                         else
                         {
-                            dLayer.ExecuteNonQuery("delete from Inv_DeliveryDispatch where n_InvoiceID=@nSalesID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                            //   if (N_AmtSplit == 1)
-                            //     {                                                
-                            dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where n_SalesID=@nSalesID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                            dLayer.ExecuteNonQuery("delete from Inv_LoyaltyPointOut where n_SalesID=@nSalesID and n_PartyID=@nPartyID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-                            // }                        
-                            dLayer.ExecuteNonQuery("delete from Inv_ServiceContract where n_SalesID=@nSalesID and n_FnYearID=@nFnYearID and n_BranchID=@nBranchID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-
-                            if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
+                            string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "SALES", nInvoiceID, TransRow["X_ReceiptNo"].ToString(), ProcStatus, "Inv_Sales", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
+                            if (status != "Error")
                             {
-                                // transaction.Rollback();
-                                // return Ok(_api.Error("Unable to delete sales Invoice"));
+                                if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
+                                    if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
+                                        if (nQuotationID > 0)
+                                            dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
+
+                                transaction.Commit();
+                                return Ok(_api.Success("Sales Invoice " + status + " Successfully"));
                             }
-                            if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
-                                if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
-                                    if (nQuotationID > 0)
-                                        dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
+                            else
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to delete Sales Invoice"));
+                            }
                         }
                     }
                     else
@@ -1152,13 +1324,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to delete!"));
                     }
                     //Invoice Counter Reset
-                     SortedList Params = new SortedList(){
-                                {"@nCompanyID",nCompanyID},
-                                {"@nFnYearID",nFnYearID},
-                                {"@nSalesID",nInvoiceID}};
 
-                    object InvoiceNO = dLayer.ExecuteScalar("select X_ReceiptNO from inv_sales where n_salesid=" + nInvoiceID + " and N_CompanyID=" + nCompanyID, Params, connection);
-                    object LastInvoiceNO = dLayer.ExecuteScalar("select top(1) N_lastUsedNo from inv_invoicecounter where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection);
                     if (InvoiceNO == LastInvoiceNO)
                     {
                         dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);

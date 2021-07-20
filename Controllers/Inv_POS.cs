@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("holdlist")]
-        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate,int ID)
+        public ActionResult GetInvoiceHoldList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int ID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -51,19 +51,19 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-            if(ID==0)
+            if (ID == 0)
             {
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=1 and N_Hold=1 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
             }
             else
             {
                 if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where  B_IsSaveDraft=0 and D_SalesDate='" + xDate + "' and N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             }
             Params.Add("@p1", nCompanyId);
@@ -155,14 +155,14 @@ namespace SmartxAPI.Controllers
         [HttpGet("dayclose")]
         public ActionResult GetDayCloseStatus(DateTime dDate)
         {
-          
+
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@dDate", dDate);
             Params.Add("@nCompanyID", nCompanyID);
 
             string sqlCommandText = "select n_closeid from Acc_Dayclosing where d_closeddate=@dDate and N_CompanyID= @nCompanyID";
-object obj;
+            object obj;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -170,13 +170,13 @@ object obj;
                     connection.Open();
                     obj = dLayer.ExecuteScalar(sqlCommandText, Params, connection);
                 }
-                if(obj==null)
-                obj=0;
-                SortedList Output=new SortedList();
-                Output.Add("dayclose",myFunctions.getIntVAL(obj.ToString()));
-                
-                 return Ok(_api.Success(Output));
-              
+                if (obj == null)
+                    obj = 0;
+                SortedList Output = new SortedList();
+                Output.Add("dayclose", myFunctions.getIntVAL(obj.ToString()));
+
+                return Ok(_api.Success(Output));
+
             }
             catch (Exception e)
             {
@@ -191,7 +191,7 @@ object obj;
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
 
-            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID<>-1";
+            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID=@nCompanyID";
 
             try
             {
@@ -215,8 +215,8 @@ object obj;
                 return Ok(_api.Error(e));
             }
         }
-         [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID,string xSearchkey, int PageSize, int Page,int nCustomerID)
+        [HttpGet("items")]
+        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -225,17 +225,17 @@ object obj;
             string sqlCommandText = "";
             string sqlDiscount = "";
             string sqlCommandCount = "";
-            string Searchkey="";
-            string categorySql="";
+            string Searchkey = "";
+            string categorySql = "";
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
 
 
-            if(xSearchkey!=null)
+            if (xSearchkey != null)
                 Searchkey = " and (vw_InvItem_Search.Description like '%" + xSearchkey + "%')";
 
-            if(nCategoryID>0)
+            if (nCategoryID > 0)
                 categorySql = " and N_CategoryID=@p2 ";
 
 
@@ -251,8 +251,8 @@ object obj;
             //                 " vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11,vw_InvItem_Search.StockQTY,'' as i_Image "+
             //                 " FROM vw_InvItem_Search LEFT OUTER JOIN "+
             //                 " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + categorySql + Searchkey;
-             sqlCommandText =  "  vw_InvItem_Search.*,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2,'' as i_Image  FROM vw_InvItem_Search LEFT OUTER JOIN "+
-                                    " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search.X_SalesUnit=Inv_ItemUnit.X_ItemUnit" + categorySql + Searchkey;
+            sqlCommandText = "  vw_InvItem_Search.*,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2,'' as i_Image  FROM vw_InvItem_Search LEFT OUTER JOIN " +
+                                   " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search.X_SalesUnit=Inv_ItemUnit.X_ItemUnit" + categorySql + Searchkey;
 
 
             Params.Add("@p1", nCompanyId);
@@ -262,8 +262,8 @@ object obj;
             Params.Add("@PSize", PageSize);
             Params.Add("@Offset", Page);
             Params.Add("@p5", Page);
-            
-            
+
+
             SortedList OutPut = new SortedList();
 
             try
@@ -273,18 +273,18 @@ object obj;
                     connection.Open();
                     string sql = pageQry + sqlCommandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
-                    
 
-                    if(nCustomerID>0)
+
+                    if (nCustomerID > 0)
                     {
-                        dt.Columns.Add("N_DiscPerc",typeof(string));
+                        dt.Columns.Add("N_DiscPerc", typeof(string));
                         foreach (DataRow var in dt.Rows)
                         {
-                            object DiscPerc = dLayer.ExecuteScalar("select N_DiscPerc from inv_customerdiscount where N_CompanyID="+ nCompanyId +" and N_CustomerID="+ nCustomerID +" and N_ProductID=" + var["N_ItemID"] +"", connection);
-                            if(DiscPerc==null)
-                                DiscPerc="";
+                            object DiscPerc = dLayer.ExecuteScalar("select N_DiscPerc from inv_customerdiscount where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerID + " and N_ProductID=" + var["N_ItemID"] + "", connection);
+                            if (DiscPerc == null)
+                                DiscPerc = "";
                             var["N_DiscPerc"] = DiscPerc.ToString();
-                        }               
+                        }
                     }
 
 
@@ -309,7 +309,7 @@ object obj;
                 return Ok(_api.Error(e));
             }
         }
-         [HttpGet("barcode")]
+        [HttpGet("barcode")]
         public ActionResult GetItemsUsingBarcode(string xBarcode)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -317,17 +317,17 @@ object obj;
             SortedList Params = new SortedList();
 
             string sqlCommandText = "";
-            sqlCommandText = "select vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, "+
-                            " vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, "+
-                            " vw_InvItem_Search.B_BaseUnit, vw_InvItem_Search.N_Qty, vw_InvItem_Search.N_BaseUnitID, vw_InvItem_Search.N_MinimumMargin, vw_InvItem_Search.N_ItemManufacturerID, vw_InvItem_Search.X_ItemManufacturer, "+
-                            " vw_InvItem_Search.X_SalesUnit, vw_InvItem_Search.X_PurchaseUnit, vw_InvItem_Search.X_Barcode, vw_InvItem_Search.B_BarcodewithQty, vw_InvItem_Search.X_StockUnit, vw_InvItem_Search.N_StockUnitQty, "+
-                            " vw_InvItem_Search.B_IsIMEI, vw_InvItem_Search.N_LengthID, vw_InvItem_Search.N_PurchaseUnitQty, vw_InvItem_Search.N_SalesUnitQty, vw_InvItem_Search.Stock, vw_InvItem_Search.Rate, "+
-                            " vw_InvItem_Search.N_StockUnitID, vw_InvItem_Search.X_Rack, vw_InvItem_Search.[Product Code], vw_InvItem_Search.B_IsBatch, vw_InvItem_Search.N_LeadDays, vw_InvItem_Search.N_TransitDays, "+
-                            " vw_InvItem_Search.N_DeliveryDays, vw_InvItem_Search.X_BOMItemUnit, vw_InvItem_Search.N_BOMUnitID, vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName, vw_InvItem_Search.N_PkeyID, "+
-                            " vw_InvItem_Search.N_TaxAmt, vw_InvItem_Search.X_DisplayName2, vw_InvItem_Search.N_TaxAmt2, vw_InvItem_Search.N_TaxID2, vw_InvItem_Search.N_PurchaseCost, vw_InvItem_Search.X_CategoryCode, "+
-                            " vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, "+
-                            " vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11,vw_InvItem_Search.StockQTY,'' as i_Image "+
-                            " FROM vw_InvItem_Search LEFT OUTER JOIN "+
+            sqlCommandText = "select vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, " +
+                            " vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, " +
+                            " vw_InvItem_Search.B_BaseUnit, vw_InvItem_Search.N_Qty, vw_InvItem_Search.N_BaseUnitID, vw_InvItem_Search.N_MinimumMargin, vw_InvItem_Search.N_ItemManufacturerID, vw_InvItem_Search.X_ItemManufacturer, " +
+                            " vw_InvItem_Search.X_SalesUnit, vw_InvItem_Search.X_PurchaseUnit, vw_InvItem_Search.X_Barcode, vw_InvItem_Search.B_BarcodewithQty, vw_InvItem_Search.X_StockUnit, vw_InvItem_Search.N_StockUnitQty, " +
+                            " vw_InvItem_Search.B_IsIMEI, vw_InvItem_Search.N_LengthID, vw_InvItem_Search.N_PurchaseUnitQty, vw_InvItem_Search.N_SalesUnitQty, vw_InvItem_Search.Stock, vw_InvItem_Search.Rate, " +
+                            " vw_InvItem_Search.N_StockUnitID, vw_InvItem_Search.X_Rack, vw_InvItem_Search.[Product Code], vw_InvItem_Search.B_IsBatch, vw_InvItem_Search.N_LeadDays, vw_InvItem_Search.N_TransitDays, " +
+                            " vw_InvItem_Search.N_DeliveryDays, vw_InvItem_Search.X_BOMItemUnit, vw_InvItem_Search.N_BOMUnitID, vw_InvItem_Search.N_TaxCategoryID, vw_InvItem_Search.X_DisplayName, vw_InvItem_Search.N_PkeyID, " +
+                            " vw_InvItem_Search.N_TaxAmt, vw_InvItem_Search.X_DisplayName2, vw_InvItem_Search.N_TaxAmt2, vw_InvItem_Search.N_TaxID2, vw_InvItem_Search.N_PurchaseCost, vw_InvItem_Search.X_CategoryCode, " +
+                            " vw_InvItem_Search.N_CategoryID, vw_InvItem_Search.N_CessID, vw_InvItem_Search.N_CessAmt, vw_InvItem_Search.X_CessName, vw_InvItem_Search.N_ItemTypeID, vw_InvItem_Search.N_PreferredVendorID, " +
+                            " vw_InvItem_Search.X_HSCode, isNull(vw_InvItem_Search.N_Sprice11 ,Inv_ItemUnit.N_SellingPrice) N_Sprice11,vw_InvItem_Search.StockQTY,'' as i_Image " +
+                            " FROM vw_InvItem_Search LEFT OUTER JOIN " +
                             " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.x_barcode=@p2";//"select N_CompanyID, N_ItemID, X_ItemCode, X_ItemName, X_PartNo, B_InActive, N_LocationID, X_Category, X_ClassName, N_BranchID, N_SPrice, N_CategoryID, X_Barcode,X_ItemName_a, N_ItemTypeID, N_TaxCategoryID, X_DisplayName, X_CategoryName, N_Amount, X_ItemUnit,'' as I_Image from vw_ItemPOSCloud where N_CompanyID=@p1 and X_ItemCode<>'001' and x_barcode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xBarcode);
@@ -340,7 +340,7 @@ object obj;
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
-                  
+
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(_api.Warning("No Results Found"));
@@ -380,18 +380,18 @@ object obj;
                         dt = myFunctions.AddNewColumnToDataTable(dt, "Image", typeof(string), "");
                         DataRow dataRow = dt.Rows[0];
                         string ImageData = dataRow["I_Image"].ToString();
-                        if (ImageData != "" || ImageData != "0x"  || ImageData != null)
+                        if (ImageData != "" || ImageData != "0x" || ImageData != null)
                         {
                             byte[] Image = (byte[])dataRow["I_Image"];
-                            if(Image.Length>0)
-                            dt.Rows[0]["Image"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
-                           
+                            if (Image.Length > 0)
+                                dt.Rows[0]["Image"] = "data:image/png;base64," + Convert.ToBase64String(Image, 0, Image.Length);
+
                         }
-                         dt.Columns.Remove("I_Image");
+                        dt.Columns.Remove("I_Image");
                         dt.AcceptChanges();
                     }
-                    OutPut.Add("image",dt.Rows[0]["Image"]);
-                    OutPut.Add("x_ItemCode",dt.Rows[0]["X_ItemCode"]);
+                    OutPut.Add("image", dt.Rows[0]["Image"]);
+                    OutPut.Add("x_ItemCode", dt.Rows[0]["X_ItemCode"]);
 
                     if (dt.Rows.Count == 0)
                     {
@@ -415,7 +415,7 @@ object obj;
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
-         
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -493,8 +493,8 @@ object obj;
                     QueryParams.Add("@nBranchID", N_BranchID);
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
-                    object DirectPosting=dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
-                    if(DirectPosting!=null)
+                    object DirectPosting = dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction);
+                    if (DirectPosting != null)
                         B_DirectPosting = myFunctions.getBoolVAL(DirectPosting.ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (objAllBranchData != null)
@@ -611,7 +611,7 @@ object obj;
 
                         // int N_CurrentSalesID = myFunctions.getIntVAL(Rowsaleamountdetails["N_SalesID"].ToString());
                         bool B_EnablePointSystem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("64", "AllowLoyaltyPoint", "N_Value", "N_UserCategoryID", UserCategoryID.ToString(), N_CompanyID, dLayer, connection, transaction)));
-                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator","X_UserCategory", dLayer, connection, transaction);
+                        bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
                         //Sales amount details/payment popup
                         for (int i = 0; i < dtsaleamountdetails.Rows.Count; i++)
                             dtsaleamountdetails.Rows[i]["N_SalesId"] = N_SalesID;
@@ -697,10 +697,10 @@ object obj;
                             // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
 
                             SortedList StockPostingParams = new SortedList();
-                        StockPostingParams.Add("N_CompanyID", N_CompanyID);
-                        StockPostingParams.Add("N_SalesID", N_SalesID);
-                        StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
-                        StockPostingParams.Add("N_DeliveryNoteID", 0);
+                            StockPostingParams.Add("N_CompanyID", N_CompanyID);
+                            StockPostingParams.Add("N_SalesID", N_SalesID);
+                            StockPostingParams.Add("N_SaveDraft", N_SaveDraft);
+                            StockPostingParams.Add("N_DeliveryNoteID", 0);
 
                             try
                             {
@@ -724,7 +724,7 @@ object obj;
                                 else
                                     return Ok(_api.Error(ex));
                             }
-         
+
 
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
@@ -749,9 +749,9 @@ object obj;
                     }
                     //return GetSalesInvoiceDetails(int.Parse(MasterRow["n_CompanyId"].ToString()), int.Parse(MasterRow["n_FnYearId"].ToString()), int.Parse(MasterRow["n_BranchId"].ToString()), InvoiceNo);
                     SortedList Result = new SortedList();
-                Result.Add("n_InvoiceID", N_SalesID);
-                Result.Add("x_InvoiceNo", InvoiceNo);
-                return Ok(_api.Success(Result, "Sales invoice saved" + ":" + InvoiceNo));
+                    Result.Add("n_InvoiceID", N_SalesID);
+                    Result.Add("x_InvoiceNo", InvoiceNo);
+                    return Ok(_api.Success(Result, "Sales invoice saved" + ":" + InvoiceNo));
                 }
             }
             catch (Exception ex)
@@ -811,8 +811,8 @@ object obj;
                             // transaction.Rollback();
                             // return Ok(_api.Error("Unable to delete sales Invoice"));
                         }
-                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator","X_UserCategory", dLayer, connection, transaction))
-                            if (myFunctions.CheckPermission(nCompanyID, 81, UserCategory.ToString(),"N_UserCategoryID", dLayer, connection, transaction))
+                        if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
+                            if (myFunctions.CheckPermission(nCompanyID, 81, UserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
                                 if (nQuotationID > 0)
                                     dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
                     }
@@ -998,7 +998,7 @@ object obj;
                     else
                         SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,@xBatch, 'location')As N_AvlStock ,0 As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,0 As N_LPrice ,0 As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=@nCompanyID";
                 }
-                
+
                 DataTable ItemDetails = dLayer.ExecuteDataTable(SQL, Params, connection);
                 if (ItemDetails.Rows.Count != 1)
                     return Ok(_api.Warning("Invalid Item"));
@@ -1069,7 +1069,7 @@ object obj;
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
-                    QueryParamsList.Add("@xTransType", "SALES");           
+                    QueryParamsList.Add("@xTransType", "SALES");
                     QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
 
                     SortedList mParamsList = new SortedList()
@@ -1121,8 +1121,8 @@ object obj;
                     object objSalesReturnDraft = dLayer.ExecuteScalar("select Isnull(Count(N_DebitNoteId),0) from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=1 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     if (objSalesReturnDraft != null)
                         myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesReturnDraft", typeof(int), myFunctions.getIntVAL(objSalesReturnDraft.ToString()));
-                        QueryParamsList.Add("@nCustomerID", masterTable.Rows[0]["N_CustomerID"].ToString());
-                        object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList, Con);
+                    QueryParamsList.Add("@nCustomerID", masterTable.Rows[0]["N_CustomerID"].ToString());
+                    object obPaymentMenthodid = dLayer.ExecuteScalar("Select N_TypeID From vw_InvCustomer Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID and (N_BranchID=0 or N_BranchID=@nBranchID) and B_Inactive = 0", QueryParamsList, Con);
                     if (obPaymentMenthodid != null)
                     {
                         QueryParamsList.Add("@nPaymentMethodID", myFunctions.getIntVAL(obPaymentMenthodid.ToString()));
@@ -1161,7 +1161,7 @@ object obj;
                     myFunctions.AddNewColumnToDataTable(masterTable, "X_SalesReceiptNos", typeof(string), InvoiceNos);
 
 
-                    dLayer.ExecuteDataTable( "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchId Or N_BranchId=0)",QueryParamsList,Con);
+                    dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchId Or N_BranchId=0)", QueryParamsList, Con);
 
                     //Details
                     SortedList dParamList = new SortedList()
@@ -1172,7 +1172,7 @@ object obj;
                     };
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
-                    if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }                   
+                    if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     return Ok(_api.Success(dsSalesInvoice));

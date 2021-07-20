@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
                                     " WHERE(AppMaster.B_Inactive = 0) and(ClientApps.N_ClientID =" + ClientID + " )" +
                                     " Union all" +
                                     " SELECT *, null as N_ClientID FROM AppMaster WHERE N_AppID not in (SELECT N_AppID FROM ClientApps WHERE N_ClientID =" + ClientID + " )) a order by N_Order";
-showAll=false;
+// showAll=false;
             if (showAll == false)
             {
                 sqlCommandText = "SELECT AppMaster.*,ClientApps.N_ClientID FROM AppMaster INNER JOIN ClientApps ON AppMaster.N_AppID = ClientApps.N_AppID where ClientApps.N_ClientID=" + ClientID + " and AppMaster.B_Inactive =0 order by AppMaster.N_Order";

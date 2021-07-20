@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                         }
                         if (dt.TableName == "Vendor List")
                         {
-                            
+
                             Mastertable = ds.Tables["Vendor List"];
                             foreach (DataColumn col in Mastertable.Columns)
                             {
@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
                         }
                         if (dt.TableName == "Product List")
                         {
-                           
+
                             Mastertable = ds.Tables["Product List"];
                             foreach (DataColumn col in Mastertable.Columns)
                             {
@@ -88,26 +88,39 @@ namespace SmartxAPI.Controllers
                             Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Items";
                             Params.Add("X_Type", "product");
+                            Mastertable.Columns.Add("N_CompanyID");
+                            Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
 
                         }
+
                         if (Mastertable.Rows.Count > 0)
                         {
+
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
                             dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(dt.TableName +" Uploaded Error"));
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
+                            transaction.Commit();
+                            return Ok(_api.Success(dt.TableName +" Uploaded"));
                         }
                     }
-
-                    transaction.Commit();
+                    if (Mastertable.Rows.Count > 0)
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("Uploaded Completed"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error("Uploaded Error"));
+                    }
                 }
-                return Ok(_api.Success("Uploaded"));
+
             }
             catch (Exception ex)
             {
