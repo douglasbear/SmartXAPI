@@ -167,6 +167,8 @@ namespace SmartxAPI.Controllers
                                     companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                                     companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
                                 }
+                            }else{
+                                return Ok(_api.Error("CompanyNotFound"));
                             }
                         }
                     }
@@ -189,7 +191,7 @@ namespace SmartxAPI.Controllers
                     using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
                     {
                         olivCnn.Open();
-                        string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.X_UserID, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl, ClientApps.X_DBUri, AppMaster.X_AppName FROM Users LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID where Users.x_UserID=@emailID and Users.N_ClientID=@nClientID ";
+                        string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_AdminUserID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE Users.x_UserID=@emailID and Users.N_ClientID=@nClientID ";
                         SortedList Params = new SortedList();
                         Params.Add("@emailID", username);
                         Params.Add("@nClientID", clientID);
