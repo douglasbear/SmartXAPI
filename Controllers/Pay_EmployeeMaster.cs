@@ -1515,7 +1515,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nEmpID, int nFnyearID,DataSet dsAttachment)
+        public ActionResult DeleteData(int nEmpID, int nFnyearID,DataTable dsAttachment)
         {
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
