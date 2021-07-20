@@ -1291,6 +1291,7 @@ namespace SmartxAPI.Controllers
                                         if (nQuotationID > 0)
                                             dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
 
+                                myAttachments.DeleteAttachment(dLayer, 1,nInvoiceID,N_CustomerId, nFnYearID, N_FormID,User, transaction, connection);
                             }
                         }
                         else
