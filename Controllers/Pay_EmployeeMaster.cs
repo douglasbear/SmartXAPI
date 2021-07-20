@@ -528,7 +528,7 @@ namespace SmartxAPI.Controllers
 
                                 DependenceTable.AcceptChanges();
 
-                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_ContactDetailsID", DependenceTable, connection, transaction);
+                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_DependenceID", DependenceTable, connection, transaction);
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
@@ -658,7 +658,7 @@ namespace SmartxAPI.Controllers
                                 dRow["N_EmpUpdateID"] = nEmpUpdateID;
                             }
                             DependenceTable.AcceptChanges();                      
-                            int nDependenceUpdateID = dLayer.SaveData("Pay_EmployeeDependenceUpdate", "N_ContactDetailsUpdateID", DependenceTable, connection, transaction);
+                            int nDependenceUpdateID = dLayer.SaveData("Pay_EmployeeDependenceUpdate", "N_DependenceUpdateID", DependenceTable, connection, transaction);
                             if (nDependenceUpdateID <= 0)
                             {
                                 transaction.Rollback();
@@ -796,7 +796,7 @@ namespace SmartxAPI.Controllers
 
                                 DependenceTable.AcceptChanges();
 
-                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_ContactDetailsID", DependenceTable, connection, transaction);
+                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_DependenceID", DependenceTable, connection, transaction);
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
