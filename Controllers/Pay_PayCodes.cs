@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%')";
+                Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%' or X_PayType like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_PayCode desc";

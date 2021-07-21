@@ -149,15 +149,17 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or [Emp Name] like'%" + xSearchkey + "%'or X_VacType like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_VacationGroupCode like'%" + xSearchkey + "%'or [Emp Name] like'%" + xSearchkey + "%' or X_VacType like'%" + xSearchkey + "%' or Cast(vacationRequestDate as Varchar) like'%" + xSearchkey + "%'or N_VacDays like'%" + xSearchkey + "%'or X_VacRemarks  like'%" + xSearchkey + "%' or Cast(D_VacDateFrom as Varchar)  like'%" + xSearchkey + "%' or Cast(D_VacDateTo as Varchar)  like'%" + xSearchkey + "%' or X_CurrentStatus like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by CAST(ISNULL(B_IsSaveDraft,0) as int) desc,cast(X_VacationGroupCode as numeric) desc";
             else if (xSortBy.Contains("vacationRequestDate"))
                 xSortBy = " order by cast(vacationRequestDate as DateTime) " + xSortBy.Split(" ")[1];
             else
+            
+            
                 xSortBy = " order by " + xSortBy;
-
+        
             string isAdjestmentCriteria = "  and B_IsAdjustEntry<>1 ";
             string isMyApprovalsCriteria = "";
 

@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
-                Searchkey = " and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%')";
+                Searchkey = " and (x_VacCode like '%" + xSearchkey + "%' or Name like'%" + xSearchkey + "%'or x_TypeName like'%" + xSearchkey + "%' or x_Period like'%" + xSearchkey + "%')";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VacTypeID desc";
             else
