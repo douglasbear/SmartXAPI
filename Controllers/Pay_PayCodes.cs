@@ -256,9 +256,19 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%' or X_PayType like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_PayCode desc";
+                xSortBy = " order by N_PayID desc";
             else
-                xSortBy = " order by " + xSortBy;
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "x_PayCode":
+                                xSortBy = "N_PayID " + xSortBy.Split(" ")[1];
+                                break;
+                            
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=" + nCompanyId + " " + Searchkey + xSortBy;
@@ -282,7 +292,8 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        //return Ok(api.Warning("No Results Found"));
+                         return Ok(api.Success(OutPut));
                     }
                     else
                     {
