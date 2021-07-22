@@ -69,7 +69,7 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "amount":
                                 xSortBy = "Cast(REPLACE(amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
-                                break;        
+                                break;
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and (X_type='SR' OR X_type='SA')" ;
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and (X_type='SR' OR X_type='SA')";
                         }
                         else
                         {
@@ -433,12 +433,27 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     DataRow Master = MasterTable.Rows[0];
+                    double nAmount = 0, nAmountF = 0;
                     var xVoucherNo = Master["x_VoucherNo"].ToString();
                     var xType = Master["x_Type"].ToString();
+                    string xDesc = "";
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                     int PayReceiptId = myFunctions.getIntVAL(Master["n_PayReceiptId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(Master["n_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
+                    nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
+                    nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
+                    if (MasterTable.Columns.Contains("x_Desc"))
+                    {
+                        xDesc = Master["x_Desc"].ToString();
+                    }
+                    if (MasterTable.Columns.Contains("n_Amount"))
+                        MasterTable.Columns.Remove("n_Amount");
+                    if (MasterTable.Columns.Contains("n_AmountF"))
+                        MasterTable.Columns.Remove("n_AmountF");
+                    if (MasterTable.Columns.Contains("x_Desc"))
+                        MasterTable.Columns.Remove("x_Desc");
+
 
                     SortedList InvCounterParams = new SortedList()
                     {
@@ -485,6 +500,42 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable To Save Customer Payment"));
+                    }
+                    if (xType == "SA")
+                    {
+
+
+                        DetailTable.Clear();
+                        DataRow row = DetailTable.NewRow();
+
+                        row["N_CompanyID"] = nCompanyId;
+                        row["N_PayReceiptId"] = PayReceiptId;
+                        row["N_InventoryId"] = PayReceiptId;
+                        row["N_DiscountAmt"] = 0;
+                        row["N_DiscountAmtF"] = 0;
+                        row["N_Amount"] = nAmount;
+                        row["X_Description"] = xDesc;
+                        row["N_BranchID"] = myFunctions.getIntVAL(Master["N_BranchID"].ToString());
+                        row["X_TransType"] = xType;
+                        row["N_AmountF"] = nAmountF;
+                        row["N_AmtPaidFromAdvanceF"] = 0;
+                        row["N_CurrencyID"] = myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
+                        row["N_ExchangeRate"] = myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
+
+                        DetailTable.Rows.Add(row);
+                        // DetailTable.Rows[0]["N_CompanyID"] = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
+                        // DetailTable.Rows[0]["N_PayReceiptId"] =n_PayReceiptID;
+                        // DetailTable.Rows[0]["N_InventoryId"] =n_PayReceiptID;
+                        // DetailTable.Rows[0]["N_DiscountAmt"] =0;
+                        // DetailTable.Rows[0]["N_DiscountAmtF"] =0;
+                        // DetailTable.Rows[0]["N_Amount"] =nAmount;
+                        // DetailTable.Rows[0]["X_Description"] =xDesc;
+                        // DetailTable.Rows[0]["N_BranchID"] =myFunctions.getIntVAL(Master["N_BranchID"].ToString());
+                        // DetailTable.Rows[0]["X_TransType"] =x_Type;
+                        // DetailTable.Rows[0]["N_AmountF"] =nAmountF;
+                        // DetailTable.Rows[0]["N_AmtPaidFromAdvanceF"] =0;
+                        // DetailTable.Rows[0]["N_CurrencyID"] =myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
+                        // DetailTable.Rows[0]["N_ExchangeRate"] =myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -625,3 +676,4 @@ namespace SmartxAPI.Controllers
 
     }
 }
+

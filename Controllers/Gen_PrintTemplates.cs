@@ -35,35 +35,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
             reportPath = conf.GetConnectionString("ReportPath");
         }
-        [HttpGet("policyList")]
-        public ActionResult GetPolicyList()
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select X_InsuranceCode,X_CardNo,X_InsuranceName,X_VendorName,X_StartDate,X_EndDate,N_MedicalInsID,N_CompanyID,N_VendorID from vw_MedicalInsurance where N_CompanyID=@nCompanyID  group By  X_InsuranceCode,X_CardNo,X_InsuranceName,X_VendorName,X_StartDate,X_EndDate,N_MedicalInsID,N_CompanyID,N_VendorID ";
-            Params.Add("@nCompanyID", nCompanyID);
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(e));
-            }
-        }
+
         [HttpGet("user")]
         public ActionResult GetUser()
         {
@@ -93,6 +65,36 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+        [HttpGet("module")]
+        public ActionResult GetModule()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from vw_UserRole_Disp where N_CompanyID=" + nCompanyID + " and Category <> 'Olivo'";
+            Params.Add("@nCompanyID", nCompanyID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpGet("screen")]
         public ActionResult GetScreen(int nLanguageID, int n_UserCategoryID, int nModuleID)
         {
@@ -172,7 +174,7 @@ namespace SmartxAPI.Controllers
                             templates.Add(element);
                         }
 
-                        
+
 
 
 

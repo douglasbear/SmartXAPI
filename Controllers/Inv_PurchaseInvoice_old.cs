@@ -12,7 +12,7 @@ namespace SmartxAPI.Controllers
 
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("purchaseinvoice")]
+    [Route("purchaseinvoice_old")]
     [ApiController]
     public class Inv_PurchaseInvoice_old : ControllerBase
     {
