@@ -429,6 +429,9 @@ namespace SmartxAPI.Controllers
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpAnyRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
+                        if(ButtonTag=="6" ||ButtonTag=="0")
+                            myAttachments.DeleteAttachment(dLayer, 1,nRequestID,EmpID, nFnYearID, this.FormID,User, transaction, connection);
+
                         transaction.Commit();
                         return Ok(api.Success("Employee Request " + status + " Successfully"));
                     }

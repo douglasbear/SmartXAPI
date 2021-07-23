@@ -956,6 +956,8 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.DeleteData("Pay_VacationDetails", "N_VacationGroupID", n_VacationGroupID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
                             dLayer.DeleteData("Dms_ScreenAttachments", "N_TransID", n_VacationGroupID, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_FormID=210 and N_PartyID="+EmpID, connection, transaction);
+
+                            myAttachments.DeleteAttachment(dLayer, 1,n_VacationGroupID,EmpID, nFnYearID, this.FormID,User, transaction, connection);
                         }
 
                         transaction.Commit();

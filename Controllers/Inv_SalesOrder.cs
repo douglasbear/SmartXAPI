@@ -486,10 +486,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nSalesOrderID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    string Sql = "select N_CustomerId from Inv_SalesOrder where N_SalesOrderId=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    int N_CustomerId = myFunctions.getIntVAL(TransRow["N_CustomerId"].ToString());
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    int nCompanyID = myFunctions.GetCompanyID(User);
+                 
                     object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                     if (objProcessed == null) objProcessed = 0;
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
@@ -509,6 +525,8 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+                            myAttachments.DeleteAttachment(dLayer, 1,nSalesOrderID,N_CustomerId, nFnYearID, this.FormID,User, transaction, connection);
+
                             transaction.Commit();
                             return Ok(_api.Success("Sales Order deleted"));
 
