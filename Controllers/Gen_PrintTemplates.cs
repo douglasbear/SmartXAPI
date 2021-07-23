@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_PrintSelectDispRpt where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + "";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID from vw_PrintSelectDispRpt where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID";
             Params.Add("@nCompanyID", nCompanyID);
             try
             {
