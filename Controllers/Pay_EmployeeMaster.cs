@@ -402,6 +402,7 @@ namespace SmartxAPI.Controllers
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
                 DataRow ApprovalRow = Approvals.Rows[0];
+                DataTable Attachment = ds.Tables["attachments"];
 
                 var X_EmpUpdateCode = MasterRow["X_EmpUpdateCode"].ToString();
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
@@ -486,7 +487,7 @@ namespace SmartxAPI.Controllers
                                                     +" X_KinAddress="+ContactsTable.Rows[0]["X_KinAddress"].ToString()+", X_KinPOBoxNo="+ContactsTable.Rows[0]["X_KinPOBoxNo"].ToString()+", X_KinCity="+ContactsTable.Rows[0]["X_KinCity"].ToString()+", X_KinCountry="+ContactsTable.Rows[0]["X_KinCountry"].ToString()+", N_KinCountryID="+myFunctions.getIntVAL(ContactsTable.Rows[0]["N_KinCountryID"].ToString())+", X_RefName="+ContactsTable.Rows[0]["X_RefName"].ToString()+", "
                                                     +"X_RefRelation="+ContactsTable.Rows[0]["X_RefRelation"].ToString()+", X_RefRelationInfo="+ContactsTable.Rows[0]["X_RefRelationInfo"].ToString()+", X_PrevRefName="+ContactsTable.Rows[0]["X_PrevRefName"].ToString()+", X_PrevRefJob="+ContactsTable.Rows[0]["X_PrevRefJob"].ToString()+", X_PrevRefDepartment="+ContactsTable.Rows[0]["X_PrevRefDepartment"].ToString()+", X_PrevRefCompany="+ContactsTable.Rows[0]["X_PrevRefCompany"].ToString()+", X_PrevRefContactNo="+ContactsTable.Rows[0]["X_PrevRefContactNo"].ToString()+", X_PrevRefEmail="+ContactsTable.Rows[0]["X_PrevRefEmail"].ToString()+" "
                                                     +" where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_ContactDetailsID=@N_ContactDetailsID";
-                                                    
+
                                 dLayer.ExecuteNonQuery(ContactQry, QueryParams, connection, transaction);
                             }
                             else
@@ -495,7 +496,13 @@ namespace SmartxAPI.Controllers
                                     ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
                                 if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
                                     ContactsTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
+                                
+                                foreach (DataRow dRow in ContactsTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                ContactsTable.AcceptChanges(); 
 
                                 int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
                                 if (nContactsID <= 0)
@@ -514,9 +521,15 @@ namespace SmartxAPI.Controllers
                                     DependenceTable.Columns.Remove("N_DependenceUpdateID");
                                 if (DependenceTable.Columns.Contains("N_EmpUpdateID"))
                                     DependenceTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
 
-                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_ContactDetailsID", DependenceTable, connection, transaction);
+                                foreach (DataRow dRow in DependenceTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                DependenceTable.AcceptChanges();
+
+                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_DependenceID", DependenceTable, connection, transaction);
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
@@ -533,7 +546,13 @@ namespace SmartxAPI.Controllers
                                     EduTable.Columns.Remove("N_EduUpdateID");
                                 if (EduTable.Columns.Contains("N_EmpUpdateID"))
                                     EduTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
+                                
+                                foreach (DataRow dRow in EduTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                EduTable.AcceptChanges();
 
                                 int nEduID = dLayer.SaveData("Pay_EmployeeEducation", "N_EduID", EduTable, connection, transaction);
                                 if (nEduID <= 0)
@@ -552,7 +571,13 @@ namespace SmartxAPI.Controllers
                                     HistoryTable.Columns.Remove("N_JobUpdateID");
                                 if (HistoryTable.Columns.Contains("N_EmpUpdateID"))
                                     HistoryTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
+
+                                foreach (DataRow dRow in HistoryTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                HistoryTable.AcceptChanges();
 
                                 int nEduID = dLayer.SaveData("Pay_EmploymentHistory", "N_JobID", HistoryTable, connection, transaction);
                                 if (nEduID <= 0)
@@ -561,8 +586,16 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error("Unable to save"));
                                 }
                             }
-                        }
 
+                            if (Attachment.Rows.Count > 0)
+                            {         
+                                foreach (DataRow dRow in Attachment.Rows)
+                                {
+                                    dRow["n_FormID"] = 188;
+                                }
+                                myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, "Employee", User, connection, transaction);
+                            }
+                        }
                         
                         myFunctions.SendApprovalMail(N_NextApproverID, FormID, nEmpUpdateID, "EMPLOYEE", X_EmpUpdateCode, dLayer, connection, transaction, User);
                         transaction.Commit();
@@ -613,7 +646,13 @@ namespace SmartxAPI.Controllers
                         int N_SaveDraft =myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
                         if (ContactsTable.Rows.Count > 0)
-                        {                          
+                        {             
+                            foreach (DataRow dRow in ContactsTable.Rows)
+                            {
+                                dRow["N_EmpID"] = nEmpID;
+                                dRow["N_EmpUpdateID"] = nEmpUpdateID;
+                            }
+                            ContactsTable.AcceptChanges();             
                             int nContactsUpdateID = dLayer.SaveData("Pay_EmployeeSubUpdate", "N_ContactDetailsUpdateID", ContactsTable, connection, transaction);
                             if (nContactsUpdateID <= 0)
                             {
@@ -622,8 +661,14 @@ namespace SmartxAPI.Controllers
                             }
                         }
                         if (DependenceTable.Rows.Count > 0)
-                        {                          
-                            int nDependenceUpdateID = dLayer.SaveData("Pay_EmployeeDependenceUpdate", "N_ContactDetailsUpdateID", DependenceTable, connection, transaction);
+                        {    
+                            foreach (DataRow dRow in DependenceTable.Rows)
+                            {
+                                dRow["N_EmpID"] = nEmpID;
+                                dRow["N_EmpUpdateID"] = nEmpUpdateID;
+                            }
+                            DependenceTable.AcceptChanges();                      
+                            int nDependenceUpdateID = dLayer.SaveData("Pay_EmployeeDependenceUpdate", "N_DependenceUpdateID", DependenceTable, connection, transaction);
                             if (nDependenceUpdateID <= 0)
                             {
                                 transaction.Rollback();
@@ -631,7 +676,13 @@ namespace SmartxAPI.Controllers
                             }
                         }
                          if (EduTable.Rows.Count > 0)
-                        {                          
+                        {     
+                            foreach (DataRow dRow in EduTable.Rows)
+                            {
+                                dRow["N_EmpID"] = nEmpID;
+                                dRow["N_EmpUpdateID"] = nEmpUpdateID;
+                            }
+                            EduTable.AcceptChanges();                     
                             int nEduUpdateID = dLayer.SaveData("Pay_EmployeeEducationUpdate", "N_EduUpdateID", EduTable, connection, transaction);
                             if (nEduUpdateID <= 0)
                             {
@@ -640,13 +691,28 @@ namespace SmartxAPI.Controllers
                             }
                         }
                          if (HistoryTable.Rows.Count > 0)
-                        {                          
+                        {        
+                            foreach (DataRow dRow in HistoryTable.Rows)
+                            {
+                                dRow["N_EmpID"] = nEmpID;
+                                dRow["N_EmpUpdateID"] = nEmpUpdateID;
+                            }
+                            HistoryTable.AcceptChanges();                  
                             int nHistoryUpdateID = dLayer.SaveData("Pay_EmploymentHistoryUpdate", "N_JobUpdateID", HistoryTable, connection, transaction);
                             if (nHistoryUpdateID <= 0)
                             {
                                 transaction.Rollback();
                                 return Ok(_api.Error("Unable to save"));
                             }
+                        }
+
+                        if (Attachment.Rows.Count > 0)
+                        {         
+                            foreach (DataRow dRow in Attachment.Rows)
+                            {
+                                dRow["n_FormID"] = 1228;
+                            }
+                            myAttachments.SaveAttachment(dLayer, Attachment, X_EmpUpdateCode, nEmpUpdateID, MasterTable.Rows[0]["x_EmpName"].ToString(), X_EmpUpdateCode, nEmpUpdateID, "Employee Update", User, connection, transaction);
                         }
 
                         if(N_SaveDraft==0)
@@ -716,7 +782,13 @@ namespace SmartxAPI.Controllers
                                     ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
                                 if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
                                     ContactsTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
+                                
+                                foreach (DataRow dRow in ContactsTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                ContactsTable.AcceptChanges(); 
 
                                 int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
                                 if (nContactsID <= 0)
@@ -735,9 +807,15 @@ namespace SmartxAPI.Controllers
                                     DependenceTable.Columns.Remove("N_DependenceUpdateID");
                                 if (DependenceTable.Columns.Contains("N_EmpUpdateID"))
                                     DependenceTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
 
-                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_ContactDetailsID", DependenceTable, connection, transaction);
+                                foreach (DataRow dRow in DependenceTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                DependenceTable.AcceptChanges();
+
+                                int nDependenceID = dLayer.SaveData("Pay_EmployeeDependence", "N_DependenceID", DependenceTable, connection, transaction);
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
@@ -754,7 +832,13 @@ namespace SmartxAPI.Controllers
                                     EduTable.Columns.Remove("N_EduUpdateID");
                                 if (EduTable.Columns.Contains("N_EmpUpdateID"))
                                     EduTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
+                                
+                                foreach (DataRow dRow in EduTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                EduTable.AcceptChanges();
 
                                 int nEduID = dLayer.SaveData("Pay_EmployeeEducation", "N_EduID", EduTable, connection, transaction);
                                 if (nEduID <= 0)
@@ -773,7 +857,13 @@ namespace SmartxAPI.Controllers
                                     HistoryTable.Columns.Remove("N_JobUpdateID");
                                 if (HistoryTable.Columns.Contains("N_EmpUpdateID"))
                                     HistoryTable.Columns.Remove("N_EmpUpdateID");
-                                ContactsTable.AcceptChanges();
+
+                                foreach (DataRow dRow in HistoryTable.Rows)
+                                {
+                                    dRow["N_EmpID"] = nEmpID;
+                                }
+
+                                HistoryTable.AcceptChanges();
 
                                 int nEduID = dLayer.SaveData("Pay_EmploymentHistory", "N_JobID", HistoryTable, connection, transaction);
                                 if (nEduID <= 0)
@@ -781,6 +871,15 @@ namespace SmartxAPI.Controllers
                                     transaction.Rollback();
                                     return Ok(_api.Error("Unable to save"));
                                 }
+                            }
+
+                            if (Attachment.Rows.Count > 0)
+                            {         
+                                foreach (DataRow dRow in Attachment.Rows)
+                                {
+                                    dRow["n_FormID"] = 188;
+                                }
+                                myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, MasterTable.Rows[0]["x_EmpName"].ToString(), MasterTable.Rows[0]["x_EmpCode"].ToString(), nEmpID, "Employee", User, connection, transaction);
                             }
                         }
 
@@ -849,22 +948,25 @@ namespace SmartxAPI.Controllers
                         Contacts_sqlQuery = "Select * from vw_ContactUpdateDetails where N_CompanyID =@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
                         Dependence_sqlQuery = "Select * from Pay_EmployeeDependenceUpdate Inner Join Pay_Relation on Pay_EmployeeDependenceUpdate.N_RelationID = Pay_Relation.N_RelationID and Pay_EmployeeDependenceUpdate.N_CompanyID = Pay_Relation.N_CompanyID Where Pay_EmployeeDependenceUpdate.N_CompanyID=@nCompanyID and Pay_EmployeeDependenceUpdate.N_EmpUpdateID=@nEmpUpdateID and Pay_EmployeeDependenceUpdate.N_EmpID=@nEmpID";
                         Edu_sqlQuery = "Select * from Pay_EmployeeEducationUpdate where N_CompanyID =@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
-                        History_sqlQuery = "Select * from Pay_EmploymentHistoryUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";
+                        History_sqlQuery = "Select * from Pay_EmploymentHistoryUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID";                        
 
                         Contacts = dLayer.ExecuteDataTable(Contacts_sqlQuery, QueryParams, connection);
                         Dependence  = dLayer.ExecuteDataTable(Dependence_sqlQuery, QueryParams, connection);
                         Education = dLayer.ExecuteDataTable(Edu_sqlQuery, QueryParams, connection);
                         History  = dLayer.ExecuteDataTable(History_sqlQuery, QueryParams, connection);
+                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), 1228, nFnYearID, User, connection);
 
-                        Contacts = _api.Format(Contacts, "contacts");
-                        Dependence = _api.Format(Dependence, "dependence");
-                        Education = _api.Format(Education, "education");
-                        History = _api.Format(History, "history");
+                        Contacts = _api.Format(Contacts, "pay_EmployeeSub");
+                        Dependence = _api.Format(Dependence, "pay_EmployeeDependence");
+                        Education = _api.Format(Education, "pay_EmployeeEducation");
+                        History = _api.Format(History, "pay_EmploymentHistory");
+                        Attachements = _api.Format(Attachements, "attachments");
 
                         ds.Tables.Add(Contacts);
                         ds.Tables.Add(Dependence);
                         ds.Tables.Add(Education);
                         ds.Tables.Add(History);
+                        ds.Tables.Add(Attachements);
 
                         return Ok(_api.Success(ds));
                     }
@@ -1515,7 +1617,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nEmpID, int nFnyearID,DataSet dsAttachment)
+        public ActionResult DeleteData(int nEmpID, int nFnyearID)
         {
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -1573,7 +1675,7 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Pay_EmpAddlInfo", "N_EmpID", nEmpID, "", connection, transaction);
                     dLayer.DeleteData("Pay_Employee", "N_EmpID", nEmpID, "", connection, transaction);
 
-                    myAttachments.DeleteAttachment(dLayer, 1,dsAttachment,nEmpID, nFnyearID, FormID,User, transaction, connection);
+                    myAttachments.DeleteAttachment(dLayer, 1,nEmpID,nEmpID, nFnyearID, FormID,User, transaction, connection);
 
                     transaction.Commit();
                 }

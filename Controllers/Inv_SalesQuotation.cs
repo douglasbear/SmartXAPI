@@ -828,6 +828,9 @@ namespace SmartxAPI.Controllers
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
+                            if(ButtonTag=="6" ||ButtonTag=="0")
+                                myAttachments.DeleteAttachment(dLayer, 1,N_QuotationID,N_CustomerID, nFnYearID, this.FormID,User, transaction, connection);
+
                             transaction.Commit();
                             return Ok(_api.Success("Sales Quotation " + status + " Successfully"));
                         }
