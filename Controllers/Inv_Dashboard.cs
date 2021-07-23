@@ -203,6 +203,7 @@ namespace SmartxAPI.Controllers
             sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "
                             +"FROM vw_InvStock_Status INNER JOIN Inv_ItemMaster ON vw_InvStock_Status.N_ItemID = Inv_ItemMaster.N_ItemID AND vw_InvStock_Status.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN "
                             +"Inv_ItemCategory ON Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID "
+                            +"WHERE vw_InvStock_Status.N_CompanyID="+nCompanyID+" "
                             +"GROUP BY vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category";
 
             SortedList Data = new SortedList();
