@@ -46,8 +46,21 @@ namespace SmartxAPI.Controllers
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ServiceEndID desc";
             else
+            {
+                   switch (xSortBy.Split(" ")[0])
+                        {
+                             case "x_ServiceEndCode":
+                                xSortBy = "N_ServiceEndID " + xSortBy.Split(" ")[1];
+                                break;
+                            case "d_EndDate":
+                                xSortBy = "Cast(D_EndDate as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                           
+                            default: break;
+                        }
+            
                 xSortBy = " order by " + xSortBy;
-
+        }
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") X_ServiceEndCode,X_EmpCode,X_EmpName,D_EndDate,X_EndType from vw_EndOfService Where N_CompanyID=@nCompanyID " + Searchkey + " " + xSortBy;
             else

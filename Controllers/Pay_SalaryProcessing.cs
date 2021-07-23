@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", nFnYearId);
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' or x_BankName like '%" + xSearchkey + "%' or x_AddDedBatch like '%" + xSearchkey + "%' ) ";
+                Searchkey = "and (N_TransID like '%" + xSearchkey + "%' or Batch like '%" + xSearchkey + "%' or  [Payrun ID] like '%" + xSearchkey + "%' or x_BankName like '%" + xSearchkey + "%' or x_AddDedBatch like '%" + xSearchkey + "%' or cast(d_TransDate as Varchar) like '%" + xSearchkey + "%') ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
             xSortBy = " order by N_PayRunID desc,cast(Batch as Numeric) desc";
