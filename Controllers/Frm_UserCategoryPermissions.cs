@@ -179,7 +179,7 @@ namespace SmartxAPI.Controllers
                     PostingParam.Add("@nCompanyID", nCompanyID);
                     PostingParam.Add("@xUserCategory", "permUserCategory");
                     PostingParam.Add("@nMenuID", N_MenuID);
-                    string SecUsersql = "SP_InvSalesOrderDtls_Disp @nCompanyID,@xUserCategory,@nMenuID";
+                    string SecUsersql = "SP_Sec_UserMenus_Permissions @nCompanyID,@xUserCategory,@nMenuID";
                     SecUserPermissions = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
                     SecUserPermissions = _api.Format(SecUserPermissions, "SecUserPermissions");
 
