@@ -534,12 +534,31 @@ namespace SmartxAPI.Controllers
             int Results = 0;
             if (CheckProcessed(nGRNID))
                 return Ok(_api.Error("Transaction Started"));
+
+          
             try
             {
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nGRNID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string Sql = "select N_VendorID,N_FnYearID from Inv_MRN where N_MRNID=@nTransID and N_CompanyID=@nCompanyID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(_api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    int VendorID = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(TransRow["N_FnYearID"].ToString());
+
+
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
@@ -555,6 +574,8 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to Delete Goods Receive Note"));
                     }
+
+                    myAttachments.DeleteAttachment(dLayer, 1,nGRNID,VendorID, nFnYearID, this.N_FormID,User, transaction, connection);
 
                     transaction.Commit();
                     return Ok(_api.Success("Goods Receive Note deleted"));

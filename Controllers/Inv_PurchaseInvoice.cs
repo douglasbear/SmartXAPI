@@ -782,6 +782,8 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to Delete PurchaseInvoice"));
                         }
 
+                        myAttachments.DeleteAttachment(dLayer, 1,nPurchaseID,VendorID, nFnYearID, N_FormID,User, transaction, connection);
+
                     }
                     else
                     {
