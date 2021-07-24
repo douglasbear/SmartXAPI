@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" +xSearchkey+ "%')";
+                Searchkey = "and ([Voucher No] like '%" + xSearchkey + "%' or Account like '%" + xSearchkey + "%' or X_Remarks like '%" + xSearchkey + "%' or [Voucher Date] like '%" +xSearchkey+ "%' or n_Amount like '%" +xSearchkey+ "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VoucherID desc";
@@ -54,6 +54,8 @@ namespace SmartxAPI.Controllers
                     case "voucherNo" : xSortBy ="N_VoucherID " + xSortBy.Split(" ")[1] ;
                     break;
                     case "voucherDate" : xSortBy ="[Voucher Date] " + xSortBy.Split(" ")[1] ;
+                    break;
+                     case "n_Amount" : xSortBy ="Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1] ;
                     break;
                     default : break;
                 }
@@ -93,7 +95,8 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
+                   // return Ok(api.Warning("No Results Found"));
+                   return Ok(api.Success(OutPut));
                 }
                 else
                 {

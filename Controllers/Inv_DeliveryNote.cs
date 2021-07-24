@@ -518,6 +518,8 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
+
+                        myAttachments.DeleteAttachment(dLayer, 1,nDeliveryNoteID,nCustomerID, nFnYearID, this.FormID,User, transaction, connection);
                     }
                     //Attachment delete code here
 
