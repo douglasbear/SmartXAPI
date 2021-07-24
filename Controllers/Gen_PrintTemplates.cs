@@ -66,12 +66,12 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("module")]
-        public ActionResult GetModule(int n_UserCategoryId,int nLanguageID)
+        public ActionResult GetModule(int n_UserCategoryId, int nLanguageID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            
+
             string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module from vw_PrintTemplateUserMenus where  N_LanguageID = " + nLanguageID + " and N_ParentMenuID = 0 and N_UserCategoryID=" + n_UserCategoryId + " and N_CompanyID=" + nCompanyID + "and X_ControlNo = '0' group by N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module";
             Params.Add("@nCompanyID", nCompanyID);
             try
@@ -102,7 +102,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID from vw_PrintSelectDispRpt where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName";
+
             Params.Add("@nCompanyID", nCompanyID);
             try
             {
@@ -132,6 +133,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    connection.Open();
                     string X_ReportFilePath = "";
                     string X_FolderName = "";
 
@@ -193,7 +195,36 @@ namespace SmartxAPI.Controllers
             }
 
         }
-    }
+
+        // [HttpPost("save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             if (txtUserGroup.Text == "")
+        //                 X_UserCategoryName = myCompanyID._UserCategoryName;
+        //             else
+        //                 X_UserCategoryName = txtUserGroup.Text;
+        //             object result = 0;
+        //             try
+        //             {
+        //                 dba.SetTransaction();
+        //                 dba.ExecuteNonQuery("SP_GeneralDefaults_ins " + myCompanyID._CompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + txtSelectedRpt.Text + "','" + X_UserCategoryName + "'", "TEXT", new DataTable());
+        //                 dba.ExecuteNonQuery("SP_GeneralDefaults_ins " + myCompanyID._CompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + myFunctions.getIntVAL(txtCpyNos.Text) + ",''", "TEXT", new DataTable());
+        //                 dba.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + myCompanyID._CompanyID + "," + ReportSelectingScreenID + " ,'" + txtSelectedRpt.Text + "'," + N_UserCategoryId + "," + myFunctions.getIntVAL(txtCpyNos.Text) + "," + myFunctions.getIntVAL(chkClearScreenAfterSave.Checked) + "", "TEXT", new DataTable());
+        //                 dba.Commit();
+        //                 return true;
+        //             }
+        //             catch (Exception ex)
+        //             {
+        //                 dba.Rollback();
+        //                 msg.msgError(ex.Message);
+        //                 return false;
+        //             }
+        //         }
+            }
 }
 
 
