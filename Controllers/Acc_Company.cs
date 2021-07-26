@@ -204,14 +204,13 @@ namespace SmartxAPI.Controllers
                     }
                     Params.Add("@p1", xUserName);
                     Params.Add("@p2", xPassword);
-                    //   object count=dLayer.ExecuteScalar("select count(*) from sec_user where x_UserName=@p1 and X_Password=@p2",Params, connection,transaction);
+                    object CompanyCount=dLayer.ExecuteScalar("select count(*) from Acc_Company where B_IsDefault=1 and N_ClientID="+myFunctions.GetClientID(User), connection,transaction);
 
-                    //  int Obcount = myFunctions.getIntVAL(count.ToString());
-                    // if (Obcount == 0)
-                    // {
-                    //     transaction.Rollback();
-                    //     return Ok(api.Warning("Unable to save.Password Mismatch"));
-                    //  }
+                     int Count = myFunctions.getIntVAL(CompanyCount.ToString());
+                    if (Count == 0)
+                    {
+                        MasterTable.Rows[0]["b_IsDefault"] = 1;
+                    }
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
                     string footer = myFunctions.ContainColumn("i_Footer", MasterTable) ? MasterTable.Rows[0]["i_Footer"].ToString() : "";
                     string header = myFunctions.ContainColumn("i_Header", MasterTable) ? MasterTable.Rows[0]["i_Header"].ToString() : "";

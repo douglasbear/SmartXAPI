@@ -483,16 +483,32 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nPOrderID, int nBranchID, int nFnYearID)
         {
             int Results = 0;
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList();
+                    ParamList.Add("@nTransID", nPOrderID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    string Sql = "select N_VendorID from Inv_PurchaseOrder where N_POrderID=@nTransID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error("Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    int VendorID = myFunctions.getIntVAL(TransRow["N_VendorID"].ToString());
+
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                    int nCompanyID = myFunctions.GetCompanyID(User);
                     object objPurchaseProcessed = dLayer.ExecuteScalar("Select Isnull(N_PurchaseID,0) from Inv_Purchase where N_CompanyID=" + nCompanyID + " and N_POrderID=" + nPOrderID + " and B_IsSaveDraft = 0", connection, transaction);
                     if (objPurchaseProcessed == null)
                         objPurchaseProcessed = 0;
@@ -514,6 +530,8 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+                            myAttachments.DeleteAttachment(dLayer, 1,nPOrderID,VendorID, nFnYearID, this.FormID,User, transaction, connection);
+
                             transaction.Commit();
                             return Ok(api.Success("Purchase Order deleted"));
 

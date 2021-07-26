@@ -307,12 +307,26 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Receipt No] like '%" + xSearchkey + "%' or [Employee Name] like '%" + xSearchkey + "%' or [Date] like '%" + xSearchkey + "%' or X_PaymentMethod like '%" + xSearchkey + "%' or X_BankName like '%" + xSearchkey + "%' )";
+                Searchkey = "and ([Receipt No] like '%" + xSearchkey + "%' or [Employee Name] like '%" + xSearchkey + "%' or cast(Date as Varchar) like '%" + xSearchkey + "%' or X_PaymentMethod like '%" + xSearchkey + "%' or X_BankName like '%" + xSearchkey + "%' or N_TotalAmount like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ReceiptID desc";
-            else
-                xSortBy = " order by " + xSortBy;
+           else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "receiptNo":
+                                xSortBy = "N_ReceiptID " + xSortBy.Split(" ")[1];
+                                break;
+                            case "date":
+                                xSortBy = "Cast(Date as DateTime ) " + xSortBy.Split(" ")[1];
+                                break;
+                          
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayEmployeePayment_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + xSortBy;

@@ -250,7 +250,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             // Params.Add("@p1",nCompanyId);
-            string sqlCommandText = "Select * from Acc_TaxType ";
+            string sqlCommandText = "select N_TypeID,X_TypeName,X_MenuCaption,X_ScreenCaption,X_RepPathCaption from Acc_TaxType group by N_TypeID,X_TypeName,X_MenuCaption,X_ScreenCaption,X_RepPathCaption";
 
             try{
                 using(SqlConnection connection = new SqlConnection(connectionString))
