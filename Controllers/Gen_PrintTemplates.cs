@@ -196,36 +196,41 @@ namespace SmartxAPI.Controllers
 
         }
 
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //              DataTable MasterTable;
-        //               MasterTable = ds.Tables["master"];
-        //               var x_VoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
-                 
-        //                 X_UserCategoryName = txtUserGroup.Text;
-        //             object result = 0;
-        //             try
-        //             {
-        //                 dba.SetTransaction();
-        //                 dba.ExecuteNonQuery("SP_GeneralDefaults_ins " + myCompanyID._CompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + txtSelectedRpt.Text + "','" + X_UserCategoryName + "'", "TEXT", new DataTable());
-        //                 dba.ExecuteNonQuery("SP_GeneralDefaults_ins " + myCompanyID._CompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + myFunctions.getIntVAL(txtCpyNos.Text) + ",''", "TEXT", new DataTable());
-        //                 dba.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + myCompanyID._CompanyID + "," + ReportSelectingScreenID + " ,'" + txtSelectedRpt.Text + "'," + N_UserCategoryId + "," + myFunctions.getIntVAL(txtCpyNos.Text) + "," + myFunctions.getIntVAL(chkClearScreenAfterSave.Checked) + "", "TEXT", new DataTable());
-        //                 dba.Commit();
-        //                 return true;
-        //             }
-        //             catch (Exception ex)
-        //             {
-        //                 dba.Rollback();
-        //                 msg.msgError(ex.Message);
-        //                 return false;
-        //             }
-        //         }
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    DataTable MasterTable;
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    MasterTable = ds.Tables["master"];
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    var X_UserCategoryName = MasterTable.Rows[0]["x_UserCategoryName"].ToString();
+                    int ReportSelectingScreenID = myFunctions.getIntVAL(MasterTable.Rows[0]["x_ScreenID"].ToString());
+                    int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
+                    var x_SelectedReport = MasterTable.Rows[0]["x_SelectedReport"].ToString();
+                    int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
+
+                    object result = 0;
+                    dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + 1 + "", connection, transaction);
+
+
+                    transaction.Commit();
+                }
+                return Ok(_api.Success( "Template Saved"));
+
             }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+    }
 }
 
 
