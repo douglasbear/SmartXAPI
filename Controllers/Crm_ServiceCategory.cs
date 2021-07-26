@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-
+                    transaction.Commit();
                     return Ok(api.Success("Workflow Created"));
                 }
             }
