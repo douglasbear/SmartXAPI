@@ -155,6 +155,11 @@ namespace SmartxAPI.Controllers
                         if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["X_WActivityCode"] = ActivityCode;
                     }
+                    if (nWActivityID > 0)
+                    {
+                        dLayer.DeleteData("CRM_WorkflowMaster", "N_WActivityID", nWActivityID, "", connection, transaction);
+                        dLayer.DeleteData("CRM_WorkflowActivities", "N_WActivityID", nWActivityID, "", connection, transaction);
+                    }
 
                     nWActivityID = dLayer.SaveData("CRM_WorkflowMaster", "N_WActivityID", MasterTable, connection, transaction);
                     if (nWActivityID <= 0)
@@ -164,7 +169,8 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
+                        if (!DetailsTable.Columns.Contains("N_FnYearID"))
+                            DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
                         foreach (DataRow var in DetailsTable.Rows)
                         {
                             var["N_WActivityID"] = nWActivityID;
