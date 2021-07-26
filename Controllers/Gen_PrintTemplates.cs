@@ -66,12 +66,12 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("module")]
-        public ActionResult GetModule(int n_UserCategoryId,int nLanguageID)
+        public ActionResult GetModule(int n_UserCategoryId, int nLanguageID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            
+
             string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module from vw_PrintTemplateUserMenus where  N_LanguageID = " + nLanguageID + " and N_ParentMenuID = 0 and N_UserCategoryID=" + n_UserCategoryId + " and N_CompanyID=" + nCompanyID + "and X_ControlNo = '0' group by N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module";
             Params.Add("@nCompanyID", nCompanyID);
             try
@@ -102,7 +102,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID from vw_PrintSelectDispRpt where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName";
+
             Params.Add("@nCompanyID", nCompanyID);
             try
             {
@@ -132,6 +133,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                    connection.Open();
                     string X_ReportFilePath = "";
                     string X_FolderName = "";
 
@@ -192,6 +194,41 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
 
+        }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    DataTable MasterTable;
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    MasterTable = ds.Tables["master"];
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    var X_UserCategoryName = MasterTable.Rows[0]["x_UserCategoryName"].ToString();
+                    int ReportSelectingScreenID = myFunctions.getIntVAL(MasterTable.Rows[0]["x_ScreenID"].ToString());
+                    int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
+                    var x_SelectedReport = MasterTable.Rows[0]["x_SelectedReport"].ToString();
+                    int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
+
+                    object result = 0;
+                    dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + 1 + "", connection, transaction);
+
+
+                    transaction.Commit();
+                }
+                return Ok(_api.Success( "Template Saved"));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
         }
     }
 }

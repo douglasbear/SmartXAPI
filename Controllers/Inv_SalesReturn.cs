@@ -238,6 +238,17 @@ namespace SmartxAPI.Controllers
                             SalesReturn.AcceptChanges();
                         }
                     }
+                    if(xReceiptNo==null && !SalesReturn.Columns.Contains("x_DisplayName") )
+                    {
+                         object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + SalesReturn.Rows[0]["N_TaxCategoryID"] + " and N_CompanyID=" + nCompanyId, Params, connection);
+                        if (MainTax != null)
+                        {
+                            SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "x_DisplayName", typeof(string), null);
+
+                            SalesReturn.Rows[0]["x_DisplayName"] = MainTax.ToString();
+                            SalesReturn.AcceptChanges();
+                        }
+                    }
                     dt.Tables.Add(SalesReturn);
 
                     int N_DebitNoteId = myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString());

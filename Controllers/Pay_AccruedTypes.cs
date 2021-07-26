@@ -297,7 +297,7 @@ namespace SmartxAPI.Controllers
 
 
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
+                        // dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
                       
 
 
