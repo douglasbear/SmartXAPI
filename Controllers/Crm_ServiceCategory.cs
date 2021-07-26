@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error("Unable to save"));
                     }
                     transaction.Commit();
-                    return Ok(api.Success("Workflow Created"));
+                    return Ok(api.Success("Service Category Created"));
                 }
             }
 
