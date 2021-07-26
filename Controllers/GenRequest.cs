@@ -245,6 +245,9 @@ namespace SmartxAPI.Controllers
                 case "CrmWorkType":
                     N_FormID = 1360;
                     break;
+                case "BodyVariable":
+                    N_FormID = 1359;
+                    break;
                 default: return Ok("Invalid Type");
             }
 
