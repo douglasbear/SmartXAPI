@@ -203,9 +203,10 @@ namespace SmartxAPI.Controllers
         //     {
         //         using (SqlConnection connection = new SqlConnection(connectionString))
         //         {
-        //             if (txtUserGroup.Text == "")
-        //                 X_UserCategoryName = myCompanyID._UserCategoryName;
-        //             else
+        //              DataTable MasterTable;
+        //               MasterTable = ds.Tables["master"];
+        //               var x_VoucherNo = MasterTable.Rows[0]["x_VoucherNo"].ToString();
+                 
         //                 X_UserCategoryName = txtUserGroup.Text;
         //             object result = 0;
         //             try
