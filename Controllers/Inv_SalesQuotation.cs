@@ -521,6 +521,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", DupCriteria, "", MasterTable, connection, transaction);
+                    
                     if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
