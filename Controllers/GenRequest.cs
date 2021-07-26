@@ -248,8 +248,8 @@ namespace SmartxAPI.Controllers
                 default: return Ok("Invalid Type");
             }
 
-            string X_Criteria = "N_ReferId=@p1 order by n_Sort ASC";
-            SortedList param = new SortedList() { { "@p1", N_FormID } };
+            string X_Criteria = "N_ReferId=@p1 and N_CompanyID=@nCompanyID order by n_Sort ASC";
+            SortedList param = new SortedList() { { "@p1", N_FormID },{"@nCompanyID",myFunctions.GetCompanyID(User)} };
 
             DataTable dt = new DataTable();
 
