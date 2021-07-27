@@ -407,7 +407,7 @@ namespace SmartxAPI.Controllers
                         }
 
                         string DetailSql = "";
-                        DetailSql = "select * from vw_OpportunityToInvoice where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
+                        DetailSql = "select * from vw_OpportunityDetailsToInvoice where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
