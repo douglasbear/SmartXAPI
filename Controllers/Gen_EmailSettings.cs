@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = Master.Rows[0];
                     SortedList Params = new SortedList();
                     string Toemail = "";
-                    string Email = MasterRow["X_ClientMail"].ToString();
+                    string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["X_Subject"].ToString();
                     Toemail = Email.ToString();
@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-                    return Ok("SUCCESS");
+                   return Ok(api.Success("Email Send"));
 
                 }
             }

@@ -109,14 +109,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("accrualSettings")]
-        public ActionResult GetAccrualSettings(int nFnYearID)
+        public ActionResult GetAccrualSettings(int nFnYearID,int nCountryID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nCountryID);
 
-            string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and isnull(N_CountryID,0)=1 order by X_Type desc";
+            string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and N_CountryID=@p2 order by X_Type desc";
 
             SortedList OutPut = new SortedList();
 
