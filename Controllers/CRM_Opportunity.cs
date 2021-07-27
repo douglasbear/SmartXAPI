@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
                                 Activity.Columns.Remove("N_WActivityDetailID");
                                 int Order = 1;
                                 double Minuts = 0;
-                                object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection,transaction);
+                                object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection, transaction);
                                 foreach (DataRow var in Activity.Rows)
                                 {
                                     ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
@@ -219,6 +219,11 @@ namespace SmartxAPI.Controllers
                                     var["n_ActivityID"] = 0;
                                     var["N_Order"] = Order;
                                     var["X_Contact"] = Contact;
+                                    if (Order == 1)
+                                    {
+                                        var["b_closed"] = 1;
+                                        var["x_status"] = "Closed";
+                                    }
                                     if (var["N_ReminderUnitID"].ToString() == "248")
                                         Minuts = 1;
                                     else if (var["N_ReminderUnitID"].ToString() == "247")

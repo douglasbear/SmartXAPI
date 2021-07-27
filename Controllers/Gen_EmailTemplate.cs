@@ -113,12 +113,16 @@ namespace SmartxAPI.Controllers
                     Master.Columns.Remove("x_TemplateName");
                     Master.Columns.Remove("n_TemplateID");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
-  
-                    dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
+                    var X_Body = Master.Rows[0]["X_Body"].ToString();
+                    Master.Columns.Remove("X_Body");
+
+                    int N_LogID = dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
+
+                    //dLayer.ExecuteNonQuery("update Gen_MailLog set X_Body='" + X_Body + "' where N_CompanyID="+companyid+" and N_MailLogID=" + N_LogID, Params, connection, transaction);
                     transaction.Commit();
 
                     return Ok(api.Success("Email Send"));
-                    
+
 
                 }
             }
@@ -174,6 +178,8 @@ namespace SmartxAPI.Controllers
                         if (TemplateCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Code")); }
                         MasterTable.Rows[0]["X_TemplateCode"] = TemplateCode;
                     }
+                    var X_Body = MasterTable.Rows[0]["X_Body"].ToString();
+                    MasterTable.Columns.Remove("X_Body");
 
                     nTemplateID = dLayer.SaveData("Gen_MailTemplates", "N_TemplateID", MasterTable, connection, transaction);
                     if (nTemplateID <= 0)
@@ -183,6 +189,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        dLayer.ExecuteNonQuery("update Gen_MailTemplates set X_Body='" + X_Body + "' where N_CompanyID=@N_CompanyID and N_TemplateID=" + nTemplateID, Params, connection, transaction);
                         transaction.Commit();
 
                         return Ok(api.Success("Mail Template Created"));
@@ -282,7 +289,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-         [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nTemplateID)
         {
 

@@ -263,11 +263,24 @@ namespace SmartxAPI.Controllers
             Params.Add("@nUserID", nUserID);
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
-                Searchkey = " and (X_VacationReturnCode like '%" + xSearchkey + "%'or X_EmpName like'%" + xSearchkey + "%')";
+                Searchkey = " and (X_VacationReturnCode like '%" + xSearchkey + "%'or cast(D_Date as VarChar) like'%" + xSearchkey + "%'or cast(D_ReturnDate as VarChar) like'%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%'or x_Remarks like'%" + xSearchkey + "%')";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by ReturnId desc";
             else
-                xSortBy = " order by " + xSortBy;
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                           
+                            case "d_Date":
+                                xSortBy = "Cast(D_Date as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            case "d_ReturnDate":
+                                xSortBy = "Cast(D_ReturnDate as DateTime )" + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayVacationReturn where N_CompanyID=@p1 and N_EmpID=@nEmpID" + Searchkey + xSortBy;

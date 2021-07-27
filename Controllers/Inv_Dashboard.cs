@@ -18,7 +18,7 @@ namespace SmartxAPI.Controllers
 
 
 
-    public class Inv_StatusManager : ControllerBase
+    public class Inv_Dashboard : ControllerBase
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions _api;
@@ -26,7 +26,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
 
-        public Inv_StatusManager(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Inv_Dashboard(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
             _api = api;
@@ -187,6 +187,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             string sqlAll="",sqlNoStock="",sqlMinQty="",sqlReOrder="",criteria="";
+            string sqlTopSell="",sqlInvValue="";
 
             if(bAllBranchData)
                 criteria="N_CompanyID ="+nCompanyID;
@@ -198,11 +199,20 @@ namespace SmartxAPI.Controllers
             sqlMinQty = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock <=N_MinQty";
             sqlReOrder = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock <=N_ReOrderQty";
 
+            sqlTopSell = "select Top 5 * from vw_TopSellingItem where N_CompanyID="+nCompanyID+" order by N_Count Desc";
+            sqlInvValue = "SELECT vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category,SUM(vw_InvStock_Status.N_Factor*vw_InvStock_Status.N_Cost*vw_InvStock_Status.N_Qty) AS N_Value "
+                            +"FROM vw_InvStock_Status INNER JOIN Inv_ItemMaster ON vw_InvStock_Status.N_ItemID = Inv_ItemMaster.N_ItemID AND vw_InvStock_Status.N_CompanyID = Inv_ItemMaster.N_CompanyID INNER JOIN "
+                            +"Inv_ItemCategory ON Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CategoryID = Inv_ItemCategory.N_CategoryID AND Inv_ItemMaster.N_CompanyID = Inv_ItemCategory.N_CompanyID "
+                            +"WHERE vw_InvStock_Status.N_CompanyID="+nCompanyID+" "
+                            +"GROUP BY vw_InvStock_Status.N_CompanyID, Inv_ItemCategory.X_CategoryCode, Inv_ItemCategory.X_Category";
+
             SortedList Data = new SortedList();
             DataTable AllItem = new DataTable();
             DataTable NoStock = new DataTable();
             DataTable MinQty = new DataTable();
             DataTable ReOrder = new DataTable();
+            DataTable TopSell = new DataTable();
+            DataTable InvValue = new DataTable();
 
             try
             {
@@ -214,17 +224,24 @@ namespace SmartxAPI.Controllers
                     NoStock = dLayer.ExecuteDataTable(sqlNoStock, Params, connection);
                     MinQty = dLayer.ExecuteDataTable(sqlMinQty, Params, connection);
                     ReOrder = dLayer.ExecuteDataTable(sqlReOrder, Params, connection);
+                    TopSell = dLayer.ExecuteDataTable(sqlTopSell, Params, connection);
+                    InvValue = dLayer.ExecuteDataTable(sqlInvValue, Params, connection);
                 }
 
                 AllItem.AcceptChanges();
                 NoStock.AcceptChanges();
                 MinQty.AcceptChanges();
                 ReOrder.AcceptChanges();
+                TopSell.AcceptChanges();
+                InvValue.AcceptChanges();
 
                 if (AllItem.Rows.Count > 0) Data.Add("allItemCount", AllItem);
                 if (NoStock.Rows.Count > 0) Data.Add("noStocCount", NoStock);
                 if (MinQty.Rows.Count > 0) Data.Add("minQtyCount", MinQty);
                 if (ReOrder.Rows.Count > 0) Data.Add("reOrderCount", ReOrder);
+
+                if (TopSell.Rows.Count > 0) Data.Add("topSellItems", TopSell);
+                if (InvValue.Rows.Count > 0) Data.Add("categoryWiseInvValue", InvValue);
 
                 return Ok(_api.Success(Data));
 

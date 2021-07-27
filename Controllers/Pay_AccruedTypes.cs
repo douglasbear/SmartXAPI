@@ -104,11 +104,22 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyId);
             if (xSearchkey != null && xSearchkey.Trim() != "")
 
-                Searchkey = " and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%')";
+                Searchkey = " and (x_VacCode like '%" + xSearchkey + "%' or Name like'%" + xSearchkey + "%'or x_TypeName like'%" + xSearchkey + "%' or x_Period like'%" + xSearchkey + "%')";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_VacTypeID desc";
             else
+            {
+                   switch (xSortBy.Split(" ")[0])
+                        {
+                             case "x_VacCode":
+                                xSortBy = "N_VacTypeID " + xSortBy.Split(" ")[1];
+                                break;
+                           
+                            default: break;
+                        }
+            
                 xSortBy = " order by " + xSortBy;
+        }
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 and N_CountryID=" + nCountryID + " " + Searchkey + xSortBy;
@@ -133,7 +144,8 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                        //return Ok(_api.Warning("No Results Found"));
+                          return Ok(_api.Success(OutPut));
                     }
                     else
                     {
@@ -285,7 +297,7 @@ namespace SmartxAPI.Controllers
 
 
                         dLayer.DeleteData("Pay_VacationTypeDetails", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
-                        dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
+                        // dLayer.DeleteData("Pay_VacationType", "N_VacTypeID", n_VacTypeID, "", connection, transaction);
                       
 
 

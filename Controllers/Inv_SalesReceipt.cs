@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%')";
+                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";
@@ -65,10 +65,10 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "N_PayReceiptId " + xSortBy.Split(" ")[1];
                                 break;
                             case "date":
-                                xSortBy = "Cast(date as DateTime )" + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(DATE as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "amount":
-                                xSortBy = "Cast(REPLACE(amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;        
                             default: break;
                         }
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and (X_type='SR' OR X_type='SA')" ;
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess=0 and (X_type='SR' OR X_type='SA')";
                         }
                         else
                         {
@@ -433,12 +433,27 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     DataRow Master = MasterTable.Rows[0];
+                    double nAmount = 0, nAmountF = 0;
                     var xVoucherNo = Master["x_VoucherNo"].ToString();
                     var xType = Master["x_Type"].ToString();
+                    string xDesc = "";
                     int nCompanyId = myFunctions.getIntVAL(Master["n_CompanyID"].ToString());
                     int PayReceiptId = myFunctions.getIntVAL(Master["n_PayReceiptId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(Master["n_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
+                    nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
+                    nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
+                    if (MasterTable.Columns.Contains("x_Desc"))
+                    {
+                        xDesc = Master["x_Desc"].ToString();
+                    }
+                    if (MasterTable.Columns.Contains("n_Amount"))
+                        MasterTable.Columns.Remove("n_Amount");
+                    if (MasterTable.Columns.Contains("n_AmountF"))
+                        MasterTable.Columns.Remove("n_AmountF");
+                    if (MasterTable.Columns.Contains("x_Desc"))
+                        MasterTable.Columns.Remove("x_Desc");
+
 
                     SortedList InvCounterParams = new SortedList()
                     {
@@ -485,6 +500,76 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable To Save Customer Payment"));
+                    }
+                    if (xType == "SA")
+                    {
+
+
+                        DetailTable.Clear();
+                        DataRow row = DetailTable.NewRow();
+
+                        if (DetailTable.Columns.Contains("N_CompanyID"))
+                            row["N_CompanyID"] = nCompanyId;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_CompanyID", typeof(int), nCompanyId);
+                        if (DetailTable.Columns.Contains("N_PayReceiptId"))
+                            row["N_PayReceiptId"] = PayReceiptId;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_PayReceiptId", typeof(int), PayReceiptId);
+                        if (DetailTable.Columns.Contains("N_InventoryId"))
+                            row["N_InventoryId"] = PayReceiptId;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_InventoryId", typeof(int), PayReceiptId);
+                        if (DetailTable.Columns.Contains("N_DiscountAmt"))
+                            row["N_DiscountAmt"] = 0;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_DiscountAmt", typeof(int), 0);
+                        if (DetailTable.Columns.Contains("N_DiscountAmtF"))
+                            row["N_DiscountAmtF"] = 0;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_DiscountAmtF", typeof(int), 0);
+                        if (DetailTable.Columns.Contains("N_Amount"))
+                            row["N_Amount"] = nCompanyId;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_Amount", typeof(double), nAmount);
+                        if (DetailTable.Columns.Contains("X_Description"))
+                            row["X_Description"] = xDesc;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "X_Description", typeof(string), xDesc);
+                        if (DetailTable.Columns.Contains("N_BranchID"))
+                            row["N_BranchID"] = myFunctions.getIntVAL(Master["N_BranchID"].ToString());
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_BranchID", typeof(int), myFunctions.getIntVAL(Master["N_BranchID"].ToString()));
+                        if (DetailTable.Columns.Contains("X_TransType"))
+                            row["X_TransType"] = xType;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "X_TransType", typeof(string), xType);
+                        if (DetailTable.Columns.Contains("N_AmountF"))
+                            row["N_AmountF"] = nAmountF;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_AmountF", typeof(double), nAmountF);
+                        if (DetailTable.Columns.Contains("N_AmtPaidFromAdvanceF"))
+                            row["N_AmtPaidFromAdvanceF"] = 0;
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_AmtPaidFromAdvanceF", typeof(double), 0);
+                        if (DetailTable.Columns.Contains("N_CurrencyID"))
+                            row["N_CurrencyID"] = myFunctions.getIntVAL(Master["N_CurrencyID"].ToString());
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_CurrencyID", typeof(int), myFunctions.getIntVAL(Master["N_CurrencyID"].ToString()));
+
+                        if (DetailTable.Columns.Contains("N_ExchangeRate"))
+                            row["N_ExchangeRate"] = myFunctions.getIntVAL(Master["N_ExchangeRate"].ToString());
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ExchangeRate", typeof(int), myFunctions.getIntVAL(Master["N_ExchangeRate"].ToString()));
+                        if (DetailTable.Columns.Contains("n_PayReceiptDetailsId"))
+                            {
+                                
+                            }
+                        else
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "n_PayReceiptDetailsId", typeof(int), 0);
+
+                        DetailTable.Rows.Add(row);
+
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -625,3 +710,4 @@ namespace SmartxAPI.Controllers
 
     }
 }
+

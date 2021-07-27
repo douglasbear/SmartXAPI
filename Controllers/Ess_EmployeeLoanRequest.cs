@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
             }
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (N_LoanID like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%')";
+                Searchkey = "and (N_LoanID like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%'or D_LoanIssueDate like'%" + xSearchkey + "%'or N_LoanAmount like'%" + xSearchkey + "%'or N_Installments like'%" + xSearchkey + "%'or D_LoanPeriodFrom like'%" + xSearchkey + "%'or D_LoanPeriodTo like'%" + xSearchkey + "%'or X_CurrentStatus like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_LoanID desc";

@@ -139,16 +139,22 @@ namespace SmartxAPI.Controllers
                                 paramList.Add("@xDBUri", activeDbUri);
                                 paramList.Add("@nUserLimit", appID);
 
+                                int expDays = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_TrialPeriod from AppMaster where N_AppID=@nAppID", paramList, olivCnn).ToString());
 
-                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1 from ClientApps", paramList, olivCnn);
+                                DateTime expDate = DateTime.Today.AddDays(expDays);
+
+                                paramList.Add("@dExpDate", expDate);
+
+
+                                int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0 from ClientApps", paramList, olivCnn);
                                 if (rows <= 0)
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
                             }
                             connectionString = cofig.GetConnectionString(activeDbUri);
-                            if(companyid>0)
-                            {
+                            // if(companyid>0)
+                            // {
                                 using (SqlConnection cnn = new SqlConnection(connectionString))
                                 {
                                     cnn.Open();
@@ -167,9 +173,9 @@ namespace SmartxAPI.Controllers
                                     companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                                     companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
                                 }
-                            }else{
-                                return Ok(_api.Error("CompanyNotFound"));
-                            }
+                            // }else{
+                            //     return Ok(_api.Error("CompanyNotFound"));
+                            // }
                         }
                     }
                     catch (Exception ex)
