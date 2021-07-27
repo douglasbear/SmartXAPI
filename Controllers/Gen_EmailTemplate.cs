@@ -54,9 +54,11 @@ namespace SmartxAPI.Controllers
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["X_Subject"].ToString();
+                    int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     Toemail = Email.ToString();
                     object companyemail = "";
                     object companypassword = "";
+                    object Company, Oppportunity, Contact;
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -75,8 +77,20 @@ namespace SmartxAPI.Controllers
                                 body = "";
 
 
+
+
                             string Sender = companyemail.ToString();
                             MailBody = body.ToString();
+                            if (nopportunityID > 0)
+                            {
+                                Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2", Params, connection, transaction);
+                                Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2", Params, connection, transaction);
+                                Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2", Params, connection, transaction);
+                                MailBody.Replace("@companyName", Company.ToString());
+                                MailBody.Replace("@contactName", Contact.ToString());
+                                MailBody.Replace("@LeadName", Oppportunity.ToString());
+
+                            }
                             string Subject = Subjectval;
 
 
