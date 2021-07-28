@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
             {
                 N_Flag = 1;
             }
-            string sqlCommandText = "SP_Inv_AssetItemcategory_Disp  " + myCompanyID._CompanyID + "," + myCompanyID._FnYearID + "," + N_Flag + "";
+            string sqlCommandText = "SP_Inv_AssetItemcategory_Disp  " + myFunctions.GetCompanyID(User) + "," + nFnYearID + "," + N_Flag + "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nCategoryID);

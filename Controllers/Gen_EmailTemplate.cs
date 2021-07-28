@@ -25,13 +25,15 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID = 1348;
+        private readonly IMyAttachments myAttachments;
 
-        public Gen_EmailTemplate(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf)
+        public Gen_EmailTemplate(IDataAccessLayer dl, IApiFunctions _api, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = _api;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            myAttachments = myAtt;
         }
         [AllowAnonymous]
 
@@ -53,10 +55,13 @@ namespace SmartxAPI.Controllers
                     string Toemail = "";
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
-                    string Subjectval = MasterRow["X_Subject"].ToString();
+                    string Subjectval = MasterRow["x_TempSubject"].ToString();
+                    int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
+                    int nTemplateID = myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
                     Toemail = Email.ToString();
                     object companyemail = "";
                     object companypassword = "";
+                    object Company, Oppportunity, Contact, CustomerID;
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -74,11 +79,26 @@ namespace SmartxAPI.Controllers
                             else
                                 body = "";
 
-
                             string Sender = companyemail.ToString();
-                            MailBody = body.ToString();
                             string Subject = Subjectval;
+                            MailBody = body.ToString();
+                            if (nopportunityID > 0)
+                            {
+                                Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                
+                                
+                                MailBody=MailBody.Replace("@CompanyName",Company.ToString());
+                                MailBody=MailBody.Replace("@ContactName", Contact.ToString());
+                                MailBody=MailBody.Replace("@LeadName", Oppportunity.ToString());
 
+                                Subject=Subject.Replace("@CompanyName",Company.ToString());
+                                Subject=Subject.Replace("@ContactName", Contact.ToString());
+                                Subject=Subject.Replace("@LeadName", Oppportunity.ToString());
+                                // DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(CustomerID.ToString()),nTemplateID, this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                            }
 
 
                             SmtpClient client = new SmtpClient
@@ -105,6 +125,14 @@ namespace SmartxAPI.Controllers
                             string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
                             if (Bcc != "")
                                 message.Bcc.Add(Bcc);
+
+                            //Attachments
+                            DataTable Attachments = dLayer.ExecuteDataTable("select * from Dms_ScreenAttachments where N_CompanyID=" + companyid + " and n_formid=" + 1348 + " and N_TransID=" + nTemplateID, Params, connection, transaction);
+                            foreach (DataRow var in Attachments.Rows)
+                            {
+                                message.Attachments.Add(new Attachment(var["x_refName"].ToString()));
+
+                            }
                             client.Send(message);
 
                         }
@@ -112,13 +140,16 @@ namespace SmartxAPI.Controllers
                     Master.Columns.Remove("x_TemplateCode");
                     Master.Columns.Remove("x_TemplateName");
                     Master.Columns.Remove("n_TemplateID");
+                    Master.Columns.Remove("x_TempSubject");
+                    if(Master.Columns.Contains("n_PkeyId"))
+                        Master.Columns.Remove("n_PkeyId");
+                    if(Master.Columns.Contains("n_PkeyIdSub"))
+                        Master.Columns.Remove("n_PkeyIdSub");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
-                    var X_Body = Master.Rows[0]["X_Body"].ToString();
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subjectval);
                     Master.Columns.Remove("X_Body");
 
                     int N_LogID = dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
-
-                    //dLayer.ExecuteNonQuery("update Gen_MailLog set X_Body='" + X_Body + "' where N_CompanyID="+companyid+" and N_MailLogID=" + N_LogID, Params, connection, transaction);
                     transaction.Commit();
 
                     return Ok(api.Success("Email Send"));
@@ -180,6 +211,10 @@ namespace SmartxAPI.Controllers
                     }
                     var X_Body = MasterTable.Rows[0]["X_Body"].ToString();
                     MasterTable.Columns.Remove("X_Body");
+                    if(MasterTable.Columns.Contains("n_PkeyIdSub"))
+                        MasterTable.Columns.Remove("n_PkeyIdSub");
+                    if(MasterTable.Columns.Contains("n_PkeyId"))
+                        MasterTable.Columns.Remove("n_PkeyId");
 
                     nTemplateID = dLayer.SaveData("Gen_MailTemplates", "N_TemplateID", MasterTable, connection, transaction);
                     if (nTemplateID <= 0)
