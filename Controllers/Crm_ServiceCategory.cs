@@ -33,14 +33,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ServiceCategoryDetails(string xServiceCategory)
+        public ActionResult ServiceCategoryDetails(int nServiceCategoryID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_CrmServiceCategory where N_CompanyID=@p1 and X_ServiceCategoryCode=@p3";
+            string sqlCommandText = "select * from vw_CrmServiceCategory where N_CompanyID=@p1 and N_ServiceCategoryID=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", xServiceCategory);
+            Params.Add("@p3", nServiceCategoryID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
