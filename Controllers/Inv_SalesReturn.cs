@@ -227,9 +227,10 @@ namespace SmartxAPI.Controllers
 
                     SalesReturn = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SalesReturn = _api.Format(SalesReturn, "Master");
+        
                     if (xReceiptNo != "" && xReceiptNo != null)
                     {
-                        object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + SalesReturn.Rows[0]["N_TaxCategoryID"] + " and N_CompanyID=" + nCompanyId, Params, connection);
+                        object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + myFunctions.getIntVAL(SalesReturn.Rows[0]["N_TaxCategoryID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                         if (MainTax != null)
                         {
                             SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "x_DisplayName", typeof(string), null);
@@ -240,7 +241,7 @@ namespace SmartxAPI.Controllers
                     }
                     if(xReceiptNo==null && !SalesReturn.Columns.Contains("x_DisplayName") )
                     {
-                         object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + SalesReturn.Rows[0]["N_TaxCategoryID"] + " and N_CompanyID=" + nCompanyId, Params, connection);
+                         object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + myFunctions.getIntVAL(SalesReturn.Rows[0]["N_TaxCategoryID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                         if (MainTax != null)
                         {
                             SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "x_DisplayName", typeof(string), null);
