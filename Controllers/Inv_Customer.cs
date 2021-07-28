@@ -107,6 +107,14 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_CustomerID desc";
             else
             {
+                 switch (xSortBy.Split(" ")[0])
+                        {
+                            case "x_CustomerCode":
+                                xSortBy = "N_CustomerID " + xSortBy.Split(" ")[1];
+                                break;
+                           
+                            default: break;
+                        }
              xSortBy = " order by " + xSortBy;
             }
               

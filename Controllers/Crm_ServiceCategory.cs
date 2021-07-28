@@ -29,7 +29,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 1307;
+            FormID = 1375;
         }
 
         [HttpGet("details")]
@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_CrmServiceCategory where N_CompanyID=@p1 and X_WActivityCode=@p3";
+            string sqlCommandText = "select * from vw_CrmServiceCategory where N_CompanyID=@p1 and X_ServiceCategoryCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xServiceCategory);
             try
@@ -84,12 +84,27 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_ServiceCategoryCode"].ToString();
                     if (values == "@Auto")
                     {
+                  
                         Params.Add("N_CompanyID", nCompanyID);
-                        Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
-                        ActivityCode = dLayer.GetAutoNumber("Crm_ServiceCategory", "X_ServiceCategoryCode", Params, connection, transaction);
-                        if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Code")); }
-                        MasterTable.Rows[0]["X_ServiceCategoryCode"] = ActivityCode;
+                        Params.Add("N_YearID", nFnYearId);
+
+                        while (true)
+                        {
+                            ActivityCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Crm_ServiceCategory Where X_ServiceCategoryCode ='" + ActivityCode + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        values = ActivityCode;
+
+
+                        if (values == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate")); }
+                        MasterTable.Rows[0]["X_ServiceCategoryCode"] = values;
+
+                    
+
+                       
                     }
 
                     nServiceCategoryID = dLayer.SaveData("Crm_ServiceCategory", "N_ServiceCategoryID", MasterTable, connection, transaction);
@@ -98,7 +113,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-                    transaction.Commit();
+                        transaction.Commit();
                     return Ok(api.Success("Service Category Created"));
                 }
             }

@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%'or X_RequestTypeDesc like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%'or X_RequestTypeDesc like'%" + xSearchkey + "%'or D_RequestDate like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%'or X_CurrentStatus like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by X_RequestCode desc";
@@ -429,6 +429,9 @@ namespace SmartxAPI.Controllers
                     string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Employee Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_EmpAnyRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error")
                     {
+                        if(ButtonTag=="6" ||ButtonTag=="0")
+                            myAttachments.DeleteAttachment(dLayer, 1,nRequestID,EmpID, nFnYearID, this.FormID,User, transaction, connection);
+
                         transaction.Commit();
                         return Ok(api.Success("Employee Request " + status + " Successfully"));
                     }

@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%')";
+                        Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_PayReceiptId desc";
@@ -65,11 +65,11 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "N_PayReceiptId " + xSortBy.Split(" ")[1];
                                 break;
                             case "date":
-                                xSortBy = "Cast(date as DateTime )" + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(DATE as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "amount":
-                                xSortBy = "Cast(REPLACE(amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
-                                break;
+                                xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;        
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;

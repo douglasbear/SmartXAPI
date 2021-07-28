@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%')";
+                        Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%' or N_BalanceAmt like '%" + xSearchkey + "%' or N_DueDays like '%" + xSearchkey + "%')";
                     if (CheckClosedYear == false)
                     {
                         if (bAllBranchData == true)
@@ -91,6 +91,9 @@ namespace SmartxAPI.Controllers
                                 break;
                             case "x_BillAmt":
                                 xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                break;
+                                case "n_BalanceAmt":
+                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -1291,6 +1294,7 @@ namespace SmartxAPI.Controllers
                                         if (nQuotationID > 0)
                                             dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
 
+                                myAttachments.DeleteAttachment(dLayer, 1,nInvoiceID,N_CustomerId, nFnYearID, N_FormID,User, transaction, connection);
                             }
                         }
                         else
