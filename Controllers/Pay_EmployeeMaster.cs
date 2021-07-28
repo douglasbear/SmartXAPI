@@ -1019,7 +1019,7 @@ namespace SmartxAPI.Controllers
 
                             // dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod,N_BranchID=@N_BranchID,N_NationalityID=@N_NationalityID,X_Nationality=@X_Nationality where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
 
-string empImage = myFunctions.ContainColumn("i_Employe_Image", tmpEmployee) ? tmpEmployee.Rows[0]["i_Employe_Image"].ToString() : "";
+                    string empImage = myFunctions.ContainColumn("i_Employe_Image", tmpEmployee) ? tmpEmployee.Rows[0]["i_Employe_Image"].ToString() : "";
                     Byte[] empImageBitmap = new Byte[empImage.Length];
                     empImageBitmap = Convert.FromBase64String(empImage);
                     if (myFunctions.ContainColumn("i_Employe_Image", tmpEmployee))
