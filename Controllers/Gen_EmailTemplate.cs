@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
                     string Toemail = "";
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
-                    string Subjectval = MasterRow["X_Subject"].ToString();
+                    string Subjectval = MasterRow["x_TempSubject"].ToString();
                     int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     int nTemplateID = myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
                     Toemail = Email.ToString();
@@ -90,9 +90,13 @@ namespace SmartxAPI.Controllers
                                 CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
                                 
                                 
-                                MailBody.Replace("@CompanyName",Company.ToString());
-                                MailBody.Replace("@ContactName", Contact.ToString());
-                                MailBody.Replace("@LeadName", Oppportunity.ToString());
+                                MailBody=MailBody.Replace("@CompanyName",Company.ToString());
+                                MailBody=MailBody.Replace("@ContactName", Contact.ToString());
+                                MailBody=MailBody.Replace("@LeadName", Oppportunity.ToString());
+
+                                Subject=Subject.Replace("@CompanyName",Company.ToString());
+                                Subject=Subject.Replace("@ContactName", Contact.ToString());
+                                Subject=Subject.Replace("@LeadName", Oppportunity.ToString());
                                 // DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(CustomerID.ToString()),nTemplateID, this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
                             }
 
@@ -136,11 +140,13 @@ namespace SmartxAPI.Controllers
                     Master.Columns.Remove("x_TemplateCode");
                     Master.Columns.Remove("x_TemplateName");
                     Master.Columns.Remove("n_TemplateID");
+                    Master.Columns.Remove("x_TempSubject");
                     if(Master.Columns.Contains("n_PkeyId"))
                         Master.Columns.Remove("n_PkeyId");
                     if(Master.Columns.Contains("n_PkeyIdSub"))
                         Master.Columns.Remove("n_PkeyIdSub");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subjectval);
                     Master.Columns.Remove("X_Body");
 
                     int N_LogID = dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
