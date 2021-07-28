@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
                     double BalanceAmt = 0;
                     foreach (DataRow var in dt.Rows)
                     {
-                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myCompanyID._CompanyID, Params, connection);
+                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myFunctions.GetCompanyID(User), Params, connection);
                         if (objBal != null)
                         {
                             BalanceAmt = myFunctions.getVAL(objBal.ToString());
@@ -532,12 +532,12 @@ namespace SmartxAPI.Controllers
                         if (CustomerID != null)
                         {
                             if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
-                                saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString(), Con);
+                                saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString(), Con);
                             else
-                                saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=0", Con);
+                                saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0", Con);
                         }
                         else
-                            saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=0", Con);
+                            saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0", Con);
                     }
 
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesId"].ToString()), this.N_FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);

@@ -310,7 +310,7 @@ namespace SmartxAPI.Controllers
                         if (VendorDebitID != null)
                         {
                             int N_AdjustmentID = myFunctions.getIntVAL(VendorDebitID.ToString());
-                            dLayer.ExecuteNonQuery("SP_Delete_Trans_With_Accounts " + myCompanyID._CompanyID.ToString() + ",'VENDOR DEBIT NOTE'," + N_AdjustmentID.ToString() + ",'" + nUserID + "','" + myCompanyID._SystemName + "'", connection, transaction);
+                            dLayer.ExecuteNonQuery("SP_Delete_Trans_With_Accounts " + myFunctions.GetCompanyID(User) + ",'VENDOR DEBIT NOTE'," + N_AdjustmentID.ToString() + ",'" + nUserID + "','" + myCompanyID._SystemName + "'", connection, transaction);
                         }
                     }
 
