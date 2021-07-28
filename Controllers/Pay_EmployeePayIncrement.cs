@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
 
 
             //string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
-            string sqlAcrual = "select * from [vw_PayAccruedCode_List] Where N_CompanyID=@p1 and isnull(N_CountryID,0) =1 order by X_Type desc";
+            string sqlAcrual = "select * from [vw_PayAccruedCode_List] Where N_CompanyID=@p1 order by X_Type desc";
             string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2 and N_PaymentID in (6,7)";
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
 
@@ -131,15 +131,8 @@ namespace SmartxAPI.Controllers
                 DS.Tables.Add(dtAccrual);
                 DS.Tables.Add(dtBenefits);
                 DS.Tables.Add(dtOtherinfo);
+                return Ok(api.Success(DS));
 
-                if (dtOtherinfo.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(DS));
-                }
             }
             catch (Exception e)
             {

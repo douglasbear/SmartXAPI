@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or d_ClosingDate like'%" + xSearchkey + "%'or x_nextStep like'%" + xSearchkey + "%'or x_Contact like'%" + xSearchkey + "%'or x_Mobile like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%'or x_StatusType like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_OpportunityID desc";
@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
                                 Activity.Columns.Remove("N_WActivityDetailID");
                                 int Order = 1;
                                 double Minuts = 0;
-                                object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection,transaction);
+                                object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection, transaction);
                                 foreach (DataRow var in Activity.Rows)
                                 {
                                     ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
@@ -219,6 +219,11 @@ namespace SmartxAPI.Controllers
                                     var["n_ActivityID"] = 0;
                                     var["N_Order"] = Order;
                                     var["X_Contact"] = Contact;
+                                    if (Order == 1)
+                                    {
+                                        var["b_closed"] = 1;
+                                        var["x_status"] = "Closed";
+                                    }
                                     if (var["N_ReminderUnitID"].ToString() == "248")
                                         Minuts = 1;
                                     else if (var["N_ReminderUnitID"].ToString() == "247")
