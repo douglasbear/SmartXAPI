@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
                             case "orderNo":
                                 xSortBy = "N_SalesOrderId " + xSortBy.Split(" ")[1];
                                 break;
-                             case "orderDate":
+                            case "orderDate":
                                 xSortBy = "Cast([Order Date] as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "n_Amount":
@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID,int n_OpportunityID)
+        public ActionResult GetSalesOrderDetails(int? nCompanyID, string xOrderNo, int nFnYearID, int nLocationID, bool bAllBranchData, int nBranchID, int nQuotationID, int n_OpportunityID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -173,13 +173,28 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    //CRM Quotation Checking
+                    object N_QuotationID = 0;
+                    if (n_OpportunityID > 0)
+                    {
+                        N_QuotationID = dLayer.ExecuteScalar("Select N_QuotationID from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_OpportunityID=" + n_OpportunityID, Params, connection);
+                        if (N_QuotationID != null)
+                            nQuotationID = myFunctions.getIntVAL(N_QuotationID.ToString());
+                    }
+
                     if (nQuotationID > 0)
                     {
+
                         Params.Add("@nQuotationID", nQuotationID);
                         Mastersql = "select * from vw_Inv_SalesQuotationMaster_Disp where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
+                        if (!MasterTable.Columns.Contains("N_OpportunityID"))
+                        {
+                            MasterTable.Columns.Add("N_OpportunityID");
+                            MasterTable.Rows[0]["N_OpportunityID"] = n_OpportunityID.ToString();
+                        }
 
                         if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerId"].ToString()) == 0)
                         {
@@ -208,18 +223,6 @@ namespace SmartxAPI.Controllers
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
-
-                        // if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerId"].ToString()) == 0)
-                        // {
-                        //     object CustomerID = dLayer.ExecuteScalar("select N_CustomerId from Inv_Customer where N_CompanyID=@nCompanyID and N_CrmCompanyID=" + MasterTable.Rows[0]["n_CrmCompanyID"].ToString(), Params, connection);
-                        //     object CustomerName = dLayer.ExecuteScalar("select X_CustomerName from Inv_Customer where N_CompanyID=@nCompanyID and N_CrmCompanyID=" + MasterTable.Rows[0]["n_CrmCompanyID"].ToString(), Params, connection);
-                        //     if (CustomerID != null)
-                        //     {
-                        //         MasterTable.Rows[0]["N_CustomerId"] = CustomerID.ToString();
-                        //         MasterTable.Rows[0]["X_CustomerName"] = CustomerName.ToString();
-                        //     }
-
-                        // }
                         DetailSql = "";
                         DetailSql = "select * from vw_OpportunitytoSalesOrderDetails where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
                         DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
@@ -534,7 +537,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-                 
+
                     object objProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + nSalesOrderID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
                     if (objProcessed == null) objProcessed = 0;
                     if (myFunctions.getIntVAL(objProcessed.ToString()) == 0)
@@ -554,7 +557,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            myAttachments.DeleteAttachment(dLayer, 1,nSalesOrderID,N_CustomerId, nFnYearID, this.FormID,User, transaction, connection);
+                            myAttachments.DeleteAttachment(dLayer, 1, nSalesOrderID, N_CustomerId, nFnYearID, this.FormID, User, transaction, connection);
 
                             transaction.Commit();
                             return Ok(_api.Success("Sales Order deleted"));
