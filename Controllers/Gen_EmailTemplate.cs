@@ -224,17 +224,27 @@ namespace SmartxAPI.Controllers
 
                     string payCode = MasterTable.Rows[0]["X_TemplateCode"].ToString();
                     int payId = nTemplateID;
-                    string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
-                    int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
-                     Attachment.Columns.Remove("x_FolderName");
-                   
-                    Attachment.Columns.Remove("x_PartyCode");
-                    Attachment.Columns.Remove("x_TransCode");
-                    Attachment.AcceptChanges();
+
 
                     //  string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
                     if (Attachment.Rows.Count > 0)
+                    {
+                        string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
+                        int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
+                        Attachment.Columns.Remove("x_FolderName");
+
+                        Attachment.Columns.Remove("x_PartyCode");
+                        Attachment.Columns.Remove("x_TransCode");
+                        if(Attachment.Columns.Contains("n_PartyID1"))
+                            Attachment.Columns.Remove("n_PartyID1");
+                        if(Attachment.Columns.Contains("n_ActionID"))
+                            Attachment.Columns.Remove("n_ActionID");
+                        if(Attachment.Columns.Contains("tempFileName"))
+                            Attachment.Columns.Remove("tempFileName");
+                        
+                        Attachment.AcceptChanges();
                         myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId, "", partyCode, partyID, "Email", User, connection, transaction);
+                    }
 
                     if (nTemplateID <= 0)
                     {
