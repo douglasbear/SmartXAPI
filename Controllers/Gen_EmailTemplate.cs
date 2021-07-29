@@ -65,6 +65,7 @@ namespace SmartxAPI.Controllers
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+                    string Subject="";
                     if (Toemail.ToString() != "")
                     {
                         if (companyemail.ToString() != "")
@@ -80,7 +81,7 @@ namespace SmartxAPI.Controllers
                                 body = "";
 
                             string Sender = companyemail.ToString();
-                            string Subject = Subjectval;
+                            Subject = Subjectval;
                             MailBody = body.ToString();
                             if (nopportunityID > 0)
                             {
@@ -146,7 +147,7 @@ namespace SmartxAPI.Controllers
                     if(Master.Columns.Contains("n_PkeyIdSub"))
                         Master.Columns.Remove("n_PkeyIdSub");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
-                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subjectval);
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subject);
                     Master.Columns.Remove("X_Body");
 
                     int N_LogID = dLayer.SaveData("Gen_MailLog", "N_MailLogID", Master, connection, transaction);
