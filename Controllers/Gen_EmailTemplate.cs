@@ -188,9 +188,11 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
+                DataTable Attachment = ds.Tables["attachments"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nTemplateID = 0;
+                
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -200,6 +202,7 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string TemplateCode = "";
                     var values = MasterTable.Rows[0]["X_TemplateCode"].ToString();
+                    
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -217,6 +220,18 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("n_PkeyId");
 
                     nTemplateID = dLayer.SaveData("Gen_MailTemplates", "N_TemplateID", MasterTable, connection, transaction);
+
+                    string payCode = MasterTable.Rows[0]["X_TemplateCode"].ToString(); 
+                    int payId = nTemplateID; 
+                    string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString(); 
+                    int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString()); 
+                    
+                    //string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyCode, partyID, "Email", User, connection, transaction);
+                    transaction.Commit();
+
+                    
                     if (nTemplateID <= 0)
                     {
                         transaction.Rollback();
