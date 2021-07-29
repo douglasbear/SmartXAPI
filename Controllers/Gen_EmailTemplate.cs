@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
-                    string Subject="";
+                    string Subject = "";
                     if (Toemail.ToString() != "")
                     {
                         if (companyemail.ToString() != "")
@@ -89,16 +89,16 @@ namespace SmartxAPI.Controllers
                                 Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
                                 Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
                                 CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                
-                                
-                                MailBody=MailBody.Replace("@CompanyName",Company.ToString());
-                                MailBody=MailBody.Replace("@ContactName", Contact.ToString());
-                                MailBody=MailBody.Replace("@LeadName", Oppportunity.ToString());
 
-                                Subject=Subject.Replace("@CompanyName",Company.ToString());
-                                Subject=Subject.Replace("@ContactName", Contact.ToString());
-                                Subject=Subject.Replace("@LeadName", Oppportunity.ToString());
-                                // DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(CustomerID.ToString()),nTemplateID, this.N_FormID, myFunctions.getIntVAL(Master.Rows[0]["N_FnYearID"].ToString()), User, connection);
+
+                                MailBody = MailBody.Replace("@CompanyName", Company.ToString());
+                                MailBody = MailBody.Replace("@ContactName", Contact.ToString());
+                                MailBody = MailBody.Replace("@LeadName", Oppportunity.ToString());
+
+                                Subject = Subject.Replace("@CompanyName", Company.ToString());
+                                Subject = Subject.Replace("@ContactName", Contact.ToString());
+                                Subject = Subject.Replace("@LeadName", Oppportunity.ToString());
+
                             }
 
 
@@ -142,9 +142,9 @@ namespace SmartxAPI.Controllers
                     Master.Columns.Remove("x_TemplateName");
                     Master.Columns.Remove("n_TemplateID");
                     Master.Columns.Remove("x_TempSubject");
-                    if(Master.Columns.Contains("n_PkeyId"))
+                    if (Master.Columns.Contains("n_PkeyId"))
                         Master.Columns.Remove("n_PkeyId");
-                    if(Master.Columns.Contains("n_PkeyIdSub"))
+                    if (Master.Columns.Contains("n_PkeyIdSub"))
                         Master.Columns.Remove("n_PkeyIdSub");
                     Master = myFunctions.AddNewColumnToDataTable(Master, "N_MailLogID", typeof(int), 0);
                     Master = myFunctions.AddNewColumnToDataTable(Master, "X_Subject", typeof(string), Subject);
@@ -193,7 +193,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nTemplateID = 0;
-                
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string TemplateCode = "";
                     var values = MasterTable.Rows[0]["X_TemplateCode"].ToString();
-                    
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -215,24 +215,22 @@ namespace SmartxAPI.Controllers
                     }
                     var X_Body = MasterTable.Rows[0]["X_Body"].ToString();
                     MasterTable.Columns.Remove("X_Body");
-                    if(MasterTable.Columns.Contains("n_PkeyIdSub"))
+                    if (MasterTable.Columns.Contains("n_PkeyIdSub"))
                         MasterTable.Columns.Remove("n_PkeyIdSub");
-                    if(MasterTable.Columns.Contains("n_PkeyId"))
+                    if (MasterTable.Columns.Contains("n_PkeyId"))
                         MasterTable.Columns.Remove("n_PkeyId");
 
                     nTemplateID = dLayer.SaveData("Gen_MailTemplates", "N_TemplateID", MasterTable, connection, transaction);
 
-                    string payCode = MasterTable.Rows[0]["X_TemplateCode"].ToString(); 
-                    int payId = nTemplateID; 
-                    string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString(); 
-                    int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString()); 
-                    
-                    //string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
-                   
-                   // myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyCode, partyID, "Email", User, connection, transaction);
-                    //transaction.Commit();
+                    string payCode = MasterTable.Rows[0]["X_TemplateCode"].ToString();
+                    int payId = nTemplateID;
+                    string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
+                    int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
 
-                    
+                    //  string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
+                    if (Attachment.Rows.Count > 0)
+                        myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId, "", partyCode, partyID, "Email", User, connection, transaction);
+
                     if (nTemplateID <= 0)
                     {
                         transaction.Rollback();
