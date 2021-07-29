@@ -226,6 +226,11 @@ namespace SmartxAPI.Controllers
                     int payId = nTemplateID;
                     string partyCode = Attachment.Rows[0]["x_PartyCode"].ToString();
                     int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString());
+                     Attachment.Columns.Remove("x_FolderName");
+                   
+                    Attachment.Columns.Remove("x_PartyCode");
+                    Attachment.Columns.Remove("x_TransCode");
+                    Attachment.AcceptChanges();
 
                     //  string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
                     if (Attachment.Rows.Count > 0)
