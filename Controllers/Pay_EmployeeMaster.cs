@@ -969,9 +969,11 @@ namespace SmartxAPI.Controllers
                             if(tmpEmployee.Rows.Count>0){
                                  for (int k = 0; k < tmpEmployee.Columns.Count; k++)
                                         {
-                                             for (int l = 0; l < MasterTable.Columns.Count; l++){
+                                             for (int l = 0; l < MasterTable.Columns.Count; l++){                    
                                             if (tmpEmployee.Columns[k].ColumnName.ToString().ToLower() == MasterTable.Columns[l].ColumnName.ToString().ToLower())
                                             {
+                                                if(tmpEmployee.Columns[k].ColumnName.ToString().ToLower()=="i_Employe_Image")
+                                                {}
                                                 tmpEmployee.Rows[0][tmpEmployee.Columns[k].ColumnName] = MasterTable.Rows[0][MasterTable.Columns[l].ColumnName].ToString();
                                             }
                                             }
