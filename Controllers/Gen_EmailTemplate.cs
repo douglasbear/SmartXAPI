@@ -227,9 +227,9 @@ namespace SmartxAPI.Controllers
                     int partyID = myFunctions.getIntVAL(Attachment.Rows[0]["n_PartyID"].ToString()); 
                     
                     //string partyName= Attachment.Rows[0]["x_PartyName"].ToString();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyCode, partyID, "Email", User, connection, transaction);
-                    transaction.Commit();
+                   
+                   // myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId , partyCode, partyID, "Email", User, connection, transaction);
+                    //transaction.Commit();
 
                     
                     if (nTemplateID <= 0)
