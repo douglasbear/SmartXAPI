@@ -296,7 +296,7 @@ namespace SmartxAPI.Controllers
                         // }
                         // MasterTable.Rows[0]["n_UserID"] = globalUserID;
                         if(MasterTable.Columns.Contains("n_AppID"))
-                        MasterTable.Columns.Remove("n_AppID");
+                        MasterTable.Columns.Remove("n_AppID"); 
                         MasterTable.AcceptChanges();
                         userID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                         if (userID > 0)

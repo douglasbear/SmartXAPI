@@ -442,7 +442,7 @@ namespace SmartxAPI.Controllers
                         else
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_DiscountAmtF", typeof(int), 0);
                         if (DetailTable.Columns.Contains("N_Amount"))
-                            row["N_Amount"] = nCompanyId;
+                            row["N_Amount"] = nAmount;
                         else
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_Amount", typeof(double), nAmount);
                         if (DetailTable.Columns.Contains("X_Description"))
