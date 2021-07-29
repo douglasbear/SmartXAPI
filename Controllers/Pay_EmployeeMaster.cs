@@ -974,6 +974,10 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Columns.Remove("i_Employe_Image");
                             if (myFunctions.ContainColumn("i_Employe_Image", tmpEmployee))
                                 tmpEmployee.Columns.Remove("i_Employe_Image");
+                            if (myFunctions.ContainColumn("I_Employe_Sign", MasterTable))
+                                MasterTable.Columns.Remove("I_Employe_Sign");
+                            if (myFunctions.ContainColumn("I_Employe_Sign", tmpEmployee))
+                                tmpEmployee.Columns.Remove("I_Employe_Sign");
 
                             if(tmpEmployee.Rows.Count>0){
                                  for (int k = 0; k < tmpEmployee.Columns.Count; k++)
@@ -1256,6 +1260,10 @@ namespace SmartxAPI.Controllers
                                 MasterTable.Columns.Remove("i_Employe_Image");
                             if (myFunctions.ContainColumn("i_Employe_Image", tmpEmployee))
                                 tmpEmployee.Columns.Remove("i_Employe_Image");
+                             if (myFunctions.ContainColumn("I_Employe_Sign", MasterTable))
+                                MasterTable.Columns.Remove("I_Employe_Sign");
+                            if (myFunctions.ContainColumn("I_Employe_Sign", tmpEmployee))
+                                tmpEmployee.Columns.Remove("I_Employe_Sign");
 
                             if(tmpEmployee.Rows.Count>0){
                                  for (int k = 0; k < tmpEmployee.Columns.Count; k++)
