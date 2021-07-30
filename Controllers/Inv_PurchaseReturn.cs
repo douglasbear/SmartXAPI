@@ -333,7 +333,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_CreditNoteID"] = N_CreditNoteID;
                     }
                     int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
-                    transaction.Commit();
+                    
 
                     SortedList InsParams = new SortedList(){
                                 {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
@@ -350,6 +350,7 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_PurchaseReturnID", N_CreditNoteID);
                     Result.Add("x_PurchaseReturnNo", ReturnNo);
+                    transaction.Commit();
                     return Ok(_api.Success(Result, "Purchase Return Saved"));
                 }
             }
