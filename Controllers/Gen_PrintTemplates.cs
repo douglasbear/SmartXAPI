@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            reportPath = conf.GetConnectionString("ReportPath");
+            reportPath = conf.GetConnectionString("ReportLocation");
         }
 
         [HttpGet("user")]
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
                     //DataTable reportTable = new DataTable();
                     List<SortedList> templates = new List<SortedList>();
 
-                    X_ReportFilePath += reportPath + languageID + @"\printing\";
+                    X_ReportFilePath += reportPath  + @"printing/";
                     object ObjFolderName = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID = '" + nCompanyID + "' AND N_FormID = " + reportSelectingScreenID, Params, connection);
                     if (ObjFolderName != null)
                         X_FolderName = ObjFolderName.ToString();
@@ -154,15 +154,15 @@ namespace SmartxAPI.Controllers
                         X_FolderName = "";
                     if (reportSelectingScreenID > 0)
                     {
-                        X_ReportFilePath += X_FolderName + "\\";
+                        X_ReportFilePath += X_FolderName + @"/";
                         if (n_TaxTypeID == 1)
-                            X_ReportFilePath += @"vat\";
+                            X_ReportFilePath += @"vat/";
                         else if (n_TaxTypeID == 2)
-                            X_ReportFilePath += @"gst\";
+                            X_ReportFilePath += @"gst/";
                         else if (n_TaxTypeID == 3)
-                            X_ReportFilePath += @"gst+cess\";
+                            X_ReportFilePath += @"gst+cess/";
                         else
-                            X_ReportFilePath += @"none\";
+                            X_ReportFilePath += @"none/";
                         if (!System.IO.Directory.Exists(X_ReportFilePath))
                             Directory.CreateDirectory(X_ReportFilePath);
                         int index;
