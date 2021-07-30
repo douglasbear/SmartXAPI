@@ -169,7 +169,6 @@ namespace SmartxAPI.Controllers
                     secParams.Add("@xUserCategory", x_UserCategoryName);
                     secParams.Add("@nMenuID", N_MenuID);
                     secParams.Add("@nLanguageID", nLanguageID);
-                    secParams.Add("@nLanguageID", nLanguageID);
                     secParams.Add("@nIsCategoryID", 1);
                     
                     string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID,@nIsCategoryID";
