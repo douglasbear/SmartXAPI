@@ -42,8 +42,8 @@ namespace SmartxAPI.Controllers
             string sqlCommandLeadsList = "select CONVERT(varchar,d_EntryDate,101) as d_Entry,* from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
             string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
-            string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_quotationid=@p4";
-            string sqlCommandMailLogList = "Select CONVERT(varchar,d_Date,101) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_OpportunityID=@p3";
+            string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_opportunityID=@p3";
+            string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_OpportunityID=@p3 order by N_maillogid desc";
             string sqlCommandProjectList = "Select CONVERT(varchar,d_StartDate,101) as d_Start,CONVERT(varchar,d_EndDate,101) as d_End,* from crm_Project where N_CompanyID=@p1 and N_ProjectID=@p5";
 
             Params.Add("@p1", nCompanyID);
@@ -68,9 +68,8 @@ namespace SmartxAPI.Controllers
                     
 
                     object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
-                    if (N_Quotationid != null)
+                    if (N_OpportunityID != null)
                     {
-                        Params.Add("@p4", N_Quotationid);
                         InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
                         InvoiceList = api.Format(InvoiceList, "InvoiceList");
                         dt.Tables.Add(InvoiceList);

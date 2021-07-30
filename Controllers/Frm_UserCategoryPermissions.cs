@@ -147,7 +147,8 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
 
 
-                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+                   
                     if (x_UserCategory != null)
                     {
                         x_UserCategoryName = x_UserCategory.ToString();
@@ -168,7 +169,10 @@ namespace SmartxAPI.Controllers
                     secParams.Add("@xUserCategory", x_UserCategoryName);
                     secParams.Add("@nMenuID", N_MenuID);
                     secParams.Add("@nLanguageID", nLanguageID);
-                    string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID";
+                    secParams.Add("@nLanguageID", nLanguageID);
+                    secParams.Add("@nIsCategoryID", 1);
+                    
+                    string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID,@nIsCategoryID";
                     SecAllMenus = dLayer.ExecuteDataTable(SecAllSql, secParams, connection);
                     SecAllMenus = _api.Format(SecAllMenus, "SecAllMenus");
 

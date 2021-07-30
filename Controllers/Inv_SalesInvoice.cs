@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                             case "x_BillAmt":
                                 xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
-                                case "n_BalanceAmt":
+                            case "n_BalanceAmt":
                                 xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
                     double BalanceAmt = 0;
                     foreach (DataRow var in dt.Rows)
                     {
-                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myCompanyID._CompanyID, Params, connection);
+                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myFunctions.GetCompanyID(User), Params, connection);
                         if (objBal != null)
                         {
                             BalanceAmt = myFunctions.getVAL(objBal.ToString());
@@ -278,7 +278,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID)
         {
 
             try
@@ -292,6 +292,15 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xTransType", "SALES");
+                    object N_QuotationID = 0;
+                    //CRM Quotation Checking
+                    if (n_OpportunityID > 0)
+                    {
+                        N_QuotationID = dLayer.ExecuteScalar("Select N_QuotationID from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_OpportunityID=" + n_OpportunityID, QueryParamsList, Con);
+                        if (N_QuotationID != null)
+                            nQuotationID = myFunctions.getIntVAL(N_QuotationID.ToString());
+                    }
+
                     if (nDeliveryNoteId > 0)
                     {
 
@@ -383,9 +392,51 @@ namespace SmartxAPI.Controllers
                         {
                             MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
                         }
+                        if (n_OpportunityID > 0)
+                        {
+                            // int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
+                            // if (N_CustomerID == 0)
+                            // {
+                            Object CRMCustomerID = null;
+                            Object CustomerName = null;
+                            Object N_CRMCompanyID = dLayer.ExecuteScalar("Select n_customerID from crm_opportunity where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_OpportunityID=" + n_OpportunityID, QueryParamsList, Con);
+                            if (N_CRMCompanyID != null)
+                            {
+                                CRMCustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + N_CRMCompanyID, QueryParamsList, Con);
+                                CustomerName = dLayer.ExecuteScalar("Select X_CustomerName from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + N_CRMCompanyID, QueryParamsList, Con);
+                                if (CRMCustomerID != null)
+                                {
+                                    MasterTable.Rows[0]["N_CustomerID"] = CRMCustomerID.ToString();
+                                    MasterTable.Rows[0]["x_CustomerName"] = CustomerName.ToString();
+                                    MasterTable.AcceptChanges();
+                                }
+                            }
+                        }
 
                         string DetailSql = "";
                         DetailSql = "select * from vw_QuotationDetailsToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+
+                    }
+                    else if (n_OpportunityID > 0)
+                    {
+
+                        QueryParamsList.Add("@nOpportunityID", n_OpportunityID);
+                        string Mastersql = "select * from vw_OpportunityToInvoice where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        if (isProfoma == 1)
+                        {
+                            MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                        }
+
+                        string DetailSql = "";
+                        DetailSql = "select * from vw_OpportunityDetailsToInvoice where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
@@ -532,12 +583,12 @@ namespace SmartxAPI.Controllers
                         if (CustomerID != null)
                         {
                             if (myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()) == myFunctions.getIntVAL(CustomerID.ToString()))
-                                saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString(), Con);
+                                saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=" + masterTable.Rows[0]["n_SalesId"].ToString(), Con);
                             else
-                                saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=0", Con);
+                                saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0", Con);
                         }
                         else
-                            saleamountdetails = dLayer.ExecuteDataTable("Select * from vw_SalesAmount_Customer where N_SalesID=0", Con);
+                            saleamountdetails = dLayer.ExecuteDataTable("Select distinct * from vw_SalesAmount_Customer where N_SalesID=0", Con);
                     }
 
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["N_SalesId"].ToString()), this.N_FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
@@ -1195,8 +1246,9 @@ namespace SmartxAPI.Controllers
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nInvoiceID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID, int nQuotationID, string comments)
         {
-            if(comments==null){
-                comments="";
+            if (comments == null)
+            {
+                comments = "";
             }
             int Results = 0;
             try
@@ -1294,7 +1346,7 @@ namespace SmartxAPI.Controllers
                                         if (nQuotationID > 0)
                                             dLayer.ExecuteNonQuery("update Inv_SalesQuotation set N_Processed=0 where N_QuotationId= @nQuotationID and N_CompanyId=@nCompanyID and N_FnYearId= @nFnYearID", QueryParams, connection, transaction);
 
-                                myAttachments.DeleteAttachment(dLayer, 1,nInvoiceID,N_CustomerId, nFnYearID, N_FormID,User, transaction, connection);
+                                myAttachments.DeleteAttachment(dLayer, 1, nInvoiceID, N_CustomerId, nFnYearID, N_FormID, User, transaction, connection);
                             }
                         }
                         else

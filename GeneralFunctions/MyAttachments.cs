@@ -187,31 +187,31 @@ namespace SmartxAPI.GeneralFunctions
 
                         string FieldList = "";
                         string FieldValues = "";
-                        if (FormID == 113)
-                        {
-                            if (ExpiryDate != "")
-                            {
-                                FieldList = "N_CompanyID,N_FnyearID,N_FormID,X_Subject,X_FileName,X_File,X_extension,X_refName,D_ExpiryDate,N_RemCategoryID";
-                                FieldValues = nCompanyID + "|" + myCompanyID._FnYearID + "|" + FormID + "|'" + dsAttachment.Rows[i]["X_Subject"].ToString() + "'|'" + path + "\\" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_Extension"].ToString() + "'|'" + dsAttachment.Rows[i]["X_refName"].ToString() + "','" + ExpiryDate + "'," + N_remCategory;
-                            }
-                            else
-                            {
-                                FieldList = "N_CompanyID,N_FnyearID,N_FormID,X_Subject,X_FileName,X_File,X_extension,X_refName";
-                                FieldValues = nCompanyID + "|" + myCompanyID._FnYearID + "|" + FormID + "|'" + dsAttachment.Rows[i]["X_Subject"].ToString() + "'|'" + path + "\\" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_Extension"].ToString() + "'|'" + dsAttachment.Rows[i]["X_refName"].ToString() + "'";
-                            }
-                            string refField = "N_CategoryID";
-                            string refValue = "Inv_AttachmentCategory|N_CategoryID|X_Category='" + dsAttachment.Rows[i]["X_Category"].ToString() + "'";
+                        // if (FormID == 113)
+                        // {
+                        //     if (ExpiryDate != "")
+                        //     {
+                        //         FieldList = "N_CompanyID,N_FnyearID,N_FormID,X_Subject,X_FileName,X_File,X_extension,X_refName,D_ExpiryDate,N_RemCategoryID";
+                        //         FieldValues = nCompanyID + "|" + myCompanyID._FnYearID + "|" + FormID + "|'" + dsAttachment.Rows[i]["X_Subject"].ToString() + "'|'" + path + "\\" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_Extension"].ToString() + "'|'" + dsAttachment.Rows[i]["X_refName"].ToString() + "','" + ExpiryDate + "'," + N_remCategory;
+                        //     }
+                        //     else
+                        //     {
+                        //         FieldList = "N_CompanyID,N_FnyearID,N_FormID,X_Subject,X_FileName,X_File,X_extension,X_refName";
+                        //         FieldValues = nCompanyID + "|" + myCompanyID._FnYearID + "|" + FormID + "|'" + dsAttachment.Rows[i]["X_Subject"].ToString() + "'|'" + path + "\\" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_File"].ToString() + "'|'" + dsAttachment.Rows[i]["X_Extension"].ToString() + "'|'" + dsAttachment.Rows[i]["X_refName"].ToString() + "'";
+                        //     }
+                        //     string refField = "N_CategoryID";
+                        //     string refValue = "Inv_AttachmentCategory|N_CategoryID|X_Category='" + dsAttachment.Rows[i]["X_Category"].ToString() + "'";
 
-                            string DupCriteria = "";
-                            // dLayer.SaveData(ref Result, "Acc_CompanyAttachments", "N_AttachmentID", N_AttachmentID.ToString(), FieldList, FieldValues, refField, refValue, DupCriteria, "");
-                            dLayer.SaveData("Acc_CompanyAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
+                        //     string DupCriteria = "";
+                        //     // dLayer.SaveData(ref Result, "Acc_CompanyAttachments", "N_AttachmentID", N_AttachmentID.ToString(), FieldList, FieldValues, refField, refValue, DupCriteria, "");
+                        //     dLayer.SaveData("Acc_CompanyAttachments", "N_AttachmentID", dsAttachment, connection, transaction);
 
-                            if (myFunctions.getIntVAL(Result.ToString()) > 0)
-                            {
+                        //     if (myFunctions.getIntVAL(Result.ToString()) > 0)
+                        //     {
 
-                            }
+                        //     }
 
-                        }
+                        // }
                     }
 
                     if (FormID != 113)

@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                     var nLocationID = Master.Rows[0]["N_LocationID"];
                     Params.Add("@nLocationID", nLocationID);
                     object X_LocationName = dLayer.ExecuteScalar("select X_LocationName from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@nLocationID", Params, connection);
-                    if(X_LocationName!=null)
+                    if (X_LocationName != null)
                         Master = myFunctions.AddNewColumnToDataTable(Master, "X_LocationName", typeof(string), X_LocationName.ToString());
 
                     int nProjectID = myFunctions.getIntVAL(Master.Rows[0]["N_ProjectID"].ToString());
@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nProjectID", nProjectID);
                         object xProjectName = dLayer.ExecuteScalar("select X_ProjectName from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", Params, connection);
-                        if(xProjectName!=null)
+                        if (xProjectName != null)
                             Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectName", typeof(string), xProjectName.ToString());
                     }
                     else
@@ -523,7 +523,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", DupCriteria, "", MasterTable, connection, transaction);
-                    
+
                     if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
@@ -533,8 +533,10 @@ namespace SmartxAPI.Controllers
                     {
                         DetailTable.Rows[j]["n_QuotationID"] = N_QuotationID;
                     }
+                    if (N_CustomerID == 0)
+                        objCustName="";
 
-                    N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "Sales Quotation", N_QuotationID, QuotationNo, 1, objCustName.ToString(), 0, "", User, dLayer, connection, transaction);
 
                     int N_QuotationDetailId = dLayer.SaveData("Inv_SalesQuotationDetails", "n_QuotationDetailsID", DetailTable, connection, transaction);
                     if (N_QuotationDetailId <= 0)
@@ -812,7 +814,7 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
 
-               
+
                     object objSalesProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesID,0) from Inv_Sales where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + " and B_IsSaveDraft = 0", connection, transaction);
                     object objOrderProcessed = dLayer.ExecuteScalar("Select Isnull(N_SalesOrderId,0) from Inv_SalesOrder where N_CompanyID=" + nCompanyID + " and N_QuotationID=" + N_QuotationID + "", connection, transaction);
                     if (objSalesProcessed == null)
@@ -831,8 +833,8 @@ namespace SmartxAPI.Controllers
                         string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
-                            if(ButtonTag=="6" ||ButtonTag=="0")
-                                myAttachments.DeleteAttachment(dLayer, 1,N_QuotationID,N_CustomerID, nFnYearID, this.FormID,User, transaction, connection);
+                            if (ButtonTag == "6" || ButtonTag == "0")
+                                myAttachments.DeleteAttachment(dLayer, 1, N_QuotationID, N_CustomerID, nFnYearID, this.FormID, User, transaction, connection);
 
                             transaction.Commit();
                             return Ok(_api.Success("Sales Quotation " + status + " Successfully"));

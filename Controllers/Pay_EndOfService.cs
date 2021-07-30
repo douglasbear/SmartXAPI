@@ -499,7 +499,7 @@ namespace SmartxAPI.Controllers
                     {
                         n_ServiceEndSettingsID = 1;
                     }
-                    object obj = dLayer.ExecuteScalar("Select dbo.[SP_GetEOSAmount_Settings](" + myCompanyID._CompanyID + "," + nEmpID + "," + dtpEndDate.Year.ToString("00##") + dtpEndDate.Month.ToString("0#") + "," + myCompanyID._FnYearID + ",0," + n_ServiceEndSettingsID + ")", Params, connection);
+                    object obj = dLayer.ExecuteScalar("Select dbo.[SP_GetEOSAmount_Settings](" + myFunctions.GetCompanyID(User) + "," + nEmpID + "," + dtpEndDate.Year.ToString("00##") + dtpEndDate.Month.ToString("0#") + "," + nFnYearID + ",0," + n_ServiceEndSettingsID + ")", Params, connection);
                     if (obj != null)
                     {
                         EmployeeTable.Rows[0]["N_AdjustAmount"] = myFunctions.getVAL(obj.ToString());

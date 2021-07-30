@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_CRMWorkflow where N_CompanyID=@p1 and X_WActivityCode=@p3";
+            string sqlCommandText = "select * from vw_CRMWorkflow where N_CompanyID=@p1 and X_WActivityCode=@p3 order by N_Order";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
             try
@@ -155,11 +155,11 @@ namespace SmartxAPI.Controllers
                         if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["X_WActivityCode"] = ActivityCode;
                     }
-                    if (nWActivityID > 0)
-                    {
-                        dLayer.DeleteData("CRM_WorkflowMaster", "N_WActivityID", nWActivityID, "", connection, transaction);
-                        dLayer.DeleteData("CRM_WorkflowActivities", "N_WActivityID", nWActivityID, "", connection, transaction);
-                    }
+                    // if (nWActivityID > 0)
+                    // {
+                    //     dLayer.DeleteData("CRM_WorkflowMaster", "N_WActivityID", nWActivityID, "", connection, transaction);
+                    //     dLayer.DeleteData("CRM_WorkflowActivities", "N_WActivityID", nWActivityID, "", connection, transaction);
+                    // }
 
                     nWActivityID = dLayer.SaveData("CRM_WorkflowMaster", "N_WActivityID", MasterTable, connection, transaction);
                     if (nWActivityID <= 0)
@@ -190,41 +190,45 @@ namespace SmartxAPI.Controllers
         }
 
 
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nOpportunityID)
-        // {
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nWActivityID)
+        {
 
-        //     int Results = 0;
-        //     try
-        //     {
-        //         SortedList Params = new SortedList();
+            int Results = 0;
+            try
+            {
+                SortedList Params = new SortedList();
 
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
-        //             transaction.Commit();
-        //         }
-        //         if (Results > 0)
-        //         {
-        //             Dictionary<string, string> res = new Dictionary<string, string>();
-        //             res.Add("N_OpportunityID", nOpportunityID.ToString());
-        //             return Ok(api.Success(res, "Opportunity deleted"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(api.Error("Unable to delete Opportunity"));
-        //         }
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("CRM_WorkflowMaster", "N_WActivityID", nWActivityID, "", connection, transaction);
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("CRM_WorkflowActivities", "N_WActivityID", nWActivityID, "", connection, transaction);
+                    }
+                    transaction.Commit();
+                    return Ok(api.Success("Workflow deleted"));
+                }
+                // if (Results > 0)
+                // {
 
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(api.Error(ex));
-        //     }
+                //     return Ok(api.Success("Workflow deleted"));
+                // }
+                // else
+                // {
+                //     return Ok(api.Error("Unable to delete Workflow"));
+                // }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(ex));
+            }
 
 
 
-        // }
+        }
     }
 }

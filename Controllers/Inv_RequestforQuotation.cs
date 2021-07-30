@@ -67,7 +67,7 @@ namespace SmartxAPI.Controllers
                             xSortBy = " order by " + xSortBy;
                         }
 
-                        if (myCompanyID._B_AllBranchData == true)
+                        if (bAllBranchData == true)
                             sqlCondition="N_CompanyID=@p1 and N_FnYearID=@p2";
                         else
                             sqlCondition="N_CompanyID=@p1 and N_FnYearID=@p2 and n_branchid=@p3";
@@ -304,7 +304,7 @@ namespace SmartxAPI.Controllers
 
            
         [HttpGet("details")]
-        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID)
+        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID,int nPRSID)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
