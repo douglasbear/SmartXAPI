@@ -65,6 +65,7 @@ namespace SmartxAPI.Controllers
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+                    
                     string Subject = "";
                     if (Toemail.ToString() != "")
                     {
@@ -117,6 +118,7 @@ namespace SmartxAPI.Controllers
                             message.From = new MailAddress(Sender);
                             message.Subject = Subject;
                             message.Body = MailBody;
+                            message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography" );
 
                             message.IsBodyHtml = true; //HTML email  
                             string CC = GetCCMail(256, companyid, connection, transaction, dLayer);

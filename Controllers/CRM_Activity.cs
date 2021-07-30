@@ -171,14 +171,17 @@ namespace SmartxAPI.Controllers
                     }
                     if (MasterTable.Rows[0]["N_RelatedTo"].ToString() == "294")
                     {
-                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection, transaction);
-                        if (Count != null)
+                        if (nActivityID == 0)
                         {
+                            object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection, transaction);
+                            if (Count != null)
+                            {
 
-                            int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
-                            dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
-                            MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                                int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                                dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                            }
                         }
 
                     }
@@ -241,17 +244,17 @@ namespace SmartxAPI.Controllers
                         }
                         if (MasterTable.Columns.Contains("b_IsAutoMail"))
                         {
-                             DataRow row1 = dtSave.NewRow();
-                        row1["N_ReminderId"] = 0;
-                        row1["N_CompanyID"] = myFunctions.GetCompanyID(User);
-                        row1["N_FormID"] = this.FormID;
-                        row1["N_PartyID"] = nActivityID;
-                        row1["X_Subject"] = "Activity";
-                        row1["X_Title"] = "Activity";
-                        row1["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
-                        row1["B_IsAttachment"] = 0;
-                        row1["N_SettingsID"] = 0;
-                        row1["N_UserID"] = nUserID;
+                            DataRow row1 = dtSave.NewRow();
+                            row1["N_ReminderId"] = 0;
+                            row1["N_CompanyID"] = myFunctions.GetCompanyID(User);
+                            row1["N_FormID"] = this.FormID;
+                            row1["N_PartyID"] = nActivityID;
+                            row1["X_Subject"] = "Activity";
+                            row1["X_Title"] = "Activity";
+                            row1["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
+                            row1["B_IsAttachment"] = 0;
+                            row1["N_SettingsID"] = 0;
+                            row1["N_UserID"] = nUserID;
                             if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
                             {
                                 row1["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
@@ -263,7 +266,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                        
+
 
                         // if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
                         //     myReminders.ReminderSet(dLayer, 24, nActivityID, MasterTable.Rows[0]["D_ScheduleDate"].ToString(), this.FormID, nUserID, User, connection, transaction);
