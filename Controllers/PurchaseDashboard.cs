@@ -41,14 +41,15 @@ namespace SmartxAPI.Controllers
             string sqlCurrentInvoice = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvPurchaseInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID = " + nCompanyID + "";
 
             string sqlTopVendors = "select top(5) Vendor as X_TopVendors,CAST(COUNT(*) as varchar(50)) as N_Count from vw_InvPurchaseInvoiceNo_Search where N_CompanyID = " + nCompanyID + " group by Vendor order by COUNT(*) Desc";
-            //string sqlCurrentPurchase =""
+            string sqlDraftedInvoice = "select COUNT(N_PurchaseID) as N_DraftedInvoice from Inv_Purchase where ISNULL(B_IsSaveDraft,0)=1 and X_TransType='PURCHASE' and N_CompanyID = " + nCompanyID;
+            string sqlUnprocessedOrder = "select COUNT(N_POrderID) as N_UnProcessed from Inv_PurchaseOrder where ISNULL(N_Processed,0)=0 and N_CompanyID=" + nCompanyID;           
 
             SortedList Data=new SortedList();
             DataTable CurrentOrder = new DataTable();
             DataTable CurrentInvoice = new DataTable();
             DataTable TopVendor = new DataTable();
-           
-           
+            DataTable DraftedInvoice = new DataTable();
+            DataTable UnprocessedOrder = new DataTable();
 
             try
             {
@@ -59,25 +60,22 @@ namespace SmartxAPI.Controllers
                     CurrentOrder = dLayer.ExecuteDataTable(sqlCurrentOrder, Params, connection);
                     CurrentInvoice = dLayer.ExecuteDataTable(sqlCurrentInvoice, Params, connection);
                     TopVendor = dLayer.ExecuteDataTable(sqlTopVendors, Params, connection);
-                    
-
-                  
-                }
-               
-
-               CurrentOrder.AcceptChanges();
-               CurrentInvoice.AcceptChanges();
-               TopVendor.AcceptChanges();
-
-
+                    DraftedInvoice = dLayer.ExecuteDataTable(sqlDraftedInvoice, Params, connection);
+                    UnprocessedOrder = dLayer.ExecuteDataTable(sqlUnprocessedOrder, Params, connection);
+                                  
+                }             
+                CurrentOrder.AcceptChanges();
+                CurrentInvoice.AcceptChanges();
+                TopVendor.AcceptChanges();
+                DraftedInvoice.AcceptChanges();
+                UnprocessedOrder.AcceptChanges();
 
                 if(CurrentOrder.Rows.Count>0)Data.Add("orderData",CurrentOrder);
                 if(CurrentInvoice.Rows.Count>0)Data.Add("invoiceData",CurrentInvoice);
                 if(TopVendor.Rows.Count>0)Data.Add("topVendors",TopVendor);
+                if(DraftedInvoice.Rows.Count>0)Data.Add("draftedInvoice",DraftedInvoice);
+                if(UnprocessedOrder.Rows.Count>0)Data.Add("unprocessedOrder",UnprocessedOrder);
                
-                
-               
-
                 return Ok(api.Success(Data));
 
             }

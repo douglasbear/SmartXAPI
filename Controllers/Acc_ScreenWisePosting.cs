@@ -30,18 +30,20 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 217;
+            FormID = 1126;
         }
 
         [HttpGet("details")]
-        public ActionResult GetBankDetails(int nBankID)
+        public ActionResult GetPostingDetails(int nFnYearID,string xScreen,string xVoucherNo)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from vw_AccBank_Disp where N_CompanyID=@nCompanyID and N_BankID=@nBankID";
+            string sqlCommandText="select * from vw_ScreenWisePosting where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
             Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nBankID",nBankID);
+            Params.Add("@nFnYearID",nFnYearID);
+            Params.Add("@xScreen",xScreen);
+            Params.Add("@xVoucherNo",xVoucherNo);
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
