@@ -42,6 +42,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandLeadsList = "select CONVERT(varchar,d_EntryDate,101) as d_Entry,* from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
             string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
             string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
+            string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_opportunityID=@p3";
             string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_opportunityID=@p3";
             string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_OpportunityID=@p3 order by N_maillogid desc";
             string sqlCommandProjectList = "Select CONVERT(varchar,d_StartDate,101) as d_Start,CONVERT(varchar,d_EndDate,101) as d_End,* from crm_Project where N_CompanyID=@p1 and N_ProjectID=@p5";
@@ -53,6 +54,7 @@ namespace SmartxAPI.Controllers
             DataTable LeadsList = new DataTable();
             DataTable ContactList = new DataTable();
             DataTable QuotationList = new DataTable();
+            DataTable OrderList = new DataTable();
             DataTable InvoiceList = new DataTable();
             DataTable MailLogList = new DataTable();
             DataTable ProjectList = new DataTable();
@@ -86,6 +88,7 @@ namespace SmartxAPI.Controllers
                     LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
                     ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
                     QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
+                    OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
                     MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
 
 
@@ -94,6 +97,7 @@ namespace SmartxAPI.Controllers
                     ContactList = api.Format(ContactList, "ContactList");
                     QuotationList = api.Format(QuotationList, "QuotationList");
                     MailLogList = api.Format(MailLogList, "MailLogList");
+                    OrderList = api.Format(OrderList, "OrderList");
 
 
 
@@ -102,6 +106,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(ContactList);
                     dt.Tables.Add(QuotationList);
                     dt.Tables.Add(MailLogList);
+                    dt.Tables.Add(OrderList);
 
                     return Ok(api.Success(dt));
 

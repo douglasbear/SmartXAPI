@@ -293,9 +293,14 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nBranchId", nBranchId);
                     QueryParamsList.Add("@xTransType", "SALES");
                     object N_QuotationID = 0;
+                    object N_SalesOrderID = 0;
                     //CRM Quotation Checking
                     if (n_OpportunityID > 0)
                     {
+                        N_SalesOrderID = dLayer.ExecuteScalar("Select N_SalesOrderID from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_OpportunityID=" + n_OpportunityID, QueryParamsList, Con);
+                        if (N_SalesOrderID != null)
+                            nSalesOrderID = myFunctions.getIntVAL(N_SalesOrderID.ToString());
+
                         N_QuotationID = dLayer.ExecuteScalar("Select N_QuotationID from Inv_SalesQuotation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_OpportunityID=" + n_OpportunityID, QueryParamsList, Con);
                         if (N_QuotationID != null)
                             nQuotationID = myFunctions.getIntVAL(N_QuotationID.ToString());
@@ -364,6 +369,11 @@ namespace SmartxAPI.Controllers
                         string Mastersql = "select * from vw_SalesOrderMasterToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        if (!MasterTable.Columns.Contains("N_OpportunityID"))
+                        {
+                            MasterTable.Columns.Add("N_OpportunityID");
+                            MasterTable.Rows[0]["N_OpportunityID"] = n_OpportunityID.ToString();
+                        }
                         MasterTable = _api.Format(MasterTable, "Master");
                         if (isProfoma == 1)
                         {
@@ -394,9 +404,6 @@ namespace SmartxAPI.Controllers
                         }
                         if (n_OpportunityID > 0)
                         {
-                            // int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
-                            // if (N_CustomerID == 0)
-                            // {
                             Object CRMCustomerID = null;
                             Object CustomerName = null;
                             Object N_CRMCompanyID = dLayer.ExecuteScalar("Select n_customerID from crm_opportunity where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_OpportunityID=" + n_OpportunityID, QueryParamsList, Con);
@@ -404,6 +411,11 @@ namespace SmartxAPI.Controllers
                             {
                                 CRMCustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + N_CRMCompanyID, QueryParamsList, Con);
                                 CustomerName = dLayer.ExecuteScalar("Select X_CustomerName from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + N_CRMCompanyID, QueryParamsList, Con);
+                                if (!MasterTable.Columns.Contains("N_OpportunityID"))
+                                {
+                                    MasterTable.Columns.Add("N_OpportunityID");
+                                    MasterTable.Rows[0]["N_OpportunityID"] = n_OpportunityID.ToString();
+                                }
                                 if (CRMCustomerID != null)
                                 {
                                     MasterTable.Rows[0]["N_CustomerID"] = CRMCustomerID.ToString();
