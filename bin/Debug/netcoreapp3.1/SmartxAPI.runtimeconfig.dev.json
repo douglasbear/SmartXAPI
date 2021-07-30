@@ -5,6 +5,12 @@
 <<<<<<< HEAD
 <<<<<<< HEAD
 <<<<<<< HEAD
+=======
+      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\LENOVO\\.nuget\\packages"
+=======
+>>>>>>> 18e72193667c026b270c6c3139ac6eeec8a7edef
+<<<<<<< HEAD
 <<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
@@ -16,6 +22,7 @@
       "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\USER\\.nuget\\packages"
 >>>>>>> d99b7d0f963d0577e492a9330594687750d0d678
+<<<<<<< HEAD
 =======
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
@@ -28,6 +35,9 @@
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
 >>>>>>> 308aeb5de8f27fefd5a9f3163638f6c8b02ee85f
+=======
+>>>>>>> 6b634bb4263d1588e11379d88267102b7ced1d9d
+>>>>>>> 18e72193667c026b270c6c3139ac6eeec8a7edef
     ]
   }
 }
