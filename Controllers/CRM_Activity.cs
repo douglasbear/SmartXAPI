@@ -241,11 +241,22 @@ namespace SmartxAPI.Controllers
                         }
                         if (MasterTable.Columns.Contains("b_IsAutoMail"))
                         {
+                             DataRow row1 = dtSave.NewRow();
+                        row1["N_ReminderId"] = 0;
+                        row1["N_CompanyID"] = myFunctions.GetCompanyID(User);
+                        row1["N_FormID"] = this.FormID;
+                        row1["N_PartyID"] = nActivityID;
+                        row1["X_Subject"] = "Activity";
+                        row1["X_Title"] = "Activity";
+                        row1["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
+                        row1["B_IsAttachment"] = 0;
+                        row1["N_SettingsID"] = 0;
+                        row1["N_UserID"] = nUserID;
                             if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
                             {
-                                row["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
+                                row1["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
                             }
-                            dtSave.Rows.Add(row);
+                            dtSave.Rows.Add(row1);
                             myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
                         }
 
