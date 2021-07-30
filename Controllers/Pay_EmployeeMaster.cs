@@ -964,80 +964,48 @@ namespace SmartxAPI.Controllers
 
                         if(N_SaveDraft==0)
                         {
+                            SortedList QueryParams = new SortedList();
                             DataTable tmpEmployee = dLayer.ExecuteDataTable("Select * From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
+
+                            string empImage = myFunctions.ContainColumn("i_Employe_Image", MasterTable) ? MasterTable.Rows[0]["i_Employe_Image"].ToString() : "";
+                            Byte[] empImageBitmap = new Byte[empImage.Length];
+                            empImageBitmap = Convert.FromBase64String(empImage);
+                            if (myFunctions.ContainColumn("i_Employe_Image", MasterTable))
+                                MasterTable.Columns.Remove("i_Employe_Image");
+                            if (myFunctions.ContainColumn("i_Employe_Image", tmpEmployee))
+                                tmpEmployee.Columns.Remove("i_Employe_Image");
+                            if (myFunctions.ContainColumn("I_Employe_Sign", MasterTable))
+                                MasterTable.Columns.Remove("I_Employe_Sign");
+                            if (myFunctions.ContainColumn("I_Employe_Sign", tmpEmployee))
+                                tmpEmployee.Columns.Remove("I_Employe_Sign");
 
                             if(tmpEmployee.Rows.Count>0){
                                  for (int k = 0; k < tmpEmployee.Columns.Count; k++)
+                                {
+                                    for (int l = 0; l < MasterTable.Columns.Count; l++)
+                                    {
+                                        if (tmpEmployee.Columns[k].ColumnName.ToString().ToLower() == MasterTable.Columns[l].ColumnName.ToString().ToLower())
                                         {
-                                             for (int l = 0; l < MasterTable.Columns.Count; l++){
-                                            if (tmpEmployee.Columns[k].ColumnName.ToString().ToLower() == MasterTable.Columns[l].ColumnName.ToString().ToLower())
-                                            {
-                                                tmpEmployee.Rows[0][tmpEmployee.Columns[k].ColumnName] = MasterTable.Rows[0][MasterTable.Columns[l].ColumnName].ToString();
-                                            }
-                                            }
+                                            tmpEmployee.Rows[0][tmpEmployee.Columns[k].ColumnName] = MasterTable.Rows[0][MasterTable.Columns[l].ColumnName].ToString();
                                         }
+                                    }
+                                }
                             }
                             
-                             SortedList QueryParams = new SortedList();
-                            QueryParams.Add("@N_CompanyID", nCompanyID);
-                            QueryParams.Add("@nEmpID", nEmpID);
-                            QueryParams.Add("@nFnYearID", nFnYearID);
-                            QueryParams.Add("@X_EmpName", MasterTable.Rows[0]["X_EmpName"].ToString());
-                            QueryParams.Add("@X_Address", MasterTable.Rows[0]["X_Address"].ToString());
-                            QueryParams.Add("@X_City", MasterTable.Rows[0]["X_City"].ToString());
-                            QueryParams.Add("@X_State", MasterTable.Rows[0]["X_State"].ToString());
-                            QueryParams.Add("@X_ZipCode", MasterTable.Rows[0]["X_ZipCode"].ToString());
-                            QueryParams.Add("@X_Country", MasterTable.Rows[0]["X_Country"].ToString());
-                            QueryParams.Add("@X_Phone1", MasterTable.Rows[0]["X_Phone1"].ToString());
-                            QueryParams.Add("@X_Phone2", MasterTable.Rows[0]["X_Phone2"].ToString());
-                            QueryParams.Add("@X_EmailID", MasterTable.Rows[0]["X_EmailID"].ToString());
-                            QueryParams.Add("@N_DepartmentID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_DepartmentID"].ToString()));
-                            QueryParams.Add("@N_ReportToID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReportToID"].ToString()));
-                            QueryParams.Add("@N_UserID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()));
-                            QueryParams.Add("@X_NickName", MasterTable.Rows[0]["X_NickName"].ToString());
-                            QueryParams.Add("@X_AlternateName", MasterTable.Rows[0]["X_AlternateName"].ToString());
-                            QueryParams.Add("@X_PassportNo", MasterTable.Rows[0]["X_PassportNo"].ToString());
-                            QueryParams.Add("@D_PassportExpiry",MasterTable.Rows[0]["D_PassportExpiry"].ToString());
-                            QueryParams.Add("@X_IqamaNo", MasterTable.Rows[0]["X_IqamaNo"].ToString());
-                            QueryParams.Add("@D_IqamaExpiry", MasterTable.Rows[0]["D_IqamaExpiry"].ToString());
-                            QueryParams.Add("@X_MaritalStatus", MasterTable.Rows[0]["X_MaritalStatus"].ToString());
-                            QueryParams.Add("@X_EmpImageNAme", MasterTable.Rows[0]["X_EmpImageNAme"].ToString());
-                            // QueryParams.Add("@I_Employe_Image", MasterTable.Rows[0]["I_Employe_Image"].ToString());
-                            // QueryParams.Add("@I_Employe_Sign", MasterTable.Rows[0]["I_Employe_Sign"].ToString());
-                            QueryParams.Add("@X_Email2", MasterTable.Rows[0]["X_Email2"].ToString());
-                            QueryParams.Add("@X_EmrgncyContact", MasterTable.Rows[0]["X_EmrgncyContact"].ToString());
-                            QueryParams.Add("@X_IqamaRefName", MasterTable.Rows[0]["X_IqamaRefName"].ToString());
-                            QueryParams.Add("@X_PassportRefName", MasterTable.Rows[0]["X_PassportRefName"].ToString());
-                            QueryParams.Add("@X_TelExt", MasterTable.Rows[0]["X_TelExt"].ToString());
-                            QueryParams.Add("@N_BankID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BankID"].ToString()));
-                            QueryParams.Add("@X_BankAccountNo", MasterTable.Rows[0]["X_BankAccountNo"].ToString());
-                            QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
-                            QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
-                            QueryParams.Add("@N_BranchID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
-                            QueryParams.Add("@N_NationalityID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_NationalityID"].ToString()));
-                            QueryParams.Add("@X_Nationality",MasterTable.Rows[0]["X_Nationality"].ToString());
+                            string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + tmpEmployee.Rows[0]["x_EmpCode"].ToString() + "'";
+                            string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
+                            nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, tmpEmployee, connection, transaction);
+                            if (nEmpID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                            else
+                            {
+                                if (empImage.Length > 0)
+                                    dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 
-                            // dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod,N_BranchID=@N_BranchID,N_NationalityID=@N_NationalityID,X_Nationality=@X_Nationality where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
-
-                    string empImage = myFunctions.ContainColumn("i_Employe_Image", tmpEmployee) ? tmpEmployee.Rows[0]["i_Employe_Image"].ToString() : "";
-                    Byte[] empImageBitmap = new Byte[empImage.Length];
-                    empImageBitmap = Convert.FromBase64String(empImage);
-                    if (myFunctions.ContainColumn("i_Employe_Image", tmpEmployee))
-                        tmpEmployee.Columns.Remove("i_Employe_Image");
-
-
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + tmpEmployee.Rows[0]["x_EmpCode"].ToString() + "'";
-                    string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
-                    nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, tmpEmployee, connection, transaction);
-                    if (nEmpID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }else{
-                         if (empImage.Length > 0)
-                            dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
-
-                    }
+                            }
                             //Update Contacts
                             if(myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString())>0)
                             {
@@ -1281,49 +1249,50 @@ namespace SmartxAPI.Controllers
 
                         if(N_SaveDraft==0)
                         {
-                            //Update Master
                             SortedList QueryParams = new SortedList();
-                            QueryParams.Add("@N_CompanyID", nCompanyID);
-                            QueryParams.Add("@nEmpID", nEmpID);
-                            QueryParams.Add("@nFnYearID", nFnYearID);
-                            QueryParams.Add("@X_EmpName", MasterTable.Rows[0]["X_EmpName"].ToString());
-                            QueryParams.Add("@X_Address", MasterTable.Rows[0]["X_Address"].ToString());
-                            QueryParams.Add("@X_City", MasterTable.Rows[0]["X_City"].ToString());
-                            QueryParams.Add("@X_State", MasterTable.Rows[0]["X_State"].ToString());
-                            QueryParams.Add("@X_ZipCode", MasterTable.Rows[0]["X_ZipCode"].ToString());
-                            QueryParams.Add("@X_Country", MasterTable.Rows[0]["X_Country"].ToString());
-                            QueryParams.Add("@X_Phone1", MasterTable.Rows[0]["X_Phone1"].ToString());
-                            QueryParams.Add("@X_Phone2", MasterTable.Rows[0]["X_Phone2"].ToString());
-                            QueryParams.Add("@X_EmailID", MasterTable.Rows[0]["X_EmailID"].ToString());
-                            QueryParams.Add("@N_DepartmentID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_DepartmentID"].ToString()));
-                            QueryParams.Add("@N_ReportToID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReportToID"].ToString()));
-                            QueryParams.Add("@N_UserID", myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString()));
+                            //Update Master
+                           DataTable tmpEmployee = dLayer.ExecuteDataTable("Select * From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
-                            QueryParams.Add("@X_NickName", MasterTable.Rows[0]["X_NickName"].ToString());
-                            QueryParams.Add("@X_AlternateName", MasterTable.Rows[0]["X_AlternateName"].ToString());
-                            QueryParams.Add("@X_PassportNo", MasterTable.Rows[0]["X_PassportNo"].ToString());
-                            QueryParams.Add("@D_PassportExpiry",MasterTable.Rows[0]["D_PassportExpiry"].ToString());
-                            QueryParams.Add("@X_IqamaNo", MasterTable.Rows[0]["X_IqamaNo"].ToString());
-                            QueryParams.Add("@D_IqamaExpiry", MasterTable.Rows[0]["D_IqamaExpiry"].ToString());
-                            QueryParams.Add("@X_MaritalStatus", MasterTable.Rows[0]["X_MaritalStatus"].ToString());
-                            QueryParams.Add("@X_EmpImageNAme", MasterTable.Rows[0]["X_EmpImageNAme"].ToString());
-                            // QueryParams.Add("@I_Employe_Image", MasterTable.Rows[0]["I_Employe_Image"].ToString());
-                            // QueryParams.Add("@I_Employe_Sign", MasterTable.Rows[0]["I_Employe_Sign"].ToString());
-                            QueryParams.Add("@X_Email2", MasterTable.Rows[0]["X_Email2"].ToString());
-                            QueryParams.Add("@X_EmrgncyContact", MasterTable.Rows[0]["X_EmrgncyContact"].ToString());
-                            QueryParams.Add("@X_IqamaRefName", MasterTable.Rows[0]["X_IqamaRefName"].ToString());
-                            QueryParams.Add("@X_PassportRefName", MasterTable.Rows[0]["X_PassportRefName"].ToString());
-                            QueryParams.Add("@X_TelExt", MasterTable.Rows[0]["X_TelExt"].ToString());
-                            QueryParams.Add("@N_BankID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BankID"].ToString()));
-                            QueryParams.Add("@X_BankAccountNo", MasterTable.Rows[0]["X_BankAccountNo"].ToString());
-                            QueryParams.Add("@X_EmpNameLocale", MasterTable.Rows[0]["X_EmpNameLocale"].ToString());
-                            QueryParams.Add("@N_SalaryPayMethod",myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString()));
-                            QueryParams.Add("@N_BranchID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString()));
-                            QueryParams.Add("@N_NationalityID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_NationalityID"].ToString()));
-                             QueryParams.Add("@X_Nationality",MasterTable.Rows[0]["X_Nationality"].ToString());
+                            string empImage = myFunctions.ContainColumn("i_Employe_Image", MasterTable) ? MasterTable.Rows[0]["i_Employe_Image"].ToString() : "";
+                            Byte[] empImageBitmap = new Byte[empImage.Length];
+                            empImageBitmap = Convert.FromBase64String(empImage);
+                            if (myFunctions.ContainColumn("i_Employe_Image", MasterTable))
+                                MasterTable.Columns.Remove("i_Employe_Image");
+                            if (myFunctions.ContainColumn("i_Employe_Image", tmpEmployee))
+                                tmpEmployee.Columns.Remove("i_Employe_Image");
+                             if (myFunctions.ContainColumn("I_Employe_Sign", MasterTable))
+                                MasterTable.Columns.Remove("I_Employe_Sign");
+                            if (myFunctions.ContainColumn("I_Employe_Sign", tmpEmployee))
+                                tmpEmployee.Columns.Remove("I_Employe_Sign");
 
-                            dLayer.ExecuteNonQuery("update Pay_Employee set X_EmpName=@X_EmpName, X_Address=@X_Address, X_City=@X_City, X_State=@X_State, X_ZipCode=@X_ZipCode, X_Country=@X_Country, X_Phone1=@X_Phone1, X_Phone2=@X_Phone2, X_EmailID=@X_EmailID, N_DepartmentID=@N_DepartmentID, N_ReportToID=@N_ReportToID, N_UserID=@N_UserID, X_NickName=@X_NickName, X_AlternateName=@X_AlternateName, X_PassportNo=@X_PassportNo, D_PassportExpiry=@D_PassportExpiry, X_IqamaNo=@X_IqamaNo, D_IqamaExpiry=@D_IqamaExpiry, X_MaritalStatus=@X_MaritalStatus, X_EmpImageNAme=@X_EmpImageNAme, X_Email2=@X_Email2, X_EmrgncyContact=@X_EmrgncyContact, X_IqamaRefName=@X_IqamaRefName, X_PassportRefName=@X_PassportRefName, X_TelExt=@X_TelExt, N_BankID=@N_BankID, X_BankAccountNo=@X_BankAccountNo, X_EmpNameLocale=@X_EmpNameLocale, N_SalaryPayMethod=@N_SalaryPayMethod,N_BranchID=@N_BranchID,N_NationalityID=@N_NationalityID,X_Nationality=@X_Nationality where N_CompanyID=@N_CompanyID and N_EmpID=@nEmpID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                            if(tmpEmployee.Rows.Count>0){
+                                 for (int k = 0; k < tmpEmployee.Columns.Count; k++)
+                                {
+                                    for (int l = 0; l < MasterTable.Columns.Count; l++)
+                                    {
+                                        if (tmpEmployee.Columns[k].ColumnName.ToString().ToLower() == MasterTable.Columns[l].ColumnName.ToString().ToLower())
+                                        {
+                                            tmpEmployee.Rows[0][tmpEmployee.Columns[k].ColumnName] = MasterTable.Rows[0][MasterTable.Columns[l].ColumnName].ToString();
+                                        }
+                                    }
+                                }
+                            }
 
+                            string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + tmpEmployee.Rows[0]["x_EmpCode"].ToString() + "'";
+                            string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
+                            nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, tmpEmployee, connection, transaction);
+                            if (nEmpID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error("Unable to save"));
+                            }
+                            else
+                            {
+                                if (empImage.Length > 0)
+                                    dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
+
+                            }
+                            
                             //Update Contacts
                             if(myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString())>0)
                             {
