@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
-                    
+
                     string Subject = "";
                     if (Toemail.ToString() != "")
                     {
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
                             message.From = new MailAddress(Sender);
                             message.Subject = Subject;
                             message.Body = MailBody;
-                            message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography" );
+                            message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography");
 
                             message.IsBodyHtml = true; //HTML email  
                             string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
@@ -237,13 +237,13 @@ namespace SmartxAPI.Controllers
 
                         Attachment.Columns.Remove("x_PartyCode");
                         Attachment.Columns.Remove("x_TransCode");
-                        if(Attachment.Columns.Contains("n_PartyID1"))
+                        if (Attachment.Columns.Contains("n_PartyID1"))
                             Attachment.Columns.Remove("n_PartyID1");
-                        if(Attachment.Columns.Contains("n_ActionID"))
+                        if (Attachment.Columns.Contains("n_ActionID"))
                             Attachment.Columns.Remove("n_ActionID");
-                        if(Attachment.Columns.Contains("tempFileName"))
+                        if (Attachment.Columns.Contains("tempFileName"))
                             Attachment.Columns.Remove("tempFileName");
-                        
+
                         Attachment.AcceptChanges();
                         myAttachments.SaveAttachment(dLayer, Attachment, payCode, payId, "", partyCode, partyID, "Email", User, connection, transaction);
                     }
@@ -316,13 +316,14 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult TemplateListDetails(string n_TemplateID)
+        public ActionResult TemplateListDetails(string n_TemplateID,int nopportunityID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
+            object Company, Oppportunity, Contact, CustomerID;
 
 
             sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and N_TemplateID=@p2";
@@ -337,7 +338,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    if (nopportunityID > 0)
+                    {
+                        Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+
+
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@CompanyName", Company.ToString());
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@ContactName", Contact.ToString());
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@LeadName", Oppportunity.ToString());
+
+                        dt.Rows[0]["x_Subject"] = dt.Rows[0]["x_Subject"].ToString().Replace("@CompanyName", Company.ToString());
+                        dt.Rows[0]["x_Subject"] = dt.Rows[0]["x_Subject"].ToString().Replace("@ContactName", Contact.ToString());
+                        dt.Rows[0]["x_Subject"] = dt.Rows[0]["x_Subject"].ToString().Replace("@LeadName", Oppportunity.ToString());
+                        dt.AcceptChanges();
+
+                    }
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));

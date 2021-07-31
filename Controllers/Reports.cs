@@ -15,6 +15,7 @@ using System.IO;
 using System.Net;
 using System.Threading.Tasks;
 using System.Linq;
+using System.Net.Mail;
 
 namespace SmartxAPI.Controllers
 {
@@ -310,6 +311,27 @@ namespace SmartxAPI.Controllers
                         }
                         string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
                         var path = client.GetAsync(URL);
+                        // if (nFormID == 80)
+                        // {
+                        //     SortedList Params = new SortedList();
+                        //     object N_OpportunityID = dLayer.ExecuteScalar("select N_OpportunityID from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                        //     if (N_OpportunityID != null)
+                        //     {
+                        //         if (myFunctions.getIntVAL(N_OpportunityID.ToString()) > 0)
+                        //         {
+                                    
+                        //             object Mailsend = dLayer.ExecuteScalar("select B_MailSend from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                        //             object Mail = dLayer.ExecuteScalar("select X_Email from vw_crmopportunity where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_OpportunityID=" + N_OpportunityID, Params, connection, transaction);
+                        //             if (Mailsend == null)
+                        //             {
+                        //                 if(sendmail(URL,Mail.ToString()))
+                        //                     dLayer.ExecuteNonQuery("update inv_salesquotation set B_MailSend=1 where N_CompanyID=@N_CompanyID and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                        //             }
+
+                        //         }
+                        //     }
+
+                        // }
                         path.Wait();
                         return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                     }
@@ -324,6 +346,79 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
 
+        }
+        public bool sendmail(string url, string mail)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SortedList Params = new SortedList();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int companyid = myFunctions.GetCompanyID(User);
+                    string Toemail = "";
+
+                    Toemail = mail;
+                    object companyemail = "";
+                    object companypassword = "";
+
+                    companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
+                    companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
+
+                    string Subject = "";
+                    if (Toemail.ToString() != "")
+                    {
+                        if (companyemail.ToString() != "")
+                        {
+                            object body = null;
+                            string MailBody;
+                            body = "Hi,<br> please find the attached quotation for your review";
+                            if (body != null)
+                            {
+                                body = body.ToString();
+                            }
+                            else
+                                body = "";
+
+                            string Sender = companyemail.ToString();
+                            Subject = "Quotation";
+                            MailBody = body.ToString();
+
+
+                            SmtpClient client = new SmtpClient
+                            {
+                                Host = "smtp.gmail.com",
+                                Port = 587,
+                                EnableSsl = true,
+                                DeliveryMethod = SmtpDeliveryMethod.Network,
+                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                Timeout = 10000,
+                            };
+
+                            MailMessage message = new MailMessage();
+                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            message.From = new MailAddress(Sender);
+                            message.Subject = Subject;
+                            message.Body = MailBody;
+                            message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography");
+                            message.IsBodyHtml = true; //HTML email  
+                            message.Attachments.Add(new Attachment(url));
+                            client.Send(message);
+
+                        }
+                    }
+
+
+                }
+                return true;
+            }
+
+            catch (Exception ie)
+            {
+                return false;
+            }
         }
 
         [HttpGet("shiftSchedulePrint")]
