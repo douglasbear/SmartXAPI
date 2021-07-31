@@ -311,27 +311,27 @@ namespace SmartxAPI.Controllers
                         }
                         string URL = reportApi + "/api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + reportPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
                         var path = client.GetAsync(URL);
-                        // if (nFormID == 80)
-                        // {
-                        //     SortedList Params = new SortedList();
-                        //     object N_OpportunityID = dLayer.ExecuteScalar("select N_OpportunityID from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
-                        //     if (N_OpportunityID != null)
-                        //     {
-                        //         if (myFunctions.getIntVAL(N_OpportunityID.ToString()) > 0)
-                        //         {
+                        if (nFormID == 80)
+                        {
+                            SortedList Params = new SortedList();
+                            object N_OpportunityID = dLayer.ExecuteScalar("select N_OpportunityID from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                            if (N_OpportunityID != null)
+                            {
+                                if (myFunctions.getIntVAL(N_OpportunityID.ToString()) > 0)
+                                {
                                     
-                        //             object Mailsend = dLayer.ExecuteScalar("select B_MailSend from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
-                        //             object Mail = dLayer.ExecuteScalar("select X_Email from vw_crmopportunity where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_OpportunityID=" + N_OpportunityID, Params, connection, transaction);
-                        //             if (Mailsend == null)
-                        //             {
-                        //                 if(sendmail(URL,Mail.ToString()))
-                        //                     dLayer.ExecuteNonQuery("update inv_salesquotation set B_MailSend=1 where N_CompanyID=@N_CompanyID and N_QuotationID=" + nPkeyID, Params, connection, transaction);
-                        //             }
+                                    object Mailsend = dLayer.ExecuteScalar("select B_MailSend from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                                    object Mail = dLayer.ExecuteScalar("select X_Email from vw_crmopportunity where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_OpportunityID=" + N_OpportunityID, Params, connection, transaction);
+                                    if (Mailsend == null)
+                                    {
+                                        if(sendmail(URL,Mail.ToString()))
+                                            dLayer.ExecuteNonQuery("update inv_salesquotation set B_MailSend=1 where N_CompanyID=@N_CompanyID and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                                    }
 
-                        //         }
-                        //     }
+                                }
+                            }
 
-                        // }
+                        }
                         path.Wait();
                         return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                     }
