@@ -49,14 +49,14 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID ";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_activityid";
+                xSortBy = " order by d_scheduleDate Desc";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ActivityListDetails(string xActivityCode)
+        public ActionResult ActivityListDetails(string xActivityCode,int nopportunityID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -108,6 +108,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
+            object Company, Oppportunity, Contact, CustomerID;
 
 
             try
@@ -115,7 +116,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    if (nopportunityID > 0)
+                    {
+                        Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+
+
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@CompanyName", Company.ToString());
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@ContactName", Contact.ToString());
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@LeadName", Oppportunity.ToString());
+
+                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@CompanyName", Company.ToString());
+                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@ContactName", Contact.ToString());
+                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@LeadName", Oppportunity.ToString());
+                        dt.AcceptChanges();
+
+                    }
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)

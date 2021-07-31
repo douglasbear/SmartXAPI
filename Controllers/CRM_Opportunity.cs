@@ -286,6 +286,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    Results = dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
