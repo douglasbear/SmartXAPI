@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from Gen_LookupTable where N_CompanyID=@p1 and N_FnyearID=@p2 and N_PkeyId=@p3";
+            string sqlCommandText = "SELECT Sub.*, Parent.X_Name AS X_ParentName FROM Gen_LookupTable AS Sub LEFT OUTER JOIN Gen_LookupTable AS Parent ON Sub.N_CompanyID = Parent.N_CompanyID AND Sub.N_ParentGroupID = Parent.N_PkeyId where Sub.N_CompanyID=@p1 and Sub.N_FnyearID=@p2 and Sub.N_PkeyId=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", nPkeyId);

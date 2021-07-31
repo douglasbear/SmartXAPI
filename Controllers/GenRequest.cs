@@ -165,6 +165,10 @@ namespace SmartxAPI.Controllers
         public ActionResult GetLookup(string type)
         {
             int N_FormID = 0;
+            if(int.TryParse(type, out _))
+            {
+                N_FormID = myFunctions.getIntVAL(type.ToString());
+            }else{
             switch (type)
             {
                 case "VendorType":
@@ -250,13 +254,14 @@ namespace SmartxAPI.Controllers
                     break;
                 default: return Ok("Invalid Type");
             }
+            }
 
-            string X_Criteria = "N_ReferId=@p1 and N_CompanyID=@nCompanyID order by n_Sort ASC";
+            string X_Criteria = " Sub.N_ReferId=@p1 and  Sub.N_CompanyID=@nCompanyID order by  Sub.n_Sort ASC";
             SortedList param = new SortedList() { { "@p1", N_FormID },{"@nCompanyID",myFunctions.GetCompanyID(User)} };
 
             DataTable dt = new DataTable();
 
-            string sqlCommandText = "select * from Gen_LookupTable where " + X_Criteria;
+            string sqlCommandText = "SELECT Sub.*, Parent.X_Name AS X_ParentName FROM Gen_LookupTable AS Sub LEFT OUTER JOIN Gen_LookupTable AS Parent ON Sub.N_CompanyID = Parent.N_CompanyID AND Sub.N_ParentGroupID = Parent.N_PkeyId where " + X_Criteria;
 
             try
             {
