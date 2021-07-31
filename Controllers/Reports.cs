@@ -319,13 +319,16 @@ namespace SmartxAPI.Controllers
                             {
                                 if (myFunctions.getIntVAL(N_OpportunityID.ToString()) > 0)
                                 {
-                                    
+
                                     object Mailsend = dLayer.ExecuteScalar("select B_MailSend from inv_salesquotation where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
                                     object Mail = dLayer.ExecuteScalar("select X_Email from vw_crmopportunity where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_OpportunityID=" + N_OpportunityID, Params, connection, transaction);
-                                    if (Mailsend == null)
+                                    if (Mailsend.ToString() == "")
                                     {
-                                        if(sendmail(URL,Mail.ToString()))
-                                            dLayer.ExecuteNonQuery("update inv_salesquotation set B_MailSend=1 where N_CompanyID=@N_CompanyID and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                                        if (sendmail(reportPath + ReportName + random + ".pdf", Mail.ToString()))
+                                        {
+                                            dLayer.ExecuteNonQuery("update inv_salesquotation set B_MailSend=1 where N_CompanyID=" + nCompanyId + " and N_QuotationID=" + nPkeyID, Params, connection, transaction);
+                                            transaction.Commit();
+                                        }
                                     }
 
                                 }
