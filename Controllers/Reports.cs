@@ -299,22 +299,6 @@ namespace SmartxAPI.Controllers
                         ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                     };
 
-                    // if (nFormID == 1229)//leave
-                    // {
-                    //     critiria = "{Vw_VacationApprovalSlip_Rpt.N_VacationGroupID}=" + nPkeyID;
-                    //     TableName = "Vw_VacationApprovalSlip_Rpt";
-
-                    //     RPTLocation = reportLocation + "printing/";
-                    //     ReportName = "Leaveapprovalslip";
-                    // }
-                    // if (nFormID == 1226)//loan
-                    // {
-                    //     critiria = "{vw_AccVoucherJrnlCC.X_TransType}='JV' and {vw_AccVoucherJrnlCC.N_VoucherID}=" + nPkeyID;
-                    //     TableName = "vw_AccVoucherJrnlCC";
-
-                    //     RPTLocation = reportLocation + "printing/";
-                    //     ReportName = "JournalVoucher_VAT";
-                    // }
                     if (LoadReportDetails(nFnYearID, nFormID, nPkeyID))
                     {
                         var client = new HttpClient(handler);
