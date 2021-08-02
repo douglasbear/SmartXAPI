@@ -301,6 +301,19 @@ namespace SmartxAPI.Controllers
                         userID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                         if (userID > 0)
                         {
+                            object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_UserID="+userID,connection,transaction);
+//
+if(myFunctions.getIntVAL(salesManCount.ToString())==0){
+    object salesManMax = dLayer.ExecuteScalar("select max(N_SalesmanID)+1 from Inv_SalesMan ",connection,transaction);
+    object salesManCodeMax = dLayer.ExecuteScalar("select max(cast(X_SalesManCode as numeric))+1 from Inv_SalesMan ",connection,transaction);
+    object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values("+myFunctions.GetCompanyID(User)+","+(myFunctions.getIntVAL(salesManMax.ToString()))+",'"+(myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString()+"','"+MasterTable.Rows[0]["X_UserName"].ToString()+"','"+MasterTable.Rows[0]["X_UserID"].ToString()+"',0,0,2,"+userID+",2)",connection,transaction);
+}
+
+
+
+
+//
+
                             if (nGlobalUserID == 0)
                             {
                                 object appUrl = dLayer.ExecuteScalar("select X_AppUrl from ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID", userParams, olivoCon, olivoTxn);

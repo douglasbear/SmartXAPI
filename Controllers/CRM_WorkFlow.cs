@@ -211,15 +211,6 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     return Ok(api.Success("Workflow deleted"));
                 }
-                // if (Results > 0)
-                // {
-
-                //     return Ok(api.Success("Workflow deleted"));
-                // }
-                // else
-                // {
-                //     return Ok(api.Error("Unable to delete Workflow"));
-                // }
 
             }
             catch (Exception ex)
