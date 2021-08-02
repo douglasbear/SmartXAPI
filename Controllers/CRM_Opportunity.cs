@@ -148,6 +148,7 @@ namespace SmartxAPI.Controllers
                 string X_ContactEmail = MasterTable.Rows[0]["X_Email"].ToString();
                 string X_ContactNumber = MasterTable.Rows[0]["X_Mobile"].ToString();
                 int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
+                object N_WorkFlowID=null;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -167,6 +168,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_OpportunityID='" + nOpportunityID + "' and N_FnyearID=" + nFnYearId;
+                    if(nOpportunityID>0)
+                         N_WorkFlowID = dLayer.ExecuteScalar("select N_WactivityID from CRM_Opportunity where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_OpportunityID=" + nOpportunityID, Params, connection, transaction);
                     nOpportunityID = dLayer.SaveData("CRM_Opportunity", "n_OpportunityID", DupCriteria, "", MasterTable, connection, transaction);
                     if (Items.Rows.Count > 0)
                     {
@@ -183,69 +186,78 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        if (nOPPOId == 0)
+
+                        
+                        if (N_WorkFlowID != null)
                         {
-                            if (nWActivityID > 0)
+                            if (nWActivityID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
                             {
-                                dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
-                                Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID +" and order by N_Order", Params, connection, transaction);
-                                if (Activity.Rows.Count > 0)
+                                if (nWActivityID > 0)
                                 {
-                                    SortedList AParams = new SortedList();
-                                    Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactEmail", typeof(string), "");
-                                    Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactNumber", typeof(string), "");
-                                    Activity = myFunctions.AddNewColumnToDataTable(Activity, "x_ActivityCode", typeof(string), "");
-                                    Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_TaskOwner", typeof(int), 0);
-                                    Activity = myFunctions.AddNewColumnToDataTable(Activity, "n_ActivityID", typeof(int), 0);
-                                    Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_Contact", typeof(string), "");
-                                    string ActivityCode = "";
-                                    AParams.Add("N_CompanyID", nCompanyID);
-                                    AParams.Add("N_YearID", nFnYearId);
-                                    AParams.Add("N_FormID", 1307);
-                                    Activity.Columns.Remove("N_WActivityID");
-                                    Activity.Columns.Remove("N_WActivityDetailID");
-                                    int Order = 1;
-                                    double Minuts = 0;
-                                    object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection, transaction);
-                                    foreach (DataRow var in Activity.Rows)
+                                    dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
+                                    Activity = dLayer.ExecuteDataTable("select * from CRM_WorkflowActivities where N_CompanyID=" + nCompanyID + " and N_WActivityID=" + nWActivityID + " order by N_Order", Params, connection, transaction);
+                                    if (Activity.Rows.Count > 0)
                                     {
-                                        ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
-                                        if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
-                                        var["x_ActivityCode"] = ActivityCode;
-                                        var["N_RelatedTo"] = 294;
-                                        var["N_ReffID"] = nOpportunityID;
-                                        var["X_ContactEmail"] = X_ContactEmail;
-                                        var["X_ContactNumber"] = X_ContactNumber;
-                                        var["N_TaskOwner"] = nTaskOwner;
-                                        var["n_ActivityID"] = 0;
-                                        var["N_Order"] = Order;
-                                        var["X_Contact"] = Contact;
-                                        if (Order == 1)
+                                        SortedList AParams = new SortedList();
+                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactEmail", typeof(string), "");
+                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_ContactNumber", typeof(string), "");
+                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "x_ActivityCode", typeof(string), "");
+                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "N_TaskOwner", typeof(int), 0);
+                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "n_ActivityID", typeof(int), 0);
+                                        Activity = myFunctions.AddNewColumnToDataTable(Activity, "X_Contact", typeof(string), "");
+                                        string ActivityCode = "";
+                                        AParams.Add("N_CompanyID", nCompanyID);
+                                        AParams.Add("N_YearID", nFnYearId);
+                                        AParams.Add("N_FormID", 1307);
+                                        Activity.Columns.Remove("N_WActivityID");
+                                        Activity.Columns.Remove("N_WActivityDetailID");
+                                        int Order = 1;
+                                        double Minuts = 0;
+                                        object Contact = dLayer.ExecuteScalar("select X_Contact from crm_Contact where N_ContactID=" + nContactID, Params, connection, transaction);
+                                        foreach (DataRow var in Activity.Rows)
                                         {
-                                            var["b_closed"] = 1;
-                                            var["x_status"] = "Closed";
+                                            ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
+                                            if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
+                                            var["x_ActivityCode"] = ActivityCode;
+                                            var["N_RelatedTo"] = 294;
+                                            var["N_ReffID"] = nOpportunityID;
+                                            var["X_ContactEmail"] = X_ContactEmail;
+                                            var["X_ContactNumber"] = X_ContactNumber;
+                                            var["N_TaskOwner"] = nTaskOwner;
+                                            var["n_ActivityID"] = 0;
+                                            var["N_Order"] = Order;
+                                            var["X_Contact"] = Contact;
+                                            if (Order == 1)
+                                            {
+                                                var["b_closed"] = 1;
+                                                var["x_status"] = "Closed";
+                                            }
+                                            if (var["N_ReminderUnitID"].ToString() == "248")
+                                                Minuts = 1;
+                                            else if (var["N_ReminderUnitID"].ToString() == "247")
+                                                Minuts = 60;
+                                            else if (var["N_ReminderUnitID"].ToString() == "246")
+                                                Minuts = 1440;
+                                            else
+                                                Minuts = 10080;
+
+                                            if (var["N_ReminderBrfore"].ToString() == "0")
+                                                Minuts = 0;
+                                            else
+                                                Minuts = myFunctions.getVAL(var["N_ReminderBrfore"].ToString()) * Minuts;
+
+                                            var["D_ScheduleDate"] = DateTime.Now.AddMinutes(Minuts);
+                                            Order++;
                                         }
-                                        if (var["N_ReminderUnitID"].ToString() == "248")
-                                            Minuts = 1;
-                                        else if (var["N_ReminderUnitID"].ToString() == "247")
-                                            Minuts = 60;
-                                        else if (var["N_ReminderUnitID"].ToString() == "246")
-                                            Minuts = 1440;
-                                        else
-                                            Minuts = 10080;
-
-                                        if (var["N_ReminderBrfore"].ToString() == "0")
-                                            Minuts = 0;
-                                        else
-                                            Minuts = myFunctions.getVAL(var["N_ReminderBrfore"].ToString()) * Minuts;
-
-                                        var["D_ScheduleDate"] = DateTime.Now.AddMinutes(Minuts);
-                                        Order++;
+                                        dLayer.SaveData("CRM_Activity", "n_ActivityID", Activity, connection, transaction);
                                     }
-                                    dLayer.SaveData("CRM_Activity", "n_ActivityID", Activity, connection, transaction);
                                 }
+
                             }
+
                         }
+
+
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
 
                         transaction.Commit();
@@ -274,6 +286,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    Results = dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)

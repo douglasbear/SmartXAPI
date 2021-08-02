@@ -52,9 +52,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from CRM_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from CRM_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " and N_WActivityID not in (select top(" + Count + ") N_WActivityID from CRM_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " and N_WActivityID not in (select top(" + Count + ") N_WActivityID from CRM_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -211,15 +211,6 @@ namespace SmartxAPI.Controllers
                     transaction.Commit();
                     return Ok(api.Success("Workflow deleted"));
                 }
-                // if (Results > 0)
-                // {
-
-                //     return Ok(api.Success("Workflow deleted"));
-                // }
-                // else
-                // {
-                //     return Ok(api.Error("Unable to delete Workflow"));
-                // }
 
             }
             catch (Exception ex)

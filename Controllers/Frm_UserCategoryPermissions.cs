@@ -145,9 +145,12 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
+                    Boolean bool1 = true;
+                    Boolean bool2 = false;
 
 
-                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+
                     if (x_UserCategory != null)
                     {
                         x_UserCategoryName = x_UserCategory.ToString();
@@ -168,9 +171,11 @@ namespace SmartxAPI.Controllers
                     secParams.Add("@xUserCategory", x_UserCategoryName);
                     secParams.Add("@nMenuID", N_MenuID);
                     secParams.Add("@nLanguageID", nLanguageID);
-                    string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID";
+                    secParams.Add("@nIsCategoryID", 1);
+
+                    string SecAllSql = "SP_Sec_UserMenus_Sel @nCompanyID,@xUserCategory,@nMenuID,@nLanguageID,@nIsCategoryID";
                     SecAllMenus = dLayer.ExecuteDataTable(SecAllSql, secParams, connection);
-                    SecAllMenus = _api.Format(SecAllMenus, "SecAllMenus");
+                    // SecAllMenus = _api.Format(SecAllMenus, "SecAllMenus");
 
 
 
@@ -182,7 +187,46 @@ namespace SmartxAPI.Controllers
                     string SecUsersql = "SP_Sec_UserMenus_Permissions @nCompanyID,@xUserCategory,@nMenuID";
                     SecUserPermissions = dLayer.ExecuteDataTable(SecUsersql, PostingParam, connection);
                     SecUserPermissions = _api.Format(SecUserPermissions, "SecUserPermissions");
-                
+
+                    if (SecAllMenus.Rows.Count > 0)
+                    {
+                        foreach (DataRow Rows in SecAllMenus.Rows)
+                        {
+
+                            Rows["b_Delete"] = bool2;
+                            Rows["b_Edit"] = bool2;
+                            Rows["b_Save"] = bool2;
+                           
+                            Rows["b_Visible"] = bool2;
+                        }
+                    }
+                    SecAllMenus.AcceptChanges();
+                    foreach (DataRow Rows in SecAllMenus.Rows)
+                    {
+
+                        foreach (DataRow KRows in SecUserPermissions.Rows)
+                        {
+                            if (Rows["n_MenuID"].ToString() == KRows["n_MenuID"].ToString())
+                            {
+                                Rows["b_Delete"] = Convert.ToBoolean(KRows["b_Delete"].ToString());
+                                Rows["b_Edit"] = Convert.ToBoolean(KRows["b_Edit"].ToString());
+                                Rows["b_Save"] = Convert.ToBoolean(KRows["b_Save"].ToString());
+                        
+                                Rows["b_Visible"] = Convert.ToBoolean(KRows["b_Visible"].ToString());
+                            }
+
+
+
+
+
+                        }
+                    }
+                    SecAllMenus.AcceptChanges();
+                    SecAllMenus = _api.Format(SecAllMenus, "SecAllMenus");
+                  
+
+
+
 
                     dt.Tables.Add(SecUserPermissions);
                     dt.Tables.Add(SecAllMenus);
@@ -236,7 +280,7 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-                   
+
                     if (DetailTable.Rows.Count > 0)
                     {
 
