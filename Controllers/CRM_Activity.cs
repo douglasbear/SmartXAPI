@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                             {
 
                                 int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
-                                dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
+                                dLayer.ExecuteNonQuery("update crm_activity set N_Order" + NOrder + " where N_Order" + Count, Params, connection, transaction);
                                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
                                 MasterTable.Rows[0]["N_Order"] = Count.ToString();
                             }
