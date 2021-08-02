@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
                             Rows["b_Delete"] = bool2;
                             Rows["b_Edit"] = bool2;
                             Rows["b_Save"] = bool2;
-                           
+
                             Rows["b_Visible"] = bool2;
                         }
                     }
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                                 Rows["b_Delete"] = Convert.ToBoolean(KRows["b_Delete"].ToString());
                                 Rows["b_Edit"] = Convert.ToBoolean(KRows["b_Edit"].ToString());
                                 Rows["b_Save"] = Convert.ToBoolean(KRows["b_Save"].ToString());
-                        
+
                                 Rows["b_Visible"] = Convert.ToBoolean(KRows["b_Visible"].ToString());
                             }
 
@@ -222,8 +222,20 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     SecAllMenus.AcceptChanges();
+
+                   
+                    foreach (DataRow PRows in SecAllMenus.Rows)
+                    {
+                        if (PRows["x_Text"].ToString() == "Seperator")
+                         { 
+                            PRows.Delete(); 
+                            continue; 
+                            }
+
+                    }
+                    SecAllMenus.AcceptChanges();
+
                     SecAllMenus = _api.Format(SecAllMenus, "SecAllMenus");
-                  
 
 
 
