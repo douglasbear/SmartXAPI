@@ -49,14 +49,14 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID ";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by n_activityid";
+                xSortBy = " order by d_scheduleDate Desc";
             else
                 xSortBy = " order by " + xSortBy;
 
@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ActivityListDetails(string xActivityCode)
+        public ActionResult ActivityListDetails(string xActivityCode,int nopportunityID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -108,6 +108,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
+            object Company, Oppportunity, Contact, CustomerID;
 
 
             try
@@ -115,7 +116,26 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    if (nopportunityID > 0)
+                    {
+                        Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                        CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+
+
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@CompanyName", Company.ToString());
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@ContactName", Contact.ToString());
+                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@LeadName", Oppportunity.ToString());
+
+                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@CompanyName", Company.ToString());
+                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@ContactName", Contact.ToString());
+                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@LeadName", Oppportunity.ToString());
+                        dt.AcceptChanges();
+
+                    }
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -171,14 +191,17 @@ namespace SmartxAPI.Controllers
                     }
                     if (MasterTable.Rows[0]["N_RelatedTo"].ToString() == "294")
                     {
-                        object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection, transaction);
-                        if (Count != null)
+                        if (nActivityID == 0)
                         {
+                            object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection, transaction);
+                            if (Count != null)
+                            {
 
-                            int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
-                            dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
-                            MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                                int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                                dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                            }
                         }
 
                     }
@@ -241,17 +264,17 @@ namespace SmartxAPI.Controllers
                         }
                         if (MasterTable.Columns.Contains("b_IsAutoMail"))
                         {
-                             DataRow row1 = dtSave.NewRow();
-                        row1["N_ReminderId"] = 0;
-                        row1["N_CompanyID"] = myFunctions.GetCompanyID(User);
-                        row1["N_FormID"] = this.FormID;
-                        row1["N_PartyID"] = nActivityID;
-                        row1["X_Subject"] = "Activity";
-                        row1["X_Title"] = "Activity";
-                        row1["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
-                        row1["B_IsAttachment"] = 0;
-                        row1["N_SettingsID"] = 0;
-                        row1["N_UserID"] = nUserID;
+                            DataRow row1 = dtSave.NewRow();
+                            row1["N_ReminderId"] = 0;
+                            row1["N_CompanyID"] = myFunctions.GetCompanyID(User);
+                            row1["N_FormID"] = this.FormID;
+                            row1["N_PartyID"] = nActivityID;
+                            row1["X_Subject"] = "Activity";
+                            row1["X_Title"] = "Activity";
+                            row1["D_ExpiryDate"] = MasterTable.Rows[0]["D_ScheduleDate"].ToString();
+                            row1["B_IsAttachment"] = 0;
+                            row1["N_SettingsID"] = 0;
+                            row1["N_UserID"] = nUserID;
                             if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
                             {
                                 row1["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
@@ -263,7 +286,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                        
+
 
                         // if (MasterTable.Rows[0]["B_IsReminder"].ToString() == "True")
                         //     myReminders.ReminderSet(dLayer, 24, nActivityID, MasterTable.Rows[0]["D_ScheduleDate"].ToString(), this.FormID, nUserID, User, connection, transaction);

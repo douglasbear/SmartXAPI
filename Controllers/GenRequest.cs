@@ -165,98 +165,21 @@ namespace SmartxAPI.Controllers
         public ActionResult GetLookup(string type)
         {
             int N_FormID = 0;
-            switch (type)
+            string X_Criteria = "";
+
+            if(int.TryParse(type, out _))
             {
-                case "VendorType":
-                    N_FormID = 52;
-                    break;
-                case "Stage":
-                    N_FormID = 1310;
-                    break;
-                case "Industry":
-                    N_FormID = 1311;
-                    break;
-                case "LeadSource":
-                    N_FormID = 1312;
-                    break;
-                case "SubSource":
-                    N_FormID = 1355;
-                    break;
-                case "Priority":
-                    N_FormID = 1356;
-                    break;
-                case "CustomerCategory":
-                    N_FormID = 1357;
-                    break;
-                case "CrmItem":
-                    N_FormID = 1358;
-                    break;
-                case "LeadStatus":
-                    N_FormID = 1313;
-                    break;
-                case "District":
-                    N_FormID = 1273;
-                    break;
-                case "Ownership":
-                    N_FormID = 1314;
-                    break;
-                case "BloodGroup":
-                    N_FormID = 14;
-                    break;
-                case "DrivingLicence":
-                    N_FormID = 1208;
-                    break;
-                case "WorkLocation":
-                    N_FormID = 1332;
-                    break;
-                case "EducationType":
-                    N_FormID = 28;
-                    break;
-                case "serviceType":
-                    N_FormID = 1151;
-                    break;
-                case "WorkType":
-                    N_FormID = 1121;
-                    break;
-                case "ProjectType":
-                    N_FormID = 1048;
-                    break;
-                case "EnquiryType":
-                    N_FormID = 1100;
-                    break;
-                case "SubmissionType":
-                    N_FormID = 1123;
-                    break;
-                case "SeparationReason":
-                    N_FormID = 455;
-                    break;
-                case "Rating":
-                    N_FormID = 9;
-                    break;
-                case "Purpose":
-                    N_FormID = 51;
-                    break;
-                case "InsuranceClass":
-                    N_FormID = 17;
-                    break;
-                case "Pricetype":
-                    N_FormID = 3;
-                    break;
-                case "CrmWorkType":
-                    N_FormID = 1360;
-                    break;
-                case "BodyVariable":
-                    N_FormID = 1359;
-                    break;
-                default: return Ok("Invalid Type");
+             X_Criteria = " Sub.N_ReferId=@p1 and  Sub.N_CompanyID=@nCompanyID order by  Sub.n_Sort ASC";
+                N_FormID = myFunctions.getIntVAL(type.ToString());
+            }else{
+                X_Criteria = " Sub.X_ReferCode=@p2 and  Sub.N_CompanyID=@nCompanyID order by  Sub.n_Sort ASC";
             }
 
-            string X_Criteria = "N_ReferId=@p1 and N_CompanyID=@nCompanyID order by n_Sort ASC";
-            SortedList param = new SortedList() { { "@p1", N_FormID },{"@nCompanyID",myFunctions.GetCompanyID(User)} };
+            SortedList param = new SortedList() { { "@p1", N_FormID },{ "@p2", type },{"@nCompanyID",myFunctions.GetCompanyID(User)} };
 
             DataTable dt = new DataTable();
 
-            string sqlCommandText = "select * from Gen_LookupTable where " + X_Criteria;
+            string sqlCommandText = "SELECT Sub.*, Parent.X_Name AS X_ParentName FROM Gen_LookupTable AS Sub LEFT OUTER JOIN Gen_LookupTable AS Parent ON Sub.N_CompanyID = Parent.N_CompanyID AND Sub.N_ParentGroupID = Parent.N_PkeyId where " + X_Criteria;
 
             try
             {
