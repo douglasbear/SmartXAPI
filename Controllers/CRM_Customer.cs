@@ -33,14 +33,14 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult CustomerList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult CustomerList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "";
+            int nCompanyId=myFunctions.GetCompanyID(User);
+            int Count= (nPage - 1) * nSizeperpage;
+            string sqlCommandText ="";
 
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -50,11 +50,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_CustomerID desc";
             else
                 xSortBy = " order by " + xSortBy;
-
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMCustomer where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMCustomer where N_CompanyID=@p1 " + Searchkey + " and N_CustomerID not in (select top(" + Count + ") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 " + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-
+                
             }
             catch (Exception e)
             {
@@ -93,8 +93,8 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-
+            int nCompanyId=myFunctions.GetCompanyID(User);
+           
             string sqlCommandText = "select  * from vw_CRMCustomer where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             try
@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                     dt = api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-
+                
             }
             catch (Exception e)
             {
@@ -124,29 +124,23 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult CustomerListDetails(string xCustomerCode, int nCustomerID)
+        public ActionResult CustomerListDetails(string xCustomerCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-
-            string sqlCommandText = "";
-            if (nCustomerID > 0)
-            {
-                sqlCommandText = "select  X_Customer as X_CustomerName,X_Website as X_WebSite,* from vw_CRMCustomer where N_CompanyID=@p1 and N_CustomerID=" + nCustomerID + "";
-            }
-            else
-            {
-                sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1 and X_CustomerCode=@p2";
-            }
+            int nCompanyId=myFunctions.GetCompanyID(User);
+  
+            string sqlCommandText = "select * from vw_CRMCustomer where N_CompanyID=@p1 and X_CustomerCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xCustomerCode);
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -192,11 +186,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1306);
                         LeadCode = dLayer.GetAutoNumber("CRM_Customer", "x_CustomerCode", Params, connection, transaction);
-                        if (LeadCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Customer Code")); }
+                        if (LeadCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["x_CustomerCode"] = LeadCode;
                     }
 
-                    nCustomerID = dLayer.SaveData("CRM_Customer", "n_CustomerID", MasterTable, connection, transaction);
+                    nCustomerID = dLayer.SaveData("CRM_Customer", "n_CustomerID",  MasterTable, connection, transaction);
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
@@ -215,16 +209,16 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
+      
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCustomerID)
         {
 
-            int Results = 0;
+             int Results = 0;
             try
-            {
+            {                        
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();
+                SortedList QueryParams = new SortedList();                
                 QueryParams.Add("@nFormID", 1305);
                 QueryParams.Add("@nCustomerID", nCustomerID);
 
@@ -237,9 +231,9 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string, string> res = new Dictionary<string, string>();
-                    res.Add("N_CustomerID", nCustomerID.ToString());
-                    return Ok(api.Success(res, "Customer deleted"));
+                    Dictionary<string,string> res=new Dictionary<string, string>();
+                    res.Add("N_CustomerID",nCustomerID.ToString());
+                    return Ok(api.Success(res,"Customer deleted"));
                 }
                 else
                 {
