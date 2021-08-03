@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
                string sqlCommandText = "";
             if (crmcustomerID > 0)
             {
-                sqlCommandText = "select  X_Customer as X_CustomerName,X_Website as X_WebSite,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
+                sqlCommandText = "select   X_Customer as X_CustomerName,X_Website as X_WebSite,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
             }
             else
             {
@@ -388,6 +388,12 @@ namespace SmartxAPI.Controllers
                     {
                         connection.Open();
                         dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                        if(crmcustomerID>0)
+                        {
+                             dt.Rows[0]["x_CustomerCode"] = "@Auto";
+                            
+                        }
+                        dt.AcceptChanges();
                     }
                     if(dt.Rows.Count==0)
                         {
