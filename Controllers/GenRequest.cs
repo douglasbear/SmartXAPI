@@ -38,94 +38,10 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("defults/{type}")]
-        public ActionResult GetDefults(string type, string X_TypeCode)
+        public ActionResult GetDefults(int type, string X_TypeCode)
         {
-            int id = 0;
-            switch (type.ToLower())
-            {
-                case "locationtype":
-                    id = 1;
-                    break;
-                case "salarytype":
-                    id = 2;
-                    break;
-                case "accrualtype":
-                    id = 3;
-                    break;
-                case "accrualfrequency":
-                    id = 4;
-                    break;
-                case "accrualstartfrom":
-                    id = 5;
-                    break;
-                case "partnertype":
-                    id = 25;
-                    break;
-                case "producttype":
-                    id = 36;
-                    break;
-                case "traveltype":
-                    id = 56;
-                    break;
-                case "activityrelation":
-                    id = 91;
-                    break;
-                case "activitytype":
-                    id = 92;
-                    break;
-                case "customertype":
-                    id = 93;
-                    break;
-                case "timeunit":
-                    id = 68;
-                    break;
-                case "hiretype":
-                    id = 56;
-                    break;
-                case "closingstatus":
-                    id = 94;
-                    break;
-                case "maritalstatus":
-                    id = 26;
-                    break;
-                case "workmode":
-                    id = 82;
-                    break;
-                case "licencepaymentmode":
-                    id = 59;
-                    break;
-                case "licencetype":
-                    id = 64;
-                    break;
-                case "decision":
-                    id = 31;
-                    break;
-                case "employmenttype":
-                    id = 6;
-                    break;
-                case "csv":
-                    id = 80;
-                    break;
-                case "insurancetype":
-                    id = 49;
-                    break;
-                case "assetcurrentstatus":
-                    id = 46;
-                    break;
-                case "assetdepreciationmethod":
-                    id = 57;
-                    break;
-                case "applicationtype":
-                    id = 97;
-                    break;
-                case "defaultunittype":
-                    id = 104;
-                    break;
-                case "media":
-                    id = 28;
-                    break;
-                default: return Ok("Invalid Type");
-            }
+            int id = type;
+           
             string X_Criteria = "N_DefaultId=@p1";
             SortedList param = new SortedList() { { "@p1", id } };
             if (X_TypeCode != "" && X_TypeCode!= null)
