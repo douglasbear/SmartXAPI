@@ -78,20 +78,13 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("lookup/{type}")]
-        public ActionResult GetLookup(string type)
+        public ActionResult GetLookup(int type)
         {
-            int N_FormID = 0;
-            string X_Criteria = "";
+            int N_FormID = type;
 
-            if(int.TryParse(type, out _))
-            {
-             X_Criteria = " Sub.N_ReferId=@p1 and  Sub.N_CompanyID=@nCompanyID order by  Sub.n_Sort ASC";
-                N_FormID = myFunctions.getIntVAL(type.ToString());
-            }else{
-                X_Criteria = " Sub.X_ReferCode=@p2 and  Sub.N_CompanyID=@nCompanyID order by  Sub.n_Sort ASC";
-            }
+            string X_Criteria = " Sub.N_ReferId=@p1 and  Sub.N_CompanyID=@nCompanyID order by  Sub.n_Sort ASC";
 
-            SortedList param = new SortedList() { { "@p1", N_FormID },{ "@p2", type },{"@nCompanyID",myFunctions.GetCompanyID(User)} };
+            SortedList param = new SortedList() { { "@p1", N_FormID },{"@nCompanyID",myFunctions.GetCompanyID(User)} };
 
             DataTable dt = new DataTable();
 
