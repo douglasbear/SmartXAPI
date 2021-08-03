@@ -105,8 +105,8 @@ namespace SmartxAPI.Controllers
                             Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Leads";
                             Params.Add("X_Type", "Leads");
-                            Mastertable.Columns.Add("N_CompanyID");
-                            Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
+                            // Mastertable.Columns.Add("N_CompanyID");
+                            // Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
 
                         }
 
