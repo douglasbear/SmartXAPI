@@ -107,11 +107,12 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
 
-                    dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
+
 
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
 
                     nPayID = dLayer.SaveData("Pay_PayMaster", "N_PayID", DupCriteria, "N_companyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId, MasterTable, connection, transaction);
+                    dLayer.DeleteData("Pay_SummaryPercentage", "N_PayID", nPayID, "N_CompanyID=" + nCompanyID, connection, transaction);
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
@@ -344,11 +345,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPayCodeId)
+        public ActionResult DeleteData(int nPayCodeId, int flag)
         {
 
             int Results = 0;
             object obj = "";
+            object obj1 = "";
+            object obj3 = "";
+            bool showConformation = false;
             try
             {
                 SortedList Params = new SortedList();
@@ -359,14 +363,71 @@ namespace SmartxAPI.Controllers
                     obj = dLayer.ExecuteScalar("Select N_PayID From Pay_PaySetup Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
                     if (obj == null)
                     {
-                        SqlTransaction transaction = connection.BeginTransaction();
-                        Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
-                        transaction.Commit();
+                        obj3 = dLayer.ExecuteScalar("Select Count(N_TransDetailsID) from Pay_PaymentDetails Where n_CompanyID= " + myFunctions.GetCompanyID(User) + " and N_PayID = " + nPayCodeId.ToString(), Params, connection);
+                        if (obj3 != null)
+                        {
+                            if (myFunctions.getIntVAL(obj3.ToString()) > 0)
+                            {
+                                return Ok(api.Error(" PayCode Already used"));
+                            }
+
+                        }
+
+                        obj1 = dLayer.ExecuteScalar("Select N_PayID From Pay_MonthlyAddOrDedDetails Where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                        {
+                            if (obj1 != null)
+                            {
+                                if (flag == 0)
+                                {
+                                    showConformation = true;
+                                    return Ok(api.Success(showConformation));
+                                }
+                                else if (flag == 1)
+                                {
+                                    object sql3 = dLayer.ExecuteScalar("Select Count(N_TransDetailsID) from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+
+                                    if (myFunctions.getIntVAL(sql3.ToString()) == 1)
+                                    {
+                                        object TransID = dLayer.ExecuteScalar("Select N_TransID from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                        object sql4 = dLayer.ExecuteScalar("Select Count(N_TransID) from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_TransID=" + myFunctions.getIntVAL(TransID.ToString()), Params, connection);
+                                        if (myFunctions.getIntVAL(sql4.ToString()) > 1)
+                                        {
+                                            dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                        }
+                                        else
+                                        {
+                                            dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDed where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_TransID=" + myFunctions.getIntVAL(TransID.ToString()), Params, connection);
+                                            dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+
+                                    }
+
+                                    SqlTransaction transaction = connection.BeginTransaction();
+                                    Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
+                                    transaction.Commit();
+                                }
+
+                            }
+                            else
+                            {
+
+                                SqlTransaction transaction = connection.BeginTransaction();
+                                Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
+                                transaction.Commit();
+
+                            }
+
+                        }
                     }
                     else
                     {
-                       
-                         return Ok(api.Error(" PayCode Already used"));
+
+
+                        return Ok(api.Error(" PayCode Already used"));
                     }
 
                 }
