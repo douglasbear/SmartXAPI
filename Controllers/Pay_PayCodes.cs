@@ -386,7 +386,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     object sql3 = dLayer.ExecuteScalar("Select Count(N_TransDetailsID) from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
 
-                                    if (myFunctions.getIntVAL(sql3.ToString()) == 1)
+                                    if (myFunctions.getIntVAL(sql3.ToString()) >= 1)
                                     {
                                         object TransID = dLayer.ExecuteScalar("Select N_TransID from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
                                         object sql4 = dLayer.ExecuteScalar("Select Count(N_TransID) from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_TransID=" + myFunctions.getIntVAL(TransID.ToString()), Params, connection);
