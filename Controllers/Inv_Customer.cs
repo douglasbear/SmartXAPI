@@ -367,12 +367,20 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetCustomerDetails(int nCustomerID)
+        public ActionResult GetCustomerDetails(int nCustomerID,int crmcustomerID)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from vw_InvCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+               string sqlCommandText = "";
+            if (crmcustomerID > 0)
+            {
+                sqlCommandText = "select   X_Customer as X_CustomerName,X_Website as X_WebSite,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
+            }
+            else
+            {
+             sqlCommandText="select * from vw_InvCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+            }
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nCustomerID",nCustomerID);
             try{
@@ -380,6 +388,12 @@ namespace SmartxAPI.Controllers
                     {
                         connection.Open();
                         dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                        if(crmcustomerID>0)
+                        {
+                             dt.Rows[0]["x_CustomerCode"] = "@Auto";
+                            
+                        }
+                        dt.AcceptChanges();
                     }
                     if(dt.Rows.Count==0)
                         {
