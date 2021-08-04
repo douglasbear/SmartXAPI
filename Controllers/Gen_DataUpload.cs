@@ -92,6 +92,23 @@ namespace SmartxAPI.Controllers
                             Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
 
                         }
+                        if (dt.TableName == "Leads List")
+                        {
+
+                            Mastertable = ds.Tables["Leads List"];
+                            foreach (DataColumn col in Mastertable.Columns)
+                            {
+                                col.ColumnName = col.ColumnName.Trim().Replace(" ", "_");
+                                col.ColumnName = col.ColumnName.Trim().Replace("*", "");
+                                col.ColumnName = col.ColumnName.Trim().Replace("/", "_");
+                            }
+                            Mastertable.Columns.Add("Pkey_Code");
+                            xTableName = "Mig_Leads";
+                            Params.Add("X_Type", "Leads");
+                            // Mastertable.Columns.Add("N_CompanyID");
+                            // Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
+
+                        }
 
                         if (Mastertable.Rows.Count > 0)
                         {
