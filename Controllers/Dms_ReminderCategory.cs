@@ -90,19 +90,11 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nMediaTypeID", nMediaTypeID);
 
             string sqlCommandText = "";
-            if (nMediaTypeID != 155)//--EMail or SMS--
-            {
-                if (bAllBranchData == true)
-                    sqlCommandText = "Select Name as X_Recipient,X_Phone1,X_EmailID from vw_EmpReminderRecepient where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by n_Sort";
-                else
-                    sqlCommandText = "Select Name as X_Recipient,X_Phone1,X_EmailID from vw_EmpReminderRecepient where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 OR N_BranchID=@nBranchID) order by n_Sort";
-            }
-            else//--Notification--
-            {
-                sqlCommandText = "Select X_UserID,X_UserName as X_Recipient,X_UserCategory from vw_UserReminderRecepient where N_CompanyID=@nCompanyID and X_UserCategory<>'Olivo'";             
-            }
+
+            sqlCommandText = "select * from vw_RemRecepient where N_CompanyID=@nCompanyID and N_Type=@nMediaTypeID";             
 
             try
             {
