@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow var in dt.Rows)
                     {
                         double BalanceAmt = 0;
-                        object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID=1 and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
+                        object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
 
                         if (objBal != null)
                         {
