@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
 
-                   
+
 
                     string DupCriteria = "N_companyID=" + nCompanyID + " And X_Paycode = '" + values + "' and N_FnYearID=" + nFnYearId;
 
@@ -384,7 +384,28 @@ namespace SmartxAPI.Controllers
                                 }
                                 else if (flag == 1)
                                 {
-                                    dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                    object sql3 = dLayer.ExecuteScalar("Select Count(N_TransDetailsID) from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+
+                                    if (myFunctions.getIntVAL(sql3.ToString()) == 1)
+                                    {
+                                        object TransID = dLayer.ExecuteScalar("Select N_TransID from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                        object sql4 = dLayer.ExecuteScalar("Select Count(N_TransID) from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_TransID=" + myFunctions.getIntVAL(TransID.ToString()), Params, connection);
+                                        if (myFunctions.getIntVAL(sql4.ToString()) > 1)
+                                        {
+                                            dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                        }
+                                        else
+                                        {
+                                            dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDed where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_TransID=" + myFunctions.getIntVAL(TransID.ToString()), Params, connection);
+                                            dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+                                        }
+                                    }
+                                    else
+                                    {
+                                        dLayer.ExecuteNonQuery("delete from Pay_MonthlyAddOrDedDetails where  N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PayID=" + nPayCodeId.ToString(), Params, connection);
+
+                                    }
+
                                     SqlTransaction transaction = connection.BeginTransaction();
                                     Results = dLayer.DeleteData("Pay_PayMaster ", "N_PayID", nPayCodeId, "", connection, transaction);
                                     transaction.Commit();

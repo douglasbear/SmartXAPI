@@ -36,27 +36,43 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetPostingDetails(int nFnYearID,string xScreen,string xVoucherNo)
         {
+            DataSet ds = new DataSet();
             DataTable dt=new DataTable();
+            DataTable dtTotal=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlTotalText="";
             string sqlCommandText="select * from vw_ScreenWisePosting where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
             Params.Add("@xScreen",xScreen);
             Params.Add("@xVoucherNo",xVoucherNo);
-            try{
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
-                    }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(_api.Notice("No Results Found" ));
-                        }else{
-                            return Ok(_api.Success(dt));
-                        }
-            }catch(Exception e){
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                    dt = _api.Format(dt, "post");
+
+                    sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+                    dtTotal=dLayer.ExecuteDataTable(sqlTotalText,Params,connection); 
+                    dtTotal = _api.Format(dtTotal, "total");
+
+                    ds.Tables.Add(dt);
+                    ds.Tables.Add(dtTotal);
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(_api.Notice("No Results Found" ));
+                }
+                else
+                {
+                    return Ok(_api.Success(ds));
+                }
+            }
+            catch(Exception e)
+            {
                 return Ok(_api.Error(e));
             }
           
