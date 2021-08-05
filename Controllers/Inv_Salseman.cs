@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(dt);
+                     return Ok(_api.Success(dt));
                 }
 
             }
