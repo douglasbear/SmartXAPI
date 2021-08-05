@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
                     //DataTable reportTable = new DataTable();
                     List<SortedList> templates = new List<SortedList>();
 
-                    X_ReportFilePath += reportPath  + @"printing/";
+                    X_ReportFilePath += reportPath + @"printing/";
                     object ObjFolderName = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID = '" + nCompanyID + "' AND N_FormID = " + reportSelectingScreenID, Params, connection);
                     if (ObjFolderName != null)
                         X_FolderName = ObjFolderName.ToString();
@@ -168,11 +168,20 @@ namespace SmartxAPI.Controllers
                         int index;
                         foreach (var files in Directory.GetFiles(@X_ReportFilePath, "*.rpt"))
                         {
+                          
                             SortedList element = new SortedList();
                             index = Path.GetFileName(files).IndexOf(".");
                             if (index > 0)
                             {
                                 element.Add("templateName", Path.GetFileName(files).Substring(0, index).ToString());
+                                  string imagepath=@X_ReportFilePath+Path.GetFileName(files).Substring(0, index).ToString()+".jpg";
+                                if (System.IO.File.Exists(imagepath))
+                                {
+                                    Byte[] bytes = System.IO.File.ReadAllBytes(imagepath);
+                                    element.Add("templateimage", Convert.ToBase64String(bytes));
+                                }
+                               
+
                             }
                             templates.Add(element);
                         }
@@ -222,7 +231,7 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                 }
-                return Ok(_api.Success( "Template Saved"));
+                return Ok(_api.Success("Template Saved"));
 
             }
             catch (Exception e)
@@ -230,41 +239,44 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
-        //   [HttpGet("getFile")]
-        // public async Task<IActionResult> Download(int fileID,string filename)
-        // {
-        //     if (filename == null)
-        //         return Content("filename not present");
-
-        //     var path = "";
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SortedList param = new SortedList();
-        //             param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-        //             path = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection).ToString();
-        //         }
+    //     [HttpGet("getFile")]
+    //     public ActionResult GetImages(string X_ReportFilePath,)
+    //     {
+    //         DataTable dt = new DataTable();
+    //         SortedList Params = new SortedList();
+    //         try
+    //         {
+    //             using (SqlConnection connection = new SqlConnection(connectionString))
+    //             {
+    //                 connection.Open();
+    //                 SortedList param = new SortedList();
+    //                 param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+    //                 path = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection).ToString();
+    //             }
 
 
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(e));
-        //     }
-        //     path = path + filename;
+    //         }
+    //         catch (Exception e)
+    //         {
+    //             return Ok(api.Error(e));
+    //         }
+    //         path = path + filename;
 
-        //     var memory = new MemoryStream();
-        //     using (var stream = new FileStream(path, FileMode.Open))
-        //     {
-        //         await stream.CopyToAsync(memory);
-        //     }
-        //     memory.Position = 0;
-        //     return File(memory, api.GetContentType(path), Path.GetFileName(path));
-        // }
+    //         var memory = new MemoryStream();
+    //         using (var stream = new FileStream(path, FileMode.Open))
+    //         {
+    //             await stream.CopyToAsync(memory);
+    //         }
+    //         memory.Position = 0;
+    //         return File(memory, api.GetContentType(path), Path.GetFileName(path));
+    //     }
 
 
+    // }
+    //  if (lstReportTemplate.SelectedItems.Count > 0)
+    //         {
+    //             X_ReportTempPath = @X_ReportFilePath + lstReportTemplate.SelectedItem.ToString() + ".jpg";
+    //             this.pbItem.ImageLocation = X_ReportTempPath;
     }
 }
 
