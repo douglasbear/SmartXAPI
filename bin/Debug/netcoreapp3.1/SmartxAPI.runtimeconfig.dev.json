@@ -1,23 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
-=======
-      "C:\\Users\\USER\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\USER\\.nuget\\packages"
->>>>>>> bd052861cbffbd13ab1d137685ffac8ffec55b61
-=======
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
->>>>>>> a52207a2de89864008996ebd37db879e4c42e4f8
->>>>>>> b024f3bc2d61c15fd497662ae67045d9c121b63d
     ]
   }
 }
