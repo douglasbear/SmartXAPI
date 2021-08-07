@@ -54,7 +54,8 @@ namespace SmartxAPI.Controllers
 
                     if(nFormID==1373)
                     NParentMenuId = 311;
-
+                     if(nFormID==1379)
+                    NParentMenuId = 315;
                     SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",myFunctions.GetCompanyID(User)},
