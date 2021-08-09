@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-        [HttpGet("invSettingsDetails")]
+        [HttpGet("settingsDetails")]
         public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID)
         {
             try
@@ -46,40 +46,40 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nFnYearID", nFnYearID);
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
 
-                    string settingsSql ="SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, Gen_Settings.N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) order by X_SettingsTabCode,N_Order,N_UserCategoryID";
+                    string settingsSql = "SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, Gen_Settings.N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) order by X_SettingsTabCode,N_Order,N_UserCategoryID";
                     string defaultAccountsSql = "SELECT Acc_AccountDefaults.X_FieldDescr as X_Group, vw_AccMastLedger.Account  as name, vw_AccMastLedger.N_LedgerID  as N_Value, vw_AccMastLedger.[Account Code] as X_Value, Acc_AccountDefaults.N_CompanyID, Acc_AccountDefaults.N_FieldValue, Acc_AccountDefaults.N_Type, Acc_AccountDefaults.N_FnYearID, Acc_AccountDefaults.D_Entrydate, Acc_AccountDefaults.N_BranchID, Acc_AccountDefaults.N_FormID, Acc_AccountDefaults.X_WLanControlNo, Acc_AccountDefaults.N_Order, Acc_AccountDefaults.X_AccountCriteria, Lan_MultiLingual.X_WText FROM Acc_AccountDefaults LEFT OUTER JOIN Lan_MultiLingual ON Acc_AccountDefaults.X_WLanControlNo = Lan_MultiLingual.X_WControlName AND Acc_AccountDefaults.N_FormID = Lan_MultiLingual.N_FormID RIGHT OUTER JOIN vw_AccMastLedger ON Acc_AccountDefaults.N_FnYearID = vw_AccMastLedger.N_FnYearID AND Acc_AccountDefaults.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_AccountDefaults.N_FieldValue = vw_AccMastLedger.N_LedgerID WHERE (Acc_AccountDefaults.N_FormID = @nFormID) AND (Acc_AccountDefaults.N_CompanyID = @nCompanyID) AND (Acc_AccountDefaults.N_FnYearID = @nFnYearID) AND (Lan_MultiLingual.N_LanguageID = @nLangID) order by N_Order";
-                    DataTable Settings = dLayer.ExecuteDataTable(settingsSql, Params, connection);      
+                    DataTable Settings = dLayer.ExecuteDataTable(settingsSql, Params, connection);
                     DataTable AccountMap = dLayer.ExecuteDataTable(defaultAccountsSql, Params, connection);
-                    int NParentMenuId = 0 ;
+                    int NParentMenuId = 0;
 
-                    Settings = myFunctions.AddNewColumnToDataTable(Settings,"listItems",typeof(DataTable),null);
+                    Settings = myFunctions.AddNewColumnToDataTable(Settings, "listItems", typeof(DataTable), null);
 
-                      foreach (DataRow row in Settings.Rows)
+                    foreach (DataRow row in Settings.Rows)
                     {
                         if (row["X_DataSource"] != null && row["X_DataSource"].ToString() != "")
                         {
                             string sql = row["X_DataSource"].ToString();
-                             SortedList lParamsList = new SortedList()
+                            SortedList lParamsList = new SortedList()
                             {
                                 {"@Cval",myFunctions.GetCompanyID(User)},
                                 // {"@Fval",nFnYearID},
                                 // {"@Lval",nLangID},
                                 // {"@UCval",myFunctions.GetUserCategory(User)}
                             };
-                            row["listItems"] = dLayer.ExecuteDataTable(sql, lParamsList, connection);      
-                    
+                            row["listItems"] = dLayer.ExecuteDataTable(sql, lParamsList, connection);
+
                         }
                     }
                     Settings.Columns.Remove("X_DataSource");
 
                     Settings.AcceptChanges();
 
-                    if(nFormID==1373)
-                    NParentMenuId = 311;
-                     if(nFormID==1379)
-                    NParentMenuId = 315;
-                    if(nFormID==1380)
-                    NParentMenuId = 48;
+                    if (nFormID == 1373)
+                        NParentMenuId = 311;
+                    if (nFormID == 1379)
+                        NParentMenuId = 315;
+                    if (nFormID == 1380)
+                        NParentMenuId = 48;
 
                     SortedList mParamsList = new SortedList()
                     {
@@ -139,29 +139,7 @@ namespace SmartxAPI.Controllers
 
 
 
-        //Save....
-        [HttpPost("saveInventorySettings")]
-        public ActionResult SaveData([FromBody] DataSet ds)
-        {
-            try
-            {
-                DataTable InvoiceCounter = ds.Tables["invoiceCounter"];
-                DataTable Settings = ds.Tables["settings"];
 
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    transaction.Commit();
-                }
-                return Ok(_api.Success("Saved"));
-
-            }
-            catch (Exception ex)
-            {
-                return Ok(_api.Error(ex));
-            }
-        }
 
         [HttpGet("checkScreenAccess")]
         public ActionResult GetFormAccess(int nFormID)
@@ -267,6 +245,64 @@ namespace SmartxAPI.Controllers
         }
 
 
+
+        [HttpPost("saveGeneralSettings")]
+        public ActionResult SaveGeneralSettings([FromBody] DataSet ds)
+        {
+
+            DataTable GenSettinngs = ds.Tables["genSettings"];
+            DataTable InvoiceCounter = ds.Tables["invoiceCounter"];
+            DataTable AccountMaps = ds.Tables["accountMaps"];
+            DataTable General = ds.Tables["general"];
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+                    int nFnYearID = myFunctions.getIntVAL(General.Rows[0]["n_FnYearID"].ToString());
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+
+                    foreach (DataRow var in InvoiceCounter.Rows)
+                    {
+                        int Enabled = 0, Reset = 0;
+                        if (Convert.ToBoolean(var["Enabled"].ToString()))
+                            Enabled = 1;
+
+                        Reset = 0;
+
+                        if (myFunctions.getVAL(var["StartingNo"].ToString()) > myFunctions.getVAL(var["LastUsedNo"].ToString()))
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set N_StartNo=" + myFunctions.getVAL(var["StartingNo"].ToString()).ToString() + ",N_LastUsedNo=" + (myFunctions.getVAL(var["StartingNo"].ToString()) - 1) + ",X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                        else
+                            dLayer.ExecuteNonQuery("update Inv_InvoiceCounter set X_Prefix='" + var["Prefix"].ToString() + "',X_Suffix='" + var["Suffix"].ToString() + "',N_MinimumLen='" + var["MinLength"].ToString() + "',B_AutoInvoiceEnabled=" + Enabled.ToString() + ",B_ResetYearly=" + Reset.ToString() + " Where N_FormID= " + var["N_FormID"].ToString() + " and N_CompanyId=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+
+                    }
+
+                    foreach (DataRow var in GenSettinngs.Rows)
+                    {
+                        string settingsSql = "SP_GeneralDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Description"].ToString() + "' ," + myFunctions.getIntVAL(var["n_Value"].ToString()) + ",'" + var["x_Value"].ToString() + "'";
+                        dLayer.ExecuteNonQuery(settingsSql, connection, transaction);
+                    }
+
+                    foreach (DataRow var in AccountMaps.Rows)
+                    {
+                        string defaultsSql = "SP_AccountDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Value"].ToString() + "'," + nFnYearID + "";
+                        dLayer.ExecuteNonQuery(defaultsSql, connection, transaction);
+                    }
+                    transaction.Commit();
+
+
+                    return Ok(_api.Success("Settings Saved"));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
 
 
