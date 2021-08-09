@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public Gen_Lookup(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -39,10 +38,9 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string criteria = "";
             int nCompanyId=myFunctions.GetCompanyID(User);
   
-            string sqlCommandText = "select * from Gen_LookupTable where N_CompanyID=@p1 and N_FnyearID=@p2 and N_PkeyId=@p3";
+            string sqlCommandText = "SELECT Sub.*, Parent.X_Name AS X_ParentName FROM Gen_LookupTable AS Sub LEFT OUTER JOIN Gen_LookupTable AS Parent ON Sub.N_CompanyID = Parent.N_CompanyID AND Sub.N_ParentGroupID = Parent.N_PkeyId where Sub.N_CompanyID=@p1 and Sub.N_FnyearID=@p2 and Sub.N_PkeyId=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", nPkeyId);
@@ -66,7 +64,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -83,32 +81,22 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nPkeyId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PkeyId"].ToString());
-                string ReffType =  MasterTable.Rows[0]["n_ReferId"].ToString();
-                int N_FormID =0;
-                switch(ReffType){
-                case "VendorType": N_FormID=52;
-                break;
-                case "Stage": N_FormID=1310;
-                break;
-                case "Industry": N_FormID=1311;
-                break;
-                case "LeadSource": N_FormID=1312;
-                break;
-                case "LeadStatus": N_FormID=1313;
-                break;
-                case "Ownership": N_FormID=1314;
-                break;
-                default: return Ok(api.Warning("Invalid Type"));
-            }
+                int N_FormID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReferId"].ToString());
+                int nSort = 0;
+                if(MasterTable.Columns.Contains("n_Sort"))
+                 nSort = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Sort"].ToString());
 
-            MasterTable.Rows[0]["n_ReferId"] = N_FormID;
-            MasterTable.AcceptChanges();
-
+                if(N_FormID==1155)
+                {
+                    N_FormID=455;
+                }
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
+                     Params.Add("@nReferId",N_FormID);
+                     Params.Add("@nSort",nSort);
                     // Auto Gen
                     string PkeyCode = "";
                     var values = MasterTable.Rows[0]["X_PkeyCode"].ToString();
@@ -118,30 +106,46 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", N_FormID);
                         PkeyCode = dLayer.GetAutoNumber("Gen_LookupTable", "X_PkeyCode", Params, connection, transaction);
-                        if (PkeyCode == "") { return Ok(api.Error("Unable to generate PkeyCode Code")); }
+                        if (PkeyCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate PkeyCode Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
                     }
                     else
                     {
                         dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     }
+                    int Count = 0;
+                    if(nSort>0){       
+                    object SeqNo = dLayer.ExecuteScalar("select count(n_Sort) from Gen_LookupTable where N_ReferId=@nReferId and N_Sort=@nSort", Params,connection,transaction);
+                    Count = myFunctions.getIntVAL(SeqNo.ToString());
+                    }
+                    
+                    if (Count == 0 )
+                    {
+                   nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
+                    
+                    }
+                     else
+                    {
 
-                    nPkeyId = dLayer.SaveData("Gen_LookupTable", "N_PkeyId", MasterTable, connection, transaction);
+                        transaction.Rollback();
+                        return Ok(api.Error("Seq No Already Exists"));
+                    }
+                                    
+                
                     if (nPkeyId <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
                     }
-                    else
-                    {
+                   
                         transaction.Commit();
                         return Ok(api.Success("Successfully saved"));
-                    }
+
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
@@ -184,11 +188,51 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error("Unable to delete entry"));
+                return Ok(api.Error(ex));
             }
 
 
-
         }
+
+        [HttpGet("SeqNo")]
+        public ActionResult GetSeqNo()
+        {
+            DataTable dt=new DataTable();
+            
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+        
+            Params.Add("@nReferId",1310);
+            int N_Sort =0; 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                    {
+                        connection.Open();
+                        object SeqNo = dLayer.ExecuteScalar("select MAX(isnull(n_Sort,0)) as SeqNo from Gen_LookupTable where N_ReferId=@nReferId", Params,connection);
+                         
+                if (SeqNo == null)
+                {
+                   N_Sort=1;
+                }
+                else
+                {
+                    N_Sort=myFunctions.getIntVAL(SeqNo.ToString())+1;
+                }
+                  
+                          SortedList Result = new SortedList();
+                          Result.Add("n_Sort", N_Sort);
+                          return Ok(api.Success(Result));
+                }
+            }
+            catch(Exception e)
+            {
+
+                return Ok(api.Error(e));
+            }
+        }
+
+
+        
     }
 }

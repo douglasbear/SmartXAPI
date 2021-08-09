@@ -69,6 +69,9 @@ namespace SmartxAPI
             services.AddScoped<IDataAccessLayer,DataAccessLayer>();
             services.AddScoped<IApiFunctions,ApiFunctions>();
             services.AddScoped<IMyFunctions,MyFunctions>();
+            services.AddScoped<IMyAttachments,MyAttachments>();
+            services.AddScoped<IMyReminders,MyReminders>();
+
             
             
         }

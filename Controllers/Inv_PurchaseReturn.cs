@@ -10,7 +10,7 @@ using Microsoft.Extensions.Configuration;
 namespace SmartxAPI.Controllers
 
 {
-    [Authorize(AuthenticationSchemes=JwtBearerDefaults.AuthenticationScheme)]
+    [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("purchasereturn")]
     [ApiController]
     public class Inv_PurchaseReturn : ControllerBase
@@ -20,89 +20,154 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        
-        public Inv_PurchaseReturn(IApiFunctions api,IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+
+        public Inv_PurchaseReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
-            _api=api;
-            dLayer=dl;
+            _api = api;
+            dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
 
         }
-       
+
 
         [HttpGet("list")]
-        public ActionResult GetPurchaseReturnList(int? nCompanyId,int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetPurchaseReturnList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
-            
-            if(Count==0)
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
-            else
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
-
-            Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nFnYearId);
-            SortedList OutPut = new SortedList();
-
-            try{
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
-                     sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
-                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",_api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+                    bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_CreditNoteNo like '%" + xSearchkey + "%' or X_VendorName like '%" + xSearchkey + "%' or X_InvoiceNo like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_CreditNoteId desc";
+                    else
+                    {
+                        switch (xSortBy.Split(" ")[0])
+                        {
+                            case "x_CreditNoteNo":
+                                xSortBy = "N_CreditNoteId " + xSortBy.Split(" ")[1];
+                                break;
+                            default: break;
+                        }
+                        xSortBy = " order by " + xSortBy;
+                    }
+                    if (CheckClosedYear == false)
+                    {
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess =0";
+                        }
+                    }
+                    else
+                    {
+                        if (bAllBranchData == true)
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " ";
+                        }
+                        else
+                        {
+                            Searchkey = Searchkey + " and  N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and B_YearEndProcess =0";
+                        }
+                    }
+
+
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+
+                    Params.Add("@p1", nCompanyId);
+                    Params.Add("@p2", nFnYearId);
+                    SortedList OutPut = new SortedList();
+
+
+                    // connection.Open();
+                    //  dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
+                    //  sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    // object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    // OutPut.Add("Details",_api.Format(dt));
+                    // OutPut.Add("TotalCount",TotalCount);
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_TotalReturnAmount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
+                    string TotalSum = "0";
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
+                        TotalSum = drow["TotalAmount"].ToString();
+                    }
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalSum", TotalSum);
+
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(OutPut));
-                }     
-                  }catch(Exception e){
-                     return BadRequest(_api.Error(e));
-                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
         }
 
 
         [HttpGet("listInvoice")]
-        public ActionResult GetPurchaseInvoiceList(int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult GetPurchaseInvoiceList(int nFnYearId, int nPage, int nSizeperpage)
         {
-            DataTable dt=new DataTable();
-            SortedList Params=new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-            string sqlCommandCount="";
-            
-            if(Count==0)
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
             else
-                sqlCommandText= "select top("+ nSizeperpage +") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top("+ Count +") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CreditNoteID not in (select top(" + Count + ") N_CreditNoteID from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2)";
 
-            Params.Add("@p1",nCompanyId);
-            Params.Add("@p2",nFnYearId);
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
             SortedList OutPut = new SortedList();
 
-            try{
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params, connection);
-                     sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCreditNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-                    OutPut.Add("Details",_api.Format(dt));
-                    OutPut.Add("TotalCount",TotalCount);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 if (dt.Rows.Count == 0)
                 {
@@ -111,14 +176,16 @@ namespace SmartxAPI.Controllers
                 else
                 {
                     return Ok(_api.Success(OutPut));
-                }     
-                  }catch(Exception e){
-                     return BadRequest(_api.Error(e));
                 }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
         }
 
-       [HttpGet("listDetails")]
-        public ActionResult GetPurchaseReturnDetails(int nCompanyId, string xCreditNoteNo,string xInvoiceNo, int nFnYearId, bool bAllBranchData, int nBranchID)
+        [HttpGet("listDetails")]
+        public ActionResult GetPurchaseReturnDetails(int nCompanyId, string xCreditNoteNo, string xInvoiceNo, int nFnYearId, bool bAllBranchData, int nBranchID)
         {
 
             DataSet dt = new DataSet();
@@ -126,30 +193,32 @@ namespace SmartxAPI.Controllers
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
-
+            if (xCreditNoteNo == null) xCreditNoteNo = "";
+            if (xInvoiceNo == null) xInvoiceNo = "0";
             string Mastersql = "";
 
             if (bAllBranchData == true)
             {
-                if(xInvoiceNo=="0")
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',0";
+                if (xInvoiceNo == "0")
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 0, @p3,@p2,'PURCHASE',0";
                 else
                 {
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',0";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 1, @p4,@p2,'PURCHASE',0";
                     Params.Add("@p4", xInvoiceNo);
                 }
             }
             else
             {
-              if(xInvoiceNo=="0")
+                if (xInvoiceNo == "0")
                 {
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 0, @p3,@p2,'PURCHASE',@p5";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 0, @p3,@p2,'PURCHASE',@p5";
                     Params.Add("@p5", nBranchID);
                 }
                 else
                 {
-                    Mastersql = "SP_Inv_PurchaseReturn_Disp @p1, 1, @p4,@p2,'PURCHASE',@p5";
+                    Mastersql = "SP_Inv_PurchaseReturn_Display @p1, 1, @p4,@p2,'PURCHASE',@p5";
                     Params.Add("@p5", nBranchID);
+                    Params.Add("@p4", xInvoiceNo);
                 }
             }
 
@@ -170,77 +239,136 @@ namespace SmartxAPI.Controllers
 
                     //PurchaseOrder Details
                     string DetailSql = "";
+                    if (xCreditNoteNo != "")
+                    {
                         if (bAllBranchData == true)
                         {
-                            DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0";
                         }
                         else
                         {
-                             DetailSql = "Select vw_InvPurchaseReturnEdit.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
+                            DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
-                        
+                    }
+                    else
+                    {
+                        if (bAllBranchData == true)
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
+                        else
+                            DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
+                    }
+
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
-                return Ok(dt);
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
 
-       //Save....
-       [HttpPost("Save")]
-        public ActionResult SaveData([FromBody]DataSet ds)
-        { 
-            
-                    DataTable MasterTable;
-                    DataTable DetailTable;
-                    MasterTable = ds.Tables["master"];
-                    DetailTable = ds.Tables["details"];
-                    SortedList Params = new SortedList();
-                    // Auto Gen
-                                try{
-                 using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                    connection.Open();
-                    SqlTransaction transaction=connection.BeginTransaction();
-                    string QuotationNo="";
-                    var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
-                    if(values=="@Auto"){
-                        Params.Add("N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString());
-                        Params.Add("N_YearID",MasterTable.Rows[0]["n_FnYearId"].ToString());
-                        Params.Add("N_FormID",80);
-                        Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
-                        QuotationNo =  dLayer.GetAutoNumber("Inv_PurchaseReturnMaster","X_CreditNoteNo", Params,connection,transaction);
-                        if(QuotationNo==""){return Ok(_api.Warning("Unable to generate Quotation Number"));}
-                        MasterTable.Rows[0]["X_CreditNoteNo"] = QuotationNo;
-                    }
-                    int N_CreditNoteID=dLayer.SaveData("Inv_PurchaseReturnMaster","N_CreditNoteID",MasterTable,connection,transaction);                    
-                    if(N_CreditNoteID<=0){
-                        transaction.Rollback();
-                        }
-                    for (int j = 0 ;j < DetailTable.Rows.Count;j++)
-                        {
-                            DetailTable.Rows[j]["N_CreditNoteID"]=N_CreditNoteID;
-                        }
-                    int N_QuotationDetailId=dLayer.SaveData("Inv_PurchaseReturnDetails","n_CreditNoteDetailsID",DetailTable,connection,transaction);                    
-                    transaction.Commit();
-                    return Ok(_api.Success("Purchase Return Saved" ));
-                    }
-                }
-                catch (Exception ex)
-                {
-                    return BadRequest(_api.Error(ex));
-                }
-        }
-       
-     
+        //Save....
+        [HttpPost("Save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
 
-        [HttpDelete()]
-        public ActionResult DeleteData(int nCreditNoteId, int nCompanyId, string xType)
+            DataTable MasterTable;
+            DataTable DetailTable;
+            MasterTable = ds.Tables["master"];
+            DetailTable = ds.Tables["details"];
+            SortedList Params = new SortedList();
+            // Auto Gen
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    string ReturnNo = "";
+                    int N_CreditNoteID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CreditNoteId"].ToString());
+                    int N_UserID = myFunctions.GetUserID(User);
+                    double N_TotalReceived = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceived"].ToString());
+                    MasterTable.Rows[0]["n_TotalReceived"] = N_TotalReceived;
+                    double N_TotalReceivedF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalReceivedF"].ToString());
+                    MasterTable.Rows[0]["n_TotalReceivedF"] = N_TotalReceivedF;
+                    var values = MasterTable.Rows[0]["X_CreditNoteNo"].ToString();
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", 80);
+                        Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        ReturnNo = dLayer.GetAutoNumber("Inv_PurchaseReturnMaster", "X_CreditNoteNo", Params, connection, transaction);
+                        if (ReturnNo == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate Quotation Number")); }
+                        MasterTable.Rows[0]["X_CreditNoteNo"] = ReturnNo;
+                    }
+
+                    if (N_CreditNoteID > 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_TransType","PURCHASE RETURN"},
+                                {"N_VoucherID",N_CreditNoteID}};
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+                    }
+
+                    N_CreditNoteID = dLayer.SaveData("Inv_PurchaseReturnMaster", "N_CreditNoteID", MasterTable, connection, transaction);
+                    if (N_CreditNoteID <= 0)
+                    {
+                        transaction.Rollback();
+                    }
+
+
+
+
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_CreditNoteID"] = N_CreditNoteID;
+                        DetailTable.Rows[j]["n_RetQty"] = (myFunctions.getVAL(DetailTable.Rows[j]["n_RetQty"].ToString())) * (myFunctions.getVAL(DetailTable.Rows[j]["N_UnitQty"].ToString()));
+                    }
+                    DetailTable.Columns.Remove("N_UnitQty");
+                    int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
+                    
+
+                    SortedList InsParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"N_CreditNoteID",N_CreditNoteID}};
+                    dLayer.ExecuteNonQueryPro("[SP_PurchaseReturn_Ins]", InsParams, connection, transaction);
+
+                    SortedList PostParams = new SortedList(){
+                                {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
+                                {"X_InventoryMode","PURCHASE RETURN"},
+                                {"N_InternalID",N_CreditNoteID},
+                                {"N_UserID",N_UserID}};
+                    dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Purchase_Posting", PostParams, connection, transaction);
+
+                    SortedList Result = new SortedList();
+                    Result.Add("n_PurchaseReturnID", N_CreditNoteID);
+                    Result.Add("x_PurchaseReturnNo", ReturnNo);
+                    transaction.Commit();
+                    return Ok(_api.Success(Result, "Purchase Return Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
+        //Delete....
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int? nCreditNoteId, int? nCompanyId)
         {
             try
             {
@@ -248,13 +376,20 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    object objPaymentProcessed = dLayer.ExecuteScalar("Select Isnull(N_PayReceiptId,0) from Inv_PayReceiptDetails where N_InventoryId=" + nCreditNoteId + " and X_TransType='PURCHASE RETURN'", connection, transaction);
+                    if (objPaymentProcessed == null)
+                        objPaymentProcessed = 0;
+
                     SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyId},
-                                {"X_TransType",xType},
+                                {"X_TransType","PURCHASE RETURN"},
                                 {"N_VoucherID",nCreditNoteId}
                             };
-                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
+                    if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
+                    else
+                        return Ok(_api.Error("Payment processed! Unable to delete"));
                     transaction.Commit();
                 }
 
@@ -263,12 +398,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 
         }
-         [HttpGet("dummy")]
+        [HttpGet("dummy")]
         public ActionResult GetPurchaseReturnDummy(int? nPurchaseReturnId)
         {
             try
@@ -307,6 +442,6 @@ namespace SmartxAPI.Controllers
         }
 
 
-        
+
     }
 }

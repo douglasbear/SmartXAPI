@@ -29,12 +29,31 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(int? nCompanyId)
+       public ActionResult GetLocationDetails(int? nCompanyId, string prs,bool bLocationRequired,bool bAllBranchData,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
+            string sqlCommandText = "";
+            if (prs == null || prs == "")
+                sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 order by N_LocationID DESC";
+            else
+            {
+                if (!bLocationRequired)
+                {
+                    if (bAllBranchData == true)
+                       sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
+                    
+                    else
+                        sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" +nCompanyId + " and  N_BranchID=" + nBranchID;
+                    
+                }
+                else
+                {
+                   sqlCommandText = "select [Location Name] as x_LocationName,* from vw_InvLocation_Disp where  isnull(N_MainLocationID,0) =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
+                }
+            }
+
             Params.Add("@p1", nCompanyId);
 
             try
@@ -46,19 +65,18 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" });
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(_api.Format(dt)));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(e));
             }
         }
-
 
 
         [HttpGet("listdetails")]
@@ -67,7 +85,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvLocation_Disp where N_CompanyID=@p1 and N_LocationID=@p2 order by N_LocationID DESC";
+            string sqlCommandText = "select * from vw_InvLocation where N_CompanyID=@p1 and N_LocationID=@p2 order by N_LocationID DESC";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nLocationId);
 
@@ -80,21 +98,47 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return StatusCode(200, new { StatusCode = 200, Message = "No Results Found" });
+                    return Ok(_api.Warning("No Results Found" ));
                 }
                 else
                 {
-                    return Ok(dt);
+                    return Ok(_api.Success(_api.Format(dt)));
                 }
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok( _api.Error(e));
             }
         }
 
 
+[HttpPost("change")]
+        public ActionResult ChangeData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationID"].ToString());
+                Params.Add("@nCompanyID",nCompanyID);
+                Params.Add("@nLocationID",nLocationID);
 
+                dLayer.ExecuteNonQuery("update Inv_Location set B_IsCurrent=0 where N_CompanyID=@nCompanyID", Params,connection);
+                dLayer.ExecuteNonQuery("update Inv_Location set B_IsCurrent=1 where N_LocationID=@nLocationID and N_CompanyID=@nCompanyID", Params,connection);
+
+                    return Ok(_api.Success("Location Changed")) ;
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
 
         //Save....
         [HttpPost("save")]
@@ -120,17 +164,17 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 450);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
-                        if (LocationCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Location Code")); }
+                        if (LocationCode == "") { transaction.Rollback(); return Ok( _api.Error( "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
 
                     MasterTable.Columns.Remove("n_FnYearId");
-
-                    int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", 0, MasterTable, connection, transaction);
+                    MasterTable.Columns.Remove("b_isSubLocation");
+                    int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
                     if (N_LocationID <= 0)
                     {
                         transaction.Rollback();
-                        return StatusCode(404, _api.Response(404, "Unable to save"));
+                        return Ok(_api.Warning("Unable to save"));
                     }
                     else
                     {
@@ -141,7 +185,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
         }
 
@@ -149,26 +193,33 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nLocationId)
         {
             int Results = 0;
+            SortedList Params = new SortedList();
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    Params.Add("@nLocationId",nLocationId);
+                     object count=dLayer.ExecuteScalar("select count(*) as N_Count from vw_Inv_Location_Disp where N_LocationID=@nLocationId and N_CompanyID=N_CompanyID",Params,connection);
+                    int  N_Count= myFunctions.getIntVAL(count.ToString());
+                    if(N_Count <= 0)
+                    {
                 Results = dLayer.DeleteData("Inv_Location", "N_LocationID", nLocationId, "",connection);
+                }
                 }
                 if (Results > 0)
                 {
-                    return StatusCode(200, _api.Response(200, "Location deleted"));
+                    return Ok(_api.Success("Location deleted"));
                 }
                 else
                 {
-                    return StatusCode(409, _api.Response(409, "Unable to delete Location"));
+                    return Ok( _api.Error("Unable to delete Location"));
                 }
 
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(ex));
             }
 
 

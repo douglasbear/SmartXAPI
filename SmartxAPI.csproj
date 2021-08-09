@@ -6,6 +6,7 @@
 
   <ItemGroup>
     <PackageReference Include="AutoMapper.Extensions.Microsoft.DependencyInjection" Version="7.0.0" />
+    <PackageReference Include="Cake.CoreCLR" Version="1.1.0" />
     <PackageReference Include="CrystalDecisions.CrystalReports.Engine" Version="1.0.0" />
     <PackageReference Include="CrystalDecisions.ReportSource" Version="1.0.0" />
     <PackageReference Include="CrystalDecisions.Shared" Version="1.0.0" />
@@ -29,6 +30,7 @@
     <PackageReference Include="System.Data.SqlClient" Version="4.8.1" />
     <PackageReference Include="System.IdentityModel.Tokens.Jwt" Version="6.5.1" />
     <PackageReference Include="System.Text.Json" Version="4.7.2" />
+    <PackageReference Include="Vse.Web.Serialization.ControlledSerializationJsonConverter" Version="1.0.4" />
   </ItemGroup>
 
 

@@ -2,12 +2,13 @@ using System;
 using System.Collections.Generic;
 using System.ComponentModel.DataAnnotations;
 using System.ComponentModel.DataAnnotations.Schema;
+using System.Data;
 using SmartxAPI.Dtos.Login;
 using SmartxAPI.Models;
 
 namespace SmartxAPI.Dtos.SP
 {
-    public partial class SP_LOGIN
+    public partial class SP_LOGIN_CLOUD
     {
         [Key]
         public int N_UserID { get; set; }
@@ -39,6 +40,7 @@ namespace SmartxAPI.Dtos.SP
         public bool B_AllBranchesData { get; set; }
         public int N_TaxType { get; set; }
         public string X_UserFullName { get; set; }
+        public string X_UserCategoryIDList { get; set; }
         [NotMapped]
         public string Token { get; set; }
         [NotMapped]
@@ -61,8 +63,22 @@ namespace SmartxAPI.Dtos.SP
         public int N_PositionID { get; set; }
         [NotMapped]
         public string X_Position { get; set; }
-         [NotMapped]
+        [NotMapped]
         public string X_EmpNameLocale { get; set; }
+        [NotMapped]
+        public int N_CountryID { get; set; }
+        [NotMapped]
+        public int N_SalesmanID { get; set; }
+        [NotMapped]
+        public string X_SalesmanCode { get; set; }
+        [NotMapped]
+        public string X_SalesmanName { get; set; }
+        [NotMapped]
+        public int N_CurrencyDecimal { get; set; }
+        [NotMapped]
+        public int N_AppID { get; set; }
+        [NotMapped]
+        public DataTable GlobalUserInfo { get; set; }
 
 
     }

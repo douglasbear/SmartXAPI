@@ -22,6 +22,7 @@ namespace SmartxAPI.Dtos.Login
         public bool? BShow { get; set; }
         public string XRouteName { get; set; }
         public bool? BShowOnline { get; set; }
+        public bool? BWShow { get; set; }
         public List<ChildMenuDto> ChildMenu {get; set;}
     }
 }

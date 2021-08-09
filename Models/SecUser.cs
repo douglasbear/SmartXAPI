@@ -40,6 +40,6 @@ namespace SmartxAPI.Models
         [Column("N_LoginFlag")]
         public int? NLoginFlag { get; set; }
         [Column("X_Token")]
-        public string XToken { get; set; }
+        public string XToken { get; set; }  
     }
 }

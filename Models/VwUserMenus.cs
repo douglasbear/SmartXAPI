@@ -58,5 +58,7 @@ namespace SmartxAPI.Models
         [Column("X_RouteName")]
         [StringLength(150)]
         public string XRouteName { get; set; }
+        [Column("B_WShow")]
+        public bool? BWShow { get; set; }
     }
 }

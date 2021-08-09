@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select Code,[Unit Code],Description from vw_InvItemUnit_Disp where N_CompanyID=@p1 and code=@p2 order by ItemCode,[Unit Code]";
+            string sqlCommandText = "select * from vw_InvItemUnit_Disp where N_CompanyID=@p1 and N_ItemUnitID=@p2 order by ItemCode";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nItemUnitID);
 
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
             }
         }
 
@@ -113,17 +113,19 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID", MasterTable, connection, transaction);
+                    string X_ItemUnit= MasterTable.Rows[0]["X_ItemUnit"].ToString();
+                    string DupCriteria = "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_ItemUnit='" + X_ItemUnit + "'";
+                    int N_ItemUnitID = dLayer.SaveData("Inv_ItemUnit", "N_ItemUnitID",DupCriteria,"", MasterTable, connection, transaction);
                     if (N_ItemUnitID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( api.Warning("Unable to save ItemUnit"));
+                        return Ok( api.Warning("Unit Already Exist"));
                     }
                     else
                     {
                         transaction.Commit();
                     }
-                    return GetItemUnitListDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_ItemUnitID);
+                    return Ok( api.Success("Unit Created"));
                 }
                 
 
@@ -131,7 +133,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
         }
 
@@ -145,22 +147,65 @@ namespace SmartxAPI.Controllers
             {
                 SortedList mParamsList = new SortedList()
                     {
-                        {"N_CompanyID",nCompanyId},
-                        {"X_ItemUnit",baseUnit},
-                        {"N_ItemID",itemId}
+                        {"@N_CompanyID",nCompanyId},
+                        {"@X_ItemUnit",baseUnit},
+                        {"@N_ItemID",itemId}
                     };
                 DataTable masterTable = new DataTable();
+
+// string sql = " Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit,Inv_ItemUnit.N_ItemUnitID,Inv_ItemMaster.N_PurchaseCost from Inv_ItemUnit Left Outer join Inv_ItemUnit as Base On Inv_ItemUnit.N_BaseUnitID=Base.N_ItemUnitID inner join Inv_ItemMaster ON Inv_ItemUnit.N_ItemID=Inv_ItemMaster.N_ItemID and Inv_ItemUnit.N_CompanyID=Inv_ItemMaster.N_CompanyID where Base.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0 UNION Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit,Inv_ItemUnit.N_ItemUnitID,Inv_ItemMaster.N_PurchaseCost from Inv_ItemUnit inner join Inv_ItemMaster ON Inv_ItemUnit.N_ItemID=Inv_ItemMaster.N_ItemID and Inv_ItemUnit.N_CompanyID=Inv_ItemMaster.N_CompanyID where Inv_ItemUnit.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0";
+string sql ="SELECT        Inv_ItemUnit.X_ItemUnit, Inv_ItemUnit.N_Qty, dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID, Inv_ItemUnit.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_UnitSellingPrice, Inv_ItemUnit.B_BaseUnit, Inv_ItemUnit.N_ItemUnitID, Inv_ItemMaster.N_PurchaseCost,Inv_ItemUnit.N_DefaultType "
++ " FROM            Inv_ItemUnit LEFT OUTER JOIN Inv_ItemMaster ON Inv_ItemUnit.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ItemUnit.N_ItemID = Inv_ItemMaster.N_ItemID where Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0 ";
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
+                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
+                    // masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
                 }
+
+
                 if (masterTable.Rows.Count == 0) { return Ok(api.Notice("No Data Found")); }
                 return Ok(api.Success(masterTable));
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(e));
+            }
+        }
+
+
+        [HttpGet("itemUnitList")]
+        public ActionResult GetItemUnitList( string baseUnit, int itemId)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            if (baseUnit == null) { baseUnit = ""; }
+            try
+            {
+                SortedList mParamsList = new SortedList()
+                    {
+                        {"@N_CompanyID",nCompanyId},
+                        {"@X_ItemUnit",baseUnit},
+                        {"@N_ItemID",itemId}
+                    };
+                DataTable masterTable = new DataTable();
+
+string sql = " Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit from Inv_ItemUnit Left Outer join Inv_ItemUnit as Base On Inv_ItemUnit.N_BaseUnitID=Base.N_ItemUnitID where Base.X_ItemUnit=@X_ItemUnit and Inv_ItemUnit.N_CompanyID=@N_CompanyID and Inv_ItemUnit.N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0 UNION Select X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingPrice(Inv_ItemUnit.N_ItemID,Inv_ItemUnit.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_UnitSellingPrice,Inv_ItemUnit.B_BaseUnit from Inv_ItemUnit where X_ItemUnit=@X_ItemUnit and N_CompanyID=@N_CompanyID and N_ItemID =@N_ItemID and isnull(dbo.Inv_ItemUnit.B_InActive,0)=0";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
+                    // masterTable = dLayer.ExecuteDataTablePro("SP_FillItemUnit", mParamsList, connection);
+                }
+
+
+                if (masterTable.Rows.Count == 0) { return Ok(api.Notice("No Data Found")); }
+                return Ok(api.Success(masterTable));
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
             }
         }
 
@@ -187,7 +232,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(ex));
             }
 
 
