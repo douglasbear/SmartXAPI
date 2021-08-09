@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies";
 
             Params.Add("@nCompanyID", nCompanyID);
             try
@@ -212,21 +212,22 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
+                     connection.Open();
                     DataTable MasterTable;
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
                     MasterTable = ds.Tables["master"];
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    var X_UserCategoryName = MasterTable.Rows[0]["x_UserCategoryName"].ToString();
-                    int ReportSelectingScreenID = myFunctions.getIntVAL(MasterTable.Rows[0]["x_ScreenID"].ToString());
+                    var X_UserCategoryName = MasterTable.Rows[0]["category"].ToString();
+                    int ReportSelectingScreenID = myFunctions.getIntVAL(MasterTable.Rows[0]["screenID"].ToString());
                     int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
-                    var x_SelectedReport = MasterTable.Rows[0]["x_SelectedReport"].ToString();
+                    var x_SelectedReport = MasterTable.Rows[0]["x_TemplateName"].ToString();
                     int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
-
+                    int a=1;
                     object result = 0;
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + 1 + "", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + ","+a+" ", connection, transaction);
 
 
                     transaction.Commit();
