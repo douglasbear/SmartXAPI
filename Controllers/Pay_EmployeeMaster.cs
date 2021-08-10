@@ -1977,6 +1977,10 @@ namespace SmartxAPI.Controllers
                                     dtGobal.Rows.Add(rowGb);
 
                                     int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
+                                    if(GlobalUserID>0)
+                                    {
+                                        olivoTxn.Commit();
+                                    }
                                 }
                                 object objUserID = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_EmpID=" + nEmpID+" and X_UserID='"+xEmail.ToString()+"'", connection, transaction);                        
                                 if(objUserID==null)
