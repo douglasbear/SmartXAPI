@@ -100,6 +100,42 @@ namespace SmartxAPI.Controllers
             }
         }
 
+         [HttpGet("parentTaskList")]
+        public ActionResult ParentTaskList()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+
+            
+            string sqlCommandText = "select  * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 and isnull(N_ParentID,0)=0";
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@nUserID", nUserID);
+            // Params.Add("@nFnYearId", nFnYearId);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    
+                        return Ok(_api.Success(dt));
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult TaskDetails(string xTaskCode)
         {
