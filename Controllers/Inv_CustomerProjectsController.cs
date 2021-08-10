@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
                                         {
                                             N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
 
-                                            TaskStatus = dLayer.ExecuteDataTable("select N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + TaskMaster.Rows[j]["N_WTaskID"] + " order by N_Order", Params, connection, transaction);
+                                            TaskStatus = dLayer.ExecuteDataTable("select N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status,N_Order from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + TaskMaster.Rows[j]["N_WTaskID"] + " order by N_Order", Params, connection, transaction);
                                             if (TaskStatus.Rows.Count > 0)
                                             {
                                                 TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskID", typeof(int), N_TaskID);

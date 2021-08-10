@@ -38,9 +38,9 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandTasksList = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_OpportunityCode=@p2 order by N_Order";
-            // string sqlCommandLeadsList = "select CONVERT(varchar,d_EntryDate,101) as d_Entry,* from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";
-            // string sqlCommandContactList = "Select * from vw_CRMContact where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            string sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and isnull(N_ParentID,0)=0 order by N_Order";
+            string sqlCommandContactList = "Select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and X_ProjectCode=@p2";
+            // string sqlCommandLeadsList = "select CONVERT(varchar,d_EntryDate,101) as d_Entry,* from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";          
             // string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
             // string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_opportunityID=@p3";
             // string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_opportunityID=@p3";
@@ -50,63 +50,64 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", xProjectCode);
 
-            DataTable ActivitiesList = new DataTable();
-            DataTable LeadsList = new DataTable();
+            DataTable TasksList = new DataTable();
             DataTable ContactList = new DataTable();
-            DataTable QuotationList = new DataTable();
-            DataTable OrderList = new DataTable();
-            DataTable InvoiceList = new DataTable();
-            DataTable MailLogList = new DataTable();
-            DataTable ProjectList = new DataTable();
+            // DataTable LeadsList = new DataTable();
+
+            // DataTable QuotationList = new DataTable();
+            // DataTable OrderList = new DataTable();
+            // DataTable InvoiceList = new DataTable();
+            // DataTable MailLogList = new DataTable();
+            // DataTable ProjectList = new DataTable();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
-                    object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
-                    Params.Add("@p3", N_OpportunityID);
-                    
+                    // object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
+                    // object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
+                    // Params.Add("@p3", N_OpportunityID);
 
-                    object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
-                    if (N_OpportunityID != null)
-                    {
-                        InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
-                        InvoiceList = api.Format(InvoiceList, "InvoiceList");
-                        dt.Tables.Add(InvoiceList);
-                    }
-                    if (N_ProjectID != null)
-                    {
-                        Params.Add("@p5", N_ProjectID);
-                        ProjectList = dLayer.ExecuteDataTable(sqlCommandProjectList, Params, connection);
-                        ProjectList = api.Format(ProjectList, "ProjectList");
-                        dt.Tables.Add(ProjectList);
-                    }
 
-                    ActivitiesList = dLayer.ExecuteDataTable(sqlCommandActivitiesList, Params, connection);
-                    LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
+                    // object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
+                    // if (N_OpportunityID != null)
+                    // {
+                    //     InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
+                    //     InvoiceList = api.Format(InvoiceList, "InvoiceList");
+                    //     dt.Tables.Add(InvoiceList);
+                    // }
+                    // if (N_ProjectID != null)
+                    // {
+                    //     Params.Add("@p5", N_ProjectID);
+                    //     ProjectList = dLayer.ExecuteDataTable(sqlCommandProjectList, Params, connection);
+                    //     ProjectList = api.Format(ProjectList, "ProjectList");
+                    //     dt.Tables.Add(ProjectList);
+                    // }
+
+                    TasksList = dLayer.ExecuteDataTable(sqlCommandTasksList, Params, connection);
                     ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
-                    QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
-                    OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
-                    MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
+                    // LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
+                    // QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
+                    // OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
+                    // MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
 
 
-                    ActivitiesList = api.Format(ActivitiesList, "ActivitiesList");
-                    LeadsList = api.Format(LeadsList, "LeadsList");
+                    TasksList = api.Format(TasksList, "TasksList");
                     ContactList = api.Format(ContactList, "ContactList");
-                    QuotationList = api.Format(QuotationList, "QuotationList");
-                    MailLogList = api.Format(MailLogList, "MailLogList");
-                    OrderList = api.Format(OrderList, "OrderList");
+                    // LeadsList = api.Format(LeadsList, "LeadsList");
+                    // QuotationList = api.Format(QuotationList, "QuotationList");
+                    // MailLogList = api.Format(MailLogList, "MailLogList");
+                    // OrderList = api.Format(OrderList, "OrderList");
 
 
 
-                    dt.Tables.Add(ActivitiesList);
-                    dt.Tables.Add(LeadsList);
+                    dt.Tables.Add(TasksList);
                     dt.Tables.Add(ContactList);
-                    dt.Tables.Add(QuotationList);
-                    dt.Tables.Add(MailLogList);
-                    dt.Tables.Add(OrderList);
+                    // dt.Tables.Add(LeadsList);
+                    // dt.Tables.Add(QuotationList);
+                    // dt.Tables.Add(MailLogList);
+                    // dt.Tables.Add(OrderList);
 
                     return Ok(api.Success(dt));
 
@@ -118,16 +119,16 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("update")]
-        public ActionResult ActivityUpdate(string xActivityCode, bool bFlag)
+        public ActionResult TasksUpdate(string xActivityCode, bool bFlag)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
             if (bFlag)
-                sqlCommandText = "update crm_activity set b_closed=1,x_status='Closed'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
+                sqlCommandText = "update Tsk_TaskMaster set b_closed=1,x_status='Closed'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
             else
-                sqlCommandText = "update crm_activity set b_closed=0,x_status='Active'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
+                sqlCommandText = "update Tsk_TaskMaster set b_closed=0,x_status='Active'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xActivityCode);
 
