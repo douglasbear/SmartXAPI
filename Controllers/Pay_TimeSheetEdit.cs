@@ -180,9 +180,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (b_AllBranchData == true)
-                        empSql = "select * from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "'   order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "'   order by X_EmpCode";
                     else
-                        empSql = "select * from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "'  order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "'  order by X_EmpCode";
 
                     EmpTable = dLayer.ExecuteDataTable(empSql, Params, connection);
                     if (EmpTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
