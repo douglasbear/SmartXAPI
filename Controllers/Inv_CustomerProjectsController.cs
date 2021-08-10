@@ -21,14 +21,14 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
         private readonly string connectionString;
-         private readonly IMyFunctions myFunctions;
-          private readonly int N_FormID = 74;
+        private readonly IMyFunctions myFunctions;
+        private readonly int N_FormID = 74;
 
-        public InvCustomerProjectsController(IDataAccessLayer dl,IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
+        public InvCustomerProjectsController(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
         {
             dLayer = dl;
             api = apiFun;
-            myFunctions=myFun;
+            myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -48,7 +48,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -57,13 +57,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                   return Ok(api.Success(dt));
+                    return Ok(api.Success(dt));
                 }
 
             }
             catch (Exception e)
             {
-               return Ok(api.Error(e));
+                return Ok(api.Error(e));
             }
 
 
@@ -76,12 +76,14 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
+                DataTable MasterTable, TaskMaster, TaskStatus;
                 MasterTable = ds.Tables["master"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+                int nWTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WTaskID"].ToString());
                 string X_ProjectCode = MasterTable.Rows[0]["X_ProjectCode"].ToString();
+                object N_WorkFlowID = null;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -93,8 +95,8 @@ namespace SmartxAPI.Controllers
                     var values = MasterTable.Rows[0]["X_ProjectCode"].ToString();
                     if (values == "@Auto")
 
-                      {
-                         Params.Add("N_CompanyID", nCompanyID);
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
 
@@ -120,9 +122,12 @@ namespace SmartxAPI.Controllers
                     //     if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Project Information")); }
                     //     MasterTable.Rows[0]["X_ProjectCode"] = ProjectCode;
                     // }
-                      MasterTable.Columns.Remove("n_FnYearId");
-                     // MasterTable.Columns.Remove("n_LocationID");
+                    MasterTable.Columns.Remove("n_FnYearId");
+                    // MasterTable.Columns.Remove("n_LocationID");
 
+                    //Check for Existing Workflow
+                    if (nProjectID > 0)
+                        N_WorkFlowID = dLayer.ExecuteScalar("select N_WTaskID from inv_customerprojects where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_ProjectID=" + nProjectID, Params, connection, transaction);
 
                     nProjectID = dLayer.SaveData("inv_CustomerProjects", "N_ProjectID", MasterTable, connection, transaction);
                     if (nProjectID <= 0)
@@ -132,6 +137,81 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if (N_WorkFlowID != null)
+                        {
+                            if (nWTaskID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
+                            {
+                                if (nWTaskID > 0)
+                                {
+                                    dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
+                                    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
+
+                                    TaskMaster = dLayer.ExecuteDataTable("select x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate,N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
+                                    if (TaskMaster.Rows.Count > 0)
+                                    {
+                                        SortedList AParams = new SortedList();
+                                        string TaskCode = "";
+                                        double Minuts = 0;
+                                        int N_TaskID = 0;
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_TaskID", typeof(int), 0);
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
+                                        foreach (DataRow var in TaskMaster.Rows)
+                                        {
+                                            TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
+                                            if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Task Code")); }
+                                            var["x_TaskCode"] = TaskCode;
+
+                                            if (var["N_StartDateUnitID"].ToString() == "248")
+                                                Minuts = 1;
+                                            else if (var["N_StartDateUnitID"].ToString() == "247")
+                                                Minuts = 60;
+                                            else if (var["N_StartDateUnitID"].ToString() == "246")
+                                                Minuts = 1440;
+                                            else
+                                                Minuts = 10080;
+
+                                            if (var["N_StartDateBefore"].ToString() == "0")
+                                                Minuts = 0;
+                                            else
+                                                Minuts = myFunctions.getVAL(var["N_StartDateBefore"].ToString()) * Minuts;
+
+                                            var["D_TaskDate"] = DateTime.Now.AddMinutes(Minuts);
+
+                                            if (var["N_EndUnitID"].ToString() == "248")
+                                                Minuts = 1;
+                                            else if (var["N_EndUnitID"].ToString() == "247")
+                                                Minuts = 60;
+                                            else if (var["N_EndUnitID"].ToString() == "246")
+                                                Minuts = 1440;
+                                            else
+                                                Minuts = 10080;
+
+                                            if (var["N_EndDateBefore"].ToString() == "0")
+                                                Minuts = 0;
+                                            else
+                                                Minuts = myFunctions.getVAL(var["N_EndDateBefore"].ToString()) * Minuts;
+
+                                            var["D_DueDate"] = DateTime.Now.AddMinutes(Minuts);
+
+                                        }
+                                        for (int j = 0; j < TaskMaster.Rows.Count; j++)
+                                        {
+                                            N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
+
+                                            TaskStatus = dLayer.ExecuteDataTable("select N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status,N_Order from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + TaskMaster.Rows[j]["N_WTaskID"] + " order by N_Order", Params, connection, transaction);
+                                            if (TaskStatus.Rows.Count > 0)
+                                            {
+                                                TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskID", typeof(int), N_TaskID);
+                                                TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskStatusID", typeof(int), 0);
+                                                dLayer.SaveData("Tsk_TaskStatus", "n_TaskStatusID", TaskStatus, connection, transaction);
+                                                TaskStatus.Clear();
+
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
                         transaction.Commit();
                         return Ok(api.Success("Project Information Created"));
                     }
@@ -143,13 +223,13 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int nProjectID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -160,9 +240,9 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_ProjectID",nProjectID.ToString());
-                    return Ok(api.Success(res,"Project Information deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_ProjectID", nProjectID.ToString());
+                    return Ok(api.Success(res, "Project Information deleted"));
                 }
                 else
                 {
@@ -177,80 +257,92 @@ namespace SmartxAPI.Controllers
 
         }
 
-        
-        [HttpGet("Details") ]
-        public ActionResult GetCustomerProjectDetails (string xProjectCode,int nFnYearId)
-          
-        {   DataTable dt=new DataTable();
-            SortedList Params = new SortedList();
-             int nCompanyID=myFunctions.GetCompanyID(User);
-              string sqlCommandText="select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
-               Params.Add("@nCompanyID",nCompanyID);
-                Params.Add("@YearID", nFnYearId);
-             Params.Add("@xProjectCode",xProjectCode);
-            
-            try{
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection);
-                }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(api.Notice("No Results Found"));
-                        }else{
-                            return Ok(api.Success(dt));
-                        }
-                
-            }catch(Exception e){
-                return Ok(api.Error(e));
-            }   
-        }
-         [HttpGet("AccountList") ]
-        public ActionResult GetAccountList ()
-        {    int nCompanyID=myFunctions.GetCompanyID(User);
-  
-            SortedList param = new SortedList(){{"@p1",nCompanyID}};
-            
-            DataTable dt=new DataTable();
-            
-            string sqlCommandText="select * from prj_AccountSettings where N_CompanyID=@p1";
-                
-            try{
-                    using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
+        [HttpGet("Details")]
+        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId)
 
-                    dt=dLayer.ExecuteDataTable(sqlCommandText,param,connection);
-                }
-                    if(dt.Rows.Count==0)
-                        {
-                            return Ok(api.Notice("No Results Found"));
-                        }else{
-                            return Ok(api.Success(dt));
-                        }
-                
-            }catch(Exception e){
-                return Ok(api.Error(e));
-            }   
-        }
-    
-    
-
-
-    
-    
-
-
-       [HttpGet("dashboardlist")]
-        public ActionResult ProjectList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
-            int nCompanyId=myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@YearID", nFnYearId);
+            Params.Add("@xProjectCode", xProjectCode);
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+        [HttpGet("AccountList")]
+        public ActionResult GetAccountList()
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            SortedList param = new SortedList() { { "@p1", nCompanyID } };
+
+            DataTable dt = new DataTable();
+
+            string sqlCommandText = "select * from prj_AccountSettings where N_CompanyID=@p1";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, param, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
+
+
+
+
+
+
+        [HttpGet("dashboardlist")]
+        public ActionResult ProjectList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%' or x_CustomerName like '%" + xSearchkey + "%' or x_District like '%" + xSearchkey + "%' or d_StartDate like '%" + xSearchkey + "%' or n_ContractAmt like '%" + xSearchkey + "%')";
@@ -259,11 +351,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_ProjectID desc";
             else
                 xSortBy = " order by " + xSortBy;
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -274,7 +366,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     string sqlCommandCount = "select count(*) as N_Count  from vw_InvProjectDashBoard where N_CompanyID=@p1 ";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -290,7 +382,7 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -299,6 +391,6 @@ namespace SmartxAPI.Controllers
         }
     }
 }
-    
-    
-    
+
+
+
