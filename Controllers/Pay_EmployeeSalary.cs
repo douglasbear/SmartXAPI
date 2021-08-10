@@ -22,7 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
-      
+
 
 
         public EmployeeSalary(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    
+
                     OutPut.Add("Details", _api.Format(dt));
                     if (dt.Rows.Count == 0)
                     {
@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    
+
                     OutPut.Add("Details", _api.Format(dt));
                     if (dt.Rows.Count == 0)
                     {
@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("accrualSettings")]
-        public ActionResult GetAccrualSettings(int nFnYearID,int nCountryID)
+        public ActionResult GetAccrualSettings(int nFnYearID, int nCountryID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    
+
                     OutPut.Add("Details", _api.Format(dt));
                     if (dt.Rows.Count == 0)
                     {
@@ -146,46 +146,47 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetEmpGradeDetails(int nFnYearID, string xGradeCode)
+        public ActionResult GetEmpGradeDetails(int nFnYearID, int nGradeID)
         {
-            DataSet dt=new DataSet();
-            SortedList Params=new SortedList();
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
-            string Mastersql="Select * from vw_Pay_SalaryGrade Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_GradeCode=@xGradeCode";
-            Params.Add("@nCompanyID",nCompanyID);
+            string Mastersql = "Select * from vw_Pay_SalaryGrade Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_GradeID=@nGradeID";
+            Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@xGradeCode",xGradeCode);
-            
-            try{
+            Params.Add("@nGradeID", nGradeID);
+
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        MasterTable=dLayer.ExecuteDataTable(Mastersql,Params,connection); 
-
-                        if (MasterTable.Rows.Count == 0)
-                        {
-                        return Ok(_api.Warning("No Data Found !!"));
-                        }
-
-                        MasterTable = _api.Format(MasterTable, "Master");
-                        dt.Tables.Add(MasterTable);
-
-                        int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
-
-                        string DetailSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID;
-
-                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                        DetailTable = _api.Format(DetailTable, "Details");
-                        dt.Tables.Add(DetailTable);
-                    }
-                    return Ok(_api.Success(dt));
-                }
-                catch (Exception e)
                 {
-                    return Ok(_api.Error(e));
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Data Found !!"));
+                    }
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
+
+                    string DetailSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID;
+
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
                 }
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
         }
 
         [HttpPost("save")]
@@ -194,20 +195,20 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                DataTable DetailTable;
-                DataTable SalaryTable;
-                DataTable BenefitTable;
-                DataTable AccrualTable;
+                // DataTable DetailTable;
+                // DataTable SalaryTable;
+                // DataTable BenefitTable;
+                // DataTable AccrualTable;
                 MasterTable = ds.Tables["master"];
-                DetailTable = ds.Tables["details"];
-                SalaryTable = ds.Tables["salary"];
-                BenefitTable = ds.Tables["benefit"];
-                AccrualTable = ds.Tables["accrual"];
+                // DetailTable = ds.Tables["details"];
+                // SalaryTable = ds.Tables["salary"];
+                // BenefitTable = ds.Tables["benefit"];
+                // AccrualTable = ds.Tables["accrual"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nGradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GradeID"].ToString());
-                int  nGradeDetailsID=0;
-                
+                int nGradeDetailsID = 0;
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -215,11 +216,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
                     // SortedList QueryParams = new SortedList();
-                   
+
                     // Auto Gen
                     string GradeCode = "";
                     var values = MasterTable.Rows[0]["x_GradeCode"].ToString();
-                    
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -231,13 +232,13 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_GradeCode"] = GradeCode;
                     }
 
-                    if(nGradeID>0)
+                    if (nGradeID > 0)
                     {
-                         SortedList DeleteParams = new SortedList(){
+                        SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType","Employee Salary Grade"},
                                 {"N_VoucherID",nGradeID},};
-                         try
+                        try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
                         }
@@ -250,51 +251,51 @@ namespace SmartxAPI.Controllers
 
 
                     nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", MasterTable, connection, transaction);
-                    
-                    if (nGradeID > 0)
-                    {
-                        double nPayValue = 0;
-                        for (int j = 0; j < SalaryTable.Rows.Count; j++)
-                        {
-                            string SalarySelect = SalaryTable.Rows[j]["b_SalarySelect"].ToString();
-                            if (SalarySelect == "True")
-                            {
-                                nPayValue = myFunctions.getIntVAL(SalaryTable.Rows[j]["n_Value"].ToString());;
-                                nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", SalaryTable, connection, transaction);
-                            }
-                        }
-                        SalaryTable.Columns.Remove("b_SalarySelect");
 
-                        for (int j = 0; j < BenefitTable.Rows.Count; j++)
-                        {
-                            string BenefitSelect = BenefitTable.Rows[j]["b_BenefitSelect"].ToString();
-                            if (BenefitSelect == "True")
-                            {
-                                nPayValue = myFunctions.getIntVAL(BenefitTable.Rows[j]["n_Value"].ToString());;
-                                nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", BenefitTable, connection, transaction);
-                            }
-                        }
-                        BenefitTable.Columns.Remove("b_BenefitSelect");
+                    // if (nGradeID > 0)
+                    // {
+                    //     double nPayValue = 0;
+                    //     for (int j = 0; j < SalaryTable.Rows.Count; j++)
+                    //     {
+                    //         string SalarySelect = SalaryTable.Rows[j]["b_SalarySelect"].ToString();
+                    //         if (SalarySelect == "True")
+                    //         {
+                    //             nPayValue = myFunctions.getIntVAL(SalaryTable.Rows[j]["n_Value"].ToString());;
+                    //             nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", SalaryTable, connection, transaction);
+                    //         }
+                    //     }
+                    //     SalaryTable.Columns.Remove("b_SalarySelect");
 
-                        for (int j = 0; j < AccrualTable.Rows.Count; j++)
-                        {
-                            string AccrualSelect = AccrualTable.Rows[j]["b_AccrualSelect"].ToString();
-                            if (AccrualSelect == "True")
-                            {
-                                nPayValue = myFunctions.getIntVAL(AccrualTable.Rows[j]["n_Accrued"].ToString());;
-                                nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", AccrualTable, connection, transaction);
-                            }
-                        }
-                        AccrualTable.Columns.Remove("b_AccrualSelect");
-                    }
-                    else
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
-                    }
-                    
-                   // dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
-                    
+                    //     for (int j = 0; j < BenefitTable.Rows.Count; j++)
+                    //     {
+                    //         string BenefitSelect = BenefitTable.Rows[j]["b_BenefitSelect"].ToString();
+                    //         if (BenefitSelect == "True")
+                    //         {
+                    //             nPayValue = myFunctions.getIntVAL(BenefitTable.Rows[j]["n_Value"].ToString());;
+                    //             nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", BenefitTable, connection, transaction);
+                    //         }
+                    //     }
+                    //     BenefitTable.Columns.Remove("b_BenefitSelect");
+
+                    //     for (int j = 0; j < AccrualTable.Rows.Count; j++)
+                    //     {
+                    //         string AccrualSelect = AccrualTable.Rows[j]["b_AccrualSelect"].ToString();
+                    //         if (AccrualSelect == "True")
+                    //         {
+                    //             nPayValue = myFunctions.getIntVAL(AccrualTable.Rows[j]["n_Accrued"].ToString());;
+                    //             nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", AccrualTable, connection, transaction);
+                    //         }
+                    //     }
+                    //     AccrualTable.Columns.Remove("b_AccrualSelect");
+                    // }
+                    // else
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error("Unable to save"));
+                    // }
+
+                    //dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
+
                     transaction.Commit();
                     return Ok(_api.Success("Employee Grade Saved"));
                 }
@@ -314,18 +315,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    SortedList deleteParams = new SortedList()
-                            {
-                                {"N_CompanyID",nCompanyID},
-                                {"X_TransType","Employee Salary Grade"},
-                                {"N_VoucherID",nGradeID},
-                                {"N_UserID",nUserID},
-                                {"X_SystemName","WebRequest"},
+                    // SortedList deleteParams = new SortedList()
+                    //         {
+                    //             {"N_CompanyID",nCompanyID},
+                    //             {"X_TransType","Employee Salary Grade"},
+                    //             {"N_VoucherID",nGradeID},
+                    //             {"N_UserID",nUserID},
+                    //             {"X_SystemName","WebRequest"},
 
-                            };
-                    dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
-                    transaction.Commit();
+
+                    //         };
+                    // dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                    int Results = dLayer.DeleteData("Pay_SalaryGrade", "N_GradeID", nGradeID, "", connection);
+                    if (Results <= 0)
+                    {
+                        return Ok(_api.Error("Unable to Delete"));
+                    }
                 }
                 return Ok(_api.Success("Deleted"));
             }
@@ -334,7 +339,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
-          
+
     }
 
 }

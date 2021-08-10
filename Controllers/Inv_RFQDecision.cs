@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int N_RFQDecisionID)
+        public ActionResult DeleteData(int nRFQDecisionID)
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -121,8 +121,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    dLayer.DeleteData("Inv_RFQDecisionDetails", "N_PRSID", N_RFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + N_RFQDecisionID, connection, transaction);
-                    Results = dLayer.DeleteData("Inv_RFQDecisionMaster", "N_RFQDecisionID", N_RFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + N_RFQDecisionID, connection, transaction);
+                    dLayer.DeleteData("Inv_RFQDecisionDetails", "N_RFQDecisionID", nRFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + nRFQDecisionID, connection, transaction);
+                    Results = dLayer.DeleteData("Inv_RFQDecisionMaster", "N_RFQDecisionID", nRFQDecisionID, "N_CompanyID=" + nCompanyID + " and N_RFQDecisionID=" + nRFQDecisionID, connection, transaction);
 
                     if (Results > 0)
                     {
@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
                     }
                     int N_RFQDecisionDetailsID = dLayer.SaveData("Inv_RFQDecisionDetails", "N_RFQDecisionDetailsID", DetailTable, connection, transaction);
 
-                    if (N_RFQDecisionDetailsID > 0)
+                    if (N_RFQDecisionDetailsID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(api.Error("Unable to save"));
@@ -218,7 +218,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetDetails(string X_RFQDecisionCode, int nFnYearID, int nBranchID, bool bShowAllBranchData)
+        public ActionResult GetDetails(string xRFQDecisionCode, int nFnYearID, int nBranchID, bool bShowAllBranchData)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -229,7 +229,7 @@ namespace SmartxAPI.Controllers
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-            QueryParams.Add("@X_RFQDecisionCode", X_RFQDecisionCode);
+            QueryParams.Add("@xRFQDecisionCode", xRFQDecisionCode);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
             string Condition = "";
@@ -241,9 +241,9 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     if (bShowAllBranchData == true)
-                        Condition = "n_Companyid=@nCompanyID and X_RFQDecisionCode =@X_RFQDecisionCode and N_FnYearID=@nFnYearID";
+                        Condition = "n_Companyid=@nCompanyID and X_RFQDecisionCode =@xRFQDecisionCode and N_FnYearID=@nFnYearID";
                     else
-                        Condition = "n_Companyid=@nCompanyID and X_RFQDecisionCode =@X_RFQDecisionCode and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+                        Condition = "n_Companyid=@nCompanyID and X_RFQDecisionCode =@xRFQDecisionCode and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
 
 
                     _sqlQuery = "Select * from vw_RFQDecisionMaster Where " + Condition + "";
