@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
 
                     //Check for Existing Workflow
                     if (nProjectID > 0)
-                        N_WorkFlowID = dLayer.ExecuteScalar("select N_WTaskID from inv_customerprojects where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_ProjectID=" + nProjectID, Params, connection, transaction);
+                        N_WorkFlowID = dLayer.ExecuteScalar("select N_WTaskID from inv_customerprojects where N_CompanyID=" + nCompanyID + " and N_ProjectID=" + nProjectID, Params, connection, transaction);
 
                     nProjectID = dLayer.SaveData("inv_CustomerProjects", "N_ProjectID", MasterTable, connection, transaction);
                     if (nProjectID <= 0)
@@ -144,12 +144,15 @@ namespace SmartxAPI.Controllers
                                 if (nWTaskID > 0)
                                 {
                                     dLayer.DeleteData("Tsk_TaskMaster", "N_ProjectID", nProjectID, "", connection, transaction);
-                                    dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
+                                    //dLayer.DeleteData("Tsk_TaskStatus", "N_ProjectID", nProjectID, "", connection, transaction);
 
-                                    TaskMaster = dLayer.ExecuteDataTable("select x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate,N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
+                                    TaskMaster = dLayer.ExecuteDataTable("select N_CompanyID,x_tasksummery,x_taskdescription,'' as D_TaskDate,'' as D_DueDate,N_StartDateBefore,N_StartDateUnitID,N_EndDateBefore,N_EndUnitID,N_WTaskDetailID,N_Order from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + nWTaskID + " order by N_Order", Params, connection, transaction);
                                     if (TaskMaster.Rows.Count > 0)
                                     {
                                         SortedList AParams = new SortedList();
+                                        AParams.Add("N_CompanyID", nCompanyID);
+                                        AParams.Add("N_YearID", nFnYearId);
+                                        AParams.Add("N_FormID", 1056);
                                         string TaskCode = "";
                                         double Minuts = 0;
                                         int N_TaskID = 0;
@@ -194,11 +197,15 @@ namespace SmartxAPI.Controllers
                                             var["D_DueDate"] = DateTime.Now.AddMinutes(Minuts);
 
                                         }
+                                        TaskMaster.Columns.Remove("N_StartDateBefore");
+                                        TaskMaster.Columns.Remove("N_StartDateUnitID");
+                                        TaskMaster.Columns.Remove("N_EndDateBefore");
+                                        TaskMaster.Columns.Remove("N_EndUnitID");
                                         for (int j = 0; j < TaskMaster.Rows.Count; j++)
                                         {
                                             N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
 
-                                            TaskStatus = dLayer.ExecuteDataTable("select N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status,N_Order from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskID=" + TaskMaster.Rows[j]["N_WTaskID"] + " order by N_Order", Params, connection, transaction);
+                                            TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
                                             if (TaskStatus.Rows.Count > 0)
                                             {
                                                 TaskStatus = myFunctions.AddNewColumnToDataTable(TaskStatus, "n_TaskID", typeof(int), N_TaskID);
