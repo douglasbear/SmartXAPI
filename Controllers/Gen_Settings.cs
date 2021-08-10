@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("settingsDetails")]
-        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID)
+        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID,int nCompanyID)
         {
             try
             {
@@ -62,7 +62,8 @@ namespace SmartxAPI.Controllers
                             SortedList lParamsList = new SortedList()
                             {
                                 {"@Cval",myFunctions.GetCompanyID(User)},
-                                // {"@Fval",nFnYearID},
+                                {"@Fval",nFnYearID},
+                                {"@Ctrval",nCompanyID},
                                 // {"@Lval",nLangID},
                                 // {"@UCval",myFunctions.GetUserCategory(User)}
                             };
