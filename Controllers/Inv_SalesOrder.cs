@@ -435,7 +435,7 @@ namespace SmartxAPI.Controllers
                         if (objService.ToString() != "4")
                             B_IsService = false;
                     }
-                    DataColumnCollection columns = DetailTable.Columns;
+                    DataColumnCollection columns = MasterTable.Columns;
                     if (columns.Contains("b_IsService"))
                     {
                         MasterTable.Rows[0]["b_IsService"] = B_IsService;

@@ -684,7 +684,16 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+
+                var rptArray = reportName.Split(@"\");
+                string actReportLocation = reportLocation;
+                if(rptArray.Length>1){
+                    reportName = rptArray[1].ToString();
+                    actReportLocation = actReportLocation + rptArray[0].ToString()+"/";
+                }
+
+
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();
