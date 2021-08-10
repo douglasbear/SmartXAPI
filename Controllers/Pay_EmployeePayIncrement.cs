@@ -31,17 +31,18 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetSalaryRevisionList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetSalaryRevisionList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnyearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnyearID);
 
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandCount = "";
             string Searchkey = "";
-            string Criteria = " where N_CompanyID =@nCompanyID";
+            string Criteria = " where N_CompanyID =@nCompanyID and N_FnyearID=@nFnYearID";
             string sqlCommandText = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
