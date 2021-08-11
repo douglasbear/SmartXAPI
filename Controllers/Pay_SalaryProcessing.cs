@@ -149,6 +149,8 @@ namespace SmartxAPI.Controllers
                         PayPayMaster = dLayer.ExecuteDataTable("Select N_PaymentId,N_PayID from Pay_PayMaster where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection);
                     }
 
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"isHidden",typeof(bool),false);
+
                     for (int i = dt.Rows.Count - 1; i >= 0; i--)
                     {
                         if (myFunctions.getVAL(dt.Rows[i]["N_PayRate"].ToString()) == 0)
@@ -159,7 +161,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
                             {
-                                dt.Rows[i].Delete();
+                                dt.Rows[i]["isHidden"] = true;
                             }
                         }
 
