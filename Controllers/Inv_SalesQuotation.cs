@@ -460,6 +460,8 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+                    int N_CrmCompanyID = myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString());
+                    int N_ContactID = myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString());
                     int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -476,9 +478,14 @@ namespace SmartxAPI.Controllers
 
                     SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", N_CompanyID);
-                    CustParams.Add("@N_CustomerID", N_CustomerID);
+                    CustParams.Add("@N_CRMCustomerID", N_CrmCompanyID);
+                    CustParams.Add("@N_ContactID", N_ContactID);
                     CustParams.Add("@nFnYearID", N_FnYearID);
-                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                    object objCustName;
+                    if(N_CrmCompanyID>0)
+                        objCustName= dLayer.ExecuteScalar("Select X_Customer From Crm_Customer where N_CustomerID=@N_CRMCustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                    else
+                        objCustName= dLayer.ExecuteScalar("Select Crm_Contact From Crm_Contact where N_ContactID=@N_ContactID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
                     if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && N_QuotationID > 0)
                     {
@@ -795,19 +802,23 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", N_QuotationID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo, CASE WHEN ISNULL(Inv_SalesQuotation.N_CrmCompanyID,0)>0 THEN CRM_Customer.X_Customer ELSE CRM_Contact.X_Contact END AS X_CName"+
+                                " from Inv_SalesQuotation LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId AND Inv_SalesQuotation.N_FnYearId = CRM_Customer.N_FnYearId AND  Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID LEFT OUTER JOIN"+
+                                " CRM_Contact ON Inv_SalesQuotation.N_ContactID = CRM_Contact.N_ContactID AND Inv_SalesQuotation.N_CompanyId = CRM_Contact.N_CompanyId AND Inv_SalesQuotation.N_FnYearId = CRM_Contact.N_FnYearId"+
+                                " where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
                         return Ok(_api.Error("Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
-                    int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
-                    SortedList CustParams = new SortedList();
-                    CustParams.Add("@nCompanyID", nCompanyID);
-                    CustParams.Add("@N_CustomerID", N_CustomerID);
-                    CustParams.Add("@nFnYearID", nFnYearID);
-                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+                     int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
+                    // SortedList CustParams = new SortedList();
+                    // CustParams.Add("@nCompanyID", nCompanyID);
+                    // CustParams.Add("@N_CustomerID", N_CustomerID);
+                    // CustParams.Add("@nFnYearID", nFnYearID);
+                    // object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection);
+                     string CustName=TransRow["X_CName"].ToString();
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, N_QuotationID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
@@ -830,7 +841,7 @@ namespace SmartxAPI.Controllers
                         string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                         int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, objCustName.ToString(), User, dLayer, connection, transaction);
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Sales Quotation", N_QuotationID, TransRow["X_QuotationNo"].ToString(), ProcStatus, "Inv_SalesQuotation", X_Criteria, CustName.ToString(), User, dLayer, connection, transaction);
                         if (status != "Error")
                         {
                             if (ButtonTag == "6" || ButtonTag == "0")
