@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
                 string X_ContactEmail = MasterTable.Rows[0]["X_Email"].ToString();
                 string X_ContactNumber = MasterTable.Rows[0]["X_Mobile"].ToString();
                 int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
-                object N_WorkFlowID=null;
+                object N_WorkFlowID="";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -186,8 +186,6 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-
-                        
                         if (N_WorkFlowID != null)
                         {
                             if (nWActivityID != myFunctions.getIntVAL(N_WorkFlowID.ToString()))
