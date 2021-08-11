@@ -802,10 +802,10 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", N_QuotationID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo, CASE WHEN ISNULL(Inv_SalesQuotation.N_CrmCompanyID,0)>0 THEN CRM_Customer.X_Customer ELSE CRM_Contact.X_Contact END AS X_CName"+
+                    string Sql = "select isNull(Inv_SalesQuotation.N_UserID,0) as N_UserID,isNull(Inv_SalesQuotation.N_ProcStatus,0) as N_ProcStatus,isNull(Inv_SalesQuotation.N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(Inv_SalesQuotation.N_CustomerID,0) as N_CustomerID,Inv_SalesQuotation.X_QuotationNo, CASE WHEN ISNULL(Inv_SalesQuotation.N_CrmCompanyID,0)>0 THEN CRM_Customer.X_Customer ELSE CRM_Contact.X_Contact END AS X_CName"+
                                 " from Inv_SalesQuotation LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId AND Inv_SalesQuotation.N_FnYearId = CRM_Customer.N_FnYearId AND  Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID LEFT OUTER JOIN"+
                                 " CRM_Contact ON Inv_SalesQuotation.N_ContactID = CRM_Contact.N_ContactID AND Inv_SalesQuotation.N_CompanyId = CRM_Contact.N_CompanyId AND Inv_SalesQuotation.N_FnYearId = CRM_Contact.N_FnYearId"+
-                                " where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
+                                " where Inv_SalesQuotation.N_CompanyId=@nCompanyID and Inv_SalesQuotation.N_FnYearID=@nFnYearID and Inv_SalesQuotation.N_QuotationID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {

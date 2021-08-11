@@ -146,11 +146,11 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     DataTable ElementsTable = new DataTable();
                     string ElementSql = "";
+                    //if(dtTimesheet.Rows.Count)
                     ElementSql = " Select * from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
                     if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ElementsTable.AcceptChanges();
-                    ElementsTable = _api.Format(ElementsTable);
 
                     DateTime Date = dtpSalaryFromdate;
                     do
@@ -166,6 +166,7 @@ namespace SmartxAPI.Controllers
 
                     }while (Date <= dtpSalaryToDate);
 
+                    ElementsTable = _api.Format(ElementsTable);
                     dt.Tables.Add(ElementsTable);
                     return Ok(_api.Success(dt));
 
