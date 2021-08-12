@@ -146,28 +146,67 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     DataTable ElementsTable = new DataTable();
                     string ElementSql = "";
-                    //if(dtTimesheet.Rows.Count)
-                    ElementSql = " Select * from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
-                    ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
-                    if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    ElementsTable.AcceptChanges();
-
-                    DateTime Date = dtpSalaryFromdate;
-                    do
+                    int IsEmpAdded=0;
+                    for(int i=0;i<dtTimesheet.Rows.Count;i++)
                     {
-                        object objDatePresent= dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
-                        if(objDatePresent==null)
+                        if(myFunctions.getIntVAL(dtTimesheet.Rows[i]["N_EmpID"].ToString())==nEmpID)
+                        IsEmpAdded=1;
+
+                    }
+                    if(IsEmpAdded==0)
+                    {
+                        ElementSql = " Select * from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
+                        ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
+                        if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        ElementsTable.AcceptChanges();
+
+                        DateTime Date = dtpSalaryFromdate;
+                        do
                         {
-                            DataRow rowET = ElementsTable.NewRow();
-                            rowET["D_Date"] = Date;
+                            object objDatePresent= dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
+                            if(objDatePresent==null)
+                            {
+                                DataRow rowET = ElementsTable.NewRow();
+                                rowET["D_Date"] = Date;
 
-                            ElementsTable.Rows.Add(rowET);
+                                ElementsTable.Rows.Add(rowET);
+                            }
+
+                        }while (Date <= dtpSalaryToDate);
+
+                        ElementsTable = _api.Format(ElementsTable);
+                        dt.Tables.Add(ElementsTable);
+
+                       foreach (DataRow var in ElementsTable.Rows)
+                        {
+                            DataRow rowTS = dtTimesheet.NewRow();
+                            rowTS["N_CompanyID"] = var["N_CompanyID"];
+                            rowTS["D_Date"] = var["D_Date"];
+                            rowTS["N_EmpID"] = var["N_EmpID"];
+                            rowTS["D_In"] = var["D_In"];
+                            rowTS["D_Out"] = var["D_Out"];
+                            rowTS["X_PayrunText"] = var["X_PayrunText"];
+                            rowTS["D_Shift2_In"] = var["D_Shift2_In"];
+                            rowTS["D_Shift2_Out"] = var["D_Shift2_Out"];
+                            rowTS["N_SheetID"] = var["N_SheetID"];
+                            rowTS["N_FnYearID"] = var["N_FnYearID"];
+                            rowTS["N_Status"] = var["N_Status"];
+                            rowTS["X_Remarks"] = var["X_Remarks"];
+                            rowTS["D_ActIn1"] = var["D_ActIn1"];
+                            rowTS["D_ActOut1"] = var["D_ActOut1"];
+                            rowTS["D_ActIn2"] = var["D_ActIn2"];
+                            rowTS["D_ActOut2"] = var["D_ActOut2"];
+                            rowTS["N_BreakHrs"] = var["N_BreakHrs"];
+                            rowTS["N_DedHour"] = var["N_DedHour"];
+                            rowTS["D_Act_Shift1_In"] = var["D_Act_Shift1_In"];
+                            rowTS["D_Act_Shift1_Out"] = var["D_Act_Shift1_Out"];
+                            rowTS["D_Act_Shift2_In"] = var["D_Act_Shift2_In"];
+                            rowTS["D_Act_Shift2_Out"] = var["D_Act_Shift2_Out"];
+
+                            dtTimesheet.Rows.Add(rowTS);
                         }
-
-                    }while (Date <= dtpSalaryToDate);
-
-                    ElementsTable = _api.Format(ElementsTable);
-                    dt.Tables.Add(ElementsTable);
+                    }
+                    dt.Tables.Add(dtTimesheet);
                     return Ok(_api.Success(dt));
 
                 }
