@@ -486,7 +486,7 @@ namespace SmartxAPI.Controllers
                         {"N_BranchId",nBranchId}
                     };
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
-                    masterTable = _api.Format(masterTable, "Master");
+                    masterTable = _api.Format(masterTable, "Master"); 
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
                     int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());

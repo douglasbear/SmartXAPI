@@ -1941,98 +1941,102 @@ namespace SmartxAPI.Controllers
                         //     dLayer.ExecuteNonQuery("update  Sec_User set N_LoginFlag=" + n_LoginFlag + ",B_Active= 0 where N_UserID=" + n_UserID + " and N_CompanyID= " + nCompanyID, Params, connection, transaction);
                         // }
                         string xEmail=dtMasterTable.Rows[0]["X_EmailID"].ToString();
-                        // if(xEmail!="")
-                        // {
-                        //     using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
-                        //     {
-                        //         olivoCon.Open();
-                        //         SqlTransaction olivoTxn = olivoCon.BeginTransaction();
-                        //         string Pwd = myFunctions.EncryptString(xEmail);
-                        //         int nClientID=myFunctions.GetClientID(User);
-                        //         object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='"+xEmail.ToString()+"' and N_ClientID="+nClientID, olivoCon, olivoTxn);
-                        //         if (glogalUserID == null)
-                        //         {
-                        //             DataTable dtGobal = new DataTable();
-                        //             dtGobal.Clear();
-                        //             dtGobal.Columns.Add("X_EmailID");
-                        //             dtGobal.Columns.Add("N_UserID");
-                        //             dtGobal.Columns.Add("X_UserName");
-                        //             dtGobal.Columns.Add("N_ClientID");
-                        //             dtGobal.Columns.Add("N_ActiveAppID");
-                        //             dtGobal.Columns.Add("X_Password");
-                        //             dtGobal.Columns.Add("B_Inactive");
-                        //             dtGobal.Columns.Add("X_UserID");
-                        //             dtGobal.Columns.Add("B_EmailVerified");
+                        if(xEmail!="")
+                        {
+                            using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                            {
+                                olivoCon.Open();
+                                SqlTransaction olivoTxn = olivoCon.BeginTransaction();
+                                string Pwd = myFunctions.EncryptString(xEmail);
+                                int nClientID=myFunctions.GetClientID(User);
+                                object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='"+xEmail.ToString()+"' and N_ClientID="+nClientID, olivoCon, olivoTxn);
+                                if (glogalUserID == null)
+                                {
+                                    DataTable dtGobal = new DataTable();
+                                    dtGobal.Clear();
+                                    dtGobal.Columns.Add("X_EmailID");
+                                    dtGobal.Columns.Add("N_UserID");
+                                    dtGobal.Columns.Add("X_UserName");
+                                    dtGobal.Columns.Add("N_ClientID");
+                                    dtGobal.Columns.Add("N_ActiveAppID");
+                                    dtGobal.Columns.Add("X_Password");
+                                    dtGobal.Columns.Add("B_Inactive");
+                                    dtGobal.Columns.Add("X_UserID");
+                                    dtGobal.Columns.Add("B_EmailVerified");
 
-                        //             DataRow rowGb = dtGobal.NewRow();
-                        //             rowGb["X_EmailID"] = xEmail;
-                        //             rowGb["X_UserName"] = xEmail;
-                        //             rowGb["N_ClientID"] = nClientID;
-                        //             rowGb["N_ActiveAppID"] = xEmail;
-                        //             rowGb["X_Password"] = Pwd;
-                        //             rowGb["B_Inactive"] = 0;
-                        //             rowGb["X_UserID"] = xEmail;
-                        //             rowGb["B_EmailVerified"] = 1;
+                                    DataRow rowGb = dtGobal.NewRow();
+                                    rowGb["X_EmailID"] = xEmail;
+                                    rowGb["X_UserName"] = xEmail;
+                                    rowGb["N_ClientID"] = nClientID;
+                                    rowGb["N_ActiveAppID"] = 2;
+                                    rowGb["X_Password"] = Pwd;
+                                    rowGb["B_Inactive"] = 0;
+                                    rowGb["X_UserID"] = xEmail;
+                                    rowGb["B_EmailVerified"] = 1;
 
-                        //             dtGobal.Rows.Add(rowGb);
+                                    dtGobal.Rows.Add(rowGb);
 
-                        //             int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
-                        //         }
-                                // object objUserID = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_EmpID=" + nEmpID+" and X_UserID='"+xEmail.ToString()+"'", connection, transaction);                        
-                                // if(objUserID==null)
-                                // {                     
+                                    int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
+                                    if(GlobalUserID>0)
+                                    {
+                                        olivoTxn.Commit();
+                                    }
+                                }
+                                object objUserID = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_EmpID=" + nEmpID+" and X_UserID='"+xEmail.ToString()+"'", connection, transaction);                        
+                                if(objUserID==null)
+                                {                     
                                    
-                                //     object objUserCat = dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=2", connection, transaction); 
-                                //     if(objUserCat!=null)
-                                //     {                      
-                                //         object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='"+xEmail.ToString()+"' and N_EmpID="+nEmpID+" and N_UserCategoryID="+myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);                        
-                                //         if(objUserCheck==null)
-                                //         {
-                                //             object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='"+xEmail.ToString()+"'", connection, transaction);                        
-                                //             if(objUser!=null)
-                                //             {
-                                //                 dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",B_Active= 1,N_UserCategoryID="+myFunctions.getIntVAL(objUserCat.ToString())+",X_UserCategoryList="+objUserCat.ToString()+" where X_UserID='"+xEmail.ToString()+"' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
-                                //             }
-                                //             else
-                                //             {
-                                //                 DataTable dt = new DataTable();
-                                //                 dt.Clear();
-                                //                 dt.Columns.Add("N_CompanyID");
-                                //                 dt.Columns.Add("N_UserID");
-                                //                 dt.Columns.Add("X_UserID");
-                                //                 dt.Columns.Add("X_Password");
-                                //                 dt.Columns.Add("N_UserCategoryID");
-                                //                 dt.Columns.Add("B_Active");
-                                //                 dt.Columns.Add("N_BranchID");
-                                //                 dt.Columns.Add("N_LocationID");
-                                //                 dt.Columns.Add("X_UserName");
-                                //                 dt.Columns.Add("N_EmpID");
-                                //                 dt.Columns.Add("N_LoginFlag");
-                                //                 dt.Columns.Add("X_UserCategoryList");
-                                //                 dt.Columns.Add("X_Email");
+                                    object objUserCat = dLayer.ExecuteScalar("Select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + "  and N_AppID=2", connection, transaction); 
+                                    if(objUserCat!=null)
+                                    {                      
+                                        object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='"+xEmail.ToString()+"' and N_EmpID="+nEmpID+" and N_UserCategoryID="+myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);                        
+                                        if(objUserCheck==null)
+                                        {
+                                            object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='"+xEmail.ToString()+"'", connection, transaction);                        
+                                            if(objUser!=null)
+                                            {
+                                                dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",B_Active= 1,N_UserCategoryID="+myFunctions.getIntVAL(objUserCat.ToString())+",X_UserCategoryList="+objUserCat.ToString()+" where X_UserID='"+xEmail.ToString()+"' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                                            }
+                                            else
+                                            {
+                                                DataTable dt = new DataTable();
+                                                dt.Clear();
+                                                dt.Columns.Add("N_CompanyID");
+                                                dt.Columns.Add("N_UserID");
+                                                dt.Columns.Add("X_UserID");
+                                                dt.Columns.Add("X_Password");
+                                                dt.Columns.Add("N_UserCategoryID");
+                                                dt.Columns.Add("B_Active");
+                                                dt.Columns.Add("N_BranchID");
+                                                dt.Columns.Add("N_LocationID");
+                                                dt.Columns.Add("X_UserName");
+                                                dt.Columns.Add("N_EmpID");
+                                                dt.Columns.Add("N_LoginFlag");
+                                                dt.Columns.Add("X_UserCategoryList");
+                                                dt.Columns.Add("X_Email");
 
-                                //                 DataRow row = dt.NewRow();
-                                //                 row["N_CompanyID"] = nCompanyID;
-                                //                 row["X_UserID"] = xEmail;
-                                //                 row["X_Password"] = Pwd;
-                                //                 row["N_UserCategoryID"] =myFunctions.getIntVAL(objUserCat.ToString());
-                                //                 row["B_Active"] = 1;
-                                //                 row["N_BranchID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_BranchID"].ToString());
-                                //                 row["N_LocationID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString());
-                                //                 row["X_UserName"] = dtMasterTable.Rows[0]["X_EmpName"].ToString();
-                                //                 row["N_EmpID"] = nEmpID;
-                                //                 row["N_LoginFlag"] = 0;
-                                //                 row["X_UserCategoryList"] = objUserCat.ToString();
-                                //                 row["X_Email"] = xEmail;
-                                //                 dt.Rows.Add(row);
+                                                DataRow row = dt.NewRow();
+                                                row["N_CompanyID"] = nCompanyID;
+                                                row["X_UserID"] = xEmail;
+                                                row["X_Password"] = Pwd;
+                                                row["N_UserCategoryID"] =myFunctions.getIntVAL(objUserCat.ToString());
+                                                row["B_Active"] = 1;
+                                                row["N_BranchID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_BranchID"].ToString());
+                                                row["N_LocationID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString());
+                                                row["X_UserName"] = dtMasterTable.Rows[0]["X_EmpName"].ToString();
+                                                row["N_EmpID"] = nEmpID;
+                                                row["N_LoginFlag"] = 0;
+                                                row["X_UserCategoryList"] = objUserCat.ToString();
+                                                row["X_Email"] = xEmail;
+                                                dt.Rows.Add(row);
 
-                                //                 int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
-                                //             }
-                                //         }
-                                //     }
-                                // }
-                        //     }
-                        // }
+                                                int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+                                            }
+                                        }
+                                    }
+                                }
+                            }
+                        }
 
                         //ATTACHMENT SAVING
                         myAttachments.SaveAttachment(dLayer, Attachment, xEmpCode, nEmpID, dtMasterTable.Rows[0]["x_EmpName"].ToString(), xEmpCode, nEmpID, "Employee", User, connection, transaction);
