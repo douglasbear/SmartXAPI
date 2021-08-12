@@ -144,7 +144,7 @@ namespace SmartxAPI.Controllers
 
                     bool B_ShowBenefitsInGrid = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Payroll", "Show Benefits", "N_Value", nCompanyID, dLayer, connection)));
                     DataTable PayPayMaster = new DataTable();
-                    if (!B_ShowBenefitsInGrid)
+                    if (B_ShowBenefitsInGrid)
                     {
                         PayPayMaster = dLayer.ExecuteDataTable("Select N_PaymentId,N_PayID from Pay_PayMaster where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection);
                     }
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
                            { dt.Rows[i].Delete();
                            continue;
                            }
-                        if (!B_ShowBenefitsInGrid)
+                        if (B_ShowBenefitsInGrid)
                         {
                             if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
                             {
