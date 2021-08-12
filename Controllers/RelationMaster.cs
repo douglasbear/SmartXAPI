@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("Details") ]
+        [HttpGet("details") ]
         public ActionResult GetRelationDetails (int nRelationID, int nCompanyID)
           
         {   DataTable dt=new DataTable();
