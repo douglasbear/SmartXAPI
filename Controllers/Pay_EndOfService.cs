@@ -422,7 +422,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("paymentDetails")]
-        public ActionResult GetPaymentDetails(int nEmpID)
+        public ActionResult GetPaymentDetails(int nEmpID)//,int nFnYearID,DateTime dDate,int nPayID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -430,12 +430,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nEmpID", nEmpID);
             string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+
+          
+
             SortedList OutPut = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+
+                    // SortedList proParams2 = new SortedList(){
+                    //                 {"N_CompanyID",nCompanyID},
+                    //                 {"N_EmpID",nEmpID},
+                    //                 {"N_FnYearID",nFnYearID},
+                    //                 {"D_Date",dDate},
+                    //                 {"N_PayID",nPayID}};
+
+                    // dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);

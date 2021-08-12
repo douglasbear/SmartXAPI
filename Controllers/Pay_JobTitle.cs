@@ -40,7 +40,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "Select N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description from vw_PayPosition_DispAdvanced Where N_CompanyID=@nCompanyID Group By N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description";
+            string sqlCommandText = "Select N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename from vw_PayPosition_DispAdvanced Where N_CompanyID=@nCompanyID Group By N_CompanyID,N_PositionID,N_EmpID,N_SalaryGradeID,B_Edit,Code,Description,X_GradeCode,X_Gradename";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
