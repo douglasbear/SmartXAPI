@@ -180,14 +180,14 @@ namespace SmartxAPI.Controllers
                         DataRow[] drEmpDetails = dt.Select("N_EmpID = " + mstVar["N_EmpID"].ToString());
                         if (drEmpDetails.Length > 0)
                         {
-                            foreach (DataRow empVar in drEmpDetails)
-                            {
-                                DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + empVar["N_PayTypeID"]);
-                                if (payTypeRow.Length > 0)
-                                {
-                                    empVar["N_Type"] = payTypeRow[0]["N_Type"];
-                                }
-                            }
+                            // foreach (DataRow empVar in drEmpDetails)
+                            // {
+                            //     DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + empVar["N_PayTypeID"]);
+                            //     if (payTypeRow.Length > 0)
+                            //     {
+                            //         empVar["N_Type"] = payTypeRow[0]["N_Type"];
+                            //     }
+                            // }
 
                             dtNode = drEmpDetails.CopyToDataTable();
                             dtNode.AcceptChanges();
