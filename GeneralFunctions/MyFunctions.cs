@@ -28,11 +28,13 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string ApprovalLink;
         private readonly string masterDBConnectionString;
         private readonly IConfiguration config;
+        private readonly string reportPath;
         public MyFunctions(IConfiguration conf)
         {
             ApprovalLink = conf.GetConnectionString("ApprovalLink");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             config = conf;
+            reportPath = conf.GetConnectionString("ReportPath");
 
         }
 
@@ -1452,6 +1454,87 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
+         public bool ExportToExcel(ClaimsPrincipal User,string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection)
+        {
+            bool result = false;
+
+            try
+            {
+                DataTable ExportTable = dLayer.ExecuteDataTable(_fillquery,connection);
+                if (ExportTable.Rows.Count > 0)
+                {
+                    // foreach (DataRow dr in ExportTable.Rows)
+                        GenerateExportFile(reportPath.ToString(), ExportTable, _filename);
+                }
+                result = true;
+            }
+            catch (Exception ex)
+            {
+               return result;
+            }
+
+
+            return result;
+        }
+
+        public static bool GenerateExportFile(string _filepath, DataTable ExportTable,string _filename)
+        {
+            bool res = false;
+
+            try
+            {
+
+                StringBuilder sb = new StringBuilder();
+                string xExportFileName = "";
+                string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
+                xExportFileName = _filepath + _filename + ".csv";
+                int index = 0;
+                foreach (DataRow drow in ExportTable.Rows)
+                {
+
+
+                    if (!File.Exists(xExportFileName))
+                        File.Create(xExportFileName).Close();
+                    else
+                        File.WriteAllText(xExportFileName, String.Empty);
+                    string delimiter = ",";
+                    string[][] header = new string[][]
+                    {                       
+                        new string[]{"Ledger Code","Ledger Name","Remarks","Debit","Credit"}
+                    };
+                    string[][] output = new string[][]
+                    {
+                 
+                       new string[]{drow["X_LedgerCode"].ToString(),drow["X_LedgerName"].ToString(),drow["X_Remarks"].ToString(),drow["Debit"].ToString().Replace(",","").Trim(),drow["Credit"].ToString().Replace(",","").Trim()}
+                    };
+                    int length = output.GetLength(0);
+
+                    if (index == 0)
+                        sb.AppendLine(string.Join(delimiter, header[0]));
+                    for (index = 0; index < length; index++)
+                        sb.AppendLine(string.Join(delimiter, output[index]));
+
+                }
+
+                File.AppendAllText(xExportFileName, sb.ToString());
+
+                res = true;
+            }
+            catch (Exception ex)
+            {
+                if (ex is DirectoryNotFoundException)
+                {
+                   res = false;
+                }
+                else
+                {
+                    res = false;
+                }
+            }
+            return res;
+        }
+
+
     }
 
 
@@ -1509,5 +1592,6 @@ namespace SmartxAPI.GeneralFunctions
         public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+         public bool ExportToExcel(ClaimsPrincipal User,string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }
