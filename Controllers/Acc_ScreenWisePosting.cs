@@ -9,6 +9,7 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.ComponentModel;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace SmartxAPI.Controllers
 {
@@ -44,6 +45,8 @@ namespace SmartxAPI.Controllers
             if(value==null)value=0;
             string sqlTotalText="";
             string sqlCommandText="";
+
+            string fileName = "";
             if(value==1)
                 sqlCommandText="select * from vw_ScreenWisePosting_Salary where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
             else
@@ -61,8 +64,15 @@ namespace SmartxAPI.Controllers
                     dt = _api.Format(dt, "post");
 
                     sqlTotalText="";
-                    if(value==1)
-                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+                    if(value==1){
+                        fileName = "SalaryPosting_"+xVoucherNo+"_" + RandomString();
+                        
+                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit,'"+fileName+"' as fileName from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+                        string strFillQuery = "select * from vw_ScreenWisePosting_Salary where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and X_Code='" + xScreen + "' and X_ReferenceNo='" + xVoucherNo + "'";
+                        
+                        myFunctions.ExportToExcel(User,strFillQuery, fileName ,dLayer,connection);
+                        fileName = fileName+".csv";
+                        }
                     else
                         sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit from vw_ScreenWisePosting Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
                         
@@ -87,6 +97,18 @@ namespace SmartxAPI.Controllers
             }
           
         }
+
+                private static Random random = new Random();
+        public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
+
+
+
+        
 
         
 
