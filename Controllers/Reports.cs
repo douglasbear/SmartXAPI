@@ -264,10 +264,21 @@ namespace SmartxAPI.Controllers
 
                     }
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
+                    if (nFormID == 64)
+                    {
+                        bool SaveDraft = false;
+                        object ObjSaveDraft = dLayer.ExecuteScalar("select b_issavedraft from inv_sales WHERE N_CompanyID =@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        if (ObjSaveDraft != null)
+                        {
+                            SaveDraft = myFunctions.getBoolVAL(ObjSaveDraft.ToString());
+                            if(SaveDraft==true)
+                                ReportName="SalesInvoice_VIT1_EA_WL_A4P -PROFORMA";
+                        }
+
+                    }
 
                     return true;
                 }
@@ -687,9 +698,10 @@ namespace SmartxAPI.Controllers
 
                 var rptArray = reportName.Split(@"\");
                 string actReportLocation = reportLocation;
-                if(rptArray.Length>1){
+                if (rptArray.Length > 1)
+                {
                     reportName = rptArray[1].ToString();
-                    actReportLocation = actReportLocation + rptArray[0].ToString()+"/";
+                    actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
                 }
 
 
