@@ -38,7 +38,9 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlEmployeeDetails = "select CONVERT(VARCHAR,vw_PayEmployee.d_DOB, 106) as d_DOB1,CONVERT(VARCHAR,vw_PayEmployee.d_HireDate, 106) as d_HireDate1,* from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
+            // string sqlEmployeeDetails = "select CONVERT(VARCHAR,vw_PayEmployee.d_DOB, 106) as d_DOB1,CONVERT(VARCHAR,vw_PayEmployee.d_HireDate, 106) as d_HireDate1,* from vw_PayEmployee where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3";
+
+            string sqlEmployeeDetails = "SELECT CONVERT(VARCHAR,vw_PayEmployee.d_DOB, 106) as d_DOB1,CONVERT(VARCHAR,vw_PayEmployee.d_HireDate, 106) as d_HireDate1,vw_PayEmployee.*, Pay_Employee.X_EmpName AS X_ReportTo FROM vw_PayEmployee LEFT OUTER JOIN Pay_Employee ON vw_PayEmployee.N_FnYearID = Pay_Employee.N_FnYearID RIGHT OUTER JOIN Pay_Supervisor ON Pay_Employee.N_EmpID = Pay_Supervisor.N_EmpID AND Pay_Employee.N_CompanyID = Pay_Supervisor.N_CompanyID AND vw_PayEmployee.N_ReportToID = Pay_Supervisor.N_SupervisorID AND  vw_PayEmployee.N_CompanyID = Pay_Supervisor.N_CompanyID where vw_PayEmployee.N_CompanyID=@p1 and vw_PayEmployee.N_FnYearID=@p2 and vw_PayEmployee.N_EmpID=@p3";
             // string sqlSalary = " Select X_Description AS X_SalaryName,CONVERT(varchar, CAST(N_Value AS money), 1) as N_Amount from vw_EmpPayInformation  WHERE N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 and N_PayMethod in (0,3) ";
             
             string sqlSalary ="SELECT ROW_NUMBER() OVER (ORDER BY vw_PayEmployeePayHistory.N_PayID) As Srl,vw_PayEmployeePayHistory.* FROM         dbo.vw_PayEmployeePayHistory WHERE  (dbo.vw_PayEmployeePayHistory.N_CompanyID =@p1) AND (dbo.vw_PayEmployeePayHistory.N_EmpID =@p3) AND (dbo.vw_PayEmployeePayHistory.N_FnYearID =@p2) Order by D_EffectiveDate Desc,vw_PayEmployeePayHistory.N_PayTypeID";
