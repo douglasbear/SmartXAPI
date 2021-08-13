@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("list")]
-        public ActionResult GetSalaryRevisionList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnyearID)
+        public ActionResult GetSalaryRevisionList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnyearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
 
 
             //string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
-            string sqlAcrual = "select * from [vw_PayAccruedCode_List] Where N_CompanyID=@p1 order by X_Type desc";
+            string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p3";
             string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p3 and N_FnYearID=@p2 and N_PaymentID in (6,7)";
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 order by n_type";
 
@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
             string sqlAcrual = "Select *,(Select COUNT(*) from Pay_VacationDetails Where N_CompanyID = vw_Pay_EmployeeAccrul.N_CompanyID AND N_EmpID = vw_Pay_EmployeeAccrul.N_EmpID AND N_VacTypeID = vw_Pay_EmployeeAccrul.N_VacTypeID ) AS N_NoEdit from vw_Pay_EmployeeAccrul Where N_CompanyID=@p1 and N_EmpID=@p2";
             string sqlBenefits = "Select *,(Select COUNT(*) from Pay_PaymentDetails Where N_CompanyID = vw_EmpPayInformationAmendments.N_CompanyID AND N_EmpID = vw_EmpPayInformationAmendments.N_EmpID AND N_PayID = vw_EmpPayInformationAmendments.N_PayID AND N_Value = vw_EmpPayInformationAmendments.N_value ) AS N_NoEdit from vw_EmpPayInformationAmendments  Where N_CompanyID=@p1 and N_EmpID=@p2 and N_FnYearID=@p3";
             //string sqlSalaryHistory = "select top 1 * from vw_Pay_EmployeeAdditionalInfo Where N_CompanyID=@p1 and N_HistoryID=@p4";
-            string sqlMaster = "select  * from VW_SalaryRivisionDisp Where N_CompanyID=@p1 and x_HistoryCode="+x_HistoryCode;
+            string sqlMaster = "select  * from VW_SalaryRivisionDisp Where N_CompanyID=@p1 and x_HistoryCode=" + x_HistoryCode;
             string sqlOtherinfo = "select * from vw_SalaryRevision Where N_CompanyID=@p1 and N_FnYearID=@p3 and N_EmpID=@p2 order by n_type";
 
             Params.Add("@p1", nCompanyId);
@@ -179,7 +179,7 @@ namespace SmartxAPI.Controllers
                     dParamList.Add("@N_FnYearID", nFnYearID);
                     dParamList.Add("@N_EmpID", Convert.ToUInt32(dtMaster.Rows[0]["n_EmpID"].ToString()));
                     dParamList.Add("@Date", Convert.ToDateTime(dtMaster.Rows[0]["D_EffectiveDate"].ToString()));
-                    
+
                     dtSalaryHistory = dLayer.ExecuteDataTablePro("SP_Pay_SalaryRevisionDisp", dParamList, connection);
                     dtAccrual = dLayer.ExecuteDataTable(sqlAcrual, Params, connection);
                     dtBenefits = dLayer.ExecuteDataTable(sqlBenefits, Params, connection);
@@ -296,10 +296,25 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[0]["n_NLocation"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
                     if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NInsClassID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
-
+                    if (Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() != "0")
+                        dLayer.ExecuteNonQuery("update Pay_Employee set n_SalaryGrade=" + Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
                     //Accrual Save
+                    for (int i = 0; i <= Accrual.Rows.Count - 1; i++)
+                    {
+                        //     }
+                        // foreach (DataRow var in Accrual.Rows)
+                        // {
+                        if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
+                        {
+                            dLayer.DeleteData("Pay_EmpAccruls", "N_EmpAccID", myFunctions.getIntVAL(Accrual.Rows[i]["N_EmpAccID"].ToString()), "", connection, transaction);
+                            Accrual.Rows[i].Delete();
+                            continue;
+                        }
+
+                    }
+                    Accrual.Columns.Remove("b_IsChecked");
                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
 
                     transaction.Commit();
