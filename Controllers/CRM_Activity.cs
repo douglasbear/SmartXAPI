@@ -361,7 +361,7 @@ namespace SmartxAPI.Controllers
             {
                 Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
             }
-            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end' from vw_CRM_Activity Where N_CompanyID= " + nCompanyID +" " +Criteria;
+            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID +" " +Criteria;
 
 
             try
