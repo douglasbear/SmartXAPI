@@ -345,8 +345,46 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(ex));
             }
 
+        }
+          [HttpGet("calenderData")]
+        public ActionResult GetcalenderData(bool bySalesMan)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
+            string Criteria = "";
+            if (bySalesMan == true)
+            {
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+            }
+            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as end from vw_CRM_Activity Where N_CompanyID= " + nCompanyID +" " +Criteria;
 
 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
         }
     }
 }
