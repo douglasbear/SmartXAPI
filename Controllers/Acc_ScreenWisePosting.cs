@@ -34,15 +34,20 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetPostingDetails(int nFnYearID,string xScreen,string xVoucherNo)
+        public ActionResult GetPostingDetails(int nFnYearID,string xScreen,string xVoucherNo,int value)
         {
             DataSet ds = new DataSet();
             DataTable dt=new DataTable();
             DataTable dtTotal=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            if(value==null)value=0;
             string sqlTotalText="";
-            string sqlCommandText="select * from vw_ScreenWisePosting where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
+            string sqlCommandText="";
+            if(value==1)
+                sqlCommandText="select * from vw_ScreenWisePosting_Salary where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+            else
+                sqlCommandText="select * from vw_ScreenWisePosting where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nFnYearID",nFnYearID);
             Params.Add("@xScreen",xScreen);
@@ -55,7 +60,12 @@ namespace SmartxAPI.Controllers
                     dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
                     dt = _api.Format(dt, "post");
 
-                    sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+                    sqlTotalText="";
+                    if(value==1)
+                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit from vw_ScreenWisePosting_Salary Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_ReferenceNo=@xVoucherNo";
+                    else
+                        sqlTotalText="select CONVERT(VARCHAR,SUM(CAST(Debit AS money)),1) as N_TotDebit,CONVERT(VARCHAR,SUM(CAST(Credit AS money)),1) AS N_TotCredit from vw_ScreenWisePosting Where N_CompanyID=@nCompanyID and X_Code=@xScreen and X_VoucherNo=@xVoucherNo and N_FnYearID=@nFnYearID";
+                        
                     dtTotal=dLayer.ExecuteDataTable(sqlTotalText,Params,connection); 
                     dtTotal = _api.Format(dtTotal, "total");
 
