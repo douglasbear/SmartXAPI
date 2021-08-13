@@ -353,8 +353,9 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-           
+            int nUserID = myFunctions.GetUserID(User);
             Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@nUserID", nUserID);
             string Criteria = "";
             if (bySalesMan == true)
             {
