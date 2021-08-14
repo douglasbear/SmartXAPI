@@ -165,10 +165,13 @@ namespace SmartxAPI.Controllers
                     {
                         if (!DetailsTable.Columns.Contains("N_FnYearID"))
                             DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
+                        int N_Order=1;
                         foreach (DataRow var in DetailsTable.Rows)
                         {
                             var["N_WTaskID"] = nWTaskID;
                             var["N_FnYearID"] = nFnYearId;
+                            var["N_Order"] = N_Order;
+                            N_Order++;
                         }
                         dLayer.SaveData("Prj_WorkflowTasks", "N_WTaskDetailID", DetailsTable, connection, transaction);
                         transaction.Commit();

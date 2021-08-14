@@ -195,7 +195,7 @@ namespace SmartxAPI.Controllers
                                             else
                                                 Minuts = myFunctions.getVAL(var["N_EndDateBefore"].ToString()) * Minuts;
 
-                                            var["D_DueDate"] = DateTime.Now.AddMinutes(Minuts);
+                                            var["D_DueDate"] = DateTime.Parse(var["D_TaskDate"].ToString()).AddMinutes(Minuts);
 
                                         }
                                         TaskMaster.Columns.Remove("N_StartDateBefore");
