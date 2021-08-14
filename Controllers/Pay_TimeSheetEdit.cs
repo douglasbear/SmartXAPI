@@ -146,12 +146,40 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", nCompanyID);
                     DataTable ElementsTable = new DataTable();
                     string ElementSql = "";
-                    ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
+                    int IsEmpAdded = 0;
+                    // for(int i=0;i<dtTimesheet.Rows.Count;i++)
+                    // {
+                    //     if(myFunctions.getIntVAL(dtTimesheet.Rows[i]["N_EmpID"].ToString())==nEmpID)
+                    //     IsEmpAdded=1;
+
+                    // }
+
+                    ElementSql = " Select N_EmpID as n_EmpID,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
                     if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ElementsTable.AcceptChanges();
+
+                    DateTime Date = dtpSalaryFromdate;
+                    do
+                    {
+                        object objDatePresent = dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
+                        if (objDatePresent == null)
+                        {
+                            DataRow rowET = ElementsTable.NewRow();
+                            rowET["D_Date"] = Date;
+
+                            ElementsTable.Rows.Add(rowET);
+                        }
+
+                    } while (Date <= dtpSalaryToDate);
+
                     ElementsTable = _api.Format(ElementsTable);
                     dt.Tables.Add(ElementsTable);
+
+
+
+
+                    // dt.Tables.Add(dtTimesheet);
                     return Ok(_api.Success(ElementsTable));
 
                 }
@@ -197,6 +225,89 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+        // [HttpPost("save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         DataTable MasterTable;
+        //         DataTable DetailTable;
+        //         MasterTable = ds.Tables["master"];
+        //         DetailTable = ds.Tables["details"];
+        //         int N_SaveDraft = 0;
+        //         int N_Status = 0;
+        //         int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+        //         int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+        //         int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+        //         int nTimesheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimesheetID"].ToString());
+        //         int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString());
+        //         var dEndDate = MasterTable.Rows[0]["D_EndDate"].ToString();
+        //         string xMethod = MasterTable.Rows[0]["X_Method"].ToString();
+        //         int nEOSDetailID = 0;
+
+
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             SqlTransaction transaction = connection.BeginTransaction();
+        //             SortedList Params = new SortedList();
+        //             SortedList QueryParams = new SortedList();
+
+        //             // Auto Gen
+        //             string X_BatchCode = "";
+        //             var values = MasterTable.Rows[0]["X_BatchCode"].ToString();
+        //             if (values == "@Auto")
+        //             {
+        //                 Params.Add("N_CompanyID", nCompanyID);
+        //                 Params.Add("N_YearID", nFnYearId);
+        //                 Params.Add("N_FormID", this.FormID);
+        //                 Params.Add("N_BranchID", nBranchID);
+        //                 X_BatchCode = dLayer.GetAutoNumber("Pay_TimeSheetEntry", "X_BatchCode", Params, connection, transaction);
+        //                 if (X_BatchCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate timesheet entry Code")); }
+        //                 MasterTable.Rows[0]["X_BatchCode"] = X_BatchCode;
+        //             }
+        //             string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
+        //             nTimesheetID = dLayer.SaveData("Pay_TimeSheetEntry", "N_TimesheetID", DupCriteria, "", MasterTable, connection, transaction);
+        //             if (nTimesheetID <= 0)
+        //             {
+        //                 transaction.Rollback();
+        //                 return Ok(_api.Error("Unable to save"));
+        //             }
+        //             QueryParams.Add("@nCompanyID", nCompanyID);
+        //             QueryParams.Add("@nFnYearID", nFnYearId);
+        //             QueryParams.Add("@N_ServiceEndID", nServiceEndID);
+        //             QueryParams.Add("@N_EmpID", nEmpID);
+        //             QueryParams.Add("@X_Method", xMethod);
+        //             object Savedraft = dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from pay_EndOFService where N_CompanyID=@nCompanyID and N_ServiceEndID=@N_ServiceEndID", QueryParams, connection, transaction);
+        //             if (Savedraft != null)
+        //                 N_SaveDraft = myFunctions.getIntVAL(Savedraft.ToString());
+        //             object Status = "3";// dLayer.ExecuteScalar("select N_Status  from Pay_EmployeeStatus where X_Description=@X_Method", QueryParams, connection, transaction);
+        //             if (Status != null)
+        //                 N_Status = myFunctions.getIntVAL(Status.ToString());
+
+        //             object PositionID = dLayer.ExecuteScalar("select N_PositionID from vw_PayEmployee where N_CompanyID=@nCompanyID and N_EMPID=@N_EmpID", QueryParams, connection, transaction);
+
+        //             if (N_SaveDraft == 0)
+        //             {
+        //                 dLayer.ExecuteNonQuery("Update Pay_Employee Set N_Status = " + N_Status + ",D_StatusDate='" + dEndDate.ToString() + "' Where N_CompanyID =" + nCompanyID + " And N_EmpID =" + nEmpID.ToString(), QueryParams, connection, transaction);
+        //                 dLayer.ExecuteNonQuery("Update Pay_SuperVisor Set N_EmpID = 0  Where N_CompanyID =" + nCompanyID + " And N_PositionID =" + PositionID.ToString(), QueryParams, connection, transaction);
+        //             }
+        //             dLayer.DeleteData("pay_EndOfServiceSDetails", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
+        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
+        //             {
+        //                 nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
+        //             }
+        //             transaction.Commit();
+        //             return Ok(api.Success("Terminated"));
+        //         }
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(api.Error(ex));
+        //     }
+        // }
+
     }
 }
 

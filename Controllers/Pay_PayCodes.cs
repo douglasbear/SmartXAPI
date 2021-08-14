@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
                 Searchkey = "and (X_PayCode like '%" + xSearchkey + "%'or X_Description like '%" + xSearchkey + "%' or  X_TypeName like '%" + xSearchkey + "%' or X_PayType like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by X_TypeName,X_PayType asc";
+                xSortBy = " order by X_PayType,X_TypeName asc";
             else
             {
                 switch (xSortBy.Split(" ")[0])

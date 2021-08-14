@@ -1949,7 +1949,7 @@ namespace SmartxAPI.Controllers
                                 SqlTransaction olivoTxn = olivoCon.BeginTransaction();
                                 string Pwd = myFunctions.EncryptString(xEmail);
                                 int nClientID=myFunctions.GetClientID(User);
-                                object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='"+xEmail.ToString()+"' and N_ClientID=@nClientID ", olivoCon, olivoTxn);
+                                object glogalUserID = dLayer.ExecuteScalar("SELECT N_UserID FROM Users where x_EmailID='"+xEmail.ToString()+"' and N_ClientID="+nClientID, olivoCon, olivoTxn);
                                 if (glogalUserID == null)
                                 {
                                     DataTable dtGobal = new DataTable();
@@ -1968,7 +1968,7 @@ namespace SmartxAPI.Controllers
                                     rowGb["X_EmailID"] = xEmail;
                                     rowGb["X_UserName"] = xEmail;
                                     rowGb["N_ClientID"] = nClientID;
-                                    rowGb["N_ActiveAppID"] = xEmail;
+                                    rowGb["N_ActiveAppID"] = 2;
                                     rowGb["X_Password"] = Pwd;
                                     rowGb["B_Inactive"] = 0;
                                     rowGb["X_UserID"] = xEmail;
@@ -1977,6 +1977,10 @@ namespace SmartxAPI.Controllers
                                     dtGobal.Rows.Add(rowGb);
 
                                     int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
+                                    if(GlobalUserID>0)
+                                    {
+                                        olivoTxn.Commit();
+                                    }
                                 }
                                 object objUserID = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_EmpID=" + nEmpID+" and X_UserID='"+xEmail.ToString()+"'", connection, transaction);                        
                                 if(objUserID==null)
@@ -2212,14 +2216,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
+                return Ok(_api.Success(dt));
             }
             catch (Exception e)
             {
