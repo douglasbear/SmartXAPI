@@ -149,15 +149,15 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("notesupdate")]
-        public ActionResult NotesUpdate(string xOpportunityCode, string xnotes)
+        public ActionResult NotesUpdate(string xProjectCode, string xnotes)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
-            sqlCommandText = "update crm_opportunity set X_Notes=@p3 where N_CompanyID=@p1 and X_OpportunityCode=@p2";
+            sqlCommandText = "update inv_customerprojects set X_Notes=@p3 where N_CompanyID=@p1 and X_ProjectCode=@p2";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", xOpportunityCode);
+            Params.Add("@p2", xProjectCode);
             Params.Add("@p3", xnotes);
 
 
