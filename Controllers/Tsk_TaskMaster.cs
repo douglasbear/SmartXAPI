@@ -526,7 +526,7 @@ namespace SmartxAPI.Controllers
             }
         }
           [HttpGet("calenderData")]
-        public ActionResult GetcalenderData(bool bySalesMan)
+        public ActionResult GetcalenderData(bool byUser)
 
         {
             DataTable dt = new DataTable();
@@ -536,11 +536,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nUserID", nUserID);
             string Criteria = "";
-            if (bySalesMan == true)
+             if (byUser == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_AssigneeID=@nUserID ";
             }
-            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as end from vw_CRM_Activity Where N_CompanyID= " + nCompanyID +" " +Criteria;
+
+            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start,cast(D_DueDate as Date) as 'end', N_TaskID,X_TaskCode,X_Status  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +" " +Criteria;
 
 
             try
