@@ -541,7 +541,7 @@ namespace SmartxAPI.Controllers
                 Criteria = " and N_AssigneeID=@nUserID ";
             }
 
-            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start,cast(D_DueDate as Date) as end from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +" " +Criteria;
+            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start,cast(D_DueDate as Date) as 'end', N_TaskID,X_TaskCode,X_Status  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +" " +Criteria;
 
 
             try
