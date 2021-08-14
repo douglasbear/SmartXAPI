@@ -80,8 +80,8 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
 
-            string sqlCommandText = "Select * from vw_PayMaster Where  N_CompanyID=@p1 and  N_FnYearID=@p2 and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
-
+            // string sqlCommandText = "Select * from vw_PayMaster Where  N_CompanyID=@p1 and  N_FnYearID=@p2 and (N_PaymentID=6 or N_PaymentID=7 )and N_PaytypeID<>14  and (N_Paymethod=0 or N_Paymethod=3)";
+string sqlCommandText = "Select * from vw_PayMaster Where ( N_CompanyID=@p1 and  N_FnYearID=@p2 and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@p1 and  N_FnYearID=@p2) and isnull(B_InActive,0)=0 order by N_PayTypeID";
             SortedList OutPut = new SortedList();
 
             try
