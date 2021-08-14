@@ -233,9 +233,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (b_AllBranchData == true)
-                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "')  order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "')  order by X_EmpCode";
                     else
-                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "') order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "') order by X_EmpCode";
 
                     EmpTable = dLayer.ExecuteDataTable(empSql, Params, connection);
                     if (EmpTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -360,7 +360,6 @@ namespace SmartxAPI.Controllers
         public ActionResult GetDetails(string xBatchCode, int nFnYearID)
         {
             DataTable Master = new DataTable();
-            DataTable Detail = new DataTable();
             DataTable EmpTable = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
@@ -391,19 +390,19 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        QueryParams.Add("@N_RFQDecisionID", Master.Rows[0]["N_RFQDecisionID"].ToString());
+                        QueryParams.Add("@N_TimesheetID", Master.Rows[0]["N_TimesheetID"].ToString());
 
                         ds.Tables.Add(Master);
 
-                        _sqlQuery = "Select * from vw_RFQDecisionDetails Where N_CompanyID=@nCompanyID and N_RFQDecisionID=@N_RFQDecisionID";
-                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        _sqlQuery = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID in (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=@nCompanyID and N_TimesheetID=@N_TimesheetID)";
+                        EmpTable = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                        Detail = _api.Format(Detail, "details");
-                        if (Detail.Rows.Count == 0)
+                        EmpTable = _api.Format(EmpTable, "EmpTable");
+                        if (EmpTable.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
-                        ds.Tables.Add(Detail);
+                        ds.Tables.Add(EmpTable);
 
                         return Ok(_api.Success(ds));
                     }
