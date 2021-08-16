@@ -149,15 +149,19 @@ namespace SmartxAPI.Controllers
                         PayPayMaster = dLayer.ExecuteDataTable("Select N_PaymentId,N_PayID from Pay_PayMaster where N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearID, connection);
                     }
 
+                    dt = myFunctions.AddNewColumnToDataTable(dt,"isHidden",typeof(bool),false);
+
                     for (int i = dt.Rows.Count - 1; i >= 0; i--)
                     {
                         if (myFunctions.getVAL(dt.Rows[i]["N_PayRate"].ToString()) == 0)
-                            dt.Rows[i].Delete();
+                           { dt.Rows[i].Delete();
+                           continue;
+                           }
                         if (B_ShowBenefitsInGrid)
                         {
                             if (ValidateBenefits(myFunctions.getIntVAL(dt.Rows[i]["N_PayID"].ToString()), myFunctions.getIntVAL(dt.Rows[i]["N_Type"].ToString()), PayPayMaster))
                             {
-                                dt.Rows[i].Delete();
+                                dt.Rows[i]["isHidden"] = true;
                             }
                         }
 
@@ -176,14 +180,14 @@ namespace SmartxAPI.Controllers
                         DataRow[] drEmpDetails = dt.Select("N_EmpID = " + mstVar["N_EmpID"].ToString());
                         if (drEmpDetails.Length > 0)
                         {
-                            foreach (DataRow empVar in drEmpDetails)
-                            {
-                                DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + empVar["N_PayTypeID"]);
-                                if (payTypeRow.Length > 0)
-                                {
-                                    empVar["N_Type"] = payTypeRow[0]["N_Type"];
-                                }
-                            }
+                            // foreach (DataRow empVar in drEmpDetails)
+                            // {
+                            //     DataRow[] payTypeRow = payType.Select("N_PayTypeID = " + empVar["N_PayTypeID"]);
+                            //     if (payTypeRow.Length > 0)
+                            //     {
+                            //         empVar["N_Type"] = payTypeRow[0]["N_Type"];
+                            //     }
+                            // }
 
                             dtNode = drEmpDetails.CopyToDataTable();
                             dtNode.AcceptChanges();

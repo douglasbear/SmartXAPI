@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
             }
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_TaskSummery like '%"+xSearchkey+"%' OR X_TaskDescription like '%"+xSearchkey+"%' OR X_Assignee like '%"+xSearchkey+"%' OR X_Submitter like '%"+xSearchkey+"%' OR X_ClosedUser like '%"+xSearchkey+"%'  OR X_ProjectName like '%"+xSearchkey+"%' )";
+                Searchkey = "and (X_TaskSummery like '%" + xSearchkey + "%' OR X_TaskDescription like '%" + xSearchkey + "%' OR X_Assignee like '%" + xSearchkey + "%' OR X_Submitter like '%" + xSearchkey + "%' OR X_ClosedUser like '%" + xSearchkey + "%'  OR X_ProjectName like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_TaskID desc";
@@ -100,6 +100,42 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("parentTaskList")]
+        public ActionResult ParentTaskList()
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+
+
+            string sqlCommandText = "select  * from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 and isnull(N_ParentID,0)=0";
+
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@nUserID", nUserID);
+            // Params.Add("@nFnYearId", nFnYearId);
+            SortedList OutPut = new SortedList();
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    return Ok(_api.Success(dt));
+
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult TaskDetails(string xTaskCode)
         {
@@ -121,7 +157,7 @@ namespace SmartxAPI.Controllers
                     string Mastersql = "";
                     string DetailSql = "";
                     string HistorySql = "";
-                    string CommentsSql="";
+                    string CommentsSql = "";
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xTaskCode", xTaskCode);
@@ -144,9 +180,9 @@ namespace SmartxAPI.Controllers
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
                     HistoryTable = _api.Format(HistoryTable, "History");
 
-                    
+
                     //Comments
-                    CommentsSql="select * from vw_Tsk_TaskComments where N_ActionID=@nTaskID ";
+                    CommentsSql = "select * from vw_Tsk_TaskComments where N_ActionID=@nTaskID ";
                     CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
                     CommentsTable = _api.Format(CommentsTable, "Comments");
 
@@ -230,18 +266,18 @@ namespace SmartxAPI.Controllers
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
-                        if(DetailTable.Columns.Contains("X_Assignee"))
-                        DetailTable.Columns.Remove("X_Assignee");
+                        if (DetailTable.Columns.Contains("X_Assignee"))
+                            DetailTable.Columns.Remove("X_Assignee");
                     }
                     if (DetailTable.Rows[0]["n_ClosedUserID"].ToString() != "0" && DetailTable.Rows[0]["n_ClosedUserID"].ToString() != "")
                     {
-                        if(DetailTable.Columns.Contains("x_ClosedUser"))
-                        DetailTable.Columns.Remove("x_ClosedUser");
+                        if (DetailTable.Columns.Contains("x_ClosedUser"))
+                            DetailTable.Columns.Remove("x_ClosedUser");
                     }
                     if (DetailTable.Rows[0]["n_SubmitterID"].ToString() != "0" && DetailTable.Rows[0]["n_SubmitterID"].ToString() != "")
                     {
-                        if(DetailTable.Columns.Contains("x_Submitter"))
-                        DetailTable.Columns.Remove("x_Submitter");
+                        if (DetailTable.Columns.Contains("x_Submitter"))
+                            DetailTable.Columns.Remove("x_Submitter");
                     }
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() == "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() == "")
@@ -325,33 +361,41 @@ namespace SmartxAPI.Controllers
                     // }
 
 
-                     if (nStatus == "3" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    if (nStatus == "3" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
-                     else if (nStatus == "3" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    else if (nStatus == "3" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
-                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                        DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
+                    }
+                    else if (nStatus == "4")
+                    {
+                        DetailTable.Rows[0]["N_AssigneeID"] = 0;
+
+
                     }
 
-                  
+
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
                         DetailTable.Rows[0]["N_TaskID"] = nTaskID;
                         DetailTable.Rows[0]["N_TaskStatusID"] = 0;
                     }
-                   
+
                     int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                     if (nTaskStatusID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable To Save"));
                     }
+                    if (nStatus == "4")
+                    {
 
-                    //dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET X_Status='" + xStatus + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
-
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    }
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
@@ -424,10 +468,10 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     int nCommentsID = myFunctions.getIntVAL(Comments.Rows[0]["N_CommentsID"].ToString());
-                    int nUserID=myFunctions.GetUserID(User);
+                    int nUserID = myFunctions.GetUserID(User);
                     string xComments = (Comments.Rows[0]["x_Comments"].ToString());
                     Comments.Rows[0]["N_ActionID"] = MasterTable.Rows[0]["N_TaskID"].ToString();
-                    Comments.Rows[0]["N_Creator"]=nUserID;
+                    Comments.Rows[0]["N_Creator"] = nUserID;
 
                     if (Comments.Rows.Count > 0)
                     {
@@ -489,5 +533,33 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
+        [HttpPost("updateDashboard")]
+        public ActionResult UpdateDashboard(int nTaskID, int nStatus)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    object N_TaskStatusID;
+                    Params.Add("N_CompanyID", nCompanyID);
+                    if (nStatus == 4)
+                    {
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                        N_TaskStatusID = dLayer.ExecuteScalar("select max(N_TaskStatusID) from Tsk_TaskStatus where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET N_AssigneeID=0 where N_TaskStatusID=" + myFunctions.getIntVAL(N_TaskStatusID.ToString()) + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+
+                    }
+                    return Ok(_api.Success("deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+        
     }
 }

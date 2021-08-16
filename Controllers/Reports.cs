@@ -264,10 +264,21 @@ namespace SmartxAPI.Controllers
 
                     }
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
+                    if (nFormID == 64)
+                    {
+                        bool SaveDraft = false;
+                        object ObjSaveDraft = dLayer.ExecuteScalar("select b_issavedraft from inv_sales WHERE N_CompanyID =@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        if (ObjSaveDraft != null)
+                        {
+                            SaveDraft = myFunctions.getBoolVAL(ObjSaveDraft.ToString());
+                            if(SaveDraft==true)
+                                ReportName="SalesInvoice_VIT1_EA_WL_A4P -PROFORMA";
+                        }
+
+                    }
 
                     return true;
                 }
@@ -684,7 +695,17 @@ namespace SmartxAPI.Controllers
                 var client = new HttpClient(handler);
                 var random = RandomString();
                 //HttpClient client = new HttpClient(clientHandler);
-                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+
+                var rptArray = reportName.Split(@"\");
+                string actReportLocation = reportLocation;
+                if (rptArray.Length > 1)
+                {
+                    reportName = rptArray[1].ToString();
+                    actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
+                }
+
+
+                string URL = reportApi + "/api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + reportPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
                 var path = client.GetAsync(URL);
 
                 path.Wait();

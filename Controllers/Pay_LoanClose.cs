@@ -376,7 +376,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int xLoanClose, int nFnYearId)
+        public ActionResult DeleteData(string xLoanClose, int nFnYearId)
         {
 
             int Results = 0;
@@ -388,16 +388,17 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    N_LoanCloseID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_LoanCloseID from Pay_LoanClose where N_CompanyID="+nCompanyId+" and X_LoanClosingCode='"+xLoanClose+"'", Params, connection).ToString());
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
-                                {"N_YearID", nFnYearId},
+                                {"n_FnyearID", nFnYearId},
                                 {"X_TransType","ELC"},
                                 {"X_ReferenceNo",xLoanClose},
                                 };
-                    N_LoanCloseID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_LoanCloseID from Pay_LoanClose where N_CompanyID=N_CompanyID and X_LoanClosingCode=X_ReferenceNo", Params, connection).ToString());
+                    
                     dLayer.ExecuteNonQueryPro("SP_Pay_LoanClosingVoucher_Del", DeleteParams, connection, transaction);
-                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  where N_LoanTransID= N_LoanTransID and N_CompanyID=N_CompanyID and B_IsLoanClose=1 and N_TransDetailsID=N_LoanCloseID", Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails set N_RefundAmount =Null,D_RefundDate =Null,N_PayRunID =Null,N_TransDetailsID =Null,B_IsLoanClose =Null  where N_LoanTransID= N_LoanTransID and N_CompanyID=N_CompanyID and B_IsLoanClose=1 and N_TransDetailsID="+N_LoanCloseID+"", Params, connection, transaction);
                     Results = dLayer.DeleteData("Pay_LoanIssueDetails", "N_LoanTransID", N_LoanCloseID, "", connection, transaction);
                     transaction.Commit();
                 }
