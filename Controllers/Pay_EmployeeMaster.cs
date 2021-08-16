@@ -1024,6 +1024,8 @@ namespace SmartxAPI.Controllers
                             }
                             else
                             {
+                                 dLayer.DeleteData("Pay_EmployeeSub", "N_EmpID", nEmpID, "", connection, transaction);
+
                                 if (ContactsTable.Columns.Contains("N_ContactDetailsUpdateID"))
                                     ContactsTable.Columns.Remove("N_ContactDetailsUpdateID");
                                 if (ContactsTable.Columns.Contains("N_EmpUpdateID"))
