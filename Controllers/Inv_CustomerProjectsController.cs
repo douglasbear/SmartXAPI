@@ -267,16 +267,21 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("Details")]
-        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId)
+        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
 
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+            string sqlCommandText = "";
+            if (nOpportunityID > 0)
+                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+            else
+                sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
             Params.Add("@xProjectCode", xProjectCode);
+            Params.Add("@nOpportunityID", nOpportunityID);
 
             try
             {
@@ -335,22 +340,22 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
-         [HttpGet("stageupdate")]
-        public ActionResult StageUpdate(string xstage,int nProjectID)
+        [HttpGet("stageupdate")]
+        public ActionResult StageUpdate(string xstage, int nProjectID)
         {
 
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyId);
-            xstage=xstage.ToString().Trim();
+            xstage = xstage.ToString().Trim();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID="+nCompanyId+" and N_ReferID=1310 and X_Name='"+xstage+"'", Params, connection);
-                    if(N_StageID!=null)
+                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID=" + nCompanyId + " and N_ReferID=1310 and X_Name='" + xstage + "'", Params, connection);
+                    if (N_StageID != null)
                         dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StageID=" + N_StageID.ToString() + " where N_CompanyID=@p1 and N_ProjectID=" + nProjectID, Params, connection);
 
                 }
