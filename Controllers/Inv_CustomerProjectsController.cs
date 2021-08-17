@@ -273,11 +273,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            if(xProjectCode==null)xProjectCode="";
             string sqlCommandText = "";
             if (nOpportunityID > 0)
-                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+                 sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
             else
-                sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID";
+                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+               
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
             Params.Add("@xProjectCode", xProjectCode);
