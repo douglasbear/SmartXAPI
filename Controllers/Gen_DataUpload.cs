@@ -49,6 +49,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataTable dt in ds.Tables)
                     {
                         Params.Add("X_Type", dt.TableName);
+                        Mastertable = ds.Tables[dt.TableName];
                         foreach (DataColumn col in Mastertable.Columns)
                         {
                             col.ColumnName = col.ColumnName.Replace(" ", "_");

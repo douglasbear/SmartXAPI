@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {

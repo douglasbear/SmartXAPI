@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("update")]
-        public ActionResult ActivityUpdate(string xActivityCode, bool bFlag)
+        public ActionResult ActivityUpdate(string xActivityCode, bool bFlag,int nStageID,int nOpportunityID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -130,6 +130,8 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "update crm_activity set b_closed=0,x_status='Active'  where N_CompanyID=@p1 and X_ActivityCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xActivityCode);
+            Params.Add("@p3", nStageID);
+            Params.Add("@p4", nOpportunityID);
 
 
             try
@@ -138,6 +140,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dLayer.ExecuteNonQuery(sqlCommandText, Params, connection);
+                    if(nStageID>0)
+                        dLayer.ExecuteNonQuery("update crm_opportunity set N_StageID=@p3 where N_CompanyID=@p1 and N_OpportunityID=@p4", Params, connection);
                 }
                 return Ok(api.Warning("Activity Updated"));
 
