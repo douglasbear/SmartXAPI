@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("employeeDetails")]
-        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, string xEmployeeCode, DateTime dtpSalaryFromdate, DateTime dtpSalaryToDate)
+        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, string xEmployeeCode, DateTime dtpSalaryFromdate, DateTime dtpSalaryToDate,int nCatID)
         {
             try
             {
@@ -145,16 +145,19 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     Params.Add("@nCompanyID", nCompanyID);
                     DataTable ElementsTable = new DataTable();
+                    DataTable ActualTable = new DataTable();
                     string ElementSql = "";
+                    string ActualSql = "";
  
-                    ElementSql = " Select * from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
+                    ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
-                    if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ElementsTable.AcceptChanges();
 
                     DateTime Date = dtpSalaryFromdate;
                     do
                     {
+
                         object objDatePresent= dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
                         if(objDatePresent==null)
                         {
@@ -163,13 +166,57 @@ namespace SmartxAPI.Controllers
 
                             ElementsTable.Rows.Add(rowET);
                         }
+                        Date=Date.AddDays(1);
 
-                    }while (Date <= dtpSalaryToDate);
+                    }while (Date <= dtpSalaryToDate);               
+
+                    
+                    foreach (DataRow var in ElementsTable.Rows)
+                    {
+                        ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
+                        ActualTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);
+                        ActualTable.AcceptChanges();
+                        if (ActualTable.Rows.Count != 0) 
+                        { 
+                            nCatID=myFunctions.getIntVAL(ActualTable.Rows[0]["N_GroupID"].ToString());
+
+                            var["D_ActIn1"] = ActualTable.Rows[0]["D_In1"].ToString();
+                            var["D_ActOut1"] = ActualTable.Rows[0]["D_Out1"].ToString();
+                            var["D_ActIn2"] = ActualTable.Rows[0]["D_In2"].ToString();
+                            var["D_ActOut2"] = ActualTable.Rows[0]["D_Out2"].ToString();
+                        }
+                        else if (nCatID > 0)
+                        {
+                            var["D_ActIn1"] = dLayer.ExecuteScalar("select D_In1 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+                            var["D_ActOut1"] = dLayer.ExecuteScalar("select D_Out1 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+                            var["D_ActIn2"] = dLayer.ExecuteScalar("select D_In2 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+                            var["D_ActOut2"] = dLayer.ExecuteScalar("select D_Out2 from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString();
+                        }
+                        else
+                        {
+                            var["D_ActIn1"] = "00:00:00";
+                            var["D_ActOut1"] = "00:00:00";
+                            var["D_ActIn2"] = "00:00:00";
+                            var["D_ActOut2"] = "00:00:00";
+                        }
+                        if (nCatID > 0)
+                            var["N_BreakHrs"] = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_BreakHours from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString());
+
+                        if((var["D_ActIn1"] != ""||var["D_ActIn1"] != null) && (var["D_In"] == ""||var["D_In"] == null))
+                            var["D_In"] ="00:00:00";
+                        if((var["D_ActOut1"] != ""||var["D_ActOut1"] != null) && (var["D_Out"] == ""||var["D_Out"] == null))
+                            var["D_Out"] ="00:00:00";
+                        if((var["D_ActIn2"] != ""||var["D_ActIn2"] != null) && (var["D_Shift2_In"] == ""||var["D_Shift2_In"] == null))
+                            var["D_Shift2_In"] ="00:00:00";
+                        if((var["D_ActOut2"] != ""||var["D_ActOut2"] != null) && (var["D_Shift2_Out"] == ""||var["D_Shift2_Out"] == null))
+                            var["D_Shift2_Out"] ="00:00:00";
+                       
+                    }
 
                     ElementsTable = _api.Format(ElementsTable);
                     dt.Tables.Add(ElementsTable);
 
-                    return Ok(_api.Success(dt));
+                    return Ok(_api.Success(ElementsTable));
 
                 }
 
@@ -197,9 +244,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (b_AllBranchData == true)
-                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "')  order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "')  order by X_EmpCode";
                     else
-                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "') order by X_EmpCode";
+                        empSql = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_HireDate<='" + dtpSalaryToDate + "' and N_BranchID=" + nBranchID + "  and ISNULL(D_TerminationDate,GETDATE())>='" + dtpSalaryFromdate + "' and N_EmpID NOT IN (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=" + nCompanyID + " and N_TimesheetID>0 and D_DateFrom<='" + dtpSalaryFromdate + "' and D_DateTo>='" + dtpSalaryToDate + "') order by X_EmpCode";
 
                     EmpTable = dLayer.ExecuteDataTable(empSql, Params, connection);
                     if (EmpTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -324,7 +371,6 @@ namespace SmartxAPI.Controllers
         public ActionResult GetDetails(string xBatchCode, int nFnYearID)
         {
             DataTable Master = new DataTable();
-            DataTable Detail = new DataTable();
             DataTable EmpTable = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
@@ -335,7 +381,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", companyid);
             QueryParams.Add("@xBatchCode", xBatchCode);
             QueryParams.Add("@nFnYearID", nFnYearID);
-            string Condition = "";
+
             string _sqlQuery = "";
             try
             {
@@ -355,19 +401,19 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        QueryParams.Add("@N_RFQDecisionID", Master.Rows[0]["N_RFQDecisionID"].ToString());
+                        QueryParams.Add("@N_TimesheetID", Master.Rows[0]["N_TimesheetID"].ToString());
 
                         ds.Tables.Add(Master);
 
-                        _sqlQuery = "Select * from vw_RFQDecisionDetails Where N_CompanyID=@nCompanyID and N_RFQDecisionID=@N_RFQDecisionID";
-                        Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        _sqlQuery = "select N_CompanyID,N_FnYearID,N_EmpId,X_EmpCode,X_EmpName,X_DepartMent,X_Position,N_PositionID,N_DepartmentID,N_CatagoryID AS N_CatID from vw_PayEmployee Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID in (select N_EmpID from Pay_TimesheetEntryEmp where N_CompanyID=@nCompanyID and N_TimesheetID=@N_TimesheetID)";
+                        EmpTable = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                        Detail = _api.Format(Detail, "details");
-                        if (Detail.Rows.Count == 0)
+                        EmpTable = _api.Format(EmpTable, "EmpTable");
+                        if (EmpTable.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
-                        ds.Tables.Add(Detail);
+                        ds.Tables.Add(EmpTable);
 
                         return Ok(_api.Success(ds));
                     }

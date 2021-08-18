@@ -224,5 +224,36 @@ namespace SmartxAPI.Controllers
 
 
         }
+
+        [HttpGet("taskworkflow")]
+        public ActionResult TaskWorkFlowList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyID);
+            string sqlCommandText = "select * from Prj_WorkflowMaster where N_CompanyID=@p1 order by N_WTaskID";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
     }
 }
