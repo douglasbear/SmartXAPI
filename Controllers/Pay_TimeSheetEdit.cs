@@ -201,6 +201,15 @@ namespace SmartxAPI.Controllers
                         }
                         if (nCatID > 0)
                             var["N_BreakHrs"] = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_BreakHours from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString());
+
+                        if((var["D_ActIn1"] != ""||var["D_ActIn1"] != null) && (var["D_In"] == ""||var["D_In"] == null))
+                            var["D_In"] ="00:00:00";
+                        if((var["D_ActOut1"] != ""||var["D_ActOut1"] != null) && (var["D_Out"] == ""||var["D_Out"] == null))
+                            var["D_Out"] ="00:00:00";
+                        if((var["D_ActIn2"] != ""||var["D_ActIn2"] != null) && (var["D_Shift2_In"] == ""||var["D_Shift2_In"] == null))
+                            var["D_Shift2_In"] ="00:00:00";
+                        if((var["D_ActOut2"] != ""||var["D_ActOut2"] != null) && (var["D_Shift2_Out"] == ""||var["D_Shift2_Out"] == null))
+                            var["D_Shift2_Out"] ="00:00:00";
                        
                     }
 
