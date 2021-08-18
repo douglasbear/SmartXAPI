@@ -208,6 +208,44 @@ namespace SmartxAPI.Controllers
             }
         }
 
+          [HttpGet("emailDetails")]
+        public ActionResult TaskDetails(string xTaskCode,int nTemplateID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@p2", xTaskCode);
+            Params.Add("@p3", nTemplateID);
+          
+            string sqlCommandText = "select * from vw_Tsk_TaskMaster where N_CompanyID=@nCompanyId and X_TaskCode=@p2 and N_TemplateID=@p3";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
 
     }
 }
