@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Warning("No Results Found"));
+                    return Ok(api.Success(dt));
                 }
                 else
                 {
@@ -276,9 +276,9 @@ namespace SmartxAPI.Controllers
             if(xProjectCode==null)xProjectCode="";
             string sqlCommandText = "";
             if (nOpportunityID > 0)
-                 sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
+                 sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID";
             else
-                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
                
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
