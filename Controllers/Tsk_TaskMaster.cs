@@ -585,16 +585,35 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     SortedList Params = new SortedList();
-                    object N_TaskStatusID;
+                    object N_TaskStatusID1;
+
+                    int N_CreatorID = myFunctions.GetUserID(User);
+                    int N_ClosedUserID = myFunctions.GetUserID(User);
+                    DateTime D_EntryDate = DateTime.Today;
+                    DataTable DetailTable;
+
+
+
+                    int N_TaskStatusID = 0;
                     Params.Add("N_CompanyID", nCompanyID);
+                    N_TaskStatusID1 = dLayer.ExecuteScalar("select max(N_TaskStatusID) from Tsk_TaskStatus where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+
                     if (nStatus == 4)
                     {
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-                        N_TaskStatusID = dLayer.ExecuteScalar("select max(N_TaskStatusID) from Tsk_TaskStatus where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET N_AssigneeID=0 where N_TaskStatusID=" + myFunctions.getIntVAL(N_TaskStatusID.ToString()) + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-
                     }
-                    return Ok(_api.Success("Updated"));
+
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    string qry = "Select " + nCompanyID + " as N_CompanyID," + N_TaskStatusID + " as N_TaskStatusID," + nTaskID + " as N_TaskID," + 0 + " as N_AssigneeID," + 0 + " as N_SubmiterID ,'" + N_CreatorID + "' as  N_CreaterID,'" + D_EntryDate + "' as D_EntryDate,'" + "" + "' as X_Notes ," + nStatus + " as N_Status ," + 100 + " as N_WorkPercentage";
+                    DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+                    int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                    if (nID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable To Save"));
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success(""));
                 }
             }
             catch (Exception ex)
@@ -602,6 +621,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
-   
+
     }
 }
