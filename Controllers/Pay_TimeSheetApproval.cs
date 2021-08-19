@@ -115,6 +115,7 @@ namespace SmartxAPI.Controllers
     }
 }
 
+
 //         [HttpGet("employeeDetails")]
 //         public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, string xPayrunText, bool bCategoryWiseDeduction, bool bCategoryWiseAddition, DateTime systemDate)
 //         {
@@ -316,7 +317,7 @@ namespace SmartxAPI.Controllers
 //                                         //mcot==DailyOT
 //                                         //mcDeduct=0
 //                                     }
-//                                     else 
+//                                     else
 //                                     {
 //                                         //mcot==0
 //                                         //mcDeduct=0
@@ -325,308 +326,251 @@ namespace SmartxAPI.Controllers
 
 
 
+//                                 }
+//                             }
+//                             else
+//                             {
 
+//                                 {
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-//                                     }
-//                                     else
+//                                     // Get_Attnedence();
+//                                     if (nEmpID > 0)
 //                                     {
+//                                         string detailSql = "Select * From vw_EmpGrp_Workhours Where N_CompanyID = " + nCompanyID + " and N_PkeyId = " + nCategoryID + "";
+//                                         EmpGrpWorkhours = dLayer.ExecuteDataTable(detailSql, Params, connection);
+//                                         if (EmpGrpWorkhours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+//                                         //(Row 0 check ["B_Compensation"] == false then extrahrs and noncompnsrs visible false )
 
+
+//                                         //checksettings---------------------------------------------------------------------------------------
+//                                         string Sql9 = "Select B_Addition,B_Deduction,B_Compensation from Pay_EmployeeGroup where N_CompanyID=" + nCompanyID + " and N_PkeyId=" + nCategoryID;
+//                                         settingsTable = dLayer.ExecuteDataTable(Sql9, Params, connection);
+//                                         settingsTable.AcceptChanges();
+//                                         settingsTable = _api.Format(settingsTable);
+//                                         dt.Tables.Add(settingsTable);
+
+//                                         // true or false 3 field check erp code ===>CategorywiseSettings for front end validation
+//                                         //-----------------------------------------------------------------------------------------------------
+
+//                                         secParams.Add("@nCompanyID", nCompanyID);
+//                                         secParams.Add("@nFnYearID", nFnYearID);
+//                                         secParams.Add("@dtpFromdate", dtpFromdate);
+//                                         secParams.Add("@dtpTodate", dtpTodate);
+//                                         secParams.Add("@N_EmpID", nEmpID);
+
+//                                         string payAttendanceSql = "SP_Pay_TimeSheet @nCompanyID,@nFnYearID,@dtpFromdate,@dtpTodate,@N_EmpID";
+//                                         PayAttendence = dLayer.ExecuteDataTable(payAttendanceSql, secParams, connection);
+
+
+//                                         PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Vacation", typeof(int), 0);
+//                                         PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
+//                                         PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "Attandance", typeof(string), null);
+//                                         PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Type", typeof(string), null);
+//                                         PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_PayID", typeof(int), 0);
+
+//                                         //GetOffDays-------------------------------------------------------------------------------------------
+
+//                                         string Sql3 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0)  ";
+//                                         PayOffDays = dLayer.ExecuteDataTable(Sql3, secParams, connection);
+
+//                                         //-----------------------------------------------------------------------------------------------------
+//                                         string Sql4 = "Select * from vw_pay_WorkingHours Where N_CompanyID =" + nCompanyID;
+//                                         PayWorkingHours = dLayer.ExecuteDataTable(Sql4, secParams, connection);
+//                                         //-------------------------------------------------------------------------------------------------------
+//                                         //Default Paycodes
+//                                         foreach (DataRow kvar in PayAttendence.Rows)
+//                                         {
+//                                             DateTime Date = Convert.ToDateTime(kvar["D_date"].ToString());
+//                                             foreach (DataRow Var1 in PayOffDays.Rows)
+//                                             {
+//                                                 if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
+//                                                 {
+//                                                     kvar["X_Remarks"] = Var1["X_Remarks"];
+//                                                     kvar["N_Vacation"] = 2;
+//                                                 }
+//                                             }
+//                                         }
+//                                         PayAttendence.AcceptChanges();
+//                                         foreach (DataRow Tvar in PayAttendence.Rows)
 //                                         {
 
-//                                             // Get_Attnedence();
-//                                             if (nEmpID > 0)
+//                                             DateTime Date1 = Convert.ToDateTime(Tvar["D_date"].ToString());
+//                                             foreach (DataRow Var2 in PayWorkingHours.Rows)
 //                                             {
-//                                                 string detailSql = "Select * From vw_EmpGrp_Workhours Where N_CompanyID = " + nCompanyID + " and N_PkeyId = " + nCategoryID + "";
-//                                                 EmpGrpWorkhours = dLayer.ExecuteDataTable(detailSql, Params, connection);
-//                                                 if (EmpGrpWorkhours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-//                                                 //(Row 0 check ["B_Compensation"] == false then extrahrs and noncompnsrs visible false )
-
-
-//                                                 //checksettings---------------------------------------------------------------------------------------
-//                                                 string Sql9 = "Select B_Addition,B_Deduction,B_Compensation from Pay_EmployeeGroup where N_CompanyID=" + nCompanyID + " and N_PkeyId=" + nCategoryID;
-//                                                 settingsTable = dLayer.ExecuteDataTable(Sql9, Params, connection);
-//                                                 settingsTable.AcceptChanges();
-//                                                 settingsTable = _api.Format(settingsTable);
-//                                                 dt.Tables.Add(settingsTable);
-
-//                                                 // true or false 3 field check erp code ===>CategorywiseSettings for front end validation
-//                                                 //-----------------------------------------------------------------------------------------------------
-
-//                                                 secParams.Add("@nCompanyID", nCompanyID);
-//                                                 secParams.Add("@nFnYearID", nFnYearID);
-//                                                 secParams.Add("@dtpFromdate", dtpFromdate);
-//                                                 secParams.Add("@dtpTodate", dtpTodate);
-//                                                 secParams.Add("@N_EmpID", nEmpID);
-
-//                                                 string payAttendanceSql = "SP_Pay_TimeSheet @nCompanyID,@nFnYearID,@dtpFromdate,@dtpTodate,@N_EmpID";
-//                                                 PayAttendence = dLayer.ExecuteDataTable(payAttendanceSql, secParams, connection);
-
-
-//                                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Vacation", typeof(int), 0);
-//                                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_Workhours", typeof(double), null);
-//                                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "Attandance", typeof(string), null);
-//                                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "X_Type", typeof(string), null);
-//                                                 PayAttendence = myFunctions.AddNewColumnToDataTable(PayAttendence, "N_PayID", typeof(int), 0);
-
-//                                                 //GetOffDays-------------------------------------------------------------------------------------------
-
-//                                                 string Sql3 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0)  ";
-//                                                 PayOffDays = dLayer.ExecuteDataTable(Sql3, secParams, connection);
-
-//                                                 //-----------------------------------------------------------------------------------------------------
-//                                                 string Sql4 = "Select * from vw_pay_WorkingHours Where N_CompanyID =" + nCompanyID;
-//                                                 PayWorkingHours = dLayer.ExecuteDataTable(Sql4, secParams, connection);
-//                                                 //-------------------------------------------------------------------------------------------------------
-//                                                 //Default Paycodes
-//                                                 foreach (DataRow kvar in PayAttendence.Rows)
+//                                                 if (((int)Date1.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
 //                                                 {
-//                                                     DateTime Date = Convert.ToDateTime(kvar["D_date"].ToString());
-//                                                     foreach (DataRow Var1 in PayOffDays.Rows)
-//                                                     {
-//                                                         if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
-//                                                         {
-//                                                             kvar["X_Remarks"] = Var1["X_Remarks"];
-//                                                             kvar["N_Vacation"] = 2;
-//                                                         }
-//                                                     }
+//                                                     Tvar["N_Workhours"] = Var2["N_Workhours"];
 //                                                 }
-//                                                 PayAttendence.AcceptChanges();
-//                                                 foreach (DataRow Tvar in PayAttendence.Rows)
-//                                                 {
+//                                             }
+//                                         }
+//                                         PayAttendence.AcceptChanges();
+//                                         foreach (DataRow row in PayAttendence.Rows)
+//                                         {
+//                                             if (bCategoryWiseAddition)
+//                                             {
+//                                                 row["OverTime"] = myFunctions.getVAL(row["OverTime"].ToString()).ToString("0.00");
 
-//                                                     DateTime Date1 = Convert.ToDateTime(Tvar["D_date"].ToString());
-//                                                     foreach (DataRow Var2 in PayWorkingHours.Rows)
-//                                                     {
-//                                                         if (((int)Date1.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-//                                                         {
-//                                                             Tvar["N_Workhours"] = Var2["N_Workhours"];
-//                                                         }
-//                                                     }
-//                                                 }
-//                                                 PayAttendence.AcceptChanges();
-//                                                 foreach (DataRow row in PayAttendence.Rows)
+//                                             }
+//                                             else
+//                                             {
+//                                                 row["OverTime"] = "0.00";
+//                                             }
+//                                             if (bCategoryWiseDeduction)
+//                                             {
+//                                                 row["Deduction"] = myFunctions.getVAL(row["Deduction"].ToString()).ToString("0.00");
+//                                                 row["CompMinutes"] = myFunctions.getVAL(row["Deduction"].ToString()).ToString("0.00");
+
+//                                             }
+//                                             else
+//                                             {
+//                                                 row["Deduction"] = "0.00";
+//                                                 row["CompMinutes"] = "0.00";
+//                                             }
+
+
+//                                             if (!bCategoryWiseDeduction && N_Diffrence < 0)
+//                                             {
+//                                                 N_Diffrence = HoursToMinutes(Convert.ToDouble(row["N_Diff"].ToString()));
+//                                                 N_NonDedApp = HoursToMinutes(N_NonDedApp);
+
+//                                                 N_NonDedApp += N_Diffrence;
+
+//                                                 N_NonDedApp = MinutesToHours(N_NonDedApp);
+//                                             }
+
+//                                             if (row["B_Isvacation"].ToString() == "1")
+//                                             {
+//                                                 row["Attandance"] = "A";
+
+
+
+//                                             }
+//                                             else
+//                                             {
+//                                                 if (myFunctions.getVAL(row["N_ToHours"].ToString()) < myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
 //                                                 {
-//                                                     if (bCategoryWiseAddition)
+//                                                     if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
 //                                                     {
-//                                                         row["OverTime"] = myFunctions.getVAL(row["OverTime"].ToString()).ToString("0.00");
+
+//                                                         row["X_Type"] = row["X_Description"];
+//                                                         row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
+//                                                         row["Attandance"] = "P";
+
 
 //                                                     }
 //                                                     else
 //                                                     {
-//                                                         row["OverTime"] = "0.00";
-//                                                     }
-//                                                     if (bCategoryWiseDeduction)
-//                                                     {
-//                                                         row["Deduction"] = myFunctions.getVAL(row["Deduction"].ToString()).ToString("0.00");
-//                                                         row["CompMinutes"] = myFunctions.getVAL(row["Deduction"].ToString()).ToString("0.00");
-
-//                                                     }
-//                                                     else
-//                                                     {
-//                                                         row["Deduction"] = "0.00";
-//                                                         row["CompMinutes"] = "0.00";
-//                                                     }
-
-
-//                                                     if (!bCategoryWiseDeduction && N_Diffrence < 0)
-//                                                     {
-//                                                         N_Diffrence = HoursToMinutes(Convert.ToDouble(row["N_Diff"].ToString()));
-//                                                         N_NonDedApp = HoursToMinutes(N_NonDedApp);
-
-//                                                         N_NonDedApp += N_Diffrence;
-
-//                                                         N_NonDedApp = MinutesToHours(N_NonDedApp);
-//                                                     }
-
-//                                                     if (row["B_Isvacation"].ToString() == "1")
-//                                                     {
+//                                                         row["X_Type"] = X_Deductions;
+//                                                         row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
 //                                                         row["Attandance"] = "A";
-
-
-
+//                                                     }
+//                                                 }
+//                                                 else if (myFunctions.getVAL(row["N_ToHours"].ToString()) > myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
+//                                                 {
+//                                                     if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
+//                                                     {
+//                                                         row["X_Type"] = row["X_Description"];
+//                                                         row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
+//                                                         row["Attandance"] = "P";
 //                                                     }
 //                                                     else
 //                                                     {
-//                                                         if (myFunctions.getVAL(row["N_ToHours"].ToString()) < myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
+//                                                         if (myFunctions.getIntVAL(row["OverTime"].ToString()) > 0)
 //                                                         {
-//                                                             if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
-//                                                             {
-
-//                                                                 row["X_Type"] = row["X_Description"];
-//                                                                 row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
-//                                                                 row["Attandance"] = "P";
+//                                                             row["X_Type"] = X_Additions;
+//                                                             row["N_PayID"] = myFunctions.getIntVAL(N_AdditionPayID.ToString());
+//                                                             row["Attandance"] = "P";
 
 
-//                                                             }
-//                                                             else
-//                                                             {
-//                                                                 row["X_Type"] = X_Deductions;
-//                                                                 row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
-//                                                                 row["Attandance"] = "A";
-//                                                             }
 //                                                         }
-//                                                         else if (myFunctions.getVAL(row["N_ToHours"].ToString()) > myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
+//                                                         else if (myFunctions.getVAL(row["Deduction"].ToString()) > 0)
 //                                                         {
-//                                                             if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
-//                                                             {
-//                                                                 row["X_Type"] = row["X_Description"];
-//                                                                 row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
-//                                                                 row["Attandance"] = "P";
-//                                                             }
-//                                                             else
-//                                                             {
-//                                                                 if (myFunctions.getIntVAL(row["OverTime"].ToString()) > 0)
-//                                                                 {
-//                                                                     row["X_Type"] = X_Additions;
-//                                                                     row["N_PayID"] = myFunctions.getIntVAL(N_AdditionPayID.ToString());
-//                                                                     row["Attandance"] = "P";
-
-
-//                                                                 }
-//                                                                 else if (myFunctions.getVAL(row["Deduction"].ToString()) > 0)
-//                                                                 {
-//                                                                     row["X_Type"] = X_Deductions;
-//                                                                     row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
-//                                                                     row["Attandance"] = "P";
-//                                                                 }
-//                                                                 else
-//                                                                 {
-//                                                                     row["X_Type"] = "";
-//                                                                     row["N_PayID"] = 0;
-//                                                                     row["Attandance"] = "P";
-
-//                                                                 }
-//                                                             }
+//                                                             row["X_Type"] = X_Deductions;
+//                                                             row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
+//                                                             row["Attandance"] = "P";
 //                                                         }
 //                                                         else
 //                                                         {
-
 //                                                             row["X_Type"] = "";
 //                                                             row["N_PayID"] = 0;
 //                                                             row["Attandance"] = "P";
+
 //                                                         }
 //                                                     }
-//                                                     if ((row["mcRemarks"] == "" || row["mcRemarks"] == null) && row["Attandance"] != "P")
+//                                                 }
+//                                                 else
+//                                                 {
+
+//                                                     row["X_Type"] = "";
+//                                                     row["N_PayID"] = 0;
+//                                                     row["Attandance"] = "P";
+//                                                 }
+//                                             }
+//                                             if ((row["mcRemarks"] == "" || row["mcRemarks"] == null) && row["Attandance"] != "P")
+//                                             {
+//                                                 DateTime Date3 = Convert.ToDateTime(row["D_date"].ToString());
+//                                                 if (Date3 > Convert.ToDateTime(myFunctions.GetFormatedDate(systemDate.ToString())))
+//                                                     row["Attandance"] = "";
+//                                                 else
+//                                                 {
+//                                                     row["X_Type"] = X_DefaultAbsentCode;
+//                                                     row["N_PayID"] = N_DefaultAbsentID;
+//                                                     row["Attandance"] = "A";
+//                                                 }
+//                                             }
+
+//                                             foreach (DataRow Xvar in PayOffDays.Rows)
+//                                             {
+//                                                 DateTime Date4 = Convert.ToDateTime(row["D_date"].ToString());
+
+//                                                 if (nCategoryID == myFunctions.getIntVAL(Xvar["N_CategoryID"].ToString()) && ((int)Date4.DayOfWeek) + 1 == myFunctions.getIntVAL(Xvar["N_DayID"].ToString()) || myFunctions.getDateVAL(Date4) == myFunctions.getDateVAL(Convert.ToDateTime(Xvar["D_Date"].ToString())))
+//                                                 {
+//                                                     object obj5 = dLayer.ExecuteScalar("Select N_Workhours from Pay_AdditionalWorkingDays Where D_WorkingDate='" + Date4.ToString("yyyy-MM-dd") + "' and N_CatagoryID=" + nCategoryID + " and N_CompanyID=" + nCompanyID, Params, connection);
+//                                                     if (obj != null) continue;
+//                                                     if (myFunctions.getIntVAL(row["B_HolidayFlag"].ToString()) != 1)
 //                                                     {
-//                                                         DateTime Date3 = Convert.ToDateTime(row["D_date"].ToString());
-//                                                         if (Date3 > Convert.ToDateTime(myFunctions.GetFormatedDate(systemDate.ToString())))
-//                                                             row["Attandance"] = "";
-//                                                         else
-//                                                         {
-//                                                             row["X_Type"] = X_DefaultAbsentCode;
-//                                                             row["N_PayID"] = N_DefaultAbsentID;
-//                                                             row["Attandance"] = "A";
-//                                                         }
+//                                                         row["X_Remarks"] = Xvar["X_Remarks"];
+//                                                         row["N_Vacation"] = 2;
+
 //                                                     }
-
-//                                                     foreach (DataRow Xvar in PayOffDays.Rows)
+//                                                     if (myFunctions.getVAL(row["N_ToHours"].ToString()) != 0)
 //                                                     {
-//                                                         DateTime Date4 = Convert.ToDateTime(row["D_date"].ToString());
+//                                                         double hours = myFunctions.getVAL(row["N_ToHours"].ToString());
+//                                                         row["X_Type"] = X_Additions;
+//                                                         row["N_PayID"] = myFunctions.getIntVAL(N_AdditionPayID.ToString());
+//                                                         row["Attandance"] = "P";
+//                                                     }
+//                                                     else if (myFunctions.getIntVAL(row["B_HolidayFlag"].ToString()) != 1)
 
-//                                                         if (nCategoryID == myFunctions.getIntVAL(Xvar["N_CategoryID"].ToString()) && ((int)Date4.DayOfWeek) + 1 == myFunctions.getIntVAL(Xvar["N_DayID"].ToString()) || myFunctions.getDateVAL(Date4) == myFunctions.getDateVAL(Convert.ToDateTime(Xvar["D_Date"].ToString())))
-//                                                         {
-//                                                             object obj5 = dLayer.ExecuteScalar("Select N_Workhours from Pay_AdditionalWorkingDays Where D_WorkingDate='" + Date4.ToString("yyyy-MM-dd") + "' and N_CatagoryID=" + nCategoryID + " and N_CompanyID=" + nCompanyID, Params, connection);
-//                                                             if (obj != null) continue;
-//                                                             if (myFunctions.getIntVAL(row["B_HolidayFlag"].ToString()) != 1)
-//                                                             {
-//                                                                 row["X_Remarks"] = Xvar["X_Remarks"];
-//                                                                 row["N_Vacation"] = 2;
-
-//                                                             }
-//                                                             if (myFunctions.getVAL(row["N_ToHours"].ToString()) != 0)
-//                                                             {
-//                                                                 double hours = myFunctions.getVAL(row["N_ToHours"].ToString());
-//                                                                 row["X_Type"] = X_Additions;
-//                                                                 row["N_PayID"] = myFunctions.getIntVAL(N_AdditionPayID.ToString());
-//                                                                 row["Attandance"] = "P";
-//                                                             }
-//                                                             else if (myFunctions.getIntVAL(row["B_HolidayFlag"].ToString()) != 1)
-
-//                                                             {
-//                                                                 row["Attandance"] = "";
-//                                                                 row["X_Type"] = "";
-//                                                                 row["Deduction"] = "";
-//                                                                 //in out 1 & 2 should be " validate in front end
-//                                                             }
-//                                                         }
-//                                                         if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date4))
-//                                                         {
-//                                                             if (row["Attandance"] != "A")
-//                                                             {
-//                                                                 N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
-//                                                                 N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));
-
-//                                                             }
-//                                                         }
+//                                                     {
+//                                                         row["Attandance"] = "";
+//                                                         row["X_Type"] = "";
+//                                                         row["Deduction"] = "";
+//                                                         //in out 1 & 2 should be " validate in front end
+//                                                     }
+//                                                 }
+//                                                 if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date4))
+//                                                 {
+//                                                     if (row["Attandance"] != "A")
+//                                                     {
+//                                                         N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
+//                                                         N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));
 
 //                                                     }
 //                                                 }
 
-//                                                 Master.Add("N_WorkdHrs", N_WorkdHrs);
-//                                                 Master.Add("N_WorkHours", N_WorkHours);
-//                                                 return Ok(_api.Success(dt));
 //                                             }
 //                                         }
+
+//                                         Master.Add("N_WorkdHrs", N_WorkdHrs);
+//                                         Master.Add("N_WorkHours", N_WorkHours);
+//                                         return Ok(_api.Success(dt));
 //                                     }
 //                                 }
 //                             }
 //                         }
+//                     }
+//                 }
 //             catch (Exception e)
 //             {
 //                 return Ok(_api.Error(e));
