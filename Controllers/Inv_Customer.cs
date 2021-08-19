@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
                string sqlCommandText = "";
             if (crmcustomerID > 0)
             {
-                sqlCommandText = "select   X_Customer as X_CustomerName,X_Website as X_WebSite,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
+                sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
             }
             else
             {
