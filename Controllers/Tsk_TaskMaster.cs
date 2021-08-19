@@ -549,7 +549,7 @@ namespace SmartxAPI.Controllers
                 Criteria = " and N_AssigneeID=@nUserID ";
             }
 
-            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start,cast(D_DueDate as Date) as 'end', N_TaskID,X_TaskCode,X_Status  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +" " +Criteria;
+            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode,X_Status  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +" " +Criteria;
 
 
             try
@@ -575,7 +575,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-                [HttpPost("updateDashboard")]
+                [HttpGet("updateDashboard")]
         public ActionResult UpdateDashboard(int nTaskID, int nStatus)
         {
             try
@@ -594,7 +594,7 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("Update Tsk_TaskStatus SET N_AssigneeID=0 where N_TaskStatusID=" + myFunctions.getIntVAL(N_TaskStatusID.ToString()) + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
 
                     }
-                    return Ok(_api.Success("deleted"));
+                    return Ok(_api.Success("Updated"));
                 }
             }
             catch (Exception ex)

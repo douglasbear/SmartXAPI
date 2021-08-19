@@ -40,11 +40,11 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and isnull(N_ParentID,0)=0 order by N_Order";
             string sqlCommandContactList = "Select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and X_ProjectCode=@p2";
+            string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_ProjectID=@p3 order by N_maillogid desc";
+            string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_ProjectID=@p3";
+            string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_ProjectID=@p3";
             // string sqlCommandLeadsList = "select CONVERT(varchar,d_EntryDate,101) as d_Entry,* from vw_CRMOpportunity where N_CompanyID =@p1 and X_OpportunityCode=@p2";          
             // string sqlCommandQuotationList = "Select * from inv_salesquotation where N_CompanyID=@p1 and n_opportunityID=@p3";
-            // string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_opportunityID=@p3";
-            // string sqlCommandinvoiceList = "Select * from inv_sales where N_CompanyID=@p1 and n_opportunityID=@p3";
-            // string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_OpportunityID=@p3 order by N_maillogid desc";
             // string sqlCommandProjectList = "Select CONVERT(varchar,d_StartDate,101) as d_Start,CONVERT(varchar,d_EndDate,101) as d_End,* from crm_Project where N_CompanyID=@p1 and N_ProjectID=@p5";
 
             Params.Add("@p1", nCompanyID);
@@ -52,12 +52,13 @@ namespace SmartxAPI.Controllers
 
             DataTable TasksList = new DataTable();
             DataTable ContactList = new DataTable();
+            DataTable MailLogList = new DataTable();
             // DataTable LeadsList = new DataTable();
 
             // DataTable QuotationList = new DataTable();
-            // DataTable OrderList = new DataTable();
-            // DataTable InvoiceList = new DataTable();
-            // DataTable MailLogList = new DataTable();
+            DataTable OrderList = new DataTable();
+            DataTable InvoiceList = new DataTable();
+
             // DataTable ProjectList = new DataTable();
 
             try
@@ -66,16 +67,15 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     // object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
-                    // object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
-                    // Params.Add("@p3", N_OpportunityID);
+                    object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from Vw_InvCustomerProjects where X_ProjectCode=@p2", Params, connection);
+                    Params.Add("@p3", N_ProjectID);
 
 
                     // object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
                     // if (N_OpportunityID != null)
                     // {
-                    //     InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
-                    //     InvoiceList = api.Format(InvoiceList, "InvoiceList");
-                    //     dt.Tables.Add(InvoiceList);
+                    //     
+                    //     
                     // }
                     // if (N_ProjectID != null)
                     // {
@@ -87,27 +87,36 @@ namespace SmartxAPI.Controllers
 
                     TasksList = dLayer.ExecuteDataTable(sqlCommandTasksList, Params, connection);
                     ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
+                    MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
+                    OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
+                    InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
                     // LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
                     // QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
-                    // OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
-                    // MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
+
+
 
 
                     TasksList = api.Format(TasksList, "TasksList");
                     ContactList = api.Format(ContactList, "ContactList");
+                    MailLogList = api.Format(MailLogList, "MailLogList");
+                    OrderList = api.Format(OrderList, "OrderList");
+                    InvoiceList = api.Format(InvoiceList, "InvoiceList");
+
                     // LeadsList = api.Format(LeadsList, "LeadsList");
                     // QuotationList = api.Format(QuotationList, "QuotationList");
-                    // MailLogList = api.Format(MailLogList, "MailLogList");
-                    // OrderList = api.Format(OrderList, "OrderList");
+
 
 
 
                     dt.Tables.Add(TasksList);
                     dt.Tables.Add(ContactList);
+                    dt.Tables.Add(MailLogList);
+                    dt.Tables.Add(OrderList);
+                    dt.Tables.Add(InvoiceList);
                     // dt.Tables.Add(LeadsList);
                     // dt.Tables.Add(QuotationList);
-                    // dt.Tables.Add(MailLogList);
-                    // dt.Tables.Add(OrderList);
+
+
 
                     return Ok(api.Success(dt));
 
@@ -207,6 +216,44 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(e));
             }
         }
+
+          [HttpGet("emailDetails")]
+        public ActionResult TaskDetails(string xTaskCode,int nTemplateID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyId", nCompanyID);
+            Params.Add("@p2", xTaskCode);
+            Params.Add("@p3", nTemplateID);
+          
+            string sqlCommandText = "select * from vw_Tsk_TaskMaster where N_CompanyID=@nCompanyId and X_TaskCode=@p2 and N_TemplateID=@p3";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
 
 
     }

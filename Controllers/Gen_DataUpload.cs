@@ -48,66 +48,37 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     foreach (DataTable dt in ds.Tables)
                     {
+                        Params.Add("X_Type", dt.TableName);
+                        Mastertable = ds.Tables[dt.TableName];
+                        foreach (DataColumn col in Mastertable.Columns)
+                        {
+                            col.ColumnName = col.ColumnName.Replace(" ", "_");
+                            col.ColumnName = col.ColumnName.Replace("*", "");
+                        }
+                        Mastertable.Columns.Add("Pkey_Code");
+
                         if (dt.TableName == "Customer List")
                         {
-                            Mastertable = ds.Tables["Customer List"];
-                            foreach (DataColumn col in Mastertable.Columns)
-                            {
-                                col.ColumnName = col.ColumnName.Replace(" ", "_");
-                                col.ColumnName = col.ColumnName.Replace("*", "");
-                            }
-                            Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Customers";
-                            Params.Add("X_Type", "customer");
 
                         }
                         if (dt.TableName == "Vendor List")
                         {
-
-                            Mastertable = ds.Tables["Vendor List"];
-                            foreach (DataColumn col in Mastertable.Columns)
-                            {
-                                col.ColumnName = col.ColumnName.Replace(" ", "_");
-                                col.ColumnName = col.ColumnName.Replace("*", "");
-                            }
-                            Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Vendors";
-                            Params.Add("X_Type", "vendor");
-
                         }
                         if (dt.TableName == "Product List")
                         {
-
-                            Mastertable = ds.Tables["Product List"];
-                            foreach (DataColumn col in Mastertable.Columns)
-                            {
-                                col.ColumnName = col.ColumnName.Trim().Replace(" ", "_");
-                                col.ColumnName = col.ColumnName.Trim().Replace("*", "");
-                                col.ColumnName = col.ColumnName.Trim().Replace("/", "_");
-                            }
-                            Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Items";
-                            Params.Add("X_Type", "product");
                             Mastertable.Columns.Add("N_CompanyID");
                             Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
-
                         }
                         if (dt.TableName == "Leads List")
                         {
-
-                            Mastertable = ds.Tables["Leads List"];
-                            foreach (DataColumn col in Mastertable.Columns)
-                            {
-                                col.ColumnName = col.ColumnName.Trim().Replace(" ", "_");
-                                col.ColumnName = col.ColumnName.Trim().Replace("*", "");
-                                col.ColumnName = col.ColumnName.Trim().Replace("/", "_");
-                            }
-                            Mastertable.Columns.Add("Pkey_Code");
                             xTableName = "Mig_Leads";
-                            Params.Add("X_Type", "Leads");
-                            // Mastertable.Columns.Add("N_CompanyID");
-                            // Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
-
+                        }
+                        if (dt.TableName == "Chart of Accounts")
+                        {
+                            xTableName = "Mig_Accounts";
                         }
 
                         if (Mastertable.Rows.Count > 0)
@@ -119,12 +90,12 @@ namespace SmartxAPI.Controllers
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(dt.TableName +" Uploaded Error"));
+                                return Ok(_api.Error(dt.TableName + " Uploaded Error"));
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
                             transaction.Commit();
-                            return Ok(_api.Success(dt.TableName +" Uploaded"));
+                            return Ok(_api.Success(dt.TableName + " Uploaded"));
                         }
                     }
                     if (Mastertable.Rows.Count > 0)
