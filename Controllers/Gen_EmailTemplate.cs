@@ -84,23 +84,6 @@ namespace SmartxAPI.Controllers
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = body.ToString();
-                            // if (nopportunityID > 0)
-                            // {
-                            //     Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                            //     Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                            //     Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                            //     CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-
-
-                            //     MailBody = MailBody.Replace("@CompanyName", Company.ToString());
-                            //     MailBody = MailBody.Replace("@ContactName", Contact.ToString());
-                            //     MailBody = MailBody.Replace("@LeadName", Oppportunity.ToString());
-
-                            //     Subject = Subject.Replace("@CompanyName", Company.ToString());
-                            //     Subject = Subject.Replace("@ContactName", Contact.ToString());
-                            //     Subject = Subject.Replace("@LeadName", Oppportunity.ToString());
-
-                            // }
                             SmtpClient client = new SmtpClient
                             {
                                 Host = "smtp.gmail.com",
