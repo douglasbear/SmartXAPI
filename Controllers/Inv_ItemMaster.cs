@@ -190,6 +190,10 @@ namespace SmartxAPI.Controllers
             SortedList QueryParams = new SortedList();
             DataTable dtVariantList = new DataTable();
             DataTable dtItemUnits = new DataTable();
+            DataTable SubItemsTable = new DataTable();
+            DataTable ScrapItemsTable = new DataTable();
+            DataTable BOMEmpTable = new DataTable();
+            DataTable BOMAssetTable = new DataTable();
             int N_ItemID = nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
@@ -299,6 +303,27 @@ namespace SmartxAPI.Controllers
 
 
                     }
+
+                    //SubItems
+                    string subItems = "Select * from vw_InvItemDetails Where N_CompanyID=@nCompanyID and N_MainItemID=@nItemID and N_Type=1";
+                    SubItemsTable = dLayer.ExecuteDataTable(subItems, QueryParams, connection);
+                    SubItemsTable = _api.Format(SubItemsTable, "subItems");
+
+                    //ScrapItems
+                    string scrapItems = "Select * from vw_InvItemDetails Where N_CompanyID=@nCompanyID and N_MainItemID=@nItemID and N_Type=2";
+                    ScrapItemsTable = dLayer.ExecuteDataTable(scrapItems, QueryParams, connection);
+                    ScrapItemsTable = _api.Format(ScrapItemsTable, "scrapItems");
+
+                    //BOMEmp
+                    string bomEmp = "Select * from vw_BOMEmployee_Disp Where N_CompanyID=@nCompanyID and N_MainItem=@nItemID" ;
+                    BOMEmpTable = dLayer.ExecuteDataTable(bomEmp, QueryParams, connection);
+                    BOMEmpTable = _api.Format(BOMEmpTable, "bomEmp");
+
+                    //BOMAsset
+                    string bomAsset = "Select * from vw_BOMAsset_Disp Where N_CompanyID=@nCompanyID and N_MainItemID=@nItemID" ;
+                    BOMAssetTable = dLayer.ExecuteDataTable(bomAsset, QueryParams, connection);
+                    BOMAssetTable = _api.Format(BOMAssetTable, "bomAsset");
+
                 }
                 dt.AcceptChanges();
                 // multiCategory.AcceptChanges();
@@ -316,6 +341,10 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(dtItemUnits);
                 dataSet.Tables.Add(dtVariantList);
 
+                dataSet.Tables.Add(SubItemsTable);
+                dataSet.Tables.Add(ScrapItemsTable);
+                dataSet.Tables.Add(BOMEmpTable);
+                dataSet.Tables.Add(BOMAssetTable);
 
                 return Ok(_api.Success(dataSet));
 
@@ -334,6 +363,10 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable = new DataTable();
                 DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits;
+                DataTable SubItemTable = new DataTable();
+                DataTable ScrapItemTable = new DataTable();
+                DataTable BOMEmpTable = new DataTable();
+                DataTable BOMAssetTable = new DataTable();
                 DataTable POS = ds.Tables["Pos"];
                 DataTable ECOM = ds.Tables["Ecom"];
                 MasterTableNew = ds.Tables["master"];
@@ -347,6 +380,10 @@ namespace SmartxAPI.Controllers
                 CategoryList = ds.Tables["categoryListDetails"];
                 VariantList = ds.Tables["variantList"];
                 ItemUnits = ds.Tables["itemUnits"];
+                SubItemTable = ds.Tables["subItems"];
+                ScrapItemTable = ds.Tables["scrapItems"];
+                BOMEmpTable = ds.Tables["bomEmp"];
+                BOMAssetTable = ds.Tables["bomAsset"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = 0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -371,7 +408,12 @@ namespace SmartxAPI.Controllers
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
                     }
 
-
+                    if(myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString())>0)
+                    {
+                        dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID="+nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_BOMEmployee", "N_MainItem", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID="+nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_BOMAsset", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID="+nCompanyID, connection, transaction);
+                    }
                     //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();
                     var ActRow = MasterTable.NewRow();
@@ -420,6 +462,7 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error("Unable to save, Product name alrady exist"));
                         }
+                       
 
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
@@ -631,6 +674,47 @@ namespace SmartxAPI.Controllers
                             ECOM.Columns.Remove("I_Image");
                             dLayer.SaveData("Inv_DisplayImages", "N_ImageID", ECOM, connection, transaction);
 
+                        }
+
+                        //SubItems
+                        if (SubItemTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in SubItemTable.Rows)
+                            {
+                                dRow["N_MainItemID"] = N_ItemID;
+                            }
+                            SubItemTable.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemDetails", "N_ItemDetailsID", SubItemTable, connection, transaction);
+                        }
+                        //ScarpItems
+                        if (ScrapItemTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in ScrapItemTable.Rows)
+                            {
+                                dRow["N_MainItemID"] = N_ItemID;
+                            }
+                            ScrapItemTable.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemDetails", "N_ItemDetailsID", ScrapItemTable, connection, transaction);
+                        }
+                        //BOMEmp
+                        if (BOMEmpTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in BOMEmpTable.Rows)
+                            {
+                                dRow["N_MainItem"] = N_ItemID;
+                            }
+                            BOMEmpTable.AcceptChanges();
+                            dLayer.SaveData("Inv_BOMEmployee", "N_BOMEmpDetailID", BOMEmpTable, connection, transaction);
+                        }
+                        //BOMAsset
+                        if (BOMAssetTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow dRow in BOMAssetTable.Rows)
+                            {
+                                dRow["N_MainItemID"] = N_ItemID;
+                            }
+                            BOMAssetTable.AcceptChanges();
+                            dLayer.SaveData("Inv_BOMAsset", "N_BOMAssetDetailID", BOMAssetTable, connection, transaction);
                         }
                     }
 
@@ -860,6 +944,8 @@ namespace SmartxAPI.Controllers
                         {
 
                             dLayer.ExecuteScalar("delete from  Inv_ItemUnit  Where N_ItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from  Inv_BOMEmployee  Where N_MainItem=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                            dLayer.ExecuteScalar("delete from  Inv_BOMAsset  Where N_MainItemID=" + _itemID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                             // transaction.Commit();
                             // return Ok(_api.Success("Product deleted"));
                         }
