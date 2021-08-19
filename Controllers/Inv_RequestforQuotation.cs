@@ -634,7 +634,7 @@ namespace SmartxAPI.Controllers
             VendorListDetails = _api.Format(VendorListDetails, "vendorList");
 
 
-            return VendorListDetails;
+            return VendorListDetails; 
         }
 
     }
