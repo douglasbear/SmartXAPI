@@ -213,10 +213,10 @@ namespace SmartxAPI.Controllers
                     //     transaction.Rollback();
                     //     return Ok(_api.Error("Unable To Save"));
                     // }
-                    else
-                    {
+                    // else
+                    // {
                         transaction.Commit();
-                    }
+                    // }
 
                     return Ok(_api.Success("Category Saved"));
                 }
