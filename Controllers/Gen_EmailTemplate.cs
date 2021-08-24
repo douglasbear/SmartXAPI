@@ -56,12 +56,12 @@ namespace SmartxAPI.Controllers
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["x_TempSubject"].ToString();
-                    int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
+                    // int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     int nTemplateID = myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
                     Toemail = Email.ToString();
                     object companyemail = "";
                     object companypassword = "";
-                    object Company, Oppportunity, Contact, CustomerID;
+                    // object Company, Oppportunity, Contact, CustomerID;
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -84,25 +84,6 @@ namespace SmartxAPI.Controllers
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = body.ToString();
-                            if (nopportunityID > 0)
-                            {
-                                Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-                                CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + companyid + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
-
-
-                                MailBody = MailBody.Replace("@CompanyName", Company.ToString());
-                                MailBody = MailBody.Replace("@ContactName", Contact.ToString());
-                                MailBody = MailBody.Replace("@LeadName", Oppportunity.ToString());
-
-                                Subject = Subject.Replace("@CompanyName", Company.ToString());
-                                Subject = Subject.Replace("@ContactName", Contact.ToString());
-                                Subject = Subject.Replace("@LeadName", Oppportunity.ToString());
-
-                            }
-
-
                             SmtpClient client = new SmtpClient
                             {
                                 Host = "smtp.gmail.com",
@@ -184,6 +165,7 @@ namespace SmartxAPI.Controllers
             else
                 return "";
         }
+        
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {

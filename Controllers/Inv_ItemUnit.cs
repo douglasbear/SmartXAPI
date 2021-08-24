@@ -207,7 +207,7 @@ string sql = " Select Inv_ItemUnit.X_ItemUnit,Inv_ItemUnit.N_Qty,dbo.SP_SellingP
             {
                 return Ok(api.Error(e));
             }
-        }
+        }      
 
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nItemUnitID)

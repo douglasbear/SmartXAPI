@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("employeeDetails")]
-        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, string xEmployeeCode, DateTime dtpSalaryFromdate, DateTime dtpSalaryToDate,int nCatID)
+        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, string xEmployeeCode, DateTime dtpSalaryFromdate, DateTime dtpSalaryToDate, int nCatID)
         {
             try
             {
@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
                     DataTable ActualTable = new DataTable();
                     string ElementSql = "";
                     string ActualSql = "";
- 
+
                     ElementSql = " Select N_EmpID as N_EmpId,* from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date >= '" + dtpSalaryFromdate + "' and D_Date<=' " + dtpSalaryToDate + "' and N_EmpID=" + nEmpID + " order by D_Date";
                     ElementsTable = dLayer.ExecuteDataTable(ElementSql, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -158,27 +158,28 @@ namespace SmartxAPI.Controllers
                     do
                     {
 
-                        object objDatePresent= dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
-                        if(objDatePresent==null)
+                        object objDatePresent = dLayer.ExecuteScalar("Select N_EmpID from vw_TimesheetImport_Disp  Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date = '" + Date + "' and N_EmpID=" + nEmpID, Params, connection);
+                        if (objDatePresent == null)
                         {
                             DataRow rowET = ElementsTable.NewRow();
                             rowET["D_Date"] = Date;
+                            rowET["N_EmpId"] = nEmpID;
+
 
                             ElementsTable.Rows.Add(rowET);
                         }
-                        Date=Date.AddDays(1);
+                        Date = Date.AddDays(1);
+                    } while (Date <= dtpSalaryToDate);
 
-                    }while (Date <= dtpSalaryToDate);               
 
-                    
                     foreach (DataRow var in ElementsTable.Rows)
                     {
                         ActualSql = "Select * from Pay_EmpShiftDetails  Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "' and N_ShiftID=(select Max(N_ShiftID) from Pay_EmpShiftDetails Where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID + " and D_Date='" + var["D_Date"].ToString() + "')";
                         ActualTable = dLayer.ExecuteDataTable(ActualSql, Params, connection);
                         ActualTable.AcceptChanges();
-                        if (ActualTable.Rows.Count != 0) 
-                        { 
-                            nCatID=myFunctions.getIntVAL(ActualTable.Rows[0]["N_GroupID"].ToString());
+                        if (ActualTable.Rows.Count != 0)
+                        {
+                            nCatID = myFunctions.getIntVAL(ActualTable.Rows[0]["N_GroupID"].ToString());
 
                             var["D_ActIn1"] = ActualTable.Rows[0]["D_In1"].ToString();
                             var["D_ActOut1"] = ActualTable.Rows[0]["D_Out1"].ToString();
@@ -202,15 +203,15 @@ namespace SmartxAPI.Controllers
                         if (nCatID > 0)
                             var["N_BreakHrs"] = myFunctions.getFloatVAL(dLayer.ExecuteScalar("select N_BreakHours from Pay_WorkingHours where DATEPART(DW, '" + var["D_Date"].ToString() + "') = Pay_WorkingHours.N_WHID and Pay_WorkingHours.N_CatagoryId =" + nCatID + " and N_CompanyID=" + nCompanyID, Params, connection).ToString());
 
-                        if((var["D_ActIn1"] != ""||var["D_ActIn1"] != null) && (var["D_In"] == ""||var["D_In"] == null))
-                            var["D_In"] ="00:00:00";
-                        if((var["D_ActOut1"] != ""||var["D_ActOut1"] != null) && (var["D_Out"] == ""||var["D_Out"] == null))
-                            var["D_Out"] ="00:00:00";
-                        if((var["D_ActIn2"] != ""||var["D_ActIn2"] != null) && (var["D_Shift2_In"] == ""||var["D_Shift2_In"] == null))
-                            var["D_Shift2_In"] ="00:00:00";
-                        if((var["D_ActOut2"] != ""||var["D_ActOut2"] != null) && (var["D_Shift2_Out"] == ""||var["D_Shift2_Out"] == null))
-                            var["D_Shift2_Out"] ="00:00:00";
-                       
+                        if ((var["D_ActIn1"].ToString() != "" || var["D_ActIn1"].ToString() != null) && (var["D_In"].ToString() == "" || var["D_In"].ToString() == null))
+                            var["D_In"] = "00:00:00";
+                        if ((var["D_ActOut1"].ToString() != "" || var["D_ActOut1"].ToString() != null) && (var["D_Out"].ToString() == "" || var["D_Out"].ToString() == null))
+                            var["D_Out"] = "00:00:00";
+                        if ((var["D_ActIn2"].ToString() != "" || var["D_ActIn2"].ToString() != null) && (var["D_Shift2_In"].ToString() == "" || var["D_Shift2_In"].ToString() == null))
+                            var["D_Shift2_In"] = "00:00:00";
+                        if ((var["D_ActOut2"].ToString() != "" || var["D_ActOut2"].ToString() != null) && (var["D_Shift2_Out"].ToString() == "" || var["D_Shift2_Out"].ToString() == null))
+                            var["D_Shift2_Out"] = "00:00:00";
+
                     }
 
                     ElementsTable = _api.Format(ElementsTable);
@@ -278,7 +279,11 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                 int nTimesheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimesheetID"].ToString());
-                int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString());
+                if (MasterTable.Columns.Contains("n_EmpId"))
+                {
+                    int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpId"].ToString());
+                }
+
                 DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
                 DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
                 DateTime dToDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateTo"].ToString());
@@ -305,10 +310,10 @@ namespace SmartxAPI.Controllers
 
                         bool OK = true;
                         int NewNo = 0, loop = 1;
-                        string X_TmpBatchCode="";
+                        string X_TmpBatchCode = "";
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_BatchID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString()),connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_BatchID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString()), connection, transaction).ToString());
                             X_TmpBatchCode = dSalDate.Year.ToString("00##") + dSalDate.Month.ToString("0#") + NewNo.ToString("0#");
                             if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And X_BatchCode = '" + X_TmpBatchCode + "'", connection, transaction).ToString()) == 0)
                                 OK = false;
@@ -319,12 +324,12 @@ namespace SmartxAPI.Controllers
 
                     if (nTimesheetID > 0)
                     {
-                        dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID , connection, transaction);
+                        dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
                     }
                     for (int l = 0; l < EmpTable.Rows.Count; l++)
                     {
-                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID="+ myFunctions.getIntVAL(EmpTable.Rows[l]["N_EmpID"].ToString()), connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + myFunctions.getIntVAL(EmpTable.Rows[l]["N_EmpID"].ToString()), connection, transaction);
                     }
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
@@ -339,13 +344,13 @@ namespace SmartxAPI.Controllers
                     {
                         EmpTable.Rows[j]["N_TimesheetID"] = nTimesheetID;
                     }
-                    int nTimesheetEmpID=dLayer.SaveData("Pay_TimesheetEntryEmp", "N_TimeSheetEmpID", EmpTable, connection, transaction);
+                    int nTimesheetEmpID = dLayer.SaveData("Pay_TimesheetEntryEmp", "N_TimeSheetEmpID", EmpTable, connection, transaction);
                     if (nTimesheetEmpID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error("Unable to save"));
                     }
-                
+
                     for (int k = 0; k < DetailTable.Rows.Count; k++)
                     {
                         DetailTable.Rows[k]["N_TimesheetID"] = nTimesheetID;
@@ -358,7 +363,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     transaction.Commit();
-                    return Ok(_api.Success("Terminated"));
+                    return Ok(_api.Success("Saved Successfully"));
                 }
             }
             catch (Exception ex)
