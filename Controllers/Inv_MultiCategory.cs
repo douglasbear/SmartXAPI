@@ -68,45 +68,52 @@ namespace SmartxAPI.Controllers
 
         }
 
-        
+
         [HttpGet("list")]
         public ActionResult GetDepartmentList(string parent)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText="";
-            if(parent=="" || parent ==null)
-            {
-
-             sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "   Order By X_CategoryCode";
-            }
-            else{
-
-              sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "  and isnull(N_ParentID,0)=0   Order By X_CategoryCode";
-            }
-            // if (nDivisionID > 0)
-            // {
-            //     Params.Add("@nDivisionID", nDivisionID);
-            //     sqlCommandText = "Select N_CompanyID,N_DepartmentID,N_DivisionID,Code,Description from vw_PayDepartment_Disp Where N_CompanyID=@nCompanyID and N_DivisionID=@nDivisionID order by Code";
-            // }
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    string sqlCommandText = "";
+                    bool B_ShowChild = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowChild", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+                    if (parent == "" || parent == null)
+                    {
+                        if(B_ShowChild==true)
+                        {
+
+                        sqlCommandText = "select * from Inv_ItemCategoryDisplay where N_CategoryDisplayID not in(select N_ParentID from Inv_ItemCategoryDisplay  ) and    N_ParentID >0 and N_CompanyID= " + nCompanyID + "";
+                        }
+                        else
+                        {
+                            sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "";
+                        }
+                    }
+                    else
+                    {
+
+                        sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "  and isnull(N_ParentID,0)=0   Order By X_CategoryCode";
+                    }
+                
+
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
+
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
                 }
             }
             catch (Exception e)
@@ -259,7 +266,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID="+nCategoryDisplayID+" and N_CompanyID="+nCompanyID+" ", QueryParams, connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=" + nCategoryDisplayID + " and N_CompanyID=" + nCompanyID + " ", QueryParams, connection);
                     if (Objcount != null)
                     {
                         if (myFunctions.getIntVAL(Objcount.ToString()) <= 0)
