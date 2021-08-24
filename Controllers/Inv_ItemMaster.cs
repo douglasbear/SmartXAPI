@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID,string xClass,int nNotItemID,int nNotGridItemID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -45,6 +45,7 @@ namespace SmartxAPI.Controllers
 
             string qry = "";
             string Category = "";
+            string Condition = "";
             if (query != "" && query != null)
             {
                 qry = " and (Description like @query or [Item Code] like @query) ";
@@ -53,6 +54,16 @@ namespace SmartxAPI.Controllers
             if (nCategoryID > 0)
                 Category = " and vw_InvItem_Search_cloud.N_CategoryID =" + nCategoryID;
 
+            if(xClass==null)xClass="";
+            if(xClass!="")
+                Condition=Condition +" and vw_InvItem_Search_cloud.[Item Class] in ("+xClass+")";
+            
+            if(nNotItemID!=0)
+                Condition=Condition +" and vw_InvItem_Search_cloud.N_ItemID<> "+nNotItemID;
+
+            if(nNotGridItemID!=0)
+                Condition=Condition +" and vw_InvItem_Search_cloud.N_ItemID<> "+nNotGridItemID;
+
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
@@ -60,7 +71,7 @@ namespace SmartxAPI.Controllers
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
             string sqlComandText = "  vw_InvItem_Search_cloud.*,dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID,vw_InvItem_Search_cloud.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2 FROM vw_InvItem_Search_cloud LEFT OUTER JOIN " +
-             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID " + qry + Category;
+             " Inv_ItemUnit ON vw_InvItem_Search_cloud.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search_cloud.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search_cloud.N_CompanyID=@p1 and vw_InvItem_Search_cloud.B_Inactive=@p2 and vw_InvItem_Search_cloud.[Item Code]<> @p3 and vw_InvItem_Search_cloud.N_ItemTypeID<>@p4  and vw_InvItem_Search_cloud.N_ItemID=Inv_ItemUnit.N_ItemID " + qry + Category + Condition;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);

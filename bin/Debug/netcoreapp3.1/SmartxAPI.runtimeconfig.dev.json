@@ -5,9 +5,15 @@
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
 =======
+<<<<<<< HEAD
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
 >>>>>>> cd6b45332890e4485a6f4660bbcd6a637d33e928
+=======
+      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Aky77\\.nuget\\packages"
+>>>>>>> 44d55cf2561120249d860881c13217adcd50e41b
+>>>>>>> b1d4321ca5e8fafd80d7242dc214613a1b65e38e
     ]
   }
 }
