@@ -137,6 +137,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nWTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WTaskID"].ToString());
+                int N_CreatorID = myFunctions.GetUserID(User);
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -165,6 +166,8 @@ namespace SmartxAPI.Controllers
                     {
                         if (!DetailsTable.Columns.Contains("N_FnYearID"))
                             DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
+                         if (!DetailsTable.Columns.Contains("N_CreaterID"))
+                            DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_CreaterID", typeof(int), N_CreatorID);
                         int N_Order=1;
                         foreach (DataRow var in DetailsTable.Rows)
                         {
