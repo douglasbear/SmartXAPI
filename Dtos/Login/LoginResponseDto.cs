@@ -15,5 +15,6 @@ namespace SmartxAPI.Dtos.Login
 		public CompanyDto CompanyData {get; set;}
 		public FnYearDto FnYearData {get; set;}
 		public IEnumerable<MenuDto> MenuList {get;set;}
+		public IEnumerable<MenuDto> AccessList {get;set;}
     }
 }
