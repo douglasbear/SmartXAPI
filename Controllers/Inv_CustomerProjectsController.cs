@@ -159,6 +159,8 @@ namespace SmartxAPI.Controllers
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_TaskID", typeof(int), 0);
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_ProjectID", typeof(int), nProjectID);
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "B_Closed", typeof(int), 0);
+                                        TaskMaster.Rows[0]["B_Closed"] = 1;
                                         foreach (DataRow var in TaskMaster.Rows)
                                         {
                                             TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
@@ -202,10 +204,17 @@ namespace SmartxAPI.Controllers
                                         TaskMaster.Columns.Remove("N_StartDateUnitID");
                                         TaskMaster.Columns.Remove("N_EndDateBefore");
                                         TaskMaster.Columns.Remove("N_EndUnitID");
+                                        int N_CreatorID = myFunctions.GetUserID(User);
                                         for (int j = 0; j < TaskMaster.Rows.Count; j++)
                                         {
-                                            N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
 
+                                            N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
+                                            if (j == 0)
+                                            {
+                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID," + 0 + " as N_AssigneeID," + 0 + " as N_SubmitterID ,'" + N_CreatorID + "' as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
+                                                DataTable DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+                                                int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                                            }
                                             TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
                                             if (TaskStatus.Rows.Count > 0)
                                             {
