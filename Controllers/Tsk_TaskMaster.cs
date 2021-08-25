@@ -533,7 +533,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(ex));
             }
         }
-          [HttpGet("calenderData")]
+        [HttpGet("calenderData")]
         public ActionResult GetcalenderData(bool byUser)
 
         {
@@ -544,12 +544,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@nUserID", nUserID);
             string Criteria = "";
-             if (byUser == true)
+            if (byUser == true)
             {
                 Criteria = " and N_AssigneeID=@nUserID ";
             }
 
-            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID +" " +Criteria;
+            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try
@@ -575,8 +575,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-                [HttpGet("updateDashboard")]
-        public ActionResult UpdateDashboard(int nTaskID, int nStatus)
+        [HttpGet("updateDashboard")]
+        public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID)
         {
             try
             {
@@ -601,6 +601,7 @@ namespace SmartxAPI.Controllers
                     if (nStatus == 4)
                     {
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                        dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + nStageID + " where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
                     }
 
                     SqlTransaction transaction = connection.BeginTransaction();
