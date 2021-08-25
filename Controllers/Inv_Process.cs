@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
             N_FormID = 54;
         }
         [HttpGet("list")]
-        public ActionResult ProductionOrderList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult ProductionOrderList(int nFnYearId, bool b_IsProcess, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -54,12 +54,22 @@ namespace SmartxAPI.Controllers
             // xSortBy = " order by batch desc,D_TransDate desc";
             else
                 xSortBy = " order by " + xSortBy;
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' " + Searchkey;
+            if (b_IsProcess == true)
+            {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'   " + Searchkey;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' " + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
+
+            }
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' " + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 ) " + Searchkey;
+            {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' and  B_IsProcess=0   " + Searchkey;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'  and  B_IsProcess=0" + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' and  B_IsProcess=0) " + Searchkey;
 
-
+            }
             SortedList OutPut = new SortedList();
 
 
@@ -92,7 +102,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("productList")]
-        public ActionResult ProductList(int nFnYearID, int n_LocationID)
+        public ActionResult ProductList(int nFnYearID, int n_LocationID, bool b_IsProcess)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -100,7 +110,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            string sqlCommandText = "Select * from vw_InvItem_Search_WHLink_PRS  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+            string sqlCommandText = "";
+            if (b_IsProcess == true)
+                sqlCommandText = "Select * from vw_InvItem_Search_WHLink_PRS  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+            else
+                sqlCommandText = "Select * from vw_InvItem_Search_WHLink  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -509,7 +524,7 @@ namespace SmartxAPI.Controllers
                     int N_ItemID = myFunctions.getIntVAL(Master.Rows[0]["N_ItemID"].ToString());
                     string sql = "select N_BOMUnitId from Inv_ItemMaster where N_ItemID=" + N_ItemID;
                     object N_BOMUnitIdLoc = dLayer.ExecuteScalar(sql, QueryParamsList, connection);
-                    int   N_BOMUnitId = myFunctions.getIntVAL(N_BOMUnitIdLoc.ToString());
+                    int N_BOMUnitId = myFunctions.getIntVAL(N_BOMUnitIdLoc.ToString());
 
 
                     string qry = "select N_Qty from Inv_ItemUnit inner join Inv_ItemMaster on Inv_ItemUnit.N_ItemUnitID=Inv_ItemMaster.n_BOMUnitID  where Inv_ItemMaster.N_ItemID=" + N_ItemID + " and Inv_ItemUnit.N_CompanyID=" + nCompanyID + " and Inv_ItemUnit.N_ItemUnitID=" + N_BOMUnitId;
@@ -576,7 +591,7 @@ namespace SmartxAPI.Controllers
 }
 
 
-                    
+
 
 
 
