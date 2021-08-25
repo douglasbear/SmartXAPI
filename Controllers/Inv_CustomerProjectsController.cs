@@ -273,13 +273,19 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            if(xProjectCode==null)xProjectCode="";
+            if (xProjectCode == null) xProjectCode = "";
             string sqlCommandText = "";
+            //sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
             if (nOpportunityID > 0)
-                 sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID";
+            {
+                sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
+                "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_OpportunityID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType " +
+                "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID "+
+                "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
+            }
             else
-                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
-               
+                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
             Params.Add("@xProjectCode", xProjectCode);
