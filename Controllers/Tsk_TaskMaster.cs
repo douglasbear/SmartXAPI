@@ -376,6 +376,12 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    if (DetailTable.Columns.Contains("X_Assignee"))
+                        DetailTable.Columns.Remove("X_Assignee");
+                    if (DetailTable.Columns.Contains("x_Submitter"))
+                        DetailTable.Columns.Remove("x_Submitter");
+                    if (DetailTable.Columns.Contains("x_ClosedUser"))
+                        DetailTable.Columns.Remove("x_ClosedUser");
 
 
 
@@ -620,7 +626,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-                        dLayer.DeleteData("Tsk_TaskStatus", "N_TaskStatusID",myFunctions.getIntVAL(N_TaskStatusID1.ToString()), "", connection);
+                        dLayer.DeleteData("Tsk_TaskStatus", "N_TaskStatusID", myFunctions.getIntVAL(N_TaskStatusID1.ToString()), "", connection);
 
                     }
                     return Ok(_api.Success(""));
