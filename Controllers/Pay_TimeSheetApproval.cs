@@ -552,6 +552,116 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+         [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                DataTable MasterTable;
+                DataTable DetailTable;
+                DataTable EmpTable;
+                MasterTable = ds.Tables["master"];
+                DetailTable = ds.Tables["details"];
+                EmpTable = ds.Tables["employees"];
+
+                int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
+                int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                int nTimesheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimesheetID"].ToString());
+                if (MasterTable.Columns.Contains("n_EmpId"))
+                {
+                    int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpId"].ToString());
+                }
+
+                DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
+                DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
+                DateTime dToDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateTo"].ToString());
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    SortedList Params = new SortedList();
+                    SortedList QueryParams = new SortedList();
+
+                    // Auto Gen
+                    string X_BatchCode = "";
+                    var values = MasterTable.Rows[0]["X_BatchCode"].ToString();
+                    if (values == "@Auto")
+                    {
+                        // Params.Add("N_CompanyID", nCompanyID);
+                        // Params.Add("N_YearID", nFnYearId);
+                        // Params.Add("N_FormID", this.FormID);
+                        // Params.Add("N_BranchID", nBranchID);
+                        // X_BatchCode = dLayer.GetAutoNumber("Pay_TimeSheetEntry", "X_BatchCode", Params, connection, transaction);
+                        // if (X_BatchCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate timesheet entry Code")); }
+                        // MasterTable.Rows[0]["X_BatchCode"] = X_BatchCode;
+
+                        bool OK = true;
+                        int NewNo = 0, loop = 1;
+                        string X_TmpBatchCode = "";
+                        while (OK)
+                        {
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_BatchID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString()), connection, transaction).ToString());
+                            X_TmpBatchCode = dSalDate.Year.ToString("00##") + dSalDate.Month.ToString("0#") + NewNo.ToString("0#");
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And X_BatchCode = '" + X_TmpBatchCode + "'", connection, transaction).ToString()) == 0)
+                                OK = false;
+                            loop += 1;
+                        }
+                        MasterTable.Rows[0]["X_BatchCode"] = X_TmpBatchCode;
+                    }
+
+                    if (nTimesheetID > 0)
+                    {
+                        dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
+                    }
+                    for (int l = 0; l < EmpTable.Rows.Count; l++)
+                    {
+                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + myFunctions.getIntVAL(EmpTable.Rows[l]["N_EmpID"].ToString()), connection, transaction);
+                    }
+
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
+                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetEntry", "N_TimesheetID", DupCriteria, "", MasterTable, connection, transaction);
+                    if (nTimesheetID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+
+                    for (int j = 0; j < EmpTable.Rows.Count; j++)
+                    {
+                        EmpTable.Rows[j]["N_TimesheetID"] = nTimesheetID;
+                    }
+                    int nTimesheetEmpID = dLayer.SaveData("Pay_TimesheetEntryEmp", "N_TimeSheetEmpID", EmpTable, connection, transaction);
+                    if (nTimesheetEmpID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+
+                    for (int k = 0; k < DetailTable.Rows.Count; k++)
+                    {
+                        DetailTable.Rows[k]["N_TimesheetID"] = nTimesheetID;
+                    }
+                    int nImportDetailID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", DetailTable, connection, transaction);
+                    if (nImportDetailID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error("Unable to save"));
+                    }
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved Successfully"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(ex));
+            }
+        }
+
     }
 }
 
