@@ -49,6 +49,8 @@ namespace SmartxAPI.Dtos.SP
         public DateTime Expiry { get; set; }
         [NotMapped]
         public List<MenuDto> MenuList { get; set; }
+                [NotMapped]
+        public List<MenuDto> AccessList { get; set; }
         [NotMapped]
         public string I_CompanyLogo { get; set; }
         [NotMapped]
