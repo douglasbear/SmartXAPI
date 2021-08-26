@@ -587,8 +587,97 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+        [HttpPost("saveRelease")]
+        public ActionResult SaveDataRelease([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    string DocNo = "";
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    bool B_IsProcess = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsProcess"].ToString());
+                    int n_AssemblyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AssemblyID"].ToString());
+                    int N_locationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_locationID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int N_ReqId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReqId"].ToString());
+
+                    var ReleaseDate = MasterTable.Rows[0]["d_ReleaseDate"].ToString();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+
+                    if (!B_IsProcess)
+                    {
+                        object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'deleteAdd'," + n_AssemblyID.ToString() + "," + N_locationID.ToString() + ",'PRODUCTION RELEASE'", connection, transaction);
+                        if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to edit"));
+
+                        }
+
+                        //N_AssemblyID = 0;
+                    }
+                    string qry = "";
+                    if (B_IsProcess)
+                    {
+
+                        qry = "update Inv_Assembly set B_IsProcess=0, D_ReleaseDate='" + ReleaseDate + "'  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    }
+                    else
+                    {
+
+                        qry = "update Inv_Assembly set B_IsProcess=0, D_ReleaseDate='" + ReleaseDate + "'  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    }
+                    object Result = dLayer.ExecuteNonQuery(qry, Params, connection, transaction);
+
+                    if (myFunctions.getIntVAL(Result.ToString()) <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save");
+
+                    }
+                    string qry1 = "update Inv_AssemblyDetails set B_IsProcess=0  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    object Result1 = dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
+                    if (myFunctions.getIntVAL(Result1.ToString()) <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save");
+
+                    }
+                    object Res = null;
+                    //update status at Inv_prs
+                    if (N_ReqId > 0)    //N_Processed=1 if processed, N_Processed=2 if production completed.
+                        Res = dLayer.ExecuteNonQuery("Update Inv_PRS Set  N_Processed=2 Where N_PRSID=" + N_ReqId + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection, transaction);
+
+
+                    //if(B_IsProcess)
+                    dLayer.ExecuteNonQuery("[SP_BuildorUnbuild] 'insertAdd'," + n_AssemblyID.ToString() + "," + N_locationID, Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_Acc_InventoryPosting " + nCompanyID.ToString() + ",'PRODUCTION RELEASE'," + n_AssemblyID.ToString() + "," + myFunctions.GetUserID(User).ToString() + ",'" + System.Environment.MachineName + "'", Params, connection, transaction);
+
+
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved Successfully"));
+                }
+            }
+               catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+        }
     }
 }
+
 
 
 
