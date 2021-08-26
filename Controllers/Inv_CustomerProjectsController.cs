@@ -365,7 +365,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID=" + nCompanyId + " and N_ReferID=1310 and X_Name='" + xstage + "'", Params, connection);
+                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID=" + nCompanyId + " and N_ReferID=1388 and X_Name='" + xstage + "'", Params, connection);
                     if (N_StageID != null)
                         dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StageID=" + N_StageID.ToString() + " where N_CompanyID=@p1 and N_ProjectID=" + nProjectID, Params, connection);
 
