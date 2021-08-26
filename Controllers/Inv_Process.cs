@@ -112,9 +112,9 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
             if (b_IsProcess == true)
-                sqlCommandText = "Select * from vw_InvItem_Search_WHLink_PRS  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+                sqlCommandText = "Select * from vw_InvItem_Search_WHLink_PRS  Where   N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
             else
-                sqlCommandText = "Select * from vw_InvItem_Search_WHLink  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+                sqlCommandText = "Select * from vw_InvItem_Search_WHLink  Where   N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
 
             try
             {
@@ -167,11 +167,12 @@ namespace SmartxAPI.Controllers
 
                     string ItemCondition = "([Item Code] ='" + xInputVal + "' OR X_Barcode ='" + xInputVal + "')";
                     string SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'','Location') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + nCompanyID;
-                    int N_ItemID = myFunctions.getIntVAL(ItemDetails.Rows[0]["N_ItemID"].ToString());
+                 
                     ItemDetails = dLayer.ExecuteDataTable(SQL, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ItemDetails.AcceptChanges();
                     ItemDetails = myFunctions.AddNewColumnToDataTable(ItemDetails, "N_TxtQty", typeof(int), 0);
+                       int N_ItemID = myFunctions.getIntVAL(ItemDetails.Rows[0]["N_ItemID"].ToString());
 
                     if (ItemDetails.Rows.Count > 0)
                     {
@@ -239,11 +240,11 @@ namespace SmartxAPI.Controllers
 
 
 
-                    ItemDetails = _api.Format(ItemDetails);
-                    ItemStock = _api.Format(ItemStock);
-                    ProducionLabourCost = _api.Format(ProducionLabourCost);
-                    ProductionMachineCost = _api.Format(ProductionMachineCost);
-                    ItemStockUnit = _api.Format(ItemStockUnit);
+                    ItemDetails = _api.Format(ItemDetails,"ItemDetails");
+                    ItemStock = _api.Format(ItemStock,"ItemStock");
+                    ProducionLabourCost = _api.Format(ProducionLabourCost,"ProducionLabourCost");
+                    ProductionMachineCost = _api.Format(ProductionMachineCost,"ProductionMachineCost");
+                    ItemStockUnit = _api.Format(ItemStockUnit,"ItemStockUnit");
                     dt.Tables.Add(ItemDetails);
                     dt.Tables.Add(ItemStock);
                     dt.Tables.Add(ProducionLabourCost);
