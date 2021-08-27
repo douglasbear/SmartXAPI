@@ -70,7 +70,11 @@ namespace SmartxAPI.Controllers
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
-                            Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_CompanyID"]=nCompanyID;
+                            }
+                            //Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
                         }
                         if (dt.TableName == "Leads List")
                         {

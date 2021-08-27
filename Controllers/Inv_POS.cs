@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID,int dispCatID)
+        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -238,10 +238,10 @@ namespace SmartxAPI.Controllers
             if (nCategoryID > 0)
                 categorySql = " and N_CategoryID=@p2 ";
 
-            
-               
-                    if(dispCatID!=0)
-                    Searchkey = Searchkey + " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID="+dispCatID+")";
+
+
+            if (dispCatID != 0)
+                Searchkey = Searchkey + " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=" + dispCatID + ")";
 
 
             // sqlCommandText =" vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, "+
@@ -292,6 +292,18 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
+
+                    foreach (DataRow item in dt.Rows)
+                    {
+                        if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
+                        {
+                            string subItemSql = "select X_ItemName,N_Qty,N_ItemID,N_MainItemID,N_CompanyID,N_ItemDetailsID,X_ItemCode,X_ItemUnit from vw_InvItemDetails where N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyId;
+                            DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                            item["SubItems"] = subTbl;
+                        }
+                    }
+                    dt.AcceptChanges();
 
                     sqlCommandCount = "select count(*) from vw_InvItem_Search where N_CompanyID=@p1 and [Item Code]<>'001' and N_CategoryID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -305,7 +317,7 @@ namespace SmartxAPI.Controllers
                     // }
                     // else
                     // {
-                        return Ok(_api.Success(OutPut));
+                    return Ok(_api.Success(OutPut));
                     // }
                 }
             }
@@ -414,7 +426,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listallitems")]
-        public ActionResult GetAllItemDetails(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int nTerminalID, int nTerminalLocationID, int nCategory,int dispCatID)
+        public ActionResult GetAllItemDetails(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int nTerminalID, int nTerminalLocationID, int nCategory, int dispCatID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -434,7 +446,10 @@ namespace SmartxAPI.Controllers
                         _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_CompanyID=@nCompanyID";
 
 
-                    dt = dLayer.ExecuteDataTable(_sqlQuery , QueryParams, connection);
+                    dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+
 
 
                 }
