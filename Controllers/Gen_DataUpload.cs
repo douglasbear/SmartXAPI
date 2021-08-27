@@ -58,31 +58,24 @@ namespace SmartxAPI.Controllers
                         Mastertable.Columns.Add("Pkey_Code");
 
                         if (dt.TableName == "Customer List")
-                        {
                             xTableName = "Mig_Customers";
-
-                        }
                         if (dt.TableName == "Vendor List")
-                        {
                             xTableName = "Mig_Vendors";
-                        }
+                        if (dt.TableName == "Leads List")
+                            xTableName = "Mig_Leads";
+                        if (dt.TableName == "Chart of Accounts")
+                            xTableName = "Mig_Accounts";
+                        if (dt.TableName == "Products Stock")
+                            xTableName = "Mig_Stock";
+
                         if (dt.TableName == "Product List")
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
                             foreach (DataRow dtRow in Mastertable.Rows)
                             {
-                                dtRow["N_CompanyID"]=nCompanyID;
+                                dtRow["N_CompanyID"] = nCompanyID;
                             }
-                            //Mastertable.Rows[0]["N_CompanyID"] = nCompanyID;
-                        }
-                        if (dt.TableName == "Leads List")
-                        {
-                            xTableName = "Mig_Leads";
-                        }
-                        if (dt.TableName == "Chart of Accounts")
-                        {
-                            xTableName = "Mig_Accounts";
                         }
 
                         if (Mastertable.Rows.Count > 0)
