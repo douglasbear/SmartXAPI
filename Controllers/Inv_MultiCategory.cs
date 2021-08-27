@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
 
 
                         DataRow row = dt.NewRow();
-                        writefile(row["I_Image"].ToString(), DocumentPath, X_CategoryCode + "-Category-");
+                        writefile(i_Image.ToString(), DocumentPath, X_CategoryCode + "-Category-");
                         row["X_ImageName"] = X_CategoryCode + "-Category-" + ".jpg";
                         row["X_ImageLocation"] = DocumentPath;
                         row["N_ImageID"] = 0;
