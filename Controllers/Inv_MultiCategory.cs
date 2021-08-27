@@ -100,9 +100,11 @@ namespace SmartxAPI.Controllers
                     Images = dLayer.ExecuteScalar(_sqlImageQuery, Params, connection);
                     string _sqlImageQuery1 = "SELECT X_ImageLocation from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
                     ImageLocation = dLayer.ExecuteScalar(_sqlImageQuery1, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "I_Image", typeof(System.String), "");
+
                     if (Images != null)
                     {
-                        dt.Columns.Add("I_Image", typeof(System.String));
+
                         var path = ImageLocation.ToString() + "\\" + Images.ToString();
                         if (System.IO.File.Exists(path))
                         {
