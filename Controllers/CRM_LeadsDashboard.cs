@@ -64,12 +64,12 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
-                    object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
+                    object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2 and N_CompanyID=@p1", Params, connection);
+                    object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from crm_opportunity where X_OpportunityCode=@p2 and N_CompanyID=@p1", Params, connection);
                     Params.Add("@p3", N_OpportunityID);
                     
 
-                    object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
+                    object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3 and N_CompanyID=@p1", Params, connection);
                     if (N_OpportunityID != null)
                     {
                         InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
