@@ -78,9 +78,12 @@ namespace SmartxAPI.Controllers
 
 
                     DataRow row = defaultPaycode.NewRow();
-                    row["X_Addition"] = additions.ToString();
-                    row["X_Deductions "] = deductions.ToString();
-                    row["X_DefaultAbsentCode "] = AbsentCode.ToString();
+                    if (additions != null)
+                        row["X_Addition"] = additions.ToString();
+                    if (deductions != null)
+                        row["X_Deductions "] = deductions.ToString();
+                    if (AbsentCode != null)
+                        row["X_DefaultAbsentCode"] = AbsentCode.ToString();
                     //row["txtAdjustment "] = obj.ToString();
                     defaultPaycode.Rows.Add(row);
 
@@ -537,7 +540,7 @@ namespace SmartxAPI.Controllers
 
                                     Master.Add("N_WorkdHrs", N_WorkdHrs);
                                     Master.Add("N_WorkHours", N_WorkHours);
-                                    
+
                                 }
 
                             }
@@ -545,7 +548,7 @@ namespace SmartxAPI.Controllers
                     }
                     return Ok(_api.Success(dt));
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -553,7 +556,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
