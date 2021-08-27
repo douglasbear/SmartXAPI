@@ -230,6 +230,8 @@ namespace SmartxAPI.Controllers
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+                    int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+
 
 
 
@@ -288,6 +290,23 @@ namespace SmartxAPI.Controllers
                     else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
                         DetailTable.Rows[0]["N_Status"] = 1;
+                    }
+
+                    if (nProjectID>0)
+                    {
+                        if (nTaskId == 0)
+                        {
+                            object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from tsk_taskmaster where N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                            if (Count != null)
+                            {
+
+                                int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                                dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_Order=" + Count + " and N_ProjectID="+MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                            }
+                        }
+
                     }
 
 
