@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
                     int N_Order = 1;
                     foreach (DataRow var in MasterTable.Rows)
                     {
-                        dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + N_Order + " where N_CompanyID=@p1 and X_ActivityCode=" + var["x_ActivityCode"].ToString(), Params, connection);
+                        dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + N_Order + " where N_CompanyID=@p1 and x_TaskCode=" + var["x_TaskCode"].ToString(), Params, connection);
                         N_Order++;
                     }
                 }
