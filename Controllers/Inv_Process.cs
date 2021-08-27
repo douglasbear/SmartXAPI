@@ -105,16 +105,18 @@ namespace SmartxAPI.Controllers
         public ActionResult ProductList(int nFnYearID, int n_LocationID, bool b_IsProcess)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
+            
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@n_LocationID", n_LocationID);
 
             string sqlCommandText = "";
             if (b_IsProcess == true)
-                sqlCommandText = "Select * from vw_InvItem_Search_WHLink_PRS  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+                sqlCommandText = "Select * from vw_InvItem_Search_WHLink_PRS  Where N_CompanyID=@nCompanyID and N_WarehouseID=@n_LocationID and [Item Class]='Assembly Item'";
             else
-                sqlCommandText = "Select * from vw_InvItem_Search_WHLink  Where  and N_CompanyID=@nCompanyID and N_WarehouseID=" + n_LocationID + " and [Item Class]='Assembly Item'";
+                sqlCommandText = "Select * from vw_InvItem_Search_WHLink  Where N_CompanyID=@nCompanyID and N_WarehouseID=@n_LocationID and [Item Class]='Assembly Item'";
 
             try
             {
@@ -167,12 +169,12 @@ namespace SmartxAPI.Controllers
 
                     string ItemCondition = "([Item Code] ='" + xInputVal + "' OR X_Barcode ='" + xInputVal + "')";
                     string SQL = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'','Location') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + nCompanyID;
-                    int N_ItemID = myFunctions.getIntVAL(ItemDetails.Rows[0]["N_ItemID"].ToString());
+                    
                     ItemDetails = dLayer.ExecuteDataTable(SQL, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     ItemDetails.AcceptChanges();
                     ItemDetails = myFunctions.AddNewColumnToDataTable(ItemDetails, "N_TxtQty", typeof(int), 0);
-
+                    int N_ItemID = myFunctions.getIntVAL(ItemDetails.Rows[0]["N_ItemID"].ToString());
                     if (ItemDetails.Rows.Count > 0)
                     {
                         if (reqUnitId != 0 && reqQty != 0)
@@ -239,11 +241,12 @@ namespace SmartxAPI.Controllers
 
 
 
-                    ItemDetails = _api.Format(ItemDetails);
-                    ItemStock = _api.Format(ItemStock);
-                    ProducionLabourCost = _api.Format(ProducionLabourCost);
-                    ProductionMachineCost = _api.Format(ProductionMachineCost);
-                    ItemStockUnit = _api.Format(ItemStockUnit);
+                    ItemDetails = _api.Format(ItemDetails,"ItemDetails");
+                    ItemStock = _api.Format(ItemStock,"ItemStock");
+                    ProducionLabourCost = _api.Format(ProducionLabourCost,"ProducionLabourCost");
+                    ProductionMachineCost = _api.Format(ProductionMachineCost,"ProductionMachineCost");
+                    ItemStockUnit = _api.Format(ItemStockUnit,"ItemStockUnit");
+                    ByProductDetails = _api.Format(ByProductDetails,"ByProductDetails");
                     dt.Tables.Add(ItemDetails);
                     dt.Tables.Add(ItemStock);
                     dt.Tables.Add(ProducionLabourCost);
@@ -472,7 +475,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
 
-            string sqlCommandText = "Select * from vw_InvItem_Search  Where  and N_CompanyID=@nCompanyID and ([Item Class]='Stock Item' or [Item Class]='Assembly Item') and B_InActive=0";
+            string sqlCommandText = "Select * from vw_InvItem_Search  Where N_CompanyID=@nCompanyID and ([Item Class]='Stock Item' or [Item Class]='Assembly Item') and B_InActive=0";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -587,8 +590,97 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(e));
             }
         }
+
+        [HttpPost("saveRelease")]
+        public ActionResult SaveDataRelease([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    string DocNo = "";
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    bool B_IsProcess = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsProcess"].ToString());
+                    int n_AssemblyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_AssemblyID"].ToString());
+                    int N_locationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_locationID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int N_ReqId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReqId"].ToString());
+
+                    var ReleaseDate = MasterTable.Rows[0]["d_ReleaseDate"].ToString();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    SqlTransaction transaction = connection.BeginTransaction();
+
+
+                    if (!B_IsProcess)
+                    {
+                        object result = dLayer.ExecuteScalar("[SP_BuildorUnbuild] 'deleteAdd'," + n_AssemblyID.ToString() + "," + N_locationID.ToString() + ",'PRODUCTION RELEASE'", connection, transaction);
+                        if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable to edit"));
+
+                        }
+
+                        //N_AssemblyID = 0;
+                    }
+                    string qry = "";
+                    if (B_IsProcess)
+                    {
+
+                        qry = "update Inv_Assembly set B_IsProcess=0, D_ReleaseDate='" + ReleaseDate + "'  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    }
+                    else
+                    {
+
+                        qry = "update Inv_Assembly set B_IsProcess=0, D_ReleaseDate='" + ReleaseDate + "'  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    }
+                    object Result = dLayer.ExecuteNonQuery(qry, Params, connection, transaction);
+
+                    if (myFunctions.getIntVAL(Result.ToString()) <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save");
+
+                    }
+                    string qry1 = "update Inv_AssemblyDetails set B_IsProcess=0  where N_AssemblyID=" + n_AssemblyID + " and N_CompanyID=" + nCompanyID;
+                    object Result1 = dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
+                    if (myFunctions.getIntVAL(Result1.ToString()) <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok("Unable to save");
+
+                    }
+                    object Res = null;
+                    //update status at Inv_prs
+                    if (N_ReqId > 0)    //N_Processed=1 if processed, N_Processed=2 if production completed.
+                        Res = dLayer.ExecuteNonQuery("Update Inv_PRS Set  N_Processed=2 Where N_PRSID=" + N_ReqId + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection, transaction);
+
+
+                    //if(B_IsProcess)
+                    dLayer.ExecuteNonQuery("[SP_BuildorUnbuild] 'insertAdd'," + n_AssemblyID.ToString() + "," + N_locationID, Params, connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_Acc_InventoryPosting " + nCompanyID.ToString() + ",'PRODUCTION RELEASE'," + n_AssemblyID.ToString() + "," + myFunctions.GetUserID(User).ToString() + ",'" + System.Environment.MachineName + "'", Params, connection, transaction);
+
+
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved Successfully"));
+                }
+            }
+               catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+
+        }
     }
 }
+
 
 
 
