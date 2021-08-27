@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID)
+        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -239,6 +239,11 @@ namespace SmartxAPI.Controllers
                 categorySql = " and N_CategoryID=@p2 ";
 
 
+
+            if (dispCatID != 0)
+                Searchkey = Searchkey + " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=" + dispCatID + ")";
+
+
             // sqlCommandText =" vw_InvItem_Search.N_CompanyID, vw_InvItem_Search.N_ItemID, vw_InvItem_Search.[Item Code], vw_InvItem_Search.Description, vw_InvItem_Search.Description_Ar, vw_InvItem_Search.Category, "+
             //                 " vw_InvItem_Search.N_ClassID, vw_InvItem_Search.[Item Class], vw_InvItem_Search.N_Rate, vw_InvItem_Search.B_InActive, vw_InvItem_Search.[Part No], vw_InvItem_Search.N_ItemUnitID, vw_InvItem_Search.X_ItemUnit, "+
             //                 " vw_InvItem_Search.B_BaseUnit, vw_InvItem_Search.N_Qty, vw_InvItem_Search.N_BaseUnitID, vw_InvItem_Search.N_MinimumMargin, vw_InvItem_Search.N_ItemManufacturerID, vw_InvItem_Search.X_ItemManufacturer, "+
@@ -252,7 +257,7 @@ namespace SmartxAPI.Controllers
             //                 " FROM vw_InvItem_Search LEFT OUTER JOIN "+
             //                 " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4 " + categorySql + Searchkey;
             sqlCommandText = "  vw_InvItem_Search.*,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) as N_SellingPrice,Inv_ItemUnit.N_SellingPrice as N_SellingPrice2,'' as i_Image  FROM vw_InvItem_Search LEFT OUTER JOIN " +
-                                   " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID and  vw_InvItem_Search.X_SalesUnit=Inv_ItemUnit.X_ItemUnit" + categorySql + Searchkey;
+                                   " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + categorySql + Searchkey;
 
 
             Params.Add("@p1", nCompanyId);
@@ -287,6 +292,18 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
+
+                    foreach (DataRow item in dt.Rows)
+                    {
+                        if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
+                        {
+                            string subItemSql = "select X_ItemName,N_Qty,N_ItemID,N_MainItemID,N_CompanyID,N_ItemDetailsID,X_ItemCode,X_ItemUnit from vw_InvItemDetails where N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyId;
+                            DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                            item["SubItems"] = subTbl;
+                        }
+                    }
+                    dt.AcceptChanges();
 
                     sqlCommandCount = "select count(*) from vw_InvItem_Search where N_CompanyID=@p1 and [Item Code]<>'001' and N_CategoryID=@p2";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
@@ -294,14 +311,14 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     OutPut.Add("SearchKey", xSearchkey);
 
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Success(OutPut));
-                    }
+                    // if (dt.Rows.Count == 0)
+                    // {
+                    //     return Ok(_api.Warning("No Results Found"));
+                    // }
+                    // else
+                    // {
+                    return Ok(_api.Success(OutPut));
+                    // }
                 }
             }
             catch (Exception e)
@@ -409,7 +426,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listallitems")]
-        public ActionResult GetAllItemDetails(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int nTerminalID, int nTerminalLocationID, int nCategory)
+        public ActionResult GetAllItemDetails(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string xDate, int nTerminalID, int nTerminalLocationID, int nCategory, int dispCatID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -427,7 +444,12 @@ namespace SmartxAPI.Controllers
                         _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_LocationID=@nTerminalLocationID and N_CompanyID=@nCompanyID";
                     else
                         _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_CompanyID=@nCompanyID";
+
+
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+
+
 
 
                 }

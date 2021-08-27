@@ -159,6 +159,8 @@ namespace SmartxAPI.Controllers
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_TaskID", typeof(int), 0);
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "x_TaskCode", typeof(string), "");
                                         TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "n_ProjectID", typeof(int), nProjectID);
+                                        TaskMaster = myFunctions.AddNewColumnToDataTable(TaskMaster, "B_Closed", typeof(int), 0);
+                                        TaskMaster.Rows[0]["B_Closed"] = 1;
                                         foreach (DataRow var in TaskMaster.Rows)
                                         {
                                             TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
@@ -202,10 +204,17 @@ namespace SmartxAPI.Controllers
                                         TaskMaster.Columns.Remove("N_StartDateUnitID");
                                         TaskMaster.Columns.Remove("N_EndDateBefore");
                                         TaskMaster.Columns.Remove("N_EndUnitID");
+                                        int N_CreatorID = myFunctions.GetUserID(User);
                                         for (int j = 0; j < TaskMaster.Rows.Count; j++)
                                         {
-                                            N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
 
+                                            N_TaskID = dLayer.SaveDataWithIndex("Tsk_TaskMaster", "N_TaskID", "", "", j, TaskMaster, connection, transaction);
+                                            if (j == 0)
+                                            {
+                                                string qry = "Select " + nCompanyID + " as N_CompanyID," + 0 + " as N_TaskStatusID," + N_TaskID + " as N_TaskID," + 0 + " as N_AssigneeID," + 0 + " as N_SubmitterID ,'" + N_CreatorID + "' as  N_CreaterID,'" + DateTime.Today + "' as D_EntryDate,'" + "" + "' as X_Notes ," + 4 + " as N_Status ," + 100 + " as N_WorkPercentage";
+                                                DataTable DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+                                                int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                                            }
                                             TaskStatus = dLayer.ExecuteDataTable("select N_CompanyID,N_AssigneeID,N_SubmitterID,N_CreaterID,N_ClosedUserID,1 as N_Status from Prj_WorkflowTasks where N_CompanyID=" + nCompanyID + " and N_WTaskDetailID=" + TaskMaster.Rows[j]["N_WTaskDetailID"] + " order by N_Order", Params, connection, transaction);
                                             if (TaskStatus.Rows.Count > 0)
                                             {
@@ -273,13 +282,19 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            if(xProjectCode==null)xProjectCode="";
+            if (xProjectCode == null) xProjectCode = "";
             string sqlCommandText = "";
+            //sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
             if (nOpportunityID > 0)
-                 sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID";
+            {
+                sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
+                "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_CustomerID AS N_CrmCustomerID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType,vw_CRMOpportunity.N_WTaskID,vw_CRMOpportunity.X_WTask " +
+                "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID "+
+                "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
+            }
             else
-                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and X_ProjectCode=@xProjectCode";
-               
+                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
             Params.Add("@xProjectCode", xProjectCode);
@@ -356,7 +371,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID=" + nCompanyId + " and N_ReferID=1310 and X_Name='" + xstage + "'", Params, connection);
+                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID=" + nCompanyId + " and N_ReferID=1388 and X_Name='" + xstage + "'", Params, connection);
                     if (N_StageID != null)
                         dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StageID=" + N_StageID.ToString() + " where N_CompanyID=@p1 and N_ProjectID=" + nProjectID, Params, connection);
 
