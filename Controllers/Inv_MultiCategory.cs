@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
+        private readonly string reportPath;
 
         public Inv_MultiCategory(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -30,12 +31,14 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 1349;//form id of cost center
+            reportPath = conf.GetConnectionString("ReportPath");
         }
         [HttpGet("chart")]
         public ActionResult GetCategoryChart()
 
         {
             DataTable dt = new DataTable();
+            DataTable Images = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
@@ -50,7 +53,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
                 }
+
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -67,7 +72,65 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("childDetails")]
+        public ActionResult GetChildDetails(int nCategoryID)
 
+        {
+            DataTable dt = new DataTable();
+            object Images = "";
+            object ImageLocation = "";
+
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+
+
+            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,X_CategoryDisplay,  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " and N_CategoryDisplayID=" + nCategoryID + "";
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    //Image Retriving
+                    //Image Retriving
+                    string _sqlImageQuery = "SELECT X_ImageName from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
+                    Images = dLayer.ExecuteScalar(_sqlImageQuery, Params, connection);
+                    string _sqlImageQuery1 = "SELECT X_ImageLocation from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
+                    ImageLocation = dLayer.ExecuteScalar(_sqlImageQuery1, Params, connection);
+                    if (Images != null)
+                    {
+                        dt.Columns.Add("I_Image", typeof(System.String));
+                        var path = ImageLocation.ToString() + "\\" + Images.ToString();
+                        if (System.IO.File.Exists(path))
+                        {
+                            Byte[] bytes = System.IO.File.ReadAllBytes(path);
+                            dt.Rows[0]["I_Image"] = Convert.ToBase64String(bytes);
+
+                        }
+                    }
+                    dt.AcceptChanges();
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+
+                // dt = myFunctions.AddNewColumnToDataTable(dt, "I_Image", typeof(int), 0);
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(e));
+            }
+        }
 
         [HttpGet("list")]
         public ActionResult GetDepartmentList(string parent)
@@ -136,7 +199,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
-                      DataTable ImageTable = new DataTable();
+                    DataTable ImageTable = new DataTable();
                     string DocNo = "";
                     string X_CategoryCode = MasterTable.Rows[0]["x_CategoryCode"].ToString();
                     string X_CategoryDisplay = MasterTable.Rows[0]["x_CategoryDisplay"].ToString();
@@ -145,8 +208,11 @@ namespace SmartxAPI.Controllers
                     int N_CategoryDisplayID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CategoryDisplayID"].ToString());
                     int N_ParentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentID"].ToString());
                     int N_Position = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Position"].ToString());
-                    string i_Image= MasterTable.Rows[0]["I_Image"].ToString();
-                  //  if(MasterTable.Columns.Contains)
+                    string i_Image = MasterTable.Rows[0]["I_Image"].ToString();
+                    if (MasterTable.Columns.Contains("I_Image"))
+                        MasterTable.Columns.Remove("I_Image");
+
+                    //  if(MasterTable.Columns.Contains)
                     // MasterTable.Rows[0]["n_ManagerID"]=myFunctions.getIntVAL(MasterTable.Rows[0]["n_Empid"].ToString());  // commented by rks
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -218,36 +284,41 @@ namespace SmartxAPI.Controllers
                     }
 
 
+                    object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + N_CompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
+                    string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
+                    DocumentPath = DocumentPath + "DisplayImages";
+                    System.IO.Directory.CreateDirectory(DocumentPath);
+                    dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_CategoryDisplayID, "", connection, transaction);
+
+                    if (i_Image != null || i_Image != "")
+                    {
+                        DataTable dt = new DataTable();
+                        dt.Clear();
+
+                        dt.Columns.Add("X_ImageName", typeof(System.String));
+                        dt.Columns.Add("X_ImageLocation", typeof(System.String));
+                        dt.Columns.Add("N_ImageID", typeof(System.Int32));
+                        dt.Columns.Add("N_CompanyID", typeof(int));
+                        dt.Columns.Add("N_ItemID", typeof(int));
+                        dt.Columns.Add("N_Type", typeof(int));
+                        //ImageTable.Columns.Add("D_EntryDate", typeof(int));
+
+
+                        DataRow row = dt.NewRow();
+                        writefile(row["I_Image"].ToString(), DocumentPath, X_CategoryCode + "-Category-");
+                        row["X_ImageName"] = X_CategoryCode + "-Category-" + ".jpg";
+                        row["X_ImageLocation"] = DocumentPath;
+                        row["N_ImageID"] = 0;
+                        row["N_CompanyID"] = N_CompanyID;
+                        row["N_ItemID"] = N_CategoryDisplayID;
+                        row["N_Type"] = 2;
+                        dt.Rows.Add(row);
 
 
 
+                        dLayer.SaveData("Inv_DisplayImages", "N_ImageID", dt, connection, transaction);
 
-                    // object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-                    // string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-                    // DocumentPath = DocumentPath + "DisplayImages";
-                    // System.IO.Directory.CreateDirectory(DocumentPath);
-                    // dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
-
-                    // if (MasterTable.Rows.Count > 0)
-                    // {
-                    //     MasterTable.Columns.Add("X_ImageName", typeof(System.String));
-                    //     MasterTable.Columns.Add("X_ImageLocation", typeof(System.String));
-                    //     MasterTable.Columns.Add("N_ImageID", typeof(System.Int32));
-
-                    //     int i = 1;
-                    //     foreach (DataRow dRow in POS.Rows)
-                    //     {
-                    //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode + "-POS-" + i);
-                    //         dRow["X_ImageName"] = ItemCode + "-POS-" + i + ".jpg";
-                    //         dRow["X_ImageLocation"] = DocumentPath;
-                    //         dRow["N_ItemID"] = N_ItemID;
-                    //         i++;
-
-                    //     }
-                    //     POS.Columns.Remove("I_Image");
-                    //     dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
-
-                    // }
+                    }
 
                     // int nAdditionDetailsID = dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_ItemID", DetailTable, connection, transaction);
                     // if (nAdditionDetailsID <= 0)
@@ -287,7 +358,19 @@ namespace SmartxAPI.Controllers
             }
             return DeptCode;
         }
+        public bool writefile(string FileString, string Path, string Name)
+        {
 
+            string imageName = "\\" + Name + ".jpg";
+            string imgPath = Path + imageName;
+
+            byte[] imageBytes = Convert.FromBase64String(FileString);
+
+            System.IO.File.WriteAllBytes(imgPath, imageBytes);
+            return true;
+
+
+        }
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCategoryDisplayID)
         {
