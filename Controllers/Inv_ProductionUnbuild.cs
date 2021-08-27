@@ -402,8 +402,8 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpGet("itemDetails")]
-        public ActionResult GetItemDetails(int nCompanyId, string X_ItemCode ,int nLocationID)
+         [HttpGet("itemData")]
+        public ActionResult GetItemData(int nCompanyId, string X_ItemCode ,int nLocationID)
         {
 
             DataSet dt = new DataSet();
