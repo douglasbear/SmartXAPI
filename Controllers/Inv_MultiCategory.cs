@@ -85,10 +85,10 @@ namespace SmartxAPI.Controllers
                     bool B_ShowChild = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowChild", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
                     if (parent == "" || parent == null)
                     {
-                        if(B_ShowChild==true)
+                        if (B_ShowChild == true)
                         {
 
-                        sqlCommandText = "select * from Inv_ItemCategoryDisplay where N_CategoryDisplayID not in(select N_ParentID from Inv_ItemCategoryDisplay  ) and    N_ParentID >0 and N_CompanyID= " + nCompanyID + "";
+                            sqlCommandText = "select * from Inv_ItemCategoryDisplay where N_CategoryDisplayID not in(select N_ParentID from Inv_ItemCategoryDisplay  ) and    N_ParentID >0 and N_CompanyID= " + nCompanyID + "";
                         }
                         else
                         {
@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
 
                         sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + "  and isnull(N_ParentID,0)=0   Order By X_CategoryCode";
                     }
-                
+
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -136,6 +136,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
                     DataRow MasterRow = MasterTable.Rows[0];
+                      DataTable ImageTable = new DataTable();
                     string DocNo = "";
                     string X_CategoryCode = MasterTable.Rows[0]["x_CategoryCode"].ToString();
                     string X_CategoryDisplay = MasterTable.Rows[0]["x_CategoryDisplay"].ToString();
@@ -144,6 +145,8 @@ namespace SmartxAPI.Controllers
                     int N_CategoryDisplayID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CategoryDisplayID"].ToString());
                     int N_ParentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentID"].ToString());
                     int N_Position = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Position"].ToString());
+                    string i_Image= MasterTable.Rows[0]["I_Image"].ToString();
+                  //  if(MasterTable.Columns.Contains)
                     // MasterTable.Rows[0]["n_ManagerID"]=myFunctions.getIntVAL(MasterTable.Rows[0]["n_Empid"].ToString());  // commented by rks
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -214,6 +217,38 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error("Unable to save"));
                     }
 
+
+
+
+
+
+                    // object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
+                    // string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
+                    // DocumentPath = DocumentPath + "DisplayImages";
+                    // System.IO.Directory.CreateDirectory(DocumentPath);
+                    // dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
+
+                    // if (MasterTable.Rows.Count > 0)
+                    // {
+                    //     MasterTable.Columns.Add("X_ImageName", typeof(System.String));
+                    //     MasterTable.Columns.Add("X_ImageLocation", typeof(System.String));
+                    //     MasterTable.Columns.Add("N_ImageID", typeof(System.Int32));
+
+                    //     int i = 1;
+                    //     foreach (DataRow dRow in POS.Rows)
+                    //     {
+                    //         writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode + "-POS-" + i);
+                    //         dRow["X_ImageName"] = ItemCode + "-POS-" + i + ".jpg";
+                    //         dRow["X_ImageLocation"] = DocumentPath;
+                    //         dRow["N_ItemID"] = N_ItemID;
+                    //         i++;
+
+                    //     }
+                    //     POS.Columns.Remove("I_Image");
+                    //     dLayer.SaveData("Inv_DisplayImages", "N_ImageID", POS, connection, transaction);
+
+                    // }
+
                     // int nAdditionDetailsID = dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_ItemID", DetailTable, connection, transaction);
                     // if (nAdditionDetailsID <= 0)
                     // {
@@ -222,7 +257,7 @@ namespace SmartxAPI.Controllers
                     // }
                     // else
                     // {
-                        transaction.Commit();
+                    transaction.Commit();
                     // }
 
                     return Ok(_api.Success("Category Saved"));
