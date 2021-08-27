@@ -129,6 +129,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string X_UserCategoryCode = "";
+                    int FromUserCatID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_FromUserCatID"].ToString());
+                    int UserCatID =myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
                     var values = MasterTable.Rows[0]["X_UserCategoryCode"].ToString();
                     if (values == "@Auto")
                     {
@@ -143,6 +145,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("n_BranchId");
+                    MasterTable.Columns.Remove("N_FromUserCatID");
 
                     int N_UserCategoryID = dLayer.SaveData("sec_usercategory", "N_UserCategoryID", MasterTable, connection, transaction);
                     if (N_UserCategoryID <= 0)
@@ -152,6 +155,54 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        if(UserCatID==0)
+                        {
+                            DataTable UserPrevilegesDT = new DataTable();
+                            string sqlCommandText = "select 0 AS N_InternalID,"+N_UserCategoryID+" AS N_UserCategoryID, N_MenuID, B_Visible, B_Edit, B_Delete, B_Save, B_View from Sec_UserPrevileges where N_UserCategoryID="+FromUserCatID;
+                            UserPrevilegesDT = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                            if(UserPrevilegesDT.Rows.Count==0)
+                            {
+                                DataRow row = UserPrevilegesDT.NewRow();
+                                row["N_InternalID"] = 0;
+                                row["N_UserCategoryID"] = N_UserCategoryID;
+                                row["N_MenuID"] = 1;
+                                row["B_Visible"] = 1;
+                                row["B_Edit"] = 1;
+                                row["B_Delete"] = 1;
+                                row["B_Save"] = 1;
+                                row["B_View"] = null;
+                                UserPrevilegesDT.Rows.Add(row);
+
+                                DataRow row2 = UserPrevilegesDT.NewRow();
+                                row2["N_InternalID"] = 0;
+                                row2["N_UserCategoryID"] = N_UserCategoryID;
+                                row2["N_MenuID"] = 70;
+                                row2["B_Visible"] = 1;
+                                row2["B_Edit"] = 1;
+                                row2["B_Delete"] = 1;
+                                row2["B_Save"] = 1;
+                                row2["B_View"] = null;
+                                UserPrevilegesDT.Rows.Add(row2);
+
+                                DataRow row3 = UserPrevilegesDT.NewRow();
+                                row3["N_InternalID"] = 0;
+                                row3["N_UserCategoryID"] = N_UserCategoryID;
+                                row3["N_MenuID"] = 148;
+                                row3["B_Visible"] = 1;
+                                row3["B_Edit"] = 1;
+                                row3["B_Delete"] = 1;
+                                row3["B_Save"] = 1;
+                                row3["B_View"] = null;
+                                UserPrevilegesDT.Rows.Add(row2);
+                            }
+                            int N_InternalID = dLayer.SaveData("Sec_UserPrevileges", "N_InternalID", UserPrevilegesDT, connection, transaction);
+                            if (N_InternalID <= 0)
+                            {
+                                transaction.Rollback();
+                                return Ok( _api.Error( "Unable to save"));
+                            }
+                        }
+
                         transaction.Commit();
                         return GetCategoryDetails(N_UserCategoryID);
                     }
