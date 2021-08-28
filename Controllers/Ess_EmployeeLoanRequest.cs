@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -219,7 +219,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -318,7 +318,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xLoanID = dLayer.GetAutoNumber("Pay_LoanIssue", "n_LoanID", Params, connection, transaction);
-                        if (xLoanID == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Loan ID")); }
+                        if (xLoanID == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Loan ID")); }
                         MasterTable.Rows[0]["n_LoanID"] = xLoanID;
                     }
                     else
@@ -337,7 +337,7 @@ namespace SmartxAPI.Controllers
                     if (nLoanTransID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save Loan Request"));
+                        return Ok(api.Error(User,"Unable to save Loan Request"));
                     }
                     else
                     {
@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
                         if (N_LoanTransDeatilsID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to save Loan Request"));
+                            return Ok(api.Error(User,"Unable to save Loan Request"));
                         }
 
                         transaction.Commit();
@@ -386,7 +386,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -412,7 +412,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error("Transaction not Found"));
+                        return Ok(api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
                     int EmpID = myFunctions.getIntVAL(TransRow["N_EmpID"].ToString());
@@ -441,7 +441,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Loan request"));
+                        return Ok(api.Error(User,"Unable to delete Loan request"));
                     }
 
 
@@ -449,7 +449,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -587,7 +587,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 

@@ -96,7 +96,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
                         X_TaskCode = DocNo;
 
 
-                        if (X_TaskCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_TaskCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["X_TaskCode"] = X_TaskCode;
 
 
@@ -317,7 +317,7 @@ namespace SmartxAPI.Controllers
                     if (nTaskId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
@@ -328,7 +328,7 @@ namespace SmartxAPI.Controllers
                     if (nTaskStatusID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
 
                     if (Attachment.Rows.Count > 0)
@@ -340,7 +340,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     transaction.Commit();
@@ -349,7 +349,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -414,7 +414,7 @@ namespace SmartxAPI.Controllers
                     if (nTaskStatusID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     if (nStatus == "4")
                     {
@@ -427,7 +427,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -462,7 +462,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     transaction.Commit();
@@ -471,7 +471,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -504,7 +504,7 @@ namespace SmartxAPI.Controllers
                         if (nCommentsID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
 
                     }
@@ -514,7 +514,7 @@ namespace SmartxAPI.Controllers
                         if (nTaskStatusID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
 
 
@@ -527,7 +527,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -549,13 +549,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete"));
+                        return Ok(_api.Error(User,"Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         [HttpGet("calenderData")]
@@ -596,7 +596,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -641,7 +641,7 @@ namespace SmartxAPI.Controllers
                         if (nID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
                         transaction.Commit();
                         return Ok(_api.Success(""));
@@ -660,7 +660,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

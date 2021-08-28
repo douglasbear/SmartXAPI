@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         ExecutiveCode = dLayer.GetAutoNumber("inv_salesman", "X_SalesmanCode", Params, connection, transaction);
-                        if (ExecutiveCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Sales Executive Code")); }
+                        if (ExecutiveCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Sales Executive Code")); }
                         MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
 
                     }
@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
                     if (N_SalesmanID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -186,13 +186,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Sales Executive"));
+                        return Ok(_api.Error(User,"Unable to delete Sales Executive"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -213,13 +213,13 @@ namespace SmartxAPI.Controllers
         //         }
         //         else
         //         {
-        //             return Ok(_api.Error("Unable to delete Sales Executive"));
+        //             return Ok(_api.Error(User,"Unable to delete Sales Executive"));
         //         }
 
         //     }
         //     catch (Exception ex)
         //     {
-        //         return Ok(_api.Error(ex));
+        //         return Ok(_api.Error(User,ex));
         //     }
 
 

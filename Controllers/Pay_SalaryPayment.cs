@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -362,7 +362,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -416,7 +416,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
                         }
 
@@ -431,14 +431,14 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
 
                         }
                         // if (Results <= 0)
                         // {
                         //     transaction.Rollback();
-                        //     return Ok(_api.Error("Unable to delete "));
+                        //     return Ok(_api.Error(User,"Unable to delete "));
                         // }
 
                     }
@@ -451,7 +451,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete"));
+                        return Ok(_api.Error(User,"Unable to delete"));
                     }
 
                 }
@@ -459,7 +459,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -524,7 +524,7 @@ namespace SmartxAPI.Controllers
                         X_ReceiptNo = DocNo;
 
 
-                        if (X_ReceiptNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_ReceiptNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = X_ReceiptNo;
 
                     }
@@ -539,7 +539,7 @@ namespace SmartxAPI.Controllers
                     if (nReceiptID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
 
                     for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
@@ -561,7 +561,7 @@ namespace SmartxAPI.Controllers
                     if (nReceiptDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Pay not selected"));
+                        return Ok(_api.Error(User,"Pay not selected"));
                     }
 
 
@@ -584,7 +584,7 @@ namespace SmartxAPI.Controllers
                                 catch (Exception ex)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(ex));
+                                    return Ok(_api.Error(User,ex));
                                 }
 
                             }
@@ -601,7 +601,7 @@ namespace SmartxAPI.Controllers
                                 catch (Exception ex)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(ex));
+                                    return Ok(_api.Error(User,ex));
                                 }
                             }
                         }
@@ -619,7 +619,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
 
                     }
@@ -630,7 +630,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
     }

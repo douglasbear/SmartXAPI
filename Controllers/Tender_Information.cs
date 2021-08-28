@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
       
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         TenderCode = dLayer.GetAutoNumber("Prj_Tender", "X_TenderCode", Params, connection, transaction);
-                        if (TenderCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate TenderCode")); }
+                        if (TenderCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate TenderCode")); }
                         MasterTable.Rows[0]["X_TenderCode"] = TenderCode;
                     }
 
@@ -127,7 +127,7 @@ namespace SmartxAPI.Controllers
                     if (nTenderID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -138,7 +138,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
         [HttpDelete("delete")]
@@ -197,13 +197,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Tender Information"));
+                    return Ok(api.Error(User,"Unable to delete Tender Information"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

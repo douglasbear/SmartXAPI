@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
                     if (nBrandID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(_api.Error(User,ex));
             }
         }
         [HttpDelete("delete")]
@@ -122,7 +122,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
                 {
-                    return Ok(_api.Error(ex));
+                    return Ok(_api.Error(User,ex));
                 }
         }
 
@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }   
         }
     }

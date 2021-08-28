@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         RequestCode = dLayer.GetAutoNumber("Pay_TrainingRequest", "X_RequestCode", Params, connection, transaction);
-                        if (RequestCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Training Request")); }
+                        if (RequestCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Training Request")); }
                         MasterTable.Rows[0]["X_RequestCode"] = RequestCode;
                     }
                     
@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
 
@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-               return Ok(api.Error(e));
+               return Ok(api.Error(User,e));
             }
 
 
@@ -199,7 +199,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -227,13 +227,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Training Request"));
+                    return Ok(api.Error(User,"Unable to delete Training Request"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
         }

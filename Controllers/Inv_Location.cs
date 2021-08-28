@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok( _api.Error(User,e));
             }
         }
 
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 450);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         LocationCode = dLayer.GetAutoNumber("Inv_Location", "X_LocationCode", Params, connection, transaction);
-                        if (LocationCode == "") { transaction.Rollback(); return Ok( _api.Error( "Unable to generate Location Code")); }
+                        if (LocationCode == "") { transaction.Rollback(); return Ok( _api.Error(User, "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
 
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -213,13 +213,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok( _api.Error("Unable to delete Location"));
+                    return Ok( _api.Error(User,"Unable to delete Location"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 

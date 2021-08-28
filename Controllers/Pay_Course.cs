@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
 
@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                          Params.Add("N_FormID", this.N_FormID);
                         CourseCode = dLayer.GetAutoNumber("Pay_Course", "X_CourseCode", Params, connection, transaction);
-                        if (CourseCode == " ") { transaction.Rollback();return Ok(api.Error("Unable to generate Course Details")); }
+                        if (CourseCode == " ") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Course Details")); }
                         MasterTable.Rows[0]["X_CourseCode"] = CourseCode;
                     }
                     
@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                     if (nCourseID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -134,7 +134,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
 
@@ -161,13 +161,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Course Details "));
+                    return Ok(api.Error(User,"Unable to delete Course Details "));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
         }

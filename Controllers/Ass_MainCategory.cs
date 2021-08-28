@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
 
@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         AssetMainCode = dLayer.GetAutoNumber("Ass_AssetMainCategory", "X_MainCategoryCode", Params, connection, transaction);
-                        if (AssetMainCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Asset Code")); }
+                        if (AssetMainCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Asset Code")); }
                         MasterTable.Rows[0]["X_MainCategoryCode"] = AssetMainCode;
                     }
 
@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
                     if (nAssetMainId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -180,13 +180,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Asset"));
+                    return Ok(api.Error(User,"Unable to delete Asset"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

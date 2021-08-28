@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -568,7 +568,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -614,7 +614,7 @@ namespace SmartxAPI.Controllers
                         // Params.Add("N_FormID", this.FormID);
                         // Params.Add("N_BranchID", nBranchID);
                         // X_BatchCode = dLayer.GetAutoNumber("Pay_TimeSheetEntry", "X_BatchCode", Params, connection, transaction);
-                        // if (X_BatchCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate timesheet entry Code")); }
+                        // if (X_BatchCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate timesheet entry Code")); }
                         // MasterTable.Rows[0]["X_BatchCode"] = X_BatchCode;
 
                         bool OK = true;
@@ -646,7 +646,7 @@ namespace SmartxAPI.Controllers
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
 
                     for (int j = 0; j < EmpTable.Rows.Count; j++)
@@ -657,7 +657,7 @@ namespace SmartxAPI.Controllers
                     if (nTimesheetEmpID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
 
                     for (int k = 0; k < DetailTable.Rows.Count; k++)
@@ -668,7 +668,7 @@ namespace SmartxAPI.Controllers
                     if (nImportDetailID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
 
                     transaction.Commit();
@@ -677,7 +677,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

@@ -92,7 +92,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return Ok(_api.Error(e));
+//                 return Ok(_api.Error(User,e));
 //             }
 
 //         }
@@ -166,7 +166,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return Ok(_api.Error(e));
+//                 return Ok(_api.Error(User,e));
 //             }
 
 //         }
@@ -304,7 +304,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return Ok(_api.Error(e));
+//                 return Ok(_api.Error(User,e));
 //             }
 //         }
 
@@ -356,7 +356,7 @@
 //                     if (N_ItemID <= 0)
 //                     {
 //                         transaction.Rollback();
-//                         return Ok(_api.Error("Unable to save"));
+//                         return Ok(_api.Error(User,"Unable to save"));
 //                     }
 
 //                     if (image.Length > 0)
@@ -436,7 +436,7 @@
 //                     if (BaseUnitID <= 0)
 //                     {
 //                         transaction.Rollback();
-//                         return Ok(_api.Error("Unable to save"));
+//                         return Ok(_api.Error(User,"Unable to save"));
 //                     }
 
 //                     dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
@@ -513,7 +513,7 @@
 //             }
 //             catch (Exception ex)
 //             {
-//                 return Ok(_api.Error(ex));
+//                 return Ok(_api.Error(User,ex));
 //             }
 //         }
 //         public bool writefile(string FileString, string Path, string Name)
@@ -592,7 +592,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return Ok(_api.Error(e));
+//                 return Ok(_api.Error(User,e));
 //             }
 
 //         }
@@ -628,7 +628,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return Ok(_api.Error(e));
+//                 return Ok(_api.Error(User,e));
 //             }
 //         }
 
@@ -648,7 +648,7 @@
 //                     object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
 //                     if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
 //                     {
-//                         return Ok(_api.Error("Year Closed , Unable to delete product."));
+//                         return Ok(_api.Error(User,"Year Closed , Unable to delete product."));
 //                     }
 
 //                     dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", nItemID, "", connection, transaction);
@@ -664,13 +664,13 @@
 //                     {
 //                         transaction.Rollback();
 
-//                         return Ok(_api.Error("Unable to delete product category"));
+//                         return Ok(_api.Error(User,"Unable to delete product category"));
 //                     }
 //                 }
 //             }
 //             catch (Exception ex)
 //             {
-//                 return Ok(_api.Error("Can't be delete,It has been used!"));
+//                 return Ok(_api.Error(User,"Can't be delete,It has been used!"));
 //             }
 
 

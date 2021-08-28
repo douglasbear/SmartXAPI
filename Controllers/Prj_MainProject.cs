@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
 
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
         
@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
 
@@ -179,7 +179,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
 
@@ -209,7 +209,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         ProjectCode = dLayer.GetAutoNumber("Prj_MainProject", "X_MainProjectCode", Params, connection, transaction);
-                        if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Main Project")); }
+                        if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Main Project")); }
                         MasterTable.Rows[0]["X_MainProjectCode"] = ProjectCode;
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
@@ -219,7 +219,7 @@ namespace SmartxAPI.Controllers
                     if (nMainProjectID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -230,7 +230,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -258,13 +258,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Main Project"));
+                    return Ok(api.Error(User,"Unable to delete Main Project"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
 
 
@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
                         X_ProjectCode = values;
 
 
-                        if (X_ProjectCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate")); }
+                        if (X_ProjectCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["X_ProjectCode"] = X_ProjectCode;
 
                     }
@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
                     //     Params.Add("N_YearID", nFnYearId);
                     //     Params.Add("N_FormID", this.N_FormID);
                     //     ProjectCode = dLayer.GetAutoNumber("inv_CustomerProjects", "X_ProjectCode", Params, connection, transaction);
-                    //     if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Project Information")); }
+                    //     if (ProjectCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Project Information")); }
                     //     MasterTable.Rows[0]["X_ProjectCode"] = ProjectCode;
                     // }
                     MasterTable.Columns.Remove("n_FnYearId");
@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
                     if (nProjectID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
                                         foreach (DataRow var in TaskMaster.Rows)
                                         {
                                             TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
-                                            if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Task Code")); }
+                                            if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Task Code")); }
                                             var["x_TaskCode"] = TaskCode;
 
                                             if (var["N_StartDateUnitID"].ToString() == "248")
@@ -236,7 +236,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -263,13 +263,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Project Information"));
+                    return Ok(api.Error(User,"Unable to delete Project Information"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
         }
@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("AccountList")]
@@ -354,7 +354,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("stageupdate")]
@@ -381,7 +381,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -437,7 +437,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
     }

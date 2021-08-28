@@ -63,7 +63,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
 
                         object LedgerCodeCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),X_LedgerCode)) From Acc_MastLedger where N_GroupID =" + N_GroupID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId, connection, transaction);
                         if (LedgerCodeCount == null)
-                            return Ok(api.Error("Error"));
+                            return Ok(api.Error(User,"Error"));
 
                         object LedgerCodeObj = dLayer.ExecuteScalar("select X_GroupCode From Acc_MastGroup where N_GroupID =" + N_GroupID + " and N_CompanyID =" + nCompanyID + " and N_FnYearID=" + nFnYearId, connection, transaction);
 
@@ -189,7 +189,7 @@ namespace SmartxAPI.Controllers
                     if (Result <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
 
                         object GroupCodeCount = dLayer.ExecuteScalar("select COUNT(convert(numeric,X_GroupCode)) From Acc_MastGroup where X_Level like '" + level + "%' and N_CompanyID =" + nCompanyID + " and  N_ParentGroup =" + N_ParentGroupID + "  and N_FnYearID=" + nFnYearId, connection, transaction);
                         if (GroupCodeCount == null)
-                            return Ok(api.Error("Error"));
+                            return Ok(api.Error(User,"Error"));
 
                         object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =" + N_ParentGroupID + " and N_CompanyID= " + nCompanyID + " and N_FnYearID =" + nFnYearId, connection, transaction);
 
@@ -279,7 +279,7 @@ namespace SmartxAPI.Controllers
                     if (Result <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -301,7 +301,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -341,11 +341,11 @@ namespace SmartxAPI.Controllers
 
                         if (CheckTransaction(accountID,connection) == 1)
                         {
-                            return Ok(api.Error("Transaction Started"));
+                            return Ok(api.Error(User,"Transaction Started"));
                         }
                         else if (CheckTransactionNotPosted(accountID,nFnYearID,connection) == 1)
                         {
-                            return Ok(api.Error("Transaction Pending"));
+                            return Ok(api.Error(User,"Transaction Pending"));
                         }
                         Result = dLayer.DeleteData("Acc_MastLedger", "N_LedgerID", accountID, "N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID,connection);
 
@@ -363,13 +363,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(api.Error("Unable to delete"));
+                        return Ok(api.Error(User,"Unable to delete"));
                     }
 
                 }
                 catch (Exception ex)
                 {
-                    return Ok(api.Error(ex));
+                    return Ok(api.Error(User,ex));
                 }
 
 

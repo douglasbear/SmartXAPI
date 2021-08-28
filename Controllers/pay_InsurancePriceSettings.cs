@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
                 }
                 catch (Exception e)
                 {
-                    return Ok(_api.Error(e));
+                    return Ok(_api.Error(User,e));
                 }
         }
 
@@ -159,14 +159,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_InsuranceSettingsID", nInsuranceSettingsID);
                         InsuranceSettingsCode = dLayer.GetAutoNumber("Pay_InsuranceSettings", "X_InsuranceSettingsCode", Params, connection, transaction);
-                        if (InsuranceSettingsCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Grade Code")); }
+                        if (InsuranceSettingsCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["X_InsuranceSettingsCode"] = InsuranceSettingsCode;
                     }
                     nInsuranceSettingsID = dLayer.SaveData("Pay_InsuranceSettings", "N_InsuranceSettingsID", MasterTable, connection, transaction);
                     if (nInsuranceSettingsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     
                     dLayer.DeleteData("Pay_InsuranceSettingsDetails", "N_InsuranceSettingsID", nInsuranceSettingsID, "", connection, transaction);
@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -210,12 +210,12 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to Delete"));
+                    return Ok(_api.Error(User,"Unable to Delete"));
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

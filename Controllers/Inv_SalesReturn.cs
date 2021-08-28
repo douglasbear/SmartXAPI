@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("listdetails")]
@@ -298,7 +298,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -347,7 +347,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Return Number")); }
+                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Return Number")); }
                         MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
                     }
 
@@ -370,7 +370,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                         // string sqlCommandText = "";
                         // SortedList DeleteParams = new SortedList();
@@ -407,7 +407,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -461,7 +461,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                         dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     else
-                        return Ok(_api.Error("Payment processed! Unable to delete"));
+                        return Ok(_api.Error(User,"Payment processed! Unable to delete"));
 
 
                 }
@@ -474,7 +474,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }
@@ -523,7 +523,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

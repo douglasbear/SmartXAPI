@@ -55,7 +55,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xAirportCode = dLayer.GetAutoNumber("Ffw_Airport", "x_AirportCode", Params, connection, transaction);
-                        if (xAirportCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Airport Code")); }
+                        if (xAirportCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Airport Code")); }
                         MasterTable.Rows[0]["x_AirportCode"] = xAirportCode;
                     }
                     else
@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
                     if (nAirportID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Airport"));
+                        return Ok(_api.Error(User,"Unable to save Airport"));
                     }
                     else
                     {
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -155,13 +155,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Airport"));
+                        return Ok(_api.Error(User,"Unable to delete Airport"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
                         // }
                 
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }   
         }
 
@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
 
         //     catch (Exception ex)
         //     {
-        //         return Ok(api.Error(ex));
+        //         return Ok(api.Error(User,ex));
         //     }
         // }
 
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
                     return Ok(_api.Success(dt));
                 
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }   
         }
 

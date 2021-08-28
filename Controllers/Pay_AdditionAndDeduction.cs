@@ -238,7 +238,7 @@ if (xBatch != null)
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -372,7 +372,7 @@ if (xBatch != null)
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -417,7 +417,7 @@ if (xBatch != null)
                         if (x_Batch == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to generate batch"));
+                            return Ok(_api.Error(User,"Unable to generate batch"));
 
                         }
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
@@ -428,7 +428,7 @@ if (xBatch != null)
                     if (N_TransID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -476,7 +476,7 @@ if (xBatch != null)
                         if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
+                            return Ok(_api.Error(User,"Unable to save"));
                         }
                         else
                         {
@@ -489,7 +489,7 @@ if (xBatch != null)
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -547,7 +547,7 @@ if (xBatch != null)
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -568,14 +568,14 @@ if (xBatch != null)
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete batch"));
+                            return Ok(_api.Error(User,"Unable to delete batch"));
                         }
                         Results = dLayer.DeleteData("Pay_MonthlyAddOrDedDetails", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User),connection,transaction);
 
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete batch"));
+                            return Ok(_api.Error(User,"Unable to delete batch"));
                         }
                     
                     transaction.Commit();
@@ -584,7 +584,7 @@ if (xBatch != null)
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }
@@ -618,7 +618,7 @@ if (xBatch != null)
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
