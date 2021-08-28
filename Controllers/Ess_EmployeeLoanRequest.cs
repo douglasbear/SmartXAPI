@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
-
+ 
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (empID != 0 && empID != null)
