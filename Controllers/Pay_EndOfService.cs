@@ -422,14 +422,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("paymentDetails")]
-        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate,int nPayID)
+        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate)//,int nPayID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nEmpID", nEmpID);
-            //string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+            string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
 
           
 
@@ -440,28 +440,28 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    SortedList proParams2 = new SortedList(){
-                                    {"N_CompanyID",nCompanyID},
-                                    {"N_EmpID",nEmpID},
-                                    {"N_FnYearID",nFnYearID},
-                                    {"D_Date",dDate},
-                                    {"N_PayID",nPayID}};
+                    // SortedList proParams2 = new SortedList(){
+                    //                 {"N_CompanyID",nCompanyID},
+                    //                 {"N_EmpID",nEmpID},
+                    //                 {"N_FnYearID",nFnYearID},
+                    //                 {"D_Date",dDate},
+                    //                 {"N_PayID",nPayID}};
 
-                    dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
+                    // dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
 
-                    //dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    // string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
-                    // DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    // string TotalCount = "0";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
 
-                    // if (Summary.Rows.Count > 0)
-                    // {
-                    //     DataRow drow = Summary.Rows[0];
-                    //     TotalCount = drow["N_Count"].ToString();
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
 
-                    // }
+                    }
                     OutPut.Add("Details", api.Format(dt));
-                    //OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
