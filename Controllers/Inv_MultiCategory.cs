@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
 
-            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,X_CategoryDisplay,  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " and N_CategoryDisplayID=" + nCategoryID + "";
+            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,X_CategoryDisplay  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " and N_CategoryDisplayID=" + nCategoryID + "";
 
 
             try
@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
 
 
                         DataRow row = dt.NewRow();
-                        writefile(row["I_Image"].ToString(), DocumentPath, X_CategoryCode + "-Category-");
+                        writefile(i_Image.ToString(), DocumentPath, X_CategoryCode + "-Category-");
                         row["X_ImageName"] = X_CategoryCode + "-Category-" + ".jpg";
                         row["X_ImageLocation"] = DocumentPath;
                         row["N_ImageID"] = 0;
