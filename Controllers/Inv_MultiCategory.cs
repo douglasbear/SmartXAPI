@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
 
-            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,X_CategoryDisplay,  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " and N_CategoryDisplayID=" + nCategoryID + "";
+            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,X_CategoryDisplay  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " and N_CategoryDisplayID=" + nCategoryID + "";
 
 
             try
