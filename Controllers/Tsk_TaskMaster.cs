@@ -230,6 +230,8 @@ namespace SmartxAPI.Controllers
                     int nTaskId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     string X_TaskCode = MasterTable.Rows[0]["X_TaskCode"].ToString();
                     string xTaskSummery = MasterTable.Rows[0]["x_TaskSummery"].ToString();
+                    int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
+
 
 
 
@@ -288,6 +290,23 @@ namespace SmartxAPI.Controllers
                     else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
                         DetailTable.Rows[0]["N_Status"] = 1;
+                    }
+
+                    if (nProjectID>0)
+                    {
+                        if (nTaskId == 0)
+                        {
+                            object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from tsk_taskmaster where N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                            if (Count != null)
+                            {
+
+                                int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                                dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_Order=" + Count + " and N_ProjectID="+MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                            }
+                        }
+
                     }
 
 
@@ -376,6 +395,12 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    if (DetailTable.Columns.Contains("X_Assignee"))
+                        DetailTable.Columns.Remove("X_Assignee");
+                    if (DetailTable.Columns.Contains("x_Submitter"))
+                        DetailTable.Columns.Remove("x_Submitter");
+                    if (DetailTable.Columns.Contains("x_ClosedUser"))
+                        DetailTable.Columns.Remove("x_ClosedUser");
 
 
 
@@ -576,7 +601,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("updateDashboard")]
-        public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID)
+        public ActionResult UpdateDashboard(int nTaskID, int nStatus, int nProjectID, int nStageID, bool b_Closed)
         {
             try
             {
@@ -597,24 +622,40 @@ namespace SmartxAPI.Controllers
                     int N_TaskStatusID = 0;
                     Params.Add("N_CompanyID", nCompanyID);
                     N_TaskStatusID1 = dLayer.ExecuteScalar("select max(N_TaskStatusID) from Tsk_TaskStatus where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-
-                    if (nStatus == 4)
+                    if (b_Closed)
                     {
-                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-                        dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + nStageID + " where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
-                    }
+                        if (nStatus == 4)
+                        {
+                            dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                            //Layer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + nStageID + " where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                        }
+                        // dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                        if(nStageID>0)
+                            dLayer.ExecuteNonQuery("Update inv_customerprojects SET N_StageID=" + nStageID + " where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
 
-                    SqlTransaction transaction = connection.BeginTransaction();
-                    string qry = "Select " + nCompanyID + " as N_CompanyID," + N_TaskStatusID + " as N_TaskStatusID," + nTaskID + " as N_TaskID," + 0 + " as N_AssigneeID," + 0 + " as N_SubmitterID ,'" + N_CreatorID + "' as  N_CreaterID,'" + D_EntryDate + "' as D_EntryDate,'" + "" + "' as X_Notes ," + nStatus + " as N_Status ," + 100 + " as N_WorkPercentage";
-                    DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
-                    int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
-                    if (nID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+
+                        SqlTransaction transaction = connection.BeginTransaction();
+                        string qry = "Select " + nCompanyID + " as N_CompanyID," + N_TaskStatusID + " as N_TaskStatusID," + nTaskID + " as N_TaskID," + 0 + " as N_AssigneeID," + 0 + " as N_SubmitterID ,'" + N_CreatorID + "' as  N_CreaterID,'" + D_EntryDate + "' as D_EntryDate,'" + "" + "' as X_Notes ," + nStatus + " as N_Status ," + 100 + " as N_WorkPercentage";
+                        DetailTable = dLayer.ExecuteDataTable(qry, Params, connection, transaction);
+                        int nID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
+                        if (nID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error("Unable To Save"));
+                        }
+                        transaction.Commit();
+                        return Ok(_api.Success(""));
                     }
-                    transaction.Commit();
+                    else
+                    {
+                        dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=0 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), Params, connection);
+                        dLayer.DeleteData("Tsk_TaskStatus", "N_TaskStatusID", myFunctions.getIntVAL(N_TaskStatusID1.ToString()), "", connection);
+
+                    }
                     return Ok(_api.Success(""));
+
+
+
                 }
             }
             catch (Exception ex)

@@ -78,9 +78,12 @@ namespace SmartxAPI.Controllers
 
 
                     DataRow row = defaultPaycode.NewRow();
-                    row["X_Addition"] = additions.ToString();
-                    row["X_Deductions "] = deductions.ToString();
-                    row["X_DefaultAbsentCode "] = AbsentCode.ToString();
+                    if (additions != null)
+                        row["X_Addition"] = additions.ToString();
+                    if (deductions != null)
+                        row["X_Deductions "] = deductions.ToString();
+                    if (AbsentCode != null)
+                        row["X_DefaultAbsentCode"] = AbsentCode.ToString();
                     //row["txtAdjustment "] = obj.ToString();
                     defaultPaycode.Rows.Add(row);
 
@@ -114,7 +117,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("employeeDetails")]
-        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, string xPayrunText, bool bCategoryWiseDeduction, bool bCategoryWiseAddition, DateTime systemDate)
+        public ActionResult GetEmpDetails(int nFnYearID, int nEmpID, int nCategoryID, string payRunID, DateTime dtpFromdate, DateTime dtpTodate, bool bCategoryWiseDeduction, bool bCategoryWiseAddition, DateTime systemDate)
         {
             try
             {
@@ -319,8 +322,24 @@ namespace SmartxAPI.Controllers
                                     string Sql9 = "Select B_Addition,B_Deduction,B_Compensation from Pay_EmployeeGroup where N_CompanyID=" + nCompanyID + " and N_PkeyId=" + nCategoryID;
                                     settingsTable = dLayer.ExecuteDataTable(Sql9, Params, connection);
                                     settingsTable.AcceptChanges();
+
+                                    // if (dsCategory.Tables["EmpGroup"].Rows.Count == 0)
+                                    // {
+                                    //     B_CategoryWiseAddition = true;
+                                    //     B_CategoryWiseDeduction = true;
+                                    //     B_CategoryWiseComp = false;
+                                    // }
+                                    // else
+                                    // {
+                                    //     B_CategoryWiseAddition = myFunctions.getBoolVAL(dsCategory.Tables["EmpGroup"].Rows[0]["B_Addition"].ToString());
+                                    //     B_CategoryWiseDeduction = myFunctions.getBoolVAL(dsCategory.Tables["EmpGroup"].Rows[0]["B_Deduction"].ToString());
+                                    //     B_CategoryWiseComp = myFunctions.getBoolVAL(dsCategory.Tables["EmpGroup"].Rows[0]["B_Compensation"].ToString());
+                                    // }
+
                                     settingsTable = _api.Format(settingsTable);
                                     dt.Tables.Add(settingsTable);
+
+
 
                                     // true or false 3 field check erp code ===>CategorywiseSettings for front end validation
                                     //-----------------------------------------------------------------------------------------------------
@@ -537,7 +556,7 @@ namespace SmartxAPI.Controllers
 
                                     Master.Add("N_WorkdHrs", N_WorkdHrs);
                                     Master.Add("N_WorkHours", N_WorkHours);
-                                    
+
                                 }
 
                             }
@@ -545,7 +564,7 @@ namespace SmartxAPI.Controllers
                     }
                     return Ok(_api.Success(dt));
                 }
-                
+
             }
             catch (Exception e)
             {
@@ -553,7 +572,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
