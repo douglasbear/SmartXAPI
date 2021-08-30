@@ -155,20 +155,23 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
+
+                if (dtPriceList.Rows.Count == 0)
+                {
+                    return Ok(api.Success(dtPriceList));
+                }
+
+                
                 if (nQty < myFunctions.getVAL(dtPriceList.Rows[0]["N_MinQty"].ToString()))
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 dtPriceList = api.Format(dtPriceList, "pricelist");
 
-                if (dtPriceList.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
+                
+                
                     return Ok(api.Success(dtPriceList));
-                }
+
             }
             catch (Exception e)
             {
