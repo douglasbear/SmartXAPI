@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         private void GetNextLevelPattern(int higerlevelid, ref int N_LevelPattern, ref string X_LevelPattern, SortedList QueryParams, SqlConnection connection)
@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                //return Ok(_api.Error(ex.Message));
+                //return Ok(_api.Error(User,ex.Message));
             }
 
         }
@@ -187,7 +187,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -223,7 +223,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -286,7 +286,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_CostCentreCode = dLayer.GetAutoNumber("Acc_CostCentreMaster", "x_CostCentreCode", Params, connection, transaction);
-                        if (X_CostCentreCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Department/Cost Centre Code")); }
+                        if (X_CostCentreCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Department/Cost Centre Code")); }
                         MasterTable.Rows[0]["x_CostCentreCode"] = X_CostCentreCode;
 
 
@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
                     if (N_CostCentreID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -348,7 +348,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            return Ok(_api.Error("Department Allready Used"));
+                            return Ok(_api.Error(User,"Department Allready Used"));
                         }
                     }
                 }
@@ -358,13 +358,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to delete"));
+                    return Ok(_api.Error(User,"Unable to delete"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }
@@ -392,7 +392,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return StatusCode(403, _api.Error(User,e));
             }
         }
 

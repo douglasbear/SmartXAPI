@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
         //         }
         //         catch (Exception ex)
         //         {
-        //            return StatusCode(403,_api.Error(ex));
+        //            return StatusCode(403,_api.Error(User,ex));
         //         }  
         // }
 
@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
 
-                    if (user == null) { return Ok(_api.Error("Unauthorized Access")); }
+                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
 
                     return Ok(_api.Success(user));
                 }
@@ -102,7 +102,7 @@ namespace SmartxAPI.Controllers
 
                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
 
-                    if (user == null) { return Ok(_api.Error("Unauthorized Access")); }
+                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
 
                     return Ok(_api.Success(user));
                 }
@@ -168,23 +168,23 @@ namespace SmartxAPI.Controllers
                                         {
                                             return Ok(_api.Warning("Error"));
                                         }
-                                        return Ok(_api.Error("CompanyNotFound"));
+                                        return Ok(_api.Error(User,"CompanyNotFound"));
                                     }
                                     companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                                     companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
                                 }
                             // }else{
-                            //     return Ok(_api.Error("CompanyNotFound"));
+                            //     return Ok(_api.Error(User,"CompanyNotFound"));
                             // }
                         }
                     }
                     catch (Exception ex)
                     {
-                        return Ok(_api.Error("Unauthorized Access"));
+                        return Ok(_api.Error(User,"Unauthorized Access"));
                     }
                     var user = _repository.Authenticate(companyid, companyname, username, 0, reqType, appID, User.FindFirst(ClaimTypes.Uri)?.Value, clientID, GlobalUserID);
 
-                    if (user == null) { return Ok(_api.Error("Unauthorized Access")); }
+                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
 
                     return Ok(_api.Success(user));
                 }
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
                         DataTable output = dLayer.ExecuteDataTable(sql, Params, olivCnn);
                         if (output.Rows.Count == 0)
                         {
-                            return Ok(_api.Error("Unauthorized Access"));
+                            return Ok(_api.Error(User,"Unauthorized Access"));
                         }
 
                         var tokenHandler = new JwtSecurityTokenHandler();
@@ -252,12 +252,12 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Invalid Request"));
+                    return Ok(_api.Error(User,"Invalid Request"));
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error("Unauthorized Access"));
+                return Ok(_api.Error(User,"Unauthorized Access"));
             }
         }
 
@@ -281,7 +281,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return StatusCode(403, _api.Error(User,ex));
             }
         }
 

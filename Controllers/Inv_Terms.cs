@@ -52,7 +52,7 @@ namespace SmartxAPI.Controllers
                     if (N_TermsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                             return Ok(_api.Error("Department Allready Used"));
+                             return Ok(_api.Error(User,"Department Allready Used"));
                         }
                     }
                 }
@@ -103,13 +103,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to delete"));
+                    return Ok(_api.Error(User,"Unable to delete"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }

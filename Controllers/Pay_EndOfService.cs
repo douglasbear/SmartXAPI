@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listemployee")]
@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listEndType")]
@@ -153,7 +153,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listReason")]
@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_ServiceEndID", nServiceEndID);
                         ServiceEndCode = dLayer.GetAutoNumber("pay_EndOFService", "X_ServiceEndCode", Params, connection, transaction);
-                        if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Service End Code")); }
+                        if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Service End Code")); }
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");
@@ -266,7 +266,7 @@ namespace SmartxAPI.Controllers
                     if (nServiceEndID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nFnYearID", nFnYearId);
@@ -298,7 +298,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -337,13 +337,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to EoS"));
+                    return Ok(api.Error(User,"Unable to EoS"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -385,7 +385,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -417,12 +417,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
         [HttpGet("paymentDetails")]
-        public ActionResult GetPaymentDetails(int nEmpID)//,int nFnYearID,DateTime dDate,int nPayID)
+        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate)//,int nPayID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -475,7 +475,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -483,7 +483,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("employeeSalaryDetails")]
-        public ActionResult EmployeeSalary(DateTime dtpEndDate, int nFnYearID, int nEmpID, int n_ServiceEndSettingsID, string byEmp)
+        public ActionResult EmployeeSalary(DateTime dtpEndDate, int nFnYearID, int nEmpID, int n_ServiceEndSettingsID, string byEmp,DateTime dtpHireDate)
         {
             try
             {
@@ -508,6 +508,10 @@ namespace SmartxAPI.Controllers
 
                     EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_AdjustAmount", typeof(double), 0);
                     EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "X_ServiceEnd", typeof(string), "");
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_GrossAmt", typeof(double), "");
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ServiceInDays", typeof(double), "");
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ServiceInYears", typeof(double), "");
+
                     if (n_ServiceEndSettingsID == 0)
                     {
                         n_ServiceEndSettingsID = 1;
@@ -529,6 +533,20 @@ namespace SmartxAPI.Controllers
                     {
                         EmployeeTable.Rows[0]["X_ServiceEnd"] = "choosen";
                     }
+
+                    object objGross = dLayer.ExecuteScalar("SELECT SUM(Pay_EmployeePayHistory.N_Amount) AS N_GrossAmt FROM Pay_EmployeePayHistory INNER JOIN Pay_PayMaster ON Pay_EmployeePayHistory.N_CompanyID = Pay_PayMaster.N_CompanyID AND Pay_EmployeePayHistory.N_PayID = Pay_PayMaster.N_PayID where Pay_EmployeePayHistory.N_CompanyID="+nCompanyID+" and Pay_EmployeePayHistory.N_EmpID=" + nEmpID + " and Pay_EmployeePayHistory.D_EffectiveDate = (select MAX(D_EffectiveDate) from Pay_EmployeePayHistory where N_EmpID = " + nEmpID + " and N_CompanyID="+nCompanyID+" ) and Pay_PayMaster.N_PaymentID=5 and (Pay_PayMaster.N_Paymethod=0 or Pay_PayMaster.N_Paymethod=3 or Pay_PayMaster.N_PayMethod=4) and Pay_PayMaster.B_InActive=0", Params, connection);
+                    if (objGross != null)
+                    {
+                        EmployeeTable.Rows[0]["N_GrossAmt"] = myFunctions.getVAL(objGross.ToString());
+                    }
+
+                    double N_ServiceInDays=0,N_ServiceInYears=0;
+                    N_ServiceInDays=(dtpEndDate.Date - dtpHireDate.Date).TotalDays;
+                    N_ServiceInYears=((dtpEndDate.Date - dtpHireDate.Date).Days / 365.25);
+
+                    EmployeeTable.Rows[0]["N_ServiceInDays"] = myFunctions.getVAL(N_ServiceInDays.ToString());
+                    EmployeeTable.Rows[0]["N_ServiceInYears"] = myFunctions.getVAL(N_ServiceInYears.ToString());
+
                     EmployeeTable.AcceptChanges();
                     EmployeeTable = api.Format(EmployeeTable, "EmpTable");
 
@@ -539,7 +557,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
 
         }

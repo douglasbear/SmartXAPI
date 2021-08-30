@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpPost("save")]
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         LocationCode = dLayer.GetAutoNumber("Pay_WorkLocation", "X_LocationCode", Params, connection, transaction);
-                        if (LocationCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Location Code")); }
+                        if (LocationCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
                     MasterTable.Columns.Remove("n_FnYearId");
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                     if (nLocationId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
         [HttpDelete("delete")]
@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error("Transaction not Found"));
+                        return Ok(api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -193,7 +193,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Loan request"));
+                        return Ok(api.Error(User,"Unable to delete Loan request"));
                     }
 
 
@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 

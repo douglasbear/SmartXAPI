@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(dt.TableName + " Uploaded Error"));
+                                return Ok(_api.Error(User,dt.TableName + " Uploaded Error"));
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
@@ -102,14 +102,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Uploaded Error"));
+                        return Ok(_api.Error(User,"Uploaded Error"));
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
     }

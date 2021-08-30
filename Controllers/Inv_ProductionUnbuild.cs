@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -147,7 +147,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -243,7 +243,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -285,7 +285,7 @@ namespace SmartxAPI.Controllers
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(ex));
+                        return Ok(_api.Error(User,ex));
                     }
 
                     SortedList Result = new SortedList();
@@ -297,12 +297,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult GetDetails(int nCompanyId, string xReferenceNo, string xInvoiceNo, int nFnYearId, bool bAllBranchData, int nBranchID)
+        public ActionResult GetDetails(int nCompanyId, string xReferenceNo, int nFnYearId)
         {
 
             DataSet dt = new DataSet();
@@ -355,7 +355,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -382,7 +382,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }                
                 }
@@ -398,10 +398,54 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
-
-
         }
+
+         [HttpGet("itemData")]
+        public ActionResult GetItemData(int nCompanyId, string X_ItemCode ,int nLocationID)
+        {
+
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            DataTable ItemTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+
+            string Itemsql = "";
+            string condition = "([Item Code] =@X_ItemCode OR X_Barcode =@X_ItemCode)";
+
+            Itemsql = "Select *,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID,@nLocationID,'','Location') As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit,@nLocationID) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where "+condition+" and N_CompanyID=@nCompanyId";
+
+            Params.Add("@nCompanyId", nCompanyId);
+            Params.Add("@nLocationID", nLocationID);
+            Params.Add("@X_ItemCode", X_ItemCode);
+
+            try
+            {
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    ItemTable = dLayer.ExecuteDataTable(Itemsql, Params, connection);
+
+                    ItemTable = _api.Format(ItemTable, "itemDetails");
+                    Params.Add("@N_ItemID", ItemTable.Rows[0]["N_ItemID"].ToString());
+                    ItemTable = myFunctions.AddNewColumnToDataTable(ItemTable, "N_QtyInHand", typeof(double), "");
+                    object objStock = dLayer.ExecuteScalar("select dbo.SP_GenGetStock(Inv_StockMaster.N_ItemID,@nLocationID,'','Location') as N_CurrentStock from Inv_StockMaster group by N_ItemID having N_ItemID=@N_ItemID", Params, connection);
+                    if (objStock != null)
+                    {
+                        ItemTable.Rows[0]["N_QtyInHand"] = myFunctions.getVAL(objStock.ToString());
+                    }
+                    dt.Tables.Add(ItemTable);
+                   
+                }
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
     }
 }

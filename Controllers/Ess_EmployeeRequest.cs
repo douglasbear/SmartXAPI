@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -141,7 +141,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
   [HttpGet("requestCategory")]
@@ -170,7 +170,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -217,7 +217,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -300,7 +300,7 @@ namespace SmartxAPI.Controllers
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -312,7 +312,7 @@ namespace SmartxAPI.Controllers
                         //     if (!dLayer.SaveFiles(Files, "Pay_EmpAnyRequest", "N_RequestID", nRequestID, nEmpID.ToString(), nCompanyID, connection, transaction))
                         //     {
                         //         transaction.Rollback();
-                        //         return Ok(api.Error("Unable to save"));
+                        //         return Ok(api.Error(User,"Unable to save"));
                         //     }
                         // }
 
@@ -328,7 +328,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -368,7 +368,7 @@ namespace SmartxAPI.Controllers
                     if (N_RequestTypeID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -404,7 +404,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error("Transaction not Found"));
+                        return Ok(api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -438,7 +438,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Employee Request"));
+                        return Ok(api.Error(User,"Unable to delete Employee Request"));
                     }
 
 
@@ -446,7 +446,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -488,14 +488,14 @@ namespace SmartxAPI.Controllers
                     object reqUsed = dLayer.ExecuteScalar(Sql, ParamList, connection);
                     if (myFunctions.getIntVAL(reqUsed.ToString()) > 0)
                     {
-                        return Ok(api.Error("Request Type In Use"));
+                        return Ok(api.Error(User,"Request Type In Use"));
                     }
                     int res = dLayer.DeleteData("Pay_EmployeeRequestType", "N_RequestTypeID", nRequestTypeID, "N_CompanyId=" + myFunctions.GetCompanyID(User) + " and N_RequestTypeID=" + nRequestTypeID, connection);
 
                     if (res > 0)
                         return Ok(api.Success("Request Type Deleted"));
                     else
-                        return Ok(api.Error("Unable to delete Request Type"));
+                        return Ok(api.Error(User,"Unable to delete Request Type"));
 
 
 
@@ -503,7 +503,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
     }

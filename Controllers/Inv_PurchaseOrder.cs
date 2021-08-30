@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listDetails")]
@@ -294,7 +294,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -331,7 +331,7 @@ namespace SmartxAPI.Controllers
                     if (N_POrderID > 0)
                     {
                         if (CheckProcessed(N_POrderID))
-                            return Ok(api.Error("Transaction Started!"));
+                            return Ok(api.Error(User,"Transaction Started!"));
                     }
                     int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
@@ -421,7 +421,7 @@ namespace SmartxAPI.Controllers
                     if (N_POrderID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Error"));
+                        return Ok(api.Error(User,"Error"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -444,7 +444,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(ex));
+                            return Ok(api.Error(User,ex));
                         }
                     }
 
@@ -499,7 +499,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error("Transaction not Found"));
+                        return Ok(api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -526,7 +526,7 @@ namespace SmartxAPI.Controllers
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to delete Purchase Order"));
+                            return Ok(api.Error(User,"Unable to delete Purchase Order"));
                         }
                         else
                         {
@@ -541,9 +541,9 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
-                            return Ok(api.Error("Purchase invoice processed! Unable to delete"));
+                            return Ok(api.Error(User,"Purchase invoice processed! Unable to delete"));
                         else
-                            return Ok(api.Error("Unable to delete!"));
+                            return Ok(api.Error(User,"Unable to delete!"));
 
                     }
 
@@ -551,7 +551,7 @@ namespace SmartxAPI.Controllers
                     //     if (Results <= 0)
                     //     {
                     //         transaction.Rollback();
-                    //         return Ok(api.Error("Unable to delete PurchaseOrder"));
+                    //         return Ok(api.Error(User,"Unable to delete PurchaseOrder"));
                     //     }
                     //     else
                     //     {
@@ -570,14 +570,14 @@ namespace SmartxAPI.Controllers
                     //     }
                     // }
 
-                    // return Ok(api.Error("Unable to Delete PurchaseOrder"));
+                    // return Ok(api.Error(User,"Unable to Delete PurchaseOrder"));
 
 
                 }
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

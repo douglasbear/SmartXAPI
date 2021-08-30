@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -96,7 +96,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xBankCode = dLayer.GetAutoNumber("Acc_BankMaster", "x_BankCode", Params, connection, transaction);
-                        if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error("Unable to generate Bank Code")); }
+                        if (xBankCode == "") { transaction.Rollback();return Ok(_api.Error(User,"Unable to generate Bank Code")); }
                         MasterTable.Rows[0]["x_BankCode"] = xBankCode;
                     }
                     else
@@ -122,19 +122,20 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult GetBankDetails(int nBankID)
+        public ActionResult GetBankDetails(int nBankID,int nIsCompany)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from vw_AccBank_Disp where N_CompanyID=@nCompanyID and N_BankID=@nBankID";
+            string sqlCommandText="select * from vw_AccBank_Disp where N_CompanyID=@nCompanyID and N_BankID=@nBankID and B_Iscompany=@nIsCompany";
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nBankID",nBankID);
+            Params.Add("@nIsCompany",nIsCompany);
             try{
                 using (SqlConnection connection = new SqlConnection(connectionString))
                     {
@@ -148,7 +149,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Success(dt));
                         }
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
           
         }
@@ -169,13 +170,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Bank"));
+                        return Ok(_api.Error(User,"Unable to delete Bank"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

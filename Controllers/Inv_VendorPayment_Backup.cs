@@ -108,7 +108,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return StatusCode(403, api.Error(e));
+//                 return StatusCode(403, api.Error(User,e));
 //             }
 //         }
 
@@ -155,7 +155,7 @@
 //         //     }
 //         //     catch (Exception e)
 //         //     {
-//         //         return StatusCode(403, api.Error(e));
+//         //         return StatusCode(403, api.Error(User,e));
 //         //     }
 //         // }
 
@@ -289,7 +289,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return Ok(api.Error(e));
+//                 return Ok(api.Error(User,e));
 //             }
 //         }
 
@@ -377,7 +377,7 @@
 //                     if (n_PayReceiptID <= 0)
 //                     {
 //                         transaction.Rollback();
-//                         return Ok(api.Error("Error"));
+//                         return Ok(api.Error(User,"Error"));
 //                     }
 //                     for (int j = 0; j < DetailTable.Rows.Count; j++)
 //                     {
@@ -465,7 +465,7 @@
 //             }
 //             catch (Exception e)
 //             {
-//                 return StatusCode(403, api.Error(e));
+//                 return StatusCode(403, api.Error(User,e));
 //             }
 //         }
 
@@ -499,7 +499,7 @@
 //         //     }
 //         //     catch (Exception e)
 //         //     {
-//         //         return StatusCode(403, api.Error(e));
+//         //         return StatusCode(403, api.Error(User,e));
 //         //     }
 //         // }
 //     }

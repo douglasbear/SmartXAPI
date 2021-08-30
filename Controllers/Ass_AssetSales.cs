@@ -122,7 +122,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
  
@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -223,7 +223,7 @@ namespace SmartxAPI.Controllers
                     if(N_AssetInventoryID<=0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Error"));
+                        return Ok(_api.Error(User,"Error"));
                     }
                     int SalesID=0;
                     if (TypeID==287)
@@ -241,7 +241,7 @@ namespace SmartxAPI.Controllers
                         if(SalesID<=0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Error"));
+                            return Ok(_api.Error(User,"Error"));
                         }
                         else
                         {
@@ -267,7 +267,7 @@ namespace SmartxAPI.Controllers
                             if(SalesAmtID<=0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Error"));
+                                return Ok(_api.Error(User,"Error"));
                             }
                         }
                     }
@@ -279,7 +279,7 @@ namespace SmartxAPI.Controllers
                     if(N_AssetInventoryDetailsID<=0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Error"));
+                        return Ok(_api.Error(User,"Error"));
                     }
 
                     string X_Type = "";
@@ -299,7 +299,7 @@ namespace SmartxAPI.Controllers
                     if(N_ActionID<=0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Error"));
+                        return Ok(_api.Error(User,"Error"));
                     }
                    
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
@@ -334,7 +334,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -382,7 +382,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -417,7 +417,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -447,7 +447,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     if (Results >= 0)
@@ -458,7 +458,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete Asset Sales"));
+                        return Ok(_api.Error(User,"Unable to delete Asset Sales"));
                     }
 
 
@@ -466,7 +466,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
    } 

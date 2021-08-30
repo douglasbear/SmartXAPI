@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return Ok(api.Error(e));
+        //         return Ok(api.Error(User,e));
         //     }
 
         // }
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
                             if (nLoanTransDetailsID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error("Unable to save"));
+                                return Ok(api.Error(User,"Unable to save"));
                             }
                         }
 
@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
     }

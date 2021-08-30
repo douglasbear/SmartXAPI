@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpPost("save")]
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                         values = ActivityCode;
 
 
-                        if (values == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate")); }
+                        if (values == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["X_ServiceCategoryCode"] = values;
 
                     
@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
                     if (nServiceCategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                         transaction.Commit();
                     return Ok(api.Success("Service Category Created"));
@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -141,13 +141,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(api.Error("Unable to delete"));
+                        return Ok(api.Error(User,"Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
         [HttpGet("serviceCategoryList")]
@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 

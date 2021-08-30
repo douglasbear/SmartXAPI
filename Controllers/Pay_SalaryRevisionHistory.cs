@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -146,7 +146,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
         //                 // Params.Add("N_FormID", this.FormID);
         //                 Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
         //                 xHistoryCode = dLayer.GetAutoNumber("Pay_PayHistoryMaster", "X_HistoryCode", Params, connection, transaction);
-        //                 if (xHistoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate History code")); }
+        //                 if (xHistoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate History code")); }
         //                 MasterTable.Rows[0]["X_HistoryCode"] = InvxHistoryCodeoiceNo;
         //             }
 

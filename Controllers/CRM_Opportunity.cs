@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 1302);
                         Params.Add("N_BranchID", nBranchId);
                         OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", Params, connection, transaction);
-                        if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Opportunity Code")); }
+                        if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Opportunity Code")); }
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_OpportunityID='" + nOpportunityID + "' and N_FnyearID=" + nFnYearId;
@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
                     if (nOpportunityID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
                                         foreach (DataRow var in Activity.Rows)
                                         {
                                             ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
-                                            if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
+                                            if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Activity Code")); }
                                             var["x_ActivityCode"] = ActivityCode;
                                             var["N_RelatedTo"] = 294;
                                             var["N_ReffID"] = nOpportunityID;
@@ -265,7 +265,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
          [HttpGet("stageupdate")]
@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -323,13 +323,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Opportunity"));
+                    return Ok(api.Error(User,"Unable to delete Opportunity"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

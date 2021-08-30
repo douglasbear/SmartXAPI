@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -394,7 +394,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -460,8 +460,8 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    int N_CrmCompanyID = myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString());
-                    int N_ContactID = myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString());
+                    int N_CrmCompanyID = MasterTable.Columns.Contains("N_CrmCompanyID") ? myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString()):0;
+                    int N_ContactID = MasterTable.Columns.Contains("N_ContactID") ? myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString()) : 0;
                     int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -514,7 +514,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
-                        if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Quotation Number")); }
+                        if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
 
                     }
@@ -543,7 +543,7 @@ namespace SmartxAPI.Controllers
                     if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Quotation"));
+                        return Ok(_api.Error(User,"Unable to save Quotation"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -558,7 +558,7 @@ namespace SmartxAPI.Controllers
                     if (N_QuotationDetailId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Quotation"));
+                        return Ok(_api.Error(User,"Unable to save Quotation"));
                     }
                     else
                     {
@@ -589,7 +589,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
                         }
                         //transaction.Commit();
@@ -605,7 +605,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -820,7 +820,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
                     int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
@@ -864,7 +864,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete Sales Quotation"));
+                            return Ok(_api.Error(User,"Unable to delete Sales Quotation"));
                         }
                         // SortedList DeleteParams = new SortedList(){
                         //         {"N_CompanyID",nCompanyID},
@@ -877,7 +877,7 @@ namespace SmartxAPI.Controllers
                         // if (Results <= 0)
                         // {
                         //     transaction.Rollback();
-                        //     return Ok(_api.Error("Unable to delete Sales Quotation"));
+                        //     return Ok(_api.Error(User,"Unable to delete Sales Quotation"));
                         // }
                         // else
                         // {
@@ -890,11 +890,11 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objSalesProcessed.ToString()) > 0)
-                            return Ok(_api.Error("Sales invoice processed! Unable to delete"));
+                            return Ok(_api.Error(User,"Sales invoice processed! Unable to delete"));
                         else if (myFunctions.getIntVAL(objOrderProcessed.ToString()) > 0)
-                            return Ok(_api.Error("Sales order processed! Unable to delete"));
+                            return Ok(_api.Error(User,"Sales order processed! Unable to delete"));
                         else
-                            return Ok(_api.Error("Unable to delete!"));
+                            return Ok(_api.Error(User,"Unable to delete!"));
 
                     }
 
@@ -904,7 +904,7 @@ namespace SmartxAPI.Controllers
                     // if (Results <= 0)
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Unable to delete sales quotation"));
+                    //     return Ok(_api.Error(User,"Unable to delete sales quotation"));
                     // }
                     // else
                     // {
@@ -919,14 +919,14 @@ namespace SmartxAPI.Controllers
                     // else
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Unable to delete sales quotation"));
+                    //     return Ok(_api.Error(User,"Unable to delete sales quotation"));
                     // }
 
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 
@@ -958,7 +958,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return StatusCode(403, _api.Error(e));
+        //         return StatusCode(403, _api.Error(User,e));
         //     }
         // }
 

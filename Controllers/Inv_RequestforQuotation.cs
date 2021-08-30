@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
                             }
                             X_QuotationNo = DocNo;
 
-                            if (X_QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                            if (X_QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                             MasterTable.Rows[0]["x_QuotationNo"] = X_QuotationNo;
                         }
 
@@ -196,7 +196,7 @@ namespace SmartxAPI.Controllers
                         if (nQuotationID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
@@ -267,7 +267,7 @@ namespace SmartxAPI.Controllers
                             }
                             X_InwardsCode = DocNo;
 
-                            if (X_InwardsCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                            if (X_InwardsCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                             VendorMasterTable.Rows[0]["X_InwardsCode"] = X_InwardsCode;
                         }
 
@@ -277,7 +277,7 @@ namespace SmartxAPI.Controllers
                         if (N_VendorListMasterID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
 
                         for (int k = 0; k < MultiVendorTable.Rows.Count; k++)
@@ -298,7 +298,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -395,7 +395,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
           
@@ -434,7 +434,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -490,7 +490,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -528,7 +528,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
       
@@ -569,7 +569,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -610,7 +610,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

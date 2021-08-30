@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xCategoryCode = dLayer.GetAutoNumber("Pay_InsuranceCategory", "x_CategoryCode", Params, connection, transaction);
-                        if (xCategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Insurance Category Code")); }
+                        if (xCategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Insurance Category Code")); }
                         MasterTable.Rows[0]["x_CategoryCode"] = xCategoryCode;
                     }
                     else
@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Success(dt));
                         }
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -153,13 +153,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Insurance Category"));
+                        return Ok(_api.Error(User,"Unable to delete Insurance Category"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

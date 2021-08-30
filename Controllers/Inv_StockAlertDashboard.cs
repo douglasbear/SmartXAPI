@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
     }

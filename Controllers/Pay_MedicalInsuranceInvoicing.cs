@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
          [HttpGet("dashboardList")]
@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -218,7 +218,7 @@ namespace SmartxAPI.Controllers
                                 break;
                         }
                         X_InvoiceCode = DocNo;
-                        if (X_InvoiceCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_InvoiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["x_InvoiceCode"] = X_InvoiceCode;
 
                     }
@@ -234,7 +234,7 @@ namespace SmartxAPI.Controllers
                     if (nInvoiceID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                     {
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                     if (nInvoiceDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     foreach (DataRow var in DetailTable.Rows)
                     {
@@ -343,7 +343,7 @@ namespace SmartxAPI.Controllers
                         }
                         catch (Exception e)
                         {
-                            return Ok(_api.Error(e));
+                            return Ok(_api.Error(User,e));
                         }
                     }
                     transaction.Commit();
@@ -352,7 +352,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         private void DeleteAmortization(int N_InvoiceID, DataTable MasterTable, SqlConnection connection, SqlTransaction transaction)
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
                         {
                             transaction.Rollback();
-                           // return Ok(_api.Error("Unable To Save Amortization"));
+                           // return Ok(_api.Error(User,"Unable To Save Amortization"));
                         }
                     }
 
@@ -503,7 +503,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-               // return Ok(_api.Error(ex));
+               // return Ok(_api.Error(User,ex));
             }
 
         }
