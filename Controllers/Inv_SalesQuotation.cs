@@ -460,8 +460,8 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    int N_CrmCompanyID = myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString());
-                    int N_ContactID = myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString());
+                    int N_CrmCompanyID = MasterTable.Columns.Contains("N_CrmCompanyID") ? myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString()):0;
+                    int N_ContactID = MasterTable.Columns.Contains("N_ContactID") ? myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString()) : 0;
                     int N_NextApproverID = 0;
 
                     QueryParams.Add("@nCompanyID", N_CompanyID);
