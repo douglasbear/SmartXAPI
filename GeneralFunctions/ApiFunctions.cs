@@ -33,7 +33,7 @@ namespace SmartxAPI.GeneralFunctions
             return (new { StatusCode = Code, Message = ResMessage, Data = "" });
         }
 
-        public object Error(string message)
+        public object Error( ClaimsPrincipal User,string message)
         {
             return (new { type = "error", Message = message, Data = "" });
         }
@@ -100,7 +100,7 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        public object Error(Exception ex)
+        public object Error( ClaimsPrincipal User, Exception ex)
         {
             string Msg = "";
             if (ex.Message.Length < 8)
@@ -153,10 +153,10 @@ namespace SmartxAPI.GeneralFunctions
                     // }
             }
 
-            // StringBuilder sb = new StringBuilder();
-            // sb.Append(ex.Message);
-            // File.AppendAllText(logPath+"log.txt", sb.ToString());
-            // sb.Clear();
+            StringBuilder sb = new StringBuilder();
+            sb.AppendLine(ex.Message);
+            File.AppendAllText( logPath + myFunctions.GetCompanyName(User) + " - " + "log.txt", sb.ToString());
+            sb.Clear();
             return (new { type = "error", Message = Msg, Data = "" });
 
 
@@ -235,10 +235,10 @@ namespace SmartxAPI.GeneralFunctions
         public object Response(int Code, string Response);
         /*  End Of Deprecated Method  */
 
-        public object Error(Exception ex);
+        public object Error( ClaimsPrincipal User,Exception ex);
         public DataTable Format(DataTable table, string tableName);
         public DataTable Format(DataTable dt);
-        public object Error(string message);
+        public object Error( ClaimsPrincipal User,string message);
         public object Success(DataTable dataTable);
         public object Success(dynamic data);
         public object Success(DataTable dataTable, string message);

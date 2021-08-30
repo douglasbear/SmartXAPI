@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
        
@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         
                         ActionCode = dLayer.GetAutoNumber("Pay_disciplinaryAction", "X_ActionCode", Params, connection, transaction);
-                        if (ActionCode == "") { return Ok(_api.Error("Unable to generate Action Code")); }
+                        if (ActionCode == "") { return Ok(_api.Error(User,"Unable to generate Action Code")); }
                         MasterTable.Rows[0]["X_ActionCode"] = ActionCode;
                         
 
@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
                    if (nActionId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(_api.Error(User,ex));
             }
         }
 
@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Success(dt));
                         }
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -198,13 +198,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete "));
+                        return Ok(_api.Error(User,"Unable to delete "));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -312,7 +312,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
        

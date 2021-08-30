@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -235,7 +235,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -308,7 +308,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -393,7 +393,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -523,7 +523,7 @@ namespace SmartxAPI.Controllers
                                 if (nContactsID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -548,7 +548,7 @@ namespace SmartxAPI.Controllers
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -573,7 +573,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -598,7 +598,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -651,7 +651,7 @@ namespace SmartxAPI.Controllers
                     if (nEmpUpdateID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -672,7 +672,7 @@ namespace SmartxAPI.Controllers
                             if (nContactsUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
                         if (DependenceTable.Rows.Count > 0)
@@ -687,7 +687,7 @@ namespace SmartxAPI.Controllers
                             if (nDependenceUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
                          if (EduTable.Rows.Count > 0)
@@ -702,7 +702,7 @@ namespace SmartxAPI.Controllers
                             if (nEduUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
                          if (HistoryTable.Rows.Count > 0)
@@ -717,7 +717,7 @@ namespace SmartxAPI.Controllers
                             if (nHistoryUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
 
@@ -809,7 +809,7 @@ namespace SmartxAPI.Controllers
                                 if (nContactsID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -834,7 +834,7 @@ namespace SmartxAPI.Controllers
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -859,7 +859,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -884,7 +884,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -908,7 +908,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -998,7 +998,7 @@ namespace SmartxAPI.Controllers
                             if (nEmpID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                             else
                             {
@@ -1042,7 +1042,7 @@ namespace SmartxAPI.Controllers
                                 if (nContactsID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1067,7 +1067,7 @@ namespace SmartxAPI.Controllers
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1092,7 +1092,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1117,7 +1117,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1170,7 +1170,7 @@ namespace SmartxAPI.Controllers
                     if (nEmpUpdateID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -1191,7 +1191,7 @@ namespace SmartxAPI.Controllers
                             if (nContactsUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
                         if (DependenceTable.Rows.Count > 0)
@@ -1206,7 +1206,7 @@ namespace SmartxAPI.Controllers
                             if (nDependenceUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
                          if (EduTable.Rows.Count > 0)
@@ -1221,7 +1221,7 @@ namespace SmartxAPI.Controllers
                             if (nEduUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
                          if (HistoryTable.Rows.Count > 0)
@@ -1236,7 +1236,7 @@ namespace SmartxAPI.Controllers
                             if (nHistoryUpdateID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                         }
 
@@ -1286,7 +1286,7 @@ namespace SmartxAPI.Controllers
                             if (nEmpID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to save"));
+                                return Ok(_api.Error(User,"Unable to save"));
                             }
                             else
                             {
@@ -1329,7 +1329,7 @@ namespace SmartxAPI.Controllers
                                 if (nContactsID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1354,7 +1354,7 @@ namespace SmartxAPI.Controllers
                                 if (nDependenceID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1379,7 +1379,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1404,7 +1404,7 @@ namespace SmartxAPI.Controllers
                                 if (nEduID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save"));
+                                    return Ok(_api.Error(User,"Unable to save"));
                                 }
                             }
 
@@ -1428,7 +1428,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -1513,7 +1513,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -1534,7 +1534,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
                     int EmpID = myFunctions.getIntVAL(TransRow["N_EmpID"].ToString());
@@ -1563,13 +1563,13 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete Employee Update"));
+                            return Ok(_api.Error(User,"Unable to delete Employee Update"));
                         }
                     }
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete Employee Update"));
+                        return Ok(_api.Error(User,"Unable to delete Employee Update"));
                     }
 
 
@@ -1577,7 +1577,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -1649,7 +1649,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Employee Code already exist"));
+                            return Ok(_api.Error(User,"Employee Code already exist"));
                         }
 
 
@@ -1662,7 +1662,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xEmpCode = dLayer.GetAutoNumber("pay_Employee", "x_EmpCode", Params, connection, transaction);
-                        if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employee Code")); }
+                        if (xEmpCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Employee Code")); }
                         dtMasterTable.Rows[0]["x_EmpCode"] = xEmpCode;
                         X_BtnAction = "INSERT";
                     }
@@ -1692,7 +1692,7 @@ namespace SmartxAPI.Controllers
                     if (nEmpID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -2051,7 +2051,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -2092,7 +2092,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -2136,7 +2136,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -2167,7 +2167,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -2198,7 +2198,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -2222,7 +2222,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -2237,7 +2237,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return StatusCode(403, _api.Error(User,e));
             }
         }
 
@@ -2261,14 +2261,14 @@ namespace SmartxAPI.Controllers
 
                     object EmployeeLedger = dLayer.ExecuteScalar("Select 1 from vw_Pay_EmployeeLedger Where  N_CompanyID= @nCompanyID and (LedgerID=" + Employee.Rows[0]["n_ledgerID"] + " OR LedgerID=" + Employee.Rows[0]["n_loanledgerid"] + ")", Params, connection, transaction);
                     // if (EmployeeLedger != null)
-                    //     return Ok(_api.Error("Can't delete,it has been used"));
+                    //     return Ok(_api.Error(User,"Can't delete,it has been used"));
 
                     // else
                     // {
                     object obj = dLayer.ExecuteScalar("Select N_EmpID From vw_PayPendingLoans_List Where N_CompanyID=@nCompanyID and N_Empid=@nEmpID and N_FnyearID=@nFnYearID", Params, connection, transaction);
                     if (obj != null)
                     {
-                        return Ok(_api.Error("Unpaid Dues Exists"));
+                        return Ok(_api.Error(User,"Unpaid Dues Exists"));
                     }
 
                     DataTable SalaryLedger = dLayer.ExecuteDataTable("Select Pay_Employee.N_LedgerID,Pay_Employee.X_EmpName,Acc_MastLedger.X_LedgerName From Pay_Employee inner join Acc_MastLedger on Pay_Employee.N_LedgerID=Acc_MastLedger.N_LedgerID Where N_EmpID=@nEmpID and Pay_Employee.N_CompanyID=@nCompanyID and Pay_Employee.N_FnYearID=@nFnYearID", Params, connection, transaction);
@@ -2308,7 +2308,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

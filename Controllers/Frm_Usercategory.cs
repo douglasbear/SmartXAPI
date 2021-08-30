@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 40);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         X_UserCategoryCode = dLayer.GetAutoNumber("sec_usercategory", "X_UserCategoryCode", Params, connection, transaction);
-                        if (X_UserCategoryCode == "") { transaction.Rollback();return Ok( _api.Error( "Unable to generate Category Code")); }
+                        if (X_UserCategoryCode == "") { transaction.Rollback();return Ok( _api.Error(User, "Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_UserCategoryCode"] = X_UserCategoryCode;
                     }
 
@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
                     if (N_UserCategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Error( "Unable to save"));
+                        return Ok( _api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -199,7 +199,7 @@ namespace SmartxAPI.Controllers
                             if (N_InternalID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok( _api.Error( "Unable to save"));
+                                return Ok( _api.Error(User, "Unable to save"));
                             }
                         }
 
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
 
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -232,16 +232,16 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nUsercategoryID", nUsercategoryId);
                     object Category = dLayer.ExecuteScalar("Select N_UserCategoryID From Sec_UserCategory Where N_UserCategoryID=@nUsercategoryID and N_CompanyID=@nCompanyID", QueryParams, connection,transaction);
                     if(Category==null)
-                        return Ok(_api.Error("Invalid Category"));
+                        return Ok(_api.Error(User,"Invalid Category"));
                     
                     Results = dLayer.DeleteData("Sec_UserPrevileges", "N_UserCategoryID", nUsercategoryId, "", connection,transaction);
                     if(Results<0)
-                        return Ok(_api.Error("Unable to delete Category"));
+                        return Ok(_api.Error(User,"Unable to delete Category"));
 
                     object InUser = dLayer.ExecuteScalar("select N_UserID from Sec_User where N_UserCategoryID=@nUsercategoryID", QueryParams, connection,transaction);
 
                     if(InUser!=null)
-                        return Ok(_api.Error("Unable to delete Category"));
+                        return Ok(_api.Error(User,"Unable to delete Category"));
 
                     Results = dLayer.DeleteData("sec_usercategory", "N_UserCategoryID", nUsercategoryId, "", connection);
                     if (Results > 0)
@@ -251,14 +251,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Category"));
+                        return Ok(_api.Error(User,"Unable to delete Category"));
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 

@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+                return StatusCode(403, api.Error(User,e));
             }
         }
 
@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return StatusCode(403, api.Error(e));
+        //         return StatusCode(403, api.Error(User,e));
         //     }
         // }
 
@@ -315,7 +315,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -415,7 +415,7 @@ namespace SmartxAPI.Controllers
                     if (n_PayReceiptID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Error"));
+                        return Ok(api.Error(User,"Error"));
                     }
                     if (x_Type == "PA")
                     {
@@ -597,7 +597,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+                return StatusCode(403, api.Error(User,e));
             }
         }
 
@@ -630,7 +630,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return StatusCode(403, api.Error(e));
+        //         return StatusCode(403, api.Error(User,e));
         //     }
         // }
     }

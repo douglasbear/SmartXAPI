@@ -138,7 +138,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("details")]
@@ -364,7 +364,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -423,7 +423,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -479,7 +479,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
                         }
 
@@ -505,7 +505,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         //Delete....
@@ -528,7 +528,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -553,7 +553,7 @@ namespace SmartxAPI.Controllers
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete Sales Order"));
+                            return Ok(_api.Error(User,"Unable to delete Sales Order"));
                         }
                         else
                         {
@@ -567,7 +567,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Sales invoice processed! Unable to delete Sales Order"));
+                        return Ok(_api.Error(User,"Sales invoice processed! Unable to delete Sales Order"));
 
                     }
 
@@ -578,7 +578,7 @@ namespace SmartxAPI.Controllers
                     // if (Results <= 0)
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Unable to delete sales order"));
+                    //     return Ok(_api.Error(User,"Unable to delete sales order"));
                     // }
                     // else
                     // {
@@ -589,18 +589,18 @@ namespace SmartxAPI.Controllers
                     // if (Results > 0)
                     // {
                     //     transaction.Commit();
-                    //     return Ok(_api.Error("Sales order deleted"));
+                    //     return Ok(_api.Error(User,"Sales order deleted"));
                     // }
                     // else
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Unable to delete sales order"));
+                    //     return Ok(_api.Error(User,"Unable to delete sales order"));
                     // }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 
@@ -641,7 +641,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -967,7 +967,7 @@ namespace SmartxAPI.Controllers
                 ItemDetails = dLayer.ExecuteDataTable(pageQry + sql + pageQryEnd + qry, paramList, connection);
                 if (ItemDetails.Rows.Count == 0)
                 {
-                    return Ok(_api.Error("No Items Found"));
+                    return Ok(_api.Error(User,"No Items Found"));
                 }
                 return Ok(_api.Success(_api.Format(ItemDetails)));
             }

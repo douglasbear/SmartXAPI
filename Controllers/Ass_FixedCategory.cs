@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return BadRequest(api.Error(e));
+        //         return BadRequest(api.Error(User,e));
         //     }
         // }
 
@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
 //             }
 //             catch (Exception e)
 //             {
-//                 return BadRequest(api.Error(e));
+//                 return BadRequest(api.Error(User,e));
 //             }
 //         }
 
@@ -159,7 +159,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
 
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         CategoryCode = dLayer.GetAutoNumber("Ass_AssetCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Category Code")); }
+                        if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
 
@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
                     if (nCategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -214,7 +214,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -242,13 +242,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Fixed Asset"));
+                    return Ok(api.Error(User,"Unable to delete Fixed Asset"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

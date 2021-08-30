@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -159,7 +159,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -190,7 +190,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         MaintenanceCode = dLayer.GetAutoNumber("Mnp_EmployeeMaintenance", "x_MaintenanceCode", Params, connection, transaction);
-                        if (MaintenanceCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Activity Code")); }
+                        if (MaintenanceCode == "") {transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_MaintenanceCode"] = MaintenanceCode;
                     }
                     if(nMaintenanceID>0)
@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
                     if (nMaintenanceID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -212,7 +212,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -241,13 +241,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Manpower Maintenance"));
+                    return Ok(api.Error(User,"Unable to delete Manpower Maintenance"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

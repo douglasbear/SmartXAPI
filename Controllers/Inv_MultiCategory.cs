@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
                         X_CategoryCode = DocNo;
 
 
-                        if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["x_CategoryCode"] = X_CategoryCode;
 
                         // Params.Add("N_CompanyID", N_CompanyID);
@@ -265,7 +265,7 @@ namespace SmartxAPI.Controllers
                         // Params.Add("N_FormID", 1349);
                         // //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         // X_CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategoryDisplay", "x_CategoryCode", Params, connection, transaction);
-                        // if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Category")); }
+                        // if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Category")); }
                         // MasterTable.Rows[0]["x_CategoryCode"] = X_CategoryCode;
 
 
@@ -282,7 +282,7 @@ namespace SmartxAPI.Controllers
                     if (N_CategoryDisplayID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
 
 
@@ -326,7 +326,7 @@ namespace SmartxAPI.Controllers
                     // if (nAdditionDetailsID <= 0)
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Unable To Save"));
+                    //     return Ok(_api.Error(User,"Unable To Save"));
                     // }
                     // else
                     // {
@@ -338,7 +338,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         private string GetNextChildCode(int nParentID, SortedList ParamList, SqlConnection connection, SqlTransaction transaction)
@@ -395,7 +395,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            return Ok(_api.Error("Category Allready Used"));
+                            return Ok(_api.Error(User,"Category Allready Used"));
                         }
                     }
                 }
@@ -405,13 +405,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to delete"));
+                    return Ok(_api.Error(User,"Unable to delete"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }

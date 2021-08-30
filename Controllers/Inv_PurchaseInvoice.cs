@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("listOrder")]
@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Error(e.Message));
+                return StatusCode(404, _api.Error(User,e.Message));
             }
         }
         [HttpGet("listdetails")]
@@ -312,7 +312,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -479,13 +479,13 @@ namespace SmartxAPI.Controllers
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Transaction date must be in the active Financial Year."));
+                        return Ok(_api.Error(User,"Transaction date must be in the active Financial Year."));
                     }
 
                     if (N_PurchaseID > 0)
                     {
                         if (CheckProcessed(N_PurchaseID))
-                            return Ok(_api.Error("Transaction Started!"));
+                            return Ok(_api.Error(User,"Transaction Started!"));
                     }
                     SortedList VendParams = new SortedList();
                     VendParams.Add("@nCompanyID", nCompanyID);
@@ -532,7 +532,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex.Message));
+                                return Ok(_api.Error(User,ex.Message));
                             }
                         }
 
@@ -554,7 +554,7 @@ namespace SmartxAPI.Controllers
                         if (InvoiceNo == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to generate Invoice Number"));
+                            return Ok(_api.Error(User,"Unable to generate Invoice Number"));
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
@@ -577,18 +577,18 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             if (ex.Message.Contains("50"))
-                                return Ok(_api.Error("DayClosed"));
+                                return Ok(_api.Error(User,"DayClosed"));
                             else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error("YearClosed"));
+                                return Ok(_api.Error(User,"YearClosed"));
                             else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error("YearExists"));
+                                return Ok(_api.Error(User,"YearExists"));
                             else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error("PeriodClosed"));
+                                return Ok(_api.Error(User,"PeriodClosed"));
                             else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error("TxnDate"));
+                                return Ok(_api.Error(User,"TxnDate"));
                             else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error("TransactionStarted"));
-                            return Ok(_api.Error(ex.Message));
+                                return Ok(_api.Error(User,"TransactionStarted"));
+                            return Ok(_api.Error(User,ex.Message));
                         }
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
@@ -607,7 +607,7 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User,"Unable to save Purchase Invoice!"));
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
@@ -624,7 +624,7 @@ namespace SmartxAPI.Controllers
                     if (N_InvoiceDetailId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User,"Unable to save Purchase Invoice!"));
                     }
 
                     if (N_PurchaseID > 0)
@@ -663,7 +663,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex.Message));
+                            return Ok(_api.Error(User,ex.Message));
                         }
                     }
                     SortedList VendorParams = new SortedList();
@@ -678,7 +678,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
@@ -692,7 +692,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         private bool CheckProcessed(int nPurchaseID)
@@ -730,7 +730,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
             if (CheckProcessed(nPurchaseID))
-                return Ok(_api.Error("Transaction Started"));
+                return Ok(_api.Error(User,"Transaction Started"));
             try
             {
 
@@ -746,7 +746,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -779,7 +779,7 @@ namespace SmartxAPI.Controllers
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to Delete PurchaseInvoice"));
+                            return Ok(_api.Error(User,"Unable to Delete PurchaseInvoice"));
                         }
 
                         myAttachments.DeleteAttachment(dLayer, 1,nPurchaseID,VendorID, nFnYearID, N_FormID,User, transaction, connection);
@@ -796,7 +796,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to delete Purchase Invoice"));
+                            return Ok(_api.Error(User,"Unable to delete Purchase Invoice"));
                         }
                     }
 
@@ -809,7 +809,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 

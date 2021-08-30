@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
          [HttpGet("listDetails")]
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         LeadCode = dLayer.GetAutoNumber("CRM_Project", "x_ProjectCode", Params, connection, transaction);
-                        if (LeadCode == "") {transaction.Rollback(); return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LeadCode == "") {transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["x_ProjectCode"] = LeadCode;
                     }
 
@@ -191,7 +191,7 @@ namespace SmartxAPI.Controllers
                     if (nLeadID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -202,7 +202,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -230,13 +230,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Project"));
+                    return Ok(api.Error(User,"Unable to delete Project"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

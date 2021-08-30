@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listDetails")]
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1306);
                         LeadCode = dLayer.GetAutoNumber("CRM_Customer", "x_CustomerCode", Params, connection, transaction);
-                        if (LeadCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Customer Code")); }
+                        if (LeadCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["x_CustomerCode"] = LeadCode;
                     }
 
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -205,7 +205,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -237,13 +237,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Customer"));
+                    return Ok(api.Error(User,"Unable to delete Customer"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

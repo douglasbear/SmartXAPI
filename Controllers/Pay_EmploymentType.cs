@@ -86,7 +86,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xEmploymentCode = dLayer.GetAutoNumber("Pay_EmploymentType", "x_EmploymentCode", Params, connection, transaction);
-                        if (xEmploymentCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Employment Type Code")); }
+                        if (xEmploymentCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Employment Type Code")); }
                         MasterTable.Rows[0]["x_EmploymentCode"] = xEmploymentCode;
                     }
                     else
@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -157,13 +157,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Employment Type"));
+                        return Ok(_api.Error(User,"Unable to delete Employment Type"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

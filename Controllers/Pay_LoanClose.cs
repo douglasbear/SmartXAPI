@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_LoanCloseID", nLoanCloseID);
                         LoanCloseCode = dLayer.GetAutoNumber("Pay_LoanClose", "X_LoanClosingCode", Params, connection, transaction);
-                        if (LoanCloseCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LoanCloseCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["X_LoanClosingCode"] = LoanCloseCode;
                     }
                     SortedList DeleteParams = new SortedList(){
@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
                     if (nLoanCloseID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     dLayer.ExecuteNonQuery("Update Pay_LoanIssueDetails Set B_IsLoanClose =1,N_TransDetailsID=" + nLoanCloseID + "  Where N_CompanyID =" + nCompanyID + " and N_LoanTransID=" + nLoanTransID + " and(N_RefundAmount=0 OR N_RefundAmount IS Null)", Params, connection, transaction);
 
@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(N_LoanTransDetailsID.ToString()) <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to save"));
+                            return Ok(api.Error(User,"Unable to save"));
                         }
                         else
                         {
@@ -348,7 +348,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(N_LoanTransDetailsID.ToString()) <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save Loan Request"));
+                        return Ok(api.Error(User,"Unable to save Loan Request"));
                     }
 
                     SortedList ClosingParams = new SortedList(){
@@ -370,7 +370,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -410,13 +410,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to Loan Close"));
+                    return Ok(api.Error(User,"Unable to Loan Close"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

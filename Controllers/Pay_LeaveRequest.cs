@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -208,7 +208,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -293,7 +293,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -326,7 +326,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -374,7 +374,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -446,7 +446,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -489,7 +489,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -576,7 +576,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -660,7 +660,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", "210");
                         Params.Add("N_BranchID", nBranchID);
                         x_VacationGroupCode = dLayer.GetAutoNumber("Pay_VacationMaster", "x_VacationGroupCode", Params, connection, transaction);
-                        if (x_VacationGroupCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate leave Request Code")); }
+                        if (x_VacationGroupCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate leave Request Code")); }
                         MasterTable.Rows[0]["x_VacationGroupCode"] = x_VacationGroupCode;
                     }
                     else
@@ -678,7 +678,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to save"));
+                            return Ok(api.Error(User,"Unable to save"));
                         }
 
                     }
@@ -768,7 +768,7 @@ namespace SmartxAPI.Controllers
                         if (DetailID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to save"));
+                            return Ok(api.Error(User,"Unable to save"));
                         }
                         else
                         {
@@ -780,7 +780,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
 
                     // DataTable Files = ds.Tables["files"];
@@ -789,7 +789,7 @@ namespace SmartxAPI.Controllers
                     //     if (!dLayer.SaveFiles(Files, "Pay_VacationMaster", "N_VacationGroupID", n_VacationGroupID, nEmpID.ToString(), nCompanyID, connection, transaction))
                     //     {
                     //         transaction.Rollback();
-                    //         return Ok(api.Error("Unable to save"));
+                    //         return Ok(api.Error(User,"Unable to save"));
                     //     }
                     // }
 
@@ -827,7 +827,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
         public string Boody(string ReplaceEmployee, string Employee)
@@ -928,7 +928,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error("Transaction not Found"));
+                        return Ok(api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -966,7 +966,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Leave Request"));
+                        return Ok(api.Error(User,"Unable to delete Leave Request"));
                     }
 
 
@@ -974,7 +974,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 

@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("listDetails")]
@@ -204,7 +204,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         //Save....
@@ -269,7 +269,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
 
                         AdjustmentNo = dLayer.GetAutoNumber("Inv_BalanceAdjustmentMaster", "X_VoucherNo", Params, connection, transaction);
-                        if (AdjustmentNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Adjustment Number")); }
+                        if (AdjustmentNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Adjustment Number")); }
                         MasterTable.Rows[0]["X_VoucherNo"] = AdjustmentNo;
 
                     }
@@ -289,7 +289,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     if (N_AdjustmentID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Adjustment"));
+                        return Ok(_api.Error(User,"Unable to save Adjustment"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -300,7 +300,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     if (N_AdjustmentDetailsId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Adjustment"));
+                        return Ok(_api.Error(User,"Unable to save Adjustment"));
                     }
                     else
                     {
@@ -311,7 +311,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -338,7 +338,7 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listemployee")]
@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listEndType")]
@@ -153,7 +153,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("listReason")]
@@ -182,7 +182,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_ServiceEndID", nServiceEndID);
                         ServiceEndCode = dLayer.GetAutoNumber("pay_EndOFService", "X_ServiceEndCode", Params, connection, transaction);
-                        if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Service End Code")); }
+                        if (ServiceEndCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Service End Code")); }
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");
@@ -266,7 +266,7 @@ namespace SmartxAPI.Controllers
                     if (nServiceEndID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     QueryParams.Add("@nCompanyID", nCompanyID);
                     QueryParams.Add("@nFnYearID", nFnYearId);
@@ -298,7 +298,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -337,13 +337,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to EoS"));
+                    return Ok(api.Error(User,"Unable to EoS"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -385,7 +385,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -417,19 +417,19 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
         [HttpGet("paymentDetails")]
-        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate,int nPayID)
+        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate)//,int nPayID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nEmpID", nEmpID);
-            //string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+            string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
 
           
 
@@ -440,28 +440,28 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    SortedList proParams2 = new SortedList(){
-                                    {"N_CompanyID",nCompanyID},
-                                    {"N_EmpID",nEmpID},
-                                    {"N_FnYearID",nFnYearID},
-                                    {"D_Date",dDate},
-                                    {"N_PayID",nPayID}};
+                    // SortedList proParams2 = new SortedList(){
+                    //                 {"N_CompanyID",nCompanyID},
+                    //                 {"N_EmpID",nEmpID},
+                    //                 {"N_FnYearID",nFnYearID},
+                    //                 {"D_Date",dDate},
+                    //                 {"N_PayID",nPayID}};
 
-                    dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
+                    // dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
 
-                    //dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    // string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
-                    // DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    // string TotalCount = "0";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    string TotalCount = "0";
 
-                    // if (Summary.Rows.Count > 0)
-                    // {
-                    //     DataRow drow = Summary.Rows[0];
-                    //     TotalCount = drow["N_Count"].ToString();
+                    if (Summary.Rows.Count > 0)
+                    {
+                        DataRow drow = Summary.Rows[0];
+                        TotalCount = drow["N_Count"].ToString();
 
-                    // }
+                    }
                     OutPut.Add("Details", api.Format(dt));
-                    //OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotalCount", TotalCount);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -475,7 +475,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -557,7 +557,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
 
         }

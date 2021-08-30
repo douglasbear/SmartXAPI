@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(_api.Error(User,e));
             }
         }
         [HttpGet("productList")]
@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -325,7 +325,7 @@ namespace SmartxAPI.Controllers
                         X_ReferenceNo = DocNo;
 
 
-                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
                     }
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
 
                         // N_AssemblyID = 0;
@@ -376,7 +376,7 @@ namespace SmartxAPI.Controllers
                         if (N_ItemDetailsID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save Item Details "));
+                            return Ok(_api.Error(User,"Unable to save Item Details "));
                         }
 
                     }
@@ -463,7 +463,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("itemList")]
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -587,7 +587,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -623,7 +623,7 @@ namespace SmartxAPI.Controllers
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to edit"));
+                            return Ok(_api.Error(User,"Unable to edit"));
 
                         }
 
@@ -674,7 +674,7 @@ namespace SmartxAPI.Controllers
             }
                catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }

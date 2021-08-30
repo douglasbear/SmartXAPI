@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -125,7 +125,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 73);
                         CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Category Code")); }
+                        if (CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save...Category Name Exists"));
+                        return Ok(_api.Error(User,"Unable to save...Category Name Exists"));
                     }
 
                     else
@@ -148,7 +148,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -168,7 +168,7 @@ namespace SmartxAPI.Controllers
                     if (Obcount != 0)
                     {
 
-                        return Ok(_api.Error("Unable to Delete.Product category Allready Used"));
+                        return Ok(_api.Error(User,"Unable to Delete.Product category Allready Used"));
                     }
 
                     Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "", connection);
@@ -181,13 +181,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete product category"));
+                        return Ok(_api.Error(User,"Unable to delete product category"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 

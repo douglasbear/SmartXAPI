@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
   [HttpGet("categorylist")]
@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -187,7 +187,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
  
@@ -220,7 +220,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -270,7 +270,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -343,7 +343,7 @@ namespace SmartxAPI.Controllers
                     if(N_AssetInventoryID<=0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Error"));
+                        return Ok(_api.Error(User,"Error"));
                     }
                     int PurchaseID=0;
                     if (!(FormID == 1293 && TypeID == 281))
@@ -360,7 +360,7 @@ namespace SmartxAPI.Controllers
                         if(PurchaseID<=0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Error"));
+                            return Ok(_api.Error(User,"Error"));
                         }
                     }
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
@@ -378,7 +378,7 @@ namespace SmartxAPI.Controllers
                                 if(N_AssetInventoryDetailsID<=0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Error"));
+                                    return Ok(_api.Error(User,"Error"));
                                 }
                                 TransactionTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
                                 TransactionTable.Rows[j]["X_Reference"]=ReturnNo;
@@ -388,7 +388,7 @@ namespace SmartxAPI.Controllers
                                 if(N_ActionID<=0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Error"));
+                                    return Ok(_api.Error(User,"Error"));
                                 }
                             }
                         }
@@ -455,7 +455,7 @@ namespace SmartxAPI.Controllers
                                     if(N_AssetInventoryDetailsID<=0)
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error("Error"));
+                                        return Ok(_api.Error(User,"Error"));
                                     }
                                 // for (int k = 0 ;k < AssMasterTableNew.Rows.Count;k++)
                                 // {
@@ -500,7 +500,7 @@ namespace SmartxAPI.Controllers
                                         if(ItemCodeCount>0)
                                         {
                                             transaction.Rollback();
-                                            return Ok(_api.Error("Item Exists"));
+                                            return Ok(_api.Error(User,"Item Exists"));
                                         }
                                     }
                                     AssMasterTableNew.Rows[j]["X_ItemCode"]=X_ItemCode;
@@ -510,7 +510,7 @@ namespace SmartxAPI.Controllers
                                     if(N_MasterID<=0)
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error("Error"));
+                                        return Ok(_api.Error(User,"Error"));
                                     }   
 
                                 // for (int k = 0 ;k < TransactionTableNew.Rows.Count;k++)
@@ -526,7 +526,7 @@ namespace SmartxAPI.Controllers
                                     if(N_ActionID<=0)
                                     {
                                         transaction.Rollback();
-                                        return Ok(_api.Error("Error"));
+                                        return Ok(_api.Error(User,"Error"));
                                     } 
                                 }                  
                             }
@@ -546,7 +546,7 @@ namespace SmartxAPI.Controllers
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(ex));
+                        return Ok(_api.Error(User,ex));
                     }
 
                     SortedList Result = new SortedList();
@@ -558,7 +558,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -608,7 +608,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -654,7 +654,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -695,7 +695,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete Asset Purchase"));
+                        return Ok(_api.Error(User,"Unable to delete Asset Purchase"));
                     }
 
 
@@ -703,7 +703,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
    } 

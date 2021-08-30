@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -362,7 +362,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -471,7 +471,7 @@ namespace SmartxAPI.Controllers
                         if (count > 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save, Product name alrady exist"));
+                            return Ok(_api.Error(User,"Unable to save, Product name alrady exist"));
                         }
                        
 
@@ -486,7 +486,7 @@ namespace SmartxAPI.Controllers
                         if (N_ItemID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
+                            return Ok(_api.Error(User,"Unable to save"));
                         }
 
 
@@ -617,7 +617,7 @@ namespace SmartxAPI.Controllers
                         // if (BaseUnitID <= 0)
                         // {
                         //     transaction.Rollback();
-                        //     return Ok(_api.Error("Unable to save"));
+                        //     return Ok(_api.Error(User,"Unable to save"));
                         // }
 
                         dLayer.DeleteData("Inv_ItemMasterWHLink", "N_ItemID", N_ItemID, "", connection, transaction);
@@ -736,7 +736,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         public bool writefile(string FileString, string Path, string Name)
@@ -815,7 +815,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -851,7 +851,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpDelete("unitDelete")]
@@ -876,7 +876,7 @@ namespace SmartxAPI.Controllers
                     if (usedCheck != null)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Can't be delete,It has been used!"));
+                        return Ok(_api.Error(User,"Can't be delete,It has been used!"));
                     }
 
                     int classID = 0;
@@ -899,7 +899,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error("Can't be delete,It has been used!"));
+                return Ok(_api.Error(User,"Can't be delete,It has been used!"));
             }
         }
 
@@ -946,7 +946,7 @@ namespace SmartxAPI.Controllers
                         object N_Result = dLayer.ExecuteScalar("Select B_YearEndProcess from Acc_FnYear Where N_CompanyID= " + nCompanyID + " and N_FnYearID= " + nFnYearID, connection, transaction);
                         if (myFunctions.getIntVAL(myFunctions.getBoolVAL(N_Result.ToString())) == 1)
                         {
-                            return Ok(_api.Error("Year Closed , Unable to delete product."));
+                            return Ok(_api.Error(User,"Year Closed , Unable to delete product."));
                         }
 
                         dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", _itemID, "", connection, transaction);
@@ -964,7 +964,7 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
 
-                            return Ok(_api.Error("Unable to delete product category"));
+                            return Ok(_api.Error(User,"Unable to delete product category"));
                         }
                     }
                     transaction.Commit();
@@ -973,7 +973,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error("Can't be delete,It has been used!"));
+                return Ok(_api.Error(User,"Can't be delete,It has been used!"));
             }
 
 

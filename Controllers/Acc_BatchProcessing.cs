@@ -79,7 +79,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
  
@@ -127,17 +127,17 @@ namespace SmartxAPI.Controllers
                             { 
                                 transaction.Rollback();
                                 if (ex.Message == "50")
-                                    return Ok(_api.Error("Day Closed"));
+                                    return Ok(_api.Error(User,"Day Closed"));
                                 else if (ex.Message == "51")
-                                    return Ok(_api.Error("Year Closed"));
+                                    return Ok(_api.Error(User,"Year Closed"));
                                 else if (ex.Message == "52")
-                                    return Ok(_api.Error("Year Exists"));
+                                    return Ok(_api.Error(User,"Year Exists"));
                                 else if (ex.Message == "53")
-                                    return Ok(_api.Error("Period Closed"));
+                                    return Ok(_api.Error(User,"Period Closed"));
                                 else if (ex.Message == "54")
-                                    return Ok(_api.Error("Txn Date"));
+                                    return Ok(_api.Error(User,"Txn Date"));
                                 else
-                                    return Ok(_api.Error(ex));
+                                    return Ok(_api.Error(User,ex));
                             } 
 
                             dLayer.ExecuteNonQuery("update Acc_VoucherMaster set B_IsAccPosted=1 where N_VoucherID=" + DetailTable.Rows[j]["N_VoucherID"]+" and N_CompanyID="+DetailTable.Rows[j]["N_CompanyID"], connection, transaction);                                  
@@ -160,17 +160,17 @@ namespace SmartxAPI.Controllers
                             {
                                 transaction.Rollback();
                                  if (ex.Message == "50")
-                                    return Ok(_api.Error("Day Closed"));
+                                    return Ok(_api.Error(User,"Day Closed"));
                                 else if (ex.Message == "51")
-                                    return Ok(_api.Error("Year Closed"));
+                                    return Ok(_api.Error(User,"Year Closed"));
                                 else if (ex.Message == "52")
-                                    return Ok(_api.Error("Year Exists"));
+                                    return Ok(_api.Error(User,"Year Exists"));
                                 else if (ex.Message == "53")
-                                    return Ok(_api.Error("Period Closed"));
+                                    return Ok(_api.Error(User,"Period Closed"));
                                 else if (ex.Message == "54")
-                                    return Ok(_api.Error("Txn Date"));
+                                    return Ok(_api.Error(User,"Txn Date"));
                                 else
-                                    return Ok(_api.Error(ex));
+                                    return Ok(_api.Error(User,ex));
                             } 
                         }
                     }         
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -293,7 +293,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -324,7 +324,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     if (Results >= 0)
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete Asset Sales"));
+                        return Ok(_api.Error(User,"Unable to delete Asset Sales"));
                     }
 
 
@@ -343,7 +343,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
    } 

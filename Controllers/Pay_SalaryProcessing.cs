@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -285,7 +285,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(_api.Error(User,e));
             }
         }
         public int GenerateCSVFiles(int nBankID, int nCompanyID, string x_batchID, int nFnYearID, string N_salaryAmt, DateTime dtPayrun, DateTime dtpSalFrom, DateTime dtpSalTo)
@@ -921,7 +921,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -976,7 +976,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(_api.Error(User,e));
 
             }
         }
@@ -1098,7 +1098,7 @@ namespace SmartxAPI.Controllers
                         if (x_Batch == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to generate batch"));
+                            return Ok(_api.Error(User,"Unable to generate batch"));
 
                         }
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
@@ -1109,7 +1109,7 @@ namespace SmartxAPI.Controllers
                     if (N_TransID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -1178,7 +1178,7 @@ namespace SmartxAPI.Controllers
                                 if (N_TotalSalary + N_EOSAmt < 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("-ve Salary"));
+                                    return Ok(_api.Error(User,"-ve Salary"));
                                 }
                             }
                         }
@@ -1193,7 +1193,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(N_TransDetailsID.ToString()) <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Error"));
+                            return Ok(_api.Error(User,"Error"));
 
                         }
 
@@ -1231,7 +1231,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -1258,7 +1258,7 @@ namespace SmartxAPI.Controllers
                     if (count > 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete ,Transactions Exist"));
+                        return Ok(_api.Error(User,"Unable to delete ,Transactions Exist"));
 
                     }
 
@@ -1269,14 +1269,14 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete batch"));
+                        return Ok(_api.Error(User,"Unable to delete batch"));
                     }
                     Results = dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nTransID, "N_CompanyID=" + myFunctions.GetCompanyID(User), connection, transaction);
 
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete batch"));
+                        return Ok(_api.Error(User,"Unable to delete batch"));
                     }
 
                     transaction.Commit();
@@ -1285,7 +1285,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }

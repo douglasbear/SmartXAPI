@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", this.FormID);
                         X_PositionCode = dLayer.GetAutoNumber("Pay_Position", "x_PositionCode", Params, connection, transaction);
-                        if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Job title Code")); }
+                        if (X_PositionCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Job title Code")); }
                         MasterTable.Rows[0]["x_PositionCode"] = X_PositionCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearID");
@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
                     if (N_PositionID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Duplicate Exist"));
+                        return Ok(_api.Error(User,"Duplicate Exist"));
                     }
                     else
                     {
@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -188,13 +188,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Job Title"));
+                        return Ok(_api.Error(User,"Unable to delete Job Title"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

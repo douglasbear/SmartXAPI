@@ -64,7 +64,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", N_FormID);
                         PkeyCode = dLayer.GetAutoNumber("Gen_LookupTable", "X_PkeyCode", Params, connection, transaction);
-                        if (PkeyCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate PkeyCode Code")); }
+                        if (PkeyCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate PkeyCode Code")); }
                         MasterTable.Rows[0]["X_PkeyCode"] = PkeyCode;
                     }
                     else
@@ -128,14 +128,14 @@ namespace SmartxAPI.Controllers
                     {
 
                         transaction.Rollback();
-                        return Ok(api.Error("Seq No Already Exists"));
+                        return Ok(api.Error(User,"Seq No Already Exists"));
                     }
                                     
                 
                     if (nPkeyId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                    
                         transaction.Commit();
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -169,7 +169,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Entry..."));
+                        return Ok(api.Error(User,"Year is closed, Cannot create new Entry..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Gen_LookupTable", "N_PkeyId", nPkeyId, "", connection, transaction);
                     transaction.Commit();
@@ -182,13 +182,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Entry"));
+                    return Ok(api.Error(User,"Unable to delete Entry"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
             catch(Exception e)
             {
 
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
