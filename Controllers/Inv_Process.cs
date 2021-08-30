@@ -304,7 +304,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable.Columns.Remove("N_LabourCostID");
                     MasterTable.Columns.Remove("N_MachineCostID");
-
+                    MasterTable.Columns.Remove("N_BOMUnitId");
                     bool B_AddItem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("825", "AddItem", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
 
                     SqlTransaction transaction = connection.BeginTransaction();

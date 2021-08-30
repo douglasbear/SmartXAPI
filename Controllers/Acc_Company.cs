@@ -94,6 +94,37 @@ namespace SmartxAPI.Controllers
 
 
 
+[HttpGet("TimeZonelist")]
+        public ActionResult GetTimeZonelist()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select N_TimeZoneID,B_IsDST, (X_ZoneName+' '+'GMT'+X_UtcOffSet) as X_ZoneName from Gen_TimeZone";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(e));
+            }
+        }
+
+
         [HttpGet("details")]
         public ActionResult GetCompanyInfo(int nCompanyID)
         {
