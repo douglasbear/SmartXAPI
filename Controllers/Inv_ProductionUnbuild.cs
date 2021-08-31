@@ -430,7 +430,7 @@ namespace SmartxAPI.Controllers
 
                     ItemTable = _api.Format(ItemTable, "itemDetails");
                     Params.Add("@N_ItemID", ItemTable.Rows[0]["N_ItemID"].ToString());
-                    ItemTable = myFunctions.AddNewColumnToDataTable(ItemTable, "N_QtyInHand", typeof(double), "");
+                    ItemTable = myFunctions.AddNewColumnToDataTable(ItemTable, "N_QtyInHand", typeof(double), 0);
                     object objStock = dLayer.ExecuteScalar("select dbo.SP_GenGetStock(Inv_StockMaster.N_ItemID,@nLocationID,'','Location') as N_CurrentStock from Inv_StockMaster group by N_ItemID having N_ItemID=@N_ItemID", Params, connection);
                     if (objStock != null)
                     {
