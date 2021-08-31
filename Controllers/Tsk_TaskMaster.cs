@@ -309,10 +309,6 @@ namespace SmartxAPI.Controllers
 
                     }
 
-
-
-
-
                     nTaskId = dLayer.SaveData("Tsk_TaskMaster", "N_TaskID", MasterTable, connection, transaction);
                     if (nTaskId <= 0)
                     {
