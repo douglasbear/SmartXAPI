@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
         {
             int id = type;
            
-            string X_Criteria = "N_DefaultId=@p1";
+            string X_Criteria = "N_DefaultId=@p1 order by n_Sort ASC";
             SortedList param = new SortedList() { { "@p1", id } };
             if (X_TypeCode != "" && X_TypeCode!= null)
             {
