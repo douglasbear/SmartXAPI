@@ -1,13 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> 6170a218602894c7a2a1e08418d8219ce66358e4
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
     ]
   }
 }
