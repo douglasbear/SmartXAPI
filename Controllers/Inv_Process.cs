@@ -158,10 +158,13 @@ namespace SmartxAPI.Controllers
                     DataTable ProducionLabourCost = new DataTable();
                     DataTable ProductionMachineCost = new DataTable();
                     DataTable ByProductDetails = new DataTable();
+                    DataTable ScrapDetails = new DataTable();
                     // DataTable ItemStock = new DataTable();
                     DataTable ItemStockUnit = new DataTable();
 
                     string StockQuerry = "";
+                    string ScrapDetailssql="";
+
 
 
 
@@ -218,13 +221,19 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    string sql1 = "select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=2";
+                     ScrapDetailssql = "select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=2";
 
-                    ByProductDetails = dLayer.ExecuteDataTable(sql1, Params, connection);
+                    ScrapDetails = dLayer.ExecuteDataTable(ScrapDetailssql, Params, connection);
                     // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                    ByProductDetails.AcceptChanges();
+                    ScrapDetails.AcceptChanges();
 
                     ItemDetails.AcceptChanges();
+
+
+                    string sql1="Select *,dbo.SP_GenGetStock(vw_InvItemDetails.N_ItemID," + nLocationID + ",'','Location') As N_Stock,dbo.[SP_Cost_Loc](vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,''," + nLocationID + ") As N_Cost,dbo.SP_Cost(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID,'') As N_Cost1,dbo.SP_SellingPrice(vw_InvItemDetails.N_ItemID,vw_InvItemDetails.N_CompanyID) As N_SPrice From vw_InvItemDetails Where N_MainItemID =" + N_ItemID + " and N_CompanyID=" + nCompanyID + " and N_Type=1";
+                     ByProductDetails = dLayer.ExecuteDataTable(sql1, Params, connection);
+                    // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    ByProductDetails.AcceptChanges();
                     // string StockQuerry = "Select Inv_ItemDetails.N_MainItemID,Inv_ItemDetails.N_ItemID," + nLocationID + " as N_locationID,dbo.SP_GenGetStock(Inv_ItemDetails.N_ItemID," + nLocationID + ",'','Location') as N_CurrentStock from Inv_ItemDetails inner join Inv_StockMaster on Inv_ItemDetails.N_ItemID=Inv_StockMaster.N_ItemID  group by Inv_ItemDetails.N_ItemID,Inv_ItemDetails.N_MainItemID having Inv_ItemDetails.N_MainItemID=" + N_ItemID;
                     // ItemStock = dLayer.ExecuteDataTable(StockQuerry, Params, connection);
                     // // if (ElementsTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
@@ -247,12 +256,15 @@ namespace SmartxAPI.Controllers
                     ProductionMachineCost = _api.Format(ProductionMachineCost,"ProductionMachineCost");
                     ItemStockUnit = _api.Format(ItemStockUnit,"ItemStockUnit");
                     ByProductDetails = _api.Format(ByProductDetails,"ByProductDetails");
+                    ScrapDetails = _api.Format(ByProductDetails,"ScrapDetails");
                     dt.Tables.Add(ItemDetails);
                     dt.Tables.Add(ItemStock);
                     dt.Tables.Add(ProducionLabourCost);
                     dt.Tables.Add(ProductionMachineCost);
                     dt.Tables.Add(ByProductDetails);
                     dt.Tables.Add(ItemStockUnit);
+                    dt.Tables.Add(ScrapDetails);
+                    
 
 
                     return Ok(_api.Success(dt));
