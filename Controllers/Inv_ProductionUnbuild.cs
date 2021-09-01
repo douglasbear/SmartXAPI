@@ -384,17 +384,19 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User,ex));
                         }
+                        transaction.Commit();
+                       
                     }                
-                }
-                if (Results > 0)
+                }  
+                 if (Results > 0)
                 {
-                    return Ok(_api.Success( "Product Unit deleted"));
+                    
+                    return Ok(_api.Success( "Production Unbuild deleted"));
                 }
                 else
                 {
-                    return Ok(_api.Warning("Unable to delete product Unit"));
-                }
-
+                    return Ok(_api.Warning("Unable to delete production unbuild"));
+                }     
             }
             catch (Exception ex)
             {
