@@ -84,40 +84,42 @@ namespace SmartxAPI.Controllers
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = body.ToString();
-                            SmtpClient client = new SmtpClient
-                            {
-                                Host = "smtp.gmail.com",
-                                Port = 587,
-                                EnableSsl = true,
-                                DeliveryMethod = SmtpDeliveryMethod.Network,
-                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
-                                Timeout = 10000,
-                            };
+                            // SmtpClient client = new SmtpClient
+                            // {
+                            //     Host = "smtp.gmail.com",
+                            //     Port = 587,
+                            //     EnableSsl = true,
+                            //     DeliveryMethod = SmtpDeliveryMethod.Network,
+                            //     Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                            //     Timeout = 10000,
+                            // };
 
-                            MailMessage message = new MailMessage();
-                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
-                            message.From = new MailAddress(Sender);
-                            message.Subject = Subject;
-                            message.Body = MailBody;
-                            message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography");
+                            // MailMessage message = new MailMessage();
+                            // message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            // message.From = new MailAddress(Sender);
+                            // message.Subject = Subject;
+                            // message.Body = MailBody;
+                            // message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography");
 
-                            message.IsBodyHtml = true; //HTML email  
-                            string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
-                            if (CC != "")
-                                message.CC.Add(CC);
+                            // message.IsBodyHtml = true; //HTML email  
+                            // string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
+                            // if (CC != "")
+                            //     message.CC.Add(CC);
 
-                            string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
-                            if (Bcc != "")
-                                message.Bcc.Add(Bcc);
+                            // string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
+                            // if (Bcc != "")
+                            //     message.Bcc.Add(Bcc);
 
                             //Attachments
-                            DataTable Attachments = dLayer.ExecuteDataTable("select * from Dms_ScreenAttachments where N_CompanyID=" + companyid + " and n_formid=" + 1348 + " and N_TransID=" + nTemplateID, Params, connection, transaction);
-                            foreach (DataRow var in Attachments.Rows)
-                            {
-                                message.Attachments.Add(new Attachment(var["x_refName"].ToString()));
+                            // DataTable Attachments = dLayer.ExecuteDataTable("select * from Dms_ScreenAttachments where N_CompanyID=" + companyid + " and n_formid=" + 1348 + " and N_TransID=" + nTemplateID, Params, connection, transaction);
+                            // foreach (DataRow var in Attachments.Rows)
+                            // {
+                            //     message.Attachments.Add(new Attachment(var["x_refName"].ToString()));
 
-                            }
-                            client.Send(message);
+                            // }
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer,1348,nTemplateID,companyid);
+
+                            //client.Send(message);
 
                         }
                     }

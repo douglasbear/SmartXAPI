@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(User,e));
+                return StatusCode(403, _api.Error(User, e));
             }
         }
 
@@ -134,12 +134,12 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_UserCategoryNameList", typeof(string), 0);
-                    for(int i=0;i<dt.Rows.Count;i++)
+                    for (int i = 0; i < dt.Rows.Count; i++)
                     {
-                        string X_UserCategoryNameList="";
+                        string X_UserCategoryNameList = "";
                         string sqlText = "Select X_UserCategory From Sec_UserCategory Where N_UserCategoryID in(" + dt.Rows[i]["X_UserCategoryList"].ToString() + ") and N_CompanyID=@p1";
                         DataTable dtCategory = dLayer.ExecuteDataTable(sqlText, Params, connection);
-                        for(int j=0;j<dtCategory.Rows.Count;j++)
+                        for (int j = 0; j < dtCategory.Rows.Count; j++)
                         {
                             if (X_UserCategoryNameList == "")
                                 X_UserCategoryNameList = dtCategory.Rows[j]["X_UserCategory"].ToString();
@@ -169,7 +169,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         //Save....
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
 
                 int nClientID = myFunctions.GetClientID(User);
                 int globalUserID, userID, nUserID, nGlobalUserID = 0;
-                               
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -209,8 +209,8 @@ namespace SmartxAPI.Controllers
                         userParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                         userParams.Add("@nGlobalUserID", globalUser.Rows[0]["n_UserID"].ToString());
                         userParams.Add("@xEmailID", globalUser.Rows[0]["x_EmailID"].ToString());
-                       
-                        
+
+
                         string skipUserSql = "";
 
                         if (nGlobalUserID == 0)
@@ -295,15 +295,15 @@ namespace SmartxAPI.Controllers
                         globalUser.Rows[0]["x_Password"] = xPwd;
 
 
-                        
+
                         globalUserID = dLayer.SaveData("Users", "n_UserID", globalUser, olivoCon, olivoTxn);
 
-                       
+
                         if (globalUserID <= 0)
                         {
                             transaction.Rollback();
                             olivoTxn.Rollback();
-                            return Ok(_api.Error(User,"Unable to invite user"));
+                            return Ok(_api.Error(User, "Unable to invite user"));
                         }
                         // object userCount = dLayer.ExecuteScalar("Select count(1) from Sec_User where n_UserID=" + globalUserID, connection, transaction);
                         // if (myFunctions.getIntVAL(userCount.ToString()) > 0)
@@ -313,24 +313,25 @@ namespace SmartxAPI.Controllers
                         //     return Ok(_api.Error(User,"User Already Registerd With this ID !!!"));
                         // }
                         // MasterTable.Rows[0]["n_UserID"] = globalUserID;
-                        if(MasterTable.Columns.Contains("n_AppID"))
-                        MasterTable.Columns.Remove("n_AppID"); 
+                        if (MasterTable.Columns.Contains("n_AppID"))
+                            MasterTable.Columns.Remove("n_AppID");
                         MasterTable.AcceptChanges();
                         userID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                         if (userID > 0)
                         {
-                            object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_UserID="+userID,connection,transaction);
-//
-if(myFunctions.getIntVAL(salesManCount.ToString())==0){
-    object salesManMax = dLayer.ExecuteScalar("select max(N_SalesmanID)+1 from Inv_SalesMan ",connection,transaction);
-    object salesManCodeMax = dLayer.ExecuteScalar("select max(cast(X_SalesManCode as numeric))+1 from Inv_SalesMan ",connection,transaction);
-    object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values("+myFunctions.GetCompanyID(User)+","+(myFunctions.getIntVAL(salesManMax.ToString()))+",'"+(myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString()+"','"+MasterTable.Rows[0]["X_UserName"].ToString()+"','"+MasterTable.Rows[0]["X_UserID"].ToString()+"',0,0,2,"+userID+",2)",connection,transaction);
-}
+                            object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
+                            //
+                            if (myFunctions.getIntVAL(salesManCount.ToString()) == 0)
+                            {
+                                object salesManMax = dLayer.ExecuteScalar("select max(N_SalesmanID)+1 from Inv_SalesMan ", connection, transaction);
+                                object salesManCodeMax = dLayer.ExecuteScalar("select max(cast(X_SalesManCode as numeric))+1 from Inv_SalesMan ", connection, transaction);
+                                object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values(" + myFunctions.GetCompanyID(User) + "," + (myFunctions.getIntVAL(salesManMax.ToString())) + ",'" + (myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString() + "','" + MasterTable.Rows[0]["X_UserName"].ToString() + "','" + MasterTable.Rows[0]["X_UserID"].ToString() + "',0,0,2," + userID + ",2)", connection, transaction);
+                            }
 
 
 
 
-//
+                            //
 
                             if (nGlobalUserID == 0)
                             {
@@ -339,7 +340,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                                 {
                                     transaction.Rollback();
                                     olivoTxn.Rollback();
-                                    return Ok(_api.Error(User,"Unable to invite user - App Url Not Found"));
+                                    return Ok(_api.Error(User, "Unable to invite user - App Url Not Found"));
                                 }
                                 // format -> userid + email + clientid + companyid + companyUserID
                                 string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(MasterTable.Rows[0]["x_UserID"].ToString()) + seperator + myFunctions.EncryptString(nClientID.ToString());
@@ -352,7 +353,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
           + "</h1><p style='margin: 0 0 24px;'>" + userName + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
           + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Cloud Solutions, All rights reserved.</p></div>";
                                 string EmailSubject = myFunctions.GetCompanyName(User) + " invites you to join their Olivo Cloud Solutions";
-                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer);
+                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer,1,1,1);
                             }
                             else if (nUserID == 0)
                             {
@@ -362,7 +363,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                                 {
                                     transaction.Rollback();
                                     olivoTxn.Rollback();
-                                    return Ok(_api.Error(User,"Unable to invite user - App Url Not Found"));
+                                    return Ok(_api.Error(User, "Unable to invite user - App Url Not Found"));
                                 }
                                 // format -> userid + email + clientid + companyid + companyUserID
                                 string userName = dLayer.ExecuteScalar("select X_UserName from Users where N_ClientID=@nClientID and N_UserID=" + myFunctions.GetGlobalUserID(User), userParams, olivoCon, olivoTxn).ToString();
@@ -374,7 +375,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
           + "</h1><p style='margin: 0 0 24px;'>" + userName + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
           + "</p><a href='" + appUrl + "/login" + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Cloud Solutions, All rights reserved.</p></div>";
                                 string EmailSubject = myFunctions.GetCompanyName(User) + " invites you to join their Olivo Cloud Solutions";
-                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer);
+                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer,1,1,1);
 
                             }
                         }
@@ -382,7 +383,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                         {
                             transaction.Rollback();
                             olivoTxn.Rollback();
-                            return Ok(_api.Error(User,"Unable to invite user"));
+                            return Ok(_api.Error(User, "Unable to invite user"));
                         }
                         transaction.Commit();
                         olivoTxn.Commit();
@@ -397,7 +398,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(User,ex));
+                return StatusCode(403, _api.Error(User, ex));
             }
         }
 
@@ -497,7 +498,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
 
                     if (appUrl == null)
                     {
-                        return Ok(_api.Error(User,"Unable to request - App Url Not Found"));
+                        return Ok(_api.Error(User, "Unable to request - App Url Not Found"));
                     }
                     // format -> userid + email + clientid 
                     string inviteCode = myFunctions.EncryptString(globalUserID.ToString()) + seperator + myFunctions.EncryptString(emailID) + seperator + myFunctions.EncryptString(clientID.ToString());
@@ -509,14 +510,14 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
 + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
 
-                    myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer);
+                    myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer,1,1,1);
 
                 }
                 return Ok(_api.Success("Password Reset Mail Send"));
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(User,"An error occurred while sending mail"));
+                return StatusCode(403, _api.Error(User, "An error occurred while sending mail"));
             }
         }
 
@@ -550,7 +551,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(User,e));
+                return BadRequest(_api.Error(User, e));
             }
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -568,7 +569,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);               
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
 
                 using (SqlConnection olvConn = new SqlConnection(masterDBConnectionString))
@@ -595,7 +596,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -620,16 +621,16 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                     Params.Add("@p3", UserDt.ToString());
                     object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
                     if (Category == null)
-                        return Ok(_api.Error(User,"Unable to delete User"));
+                        return Ok(_api.Error(User, "Unable to delete User"));
                     else if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
-                        return Ok(_api.Error(User,"Unable to delete User"));
+                        return Ok(_api.Error(User, "Unable to delete User"));
                     else
                     {
                         int N_CountTransUser = 0;
                         object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
                         N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
                         if (N_CountTransUser > 0)
-                            return Ok(_api.Error(User,"Unable to delete User"));
+                            return Ok(_api.Error(User, "Unable to delete User"));
                     }
 
                     Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "", connection);
@@ -640,14 +641,14 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete User"));
+                        return Ok(_api.Error(User, "Unable to delete User"));
                     }
 
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 

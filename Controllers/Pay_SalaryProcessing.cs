@@ -964,7 +964,7 @@ namespace SmartxAPI.Controllers
                                 Subject = "PAYSLIP (For Your Review)";
                             else
                                 Subject = "Your salary payments for the month " + dProcessDate.ToString("MMM-yyyy");
-                            myFunctions.SendMail(Toemail, Body, Subject, dLayer);
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer,FormID,nTransID,nCompanyID);
                             message.Clear();
                         }
 

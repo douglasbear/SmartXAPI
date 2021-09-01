@@ -27,12 +27,14 @@ namespace SmartxAPI.GeneralFunctions
     {
         private readonly string ApprovalLink;
         private readonly string masterDBConnectionString;
+        private readonly string connectionString;
         private readonly IConfiguration config;
         private readonly string reportPath;
         public MyFunctions(IConfiguration conf)
         {
             ApprovalLink = conf.GetConnectionString("ApprovalLink");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
             config = conf;
             reportPath = conf.GetConnectionString("ReportPath");
 
@@ -1001,7 +1003,7 @@ namespace SmartxAPI.GeneralFunctions
                 return "";
         }
 
-        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer)
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID,int CompanyID)
         {
 
             try
@@ -1009,6 +1011,14 @@ namespace SmartxAPI.GeneralFunctions
                 ToMail = ToMail.ToString();
                 object companyemail = "";
                 object companypassword = "";
+                SortedList Params = new SortedList();
+                DataTable Attachments;
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    Attachments = dLayer.ExecuteDataTable("select * from Dms_ScreenAttachments where N_CompanyID=" + CompanyID + " and n_formid=" + FormID + " and N_TransID=" + ReferID, Params, connection);
+
+                }
 
                 // companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, connection, transaction);
                 // companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, connection, transaction);
@@ -1057,6 +1067,14 @@ namespace SmartxAPI.GeneralFunctions
                         message.Body = MailBody;
 
                         message.IsBodyHtml = true; //HTML email  
+                        if (Attachments.Rows.Count > 0)
+                        {
+                            foreach (DataRow var in Attachments.Rows)
+                            {
+                                message.Attachments.Add(new Attachment(var["x_refName"].ToString()));
+
+                            }
+                        }
                         // string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
                         // if (CC != "")
                         //     message.CC.Add(CC);
@@ -1064,6 +1082,7 @@ namespace SmartxAPI.GeneralFunctions
                         // string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
                         // if (Bcc != "")
                         //     message.Bcc.Add(Bcc);
+                        
                         client.Send(message);
 
                     }
@@ -1410,14 +1429,14 @@ namespace SmartxAPI.GeneralFunctions
         }
         public int GetCompanyID(ClaimsPrincipal User)
         {
-            object cmpID=User.FindFirst(ClaimTypes.Sid)?.Value;
-            if(cmpID==null) cmpID=0;
+            object cmpID = User.FindFirst(ClaimTypes.Sid)?.Value;
+            if (cmpID == null) cmpID = 0;
             return this.getIntVAL(cmpID.ToString());
         }
         public string GetCompanyName(ClaimsPrincipal User)
         {
-            object cmpName=User.FindFirst(ClaimTypes.StreetAddress)?.Value;
-            if(cmpName==null) cmpName="";
+            object cmpName = User.FindFirst(ClaimTypes.StreetAddress)?.Value;
+            if (cmpName == null) cmpName = "";
             return cmpName.ToString();
         }
         public string GetEmailID(ClaimsPrincipal User)
@@ -1454,30 +1473,30 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-         public bool ExportToExcel(ClaimsPrincipal User,string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection)
+        public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection)
         {
             bool result = false;
 
             try
             {
-                DataTable ExportTable = dLayer.ExecuteDataTable(_fillquery,connection);
+                DataTable ExportTable = dLayer.ExecuteDataTable(_fillquery, connection);
                 if (ExportTable.Rows.Count > 0)
                 {
                     // foreach (DataRow dr in ExportTable.Rows)
-                        GenerateExportFile(reportPath.ToString(), ExportTable, _filename);
+                    GenerateExportFile(reportPath.ToString(), ExportTable, _filename);
                 }
                 result = true;
             }
             catch (Exception ex)
             {
-               return result;
+                return result;
             }
 
 
             return result;
         }
 
-        public static bool GenerateExportFile(string _filepath, DataTable ExportTable,string _filename)
+        public static bool GenerateExportFile(string _filepath, DataTable ExportTable, string _filename)
         {
             bool res = false;
 
@@ -1499,12 +1518,12 @@ namespace SmartxAPI.GeneralFunctions
                         File.WriteAllText(xExportFileName, String.Empty);
                     string delimiter = ",";
                     string[][] header = new string[][]
-                    {                       
+                    {
                         new string[]{"Ledger Code","Ledger Name","Remarks","Debit","Credit"}
                     };
                     string[][] output = new string[][]
                     {
-                 
+
                        new string[]{drow["X_LedgerCode"].ToString(),drow["X_LedgerName"].ToString(),drow["X_Remarks"].ToString(),drow["Debit"].ToString().Replace(",","").Trim(),drow["Credit"].ToString().Replace(",","").Trim()}
                     };
                     int length = output.GetLength(0);
@@ -1524,7 +1543,7 @@ namespace SmartxAPI.GeneralFunctions
             {
                 if (ex is DirectoryNotFoundException)
                 {
-                   res = false;
+                    res = false;
                 }
                 else
                 {
@@ -1589,9 +1608,9 @@ namespace SmartxAPI.GeneralFunctions
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
-        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer);
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID,int CompanyID);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-         public bool ExportToExcel(ClaimsPrincipal User,string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
     }
 }
