@@ -560,7 +560,10 @@ namespace SmartxAPI.Controllers
 
                                             }
                                         }
+
                                     }
+                                
+
 
                                     N_OfficeHours = myFunctions.getVAL(row["N_Workhours"].ToString());
                                     N_additionTime = myFunctions.getVAL(row["OverTime"].ToString());
@@ -575,11 +578,27 @@ namespace SmartxAPI.Controllers
                                     if (N_OfficeHours != 0)
                                         OfficeHours += HoursToMinutes(N_OfficeHours);
                                     
-
                                 }
 
                                 Master.Add("N_WorkdHrs", N_WorkdHrs);
-                                Master.Add("N_WorkHours", N_WorkHours);                              
+                                Master.Add("N_WorkHours", N_WorkHours);
+
+                                EmpGrpWorkhours = _api.Format(EmpGrpWorkhours, "EmpGrpWorkhours");
+                                settingsTable = _api.Format(settingsTable, "settingsTable");
+                                PayAttendence = _api.Format(PayAttendence, "PayAttendence");
+                                PayOffDays = _api.Format(PayOffDays, "PayOffDays");
+                                PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
+                                // Master = _api.Format(Master, "Master");
+
+                                dt.Tables.Add(EmpGrpWorkhours);
+                                dt.Tables.Add(settingsTable);
+                                dt.Tables.Add(PayAttendence);
+                                dt.Tables.Add(PayOffDays);
+                                dt.Tables.Add(PayWorkingHours);
+                      
+                                //dt.Tables.Add(Master);
+
+                                //return Ok(_api.Success(dt));                             
 
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
