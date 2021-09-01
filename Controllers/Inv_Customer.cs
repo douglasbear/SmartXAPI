@@ -22,13 +22,15 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly IMyAttachments myAttachments;
 
-        public Inv_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             api = apifun;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            myAttachments = myAtt;
         }
 
 
@@ -165,6 +167,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
+                DataTable Attachment = ds.Tables["attachments"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
@@ -207,6 +210,16 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        try
+                            {
+                                myAttachments.SaveAttachment(dLayer, Attachment,  MasterTable.Rows[0]["X_CustomerCode"].ToString()+"-"+MasterTable.Rows[0]["X_CustomerName"].ToString(), 0, MasterTable.Rows[0]["X_CustomerName"].ToString(), MasterTable.Rows[0]["X_CustomerCode"].ToString(), nCustomerID, "Customer Document", User, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(ex));
+                            }
+
                         transaction.Commit();
                         // return GetCustomerList(nCompanyID, nFnYearId, nBranchId, true, nCustomerID.ToString(), "");
                         return Ok(api.Success("Customer Saved") );
@@ -215,7 +228,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
+<<<<<<< HEAD
                 return Ok(api.Error(User,ex));
+=======
+                return Ok(api.Error(ex)); 
+>>>>>>> e62b84c60a192cf29c5b2ae83edcfed2b74fc3b5
             }
         }
 
@@ -343,6 +360,7 @@ namespace SmartxAPI.Controllers
                         return Ok(api.Error(User,"Year is closed, Cannot create new Customer..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
+                    myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
                     transaction.Commit();
                 }
                 if (Results > 0)
@@ -367,8 +385,9 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetCustomerDetails(int nCustomerID,int crmcustomerID)
+        public ActionResult GetCustomerDetail(int nCustomerID,int crmcustomerID,int nFnYearID)
         {
+            DataSet ds = new DataSet();
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -394,13 +413,22 @@ namespace SmartxAPI.Controllers
                             
                         }
                         dt.AcceptChanges();
-                    }
+                    
                     if(dt.Rows.Count==0)
-                        {
-                            return Ok(api.Notice("No Results Found" ));
-                        }else{
-                            return Ok(api.Success(dt));
-                        }
+                    {
+                        return Ok(api.Notice("No Results Found" ));
+                    }
+                    else
+                    {
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
+                        Attachments = api.Format(Attachments, "attachments");
+
+                        ds.Tables.Add(dt);
+                        ds.Tables.Add(Attachments);
+
+                        return Ok(api.Success(ds));
+                    }
+                    }
             }catch(Exception e){
                 return Ok(api.Error(User,e));
             }
