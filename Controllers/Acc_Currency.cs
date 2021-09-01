@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
                        return Ok(api.Warning("No Results Found")); }
                        else{return Ok(dt);}
                 }catch(Exception e){
-                    return Ok(api.Error(e));
+                    return Ok(api.Error(User,e));
                 }
         }
 
@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
 
@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
     //             catch (Exception ex)
     //             {
                    
-    //                 return Ok(api.Error(ex));
+    //                 return Ok(api.Error(User,ex));
     //             }
     //     }
 
@@ -191,7 +191,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID",MasterTable.Rows[0]["n_BranchId"].ToString());
                         CurrencyCode = dLayer.GetAutoNumber("Acc_CurrencyMaster", "X_CurrencyCode", Params, connection, transaction);
-                        if (CurrencyCode == "") { transaction.Rollback();return Ok(api.Error("Unable to generate Currency Master")); }
+                        if (CurrencyCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Currency Master")); }
                         MasterTable.Rows[0]["X_CurrencyCode"] = CurrencyCode;
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
                     if (nCurrencyID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
         [HttpDelete("delete")]
@@ -238,7 +238,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
                 {
-                    return Ok(api.Error(ex));
+                    return Ok(api.Error(User,ex));
                 }
         }
     }

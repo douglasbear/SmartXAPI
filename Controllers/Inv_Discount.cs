@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("details")]
@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("pricelist")]
@@ -155,24 +155,27 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
+
+                if (dtPriceList.Rows.Count == 0)
+                {
+                    return Ok(api.Success(dtPriceList));
+                }
+
+
                 if (nQty < myFunctions.getVAL(dtPriceList.Rows[0]["N_MinQty"].ToString()))
                 {
                     return Ok(api.Warning("No Results Found"));
                 }
                 dtPriceList = api.Format(dtPriceList, "pricelist");
 
-                if (dtPriceList.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dtPriceList));
-                }
+
+
+                return Ok(api.Success(dtPriceList));
+
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -234,7 +237,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User, ex));
             }
         }
         [HttpDelete("delete")]
@@ -257,13 +260,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete"));
+                    return Ok(api.Error(User, "Unable to delete"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User, ex));
             }
 
         }

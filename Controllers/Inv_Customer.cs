@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -153,7 +153,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -189,7 +189,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 51);
                         Params.Add("N_BranchID", nBranchId);
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
-                        if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Customer Code")); }
+                        if (CustomerCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["X_CustomerCode"] = CustomerCode;
                     }
 
@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -217,7 +217,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error(ex));
+                                return Ok(api.Error(User,ex));
                             }
 
                         transaction.Commit();
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex)); 
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -297,7 +297,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("getdetails")]
@@ -331,7 +331,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpDelete("delete")]
@@ -353,7 +353,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(api.Error("Year is closed, Cannot create new Customer..."));
+                        return Ok(api.Error(User,"Year is closed, Cannot create new Customer..."));
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Customer", "N_CustomerID", nCustomerID, "", connection, transaction);
                     myAttachments.DeleteAttachment(dLayer, 1, 0, nCustomerID, nFnYearID, 51, User, transaction, connection);
@@ -367,13 +367,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Customer"));
+                    return Ok(api.Error(User,"Unable to delete Customer"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -426,7 +426,7 @@ namespace SmartxAPI.Controllers
                     }
                     }
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
           
         }
@@ -457,7 +457,7 @@ DataTable QList = myFunctions.GetSettingsTable();
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
     }

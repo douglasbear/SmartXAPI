@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -321,7 +321,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -415,7 +415,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpPost("Save")]
@@ -499,7 +499,7 @@ namespace SmartxAPI.Controllers
                     if (PayReceiptId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable To Save Customer Payment"));
+                        return Ok(api.Error(User,"Unable To Save Customer Payment"));
                     }
                     if (xType == "SA")
                     {
@@ -598,13 +598,13 @@ namespace SmartxAPI.Controllers
                         Result.Add("x_SalesReceiptNo", xVoucherNo);
                         return Ok(api.Success(Result, "Customer Payment Saved"));
                     }
-                    else { return Ok(api.Error("Unable To Save Customer Payment")); }
+                    else { return Ok(api.Error(User,"Unable To Save Customer Payment")); }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -643,7 +643,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -675,7 +675,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+                return StatusCode(403, api.Error(User,e));
             }
         }
 
@@ -704,7 +704,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return StatusCode(403, api.Error(e));
+        //         return StatusCode(403, api.Error(User,e));
         //     }
         // }
 

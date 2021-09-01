@@ -150,7 +150,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
 
         }
@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }   
         }
 
@@ -279,7 +279,7 @@ string status="";
 
                             break;
                             default:
-                            return Ok(api.Error("Invalid Form"));
+                            return Ok(api.Error(User,"Invalid Form"));
                             
 
                         }
@@ -308,7 +308,7 @@ if(partyId==null){
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
     }

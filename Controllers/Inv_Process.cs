@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(_api.Error(User,e));
             }
         }
         [HttpGet("productList")]
@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -260,7 +260,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -304,7 +304,7 @@ namespace SmartxAPI.Controllers
 
                     MasterTable.Columns.Remove("N_LabourCostID");
                     MasterTable.Columns.Remove("N_MachineCostID");
-
+                    MasterTable.Columns.Remove("N_BOMUnitId");
                     bool B_AddItem = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("825", "AddItem", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
 
                     SqlTransaction transaction = connection.BeginTransaction();
@@ -318,14 +318,14 @@ namespace SmartxAPI.Controllers
                         while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Assembly Where X_ReceiptNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Assembly Where X_ReferenceNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
                         X_ReferenceNo = DocNo;
 
 
-                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
                     }
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable To Save"));
+                            return Ok(_api.Error(User,"Unable To Save"));
                         }
 
                         // N_AssemblyID = 0;
@@ -376,7 +376,7 @@ namespace SmartxAPI.Controllers
                         if (N_ItemDetailsID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save Item Details "));
+                            return Ok(_api.Error(User,"Unable to save Item Details "));
                         }
 
                     }
@@ -463,7 +463,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("itemList")]
@@ -495,7 +495,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -570,7 +570,7 @@ namespace SmartxAPI.Controllers
 
 
                     Details = _api.Format(Details, "Details");
-                    Master = _api.Format(Master, "Details");
+                    Master = _api.Format(Master, "Master");
                     ItemStock = _api.Format(ItemStock);
                     ProducionLabourCost = _api.Format(ProducionLabourCost);
                     ProductionMachineCost = _api.Format(ProductionMachineCost);
@@ -587,7 +587,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -623,7 +623,7 @@ namespace SmartxAPI.Controllers
                         if (result == null || myFunctions.getIntVAL(result.ToString()) < 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to edit"));
+                            return Ok(_api.Error(User,"Unable to edit"));
 
                         }
 
@@ -674,7 +674,7 @@ namespace SmartxAPI.Controllers
             }
                catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }

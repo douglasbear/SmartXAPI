@@ -66,33 +66,22 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    // object N_OpportunityID = dLayer.ExecuteScalar("select N_opportunityID from crm_opportunity where X_OpportunityCode=@p2", Params, connection);
                     object N_ProjectID = dLayer.ExecuteScalar("select N_ProjectID from Vw_InvCustomerProjects where X_ProjectCode=@p2", Params, connection);
+
                     Params.Add("@p3", N_ProjectID);
-
-
-                    // object N_Quotationid = dLayer.ExecuteScalar("select n_quotationid from inv_salesquotation where N_OpportunityID=@p3", Params, connection);
-                    // if (N_OpportunityID != null)
-                    // {
-                    //     
-                    //     
-                    // }
-                    // if (N_ProjectID != null)
-                    // {
-                    //     Params.Add("@p5", N_ProjectID);
-                    //     ProjectList = dLayer.ExecuteDataTable(sqlCommandProjectList, Params, connection);
-                    //     ProjectList = api.Format(ProjectList, "ProjectList");
-                    //     dt.Tables.Add(ProjectList);
-                    // }
-
                     TasksList = dLayer.ExecuteDataTable(sqlCommandTasksList, Params, connection);
                     ContactList = dLayer.ExecuteDataTable(sqlCommandContactList, Params, connection);
                     MailLogList = dLayer.ExecuteDataTable(sqlCommandMailLogList, Params, connection);
                     OrderList = dLayer.ExecuteDataTable(sqlCommandOrderList, Params, connection);
                     InvoiceList = dLayer.ExecuteDataTable(sqlCommandinvoiceList, Params, connection);
-                    // LeadsList = dLayer.ExecuteDataTable(sqlCommandLeadsList, Params, connection);
-                    // QuotationList = dLayer.ExecuteDataTable(sqlCommandQuotationList, Params, connection);
+                    TasksList = myFunctions.AddNewColumnToDataTable(TasksList, "N_AssigneeID", typeof(int), 0);
+                    object N_AssigneeID = null;
 
+                    for (int i = 0; i < TasksList.Rows.Count; i++)
+                    {
+                        N_AssigneeID = dLayer.ExecuteScalar("select N_AssigneeID from vw_Tsk_Taskcurrentstatus where X_TaskCode=" + TasksList.Rows[i]["X_TaskCode"], Params, connection);
+                        TasksList.Rows[i]["N_AssigneeID"] = N_AssigneeID;
+                    }
 
 
 
@@ -102,21 +91,11 @@ namespace SmartxAPI.Controllers
                     OrderList = api.Format(OrderList, "OrderList");
                     InvoiceList = api.Format(InvoiceList, "InvoiceList");
 
-                    // LeadsList = api.Format(LeadsList, "LeadsList");
-                    // QuotationList = api.Format(QuotationList, "QuotationList");
-
-
-
-
                     dt.Tables.Add(TasksList);
                     dt.Tables.Add(ContactList);
                     dt.Tables.Add(MailLogList);
                     dt.Tables.Add(OrderList);
                     dt.Tables.Add(InvoiceList);
-                    // dt.Tables.Add(LeadsList);
-                    // dt.Tables.Add(QuotationList);
-
-
 
                     return Ok(api.Success(dt));
 
@@ -124,7 +103,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("update")]
@@ -154,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("notesupdate")]
@@ -182,7 +161,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -213,12 +192,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
 
-          [HttpGet("emailDetails")]
-        public ActionResult TaskDetails(string xTaskCode,int nTemplateID)
+        [HttpGet("emailDetails")]
+        public ActionResult TaskDetails(string xTaskCode, int nTemplateID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -226,7 +205,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyId", nCompanyID);
             Params.Add("@p2", xTaskCode);
             Params.Add("@p3", nTemplateID);
-          
+
             string sqlCommandText = "select * from vw_Tsk_TaskMaster where N_CompanyID=@nCompanyId and X_TaskCode=@p2 and N_TemplateID=@p3";
 
             try
@@ -235,8 +214,8 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
-                    
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -250,7 +229,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
 

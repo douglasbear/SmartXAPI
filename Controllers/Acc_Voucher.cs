@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         [HttpGet("details")]
@@ -164,7 +164,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -233,10 +233,10 @@ namespace SmartxAPI.Controllers
                         if (xVoucherNo == "")
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to generate Invoice Number"));
+                            return Ok(api.Error(User,"Unable to generate Invoice Number"));
                         }
                         // xVoucherNo = dLayer.GetAutoNumber("Acc_VoucherMaster", "x_VoucherNo", Params, connection, transaction);
-                        // if (xVoucherNo == "") { return Ok(api.Error("Unable to generate Invoice Number")); }
+                        // if (xVoucherNo == "") { return Ok(api.Error(User,"Unable to generate Invoice Number")); }
 
                         MasterTable.Rows[0]["x_VoucherNo"] = xVoucherNo;
                     }
@@ -244,11 +244,11 @@ namespace SmartxAPI.Controllers
                     {
                         if (N_VoucherID > 0)
                         {   int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
-                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error("Unable to Update"));}
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                              dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", N_VoucherID , "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearId,connection,transaction);
-                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error("Unable to Update"));}
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                              dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId,connection,transaction);
-                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error("Unable to Update"));}
+                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                              
                         }
                     }
@@ -305,7 +305,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Rollback();
-                            return Ok(api.Error("Unable to Save"));
+                            return Ok(api.Error(User,"Unable to Save"));
                         }
 
                     }
@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
         //Delete....
@@ -348,14 +348,14 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Voucher"));
+                        return Ok(api.Error(User,"Unable to delete Voucher"));
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -394,7 +394,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(e));
+                return StatusCode(403, api.Error(User,e));
             }
         }
 
@@ -442,7 +442,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
         
@@ -477,7 +477,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
     }

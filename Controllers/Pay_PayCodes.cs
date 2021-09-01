@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
 
@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         PayCode = dLayer.GetAutoNumber("Pay_PayMaster", "X_PayCode", Params, connection, transaction);
-                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Pay Code")); }
+                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Pay Code")); }
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
 
@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
                             if (SummaryID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error("Unable to save"));
+                                return Ok(api.Error(User,"Unable to save"));
                             }
 
                         }
@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
                             if (SummaryID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error("Unable to save"));
+                                return Ok(api.Error(User,"Unable to save"));
                             }
 
 
@@ -175,7 +175,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return BadRequest(api.Error(User,ex));
             }
         }
 
@@ -235,7 +235,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -306,7 +306,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return BadRequest(api.Error(User,e));
             }
         }
 
@@ -340,7 +340,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -368,7 +368,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getIntVAL(obj3.ToString()) > 0)
                             {
-                                return Ok(api.Error(" PayCode Already used"));
+                                return Ok(api.Error(User," PayCode Already used"));
                             }
 
                         }
@@ -427,7 +427,7 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        return Ok(api.Error(" PayCode Already used"));
+                        return Ok(api.Error(User," PayCode Already used"));
                     }
 
                 }
@@ -439,13 +439,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete PayCode"));
+                    return Ok(api.Error(User,"Unable to delete PayCode"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 
@@ -480,7 +480,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -522,7 +522,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
     }

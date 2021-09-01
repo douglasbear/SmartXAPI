@@ -108,7 +108,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("listdetails")]
@@ -163,7 +163,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -193,7 +193,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -335,7 +335,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return Ok( _api.Error(e));
+        //         return Ok( _api.Error(User,e));
         //     }
         // }
 
@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
                     if (N_GRNID > 0)
                     {
                         if (CheckProcessed(N_GRNID))
-                            return Ok(_api.Error("Transaction Started!"));
+                            return Ok(_api.Error(User,"Transaction Started!"));
                     }
                     if (values == "@Auto")
                     {
@@ -389,7 +389,7 @@ namespace SmartxAPI.Controllers
                         if (GRNNo == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to generate Document Number"));
+                            return Ok(_api.Error(User,"Unable to generate Document Number"));
                         }
                         MasterTable.Rows[0]["X_MRNNo"] = GRNNo;
                     }
@@ -415,7 +415,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -434,7 +434,7 @@ namespace SmartxAPI.Controllers
                     if (N_MRNDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Goods Receive Note!"));
+                        return Ok(_api.Error(User,"Unable to save Goods Receive Note!"));
                     }
                     // if (dtFreightChargeDist.Rows.Count > 0)
                     // {
@@ -471,7 +471,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     SortedList VendorParams = new SortedList();
@@ -486,7 +486,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     transaction.Commit();
@@ -498,7 +498,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         private bool CheckProcessed(int nGRNID)
@@ -533,7 +533,7 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
             if (CheckProcessed(nGRNID))
-                return Ok(_api.Error("Transaction Started"));
+                return Ok(_api.Error(User,"Transaction Started"));
 
           
             try
@@ -551,7 +551,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -572,7 +572,7 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to Delete Goods Receive Note"));
+                        return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
                     }
 
                     myAttachments.DeleteAttachment(dLayer, 1,nGRNID,VendorID, nFnYearID, this.N_FormID,User, transaction, connection);
@@ -585,7 +585,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 
@@ -615,7 +615,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok( _api.Error(User,e));
             }
         }
 

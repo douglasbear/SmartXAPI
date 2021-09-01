@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
-                        if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to save")); }
+                        if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
 
@@ -269,7 +269,7 @@ namespace SmartxAPI.Controllers
                     if (nVendorID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -285,7 +285,7 @@ namespace SmartxAPI.Controllers
                         if (outputDt.Rows.Count == 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save"));
+                            return Ok(_api.Error(User,"Unable to save"));
                         }
                         DataRow NewRow = outputDt.Rows[0];
 
@@ -306,7 +306,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -328,7 +328,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(_api.Error("Year is closed, Cannot create new Vendor..."));
+                        return Ok(_api.Error(User,"Year is closed, Cannot create new Vendor..."));
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
@@ -343,16 +343,16 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to delete vendor"));
+                    return Ok(_api.Error(User,"Unable to delete vendor"));
                 }
 
             }
             catch (Exception ex)
             {
                 if (ex.Message.Contains("REFERENCE constraint"))
-                    return Ok(_api.Error("Unable to delete vendor! It has been used."));
+                    return Ok(_api.Error(User,"Unable to delete vendor! It has been used."));
                 else
-                    return Ok(_api.Error(ex));
+                    return Ok(_api.Error(User,ex));
             }
 
 
@@ -390,7 +390,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -423,7 +423,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

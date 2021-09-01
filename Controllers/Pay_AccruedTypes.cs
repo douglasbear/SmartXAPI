@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
         //     }
         //     catch (Exception e)
         //     {
-        //         return Ok(api.Error(e));
+        //         return Ok(api.Error(User,e));
         //     }
         // }
 
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return BadRequest(_api.Error(User,e));
             }
         }
 
@@ -190,7 +190,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -288,7 +288,7 @@ namespace SmartxAPI.Controllers
                             if (Moddate < ProcessDate)
                             {
 
-                                 return Ok(_api.Error("Cannot save by this Date!!!!!!"));
+                                 return Ok(_api.Error(User,"Cannot save by this Date!!!!!!"));
 
                             }
 
@@ -347,7 +347,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -374,13 +374,13 @@ namespace SmartxAPI.Controllers
                     if (objVacationStarted != null)
                     {
 
-                        return Ok(_api.Error("Transaction started cannot delete Accrual Code"));
+                        return Ok(_api.Error(User,"Transaction started cannot delete Accrual Code"));
 
 
                     }
                     else if (objAssigned != null)
                     {
-                        return Ok(_api.Error("can't delete Accrual Code"));
+                        return Ok(_api.Error(User,"can't delete Accrual Code"));
 
                     }
                     else
@@ -398,13 +398,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Accrual Code"));
+                    return Ok(api.Error(User,"Unable to delete Accrual Code"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

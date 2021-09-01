@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ie)
             {
-                return Ok(api.Error(ie));
+                return Ok(api.Error(User,ie));
             }
         }
          public static string GetCCMail(int ID, int nCompanyID, SqlConnection connection, SqlTransaction transaction, IDataAccessLayer dLayer)

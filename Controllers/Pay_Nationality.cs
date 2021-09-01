@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                             if (N_Result == null)
                                 break;
                         }
-                        if (xNationalityCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Nationality Code")); }
+                        if (xNationalityCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Nationality Code")); }
                         MasterTable.Rows[0]["x_NationalityCode"] = xNationalityCode;
                     }
                    
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     if (nNationalityID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(_api.Error(User,ex));
             }
         }
 
@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -177,13 +177,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete "));
+                        return Ok(_api.Error(User,"Unable to delete "));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

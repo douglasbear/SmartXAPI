@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("policyAgent")]
@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -163,7 +163,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -228,7 +228,7 @@ namespace SmartxAPI.Controllers
                                 break;
                         }
                         X_PolicyCode = DocNo;
-                        if (X_PolicyCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_PolicyCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["x_PolicyCode"] = X_PolicyCode;
 
                     }
@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
                     if (nAdditionID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                     {
@@ -254,7 +254,7 @@ namespace SmartxAPI.Controllers
                     if (nAdditionDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
@@ -262,7 +262,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         [HttpGet("list")]
@@ -317,7 +317,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("employeeDetails")]
@@ -502,7 +502,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -551,7 +551,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
     }

@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok( _api.Error(e));
+                return Ok( _api.Error(User,e));
             }
         }
   [HttpPost("save")]
@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                       
                         CountryCode = dLayer.GetAutoNumber("Acc_Country", "X_CountryCode", Params, connection, transaction);
                         if (CountryCode == "") { transaction.Rollback();
-                        return Ok(_api.Error("Unable to generate Country Master")); }
+                        return Ok(_api.Error(User,"Unable to generate Country Master")); }
                         MasterTable.Rows[0]["X_CountryCode"] = CountryCode;
                     }
                      MasterTable.Columns.Remove("n_FnYearId");
@@ -100,7 +100,7 @@ namespace SmartxAPI.Controllers
                     if (nCountryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return BadRequest(_api.Error(User,ex));
             }
         }
         [HttpDelete("delete")]
@@ -134,7 +134,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
                 {
-                    return Ok(_api.Error(ex));
+                    return Ok(_api.Error(User,ex));
                 }
         }
     
@@ -163,7 +163,7 @@ namespace SmartxAPI.Controllers
                         }
                 
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }   
         }
 

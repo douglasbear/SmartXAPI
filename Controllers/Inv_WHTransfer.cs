@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -173,7 +173,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -235,7 +235,7 @@ namespace SmartxAPI.Controllers
                         X_ReferenceNo = DocNo;
 
 
-                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
                     }
@@ -250,7 +250,7 @@ namespace SmartxAPI.Controllers
                     if (nTransferId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
                     if (nTransferDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     else
                     {
@@ -282,7 +282,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -316,13 +316,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete"));
+                        return Ok(_api.Error(User,"Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -374,7 +374,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

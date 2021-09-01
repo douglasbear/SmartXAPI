@@ -168,7 +168,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("listOrder")]
@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("listTerms")]
@@ -274,7 +274,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("details")]
@@ -632,7 +632,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -796,7 +796,7 @@ namespace SmartxAPI.Controllers
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Transaction date must be in the active Financial Year."));
+                        return Ok(_api.Error(User,"Transaction date must be in the active Financial Year."));
                     }
 
                     B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
@@ -879,7 +879,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
@@ -900,7 +900,7 @@ namespace SmartxAPI.Controllers
                                         catch (Exception ex)
                                         {
                                             transaction.Rollback();
-                                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                            return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                                         }
                                     }
                                 }
@@ -926,7 +926,7 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Not a valid Doc No"));
+                                return Ok(_api.Error(User,"Not a valid Doc No"));
                             }
 
 
@@ -946,7 +946,7 @@ namespace SmartxAPI.Controllers
                             if (InvoiceNo == "")
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to generate Quotation Number"));
+                                return Ok(_api.Error(User,"Unable to generate Quotation Number"));
                             }
                             MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
@@ -968,7 +968,7 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Not a valid Doc No"));
+                                return Ok(_api.Error(User,"Not a valid Doc No"));
                             }
 
 
@@ -991,7 +991,7 @@ namespace SmartxAPI.Controllers
                             if (InvoiceNo == "")
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to generate Quotation Number"));
+                                return Ok(_api.Error(User,"Unable to generate Quotation Number"));
                             }
                             MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
@@ -1009,7 +1009,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
 
                         dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
@@ -1032,7 +1032,7 @@ namespace SmartxAPI.Controllers
                     if (N_SalesID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Sales Invoice!"));
+                        return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                     }
                     else
                     {
@@ -1083,7 +1083,7 @@ namespace SmartxAPI.Controllers
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                    return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                                 }
                                 else
                                 {
@@ -1095,7 +1095,7 @@ namespace SmartxAPI.Controllers
                                             if (N_SalesAmountID <= 0)
                                             {
                                                 transaction.Rollback();
-                                                return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                                return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                                             }
                                             else
                                             {
@@ -1120,7 +1120,7 @@ namespace SmartxAPI.Controllers
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                    return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                                 }
                             }
                         }
@@ -1155,7 +1155,7 @@ namespace SmartxAPI.Controllers
                         if (N_InvoiceDetailId <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                            return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                         }
                         else
                         {
@@ -1174,19 +1174,19 @@ namespace SmartxAPI.Controllers
                                 {
                                     transaction.Rollback();
                                     if (ex.Message == "50")
-                                        return Ok(_api.Error("Day Closed"));
+                                        return Ok(_api.Error(User,"Day Closed"));
                                     else if (ex.Message == "51")
-                                        return Ok(_api.Error("Year Closed"));
+                                        return Ok(_api.Error(User,"Year Closed"));
                                     else if (ex.Message == "52")
-                                        return Ok(_api.Error("Year Exists"));
+                                        return Ok(_api.Error(User,"Year Exists"));
                                     else if (ex.Message == "53")
-                                        return Ok(_api.Error("Period Closed"));
+                                        return Ok(_api.Error(User,"Period Closed"));
                                     else if (ex.Message == "54")
-                                        return Ok(_api.Error("Txn Date"));
+                                        return Ok(_api.Error(User,"Txn Date"));
                                     else if (ex.Message == "55")
-                                        return Ok(_api.Error("Quantity exceeds!"));
+                                        return Ok(_api.Error(User,"Quantity exceeds!"));
                                     else
-                                        return Ok(_api.Error(ex));
+                                        return Ok(_api.Error(User,ex));
                                 }
                             }
                         }
@@ -1206,7 +1206,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
@@ -1227,7 +1227,7 @@ namespace SmartxAPI.Controllers
                                         catch (Exception ex)
                                         {
                                             transaction.Rollback();
-                                            return Ok(_api.Error("Unable to save Sales Invoice!"));
+                                            return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
                                         }
                                     }
                                 }
@@ -1246,7 +1246,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(ex));
+                                return Ok(_api.Error(User,ex));
                             }
                         }
                         //dispatch saving here
@@ -1263,7 +1263,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
         //Delete....
@@ -1289,7 +1289,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -1349,7 +1349,7 @@ namespace SmartxAPI.Controllers
                             if (Results <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to delete sales Invoice"));
+                                return Ok(_api.Error(User,"Unable to delete sales Invoice"));
                             }
                             else
                             {
@@ -1363,7 +1363,7 @@ namespace SmartxAPI.Controllers
                                 if (dLayer.ExecuteNonQuery("delete from Inv_StockMaster where n_SalesID=@nSalesID and x_Type='Negative' and n_InventoryID = 0 and n_CompanyID=@nCompanyID", QueryParams, connection, transaction) <= 0)
                                 {
                                     // transaction.Rollback();
-                                    // return Ok(_api.Error("Unable to delete sales Invoice"));
+                                    // return Ok(_api.Error(User,"Unable to delete sales Invoice"));
                                 }
                                 if (myFunctions.CheckPermission(nCompanyID, 724, "Administrator", "X_UserCategory", dLayer, connection, transaction))
                                     if (myFunctions.CheckPermission(nCompanyID, 81, xUserCategory.ToString(), "N_UserCategoryID", dLayer, connection, transaction))
@@ -1389,7 +1389,7 @@ namespace SmartxAPI.Controllers
                             else
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error("Unable to delete Sales Invoice"));
+                                return Ok(_api.Error(User,"Unable to delete Sales Invoice"));
                             }
                         }
                     }
@@ -1397,11 +1397,11 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) > 0)
-                            return Ok(_api.Error("Sales Return processed! Unable to delete"));
+                            return Ok(_api.Error(User,"Sales Return processed! Unable to delete"));
                         else if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) > 0)
-                            return Ok(_api.Error("Customer Payment processed! Unable to delete"));
+                            return Ok(_api.Error(User,"Customer Payment processed! Unable to delete"));
                         else
-                            return Ok(_api.Error("Unable to delete!"));
+                            return Ok(_api.Error(User,"Unable to delete!"));
                     }
                     //Invoice Counter Reset
 
@@ -1416,7 +1416,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 
@@ -1457,7 +1457,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -1508,7 +1508,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -1531,7 +1531,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

@@ -80,7 +80,7 @@ namespace SmartxAPI.Controllers
                     if (ClientID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Something went wrong"));
+                        return Ok(_api.Error(User,"Something went wrong"));
                     }
 
 
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
                     // if (N_RefID <= 0)
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Something went wrong"));
+                    //     return Ok(_api.Error(User,"Something went wrong"));
                     // }
 
                     UserTable.Rows[0]["N_ClientID"] = ClientID;
@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
                     if (UserID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Something went wrong"));
+                        return Ok(_api.Error(User,"Something went wrong"));
                     }
 
                     transaction.Commit();
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
                 SortedList Res = Login(email, pwd, "Registration", 0);
                 if (Res["StatusCode"].ToString() == "0")
                 {
-                    return Ok(_api.Error(Res["Message"].ToString()));
+                    return Ok(_api.Error(User,Res["Message"].ToString()));
                 }
 
                 Res["Message"] = "Client Registration Success";
@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return StatusCode(403, _api.Error(User,ex));
             }
         }
 
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
                     SortedList Res = Login(emailID, password, "Login", appType);
                     if (Res["StatusCode"].ToString() == "0")
                     {
-                        return Ok(_api.Error(Res["Message"].ToString()));
+                        return Ok(_api.Error(User,Res["Message"].ToString()));
                     }
 
                     return Ok(_api.Success(Res));
@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -350,7 +350,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

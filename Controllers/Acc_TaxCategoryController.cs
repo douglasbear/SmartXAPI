@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -191,7 +191,7 @@ namespace SmartxAPI.Controllers
                                         catch (Exception ex)
                                         {
                                             transaction.Rollback();
-                                            return Ok(_api.Error("Unable to save!"));
+                                            return Ok(_api.Error(User,"Unable to save!"));
                                         }
                                  
                                  }
@@ -210,7 +210,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok( _api.Error(ex));
+                return Ok( _api.Error(User,ex));
             }
         }
 
@@ -231,13 +231,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Tax category"));
+                        return Ok(_api.Error(User,"Unable to delete Tax category"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 
@@ -265,7 +265,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dt));
                     }
             }catch(Exception e){
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 

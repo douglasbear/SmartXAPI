@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -117,7 +117,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         LeadCode = dLayer.GetAutoNumber("CRM_Leads", "X_LeadCode", Params, connection, transaction);
-                        if (LeadCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LeadCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["X_LeadCode"] = LeadCode;
                     }
 
@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
                     if (nLeadID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -169,7 +169,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -202,7 +202,7 @@ namespace SmartxAPI.Controllers
                     {
                         CustomerSql = "select 0 as 'N_CustomerID',0 as 'X_CustomerCode',X_Company as X_Customer,X_Phone2 as X_Phone,X_Fax,X_Website,X_State,X_Street,X_City,N_CountryID,N_CompanyId,N_FnYearId,N_EmployeesCount as X_Employee,N_AnnRevenue From CRM_Leads where N_LeadID=@nLeadID";
                         CustomerTbl = dLayer.ExecuteDataTable(CustomerSql, Params, connection, transaction);
-                        if (CustomerTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Customer ")); }
+                        if (CustomerTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Customer ")); }
                         if (CustomerTbl.Rows[0]["X_Customer"].ToString() != "")
                         {
 
@@ -211,11 +211,11 @@ namespace SmartxAPI.Controllers
                             CustParams.Add("N_YearID", n_FnYearID);
                             CustParams.Add("N_FormID", 1306);
                             string CustCode = dLayer.GetAutoNumber("CRM_Customer", "X_CustomerCode", CustParams, connection, transaction);
-                            if (CustCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Customer ")); }
+                            if (CustCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Customer ")); }
 
                             CustomerTbl.Rows[0]["X_CustomerCode"] = CustCode;
                             nCustomerID = dLayer.SaveData("CRM_Customer", "n_CustomerID", CustomerTbl, connection, transaction);
-                            if (nCustomerID <= 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Customer ")); }
+                            if (nCustomerID <= 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Customer ")); }
                         }
                         
                         
@@ -229,18 +229,18 @@ namespace SmartxAPI.Controllers
                     {
                         ContactSql = "select N_CompanyID,N_FnYearId,0 as 'N_ContactID',0 as 'X_ContactCode',X_ContactName as 'X_Contact',X_Title,X_Email,X_Phone1 as 'X_Phone' From CRM_Leads where N_LeadID=@nLeadID";
                         ContactTbl = dLayer.ExecuteDataTable(ContactSql, Params, connection, transaction);
-                        if (ContactTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Contact")); }
+                        if (ContactTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Contact")); }
 
                         SortedList ContactParams = new SortedList();
                         ContactParams.Add("N_CompanyID", nCompanyID);
                         ContactParams.Add("N_YearID", n_FnYearID);
                         ContactParams.Add("N_FormID", 1308);
                         string ContactCode = dLayer.GetAutoNumber("CRM_Contact", "X_ContactCode", ContactParams, connection, transaction);
-                        if (ContactCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Contact")); }
+                        if (ContactCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Contact")); }
 
                         ContactTbl.Rows[0]["X_ContactCode"] = ContactCode;
                         nContactId = dLayer.SaveData("CRM_Contact", "n_ContactID", ContactTbl, connection, transaction);
-                        if (nContactId <= 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Contact")); }
+                        if (nContactId <= 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Contact")); }
                     }
                     else
                     {
@@ -250,7 +250,7 @@ namespace SmartxAPI.Controllers
                     {
                         ProjectSql = "select N_CompanyID,N_FnYearId,0 as 'N_ProjectID',0 as 'X_ProjectCode',X_ProjectName,X_ProjectLocation as 'X_Location',X_ProjectDescription as 'X_Description' From CRM_Leads where N_LeadID=@nLeadID";
                         ProjectTbl = dLayer.ExecuteDataTable(ProjectSql, Params, connection, transaction);
-                        if (ProjectTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Project")); }
+                        if (ProjectTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Project")); }
                         if (ProjectTbl.Rows[0]["X_ProjectName"].ToString() != "")
                         {
                             SortedList ProjectParams = new SortedList();
@@ -258,11 +258,11 @@ namespace SmartxAPI.Controllers
                             ProjectParams.Add("N_YearID", n_FnYearID);
                             ProjectParams.Add("N_FormID", 1303);
                             string ProjectCode = dLayer.GetAutoNumber("CRM_Project", "X_ProjectCode", ProjectParams, connection, transaction);
-                            if (ProjectCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Project")); }
+                            if (ProjectCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Project")); }
 
                             ProjectTbl.Rows[0]["X_ProjectCode"] = ProjectCode;
                             nProjectID = dLayer.SaveData("CRM_Project", "n_ProjectID", ProjectTbl, connection, transaction);
-                            if (nProjectID <= 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Project")); }
+                            if (nProjectID <= 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Project")); }
                         }
                         
                         
@@ -275,14 +275,14 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID' From CRM_Leads where N_LeadID=@nLeadID";
                     OprTbl = dLayer.ExecuteDataTable(OprSql, Params, connection, transaction);
-                    if (OprTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error("Unable to Create Opportunity")); }
+                    if (OprTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Opportunity")); }
                     string OpportunityCode = "";
                     SortedList OprParams = new SortedList();
                     OprParams.Add("N_CompanyID", nCompanyID);
                     OprParams.Add("N_YearID", n_FnYearID);
                     OprParams.Add("N_FormID", 1302);
                     OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", OprParams, connection, transaction);
-                    if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error("Unable to Create Opportunity")); }
+                    if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Opportunity")); }
                     OprTbl.Rows[0]["X_OpportunityCode"] = OpportunityCode;
                     OprTbl.Rows[0]["N_CustomerID"] = nCustomerID;
                     OprTbl.Rows[0]["N_ContactID"] = nContactId;
@@ -294,7 +294,7 @@ namespace SmartxAPI.Controllers
                     if (nOpportunityID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to Create Opportunity"));
+                        return Ok(api.Error(User,"Unable to Create Opportunity"));
                     }
                     else
                     {
@@ -306,7 +306,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -334,13 +334,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Lead"));
+                    return Ok(api.Error(User,"Unable to delete Lead"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

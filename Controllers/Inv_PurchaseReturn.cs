@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -266,7 +266,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -362,7 +362,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -389,7 +389,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
                     else
-                        return Ok(_api.Error("Payment processed! Unable to delete"));
+                        return Ok(_api.Error(User,"Payment processed! Unable to delete"));
                     transaction.Commit();
                 }
 
@@ -398,7 +398,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 
@@ -437,7 +437,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return StatusCode(403, _api.Error(User,e));
             }
         }
 

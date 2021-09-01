@@ -87,11 +87,42 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
 
         }
 
+
+
+[HttpGet("TimeZonelist")]
+        public ActionResult GetTimeZonelist()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            string sqlCommandText = "select N_TimeZoneID,B_IsDST, (X_ZoneName+' '+'GMT'+X_UtcOffSet) as X_ZoneName from Gen_TimeZone";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
 
         [HttpGet("details")]
@@ -101,7 +132,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
 
-            string sqlCommandText = "SELECT Acc_Company.*,Acc_TaxType.X_TypeName FROM Acc_Company LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
+            string sqlCommandText = "SELECT Acc_Company.*, Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName +' '+'GMT'+Gen_TimeZone.X_UtcOffSet as X_ZoneName FROM Acc_Company LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
@@ -140,7 +171,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(e));
+                return Ok(api.Error(User,e));
             }
 
         }
@@ -168,7 +199,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -298,7 +329,7 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
 
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 

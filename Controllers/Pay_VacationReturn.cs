@@ -88,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", Master["n_FnYearId"].ToString());
                         Params.Add("N_FormID", 463);
                         X_VacationReturnCode = dLayer.GetAutoNumber("Pay_VacationReturn", "X_VacationReturnCode", Params, connection, transaction);
-                        if (X_VacationReturnCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Quotation Number")); }
+                        if (X_VacationReturnCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["X_VacationReturnCode"] = X_VacationReturnCode;
 
                     }
@@ -172,7 +172,7 @@ namespace SmartxAPI.Controllers
                     if (N_VacationReturnID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Vacation Return"));
+                        return Ok(_api.Error(User,"Unable to save Vacation Return"));
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, N_FnYearID, "VACATION RETURN", N_VacationReturnID, X_VacationReturnCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
@@ -188,7 +188,7 @@ namespace SmartxAPI.Controllers
                         if (N_QuotationDetailId <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error("Unable to save Vacation Return"));
+                            return Ok(_api.Error(User,"Unable to save Vacation Return"));
                         }
                     }
                     transaction.Commit();
@@ -200,7 +200,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -242,7 +242,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -327,7 +327,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpDelete("delete")]
@@ -353,7 +353,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error("Transaction not Found"));
+                        return Ok(_api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -390,13 +390,13 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to delete Vacation Return"));
+                        return Ok(_api.Error(User,"Unable to delete Vacation Return"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }

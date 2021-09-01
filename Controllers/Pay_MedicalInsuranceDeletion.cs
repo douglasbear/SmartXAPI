@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("loadEmployee")]
@@ -114,7 +114,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpGet("employeeDetails")]
@@ -256,7 +256,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -329,7 +329,7 @@ namespace SmartxAPI.Controllers
                                 break;
                         }
                         X_DeletionCode = DocNo;
-                        if (X_DeletionCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate")); }
+                        if (X_DeletionCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
                         MasterTable.Rows[0]["x_DeletionCode"] = X_DeletionCode;
 
                     }
@@ -340,7 +340,7 @@ namespace SmartxAPI.Controllers
                     if (nDeletionID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     for (int i = DetailTable.Rows.Count - 1; i >= 0; i--)
                     {
@@ -355,7 +355,7 @@ namespace SmartxAPI.Controllers
                     if (nAdditionDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     Amortization(nDeletionID, nUserID, nBranchID, N_AmortizationID, MasterTable, DetailTable, connection, transaction);
 
@@ -368,7 +368,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -516,7 +516,7 @@ namespace SmartxAPI.Controllers
                                     if (myFunctions.getIntVAL(N_AmortizationDetailsID.ToString()) <= 0)
                                     {
                                         transaction.Rollback();
-                                        // return Ok(_api.Error("Unable To Save"));
+                                        // return Ok(_api.Error(User,"Unable To Save"));
                                     }
                                     Start = new DateTime(End.AddMonths(1).Year, End.AddMonths(1).Month, 1);
 
@@ -538,7 +538,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ex)
             {
-                //return Ok(_api.Error(ex));
+                //return Ok(_api.Error(User,ex));
             }
         }
 

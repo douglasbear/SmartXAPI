@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xBranchCode = dLayer.GetAutoNumber("Acc_BranchMaster", "x_BranchCode", Params, connection, transaction);
-                        if (xBranchCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Branch Code")); }
+                        if (xBranchCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Branch Code")); }
                         MasterTable.Rows[0]["x_BranchCode"] = xBranchCode;
                     }
                     else
@@ -171,7 +171,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save Branch"));
+                        return Ok(_api.Error(User,"Unable to save Branch"));
                     }
                     else
                     {
@@ -184,20 +184,20 @@ namespace SmartxAPI.Controllers
                             DataTable LocationTable = dLayer.ExecuteDataTable(sql, BranchParams, connection, transaction);
                             if (LocationTable.Rows.Count == 0)
                             {
-                                transaction.Rollback(); return Ok(_api.Error("Unable to Create location"));
+                                transaction.Rollback(); return Ok(_api.Error(User,"Unable to Create location"));
                             }
                             Params1.Add("N_CompanyID", nCompanyID);
                             Params1.Add("N_YearID", nFnYearID);
                             Params1.Add("N_FormID", 450);
                             xLocationCode = dLayer.GetAutoNumber("Inv_Location", "x_LocationCode", Params1, connection, transaction);
-                            if (xLocationCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate location Code")); }
+                            if (xLocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate location Code")); }
                             LocationTable.Rows[0]["x_LocationCode"] = xLocationCode;
                             LocationTable.AcceptChanges();
                             String DupCriteria = "N_BranchID=" + nBranchID + " and X_LocationName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
                             nLocationID = dLayer.SaveData("Inv_Location", "N_LocationID", DupCriteria, "", LocationTable, connection, transaction);
                             if (nLocationID <= 0)
                             {
-                                transaction.Rollback(); return Ok(_api.Error("Unable to Create location"));
+                                transaction.Rollback(); return Ok(_api.Error(User,"Unable to Create location"));
                             }
 
                         }
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Branch"));
+                        return Ok(_api.Error(User,"Unable to delete Branch"));
                     }
 
 
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

@@ -65,7 +65,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
         [HttpPost("save")]
@@ -174,7 +174,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                    
@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
                         X_AdjustmentCode = DocNo;
 
 
-                        if (X_AdjustmentCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Adjustment Code")); }
+                        if (X_AdjustmentCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Adjustment Code")); }
                         MasterTable.Rows[0]["X_AdjustmentCode"] = X_AdjustmentCode;
 
                     }
@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
                     if (nAdjustment <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
                     
                     DetailTable.Columns.Remove("b_Select");
@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
                     if (N_AdjustmentDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }                   
 
                     for (int i = 0; i < PaymentTable.Rows.Count; i++)
@@ -227,7 +227,7 @@ namespace SmartxAPI.Controllers
                     if (N_TransDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable To Save"));
+                        return Ok(_api.Error(User,"Unable To Save"));
                     }
 
                     SortedList PostParams = new SortedList(){
@@ -245,7 +245,7 @@ namespace SmartxAPI.Controllers
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(ex));
+                        return Ok(_api.Error(User,ex));
                     }
                     transaction.Commit();
                     SortedList Result = new SortedList();
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -320,7 +320,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -417,7 +417,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         } 
 
@@ -447,7 +447,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
                     if (Results > 0)
@@ -457,13 +457,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete"));
+                        return Ok(_api.Error(User,"Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 

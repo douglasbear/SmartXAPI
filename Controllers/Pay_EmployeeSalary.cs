@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -105,7 +105,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -229,7 +229,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_GradeID", nGradeID);
                         GradeCode = dLayer.GetAutoNumber("Pay_SalaryGrade", "X_GradeCode", Params, connection, transaction);
-                        if (GradeCode == "") { transaction.Rollback(); return Ok(_api.Error("Unable to generate Grade Code")); }
+                        if (GradeCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Grade Code")); }
                         MasterTable.Rows[0]["x_GradeCode"] = GradeCode;
                     }
 
@@ -246,7 +246,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
                     }
 
@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
                     // else
                     // {
                     //     transaction.Rollback();
-                    //     return Ok(_api.Error("Unable to save"));
+                    //     return Ok(_api.Error(User,"Unable to save"));
                     // }
 
                     //dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
@@ -303,7 +303,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -330,14 +330,14 @@ namespace SmartxAPI.Controllers
                     int Results = dLayer.DeleteData("Pay_SalaryGrade", "N_GradeID", nGradeID, "", connection);
                     if (Results <= 0)
                     {
-                        return Ok(_api.Error("Unable to Delete"));
+                        return Ok(_api.Error(User,"Unable to Delete"));
                     }
                 }
                 return Ok(_api.Success("Deleted"));
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
