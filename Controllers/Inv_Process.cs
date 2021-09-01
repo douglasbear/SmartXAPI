@@ -318,7 +318,7 @@ namespace SmartxAPI.Controllers
                         while (true)
                         {
                             DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Assembly Where X_ReceiptNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_Assembly Where X_ReferenceNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null)
                                 break;
                         }
@@ -570,7 +570,7 @@ namespace SmartxAPI.Controllers
 
 
                     Details = _api.Format(Details, "Details");
-                    Master = _api.Format(Master, "Details");
+                    Master = _api.Format(Master, "Master");
                     ItemStock = _api.Format(ItemStock);
                     ProducionLabourCost = _api.Format(ProducionLabourCost);
                     ProductionMachineCost = _api.Format(ProductionMachineCost);
