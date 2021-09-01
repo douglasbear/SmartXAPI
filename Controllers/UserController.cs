@@ -132,6 +132,24 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "X_UserCategoryNameList", typeof(string), 0);
+                    for(int i=0;i<dt.Rows.Count;i++)
+                    {
+                        string X_UserCategoryNameList="";
+                        string sqlText = "Select X_UserCategory From Sec_UserCategory Where N_UserCategoryID in(" + dt.Rows[i]["X_UserCategoryList"].ToString() + ") and N_CompanyID=@p1";
+                        DataTable dtCategory = dLayer.ExecuteDataTable(sqlText, Params, connection);
+                        for(int j=0;j<dtCategory.Rows.Count;j++)
+                        {
+                            if (X_UserCategoryNameList == "")
+                                X_UserCategoryNameList = dtCategory.Rows[j]["X_UserCategory"].ToString();
+                            else
+                                X_UserCategoryNameList += "," + dtCategory.Rows[j]["X_UserCategory"].ToString();
+                        }
+                        dt.Rows[i]["X_UserCategoryNameList"] = X_UserCategoryNameList.ToString();
+                    }
+                    dt.AcceptChanges();
+
                     sqlCommandCount = "select count(*) as N_Count from vw_UserList where N_CompanyID=@p1  " + exclude + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
@@ -550,7 +568,7 @@ if(myFunctions.getIntVAL(salesManCount.ToString())==0){
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);               
                 }
 
                 using (SqlConnection olvConn = new SqlConnection(masterDBConnectionString))
