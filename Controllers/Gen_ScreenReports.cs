@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             string Criteria2 = "";
             object TotalCount = 0;
-            string Header= "[]";
+            string Header = "[]";
             // if (byUser == true)
             // {
             //     Criteria = " and N_AssigneeID=@nUserID ";
@@ -100,14 +100,14 @@ namespace SmartxAPI.Controllers
 
                         connection.Open();
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        sqlCommandCount = "select count(*) as N_Count  from vw_Tsk_TaskCurrentStatus where N_CompanyID=@p1 ";
+                        sqlCommandCount = "select count(*) as N_Count  from " + Table + " where " + DefaultCriteria ;
                         TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     }
 
 
 
                     OutPut.Add("Details", _api.Format(dt));
-                    OutPut.Add("Header", Header);
+                    OutPut.Add("Header", Newtonsoft.Json.JsonConvert.SerializeObject(Header));
                     OutPut.Add("TotalCount", TotalCount);
 
                     return Ok(_api.Success(OutPut));
