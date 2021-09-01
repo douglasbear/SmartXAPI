@@ -228,11 +228,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-<<<<<<< HEAD
                 return Ok(api.Error(User,ex));
-=======
-                return Ok(api.Error(ex)); 
->>>>>>> e62b84c60a192cf29c5b2ae83edcfed2b74fc3b5
             }
         }
 
