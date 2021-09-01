@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             SortedList Output = new SortedList();
 
-            string sqlCommandText = "SELECT Acc_Company.*, Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName +' '+ Gen_TimeZone.X_UtcOffSet as X_ZoneName FROM Acc_Company LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
+            string sqlCommandText = "SELECT Acc_Company.*, Acc_TaxType.X_TypeName, Gen_TimeZone.X_ZoneName +' '+'GMT'+Gen_TimeZone.X_UtcOffSet as X_ZoneName FROM Acc_Company LEFT OUTER JOIN Gen_TimeZone ON Acc_Company.N_TimeZoneID = Gen_TimeZone.N_TimeZoneID LEFT OUTER JOIN Acc_FnYear ON Acc_Company.N_CompanyID = Acc_FnYear.N_CompanyID LEFT OUTER JOIN Acc_TaxType ON Acc_Company.N_CompanyID = Acc_TaxType.N_CompanyID AND Acc_FnYear.N_TaxType = Acc_TaxType.N_TypeID where Acc_Company.B_Inactive =@p1 and Acc_Company.N_CompanyID=@p2 and Acc_FnYear.N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2) and Acc_Company.N_ClientID=@nClientID";
             Params.Add("@p1", 0);
             Params.Add("@p2", nCompanyID);
             Params.Add("@nClientID", myFunctions.GetClientID(User));
@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (values == "@Auto")
+                        if (values == "@Auto") 
                         {
                             SortedList proParams1 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},

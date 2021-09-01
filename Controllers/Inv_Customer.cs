@@ -217,7 +217,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error(ex));
+                                return Ok(api.Error(User,ex));
                             }
 
                         transaction.Commit();
