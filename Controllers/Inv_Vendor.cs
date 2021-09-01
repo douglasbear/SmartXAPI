@@ -23,13 +23,15 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-        public Inv_Vendor(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        private readonly IMyAttachments myAttachments;
+        public Inv_Vendor(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 52;
+            myAttachments = myAtt;
         }
 
 
@@ -223,6 +225,7 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
+                DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
                 // Auto Gen
@@ -285,6 +288,17 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error("Unable to save"));
                         }
                         DataRow NewRow = outputDt.Rows[0];
+
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment,  MasterTable.Rows[0]["x_VendorCode"].ToString()+"-"+MasterTable.Rows[0]["x_VendorName"].ToString(), 0, MasterTable.Rows[0]["x_VendorName"].ToString(), MasterTable.Rows[0]["x_VendorCode"].ToString(), nVendorID, "Vendor Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(ex));
+                        }
+
                         transaction.Commit();
                         return Ok(_api.Success(NewRow.Table, "Vendor successfully created"));
                     }
@@ -318,6 +332,7 @@ namespace SmartxAPI.Controllers
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
+                    myAttachments.DeleteAttachment(dLayer, 1, 0, nVendorID, nFnYearID, this.FormID, User, transaction, connection);
                     transaction.Commit();
                 }
                 if (Results > 0)
@@ -358,15 +373,19 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
+                
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(dt.Rows[0]["n_VendorID"].ToString()), 0, this.FormID, nFnYearID, User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
+
+                        return Ok(_api.Success(dt));
+                    }
                 }
             }
             catch (Exception e)

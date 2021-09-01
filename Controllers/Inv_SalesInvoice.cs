@@ -757,7 +757,7 @@ namespace SmartxAPI.Controllers
                 DataRow ApprovalRow = Approvals.Rows[0];
 
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
-                DataTable Attachment = ds.Tables["attachments"];
+                DataTable Attachment = ds.Tables["attachments"]; 
 
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();

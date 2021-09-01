@@ -203,13 +203,14 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
         
             Params.Add("@nReferId",1310);
+            Params.Add("@nCompanyID",nCompanyID);
             int N_Sort =0; 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
-                    {
-                        connection.Open();
-                        object SeqNo = dLayer.ExecuteScalar("select MAX(isnull(n_Sort,0)) as SeqNo from Gen_LookupTable where N_ReferId=@nReferId", Params,connection);
+                {
+                    connection.Open();
+                    object SeqNo = dLayer.ExecuteScalar("select MAX(isnull(n_Sort,0)) as SeqNo from Gen_LookupTable where N_ReferId=@nReferId and N_CompanyID=@nCompanyID", Params,connection);
                          
                 if (SeqNo == null)
                 {
