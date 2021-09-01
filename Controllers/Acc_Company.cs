@@ -290,7 +290,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (values == "@Auto")
+                        if (values == "@Auto") 
                         {
                             SortedList proParams1 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
