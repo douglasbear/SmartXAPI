@@ -173,6 +173,10 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+                    else if(N_HierarchyID>0)
+                    {
+                          dLayer.DeleteData("Sec_Userhierarchy", "N_HierarchyID", N_HierarchyID, "", connection, transaction);
+                    }
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.Columns.Remove("n_Position");
                     N_HierarchyID = dLayer.SaveData("Sec_Userhierarchy", "N_HierarchyID", MasterTable, connection, transaction);
