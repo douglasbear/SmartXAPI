@@ -1427,6 +1427,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
         }
+        public string GetUserPattern(ClaimsPrincipal User)
+        {
+            return (User.FindFirst(ClaimTypes.SerialNumber)?.Value).ToString();
+        }
         public int GetCompanyID(ClaimsPrincipal User)
         {
             object cmpID = User.FindFirst(ClaimTypes.Sid)?.Value;
@@ -1593,6 +1597,7 @@ namespace SmartxAPI.GeneralFunctions
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection);
         public DataTable ListToTable(SortedList List);
         public int GetUserID(ClaimsPrincipal User);
+        public string GetUserPattern(ClaimsPrincipal User);
         public int GetCompanyID(ClaimsPrincipal User);
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);

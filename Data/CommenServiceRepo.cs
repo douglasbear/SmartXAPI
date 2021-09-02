@@ -119,6 +119,7 @@ namespace SmartxAPI.Data
                 // loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and N_TypeID=2 and B_IsDefault=1  and N_BranchID=@nBranchID",Params, connection).ToString();
                 loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1  and N_BranchID=@nBranchID", Params, connection).ToString();
                 loginRes.N_LocationID = dLayer.ExecuteScalar("Select N_LocationID From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID", Params, connection).ToString();
+                object userPattern = dLayer.ExecuteScalar("Select Isnull(X_Pattern,'') From Sec_UserHierarchy Where N_CompanyID=@nCompanyID and N_UserID=@nUserID", Params, connection).ToString();
                 //loginRes.X_EmpNameLocale = dLayer.ExecuteScalar("Select X_EmpNameLocale From Pay_Employee Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID and ",Params, connection).ToString();
 
                 loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1", Params, connection).ToString());
@@ -189,7 +190,8 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.UserData,xGlobalUserID.ToString()),
                         new Claim(ClaimTypes.Email,username),
                         new Claim(ClaimTypes.Upn,username),
-                        new Claim(ClaimTypes.Uri,uri)
+                        new Claim(ClaimTypes.Uri,uri),
+                        new Claim(ClaimTypes.SerialNumber,userPattern.ToString())
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -241,16 +243,16 @@ namespace SmartxAPI.Data
                         }
 
 
-    //                     string MenuSql = "select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag," +
-    // "N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( " + loginRes.X_UserCategoryIDList + " ) and  N_CompanyId=" + loginRes.N_CompanyID + " and B_ShowOnline=1 " +
-    // " and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in( " + Modules + ") ) Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete," +
-    // "B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow order by N_Order ";
+                        string MenuSql = "select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag," +
+    "N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( " + loginRes.X_UserCategoryIDList + " ) and  N_CompanyId=" + loginRes.N_CompanyID + " and B_ShowOnline=1 " +
+    " and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in( " + Modules + ") ) Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete," +
+    "B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow order by N_Order ";
 
-    string MenuSql = "select * from (select * from vw_UserMenus_Cloud where N_UserCategoryId in (  " + loginRes.X_UserCategoryIDList + "  ) and  N_CompanyId=" + loginRes.N_CompanyID + "  and B_ShowOnline=1 and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in(" + Modules + " ) ) " +
-                    " union " +
-                    " select N_MenuId,X_MenuName,X_Caption,-1 as N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,cast(0 as bit) as B_WShow,N_UserCategoryId,N_CompanyId from vw_UserMenus_Cloud where N_UserCategoryId in (  " + loginRes.X_UserCategoryIDList + "  ) and  N_CompanyId=" + loginRes.N_CompanyID + "  and B_ShowOnline=1 and ( N_ParentMenuId not in(" + Modules + ",0) )"+
-                    " union " +
-                    " select Top(1) -1 as N_MenuId,'Other Menus' as X_MenuName,'Other Menus' as X_Caption,0 as N_ParentMenuId,0 as N_Order,cast(0 as bit) as N_HasChild,cast(0 as bit) as B_Visible,cast(0 as bit) as B_Edit,cast(0 as bit) as B_Delete,cast(0 as bit) as B_Save,cast(0 as bit) as B_View,'' as X_ShortcutKey,'' as X_CaptionAr,'' as X_FormNameWithTag,cast(0 as bit) as N_IsStartup,cast(0 as bit) as B_Show,'' as X_RouteName,cast(0 as bit) as B_ShowOnline,cast(0 as bit) as B_WShow,0 as N_UserCategoryId,0 as N_CompanyId from vw_UserMenus_Cloud )  as tbl order by B_WShow desc,N_Order";
+    // string MenuSql = "select * from (select * from vw_UserMenus_Cloud where N_UserCategoryId in (  " + loginRes.X_UserCategoryIDList + "  ) and  N_CompanyId=" + loginRes.N_CompanyID + "  and B_ShowOnline=1 and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in(" + Modules + " ) ) " +
+    //                 " union " +
+    //                 " select N_MenuId,X_MenuName,X_Caption,-1 as N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,cast(0 as bit) as B_WShow,N_UserCategoryId,N_CompanyId from vw_UserMenus_Cloud where N_UserCategoryId in (  " + loginRes.X_UserCategoryIDList + "  ) and  N_CompanyId=" + loginRes.N_CompanyID + "  and B_ShowOnline=1 and ( N_ParentMenuId not in(" + Modules + ",0) )"+
+    //                 " union " +
+    //                 " select Top(1) -1 as N_MenuId,'Other Menus' as X_MenuName,'Other Menus' as X_Caption,0 as N_ParentMenuId,0 as N_Order,cast(0 as bit) as N_HasChild,cast(0 as bit) as B_Visible,cast(0 as bit) as B_Edit,cast(0 as bit) as B_Delete,cast(0 as bit) as B_Save,cast(0 as bit) as B_View,'' as X_ShortcutKey,'' as X_CaptionAr,'' as X_FormNameWithTag,cast(0 as bit) as N_IsStartup,cast(0 as bit) as B_Show,'' as X_RouteName,cast(0 as bit) as B_ShowOnline,cast(0 as bit) as B_WShow,0 as N_UserCategoryId,0 as N_CompanyId from vw_UserMenus_Cloud )  as tbl order by B_WShow desc,N_Order";
 
                         DataTable MenusDTB = dLayer.ExecuteDataTable(MenuSql, connection);
 
