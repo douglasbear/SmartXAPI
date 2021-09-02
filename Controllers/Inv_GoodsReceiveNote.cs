@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                 sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_MRNID not in (select top(" + Count + ") N_MRNID from vw_InvMRNNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
-            
+
             // sqlCommandText = "select * from Inv_MRNDetails where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
@@ -112,14 +112,14 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId)
+        public ActionResult GetGoodsReceiveDetails(int nCompanyId, int nFnYearId, string nMRNNo, bool showAllBranch, int nBranchId, string poNo)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             DataTable dtGoodReceive = new DataTable();
             DataTable dtGoodReceiveDetails = new DataTable();
             int N_GRNID = 0;
-            //int N_POrderID = 0;
+            int N_POrderID = 0;
 
             Params.Add("@CompanyID", nCompanyId);
             Params.Add("@YearID", nFnYearId);
@@ -133,6 +133,10 @@ namespace SmartxAPI.Controllers
                 Params.Add("@GRNNo", nMRNNo);
                 X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
+            if (poNo != null)
+            {
+                X_MasterSql = "Select Inv_PurchaseOrder.*,Inv_Location.X_LocationName,Inv_Vendor.* from Inv_PurchaseOrder Inner Join Inv_Vendor On Inv_PurchaseOrder.N_VendorID=Inv_Vendor.N_VendorID and Inv_PurchaseOrder.N_CompanyID=Inv_Vendor.N_CompanyID and Inv_PurchaseOrder.N_FnYearID=Inv_Vendor.N_FnYearID LEFT OUTER JOIN Inv_Location ON Inv_Location.N_LocationID=Inv_PurchaseOrder.N_LocationID Where Inv_PurchaseOrder.N_CompanyID=" + nCompanyId + " and X_POrderNo='" + poNo + "' and Inv_PurchaseOrder.B_IsSaveDraft<>1";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -141,23 +145,43 @@ namespace SmartxAPI.Controllers
                     dtGoodReceive = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (dtGoodReceive.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dtGoodReceive = _api.Format(dtGoodReceive, "Master");
-                    N_GRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
-                    //N_POrderID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString());
-                    
+
+                    if (poNo != null)
+                    {
+                        N_POrderID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_POrderid"].ToString());
+                    }
+                    else
+                    {
+                        N_GRNID = myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString());
+
+                    }
                     if (N_GRNID != 0)
                     {
                         X_DetailsSql = "Select * from vw_InvMRNDetails  Where vw_InvMRNDetails.N_CompanyID=@CompanyID and vw_InvMRNDetails.N_MRNID=" + N_GRNID + (showAllBranch ? "" : " and vw_InvMRNDetails.N_BranchId=@BranchID");
                     }
+                    if (N_POrderID != 0)
+                    {
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_POMrn_PendingDetail.N_ItemID,vw_POMrn_PendingDetail.N_CompanyID) As N_UnitSPrice  from vw_POMrn_PendingDetail Where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID + "";
+
+                    }
+
 
                     dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
-                    
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    Attachments = _api.Format(Attachments, "attachments");
-                    
+                    if (N_POrderID != 0)
+                    {
+                    }
+                    else
+                    {
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_MRNID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtGoodReceive.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
+                          dt.Tables.Add(Attachments);
+                       
+                    }
                     dt.Tables.Add(dtGoodReceive);
-                    dt.Tables.Add(Attachments);
-                    dt.Tables.Add(dtGoodReceiveDetails);
+                     dt.Tables.Add(dtGoodReceiveDetails);
+                  
+
                 }
                 return Ok(_api.Success(dt));
             }
@@ -168,7 +192,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("fillfreight")]
-        public ActionResult fillMRNFreight(int nCompanyId, int nFnYearId,int nMrnId)
+        public ActionResult fillMRNFreight(int nCompanyId, int nFnYearId, int nMrnId)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -186,7 +210,7 @@ namespace SmartxAPI.Controllers
                     x_SqlQurery = "select * from vw_InvMRNFreights where N_CompanyID = @CompanyID and N_FnYearID = @YearID and N_MRNID = @MRNID";
                     dtFreightList = dLayer.ExecuteDataTable(x_SqlQurery, Params, connection);
                     if (dtFreightList.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    dtFreightList = _api.Format(dtFreightList, "Master"); 
+                    dtFreightList = _api.Format(dtFreightList, "Master");
                     dt.Tables.Add(dtFreightList);
                 }
                 return Ok(_api.Success(dt));
@@ -396,9 +420,10 @@ namespace SmartxAPI.Controllers
 
                     if (N_GRNID > 0)
                     {
-                        if (n_POrderID > 0){       
-                                dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1  Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                            }
+                        if (n_POrderID > 0)
+                        {
+                            dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1  Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+                        }
 
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
@@ -430,7 +455,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_MRNID"] = N_GRNID;
                     }
                     int N_MRNDetailsID = dLayer.SaveData("Inv_MRNDetails", "N_MRNDetailsID", DetailTable, connection, transaction);
-                    
+
                     if (N_MRNDetailsID <= 0)
                     {
                         transaction.Rollback();
@@ -449,9 +474,9 @@ namespace SmartxAPI.Controllers
                         try
                         {
                             if (n_POrderID > 0)
-                            {       
+                            {
                                 dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1  Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
-                                
+
                             }
                             // SortedList StockPosting = new SortedList();
                             // StockPosting.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
@@ -535,7 +560,7 @@ namespace SmartxAPI.Controllers
             if (CheckProcessed(nGRNID))
                 return Ok(_api.Error(User,"Transaction Started"));
 
-          
+
             try
             {
 
@@ -575,7 +600,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User,"Unable to Delete Goods Receive Note"));
                     }
 
-                    myAttachments.DeleteAttachment(dLayer, 1,nGRNID,VendorID, nFnYearID, this.N_FormID,User, transaction, connection);
+                    myAttachments.DeleteAttachment(dLayer, 1, nGRNID, VendorID, nFnYearID, this.N_FormID, User, transaction, connection);
 
                     transaction.Commit();
                     return Ok(_api.Success("Goods Receive Note deleted"));
@@ -596,7 +621,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            Params.Add("N_CompanyID",nCompanyID);
+            Params.Add("N_CompanyID", nCompanyID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -606,7 +631,7 @@ namespace SmartxAPI.Controllers
                 }
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Warning("No Results Found" ));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
@@ -620,4 +645,4 @@ namespace SmartxAPI.Controllers
         }
 
     }
-} 
+}
