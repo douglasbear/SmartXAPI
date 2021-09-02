@@ -418,7 +418,7 @@ namespace SmartxAPI.Controllers
                     {
                         DataTable Attachments = myAttachments.ViewAttachment(dLayer, nCustomerID, 0, 51, nFnYearID, User, connection);
                         Attachments = api.Format(Attachments, "attachments");
-
+                        dt = api.Format(dt, "master");
                         ds.Tables.Add(dt);
                         ds.Tables.Add(Attachments);
 

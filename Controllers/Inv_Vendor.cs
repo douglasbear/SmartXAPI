@@ -296,7 +296,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(ex));
+                            return Ok(_api.Error(User,ex));
                         }
 
                         transaction.Commit();
@@ -360,6 +360,7 @@ namespace SmartxAPI.Controllers
   [HttpGet("details")]
         public ActionResult ActivityListDetails(string xVendorCode,int nFnYearID)
         {
+            DataSet ds = new DataSet();
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -383,8 +384,12 @@ namespace SmartxAPI.Controllers
                     {
                         DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(dt.Rows[0]["n_VendorID"].ToString()), 0, this.FormID, nFnYearID, User, connection);
                         Attachments = _api.Format(Attachments, "attachments");
+                        dt = _api.Format(dt, "master");
+                        
+                        ds.Tables.Add(dt);
+                        ds.Tables.Add(Attachments);
 
-                        return Ok(_api.Success(dt));
+                        return Ok(_api.Success(ds));
                     }
                 }
             }
