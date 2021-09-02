@@ -420,6 +420,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[0]["N_AssigneeID"] = 0;
 
 
+
                     }
                     if (DetailTable.Columns.Contains("X_Assignee"))
                         DetailTable.Columns.Remove("X_Assignee");
