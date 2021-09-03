@@ -597,7 +597,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                     }
                     dLayer.DeleteData("Inv_SalesAddInfo_ServicePackages", "N_InfoID", N_InfoID, "", connection, transaction);
-                    dtadditionalInfo.Rows[0]["n_SalesID"] = N_SalesID;
+                    dtadditionalInfo.Rows[0]["N_InvoiceID"] = N_SalesID;
                     N_InfoID = dLayer.SaveData("Inv_SalesAddInfo_ServicePackages", "N_InfoID", dtadditionalInfo, connection, transaction);
 
 
@@ -1120,7 +1120,7 @@ namespace SmartxAPI.Controllers
                     QueryParamsList.Add("@nSalesID", nSalesID);
                     int N_TruckID = myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString());
                     object objPlateNo = null;
-                    string addlInfo = "select * from Inv_SalesAddInfo_ServicePackages where N_SalesID=" + nSalesID + "";
+                    string addlInfo = "select * from Inv_SalesAddInfo_ServicePackages where N_InvoiceID=" + nSalesID + "";
                     DataTable salesAddInfo = dLayer.ExecuteDataTable(addlInfo, mParamsList, Con);
                     salesAddInfo = _api.Format(salesAddInfo, "salesAddInfo");
 
