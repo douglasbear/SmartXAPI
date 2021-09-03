@@ -39,6 +39,8 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
+            string UserPattern = myFunctions.GetUserPattern(User);
+            Params.Add("@p3", UserPattern);
             int nCompanyId = myFunctions.GetCompanyID(User);
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
@@ -52,9 +54,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 and Left(X_Pattern,Len(@p3))=@p3 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " and N_WTaskID not in (select top(" + Count + ") N_WTaskID from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 and Left(X_Pattern,Len(@p3))=@p3 " + Searchkey + " and N_WTaskID not in (select top(" + Count + ") N_WTaskID from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
