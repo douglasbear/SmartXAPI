@@ -165,6 +165,7 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacationReturnCode"] = X_VacationReturnCode;
 
                     }
+                    MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
