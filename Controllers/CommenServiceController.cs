@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
-                            }
+                            } 
                             connectionString = cofig.GetConnectionString(activeDbUri);
                             // if(companyid>0)
                             // {
