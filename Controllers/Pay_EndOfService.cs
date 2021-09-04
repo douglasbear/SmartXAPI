@@ -269,6 +269,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");
+                    MasterTable.Columns.Remove("nSalaryPayMethod");
+                    MasterTable.Columns.Remove("nPayRate");
 
                     if(nServiceEndID>0)
                     {
