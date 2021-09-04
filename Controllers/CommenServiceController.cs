@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
                             paramList.Add("@nClientID", clientID);
                             paramList.Add("@xEmailID", username);
                             paramList.Add("@nAppID", appID);
-                            paramList.Add("@nGlobalUserID", GlobalUserID);
+                            // paramList.Add("@nGlobalUserID", GlobalUserID);
                             object checkAppExisting = dLayer.ExecuteScalar("SELECT Count(N_AppID) as Count FROM ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID", paramList, olivCnn);
                             if (myFunctions.getIntVAL(checkAppExisting.ToString()) == 0)
                             {
@@ -148,18 +148,18 @@ namespace SmartxAPI.Controllers
 
 
                                 int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0 from ClientApps", paramList, olivCnn);
-                                string appUpdate = "Update Users set N_ActiveAppID=@nAppID WHERE (X_EmailID =@xEmailID and N_UserID=@nGlobalUserID)";
+                                // string appUpdate = "Update Users set N_ActiveAppID=@nAppID WHERE (X_EmailID =@xEmailID and N_UserID=@nGlobalUserID)";
                                 
                                 if (rows <= 0)
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
-                                else{
-                                    if (appID != 6 && appID != 8)
-                            {
-                                    dLayer.ExecuteScalar(appUpdate, paramList, olivCnn);
-                            }
-                                }
+                            //     else{
+                            // //         if (appID != 6 && appID != 8)
+                            // // {
+                            // //         dLayer.ExecuteScalar(appUpdate, paramList, olivCnn);
+                            // // }
+                            //     }
                             }
                             connectionString = cofig.GetConnectionString(activeDbUri);
                             // if(companyid>0)

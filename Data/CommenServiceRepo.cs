@@ -159,7 +159,7 @@ namespace SmartxAPI.Data
                     DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
                     if (globalInfo.Rows.Count > 0)
                     {
-                        object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection).ToString();
+                        object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
                         if (AllowMultipleCompany == null)
                             AllowMultipleCompany = 0;
                         globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany);
