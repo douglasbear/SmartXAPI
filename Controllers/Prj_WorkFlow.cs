@@ -39,6 +39,13 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
+            string UserPattern = myFunctions.GetUserPattern(User);
+            string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
+                Params.Add("@p3", UserPattern);
+            }
             int nCompanyId = myFunctions.GetCompanyID(User);
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
@@ -52,9 +59,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Searchkey + " and N_WTaskID not in (select top(" + Count + ") N_WTaskID from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_WTaskID not in (select top(" + Count + ") N_WTaskID from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -85,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -117,7 +124,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -153,22 +160,22 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         TaskCode = dLayer.GetAutoNumber("Prj_WorkflowMaster", "X_WTaskCode", Params, connection, transaction);
-                        if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Task Code")); }
+                        if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Task Code")); }
                         MasterTable.Rows[0]["X_WTaskCode"] = TaskCode;
                     }
                     nWTaskID = dLayer.SaveData("Prj_WorkflowMaster", "N_WTaskID", MasterTable, connection, transaction);
                     if (nWTaskID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
                         if (!DetailsTable.Columns.Contains("N_FnYearID"))
                             DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_FnYearID", typeof(int), 0);
-                         if (!DetailsTable.Columns.Contains("N_CreaterID"))
+                        if (!DetailsTable.Columns.Contains("N_CreaterID"))
                             DetailsTable = myFunctions.AddNewColumnToDataTable(DetailsTable, "N_CreaterID", typeof(int), N_CreatorID);
-                        int N_Order=1;
+                        int N_Order = 1;
                         foreach (DataRow var in DetailsTable.Rows)
                         {
                             var["N_WTaskID"] = nWTaskID;
@@ -185,7 +192,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -215,7 +222,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
