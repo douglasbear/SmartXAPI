@@ -71,7 +71,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
         }
@@ -173,13 +173,17 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
+                    else if(N_HierarchyID>0)
+                    {
+                          dLayer.DeleteData("Sec_Userhierarchy", "N_HierarchyID", N_HierarchyID, "", connection, transaction);
+                    }
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.Columns.Remove("n_Position");
                     N_HierarchyID = dLayer.SaveData("Sec_Userhierarchy", "N_HierarchyID", MasterTable, connection, transaction);
                     if (N_HierarchyID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     transaction.Commit();
                     // }
@@ -190,7 +194,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
 
 
@@ -211,7 +215,7 @@ namespace SmartxAPI.Controllers
                     object Objcount = dLayer.ExecuteScalar(" select max(N_HierarchyID) from Sec_UserHierarchy where N_ParentID="+nHierarchyID+" and N_CompanyID="+nCompanyID+" ", QueryParams, connection);
                     if (myFunctions.getIntVAL(Objcount.ToString())>0)
                     {
-                        return Ok(_api.Error("Unable to delete"));
+                        return Ok(_api.Error(User,"Unable to delete"));
                     }
                     else
                     {
@@ -224,14 +228,14 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error("Unable to delete"));
+                    return Ok(_api.Error(User,"Unable to delete"));
                 }
                 
      
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
         }

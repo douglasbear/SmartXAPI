@@ -42,6 +42,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by X_ProjectCode";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
+            
 
             try
             {
@@ -63,7 +64,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
 
 
@@ -110,7 +111,7 @@ namespace SmartxAPI.Controllers
                         X_ProjectCode = values;
 
 
-                        if (X_ProjectCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate")); }
+                        if (X_ProjectCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ProjectCode"] = X_ProjectCode;
 
                     }
@@ -133,7 +134,7 @@ namespace SmartxAPI.Controllers
                     if (nProjectID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -164,7 +165,7 @@ namespace SmartxAPI.Controllers
                                         foreach (DataRow var in TaskMaster.Rows)
                                         {
                                             TaskCode = dLayer.GetAutoNumber("Tsk_TaskMaster", "X_TaskCode", AParams, connection, transaction);
-                                            if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Task Code")); }
+                                            if (TaskCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Task Code")); }
                                             var["x_TaskCode"] = TaskCode;
 
                                             if (var["N_StartDateUnitID"].ToString() == "248")
@@ -236,7 +237,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(User,ex));
+                return BadRequest(api.Error(User, ex));
             }
         }
 
@@ -263,13 +264,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete Project Information"));
+                    return Ok(api.Error(User, "Unable to delete Project Information"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
         }
@@ -289,7 +290,7 @@ namespace SmartxAPI.Controllers
             {
                 sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
                 "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_CustomerID AS N_CrmCustomerID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType,vw_CRMOpportunity.N_WTaskID,vw_CRMOpportunity.X_WTask " +
-                "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID "+
+                "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID " +
                 "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
             }
             else
@@ -320,7 +321,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("AccountList")]
@@ -354,7 +355,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("stageupdate")]
@@ -381,7 +382,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -392,6 +393,13 @@ namespace SmartxAPI.Controllers
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string UserPattern = myFunctions.GetUserPattern(User);
+            string Pattern="";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
+                Params.Add("@p3", UserPattern);
+            }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -404,9 +412,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -437,7 +445,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
     }
