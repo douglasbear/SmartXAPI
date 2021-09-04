@@ -394,7 +394,12 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string UserPattern = myFunctions.GetUserPattern(User);
-            Params.Add("@p3", UserPattern);
+            string Pattern="";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@p3))=@p3";
+                Params.Add("@p3", UserPattern);
+            }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -407,9 +412,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 and Left(X_Pattern,Len(@p3))=@p3 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 "+ Pattern  + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 and Left(X_Pattern,Len(@p3))=@p3 " + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") X_ProjectCode,X_ProjectName,X_CustomerName,X_District,X_Name,D_StartDate,N_ContractAmt,N_EstimateCost,AwardedBudget,ActualBudget,CommittedBudget,RemainingBudget,X_PO,N_Progress,N_CompanyID,N_Branchid,N_CustomerID,B_IsSaveDraft,B_Inactive,N_ProjectID,N_StageID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_InvProjectDashBoard where N_CompanyID=@p1 " + Pattern + Searchkey + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
