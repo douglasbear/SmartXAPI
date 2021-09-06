@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_WTaskID not in (select top(" + Count + ") N_WTaskID from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_WTaskID not in (select top(" + Count + ") N_WTaskID from vw_Prj_WorkflowMaster where N_CompanyID=@p1 " + Pattern +  xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
