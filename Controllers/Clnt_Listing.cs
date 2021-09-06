@@ -12,7 +12,7 @@ using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("contact")]
+    [Route("appClient")]
     [ApiController]
     public class Clnt_Listing : ControllerBase
     {
