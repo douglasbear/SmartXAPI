@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
                                                 Minuts = myFunctions.getVAL(var["N_StartDateBefore"].ToString()) * Minuts;
 
                                             if(Minuts==0)
-                                                var["D_TaskDate"] = "";
+                                                var["D_TaskDate"] = null;
                                             else
                                                 var["D_TaskDate"] = DateTime.Now.AddMinutes(Minuts);
 
@@ -202,7 +202,7 @@ namespace SmartxAPI.Controllers
                                                 Minuts = myFunctions.getVAL(var["N_EndDateBefore"].ToString()) * Minuts;
 
                                             if(Minuts==0)
-                                                var["D_DueDate"]="";
+                                                var["D_DueDate"]=null;
                                             else
                                                 var["D_DueDate"] = DateTime.Parse(var["D_TaskDate"].ToString()).AddMinutes(Minuts);
 
