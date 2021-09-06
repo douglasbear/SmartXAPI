@@ -85,22 +85,28 @@ namespace SmartxAPI.Controllers
                         string DefaultCriteria = dRow["X_DefaultCriteria"].ToString();
                         Header = dRow["X_Fields"].ToString();
                         string PKey = dRow["X_PKey"].ToString();
+                        string UserPattern = myFunctions.GetUserPattern(User);
+                        string Pattern = "";
+                        if (UserPattern != "")
+                        {
+                            Pattern = " and Left(X_Pattern,Len(" + UserPattern + "))=" + UserPattern;
+                        }
 
                         if (Count == 0)
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + " " + Searchkey + Criteria + Criteria2 + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Pattern + " " + Searchkey + Criteria + Criteria2 + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + " " + Searchkey + Criteria + Criteria2 + " and " + PKey + " not in (select top(" + Count + ") N_TaskID from " + Table + " where " + DefaultCriteria + " " + Criteria + Criteria2 + xSortBy + " ) " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") * from " + Table + " where " + DefaultCriteria + Pattern + " " + Searchkey + Criteria + Criteria2 + " and " + PKey + " not in (select top(" + Count + ") N_TaskID from " + Table + " where " + DefaultCriteria + " " + Criteria + Criteria2 + xSortBy + " ) " + xSortBy;
 
                         SortedList Params = new SortedList();
-                        if(DefaultCriteria.Contains("@cVal"))
-                        Params.Add("@cVal", nCompanyId);
-                        if(DefaultCriteria.Contains("@uVal"))
-                        Params.Add("@uVal", nUserID);
+                        if (DefaultCriteria.Contains("@cVal"))
+                            Params.Add("@cVal", nCompanyId);
+                        if (DefaultCriteria.Contains("@uVal"))
+                            Params.Add("@uVal", nUserID);
 
 
                         connection.Open();
                         dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                        sqlCommandCount = "select count(*) as N_Count  from " + Table + " where " + DefaultCriteria ;
+                        sqlCommandCount = "select count(*) as N_Count  from " + Table + " where " + DefaultCriteria + Pattern;
                         TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     }
 
