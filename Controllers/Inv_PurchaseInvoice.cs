@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                             case "invoiceNo":
                                 xSortBy = "N_PurchaseID " + xSortBy.Split(" ")[1];
                                 break;
-                             case "invoiceDate":
+                            case "invoiceDate":
                                 xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "invoiceNetAmt":
@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow var in dt.Rows)
                     {
                         double BalanceAmt = 0;
-                        object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
+                        object objBal = dLayer.ExecuteScalar("SELECT  Sum(PurchaseBalanceAmt) from  vw_InvPayables Where  N_VendorID=" + var["N_VendorID"] + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_PurchaseID = " + var["N_PurchaseID"], Params, connection);
 
                         if (objBal != null)
                         {
@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("listOrder")]
@@ -213,11 +213,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(404, _api.Error(User,e.Message));
+                return StatusCode(404, _api.Error(User, e.Message));
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo)
+        public ActionResult GetPurchaseInvoiceDetails(int nCompanyId, int nFnYearId, string nPurchaseNO, bool showAllBranch, int nBranchId, string xPOrderNo, string xGrnNo)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
@@ -244,75 +244,86 @@ namespace SmartxAPI.Controllers
                 Params.Add("@POrderNo", xPOrderNo);
                 X_MasterSql = "select * from vw_Inv_PurchaseOrderAsInvoiceMaster where N_CompanyID=@CompanyID and X_POrderNo=@POrderNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
-                    dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-
-
-                    if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
-                    N_PurchaseID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString());
-                    N_POrderID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_POrderID"].ToString());
-                    if (nPurchaseNO != null)
-
+                    if (xGrnNo != null || xGrnNo != "")
                     {
-                        SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
-                        dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
-                    }
-
-                    //PURCHASE INVOICE DETAILS
-                    bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
-
-                    if (nPurchaseNO != null)
-                    {
-                        if (B_MRNVisible)
-                            X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
-                        else
-                            X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
-                    }
-                    else if (xPOrderNo != null)
-                    {
-                        X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
-                    }
-                    dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
-
-                    if (nPurchaseNO != null)
-                    {
-                        object RetQty = dLayer.ExecuteScalar("select X_CreditNoteNo from Inv_PurchaseReturnMaster where N_PurchaseId =" + N_PurchaseID + " and N_CompanyID=@CompanyID and N_FnYearID=@YearID", Params, connection);
-                        if (RetQty != null)
+                        object res = dLayer.ExecuteScalar("select X_InvoiceNo from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_RsID in ( Select N_MRNID from Inv_MRN where N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and X_MRNNo='" + xGrnNo + "')", Params, connection);
+                        if (res != null)
                         {
-                            dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "IsReturnDone", typeof(bool), true);
-                            dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), RetQty.ToString());
+                            nPurchaseNO = res.ToString();
+                             X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo="+nPurchaseNO+" and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+
                         }
-                        else
+                    }
+
+                        dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
+
+
+                        if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                        dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
+                        N_PurchaseID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString());
+                        N_POrderID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_POrderID"].ToString());
+                        if (nPurchaseNO != null)
+
                         {
-                            dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "IsReturnDone", typeof(bool), false);
-                            dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), "");
+                            SortedList Status = StatusSetup(N_PurchaseID, nFnYearId, showAllBranch, dtPurchaseInvoice, connection);
+                            dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "TxnStatus", typeof(SortedList), Status);
                         }
 
-                        // int nPaymentMethod = mastr
+                        //PURCHASE INVOICE DETAILS
+                        bool B_MRNVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
+
+                        if (nPurchaseNO != null)
+                        {
+                            if (B_MRNVisible)
+                                X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                            else
+                                X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                        }
+                        else if (xPOrderNo != null)
+                        {
+                            X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        }
+                        dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
+
+                        if (nPurchaseNO != null)
+                        {
+                            object RetQty = dLayer.ExecuteScalar("select X_CreditNoteNo from Inv_PurchaseReturnMaster where N_PurchaseId =" + N_PurchaseID + " and N_CompanyID=@CompanyID and N_FnYearID=@YearID", Params, connection);
+                            if (RetQty != null)
+                            {
+                                dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "IsReturnDone", typeof(bool), true);
+                                dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), RetQty.ToString());
+                            }
+                            else
+                            {
+                                dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "IsReturnDone", typeof(bool), false);
+                                dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), "");
+                            }
+
+                            // int nPaymentMethod = mastr
+                        }
+
+
+                        dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
+
+                        dt.Tables.Add(dtPurchaseInvoice);
+                        dt.Tables.Add(Attachments);
+                        dt.Tables.Add(dtPurchaseInvoiceDetails);
                     }
 
+                    return Ok(_api.Success(dt));
 
-                    dtPurchaseInvoiceDetails = _api.Format(dtPurchaseInvoiceDetails, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_PurchaseID"].ToString()), this.N_FormID, myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    Attachments = _api.Format(Attachments, "attachments");
-
-                    dt.Tables.Add(dtPurchaseInvoice);
-                    dt.Tables.Add(Attachments);
-                    dt.Tables.Add(dtPurchaseInvoiceDetails);
                 }
-
-                return Ok(_api.Success(dt));
-
-            }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -479,13 +490,13 @@ namespace SmartxAPI.Controllers
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Transaction date must be in the active Financial Year."));
+                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                     }
 
                     if (N_PurchaseID > 0)
                     {
                         if (CheckProcessed(N_PurchaseID))
-                            return Ok(_api.Error(User,"Transaction Started!"));
+                            return Ok(_api.Error(User, "Transaction Started!"));
                     }
                     SortedList VendParams = new SortedList();
                     VendParams.Add("@nCompanyID", nCompanyID);
@@ -532,7 +543,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex.Message));
+                                return Ok(_api.Error(User, ex.Message));
                             }
                         }
 
@@ -554,7 +565,7 @@ namespace SmartxAPI.Controllers
                         if (InvoiceNo == "")
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to generate Invoice Number"));
+                            return Ok(_api.Error(User, "Unable to generate Invoice Number"));
                         }
                         MasterTable.Rows[0]["x_InvoiceNo"] = InvoiceNo;
                     }
@@ -577,18 +588,18 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
                             if (ex.Message.Contains("50"))
-                                return Ok(_api.Error(User,"DayClosed"));
+                                return Ok(_api.Error(User, "DayClosed"));
                             else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error(User,"YearClosed"));
+                                return Ok(_api.Error(User, "YearClosed"));
                             else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error(User,"YearExists"));
+                                return Ok(_api.Error(User, "YearExists"));
                             else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error(User,"PeriodClosed"));
+                                return Ok(_api.Error(User, "PeriodClosed"));
                             else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error(User,"TxnDate"));
+                                return Ok(_api.Error(User, "TxnDate"));
                             else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error(User,"TransactionStarted"));
-                            return Ok(_api.Error(User,ex.Message));
+                                return Ok(_api.Error(User, "TransactionStarted"));
+                            return Ok(_api.Error(User, ex.Message));
                         }
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
@@ -607,7 +618,7 @@ namespace SmartxAPI.Controllers
                     if (N_PurchaseID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                     }
 
                     N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "PURCHASE", N_PurchaseID, InvoiceNo, 1, objVendorName.ToString(), 0, "", User, dLayer, connection, transaction);
@@ -624,7 +635,7 @@ namespace SmartxAPI.Controllers
                     if (N_InvoiceDetailId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Purchase Invoice!"));
+                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                     }
 
                     if (N_PurchaseID > 0)
@@ -663,7 +674,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex.Message));
+                            return Ok(_api.Error(User, ex.Message));
                         }
                     }
                     SortedList VendorParams = new SortedList();
@@ -678,7 +689,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
                     myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
@@ -692,7 +703,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
         private bool CheckProcessed(int nPurchaseID)
@@ -723,14 +734,15 @@ namespace SmartxAPI.Controllers
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nPurchaseID, int nFnYearID, string comments)
         {
-            if(comments==null){
-                comments="";
+            if (comments == null)
+            {
+                comments = "";
             }
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             int Results = 0;
             if (CheckProcessed(nPurchaseID))
-                return Ok(_api.Error(User,"Transaction Started"));
+                return Ok(_api.Error(User, "Transaction Started"));
             try
             {
 
@@ -746,7 +758,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error(User,"Transaction not Found"));
+                        return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -779,10 +791,10 @@ namespace SmartxAPI.Controllers
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to Delete PurchaseInvoice"));
+                            return Ok(_api.Error(User, "Unable to Delete PurchaseInvoice"));
                         }
 
-                        myAttachments.DeleteAttachment(dLayer, 1,nPurchaseID,VendorID, nFnYearID, N_FormID,User, transaction, connection);
+                        myAttachments.DeleteAttachment(dLayer, 1, nPurchaseID, VendorID, nFnYearID, N_FormID, User, transaction, connection);
 
                     }
                     else
@@ -796,7 +808,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to delete Purchase Invoice"));
+                            return Ok(_api.Error(User, "Unable to delete Purchase Invoice"));
                         }
                     }
 
@@ -809,7 +821,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
