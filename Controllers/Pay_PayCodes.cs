@@ -272,9 +272,9 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=" + nCompanyId + " " + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_FnYearId=@p2 and N_CompanyID=" + nCompanyId + " " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_PayID not in (select top(" + Count + ") N_PayID from vw_Pay_PayMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Pay_PayMaster where N_FnYearId=@p2 and N_CompanyID=" + nCompanyId + " " + Searchkey + " and N_PayID not in (select top(" + Count + ") N_PayID from vw_Pay_PayMaster where N_FnYearId=@p2 and N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
 
 
             SortedList OutPut = new SortedList();
@@ -287,7 +287,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_PayMaster where N_CompanyID=@p1 " + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_Pay_PayMaster where N_FnYearId=@p2 and N_CompanyID=@p1 " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

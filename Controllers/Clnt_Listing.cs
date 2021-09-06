@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -16,14 +14,14 @@ namespace SmartxAPI.Controllers
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
     [Route("contact")]
     [ApiController]
-    public class CRM_Contact : ControllerBase
+    public class Clnt_Listing : ControllerBase
     {
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
 
-        public CRM_Contact(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Clnt_Listing(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             dLayer = dl;
@@ -31,72 +29,6 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
-
-        // [HttpGet("list")]
-        // public ActionResult ContactList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int nCompanyId=myFunctions.GetCompanyID(User);
-        //     string sqlCommandCount = "";
-        //     int Count= (nPage - 1) * nSizeperpage;
-        //     string sqlCommandText ="";
-        //     string Searchkey = "";
-        //     if (xSearchkey != null && xSearchkey.Trim() != "")
-        //         Searchkey = "and (X_Contact like '%" + xSearchkey + "%'or X_ContactCode like'%" + xSearchkey + "%'or X_Department like'%" + xSearchkey + "%')";
-
-        //     if (xSortBy == null || xSortBy.Trim() == "")
-        //         xSortBy = " order by n_contactID desc";
-        //     else
-        //     {
-        //                 switch (xSortBy.Split(" ")[0])
-        //                 {
-        //                     case "x_ContactCode":
-        //                         xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
-        //                         break;
-                          
-        //                     default: break;
-        //                 }
-        //         xSortBy = " order by " + xSortBy;
-        //                 }
-             
-        //      if(Count==0)
-        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
-        //     else
-        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 " + Searchkey + " and N_ContactID not in (select top("+ Count +") N_ContactID from vw_CRMContact where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
-        //     Params.Add("@p1", nCompanyId);
-
-        //     SortedList OutPut = new SortedList();
-
-
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-        //             sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1 "+Searchkey;
-        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-        //             OutPut.Add("Details", api.Format(dt));
-        //             OutPut.Add("TotalCount", TotalCount);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Success(OutPut));
-        //             }
-
-        //         }
-                
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(User,e));
-        //     }
-        // }
        [HttpGet("list")]
         public ActionResult OpportunityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
@@ -240,9 +172,6 @@ namespace SmartxAPI.Controllers
             }
         }
 
-
-
-        //Save....
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -328,8 +257,6 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,ex));
             }
-
-
 
         }
     }

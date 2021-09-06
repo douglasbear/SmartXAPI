@@ -81,6 +81,7 @@ namespace SmartxAPI.Controllers
                 int nTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TypeID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());               
+                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());               
                 string CustomerCode = MasterTable.Rows[0]["X_CustomerCode"].ToString();
              
                 MasterTable.AcceptChanges();
@@ -91,7 +92,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", 51);
-                        Params.Add("N_BranchID", 1);
+                        Params.Add("N_BranchID", nBranchID);
                        
                         CustomerCode = dLayer.GetAutoNumber("Inv_Customer", "X_CustomerCode", Params, connection, transaction);
                         if (CustomerCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Customer Code")); }
@@ -103,7 +104,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.ContainColumn("i_Image", MasterTable))
                         MasterTable.Columns.Remove("i_Image");
                     
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_CustomerCode='" + CustomerCode + "'";
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_CustomerCode='" + CustomerCode + "' and N_BranchID="+nBranchID;
                     string X_Criteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                     nCustomerID = dLayer.SaveData("Inv_Customer", "n_CustomerID", DupCriteria,X_Criteria,MasterTable, connection, transaction);
                     if (nCustomerID <= 0)

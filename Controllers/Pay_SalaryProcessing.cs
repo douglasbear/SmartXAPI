@@ -1104,6 +1104,12 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_Batch"] = x_Batch;
                     }
 
+                    if(MasterTable.Columns.Contains("N_FormID"))
+                    MasterTable.Rows[0]["N_FormID"] = 190;
+                    else
+                    {MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"N_FormID",typeof(int),190);
+                    MasterTable.AcceptChanges();}
+
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " and X_Batch='" + x_Batch + "'";
                     int N_TransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_TransID <= 0)
