@@ -227,8 +227,12 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable;
                 DataTable DetailTable;
+                DataTable PayMasterTable;
+                DataTable PayDetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                PayMasterTable = ds.Tables["payMaster"];
+                PayDetailTable = ds.Tables["payDetails"];
                 int N_SaveDraft = 0;
                 int N_Status = 0;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -236,7 +240,11 @@ namespace SmartxAPI.Controllers
                 int nServiceEndID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ServiceEndID"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString());
                 var dEndDate = MasterTable.Rows[0]["D_EndDate"].ToString();
+                DateTime dDateEnd = Convert.ToDateTime(MasterTable.Rows[0]["D_EndDate"].ToString());
                 string xMethod = MasterTable.Rows[0]["X_Method"].ToString();
+                int nSalaryPayMethod = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString());
+                int nPayRate = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRate"].ToString());
+                int nSalTransID = myFunctions.getIntVAL(PayMasterTable.Rows[0]["n_TransID"].ToString());
                 int nEOSDetailID = 0;
 
 
@@ -261,6 +269,16 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");
+                    MasterTable.Columns.Remove("N_SalaryPayMethod");
+                    MasterTable.Columns.Remove("N_PayRate");
+
+                    if(nServiceEndID>0)
+                    {
+                        dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nServiceEndID, "N_CompanyID=" + nCompanyID + " and N_FormID=" + this.N_FormID, connection, transaction);
+                        dLayer.DeleteData("Pay_PaymentDetails", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_PaymentMaster", "N_TransID", nSalTransID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                    }
+
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ServiceEndCode='" + ServiceEndCode + "' and N_FnyearID=" + nFnYearId;
                     nServiceEndID = dLayer.SaveData("pay_EndOFService", "N_ServiceEndID", DupCriteria, "", MasterTable, connection, transaction);
                     if (nServiceEndID <= 0)
@@ -292,6 +310,136 @@ namespace SmartxAPI.Controllers
                     {
                         nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
                     }
+
+                    bool B_SalProcessed =false;
+                    object _salProcessed = dLayer.ExecuteScalar("SELECT COUNT(*) FROM Pay_PaymentDetails INNER JOIN Pay_PaymentMaster ON Pay_PaymentDetails.N_TransID = Pay_PaymentMaster.N_TransID AND Pay_PaymentDetails.N_CompanyID = Pay_PaymentMaster.N_CompanyID where N_EmpID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_EmpID"].ToString()) + " and Pay_PaymentMaster.N_FormID = 190 and isnull(Pay_PaymentMaster.N_RefBatchID,0) = 0 and N_PayRunID = " + myFunctions.getIntVAL(PayMasterTable.Rows[0]["N_PayRunID"].ToString()) + " group by  Pay_PaymentMaster.N_TransID,N_PayRunID,X_Batch,N_EmpID", QueryParams, connection, transaction);
+                    if (_salProcessed != null)
+                    {
+                        if (myFunctions.getIntVAL(_salProcessed.ToString()) > 0)
+                            B_SalProcessed = true;
+                    }
+                    if(!B_SalProcessed)
+                    {
+                        PayMasterTable.Rows[0]["N_RefID"] = nServiceEndID;
+
+                        int nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", DupCriteria, "", PayMasterTable, connection, transaction);
+                        if (nTransID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,"Unable to save"));
+                        }
+                        for (int j = 0; j < PayDetailTable.Rows.Count; j++)
+                        {
+                            PayDetailTable.Rows[j]["N_TransID"] = nTransID;
+                        }
+                        int nTransDetailsID=0;
+                        nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DupCriteria, "", PayDetailTable, connection, transaction);
+                        if (nTransDetailsID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,"Unable to save"));
+                        }
+
+                        SortedList SPVoucheDelParams = new SortedList();
+                        SPVoucheDelParams.Add("N_CompanyID", nCompanyID);
+                        SPVoucheDelParams.Add("N_FnYearID", nFnYearId);
+                        SPVoucheDelParams.Add("X_TransType", "ESI");
+                        SPVoucheDelParams.Add("X_ReferenceNo", PayMasterTable.Rows[0]["X_Batch"]);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Pay_SalryProcessingVoucher_Del", SPVoucheDelParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,ex));
+                        }
+
+                        SortedList SPYrPayParams = new SortedList();
+                        SPYrPayParams.Add("N_CompanyID", nCompanyID);
+                        SPYrPayParams.Add("TransId", nTransID);
+                        SPYrPayParams.Add("N_Month", dDateEnd.Month.ToString("0#"));
+                        SPYrPayParams.Add("N_Year", dDateEnd.Year.ToString("00##"));
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Pay_YearlyPay", SPYrPayParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,ex));
+                        }
+
+                        SortedList SPPayProcessingParams = new SortedList();
+                        SPPayProcessingParams.Add("N_CompanyID", nCompanyID);
+                        SPPayProcessingParams.Add("N_TransID", nTransID);
+                        SPPayProcessingParams.Add("D_Date",myFunctions.getDateVAL(dDateEnd));
+                        SPPayProcessingParams.Add("D_EntryDate", myFunctions.getDateVAL(Convert.ToDateTime(MasterTable.Rows[0]["D_EntryDate"].ToString())));
+                        SPPayProcessingParams.Add("N_UserID", myFunctions.GetUserID(User));
+                        SPPayProcessingParams.Add("X_SystemName", System.Environment.MachineName);
+                        SPPayProcessingParams.Add("X_EntryFrom", "Salary Processing");
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Pay_PayrollProcessing", SPPayProcessingParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,ex));
+                        }
+
+                        SortedList SPPayAccrualParams = new SortedList();
+                        SPPayAccrualParams.Add("N_CompanyID", nCompanyID);
+                        SPPayAccrualParams.Add("N_Month", dDateEnd.Month.ToString("0#"));
+                        SPPayAccrualParams.Add("N_Year", dDateEnd.Year.ToString("00##"));
+                        SPPayAccrualParams.Add("N_ProcessID", nTransID);
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Pay_AccrualProcess", SPPayAccrualParams, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,ex));
+                        }
+                    }
+
+                    if(nPayRate>0)
+                    {
+                        //EOS Post
+                        DataTable dtPayDetails = new DataTable();
+                        dtPayDetails.Clear();
+                        dtPayDetails.Columns.Add("N_CompanyID");
+                        dtPayDetails.Columns.Add("N_TransID");
+                        dtPayDetails.Columns.Add("N_EmpID");
+                        dtPayDetails.Columns.Add("N_PayID");
+                        dtPayDetails.Columns.Add("N_PayFactor");
+                        dtPayDetails.Columns.Add("N_PayRate");
+                        dtPayDetails.Columns.Add("N_SalaryPayMethod");
+                        dtPayDetails.Columns.Add("B_BeginingBalEntry");
+                        dtPayDetails.Columns.Add("N_FormID");
+                        dtPayDetails.Columns.Add("N_TransDetailsID");
+
+                        int PayID = 0;
+                        object  PID =dLayer.ExecuteScalar("select ISNULL(N_PayID,0) from Pay_PayMaster where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearId+" and N_PayTypeID=11", QueryParams, connection, transaction);
+                        if (PID != null)
+                        {
+                            PayID = myFunctions.getIntVAL(PID.ToString());
+                        }
+
+                        DataRow row = dtPayDetails.NewRow();
+                        row["N_CompanyID"] = nCompanyID;
+                        row["N_TransID"] = nServiceEndID;
+                        row["N_EmpID"] = nEmpID;
+                        row["N_PayID"] = PayID;
+                        row["N_PayFactor"] = 0;
+                        row["N_PayRate"] = nPayRate;
+                        row["N_SalaryPayMethod"] = nSalaryPayMethod;
+                        row["B_BeginingBalEntry"] = 0;
+                        row["N_FormID"] = this.N_FormID;
+                        dtPayDetails.Rows.Add(row);
+                    }
+
                     transaction.Commit();
                     return Ok(api.Success("Terminated"));
                 }
@@ -365,7 +513,7 @@ namespace SmartxAPI.Controllers
             else
                 X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and N_BranchID=@nBranchID";
 
-            string sqlCommandText = "select X_EmpCode,X_EmpName,N_CompanyID,N_EmpID,X_Position,X_Department,D_HireDate,N_Status,N_FnyearID,N_BranchID from vw_PayEmployee where " + X_Crieteria;
+            string sqlCommandText = "select X_EmpCode,X_EmpName,N_CompanyID,N_EmpID,X_Position,X_Department,D_HireDate,N_Status,N_FnyearID,N_BranchID,N_SalaryPayMethod from vw_PayEmployee where " + X_Crieteria;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -422,14 +570,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("paymentDetails")]
-        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate)//,int nPayID)
+        public ActionResult GetPaymentDetails(int nEmpID,int nFnYearID,DateTime dDate,int nPayID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nEmpID", nEmpID);
-            string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+            //string sqlCommandText = "select X_Description,N_Payrate,N_Type,IsEOF from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
 
           
 
@@ -440,28 +588,28 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    // SortedList proParams2 = new SortedList(){
-                    //                 {"N_CompanyID",nCompanyID},
-                    //                 {"N_EmpID",nEmpID},
-                    //                 {"N_FnYearID",nFnYearID},
-                    //                 {"D_Date",dDate},
-                    //                 {"N_PayID",nPayID}};
+                    SortedList proParams2 = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_EmpID",nEmpID},
+                                    {"N_FnYearID",nFnYearID},
+                                    {"D_Date",dDate},
+                                    {"N_PayID",nPayID}};
 
-                    // dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
+                    dt=dLayer.ExecuteDataTablePro("SP_Pay_PendingAmtsForTermination", proParams2, connection);
 
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
-                    DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
-                    string TotalCount = "0";
+                    // dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    // string sqlCommandCount = "select count(*) as N_Count from vw_Pay_PendingAmtsForTermination where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID";
+                    //DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
+                    // string TotalCount = "0";
 
-                    if (Summary.Rows.Count > 0)
-                    {
-                        DataRow drow = Summary.Rows[0];
-                        TotalCount = drow["N_Count"].ToString();
+                    // if (Summary.Rows.Count > 0)
+                    // {
+                    //     DataRow drow = Summary.Rows[0];
+                    //     TotalCount = drow["N_Count"].ToString();
 
-                    }
+                    // }
                     OutPut.Add("Details", api.Format(dt));
-                    OutPut.Add("TotalCount", TotalCount);
+                    //OutPut.Add("TotalCount", TotalCount);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -559,7 +707,40 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(api.Error(User,e));
             }
-
         }
+
+        [HttpGet("listPaycode")]
+        public ActionResult GetListPaycode(int nEmpID,int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nEmpID", nEmpID);
+            string sqlCommandText = "select * FROM Pay_PayMaster WHERE N_PayID not in (select N_PayID from Pay_PaySetup where N_EmpID =@nEmpID) and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_PayMethod=3 and ISNULL(B_InActive,0)=0 and N_PayTypeID not in (11,14)";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
     }
 }
