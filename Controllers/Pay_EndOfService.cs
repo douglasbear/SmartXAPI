@@ -656,9 +656,9 @@ namespace SmartxAPI.Controllers
 
                     EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_AdjustAmount", typeof(double), 0);
                     EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "X_ServiceEnd", typeof(string), "");
-                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_GrossAmt", typeof(double), "");
-                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ServiceInDays", typeof(double), "");
-                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ServiceInYears", typeof(double), "");
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_GrossAmt", typeof(double), 0);
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ServiceInDays", typeof(double), 0);
+                    EmployeeTable = myFunctions.AddNewColumnToDataTable(EmployeeTable, "N_ServiceInYears", typeof(double), 0);
 
                     if (n_ServiceEndSettingsID == 0)
                     {
