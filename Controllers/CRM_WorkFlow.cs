@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from CRM_WorkflowMaster where N_CompanyID=@p1 " + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_WorkflowMaster where N_CompanyID=@p1 " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
