@@ -282,9 +282,9 @@ namespace SmartxAPI.Controllers
 
                         while (true)
                         {
-                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Tsk_TaskMaster Where X_TaskCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
-                            if (N_Result == null)
+                            if (N_Result == null)DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                                 break;
                         }
                         X_TaskCode = DocNo;
@@ -326,7 +326,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (nTaskId == 0)
                         {
-                            object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from tsk_taskmaster where N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                            object Count = dLayer.ExecuteScalar("select isnull(MAX(N_Order),0) from tsk_taskmaster where N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
                             if (Count != null)
                             {
 
