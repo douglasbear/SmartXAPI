@@ -269,8 +269,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_ServiceEndCode"] = ServiceEndCode;
                     }
                     MasterTable.Columns.Remove("X_Method");
-                    MasterTable.Columns.Remove("nSalaryPayMethod");
-                    MasterTable.Columns.Remove("nPayRate");
+                    MasterTable.Columns.Remove("N_SalaryPayMethod");
+                    MasterTable.Columns.Remove("N_PayRate");
 
                     if(nServiceEndID>0)
                     {
@@ -513,7 +513,7 @@ namespace SmartxAPI.Controllers
             else
                 X_Crieteria = "N_CompanyID=@nCompanyID and N_Status<2 and N_FnyearID =@nFnYearID and N_BranchID=@nBranchID";
 
-            string sqlCommandText = "select X_EmpCode,X_EmpName,N_CompanyID,N_EmpID,X_Position,X_Department,D_HireDate,N_Status,N_FnyearID,N_BranchID from vw_PayEmployee where " + X_Crieteria;
+            string sqlCommandText = "select X_EmpCode,X_EmpName,N_CompanyID,N_EmpID,X_Position,X_Department,D_HireDate,N_Status,N_FnyearID,N_BranchID,N_SalaryPayMethod from vw_PayEmployee where " + X_Crieteria;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

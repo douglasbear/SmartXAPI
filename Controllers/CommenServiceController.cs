@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
                     string activeDbUri = "ObConnection";
-
+                    bool b_AppNotExist=false;
 
                     try
                     {
@@ -134,6 +134,8 @@ namespace SmartxAPI.Controllers
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
+
+                                b_AppNotExist=true;
 
                                 paramList.Add("@xAppUrl", AppURL);
                                 paramList.Add("@xDBUri", activeDbUri);
@@ -172,6 +174,40 @@ namespace SmartxAPI.Controllers
                                     }
                                     companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                                     companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
+                                    if(b_AppNotExist)
+                                    {
+                                        paramList.Add("@companyid", companyid);
+                                        int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT @companyid, MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=@nAppID), MAX(N_UserCategoryID)+1, 12, @nAppID FROM Sec_UserCategory ", paramList, cnn);
+                                        if (nUserCat <= 0)
+                                        {
+                                            return Ok(_api.Warning("User category creation failed"));
+                                        }
+
+                                        int nCatID=0;
+                                        object CatID = dLayer.ExecuteScalar("select MAX(N_UserCategoryID) from Sec_UserCategory", paramList, cnn);
+                                        if (CatID!=null)
+                                        {
+                                            nCatID=myFunctions.getIntVAL(CatID.ToString());
+                                        }
+
+                                        String xCatList="";
+                                        object catList = dLayer.ExecuteScalar("select X_UserCategoryList from Sec_User where N_CompanyID="+companyid+" and N_UserID="+ myFunctions.GetUserID(User), paramList, cnn);
+                                        if (catList!=null)
+                                        {
+                                                xCatList=catList.ToString()+","+nCatID.ToString();
+                                        }
+
+                                        dLayer.ExecuteScalar("Update Sec_User set X_UserCategoryList='" + xCatList + "' where N_CompanyID="+companyid+" and N_UserID=" + myFunctions.GetUserID(User), cnn);
+
+                                        int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
+                                                                            "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+nCatID+",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View "+
+                                                                            "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*(@nAppID)) and N_CompanyID = -1", paramList, cnn);
+                                        if (Prevrows <= 0)
+                                        {
+                                            return Ok(_api.Warning("Screen permission failed"));
+                                        }                                     
+                                    }
+
                                 }
                             // }else{
                             //     return Ok(_api.Error(User,"CompanyNotFound"));
