@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by n_historyid desc";
@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + "and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + " and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
             SortedList OutPut = new SortedList();
             try
             {
