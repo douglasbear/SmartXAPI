@@ -51,6 +51,8 @@ namespace SmartxAPI.Data
         public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID = 0, int globalUserID = 0)
         {
 
+
+
             if (string.IsNullOrEmpty(companyid.ToString()) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userid.ToString()))
                 return null;
 
