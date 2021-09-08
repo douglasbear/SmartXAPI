@@ -259,31 +259,33 @@ namespace SmartxAPI.Controllers
 
                      return Ok(_api.Success(Res));
 
-                }else if (reqType == "customer")
-                {
-                    SortedList Res = new SortedList();
-                    
-                    using (SqlConnection conn = new SqlConnection(connectionString))
-                    {
-                        conn.Open();
-                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserName, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= 1";
-                        SortedList Params = new SortedList();
-                        DataTable output = dLayer.ExecuteDataTable(sql, conn);
-                        if (output.Rows.Count == 0)
-                        {
-                            return Ok(_api.Error(User,"Unauthorized Access"));
-                        }
-
-                     var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
-
-                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
-
-                    return Ok(_api.Success(user));
-                       
-                    }
-
-
                 }
+                
+                // else if (reqType == "customer")
+                // {
+                //     SortedList Res = new SortedList();
+                    
+                //     using (SqlConnection conn = new SqlConnection(connectionString))
+                //     {
+                //         conn.Open();
+                //         string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserName, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= 1";
+                //         SortedList Params = new SortedList();
+                //         DataTable output = dLayer.ExecuteDataTable(sql, conn);
+                //         if (output.Rows.Count == 0)
+                //         {
+                //             return Ok(_api.Error(User,"Unauthorized Access"));
+                //         }
+
+                //      var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
+
+                //     if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
+
+                //     return Ok(_api.Success(user));
+                       
+                //     }
+
+
+                // }
                 else
                 {
                     return Ok(_api.Error(User,"Invalid Request"));
