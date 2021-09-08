@@ -300,12 +300,15 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("update Pay_Employee set n_SalaryGrade=" + Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
+
+                    if(Accrual.Columns.Contains("N_EmpAccID") ){
                     //Accrual Save
                     for (int i = 0; i <= Accrual.Rows.Count - 1; i++)
                     {
                         //     }
                         // foreach (DataRow var in Accrual.Rows)
                         // {
+                        
                         if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
                         {
                             dLayer.DeleteData("Pay_EmpAccruls", "N_EmpAccID", myFunctions.getIntVAL(Accrual.Rows[i]["N_EmpAccID"].ToString()), "", connection, transaction);
@@ -313,10 +316,11 @@ namespace SmartxAPI.Controllers
                             continue;
                         }
 
+
                     }
                     Accrual.Columns.Remove("b_IsChecked");
                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
-
+                        }
                     transaction.Commit();
                     SortedList Result = new SortedList();
 
