@@ -197,14 +197,17 @@ namespace SmartxAPI.Controllers
 
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
+
+                    Master.Columns.Remove("n_BranchID");
 
                     if (x_DiscountNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", 1346);
-                        Params.Add("N_BranchID", 1);
+                        Params.Add("N_FormID", 858);                        
+                        Params.Add("N_BranchID", N_BranchID);
                         x_DiscountNo = dLayer.GetAutoNumber("Inv_DiscountMaster", "X_DiscCode", Params, connection, transaction);
                         if (x_DiscountNo == "")
                         {
