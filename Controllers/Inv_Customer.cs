@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -121,12 +121,13 @@ namespace SmartxAPI.Controllers
             }
               
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 " + Searchkey + " and N_CustomerID not in (select top(" + Count + ") N_CustomerID from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CustomerID,X_CustomerCode,X_CustomerName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_BranchID,X_BranchName,X_ContactName,X_Address,X_PhoneNo1 from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 " + Searchkey + " and N_CustomerID not in (select top(" + Count + ") N_CustomerID from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 " + Searchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
+            Params.Add("@p3", nFnYearId);
 
             SortedList OutPut = new SortedList();
 
@@ -137,7 +138,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 " + Searchkey + "";
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomer where N_CompanyID=@p1 and B_Inactive=@p2 and N_FnYearId=@p3 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
