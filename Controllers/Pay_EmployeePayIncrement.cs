@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + "and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + " and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
             SortedList OutPut = new SortedList();
             try
             {
@@ -303,9 +303,6 @@ namespace SmartxAPI.Controllers
                     //Accrual Save
                     for (int i = 0; i <= Accrual.Rows.Count - 1; i++)
                     {
-                        //     }
-                        // foreach (DataRow var in Accrual.Rows)
-                        // {
                         if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
                         {
                             dLayer.DeleteData("Pay_EmpAccruls", "N_EmpAccID", myFunctions.getIntVAL(Accrual.Rows[i]["N_EmpAccID"].ToString()), "", connection, transaction);
