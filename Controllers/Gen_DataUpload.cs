@@ -54,6 +54,7 @@ namespace SmartxAPI.Controllers
                         {
                             col.ColumnName = col.ColumnName.Replace(" ", "_");
                             col.ColumnName = col.ColumnName.Replace("*", "");
+                            col.ColumnName = col.ColumnName.Replace("/", "_");
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
