@@ -301,6 +301,9 @@ namespace SmartxAPI.Controllers
 
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
                     //Accrual Save
+                    if(!Accrual.Columns.Contains("N_EmpAccID"))
+                        Accrual = myFunctions.AddNewColumnToDataTable(Accrual, "N_EmpAccID", typeof(int), 0);
+                    
                     for (int i = 0; i <= Accrual.Rows.Count - 1; i++)
                     {
                         if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
