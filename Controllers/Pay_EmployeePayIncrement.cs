@@ -299,6 +299,8 @@ namespace SmartxAPI.Controllers
                     if (Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set n_SalaryGrade=" + Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 
+                    Otherinfo.Rows[0]["n_CLocation"]=0;
+
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
                     //Accrual Save
                     if(!Accrual.Columns.Contains("N_EmpAccID"))
