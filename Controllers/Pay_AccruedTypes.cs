@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
 
                 Searchkey = " and (x_VacCode like '%" + xSearchkey + "%' or Name like'%" + xSearchkey + "%'or x_TypeName like'%" + xSearchkey + "%' or x_Period like'%" + xSearchkey + "%')";
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_VacTypeID desc";
+                xSortBy = " order by cast(code as numeric) desc";
             else
             {
                    switch (xSortBy.Split(" ")[0])

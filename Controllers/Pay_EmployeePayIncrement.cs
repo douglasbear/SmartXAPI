@@ -305,10 +305,6 @@ namespace SmartxAPI.Controllers
                     //Accrual Save
                     for (int i = 0; i <= Accrual.Rows.Count - 1; i++)
                     {
-                        //     }
-                        // foreach (DataRow var in Accrual.Rows)
-                        // {
-                        
                         if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
                         {
                             dLayer.DeleteData("Pay_EmpAccruls", "N_EmpAccID", myFunctions.getIntVAL(Accrual.Rows[i]["N_EmpAccID"].ToString()), "", connection, transaction);
