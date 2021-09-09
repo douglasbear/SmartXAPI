@@ -256,7 +256,7 @@ namespace SmartxAPI.Controllers
                     ProductionMachineCost = _api.Format(ProductionMachineCost,"ProductionMachineCost");
                     ItemStockUnit = _api.Format(ItemStockUnit,"ItemStockUnit");
                     ByProductDetails = _api.Format(ByProductDetails,"ByProductDetails");
-                    ScrapDetails = _api.Format(ByProductDetails,"ScrapDetails");
+                    ScrapDetails = _api.Format(ScrapDetails,"ScrapDetails");
                     dt.Tables.Add(ItemDetails);
                     dt.Tables.Add(ItemStock);
                     dt.Tables.Add(ProducionLabourCost);
