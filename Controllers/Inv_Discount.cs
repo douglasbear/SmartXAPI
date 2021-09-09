@@ -135,6 +135,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
                         string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID";
+                        
                         string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID";
                         string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID";
                         string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID";
@@ -152,6 +153,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0";
+                        dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
 
                 }
