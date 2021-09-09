@@ -361,7 +361,10 @@ namespace SmartxAPI.Controllers
                         for (int j = 0; j < PayDetailTable.Rows.Count; j++)
                         {
                             PayDetailTable.Rows[j]["N_TransID"] = nTransID;
+                            if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["IsAccrued"].ToString())==1)
+                                PayDetailTable.Rows[j]["N_PayID"]=MasterTable.Rows[0]["N_RefPayID"];
                         }
+                        PayDetailTable.Columns.Remove("IsAccrued");
                         int nTransDetailsID=0;
                         nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DupCriteria, "", PayDetailTable, connection, transaction);
                         if (nTransDetailsID <= 0)
