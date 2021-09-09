@@ -135,6 +135,7 @@ namespace SmartxAPI.Controllers
                     {
                         Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
                         string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID";
+                        
                         string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID";
                         string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID";
                         string pricelistUnit = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemUnitID=@nItemUnitID";
@@ -152,6 +153,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                    }
+                    else
+                    {
+                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_ItemID=0 and N_ItemUnitID=0";
+                        dtPriceList = dLayer.ExecuteDataTable(pricelistAll, Params, connection);
                     }
 
                 }
@@ -197,14 +203,17 @@ namespace SmartxAPI.Controllers
 
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
+                    int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     string x_DiscountNo = MasterRow["X_DiscCode"].ToString();
+
+                    Master.Columns.Remove("n_BranchID");
 
                     if (x_DiscountNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
-                        Params.Add("N_FormID", 1346);
-                        Params.Add("N_BranchID", 1);
+                        Params.Add("N_FormID", 858);                        
+                        Params.Add("N_BranchID", N_BranchID);
                         x_DiscountNo = dLayer.GetAutoNumber("Inv_DiscountMaster", "X_DiscCode", Params, connection, transaction);
                         if (x_DiscountNo == "")
                         {
