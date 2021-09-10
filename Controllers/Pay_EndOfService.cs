@@ -243,7 +243,7 @@ namespace SmartxAPI.Controllers
                 DateTime dDateEnd = Convert.ToDateTime(MasterTable.Rows[0]["D_EndDate"].ToString());
                 string xMethod = MasterTable.Rows[0]["X_Method"].ToString();
                 int nSalaryPayMethod = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString());
-                int nPayRate = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRate"].ToString());
+                double nPayRate = myFunctions.getVAL(MasterTable.Rows[0]["N_PayRate"].ToString());
                 int nSalTransID = myFunctions.getIntVAL(PayMasterTable.Rows[0]["n_TransID"].ToString());
                 int nEOSDetailID = 0;
                 string PayrunID = dDateEnd.Year.ToString("00##") + dDateEnd.Month.ToString("0#");
