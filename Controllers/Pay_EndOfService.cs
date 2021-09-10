@@ -335,8 +335,9 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("pay_EndOfServiceSDetails", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
+                         DetailTable.Rows[j]["N_ServiceEndID"] = nServiceEndID;
                     }
+                    nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
        
                     if(!B_SalProcessed)
                     {
@@ -361,10 +362,15 @@ namespace SmartxAPI.Controllers
                         for (int j = 0; j < PayDetailTable.Rows.Count; j++)
                         {
                             PayDetailTable.Rows[j]["N_TransID"] = nTransID;
-                            if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["IsAccrued"].ToString())==1)
-                                PayDetailTable.Rows[j]["N_PayID"]=MasterTable.Rows[0]["N_RefPayID"];
+                            // if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["IsAccrued"].ToString())==1)
+                            //     PayDetailTable.Rows[j]["N_PayID"]=MasterTable.Rows[0]["N_RefPayID"];
+
+                            // if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["N_PayID"].ToString())==0)
+                            //     PayDetailTable.Rows[j].Delete();
                         }
                         PayDetailTable.Columns.Remove("IsAccrued");
+                        PayDetailTable.AcceptChanges();
+
                         int nTransDetailsID=0;
                         nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", PayDetailTable, connection, transaction);
                         if (nTransDetailsID <= 0)
@@ -472,7 +478,7 @@ namespace SmartxAPI.Controllers
                         row["N_FormID"] = this.N_FormID;
                         dtPayDetails.Rows.Add(row);
 
-                        int  nTransDetailID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", dtPayDetails, connection, transaction);
+                        int nTransDetailID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", dtPayDetails, connection, transaction);
                     }
 
                     transaction.Commit();
