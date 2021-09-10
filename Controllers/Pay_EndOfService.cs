@@ -243,7 +243,7 @@ namespace SmartxAPI.Controllers
                 DateTime dDateEnd = Convert.ToDateTime(MasterTable.Rows[0]["D_EndDate"].ToString());
                 string xMethod = MasterTable.Rows[0]["X_Method"].ToString();
                 int nSalaryPayMethod = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalaryPayMethod"].ToString());
-                int nPayRate = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayRate"].ToString());
+                double nPayRate = myFunctions.getVAL(MasterTable.Rows[0]["N_PayRate"].ToString());
                 int nSalTransID = myFunctions.getIntVAL(PayMasterTable.Rows[0]["n_TransID"].ToString());
                 int nEOSDetailID = 0;
                 string PayrunID = dDateEnd.Year.ToString("00##") + dDateEnd.Month.ToString("0#");
@@ -335,8 +335,9 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("pay_EndOfServiceSDetails", "N_ServiceEndID", nServiceEndID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
+                         DetailTable.Rows[j]["N_ServiceEndID"] = nServiceEndID;
                     }
+                    nEOSDetailID = dLayer.SaveData("pay_EndOfServiceSDetails", "N_EOSDetailID", DetailTable, connection, transaction);
        
                     if(!B_SalProcessed)
                     {
@@ -352,7 +353,7 @@ namespace SmartxAPI.Controllers
                         PayMasterTable.Rows[0]["D_SalFromDate"] = firstDayOfMonth;
                         PayMasterTable.Rows[0]["D_SalToDate"] = lastDayOfMonth;
 
-                        int nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", DupCriteria, "", PayMasterTable, connection, transaction);
+                        int nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", "", "", PayMasterTable, connection, transaction);
                         if (nTransID <= 0)
                         {
                             transaction.Rollback();
@@ -363,10 +364,15 @@ namespace SmartxAPI.Controllers
                             PayDetailTable.Rows[j]["N_TransID"] = nTransID;
                             if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["IsAccrued"].ToString())==1)
                                 PayDetailTable.Rows[j]["N_PayID"]=MasterTable.Rows[0]["N_RefPayID"];
+
+                            if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["N_PayID"].ToString())==0)
+                                PayDetailTable.Rows[j].Delete();
                         }
                         PayDetailTable.Columns.Remove("IsAccrued");
+                        PayDetailTable.AcceptChanges();
+                        
                         int nTransDetailsID=0;
-                        nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DupCriteria, "", PayDetailTable, connection, transaction);
+                        nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", PayDetailTable, connection, transaction);
                         if (nTransDetailsID <= 0)
                         {
                             transaction.Rollback();
@@ -471,6 +477,8 @@ namespace SmartxAPI.Controllers
                         row["B_BeginingBalEntry"] = 0;
                         row["N_FormID"] = this.N_FormID;
                         dtPayDetails.Rows.Add(row);
+
+                        int nTransDetailID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", dtPayDetails, connection, transaction);
                     }
 
                     transaction.Commit();
