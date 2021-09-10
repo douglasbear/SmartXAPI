@@ -352,7 +352,7 @@ namespace SmartxAPI.Controllers
                         PayMasterTable.Rows[0]["D_SalFromDate"] = firstDayOfMonth;
                         PayMasterTable.Rows[0]["D_SalToDate"] = lastDayOfMonth;
 
-                        int nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", DupCriteria, "", PayMasterTable, connection, transaction);
+                        int nTransID = dLayer.SaveData("Pay_PaymentMaster", "N_TransID", "", "", PayMasterTable, connection, transaction);
                         if (nTransID <= 0)
                         {
                             transaction.Rollback();
@@ -366,7 +366,7 @@ namespace SmartxAPI.Controllers
                         }
                         PayDetailTable.Columns.Remove("IsAccrued");
                         int nTransDetailsID=0;
-                        nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", DupCriteria, "", PayDetailTable, connection, transaction);
+                        nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", PayDetailTable, connection, transaction);
                         if (nTransDetailsID <= 0)
                         {
                             transaction.Rollback();
@@ -471,6 +471,8 @@ namespace SmartxAPI.Controllers
                         row["B_BeginingBalEntry"] = 0;
                         row["N_FormID"] = this.N_FormID;
                         dtPayDetails.Rows.Add(row);
+
+                        int  nTransDetailID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", dtPayDetails, connection, transaction);
                     }
 
                     transaction.Commit();
