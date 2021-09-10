@@ -277,6 +277,9 @@ namespace SmartxAPI.Controllers
 
                     }
                     //Salary & Benefits Save
+                    if(n_HistoryId>0)
+                        dLayer.DeleteData("Pay_EmployeePayHistory", "N_HistoryId", n_HistoryId, "", connection, transaction);
+
 
                     dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", pay_PaySetup, connection, transaction);
                     dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", pay_EmployeePayHistory, connection, transaction);
@@ -303,7 +306,7 @@ namespace SmartxAPI.Controllers
 
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
 
-                    if(Accrual.Columns.Contains("N_EmpAccID") ){
+
                     //Accrual Save
                     if(!Accrual.Columns.Contains("N_EmpAccID"))
                         Accrual = myFunctions.AddNewColumnToDataTable(Accrual, "N_EmpAccID", typeof(int), 0);
@@ -316,12 +319,9 @@ namespace SmartxAPI.Controllers
                             Accrual.Rows[i].Delete();
                             continue;
                         }
-
-
                     }
                     Accrual.Columns.Remove("b_IsChecked");
                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
-                        }
                     transaction.Commit();
                     SortedList Result = new SortedList();
 
