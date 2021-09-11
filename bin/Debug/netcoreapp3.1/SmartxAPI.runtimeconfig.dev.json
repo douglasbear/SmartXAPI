@@ -1,23 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\linju scaria\\.nuget\\packages"
->>>>>>> 725824654737fd2dbc0f75efe237c64426cd3bba
-=======
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> 7b752471a60f48a4a07940421af7367f091daeda
-=======
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
->>>>>>> 8af55c8ad77b50618170b87981236b08db516b4c
     ]
   }
 }
