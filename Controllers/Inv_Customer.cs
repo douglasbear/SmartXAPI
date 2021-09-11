@@ -172,6 +172,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+                bool bEnableLogin = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -210,6 +211,101 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        int UserID = 0, UserCatID = 0;
+                        string Pwd = myFunctions.EncryptString(CustomerCode);
+                        if(bEnableLogin)
+                        {
+                            object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection, transaction);
+                            if (objUser != null)
+                            {
+                                UserID=myFunctions.getIntVAL(objUser.ToString());
+                            }
+                            else
+                            {
+                                object objCustUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + CustomerCode + "'  and N_CustomerID is null", Params, connection, transaction);
+                                if (objUser != null)
+                                {
+                                    UserID=myFunctions.getIntVAL(objCustUser.ToString());
+                                }
+                            }
+
+                            object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=10", Params, connection, transaction);
+                            if (objUserCat != null)
+                            {
+                                UserCatID=myFunctions.getIntVAL(objUserCat.ToString());
+                            }
+                            else
+                            {
+                                int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT "+nCompanyID+", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=10), MAX(N_UserCategoryID)+1, 12, 10 FROM Sec_UserCategory ", Params, connection, transaction);
+                                if (nUserCat <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(api.Warning("User category creation failed"));
+                                }
+                                object CatID = dLayer.ExecuteScalar("select MAX(N_UserCategoryID) from Sec_UserCategory", Params, connection, transaction);
+                                if (CatID!=null)
+                                {
+                                    UserCatID=myFunctions.getIntVAL(CatID.ToString());
+                                }
+                                if(UserCatID>0)
+                                {
+                                    int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
+                                                                                "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+UserCatID+",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View "+
+                                                                                "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-10) and N_CompanyID = -1", Params, connection, transaction);
+                                    if (Prevrows <= 0)
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(api.Warning("Screen permission failed"));
+                                    } 
+                                }
+                            }
+
+                            if(UserID==0)
+                            {
+                                DataTable dt = new DataTable();
+                                dt.Clear();
+                                dt.Columns.Add("N_CompanyID");
+                                dt.Columns.Add("N_UserID");
+                                dt.Columns.Add("X_UserID");
+                                dt.Columns.Add("X_Password");
+                                dt.Columns.Add("N_UserCategoryID");
+                                dt.Columns.Add("B_Active");
+                                dt.Columns.Add("N_BranchID");
+                                dt.Columns.Add("X_UserName");
+                                dt.Columns.Add("N_CustomerID");
+                                dt.Columns.Add("N_LoginFlag");
+                                dt.Columns.Add("X_UserCategoryList");
+
+                                DataRow row = dt.NewRow();
+                                row["N_CompanyID"] = nCompanyID;
+                                row["X_UserID"] = CustomerCode;
+                                row["X_Password"] = Pwd;
+                                row["N_UserCategoryID"] =UserCatID;
+                                row["B_Active"] = 1;
+                                row["N_BranchID"] = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());                              
+                                row["X_UserName"] = MasterTable.Rows[0]["x_CustomerName"].ToString();
+                                row["N_CustomerID"] = nCustomerID;
+                                row["N_LoginFlag"] = 5;
+                                row["X_UserCategoryList"] = UserCatID.ToString();
+                                dt.Rows.Add(row);
+
+                                int nUserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+                            }
+                            else
+                            {
+                                dLayer.ExecuteNonQuery("update Sec_User set N_CustomerID=" + nCustomerID + ",B_Active=1,N_LoginFlag=5 where N_CompanyID=" + nCompanyID + "  and N_UserID=" + UserID, Params, connection, transaction);
+                            }
+                        }
+                        else
+                        {
+                            object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" +nCustomerID, Params, connection, transaction);
+                            if (objUser != null)
+                            {
+                                UserID=myFunctions.getIntVAL(objUser.ToString());
+                                dLayer.ExecuteNonQuery("update Sec_User set B_Active=0,N_LoginFlag=5  where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection, transaction);
+                            }
+                        }
+
                         try
                             {
                                 myAttachments.SaveAttachment(dLayer, Attachment,  MasterTable.Rows[0]["X_CustomerCode"].ToString()+"-"+MasterTable.Rows[0]["X_CustomerName"].ToString(), 0, MasterTable.Rows[0]["X_CustomerName"].ToString(), MasterTable.Rows[0]["X_CustomerCode"].ToString(), nCustomerID, "Customer Document", User, connection, transaction);
