@@ -3,6 +3,7 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\linju scaria\\.nuget\\packages"
 =======
@@ -49,6 +50,10 @@
       "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Dell\\.nuget\\packages"
 >>>>>>> 56442f5374ca5c4cdfdc7d000e13cb5bdeaccf40
+=======
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+>>>>>>> 0cf0b0cc21e4900a02e2aecbaa7ceda042c30ea0
     ]
   }
 }
