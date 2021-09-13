@@ -199,7 +199,7 @@ namespace SmartxAPI.Controllers
             if (xPRSNo == null) xPRSNo = "";
             string Mastersql = "";
 
-            if (bAllBranchData == true)
+           if (bAllBranchData == true)
             {
                 Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID,Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate,"+ 
                             "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, "+
@@ -227,6 +227,7 @@ namespace SmartxAPI.Controllers
                             "Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.X_POrderNo=@p3 and Inv_PurchaseOrder.N_BranchID=@nBranchID and Inv_PurchaseOrder.N_FnYearID=@p2";
                 Params.Add("@nBranchID", nBranchID);
             }
+
 
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
