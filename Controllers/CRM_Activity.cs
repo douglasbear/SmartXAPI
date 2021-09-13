@@ -59,7 +59,6 @@ namespace SmartxAPI.Controllers
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2";
                     Params.Add("@p2", UserPattern);
                 }
-
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
