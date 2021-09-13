@@ -154,7 +154,7 @@ namespace SmartxAPI.Controllers
                     var nFormID = this.FormID;
                     int N_DelID = myFunctions.getIntVAL(MasterRow["N_deliverynoteid"].ToString());
                     int N_SalesOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderID"].ToString());
-                    QueryParamsList.Add("@nDelID", nCompanyId);
+                    QueryParamsList.Add("@nDelID", N_DelID);
                     QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
                     object InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_SalesReceiptNo", typeof(string), InSales);

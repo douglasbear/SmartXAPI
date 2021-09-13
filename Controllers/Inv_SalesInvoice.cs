@@ -1124,7 +1124,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-                        bool B_salesOrder = myFunctions.CheckPermission(N_CompanyID, 81, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
+                        bool B_salesOrder=false;
+                        bool B_DeliveryNote=false;
+                        B_DeliveryNote = myFunctions.CheckPermission(N_CompanyID, 729, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
+                        if(!B_DeliveryNote)
+                            B_salesOrder = myFunctions.CheckPermission(N_CompanyID, 81, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         bool B_ServiceSheet = myFunctions.CheckPermission(N_CompanyID, 1145, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
                         {
@@ -1285,7 +1289,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nInvoiceID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo,N_SalesOrderID from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
@@ -1294,6 +1298,7 @@ namespace SmartxAPI.Controllers
                     DataRow TransRow = TransData.Rows[0];
 
                     int N_CustomerId = myFunctions.getIntVAL(TransRow["N_CustomerId"].ToString());
+                    int nSalesOrderID = myFunctions.getIntVAL(TransRow["N_SalesOrderID"].ToString());
 
                     SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", nCompanyID);
