@@ -228,5 +228,36 @@ namespace SmartxAPI.Controllers
 
 
         }
+        [HttpDelete("deletelinewise")]
+        public ActionResult DeleteDataLineWise(int nWTaskID)
+        {
+
+            int Results = 0;
+            try
+            {
+                SortedList Params = new SortedList();
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("Prj_WorkflowMaster", "N_WTaskID", nWTaskID, "", connection, transaction);
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("Prj_WorkflowTasks", "N_WTaskID", nWTaskID, "", connection, transaction);
+                    }
+                    transaction.Commit();
+                    return Ok(api.Success("Workflow deleted"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+
+
+
+        }
     }
 }
