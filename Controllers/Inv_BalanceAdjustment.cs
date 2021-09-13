@@ -304,6 +304,14 @@ DetailSql = "Select * from vw_InvBalanceAdjustmentDetaiils  Where N_CompanyID=@p
                     }
                     else
                     {
+                        SortedList PostingParams = new SortedList(){
+                                {"N_CompanyID",N_CompanyID},
+                                {"X_InventoryMode",X_Trasnaction},
+                                {"N_InternalID",N_AdjustmentID},
+                                {"N_UserID",myFunctions.GetUserID(User)}
+                                };
+                            dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            
                         transaction.Commit();
                     }
                     return Ok(_api.Success("Adjustment saved" + ":" + N_AdjustmentID));

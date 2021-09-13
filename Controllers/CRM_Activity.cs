@@ -41,9 +41,9 @@ namespace SmartxAPI.Controllers
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
-            string UserPattern = myFunctions.GetUserPattern(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string Pattern = "";
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
