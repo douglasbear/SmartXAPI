@@ -380,7 +380,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", UserPattern);
                 }
             }
-            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;
+            string sqlCommandText = "Select case when x_relatedtoname is null then x_subject else x_subject + ' - ' + x_relatedtoname end  as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try
