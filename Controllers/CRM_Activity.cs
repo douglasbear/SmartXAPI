@@ -50,13 +50,13 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
             }
             else
             {
                 if (UserPattern != "")
                 {
-                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2";
+                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
 
@@ -369,14 +369,14 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
             }
             else
             {
                 string UserPattern = myFunctions.GetUserPattern(User);
                 if (UserPattern != "")
                 {
-                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1";
+                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
             }
