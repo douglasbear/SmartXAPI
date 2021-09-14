@@ -197,9 +197,20 @@ namespace SmartxAPI.Controllers
                     Params.Add("@xTaskCode", xTaskCode);
                     Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
 
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Comments", typeof(string), "");
+
+
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    object comments = dLayer.ExecuteScalar("select  isnull(MAX(N_CommentsID),0) from Tsk_TaskComments where N_ActionID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), Params, connection);
+                    if (comments != null)
+                    {
+                        object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
+                        MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
+                    }
+                    MasterTable.AcceptChanges();
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
 
@@ -337,10 +348,10 @@ namespace SmartxAPI.Controllers
 
                         while (true)
                         {
-                            
+
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Tsk_TaskMaster Where X_TaskCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
-                            if (N_Result == null)DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                break;
+                            if (N_Result == null) DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            break;
                         }
                         X_TaskCode = DocNo;
 
@@ -523,7 +534,7 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
-                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='"+MasterTable.Rows[0]["d_DueDate"]+"' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     transaction.Commit();
                     return Ok(_api.Success("Task Updated"));
                 }

@@ -119,7 +119,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,ex));
             }
         }
-           [HttpGet("Dashboardlist")]
+           [HttpGet("list")]
         public ActionResult PrjReview(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -138,7 +138,7 @@ namespace SmartxAPI.Controllers
           
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_ProjectReview where N_CompanyID=@p1 " + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_ProjectReview where N_CompanyID=@p1 "  + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_ProjectReview where N_CompanyID=" + nCompanyId + "  " + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_Prj_ProjectReview where N_CompanyID=" + nCompanyId + " " + xSortBy + " ) " + xSortBy;
 

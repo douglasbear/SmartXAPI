@@ -173,7 +173,9 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
-                bool bEnableLogin = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
+                bool bEnableLogin = false;
+                if(MasterTable.Columns.Contains("B_EnablePortalLogin"))
+                bEnableLogin = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -253,11 +255,11 @@ namespace SmartxAPI.Controllers
                                     int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
                                                                                 "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+UserCatID+",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View "+
                                                                                 "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-10) and N_CompanyID = -1", Params, connection, transaction);
-                                    if (Prevrows <= 0)
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(api.Warning("Screen permission failed"));
-                                    } 
+                                    // if (Prevrows <= 0)
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(api.Warning("Screen permission failed"));
+                                    // } 
                                 }
                             }
 

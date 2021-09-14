@@ -153,6 +153,7 @@ namespace SmartxAPI.Data
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
                 string xGlobalUserID = "";
+                if(AppID!=10)
                 using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
@@ -177,6 +178,7 @@ namespace SmartxAPI.Data
                     case "all":
                     case "app":
                     case "switchcompany":
+                    case "customer":
                         var tokenHandler = new JwtSecurityTokenHandler();
                         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                         var tokenDescriptor = new SecurityTokenDescriptor
@@ -226,7 +228,7 @@ namespace SmartxAPI.Data
                         using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
                             cnn2.Open();
-                            if (AppID != 6 && AppID != 8)
+                            if (AppID != 6 && AppID != 8 && AppID != 10)
                             {
                                 string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                 dLayer.ExecuteScalar(appUpdate, cnn2);
