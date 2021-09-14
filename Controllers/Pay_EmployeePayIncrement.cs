@@ -316,8 +316,17 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
                         {
                             dLayer.DeleteData("Pay_EmpAccruls", "N_EmpAccID", myFunctions.getIntVAL(Accrual.Rows[i]["N_EmpAccID"].ToString()), "", connection, transaction);
-                            Accrual.Rows[i].Delete();
+                            //Accrual.Rows[i].Delete();
                             continue;
+                        }
+                    }
+                    // DataTable AccrualValues=new DataTable();;
+                    foreach (DataRow row in Accrual.Rows)
+                    {
+                        if (myFunctions.getBoolVAL(row["b_IsChecked"].ToString()) == false)
+                        {
+                            row.Delete();
+                            Accrual.AcceptChanges();
                         }
                     }
                     Accrual.Columns.Remove("b_IsChecked");
