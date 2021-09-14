@@ -205,7 +205,8 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     object comments = dLayer.ExecuteScalar("select  isnull(MAX(N_CommentsID),0) from Tsk_TaskComments where N_ActionID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), Params, connection);
-                    if (comments != null)
+                    if(comments==null)comments=0;
+                    if (myFunctions.getIntVAL( comments.ToString()) >0 )
                     {
                         object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
                         MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
