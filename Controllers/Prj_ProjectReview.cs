@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-          [HttpDelete("delete")]
+        [HttpDelete("delete")]
         public ActionResult DeleteData(int n_ProjectReviewID)
         {
             int Results = 0;
@@ -110,23 +110,22 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
-           [HttpGet("list")]
-        public ActionResult PrjReview(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        [HttpGet("list")]
+        public ActionResult PrjReview(string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
-            int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
             Params.Add("@p1", nCompanyId);
@@ -135,14 +134,10 @@ namespace SmartxAPI.Controllers
                 Searchkey = " and (x_ReviewCode like '%" + xSearchkey + "%' or X_ProjectName like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%' )";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ProjectID desc";
-          
-
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_ProjectReview where N_CompanyID=@p1 "  + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_ProjectReview where N_CompanyID=" + nCompanyId + "  " + Searchkey + " and N_ProjectID not in (select top(" + Count + ") N_ProjectID from vw_Prj_ProjectReview where N_CompanyID=" + nCompanyId + " " + xSortBy + " ) " + xSortBy;
 
 
+
+            sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 " + xSortBy + Searchkey;
 
             SortedList OutPut = new SortedList();
 
@@ -154,14 +149,14 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_Prj_ProjectReview where N_CompanyID=@p1" + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomerProjects where N_CompanyID=@p1" + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
                         //return Ok(_api.Warning("No Results Found"));
-                          return Ok(_api.Success(OutPut));
+                        return Ok(_api.Success(OutPut));
                     }
                     else
                     {
@@ -173,12 +168,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(User,e));
+                return BadRequest(_api.Error(User, e));
             }
         }
 
 
-        
+
     }
 }
 
