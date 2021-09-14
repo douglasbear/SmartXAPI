@@ -397,7 +397,7 @@ if (xBatch != null)
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nPayRunID", nPayRunID);
-                    int FormID = 0;
+                    int FormID = 208;
                     int N_IsAuto = 0;
                     int N_TransDetailsID = 0;
                     if (x_Batch.Trim() == "@Auto")
