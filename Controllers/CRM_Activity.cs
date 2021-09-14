@@ -59,7 +59,6 @@ namespace SmartxAPI.Controllers
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
-
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
