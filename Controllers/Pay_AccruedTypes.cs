@@ -122,9 +122,9 @@ namespace SmartxAPI.Controllers
         }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=@p1 and N_CountryID=" + nCountryID + " " + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List_Web where N_CompanyID=@p1 and N_CountryID=" + nCountryID + " " + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + "  and N_CountryID=" + nCountryID + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List where N_CompanyID=" + nCompanyId + " and N_CountryID=" + nCountryID + " " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_PayAccruedCode_List_Web where N_CompanyID=" + nCompanyId + "  and N_CountryID=" + nCountryID + " " + Searchkey + " and N_VacTypeID not in (select top(" + Count + ") N_VacTypeID from vw_PayAccruedCode_List_Web where N_CompanyID=" + nCompanyId + " and N_CountryID=" + nCountryID + " " + xSortBy + " ) " + xSortBy;
 
 
 
@@ -138,7 +138,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List where N_CompanyID=@p1" + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_PayAccruedCode_List_Web where N_CompanyID=@p1" + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);

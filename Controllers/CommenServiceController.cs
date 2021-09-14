@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
                     string activeDbUri = "ObConnection";
-
+                    bool b_AppNotExist=false;
 
                     try
                     {
@@ -136,6 +136,8 @@ namespace SmartxAPI.Controllers
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
+
+                                b_AppNotExist=true;
 
                                 paramList.Add("@xAppUrl", AppURL);
                                 paramList.Add("@xDBUri", activeDbUri);
@@ -182,6 +184,40 @@ namespace SmartxAPI.Controllers
                                     }
                                     companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
                                     companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
+                                    if(b_AppNotExist)
+                                    {
+                                        paramList.Add("@companyid", companyid);
+                                        int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT @companyid, MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=@nAppID), MAX(N_UserCategoryID)+1, 12, @nAppID FROM Sec_UserCategory ", paramList, cnn);
+                                        if (nUserCat <= 0)
+                                        {
+                                            return Ok(_api.Warning("User category creation failed"));
+                                        }
+
+                                        int nCatID=0;
+                                        object CatID = dLayer.ExecuteScalar("select MAX(N_UserCategoryID) from Sec_UserCategory", paramList, cnn);
+                                        if (CatID!=null)
+                                        {
+                                            nCatID=myFunctions.getIntVAL(CatID.ToString());
+                                        }
+
+                                        String xCatList="";
+                                        object catList = dLayer.ExecuteScalar("select X_UserCategoryList from Sec_User where N_CompanyID="+companyid+" and N_UserID="+ myFunctions.GetUserID(User), paramList, cnn);
+                                        if (catList!=null)
+                                        {
+                                                xCatList=catList.ToString()+","+nCatID.ToString();
+                                        }
+
+                                        dLayer.ExecuteScalar("Update Sec_User set X_UserCategoryList='" + xCatList + "' where N_CompanyID="+companyid+" and N_UserID=" + myFunctions.GetUserID(User), cnn);
+
+                                        int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
+                                                                            "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+nCatID+",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View "+
+                                                                            "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*(@nAppID)) and N_CompanyID = -1", paramList, cnn);
+                                        if (Prevrows <= 0)
+                                        {
+                                            return Ok(_api.Warning("Screen permission failed"));
+                                        }                                     
+                                    }
+
                                 }
                             // }else{
                             //     return Ok(_api.Error(User,"CompanyNotFound"));
@@ -261,14 +297,32 @@ namespace SmartxAPI.Controllers
 
                 }
                 
-                else if (reqType == "customer")
+                else
+                {
+                    return Ok(_api.Error(User,"Invalid Request"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,"Unauthorized Access"));
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("customer-login")]
+        public ActionResult AuthenticateCustomer(string reqType, int appID,string customerKey)
+        {
+            try
+            {
+
+               if (reqType == "customer")
                 {
                     SortedList Res = new SortedList();
                     
                     using (SqlConnection conn = new SqlConnection(connectionString))
                     {
                         conn.Open();
-                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserName, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= 1";
+                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= 572";
                         SortedList Params = new SortedList();
                         DataTable output = dLayer.ExecuteDataTable(sql, conn);
                         if (output.Rows.Count == 0)
@@ -278,7 +332,7 @@ namespace SmartxAPI.Controllers
 
                         DataRow dRow = output.Rows[0];
 
-                     var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserName"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 0, connectionString, myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0);
+                     var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 10, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0);
 
                     if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
 

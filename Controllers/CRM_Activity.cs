@@ -41,9 +41,9 @@ namespace SmartxAPI.Controllers
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
-            string UserPattern = myFunctions.GetUserPattern(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            string UserPattern = myFunctions.GetUserPattern(User);
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
@@ -59,7 +59,6 @@ namespace SmartxAPI.Controllers
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
-
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")

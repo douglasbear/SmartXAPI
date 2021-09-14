@@ -298,7 +298,9 @@ namespace SmartxAPI.Controllers
                                         {"N_UserID",0},
                                         {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
                                         {"X_AdminPwd",pwd},
-                                        {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()}};
+                                        {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()},
+                                        {"N_AppID",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_AppType"].ToString())}
+                                        };
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 
 
