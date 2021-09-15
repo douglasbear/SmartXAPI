@@ -58,8 +58,8 @@ namespace SmartxAPI.Controllers
 
                    if(n_ProjectID>0)
                    {
-                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set X_ReviewCaption='" +X_ReviewCaption+ "' where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection);
-                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StarRating=" +N_StarRating+ " where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection);
+                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set X_ReviewCaption='" +X_ReviewCaption+ "' where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection,transaction);
+                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StarRating=" +N_StarRating+ " where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection,transaction);
                    }
 
                     transaction.Commit();
