@@ -50,40 +50,17 @@ namespace SmartxAPI.Controllers
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     string DocNo = "";
-                    int n_ProjectReviewID = myFunctions.getIntVAL(MasterRow["N_ProjectReviewID"].ToString());
+                    int n_ProjectID = myFunctions.getIntVAL(MasterRow["N_ProjectID"].ToString());
                     int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-                    string x_ReviewCode = MasterRow["X_ReviewCode"].ToString();
-
-                    if (n_ProjectReviewID > 0)
-                    {
-                        dLayer.DeleteData("Prj_ProjectReview", "N_ProjectReviewID", n_ProjectReviewID, "", connection, transaction);
-                    }
-                    DocNo = MasterRow["X_ReviewCode"].ToString();
-                    if (DocNo == "@Auto")
-                    {
-                        Params.Add("N_CompanyID", N_CompanyID);
-                        Params.Add("N_FormID", this.N_FormID);
-                        while (true)
-                        {
-                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Prj_ProjectReview Where X_ReviewCode ='" + DocNo + "' and N_CompanyID= " + N_CompanyID, connection, transaction);
-                            if (N_Result == null)
-                                break;
-                        }
-                        x_ReviewCode = DocNo;
-
-                        if (x_ReviewCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
-                        MasterTable.Rows[0]["X_ReviewCode"] = x_ReviewCode;
+                    int N_StarRating = myFunctions.getIntVAL(MasterRow["n_StarRating"].ToString());
+                    string X_ReviewCaption = MasterRow["X_ReviewCaption"].ToString();
 
 
-                    }
-                    n_ProjectReviewID = dLayer.SaveData("Prj_ProjectReview", "N_ProjectReviewID", MasterTable, connection, transaction);
-                    if (n_ProjectReviewID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable To Save"));
-                    }
+                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set X_ReviewCaption='" +X_ReviewCaption+ "' where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection);
+                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StarRating=" +N_StarRating+ " where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection);
+
+
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
                 }
