@@ -732,6 +732,11 @@ namespace SmartxAPI.Controllers
                     DateTime D_EntryDate = DateTime.Today;
                     DataTable DetailTable;
 
+                    if(nStatus.ToString()=="4")
+                    {
+                        nStatus=5;
+                    }
+
 
 
                     int N_TaskStatusID = 0;
