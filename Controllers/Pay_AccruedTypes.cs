@@ -36,61 +36,6 @@ namespace SmartxAPI.Controllers
 
 
 
-        //  [HttpGet("list")]
-        // public ActionResult PayAccruedList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
-        // {
-        //     int nCompanyId=myFunctions.GetCompanyID(User);
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     int Count= (nPage - 1) * nSizeperpage;
-        //     string sqlCommandText ="";
-        //     string Searchkey = "";
-        //     if (xSearchkey != null && xSearchkey.Trim() != "")
-        //         Searchkey = "and (x_VacCode like '%" + xSearchkey + "%'or x_VacType like'%" + xSearchkey + "%' or x_Type like '%" + xSearchkey + "%' or x_Period like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' )";
-
-        //     if (xSortBy == null || xSortBy.Trim() == "")
-        //         xSortBy = " order by N_VacTypeID desc";
-        //     else
-        //         xSortBy = " order by " + xSortBy;
-
-        //      if(Count==0)
-        //         sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description from Pay_VacationType where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
-        //     else
-        //         sqlCommandText = "select top("+ nSizeperpage +") X_VacCode,X_VacType,X_Type,X_Period,X_Description,N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 " + Searchkey + " and N_VacTypeID not in (select top("+ Count +") N_VacTypeID from Pay_VacationType where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
-        //     Params.Add("@p1", nCompanyId);
-
-        //     SortedList OutPut = new SortedList();
-
-
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
-
-        //             string sqlCommandCount = "select count(*) as N_Count  from Pay_VacationType where N_CompanyID=@p1 ";
-        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
-        //             OutPut.Add("Details", api.Format(dt));
-        //             OutPut.Add("TotalCount", TotalCount);
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(api.Success(OutPut));
-        //             }
-
-        //         }
-
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(api.Error(User,e));
-        //     }
-        // }
-
         [HttpGet("Dashboardlist")]
         public ActionResult PayAccruedList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCountryID)
         {
@@ -106,7 +51,7 @@ namespace SmartxAPI.Controllers
 
                 Searchkey = " and (x_VacCode like '%" + xSearchkey + "%' or Name like'%" + xSearchkey + "%'or x_TypeName like'%" + xSearchkey + "%' or x_Period like'%" + xSearchkey + "%')";
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by cast(code as numeric) desc";
+                xSortBy = " order by cast(x_VacCode as numeric) desc";
             else
             {
                    switch (xSortBy.Split(" ")[0])
