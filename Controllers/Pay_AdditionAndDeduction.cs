@@ -469,7 +469,7 @@ if (xBatch != null)
                             DetailsTable.Rows[i]["n_TransID"] = N_TransID;
                             DetailsTable.Rows[i]["n_PayRate"] = Amount;
                             DetailsTable.Rows[i]["b_TimeSheetEntry"] = N_IsAuto;
-                            DetailsTable.Rows[i]["n_FormID"] = FormID;
+                            DetailsTable.Rows[i]["n_FormID"] = FormID==0?208:FormID;
                         }
                         DetailsTable.AcceptChanges();
                         N_TransDetailsID = myFunctions.getIntVAL(dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", DetailsTable, connection, transaction).ToString());
