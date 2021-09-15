@@ -56,10 +56,11 @@ namespace SmartxAPI.Controllers
                     int N_StarRating = myFunctions.getIntVAL(MasterRow["n_StarRating"].ToString());
                     string X_ReviewCaption = MasterRow["X_ReviewCaption"].ToString();
 
-
+                   if(n_ProjectID>0)
+                   {
                     dLayer.ExecuteNonQuery("update Inv_CustomerProjects set X_ReviewCaption='" +X_ReviewCaption+ "' where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection);
                     dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StarRating=" +N_StarRating+ " where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection);
-
+                   }
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
