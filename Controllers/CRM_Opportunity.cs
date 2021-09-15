@@ -90,7 +90,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -130,7 +130,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -155,7 +155,7 @@ namespace SmartxAPI.Controllers
                 string X_ContactEmail = MasterTable.Rows[0]["X_Email"].ToString();
                 string X_ContactNumber = MasterTable.Rows[0]["X_Mobile"].ToString();
                 int nContactID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ContactID"].ToString());
-                object N_WorkFlowID="";
+                object N_WorkFlowID = "";
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -171,12 +171,12 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 1302);
                         Params.Add("N_BranchID", nBranchId);
                         OpportunityCode = dLayer.GetAutoNumber("CRM_Opportunity", "x_OpportunityCode", Params, connection, transaction);
-                        if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Opportunity Code")); }
+                        if (OpportunityCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Opportunity Code")); }
                         MasterTable.Rows[0]["x_OpportunityCode"] = OpportunityCode;
                     }
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_OpportunityID='" + nOpportunityID + "' and N_FnyearID=" + nFnYearId;
-                    if(nOpportunityID>0)
-                         N_WorkFlowID = dLayer.ExecuteScalar("select N_WactivityID from CRM_Opportunity where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_OpportunityID=" + nOpportunityID, Params, connection, transaction);
+                    if (nOpportunityID > 0)
+                        N_WorkFlowID = dLayer.ExecuteScalar("select N_WactivityID from CRM_Opportunity where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and N_OpportunityID=" + nOpportunityID, Params, connection, transaction);
                     nOpportunityID = dLayer.SaveData("CRM_Opportunity", "n_OpportunityID", DupCriteria, "", MasterTable, connection, transaction);
                     if (Items.Rows.Count > 0)
                     {
@@ -189,7 +189,7 @@ namespace SmartxAPI.Controllers
                     if (nOpportunityID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -222,7 +222,7 @@ namespace SmartxAPI.Controllers
                                         foreach (DataRow var in Activity.Rows)
                                         {
                                             ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", AParams, connection, transaction);
-                                            if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Activity Code")); }
+                                            if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Activity Code")); }
                                             var["x_ActivityCode"] = ActivityCode;
                                             var["N_RelatedTo"] = 294;
                                             var["N_ReffID"] = nOpportunityID;
@@ -272,25 +272,25 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
-         [HttpGet("stageupdate")]
-        public ActionResult StageUpdate(string xstage,int nOpportunityID)
+        [HttpGet("stageupdate")]
+        public ActionResult StageUpdate(string xstage, int nOpportunityID)
         {
 
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             Params.Add("@p1", nCompanyId);
-            xstage=xstage.ToString().Trim();
+            xstage = xstage.ToString().Trim();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID="+nCompanyId+" and N_ReferID=1310 and X_Name='"+xstage+"'", Params, connection);
-                    if(N_StageID!=null)
+                    object N_StageID = dLayer.ExecuteScalar("select N_PkeyID from gen_lookuptable where n_companyID=" + nCompanyId + " and N_ReferID=1310 and X_Name='" + xstage + "'", Params, connection);
+                    if (N_StageID != null)
                         dLayer.ExecuteNonQuery("update crm_Opportunity set N_StageID=" + N_StageID.ToString() + " where N_CompanyID=@p1 and N_OpportunityID=" + nOpportunityID, Params, connection);
 
                 }
@@ -299,7 +299,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -317,6 +317,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     Results = dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
                     Results = dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
@@ -330,17 +331,49 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete Opportunity"));
+                    return Ok(api.Error(User, "Unable to delete Opportunity"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
 
         }
+        [HttpPost("stageSorting")]
+        public ActionResult ChangeData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable StageTable;
+                    StageTable = ds.Tables["stage"];
+                    SortedList Params = new SortedList();
+                    int i=0;
+
+                    int nCompanyId = myFunctions.GetCompanyID(User);
+                    Params.Add("@p1", nCompanyId);
+
+                    foreach (DataRow dtRow in StageTable.Rows)
+                    {
+                        i=i+1;
+                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and N_PkeyID=" +myFunctions.getIntVAL(dtRow["n_pKeyID"].ToString()), Params, connection);
+                        dtRow["N_Sort"]=i;
+                    }
+                    return Ok(api.Success("Stage Updated"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+        }
+
     }
+
 }
