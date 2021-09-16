@@ -373,7 +373,7 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable = new DataTable();
-                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits;
+                DataTable MasterTableNew, GeneralTable, StockUnit, SalesUnit, PurchaseUnit, AddUnit1, AddUnit2, LocationList, CategoryList, VariantList, ItemUnits,itemWarranty;
                 DataTable SubItemTable = new DataTable();
                 DataTable ScrapItemTable = new DataTable();
                 DataTable BOMEmpTable = new DataTable();
@@ -395,6 +395,7 @@ namespace SmartxAPI.Controllers
                 ScrapItemTable = ds.Tables["scrapItems"];
                 BOMEmpTable = ds.Tables["bomEmp"];
                 BOMAssetTable = ds.Tables["bomAsset"];
+                itemWarranty = ds.Tables["itemWarranty"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                 int N_ItemID = 0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -726,6 +727,14 @@ namespace SmartxAPI.Controllers
                             }
                             BOMAssetTable.AcceptChanges();
                             dLayer.SaveData("Inv_BOMAsset", "N_BOMAssetDetailID", BOMAssetTable, connection, transaction);
+                        }
+                        if(itemWarranty.Rows.Count > 0) {
+                            foreach (DataRow dRow in itemWarranty.Rows)
+                            {
+                                 dRow["N_MainItemID"] = N_ItemID;
+                            }
+                            itemWarranty.AcceptChanges();
+                            dLayer.SaveData("Inv_ItemWarranty","N_ItemDetailsID",itemWarranty,connection,transaction);
                         }
                     }
 
