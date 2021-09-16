@@ -205,6 +205,7 @@ namespace SmartxAPI.Controllers
             DataTable ScrapItemsTable = new DataTable();
             DataTable BOMEmpTable = new DataTable();
             DataTable BOMAssetTable = new DataTable();
+            DataTable ItemWarrantyTable= new DataTable();
             int N_ItemID = nItemID;
             int companyid = myFunctions.GetCompanyID(User);
 
@@ -335,6 +336,10 @@ namespace SmartxAPI.Controllers
                     BOMAssetTable = dLayer.ExecuteDataTable(bomAsset, QueryParams, connection);
                     BOMAssetTable = _api.Format(BOMAssetTable, "bomAsset");
 
+                    string itemWarranty = "Select * from vw_Inv_ItemWarranty Where N_CompanyID=@nCompanyID and N_MainItemID=@nItemID" ;
+                    ItemWarrantyTable = dLayer.ExecuteDataTable(itemWarranty, QueryParams, connection);
+                    ItemWarrantyTable = _api.Format(ItemWarrantyTable, "itemWarranty");
+
                 }
                 dt.AcceptChanges();
                 // multiCategory.AcceptChanges();
@@ -356,6 +361,7 @@ namespace SmartxAPI.Controllers
                 dataSet.Tables.Add(ScrapItemsTable);
                 dataSet.Tables.Add(BOMEmpTable);
                 dataSet.Tables.Add(BOMAssetTable);
+                dataSet.Tables.Add(ItemWarrantyTable);
 
                 return Ok(_api.Success(dataSet));
 
