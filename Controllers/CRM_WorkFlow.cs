@@ -74,7 +74,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from CRM_WorkflowMaster where N_CompanyID=@p1 " + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_WorkflowMaster where N_CompanyID=@p1 " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -262,5 +262,37 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+        [HttpDelete("deletelinewise")]
+        public ActionResult DeleteDataLineWise(int N_WActivityDetailID)
+        {
+
+            int Results = 0;
+            try
+            {
+                SortedList Params = new SortedList();
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("crm_workflowactivities", "N_WActivityDetailID", N_WActivityDetailID, "", connection, transaction);
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("crm_workflowactivities", "N_WActivityDetailID", N_WActivityDetailID, "", connection, transaction);
+                    }
+                    transaction.Commit();
+                    return Ok(api.Success("Workflow deleted"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+
+
+
+        }
+
     }
 }

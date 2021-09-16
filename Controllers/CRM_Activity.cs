@@ -43,14 +43,22 @@ namespace SmartxAPI.Controllers
             int nUserID = myFunctions.GetUserID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            string Pattern = "";
+            string UserPattern = myFunctions.GetUserPattern(User);
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+            }
+            else
+            {
+                if (UserPattern != "")
+                {
+                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                    Params.Add("@p2", UserPattern);
+                }
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -96,12 +104,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult ActivityListDetails(string xActivityCode,int nopportunityID)
+        public ActionResult ActivityListDetails(string xActivityCode, int nopportunityID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -118,7 +126,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection,transaction);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
                     if (nopportunityID > 0)
                     {
                         Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
@@ -150,7 +158,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -187,7 +195,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.FormID);
                         ActivityCode = dLayer.GetAutoNumber("CRM_Activity", "x_ActivityCode", Params, connection, transaction);
-                        if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Activity Code")); }
+                        if (ActivityCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Activity Code")); }
                         MasterTable.Rows[0]["x_ActivityCode"] = ActivityCode;
                     }
                     if (MasterTable.Rows[0]["N_RelatedTo"].ToString() == "294")
@@ -217,7 +225,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to save"));
+                            return Ok(api.Error(User, "Unable to save"));
                         }
                     }
 
@@ -225,7 +233,7 @@ namespace SmartxAPI.Controllers
                     if (nActivityID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -308,7 +316,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -337,17 +345,17 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete Activity"));
+                    return Ok(api.Error(User, "Unable to delete Activity"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
         }
-          [HttpGet("calenderData")]
+        [HttpGet("calenderData")]
         public ActionResult GetcalenderData(bool bySalesMan)
 
         {
@@ -360,9 +368,18 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
             }
-            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID +" " +Criteria;
+            else
+            {
+                string UserPattern = myFunctions.GetUserPattern(User);
+                if (UserPattern != "")
+                {
+                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                    Params.Add("@p2", UserPattern);
+                }
+            }
+            string sqlCommandText = "Select case when x_relatedtoname is null then x_subject else x_subject + ' - ' + x_relatedtoname end  as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try
@@ -384,7 +401,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
     }

@@ -23,6 +23,8 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int N_FormID;
         private readonly string reportPath;
+        private readonly string AppURL;
+
 
         public Inv_MultiCategory(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -32,12 +34,14 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 1349;//form id of cost center
             reportPath = conf.GetConnectionString("ReportPath");
+            AppURL = conf.GetConnectionString("AppURL");
         }
         [HttpGet("chart")]
         public ActionResult GetCategoryChart()
 
         {
             DataTable dt = new DataTable();
+            DataTable dt1 = new DataTable();
             DataTable Images = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -45,6 +49,7 @@ namespace SmartxAPI.Controllers
 
 
             string sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " Order By X_CategoryCode";
+            string sqlCommandText1 = "Select *  from Inv_DisplayImages Where N_CompanyID= " + nCompanyID + " ";
 
 
             try
@@ -53,9 +58,24 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
+
+                    foreach (DataRow dr in dt.Rows)
+                    {
+                        foreach (DataRow dr1 in dt1.Rows)
+                        {
+
+                            if (dr["n_CategoryDisplayID"].ToString() == dr1["N_ItemID"].ToString())
+                            {
+                                dr["x_ImageURL"] = AppURL + "/" + "Reports" + "/" + dr1["X_ImageName"];
+
+                            }
+                        }
+                    }
+
 
                 }
-
+                dt.AcceptChanges();
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -68,7 +88,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -130,7 +150,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -183,7 +203,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -257,7 +277,7 @@ namespace SmartxAPI.Controllers
                         X_CategoryCode = DocNo;
 
 
-                        if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
+                        if (X_CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["x_CategoryCode"] = X_CategoryCode;
 
                         // Params.Add("N_CompanyID", N_CompanyID);
@@ -282,7 +302,7 @@ namespace SmartxAPI.Controllers
                     if (N_CategoryDisplayID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
 
@@ -338,7 +358,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
         private string GetNextChildCode(int nParentID, SortedList ParamList, SqlConnection connection, SqlTransaction transaction)
@@ -395,7 +415,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            return Ok(_api.Error(User,"Category Allready Used"));
+                            return Ok(_api.Error(User, "Category Allready Used"));
                         }
                     }
                 }
@@ -405,13 +425,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error(User,"Unable to delete"));
+                    return Ok(_api.Error(User, "Unable to delete"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
         }

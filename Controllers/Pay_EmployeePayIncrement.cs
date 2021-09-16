@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by n_historyid desc";
@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + "and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from VW_SalaryRivisionDisp " + Criteria + Searchkey + " and N_HistoryID not in(select top(" + Count + ") N_HistoryID from VW_SalaryRivisionDisp " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
             SortedList OutPut = new SortedList();
             try
             {
@@ -277,6 +277,9 @@ namespace SmartxAPI.Controllers
 
                     }
                     //Salary & Benefits Save
+                    if(n_HistoryId>0)
+                        dLayer.DeleteData("Pay_EmployeePayHistory", "N_HistoryId", n_HistoryId, "", connection, transaction);
+
 
                     dLayer.SaveData("Pay_PaySetup", "N_PaySetupID", pay_PaySetup, connection, transaction);
                     dLayer.SaveData("Pay_EmployeePayHistory", "N_PayHistoryID", pay_EmployeePayHistory, connection, transaction);
@@ -294,29 +297,40 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQuery("update Pay_Employee set N_EmpTypeID=" + Otherinfo.Rows[0]["n_NEmpTypeID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                     if (Otherinfo.Rows[0]["n_NLocation"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update pay_employee set N_WorkLocationID='" + Otherinfo.Rows[0]["n_NLocation"].ToString() + "' where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID, connection, transaction);
-                    if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
-                        dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NInsClassID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
+                    // if (Otherinfo.Rows[0]["n_NInsClassID"].ToString() != "0")
+                    //     dLayer.ExecuteNonQuery("update Pay_Employee set N_InsClassID=" + Otherinfo.Rows[0]["n_NInsClassID"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
                     if (Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() != "0")
                         dLayer.ExecuteNonQuery("update Pay_Employee set n_SalaryGrade=" + Otherinfo.Rows[0]["n_NSalaryGrade"].ToString() + " where N_EmpID =" + N_EmpID + " and  N_CompanyID =" + N_CompanyID + " and N_FnYearID=" + N_FnYearID, connection, transaction);
 
+                    Otherinfo.Rows[0]["n_CLocation"]=0;
+
                     dLayer.SaveData("Pay_EmployeeAdditionalInfo", "N_DetailsID", Otherinfo, connection, transaction);
+
+
                     //Accrual Save
+                    if(!Accrual.Columns.Contains("N_EmpAccID"))
+                        Accrual = myFunctions.AddNewColumnToDataTable(Accrual, "N_EmpAccID", typeof(int), 0);
+                    
                     for (int i = 0; i <= Accrual.Rows.Count - 1; i++)
                     {
-                        //     }
-                        // foreach (DataRow var in Accrual.Rows)
-                        // {
                         if (myFunctions.getBoolVAL(Accrual.Rows[i]["b_IsChecked"].ToString()) == false)
                         {
                             dLayer.DeleteData("Pay_EmpAccruls", "N_EmpAccID", myFunctions.getIntVAL(Accrual.Rows[i]["N_EmpAccID"].ToString()), "", connection, transaction);
-                            Accrual.Rows[i].Delete();
+                            //Accrual.Rows[i].Delete();
                             continue;
                         }
-
+                    }
+                    // DataTable AccrualValues=new DataTable();;
+                    foreach (DataRow row in Accrual.Rows)
+                    {
+                        if (myFunctions.getBoolVAL(row["b_IsChecked"].ToString()) == false)
+                        {
+                            row.Delete();
+                            Accrual.AcceptChanges();
+                        }
                     }
                     Accrual.Columns.Remove("b_IsChecked");
                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
-
                     transaction.Commit();
                     SortedList Result = new SortedList();
 

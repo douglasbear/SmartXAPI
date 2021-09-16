@@ -51,6 +51,8 @@ namespace SmartxAPI.Data
         public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID = 0, int globalUserID = 0)
         {
 
+
+
             if (string.IsNullOrEmpty(companyid.ToString()) || string.IsNullOrEmpty(username) || string.IsNullOrEmpty(userid.ToString()))
                 return null;
 
@@ -151,6 +153,7 @@ namespace SmartxAPI.Data
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
                 string xGlobalUserID = "";
+                if(AppID!=10)
                 using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
@@ -159,7 +162,7 @@ namespace SmartxAPI.Data
                     DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
                     if (globalInfo.Rows.Count > 0)
                     {
-                        object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection).ToString();
+                        object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
                         if (AllowMultipleCompany == null)
                             AllowMultipleCompany = 0;
                         globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany);
@@ -175,6 +178,7 @@ namespace SmartxAPI.Data
                     case "all":
                     case "app":
                     case "switchcompany":
+                    case "customer":
                         var tokenHandler = new JwtSecurityTokenHandler();
                         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                         var tokenDescriptor = new SecurityTokenDescriptor
@@ -224,7 +228,7 @@ namespace SmartxAPI.Data
                         using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
                             cnn2.Open();
-                            if (AppID != 6 && AppID != 8)
+                            if (AppID != 6 && AppID != 8 && AppID != 10)
                             {
                                 string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                 dLayer.ExecuteScalar(appUpdate, cnn2);

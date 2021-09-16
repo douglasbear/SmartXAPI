@@ -45,6 +45,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             _appSettings = appSettings.Value;
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
+            connectionString = conf.GetConnectionString("SmartxConnection");
             AppURL = conf.GetConnectionString("AppURL");
             cofig = conf;
         }
@@ -73,7 +74,7 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("auth-user")]
-        public ActionResult AuthenticateUser(string reqType, int appID, int nCompanyID, string xCompanyName)
+        public ActionResult AuthenticateUser(string reqType, int appID, int nCompanyID, string xCompanyName,string customerKey)
         {
             try
             {
@@ -126,6 +127,7 @@ namespace SmartxAPI.Controllers
                             paramList.Add("@nClientID", clientID);
                             paramList.Add("@xEmailID", username);
                             paramList.Add("@nAppID", appID);
+                            // paramList.Add("@nGlobalUserID", GlobalUserID);
                             object checkAppExisting = dLayer.ExecuteScalar("SELECT Count(N_AppID) as Count FROM ClientApps where N_ClientID=@nClientID and N_AppID=@nAppID", paramList, olivCnn);
                             if (myFunctions.getIntVAL(checkAppExisting.ToString()) == 0)
                             {
@@ -149,11 +151,19 @@ namespace SmartxAPI.Controllers
 
 
                                 int rows = dLayer.ExecuteNonQuery("insert into ClientApps select @nClientID,@nAppID,@xAppUrl,@xDBUri,@nUserLimit,0,'Service',max(N_RefID)+1,@dExpDate,0 from ClientApps", paramList, olivCnn);
+                                // string appUpdate = "Update Users set N_ActiveAppID=@nAppID WHERE (X_EmailID =@xEmailID and N_UserID=@nGlobalUserID)";
+                                
                                 if (rows <= 0)
                                 {
                                     return Ok(_api.Warning("App not registerd in your company"));
                                 }
-                            } 
+                            //     else{
+                            // //         if (appID != 6 && appID != 8)
+                            // // {
+                            // //         dLayer.ExecuteScalar(appUpdate, paramList, olivCnn);
+                            // // }
+                            //     }
+                            }
                             connectionString = cofig.GetConnectionString(activeDbUri);
                             // if(companyid>0)
                             // {
@@ -284,6 +294,56 @@ namespace SmartxAPI.Controllers
                     }
 
                      return Ok(_api.Success(Res));
+
+                }
+                
+                else
+                {
+                    return Ok(_api.Error(User,"Invalid Request"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,"Unauthorized Access"));
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("customer-login")]
+        public ActionResult AuthenticateCustomer(string reqType, int appID,string customerKey)
+        {
+            try
+            {
+
+               if (reqType == "customer")
+                {
+                    SortedList Res = new SortedList();
+                    string seperator = "$+$-!";
+                    string[] cred = customerKey.Split(seperator);
+
+            int companyID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[0]));
+            int nCustomerID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[1]));
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= "+nCustomerID;
+                        SortedList Params = new SortedList();
+                        DataTable output = dLayer.ExecuteDataTable(sql, conn);
+                        if (output.Rows.Count == 0)
+                        {
+                            return Ok(_api.Error(User,"Unauthorized Access"));
+                        }
+
+                        DataRow dRow = output.Rows[0];
+
+                     var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 10, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0);
+
+                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
+
+                    return Ok(_api.Success(user));
+                       
+                    }
+
 
                 }
                 else
