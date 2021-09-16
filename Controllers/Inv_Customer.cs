@@ -493,7 +493,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-             sqlCommandText="select * from vw_InvCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+             sqlCommandText="select * from  vw_InvCustomer  where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
             }
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nCustomerID",nCustomerID);
@@ -502,10 +502,14 @@ namespace SmartxAPI.Controllers
                     {
                         connection.Open();
                         dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                        dt=myFunctions.AddNewColumnToDataTable(dt,"customerKey",typeof(string),"");
                         if(crmcustomerID>0)
                         {
                              dt.Rows[0]["x_CustomerCode"] = "@Auto";
                             
+                        }else{
+                            string seperator = "$+$-!";
+                                dt.Rows[0]["customerKey"] =  myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString())+seperator+myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString()); 
                         }
                         dt.AcceptChanges();
                     
