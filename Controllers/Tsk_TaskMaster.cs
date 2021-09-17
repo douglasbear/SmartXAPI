@@ -205,7 +205,8 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     object comments = dLayer.ExecuteScalar("select  isnull(MAX(N_CommentsID),0) from Tsk_TaskComments where N_ActionID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), Params, connection);
-                    if (comments != null)
+                    if(comments==null)comments=0;
+                    if (myFunctions.getIntVAL( comments.ToString()) >0 )
                     {
                         object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
                         MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
@@ -688,7 +689,7 @@ namespace SmartxAPI.Controllers
                 Criteria = " and N_AssigneeID=@nUserID ";
             }
 
-            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " " + Criteria;
+            string sqlCommandText = "Select case when x_ProjectName is null then X_TaskSummery else X_TaskSummery + ' - ' + x_ProjectName end  as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try
@@ -730,6 +731,11 @@ namespace SmartxAPI.Controllers
                     int N_ClosedUserID = myFunctions.GetUserID(User);
                     DateTime D_EntryDate = DateTime.Today;
                     DataTable DetailTable;
+
+                    if(nStatus.ToString()=="4")
+                    {
+                        nStatus=5;
+                    }
 
 
 
