@@ -607,16 +607,24 @@ namespace SmartxAPI.Controllers
 
                     }
 
-// Save Warranty Info
+                    SortedList warrantyParams = new SortedList();
+                    warrantyParams.Add("@nCompanyID", N_CompanyID);
+                    warrantyParams.Add("@nFnYearID", N_FnYearID);
+                    warrantyParams.Add("@nSalesID", N_SalesID);
+                    warrantyParams.Add("@dEntryDate", MasterTable.Rows[0]["D_SalesDate"].ToString());
+                    // Save Warranty Info
+
+
+                    string WarrantyMaster = "SELECT Inv_ItemMaster.N_CompanyID, 0 AS N_WarrantyID, '' AS X_WarrantyCode, Inv_Sales.N_FnYearId, Inv_Sales.N_BranchId, Inv_Sales.N_CustomerId, Inv_Sales.X_Barcode as X_WarrantyNo,@dEntryDate as  D_PeriodFrom,DATEADD(DAY, isnull(Inv_ItemMaster.N_WarrantyPeriod,0), @dEntryDate)  as  D_PeriodTo, Inv_ItemMaster.X_WarrantyRemarks AS X_Remarks, Inv_ItemMaster.X_WarrantyTandC AS X_TandC, " +
+                                            " Inv_Sales.N_SalesId FROM Inv_SalesDetails RIGHT OUTER JOIN Inv_Sales ON Inv_SalesDetails.N_CompanyID = Inv_Sales.N_CompanyId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId AND Inv_SalesDetails.N_SalesID = Inv_Sales.N_SalesId RIGHT OUTER JOIN Inv_ItemMaster ON Inv_SalesDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_SalesDetails.N_MainItemID = Inv_ItemMaster.N_ItemID" +
+                                            " where Inv_Sales.N_SalesId =@nSalesID and Inv_Sales.N_FnYearID = @nFnYearID and Inv_Sales.N_CompanyID =@nCompanyID ";
+
+                    DataTable Warranty = dLayer.ExecuteDataTable(WarrantyMaster, warrantyParams, connection, transaction);
 
 
 
 
-
-
-
-
-// End of Warranty info
+                    // End of Warranty info
 
 
                     // if (B_UserLevel)

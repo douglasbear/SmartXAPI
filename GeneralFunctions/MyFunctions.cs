@@ -1512,7 +1512,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             string tempFileName = this.RandomString() + fileName;
             string filePath = this.GetUploadsPath(User, DocType);
-            if (File.Exists(filePath + fileName) && Directory.Exists(this.tempFilePath))
+            if (Directory.Exists(filePath) && File.Exists(filePath + fileName) && Directory.Exists(this.tempFilePath))
             {
                 // File.Copy(filePath+fileName, this.tempFilePath+tempFileName, true);
                 try
