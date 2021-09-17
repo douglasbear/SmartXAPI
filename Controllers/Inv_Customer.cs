@@ -173,9 +173,9 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
-                bool bEnableLogin = false;
+                int bEnableLogin = 0;
                 if(MasterTable.Columns.Contains("B_EnablePortalLogin"))
-                bEnableLogin = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
+                bEnableLogin = Convert.ToInt32(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
                     {
                         int UserID = 0, UserCatID = 0;
                         string Pwd = myFunctions.EncryptString(CustomerCode);
-                        if(bEnableLogin)
+                        if(bEnableLogin == 1)
                         {
                             object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection, transaction);
                             if (objUser != null)
