@@ -508,9 +508,9 @@ namespace SmartxAPI.Controllers
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
-                    int N_InfoID = 0 ;
-                    if(dtadditionalInfo.Rows.Count>0)
-                     N_InfoID = myFunctions.getIntVAL(dtadditionalInfo.Rows[0]["n_InfoID"].ToString());
+                    int N_InfoID = 0;
+                    if (dtadditionalInfo.Rows.Count > 0)
+                        N_InfoID = myFunctions.getIntVAL(dtadditionalInfo.Rows[0]["n_InfoID"].ToString());
 
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
 
@@ -600,11 +600,25 @@ namespace SmartxAPI.Controllers
                     }
                     dLayer.DeleteData("Inv_SalesAddInfo_ServicePackages", "N_InfoID", N_InfoID, "", connection, transaction);
 
-                    if(dtadditionalInfo.Rows.Count>0){
-                    dtadditionalInfo.Rows[0]["N_InvoiceID"] = N_SalesID;
-                    N_InfoID = dLayer.SaveData("Inv_SalesAddInfo_ServicePackages", "N_InfoID", dtadditionalInfo, connection, transaction);
+                    if (dtadditionalInfo.Rows.Count > 0)
+                    {
+                        dtadditionalInfo.Rows[0]["N_InvoiceID"] = N_SalesID;
+                        N_InfoID = dLayer.SaveData("Inv_SalesAddInfo_ServicePackages", "N_InfoID", dtadditionalInfo, connection, transaction);
 
-}
+                    }
+
+// Save Warranty Info
+
+
+
+
+
+
+
+
+// End of Warranty info
+
+
                     // if (B_UserLevel)
                     // {
                     //     Inv_WorkFlowCatalog saving code here
@@ -1213,10 +1227,10 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    dsSalesInvoice.Tables.Add( );
+                    dsSalesInvoice.Tables.Add();
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(salesAddInfo);
-                    
+
                     return Ok(_api.Success(dsSalesInvoice));
 
                 }

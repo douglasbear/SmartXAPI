@@ -22,8 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
-        private readonly string reportPath;
-        private readonly string AppURL;
 
 
         public Inv_MultiCategory(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
@@ -33,8 +31,6 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 1349;//form id of cost center
-            reportPath = conf.GetConnectionString("ReportPath");
-            AppURL = conf.GetConnectionString("AppURL");
         }
         [HttpGet("chart")]
         public ActionResult GetCategoryChart()
@@ -60,6 +56,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt1 = dLayer.ExecuteDataTable(sqlCommandText1, Params, connection);
 
+
                     foreach (DataRow dr in dt.Rows)
                     {
                         foreach (DataRow dr1 in dt1.Rows)
@@ -67,7 +64,9 @@ namespace SmartxAPI.Controllers
 
                             if (dr["n_CategoryDisplayID"].ToString() == dr1["N_ItemID"].ToString())
                             {
-                                dr["x_ImageURL"] = AppURL + "/" + "Reports" + "/" + dr1["X_ImageName"];
+                                object fileName = dr1["X_ImageName"];
+                                if(fileName==null)fileName="";
+                                dr["x_ImageURL"] = myFunctions.GetTempFileURL(User,"productcategory",fileName.ToString());
 
                             }
                         }
@@ -118,14 +117,14 @@ namespace SmartxAPI.Controllers
                     //Image Retriving
                     string _sqlImageQuery = "SELECT X_ImageName from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
                     Images = dLayer.ExecuteScalar(_sqlImageQuery, Params, connection);
-                    string _sqlImageQuery1 = "SELECT X_ImageLocation from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
-                    ImageLocation = dLayer.ExecuteScalar(_sqlImageQuery1, Params, connection);
+                    // string _sqlImageQuery1 = "SELECT X_ImageLocation from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
+                    // ImageLocation = dLayer.ExecuteScalar(_sqlImageQuery1, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "I_Image", typeof(System.String), "");
 
                     if (Images != null)
                     {
 
-                        var path = ImageLocation.ToString() + "\\" + Images.ToString();
+                        var path =  myFunctions.GetUploadsPath(User,"productcategory") + Images.ToString();
                         if (System.IO.File.Exists(path))
                         {
                             Byte[] bytes = System.IO.File.ReadAllBytes(path);
@@ -306,10 +305,10 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + N_CompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-                    string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-                    DocumentPath = DocumentPath + "DisplayImages";
-                    System.IO.Directory.CreateDirectory(DocumentPath);
+                    // object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + N_CompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
+                    // string DocumentPath = this.docPath;
+                    // DocumentPath = DocumentPath + "DisplayImages";
+                    // System.IO.Directory.CreateDirectory(DocumentPath);
                     dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_CategoryDisplayID, "", connection, transaction);
 
                     if (i_Image != null || i_Image != "")
@@ -327,9 +326,9 @@ namespace SmartxAPI.Controllers
 
 
                         DataRow row = dt.NewRow();
-                        writefile(i_Image.ToString(), DocumentPath, X_CategoryCode + "-Category-");
-                        row["X_ImageName"] = X_CategoryCode + "-Category-" + ".jpg";
-                        row["X_ImageLocation"] = DocumentPath;
+                        writefile(i_Image.ToString(), myFunctions.GetUploadsPath(User,"productcategory"), X_CategoryCode + "-Category-");
+                        row["X_ImageName"] = X_CategoryCode + "-Category.jpg";
+                        row["X_ImageLocation"] =  myFunctions.GetUploadsPath(User,"productcategory");
                         row["N_ImageID"] = 0;
                         row["N_CompanyID"] = N_CompanyID;
                         row["N_ItemID"] = N_CategoryDisplayID;
