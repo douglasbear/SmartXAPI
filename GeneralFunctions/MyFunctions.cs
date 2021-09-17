@@ -33,7 +33,7 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string reportPath;
         private readonly string tempFileURL;
         private readonly string tempFilePath;
-        private readonly string documentPath;
+        private readonly string uploadedImagesPath;
         public MyFunctions(IConfiguration conf)
         {
             ApprovalLink = conf.GetConnectionString("ApprovalLink");
@@ -41,7 +41,7 @@ namespace SmartxAPI.GeneralFunctions
             connectionString = conf.GetConnectionString("SmartxConnection");
             config = conf;
             reportPath = conf.GetConnectionString("ReportPath");
-            documentPath = conf.GetConnectionString("DocumentsPath");
+            uploadedImagesPath = conf.GetConnectionString("UploadedImagesPath");
             tempFileURL = conf.GetConnectionString("TempFilesURL");
             tempFilePath = conf.GetConnectionString("TempFilesPath");
 
@@ -1501,18 +1501,30 @@ namespace SmartxAPI.GeneralFunctions
                     break;
                 default: break;
             }
-            string docPath = documentPath + "/" + this.GetClientID(User) + "/" + this.GetCompanyID(User) + "/" + folderName + "/";
-            if (!System.IO.Directory.Exists(docPath))
-                System.IO.Directory.CreateDirectory(docPath);
+            string docPath = uploadedImagesPath + this.GetClientID(User) + "/" + this.GetCompanyID(User) + "/" + folderName + "/";
+            if (!Directory.Exists(docPath))
+                Directory.CreateDirectory(docPath);
 
             return docPath;
         }
 
-        public string GetTempFileURL(ClaimsPrincipal User,string DocType,string fileName)
+        public string GetTempFileURL(ClaimsPrincipal User, string DocType, string fileName)
         {
-            string tempFileName = this.RandomString();
-            File.Copy(Path.Combine(this.GetUploadsPath(User,DocType), fileName), Path.Combine(this.tempFileURL, tempFileName + fileName));
-            return this.tempFileURL + tempFileName + fileName;
+            string tempFileName = this.RandomString() + fileName;
+            string filePath = this.GetUploadsPath(User, DocType);
+            if (File.Exists(filePath + fileName) && Directory.Exists(this.tempFilePath))
+            {
+                // File.Copy(filePath+fileName, this.tempFilePath+tempFileName, true);
+                try
+                {
+                    File.Copy(Path.Combine(filePath, fileName), Path.Combine(this.tempFilePath, tempFileName), true);
+                }
+                catch (IOException copyError)
+                {
+                    Console.WriteLine(copyError.Message);
+                }
+            }
+            return this.tempFileURL + tempFileName;
         }
 
         public string GetTempFilePath()
@@ -1669,7 +1681,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
         public string GetUploadsPath(ClaimsPrincipal User, string DocType);
-        public string GetTempFileURL(ClaimsPrincipal User, string DocType,string FileName);
+        public string GetTempFileURL(ClaimsPrincipal User, string DocType, string FileName);
         public string GetTempFilePath();
         public string RandomString(int length = 6);
     }
