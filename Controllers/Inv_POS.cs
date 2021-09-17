@@ -298,7 +298,14 @@ namespace SmartxAPI.Controllers
                     {
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
                         {
-                            string subItemSql = "select X_ItemName,N_Qty,N_ItemID,N_MainItemID,N_CompanyID,N_ItemDetailsID,X_ItemCode,X_ItemUnit from vw_InvItemDetails where N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyId;
+                            string subItemSql = "SELECT vw_InvItem_Search.*, dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, " +
+                        " vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_ItemDetails.N_Qty " +
+                        " FROM            Inv_ItemUnit RIGHT OUTER JOIN " +
+                                                " vw_InvItem_Search LEFT OUTER JOIN " +
+                                                " Inv_ItemDetails ON vw_InvItem_Search.N_CompanyID = Inv_ItemDetails.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_ItemDetails.N_ItemID ON Inv_ItemUnit.N_ItemID = vw_InvItem_Search.N_ItemID AND  " +
+                                                " Inv_ItemUnit.N_CompanyID = vw_InvItem_Search.N_CompanyID " +
+                        " WHERE        (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
+
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
                             item["SubItems"] = subTbl;
                         }
