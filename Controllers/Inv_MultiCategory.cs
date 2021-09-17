@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
 
-            string sqlCommandText = "Select *  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " Order By X_CategoryCode";
+            string sqlCommandText = "Select N_CompanyID,N_CategoryDisplayID,N_ParentID,X_CategoryDisplay,X_CategoryCode,'' as X_ImageURL  from Inv_ItemCategoryDisplay Where N_CompanyID= " + nCompanyID + " Order By X_CategoryCode";
             string sqlCommandText1 = "Select *  from Inv_DisplayImages Where N_CompanyID= " + nCompanyID + " ";
 
 
@@ -326,7 +326,7 @@ namespace SmartxAPI.Controllers
 
 
                         DataRow row = dt.NewRow();
-                        writefile(i_Image.ToString(), myFunctions.GetUploadsPath(User,"productcategory"), X_CategoryCode + "-Category-");
+                        writefile(i_Image.ToString(), myFunctions.GetUploadsPath(User,"productcategory"), X_CategoryCode + "-Category");
                         row["X_ImageName"] = X_CategoryCode + "-Category.jpg";
                         row["X_ImageLocation"] =  myFunctions.GetUploadsPath(User,"productcategory");
                         row["N_ImageID"] = 0;
