@@ -89,7 +89,7 @@ namespace SmartxAPI.Controllers
                     }
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        DetailTable.Rows[1]["N_ServiceID"] = nServiceID;
+                        DetailTable.Rows[i]["N_ServiceID"] = nServiceID;
                     }
                     int nServiceDetailsID = dLayer.SaveData("Inv_ServiceDetails", "N_ServiceDetailsID", DetailTable, connection, transaction);
                     if (nServiceDetailsID <= 0)
