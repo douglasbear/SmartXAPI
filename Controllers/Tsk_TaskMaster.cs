@@ -230,17 +230,24 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow row in HistoryTable.Rows)
                     {
-                        object creator = row["x_Creator"].ToString();
-                        object duettime = row["d_DueDate"].ToString();
+                        object creator = row["x_Creator"];
+
+                        string duettime = row["d_DueDate"].ToString();
                         DateTime _date;
                         string day = "";
-                        _date = DateTime.Parse(duettime.ToString());
+                        if(duettime!=null && duettime!="")
+                        {
+                        _date = DateTime.Parse(duettime);
                         day = _date.ToString("dd-MMM-yyyy HH:mm tt");
-                        object time = row["d_EntryDate"].ToString();
+                        }
+                        string time = row["d_EntryDate"].ToString();
                         DateTime _date1;
                         string day1 = "";
+                        if(time!=null && time!="")
+                        {
                         _date1 = DateTime.Parse(time.ToString());
                         day1 = _date1.ToString("dd-MMM-yyyy  HH:mm tt");
+                        }
 
 
                         object assignee = row["x_Assignee"].ToString();
@@ -251,7 +258,7 @@ namespace SmartxAPI.Controllers
                         }
                         if (row["x_HistoryText"].ToString().Contains("#TIME"))
                         {
-                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#TIME", day1.ToString());
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#TIME", day1);
                         }
                         if (row["x_HistoryText"].ToString().Contains("#DUEDATE"))
                         {
@@ -362,6 +369,7 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
@@ -416,7 +424,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable To Save"));
                     }
-                    else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
+                    else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
                         DataRow row = DetailTable.NewRow();
                         row["N_TaskID"] = nTaskId;
@@ -435,7 +443,7 @@ namespace SmartxAPI.Controllers
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        DetailTable.Rows[1]["N_TaskID"] = nTaskId;
+                        DetailTable.Rows[i]["N_TaskID"] = nTaskId;
                     }
                     int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                     if (nTaskStatusID <= 0)

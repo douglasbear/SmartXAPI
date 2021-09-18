@@ -168,7 +168,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("listOrder")]
@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("listTerms")]
@@ -274,11 +274,11 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID,int nServiceID)
         {
 
             try
@@ -389,6 +389,26 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
+                     else
+                    if (nServiceID > 0)
+                    {
+                         QueryParamsList.Add("@nServiceID", nServiceID);
+                         string Mastersql = "select * from Vw_InvServiceMasterToInvoice where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        string DetailSql = "";
+                        DetailSql = "select * from Vw_ServiceDetailsToInvoice where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+
+
+                    }
+
+                
                     else
                     if (nQuotationID > 0)
                     {
@@ -406,10 +426,10 @@ namespace SmartxAPI.Controllers
                         Object CRMCustomerID = null;
                         Object CustomerName = null;
                         object CustomerID = dLayer.ExecuteScalar("Select n_customerID from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CrmCompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_CrmCustomerID"].ToString()), QueryParamsList, Con);
-                        
+
                         if (CustomerID != null)
                         {
-                            object xCustomer=dLayer.ExecuteScalar("Select x_CustomerName from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=" + myFunctions.getIntVAL(CustomerID.ToString()), QueryParamsList, Con);
+                            object xCustomer = dLayer.ExecuteScalar("Select x_CustomerName from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=" + myFunctions.getIntVAL(CustomerID.ToString()), QueryParamsList, Con);
                             MasterTable.Rows[0]["N_CustomerID"] = CustomerID.ToString();
                             MasterTable.Rows[0]["x_CustomerName"] = xCustomer.ToString();
                             MasterTable.AcceptChanges();
@@ -486,7 +506,7 @@ namespace SmartxAPI.Controllers
                         {"N_BranchId",nBranchId}
                     };
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
-                    masterTable = _api.Format(masterTable, "Master"); 
+                    masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     DataRow MasterRow = masterTable.Rows[0];
                     int nSalesID = myFunctions.getIntVAL(MasterRow["N_SalesID"].ToString());
@@ -632,7 +652,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -757,7 +777,7 @@ namespace SmartxAPI.Controllers
                 DataRow ApprovalRow = Approvals.Rows[0];
 
                 dtsaleamountdetails = ds.Tables["saleamountdetails"];
-                DataTable Attachment = ds.Tables["attachments"]; 
+                DataTable Attachment = ds.Tables["attachments"];
 
                 SortedList Params = new SortedList();
                 SortedList QueryParams = new SortedList();
@@ -796,7 +816,7 @@ namespace SmartxAPI.Controllers
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Transaction date must be in the active Financial Year."));
+                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                     }
 
                     B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
@@ -879,7 +899,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex));
+                                return Ok(_api.Error(User, ex));
                             }
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
@@ -900,7 +920,7 @@ namespace SmartxAPI.Controllers
                                         catch (Exception ex)
                                         {
                                             transaction.Rollback();
-                                            return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                                         }
                                     }
                                 }
@@ -926,7 +946,7 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,"Not a valid Doc No"));
+                                return Ok(_api.Error(User, "Not a valid Doc No"));
                             }
 
 
@@ -946,7 +966,7 @@ namespace SmartxAPI.Controllers
                             if (InvoiceNo == "")
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,"Unable to generate Quotation Number"));
+                                return Ok(_api.Error(User, "Unable to generate Quotation Number"));
                             }
                             MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
@@ -968,7 +988,7 @@ namespace SmartxAPI.Controllers
                             if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,"Not a valid Doc No"));
+                                return Ok(_api.Error(User, "Not a valid Doc No"));
                             }
 
 
@@ -991,7 +1011,7 @@ namespace SmartxAPI.Controllers
                             if (InvoiceNo == "")
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,"Unable to generate Quotation Number"));
+                                return Ok(_api.Error(User, "Unable to generate Quotation Number"));
                             }
                             MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
@@ -1009,7 +1029,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
 
                         dLayer.ExecuteNonQuery("delete from Inv_SaleAmountDetails where N_SalesID=" + N_SalesID + " and N_CompanyID=" + N_CompanyID + " and N_BranchID=" + N_BranchID, connection, transaction);
@@ -1032,7 +1052,7 @@ namespace SmartxAPI.Controllers
                     if (N_SalesID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                        return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                     }
                     else
                     {
@@ -1083,7 +1103,7 @@ namespace SmartxAPI.Controllers
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                                    return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                                 }
                                 else
                                 {
@@ -1095,7 +1115,7 @@ namespace SmartxAPI.Controllers
                                             if (N_SalesAmountID <= 0)
                                             {
                                                 transaction.Rollback();
-                                                return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                                                return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                                             }
                                             else
                                             {
@@ -1120,14 +1140,14 @@ namespace SmartxAPI.Controllers
                                 if (N_SalesAmountID <= 0)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                                    return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                                 }
                             }
                         }
-                        bool B_salesOrder=false;
-                        bool B_DeliveryNote=false;
+                        bool B_salesOrder = false;
+                        bool B_DeliveryNote = false;
                         B_DeliveryNote = myFunctions.CheckPermission(N_CompanyID, 729, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
-                        if(!B_DeliveryNote)
+                        if (!B_DeliveryNote)
                             B_salesOrder = myFunctions.CheckPermission(N_CompanyID, 81, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         bool B_ServiceSheet = myFunctions.CheckPermission(N_CompanyID, 1145, myFunctions.GetUserCategory(User).ToString(), "N_UserCategoryID", dLayer, connection, transaction);
                         for (int j = 0; j < DetailTable.Rows.Count; j++)
@@ -1159,7 +1179,7 @@ namespace SmartxAPI.Controllers
                         if (N_InvoiceDetailId <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                         }
                         else
                         {
@@ -1178,19 +1198,19 @@ namespace SmartxAPI.Controllers
                                 {
                                     transaction.Rollback();
                                     if (ex.Message == "50")
-                                        return Ok(_api.Error(User,"Day Closed"));
+                                        return Ok(_api.Error(User, "Day Closed"));
                                     else if (ex.Message == "51")
-                                        return Ok(_api.Error(User,"Year Closed"));
+                                        return Ok(_api.Error(User, "Year Closed"));
                                     else if (ex.Message == "52")
-                                        return Ok(_api.Error(User,"Year Exists"));
+                                        return Ok(_api.Error(User, "Year Exists"));
                                     else if (ex.Message == "53")
-                                        return Ok(_api.Error(User,"Period Closed"));
+                                        return Ok(_api.Error(User, "Period Closed"));
                                     else if (ex.Message == "54")
-                                        return Ok(_api.Error(User,"Txn Date"));
+                                        return Ok(_api.Error(User, "Txn Date"));
                                     else if (ex.Message == "55")
-                                        return Ok(_api.Error(User,"Quantity exceeds!"));
+                                        return Ok(_api.Error(User, "Quantity exceeds!"));
                                     else
-                                        return Ok(_api.Error(User,ex));
+                                        return Ok(_api.Error(User, ex));
                                 }
                             }
                         }
@@ -1210,7 +1230,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex));
+                                return Ok(_api.Error(User, ex));
                             }
                             bool B_AmtpaidEnable = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "Show SalesAmt Paid", "N_Value", "N_UserCategoryID", "0", N_CompanyID, dLayer, connection, transaction)));
                             if (B_AmtpaidEnable)
@@ -1231,7 +1251,7 @@ namespace SmartxAPI.Controllers
                                         catch (Exception ex)
                                         {
                                             transaction.Rollback();
-                                            return Ok(_api.Error(User,"Unable to save Sales Invoice!"));
+                                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
                                         }
                                     }
                                 }
@@ -1250,7 +1270,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex));
+                                return Ok(_api.Error(User, ex));
                             }
                         }
                         //dispatch saving here
@@ -1267,7 +1287,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
         //Delete....
@@ -1293,7 +1313,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error(User,"Transaction not Found"));
+                        return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -1354,7 +1374,7 @@ namespace SmartxAPI.Controllers
                             if (Results <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,"Unable to delete sales Invoice"));
+                                return Ok(_api.Error(User, "Unable to delete sales Invoice"));
                             }
                             else
                             {
@@ -1394,7 +1414,7 @@ namespace SmartxAPI.Controllers
                             else
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,"Unable to delete Sales Invoice"));
+                                return Ok(_api.Error(User, "Unable to delete Sales Invoice"));
                             }
                         }
                     }
@@ -1402,11 +1422,11 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objSalesReturnProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User,"Sales Return processed! Unable to delete"));
+                            return Ok(_api.Error(User, "Sales Return processed! Unable to delete"));
                         else if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User,"Customer Payment processed! Unable to delete"));
+                            return Ok(_api.Error(User, "Customer Payment processed! Unable to delete"));
                         else
-                            return Ok(_api.Error(User,"Unable to delete!"));
+                            return Ok(_api.Error(User, "Unable to delete!"));
                     }
                     //Invoice Counter Reset
 
@@ -1421,7 +1441,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
@@ -1462,7 +1482,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -1513,7 +1533,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -1536,7 +1556,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -1709,6 +1729,19 @@ namespace SmartxAPI.Controllers
 
                 object value = dLayer.ExecuteScalar("select N_DiscPerc from inv_CustomerDiscount where N_ProductID = '" + N_ItemID + "' and N_CustomerID = '" + nCustomerID + "' and N_CompanyID = '" + nCompanyID + "'", connection);
                 myFunctions.AddNewColumnToDataTable(ItemDetails, "N_DiscPerc", typeof(decimal), value);
+
+                // ItemDetails = myFunctions.AddNewColumnToDataTable(ItemDetails, "SubItems", typeof(DataTable), null);
+
+                // foreach (DataRow item in ItemDetails.Rows)
+                // {
+                //     if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
+                //     {
+                //         string subItemSql = "select X_ItemName,N_Qty,N_ItemID,N_MainItemID,N_CompanyID,N_ItemDetailsID,X_ItemCode,X_ItemUnit from vw_InvItemDetails where N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyId;
+                //         DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                //         item["SubItems"] = subTbl;
+                //     }
+                // }
+                // ItemDetails.AcceptChanges();
 
 
                 ItemDetails.AcceptChanges();

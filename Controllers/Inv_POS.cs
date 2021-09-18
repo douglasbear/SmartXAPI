@@ -298,7 +298,14 @@ namespace SmartxAPI.Controllers
                     {
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
                         {
-                            string subItemSql = "select X_ItemName,N_Qty,N_ItemID,N_MainItemID,N_CompanyID,N_ItemDetailsID,X_ItemCode,X_ItemUnit from vw_InvItemDetails where N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyId;
+                            string subItemSql = "SELECT vw_InvItem_Search.*, dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, " +
+                        " vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_ItemDetails.N_Qty as N_SubItemQty" +
+                        " FROM            Inv_ItemUnit RIGHT OUTER JOIN " +
+                                                " vw_InvItem_Search LEFT OUTER JOIN " +
+                                                " Inv_ItemDetails ON vw_InvItem_Search.N_CompanyID = Inv_ItemDetails.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_ItemDetails.N_ItemID ON Inv_ItemUnit.N_ItemID = vw_InvItem_Search.N_ItemID AND  " +
+                                                " Inv_ItemUnit.N_CompanyID = vw_InvItem_Search.N_CompanyID " +
+                        " WHERE        (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
+
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
                             item["SubItems"] = subTbl;
                         }
@@ -607,16 +614,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-// Save Warranty Info
 
-
-
-
-
-
-
-
-// End of Warranty info
 
 
                     // if (B_UserLevel)
@@ -636,6 +634,62 @@ namespace SmartxAPI.Controllers
                     else
                     {
 
+                        if (values == "@Auto") // Generate Warranty Entry
+                        {
+                            
+                            SortedList warrantyParams = new SortedList();
+                            warrantyParams.Add("@nCompanyID", N_CompanyID);
+                            warrantyParams.Add("@nFnYearID", N_FnYearID);
+                            warrantyParams.Add("@nSalesID", N_SalesID);
+                            warrantyParams.Add("@dEntryDate", MasterTable.Rows[0]["D_SalesDate"].ToString());
+
+                            string warrantyItems = ""
+                            + "SELECT        Inv_ItemMaster.N_ItemID "
+                            + "FROM            Inv_SalesDetails RIGHT OUTER JOIN "
+                            + "                         Inv_ItemMaster ON isnull(Inv_SalesDetails.N_MainItemID,0) = Inv_ItemMaster.N_ItemID AND Inv_SalesDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID "
+                            + "						 where isnull(Inv_ItemMaster.B_WarrantyEnabled,0)=1 and Inv_SalesDetails.N_SalesID=@nSalesID and Inv_SalesDetails.N_CompanyID=@nCompanyID group by Inv_ItemMaster.N_ItemID";
+
+                            DataTable WarrantyItemsTable = dLayer.ExecuteDataTable(warrantyItems, warrantyParams, connection, transaction);
+                            warrantyParams.Add("@nItemID", 0);
+
+                            foreach (DataRow ItemsRow in WarrantyItemsTable.Rows)
+                            {
+                                warrantyParams["@nItemID"] = ItemsRow["N_ItemID"].ToString();
+                                string WarrantyMasterSql = ""
+                                                        + "SELECT        0 AS N_WarrantyID, '' AS X_WarrantyCode, Inv_Sales.N_FnYearId, Inv_Sales.N_BranchId, Inv_Sales.N_CustomerId, Inv_Sales.X_Barcode AS X_WarrantyNo,@dEntryDate AS D_PeriodFrom, DATEADD(DAY, "
+                                                        + "ISNULL(Inv_ItemMaster.N_WarrantyPeriod, 0), @dEntryDate) AS D_PeriodTo, Inv_ItemMaster.X_WarrantyRemarks AS X_Remarks, Inv_ItemMaster.X_WarrantyTandC AS X_TandC, Inv_Sales.N_SalesId,Inv_Sales.N_CompanyId "
+                                                        + "FROM            Inv_Sales CROSS JOIN Inv_ItemMaster "
+                                                        + "WHERE        (Inv_Sales.N_SalesId = @nSalesID) AND (Inv_Sales.N_FnYearId = @nFnYearID) AND (Inv_Sales.N_CompanyId = @nCompanyID)  And (Inv_ItemMaster.N_ItemID=@nItemID) "
+                                                        + "group by Inv_Sales.N_FnYearId, Inv_Sales.N_BranchId, Inv_Sales.N_CustomerId, Inv_Sales.X_Barcode,Inv_ItemMaster.N_WarrantyPeriod,Inv_ItemMaster.X_WarrantyRemarks, Inv_ItemMaster.X_WarrantyTandC, Inv_Sales.N_SalesId, Inv_Sales.N_CompanyId";
+                                DataTable WarrantyMaster = dLayer.ExecuteDataTable(WarrantyMasterSql, warrantyParams, connection, transaction);
+                                if (WarrantyMaster.Rows.Count > 0)
+                                {
+                                    Params["N_FormID"] = 1395;
+                                    string WarrantyCode = dLayer.GetAutoNumber("Inv_WarrantyContract", "X_WarrantyCode", Params, connection, transaction);
+                                    if (WarrantyCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty Code")); }
+                                    WarrantyMaster.Rows[0]["X_WarrantyCode"] = WarrantyCode;
+                                    int WarrantyID = dLayer.SaveData("Inv_WarrantyContract", "N_WarrantyID", WarrantyMaster, connection, transaction);
+
+                                    if (WarrantyID <= 0) { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty")); }
+
+                                    string WarrantyDetailSql = "select N_CompanyID," + WarrantyID + " as N_WarrantyID,0 as N_WarrantyDetailsID,N_ItemID,N_MainItemID,N_Qty," + MasterTable.Rows[0]["N_BranchID"].ToString() + " as N_BranchID," + MasterTable.Rows[0]["N_LocationID"].ToString() + " as N_LocationID,N_ItemUnitID,X_ItemRemarks from Inv_ItemWarranty where N_MainItemID =@nItemID and N_CompanyID=@nCompanyID";
+                                    DataTable WarrantyDetails = dLayer.ExecuteDataTable(WarrantyDetailSql, warrantyParams, connection, transaction);
+
+                                    if (WarrantyDetails.Rows.Count > 0)
+                                    {
+                                        int WarrantyDetailsID = dLayer.SaveData("Inv_WarrantyContractDetails", "N_WarrantyDetailsID", WarrantyDetails, connection, transaction);
+                                        if (WarrantyDetailsID <= 0) { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty")); }
+
+                                    }
+                                }
+
+                            }
+
+
+
+                        }
+
+                        // End of Warranty info
 
                         //Inv_WorkFlowCatalog insertion here
                         //DataTable dtsaleamountdetails = ds.Tables["saleamountdetails"];
