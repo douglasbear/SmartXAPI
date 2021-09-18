@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult ServiceDetails(string xServiceCode)
+        public ActionResult ServiceDetails(string xServiceCode, int nWarrantyID)
         {
 
 
@@ -182,7 +182,29 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xServiceCode", xServiceCode);
-                    Mastersql = "select * from Vw_InvService where N_CompanyId=@nCompanyID and X_TaskCode=@xServiceCode  ";
+                    if (xServiceCode != null && xServiceCode != null)
+                    {
+                        Mastersql = "select * from Vw_InvService where N_CompanyId=@nCompanyID and X_TaskCode=@xServiceCode  ";
+                    }
+                    if (nWarrantyID > 0)
+                    {
+                        Mastersql = "select * from Vw_WarrantyToMaintananceMaster where N_CompanyId=@nCompanyID and N_WarrantyID=" + nWarrantyID + "  ";
+                        MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+
+
+                        DetailSql = "select * from Vw_WarrantyToMaintananceDetails where N_CompanyId=@nCompanyID and  N_WarrantyID=" + nWarrantyID + " ";
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        DetailTable = _api.Format(DetailTable, "Details");
+
+
+                        MasterTable.AcceptChanges();
+                        dt.Tables.Add(MasterTable);
+                        dt.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dt));
+
+                    }
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int ServiceID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ServiceID"].ToString());
