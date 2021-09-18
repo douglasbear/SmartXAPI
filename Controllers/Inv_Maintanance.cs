@@ -68,7 +68,7 @@ namespace SmartxAPI.Controllers
                         while (true)
                         {
 
-                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_ServiceMaster Where X_TaskCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_ServiceMaster Where X_ServiceCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
                             if (N_Result == null) DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             break;
                         }
