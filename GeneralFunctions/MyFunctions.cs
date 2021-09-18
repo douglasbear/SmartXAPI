@@ -20,6 +20,7 @@ using System.Text;
 using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -30,6 +31,9 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string connectionString;
         private readonly IConfiguration config;
         private readonly string reportPath;
+        private readonly string tempFileURL;
+        private readonly string tempFilePath;
+        private readonly string uploadedImagesPath;
         public MyFunctions(IConfiguration conf)
         {
             ApprovalLink = conf.GetConnectionString("ApprovalLink");
@@ -37,6 +41,9 @@ namespace SmartxAPI.GeneralFunctions
             connectionString = conf.GetConnectionString("SmartxConnection");
             config = conf;
             reportPath = conf.GetConnectionString("ReportPath");
+            uploadedImagesPath = conf.GetConnectionString("UploadedImagesPath");
+            tempFileURL = conf.GetConnectionString("TempFilesURL");
+            tempFilePath = conf.GetConnectionString("TempFilesPath");
 
         }
 
@@ -1484,6 +1491,54 @@ namespace SmartxAPI.GeneralFunctions
             return User.FindFirst(ClaimTypes.Upn)?.Value;
         }
 
+        public string GetUploadsPath(ClaimsPrincipal User, string DocType)
+        {
+            string folderName = "General";
+            switch (DocType.ToLower())
+            {
+                case "productcategory":
+                    folderName = "Product_Category_Images";
+                    break;
+                default: break;
+            }
+            string docPath = uploadedImagesPath + this.GetClientID(User) + "/" + this.GetCompanyID(User) + "/" + folderName + "/";
+            if (!Directory.Exists(docPath))
+                Directory.CreateDirectory(docPath);
+
+            return docPath;
+        }
+
+        public string GetTempFileURL(ClaimsPrincipal User, string DocType, string fileName)
+        {
+            string tempFileName = this.RandomString() + fileName;
+            string filePath = this.GetUploadsPath(User, DocType);
+            if (Directory.Exists(filePath) && File.Exists(filePath + fileName) && Directory.Exists(this.tempFilePath))
+            {
+                // File.Copy(filePath+fileName, this.tempFilePath+tempFileName, true);
+                try
+                {
+                    File.Copy(Path.Combine(filePath, fileName), Path.Combine(this.tempFilePath, tempFileName), true);
+                }
+                catch (IOException copyError)
+                {
+                    Console.WriteLine(copyError.Message);
+                }
+            }
+            return this.tempFileURL + tempFileName;
+        }
+
+        public string GetTempFilePath()
+        {
+            return this.tempFilePath;
+        }
+
+        private static Random random = new Random();
+        public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
 
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection)
         {
@@ -1625,5 +1680,9 @@ namespace SmartxAPI.GeneralFunctions
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
+        public string GetUploadsPath(ClaimsPrincipal User, string DocType);
+        public string GetTempFileURL(ClaimsPrincipal User, string DocType, string FileName);
+        public string GetTempFilePath();
+        public string RandomString(int length = 6);
     }
 }
