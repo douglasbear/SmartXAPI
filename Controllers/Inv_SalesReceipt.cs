@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     int n_PayReceiptId = 0;// myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptId"].ToString());
 
-                    if (xInvoiceNo != null && myFunctions.getIntVAL(xInvoiceNo) > 0)
+                    if (xInvoiceNo != null && xInvoiceNo !="@Auto")
                     {
                         SortedList proParams1 = new SortedList(){
                                 {"@nCompanyID",nCompanyId},
