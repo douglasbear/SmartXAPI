@@ -68,6 +68,21 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_Accounts";
                         if (dt.TableName == "Products Stock")
                             xTableName = "Mig_Stock";
+                        if (dt.TableName == "Employee List")
+                            xTableName = "Mig_Employee";
+                        if (dt.TableName == "products stock")
+                            xTableName = "Mig_Stock";
+                        if (dt.TableName == "FixedAssets List")
+                            xTableName = "_Mig_AssetList";
+                        if (dt.TableName == "Salary History")
+                            xTableName = "Mig_EmployeeSalaryHistory";
+                        if (dt.TableName == "Employee Salary")
+                            xTableName = "Mig_EmployeeSalary";
+                        if (dt.TableName == "Leave History")
+                            xTableName = "Mig_EmployeeLeaveHistory";
+
+
+
 
                         if (dt.TableName == "Product List")
                         {
@@ -88,7 +103,7 @@ namespace SmartxAPI.Controllers
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,dt.TableName + " Uploaded Error"));
+                                return Ok(_api.Error(User, dt.TableName + " Uploaded Error"));
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
@@ -103,14 +118,14 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Uploaded Error"));
+                        return Ok(_api.Error(User, "Uploaded Error"));
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
     }
