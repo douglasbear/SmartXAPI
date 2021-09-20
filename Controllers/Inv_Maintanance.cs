@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@xServiceCode", xServiceCode);
                     if (xServiceCode != null && xServiceCode != null)
                     {
-                        Mastersql = "select * from Vw_InvService where N_CompanyId=@nCompanyID and X_TaskCode=@xServiceCode  ";
+                        Mastersql = "select * from Vw_InvService where N_CompanyId=@nCompanyID and X_ServiceCode=@xServiceCode  ";
                     }
                     if (nWarrantyID > 0)
                     {
