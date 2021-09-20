@@ -25,8 +25,6 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-        private readonly string reportPath;
-        private readonly string startupPath;
         private readonly IMyAttachments myAttachments;
         public Gen_DocumentManager(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -36,8 +34,6 @@ namespace SmartxAPI.Controllers
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 0;
-            reportPath = conf.GetConnectionString("ReportPath");
-            startupPath = conf.GetConnectionString("StartupPath");
         }
 
 

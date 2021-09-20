@@ -22,6 +22,7 @@ namespace SmartxAPI.Controllers
         private readonly int FormID;
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
+        private readonly string connectionString;
 
         public Gen_ScreenReports(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
@@ -32,7 +33,58 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 1056;
         }
-        private readonly string connectionString;
+
+
+
+        [HttpGet("reportsList")]
+        public ActionResult TaskList(int nMenuID, int nLangID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    String tableViewSql = ""
+                    + "SELECT Sec_TableViewComponents.N_TableViewID, Sec_TableViewComponents.N_MenuID, Sec_TableViewComponents.b_IsDefault, "
+                    + "Sec_TableViewComponents.X_PKey,Sec_TableViewComponents.X_ActionKey, En_Lan_MultiLingual.X_WText AS En_WText, Ar_Lan_MultiLingual.X_WText AS Ar_WText FROM Sec_TableViewComponents LEFT OUTER JOIN "
+                    + "Lan_MultiLingual AS En_Lan_MultiLingual ON Sec_TableViewComponents.N_MenuID = En_Lan_MultiLingual.N_FormID AND Sec_TableViewComponents.X_WLanControllNo = En_Lan_MultiLingual.X_WControlName AND En_Lan_MultiLingual.N_LanguageId =1 LEFT OUTER JOIN "
+                    + "Lan_MultiLingual AS Ar_Lan_MultiLingual ON Sec_TableViewComponents.X_WLanControllNo = Ar_Lan_MultiLingual.X_WControlName AND Sec_TableViewComponents.N_MenuID = Ar_Lan_MultiLingual.N_FormID AND Ar_Lan_MultiLingual.N_LanguageId =2 where Sec_TableViewComponents.N_MenuID=@nMenuID";
+                    SortedList TviewParams = new SortedList();
+                    TviewParams.Add("@nMenuID", nMenuID);
+                    TviewParams.Add("@nLangID", nLangID);
+                    TviewParams.Add("@nTableViewID", 0);
+                    DataTable tableViewResult = dLayer.ExecuteDataTable(tableViewSql, TviewParams, connection);
+
+                    tableViewResult = myFunctions.AddNewColumnToDataTable(tableViewResult, "columns", typeof(DataTable), null);
+                    tableViewResult.AcceptChanges();
+
+                    foreach (DataRow dRow in tableViewResult.Rows)
+                    {
+                        TviewParams["@nTableViewID"] = dRow["N_TableViewID"].ToString();
+                        string tableHeaderSql = ""
+                        + "SELECT  LOWER(LEFT(Sec_TableViewComponentDetails.X_DataField,1))+SUBSTRING(Sec_TableViewComponentDetails.X_DataField,2,LEN(Sec_TableViewComponentDetails.X_DataField)) as dataField, Lan_MultiLingual.X_WText as text,Sec_TableViewComponentDetails.B_Sort as sort, Sec_TableViewComponentDetails.B_IsLink as editLink, "
+                        + "                         Sec_TableViewComponentDetails.B_IsHidden as hidden, Sec_TableViewComponentDetails.N_Width as width, Sec_TableViewComponentDetails.B_IsAction as action,Sec_TableViewComponentDetails.X_HeaderAlign as headerAlign, "
+                        + "	Sec_TableViewComponentDetails.X_Align as align,Sec_TableViewComponentDetails.X_Formatter as formatter "
+                        + "FROM            Sec_TableViewComponentDetails LEFT OUTER JOIN "
+                        + "                         Sec_TableViewComponents ON Sec_TableViewComponentDetails.N_TableViewID = Sec_TableViewComponents.N_TableViewID LEFT OUTER JOIN "
+                        + "                         Lan_MultiLingual ON Sec_TableViewComponentDetails.X_WLanControllNo = Lan_MultiLingual.X_WControlName AND Sec_TableViewComponents.N_MenuID = Lan_MultiLingual.N_FormID "
+                        + "						 where Lan_MultiLingual.N_LanguageID=@nLangID and Lan_MultiLingual.N_LanguageID=@nLangID Sec_TableViewComponentDetails.N_TableViewID=@nTableViewID order by Sec_TableViewComponentDetails.N_Order";
+
+                        DataTable tableColumnResult = dLayer.ExecuteDataTable(tableHeaderSql, TviewParams, connection);
+                        dRow["columns"] = tableColumnResult;
+
+                    }
+
+
+                    return Ok(_api.Success(_api.Format(tableViewResult)));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
 
         [HttpGet("list")]
         public ActionResult TaskList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nTableViewID, int nMenuID)

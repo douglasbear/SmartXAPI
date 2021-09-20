@@ -195,7 +195,8 @@ namespace SmartxAPI.Controllers
                     {
                         int companyid = 0;
                         string companyname = "";
-                        string uri = output.Rows[0]["X_DBUri"].ToString();
+                        // string uri = output.Rows[0]["X_DBUri"].ToString();
+                        string uri = "SmartxConnection";
 
                         using (SqlConnection connection = new SqlConnection(config.GetConnectionString(uri)))
                         {

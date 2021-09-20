@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
                     string username = myFunctions.GetUserLoginName(User);
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
-                    string activeDbUri = "ObConnection";
+                    string activeDbUri = "SmartxConnection";
                     bool b_AppNotExist=false;
 
                     try

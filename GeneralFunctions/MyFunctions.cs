@@ -30,20 +30,16 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string masterDBConnectionString;
         private readonly string connectionString;
         private readonly IConfiguration config;
-        private readonly string reportPath;
-        private readonly string tempFileURL;
-        private readonly string tempFilePath;
+        private readonly string TempFilesPath;
         private readonly string uploadedImagesPath;
         public MyFunctions(IConfiguration conf)
         {
-            ApprovalLink = conf.GetConnectionString("ApprovalLink");
+            ApprovalLink = conf.GetConnectionString("AppURL");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             connectionString = conf.GetConnectionString("SmartxConnection");
             config = conf;
-            reportPath = conf.GetConnectionString("ReportPath");
             uploadedImagesPath = conf.GetConnectionString("UploadedImagesPath");
-            tempFileURL = conf.GetConnectionString("TempFilesURL");
-            tempFilePath = conf.GetConnectionString("TempFilesPath");
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
 
         }
 
@@ -1499,6 +1495,12 @@ namespace SmartxAPI.GeneralFunctions
                 case "productcategory":
                     folderName = "Product_Category_Images";
                     break;
+                case "ecomproductimages":
+                    folderName = "Ecom_Product_Images";
+                    break;
+                case "posproductimages":
+                    folderName = "Pos_Product_Images";
+                    break;
                 default: break;
             }
             string docPath = uploadedImagesPath + this.GetClientID(User) + "/" + this.GetCompanyID(User) + "/" + folderName + "/";
@@ -1508,28 +1510,42 @@ namespace SmartxAPI.GeneralFunctions
             return docPath;
         }
 
-        public string GetTempFileURL(ClaimsPrincipal User, string DocType, string fileName)
+        public bool writeImageFile(string FileString, string Path, string Name)
+        {
+
+            string imageName = "\\" + Name + ".jpg";
+            string imgPath = Path + imageName;
+
+            byte[] imageBytes = Convert.FromBase64String(FileString);
+
+            System.IO.File.WriteAllBytes(imgPath, imageBytes);
+            return true;
+
+
+        }
+
+        public string GetTempFileName(ClaimsPrincipal User, string DocType, string fileName)
         {
             string tempFileName = this.RandomString() + fileName;
             string filePath = this.GetUploadsPath(User, DocType);
-            if (Directory.Exists(filePath) && File.Exists(filePath + fileName) && Directory.Exists(this.tempFilePath))
+            if (Directory.Exists(filePath) && File.Exists(filePath + fileName) && Directory.Exists(this.TempFilesPath))
             {
                 // File.Copy(filePath+fileName, this.tempFilePath+tempFileName, true);
                 try
                 {
-                    File.Copy(Path.Combine(filePath, fileName), Path.Combine(this.tempFilePath, tempFileName), true);
+                    File.Copy(Path.Combine(filePath, fileName), Path.Combine(this.TempFilesPath, tempFileName), true);
                 }
                 catch (IOException copyError)
                 {
                     Console.WriteLine(copyError.Message);
                 }
             }
-            return this.tempFileURL + tempFileName;
+            return tempFileName;
         }
 
         public string GetTempFilePath()
         {
-            return this.tempFilePath;
+            return this.TempFilesPath;
         }
 
         private static Random random = new Random();
@@ -1550,7 +1566,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (ExportTable.Rows.Count > 0)
                 {
                     // foreach (DataRow dr in ExportTable.Rows)
-                    GenerateExportFile(reportPath.ToString(), ExportTable, _filename);
+                    GenerateExportFile(this.TempFilesPath.ToString(), ExportTable, _filename);
                 }
                 result = true;
             }
@@ -1681,8 +1697,9 @@ namespace SmartxAPI.GeneralFunctions
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
         public string GetUploadsPath(ClaimsPrincipal User, string DocType);
-        public string GetTempFileURL(ClaimsPrincipal User, string DocType, string FileName);
+        public string GetTempFileName(ClaimsPrincipal User, string DocType, string FileName);
         public string GetTempFilePath();
         public string RandomString(int length = 6);
+        public bool writeImageFile(string FileString, string Path, string Name);
     }
 }
