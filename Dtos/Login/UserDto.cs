@@ -22,6 +22,8 @@ namespace SmartxAPI.Dtos.Login
         public string X_EmpNameLocale { get; set; }
         public int N_PositionID { get; set; }
         public string X_Position { get; set; }
+                public int N_DepartmentID { get; set; }
+        public string X_Department { get; set; }
         public int N_SalesmanID { get; set; }
         public string X_SalesmanCode { get; set; }
         public string X_SalesmanName { get; set; }

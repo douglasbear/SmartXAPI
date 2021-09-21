@@ -508,7 +508,7 @@ namespace SmartxAPI.Controllers
                              dt.Rows[0]["x_CustomerCode"] = "@Auto";
                             
                         }else{
-                            string seperator = "$+$-!";
+                            string seperator = "$e$-!";
                                 dt.Rows[0]["customerKey"] =  myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString())+seperator+myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString()); 
                         }
                         dt.AcceptChanges();
