@@ -128,5 +128,34 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+
+          [HttpGet("dataList")]
+        public ActionResult GetDepartmentList(string parent)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    string sqlCommandText = "select * from VW_TableCount where  N_CompanyID= " + nCompanyID + "";
+
+
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    dt = _api.Format(dt);
+                        return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
     }
 }
