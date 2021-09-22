@@ -78,7 +78,6 @@ namespace SmartxAPI.Controllers
             object CustomerLastMonth="";
             object RevenueLastMonth="";
             object LeadPercentage="";
-            object LeadPercentage1="";
             object CustomerPercentage="";
             object RevenuePercentage="";
 
@@ -107,7 +106,7 @@ namespace SmartxAPI.Controllers
 
 
                     if(myFunctions.getVAL(LeadLastMonth.ToString())!=0)
-                        LeadPercentage1=((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString()))/myFunctions.getVAL(LeadLastMonth.ToString())*100).ToString();
+                        LeadPercentage=(Math.Round((myFunctions.getVAL(CurrentLead.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(LeadLastMonth.ToString()))/myFunctions.getVAL(LeadLastMonth.ToString())*100)).ToString();
                     if(myFunctions.getVAL(CustomerLastMonth.ToString())!=0)
                         CustomerPercentage=((myFunctions.getVAL(CurrentCustomer.Rows[0]["N_ThisMonth"].ToString())- myFunctions.getVAL(CustomerLastMonth.ToString()))/myFunctions.getVAL(CustomerLastMonth.ToString())*100).ToString();
                   if(myFunctions.getVAL(RevenueLastMonth.ToString())!=0)
@@ -124,8 +123,7 @@ namespace SmartxAPI.Controllers
                 // {
                 //     dtRow["N_Percentage"]=((myFunctions.getVAL(dtRow["N_Percentage"].ToString())/N_TotalLead)*100).ToString();
                 // }
-                
-
+  
                 CurrentLead = myFunctions.AddNewColumnToDataTable(CurrentLead, "N_LastMonth", typeof(string),LeadLastMonth);
                 CurrentLead = myFunctions.AddNewColumnToDataTable(CurrentLead, "N_Percentage", typeof(string),LeadPercentage);
                 CurrentLead.AcceptChanges();
