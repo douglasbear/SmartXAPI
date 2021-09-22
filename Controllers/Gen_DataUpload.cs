@@ -129,7 +129,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-          [HttpGet("dataList")]
+        [HttpGet("dataList")]
         public ActionResult GetDepartmentList(string parent)
         {
             try
@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
                     dt = _api.Format(dt);
-                        return Ok(_api.Success(dt));
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)
