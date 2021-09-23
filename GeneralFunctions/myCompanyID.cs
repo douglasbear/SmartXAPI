@@ -99,11 +99,8 @@ namespace SmartxAPI
 
         public static string _ConnectionString = "SmartxConnection";
         public static string _ServerPath = "";
-        public static string _ReportPath = "";
         public static string _DocumtPath = "";
         public static string _ReportFolder = "olivoreports";
-        public static string _DocumtFolder = "olivodocs";
-        public static string _WpsFolder = "olivowps";
         public static string _TempltFolder = "olivotemplates";
         public static string _DBBkupFolder = "olivobackup";
         // public static string _DSN;

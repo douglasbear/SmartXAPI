@@ -25,7 +25,6 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int N_FormID;
-        private readonly string reportPath;
         public Sec_Userhierarchy(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
@@ -33,7 +32,6 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             N_FormID = 1349;//form id of cost center
-            reportPath = conf.GetConnectionString("ReportPath");
         }
 
         [HttpGet("chart")]

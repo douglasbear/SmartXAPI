@@ -15,15 +15,11 @@ namespace SmartxAPI.GeneralFunctions
     public class MyReminders : IMyReminders
     {
         private readonly IMyFunctions myFunctions;
-        private readonly string reportPath;
         private readonly IApiFunctions api;
-        private readonly string startupPath;
         public MyReminders(IApiFunctions apifun, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
             myFunctions = myFun;
-            reportPath = conf.GetConnectionString("ReportPath");
-            startupPath = conf.GetConnectionString("StartupPath");
         }
         public void ReminderSet(IDataAccessLayer dLayer,int settingsID, int partyId, string dateval,int formId,int UserID, ClaimsPrincipal User, SqlConnection connection, SqlTransaction transaction)
         {

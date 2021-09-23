@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("listDetails")]
-        public ActionResult GetCustomerDetails(int xOpportunityCode)
+        public ActionResult GetCustomerDetails(string xOpportunityCode)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();

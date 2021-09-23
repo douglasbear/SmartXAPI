@@ -24,7 +24,6 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly string reportPath;
 
         public Inv_ItemMaster(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -32,7 +31,6 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            reportPath = conf.GetConnectionString("ReportPath");
         }
 
         //GET api/Projects/list
@@ -439,6 +437,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID", GeneralTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID", 53);
+                        
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
@@ -666,10 +665,6 @@ namespace SmartxAPI.Controllers
                             dLayer.SaveData("Inv_ItemCategoryDisplayMaster", "N_CategoryListID", CategoryList, connection, transaction);
                         }
                         //Saving Display Images
-                        object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-                        string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-                        DocumentPath = DocumentPath + "DisplayImages";
-                        System.IO.Directory.CreateDirectory(DocumentPath);
                         dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_ItemID, "", connection, transaction);
 
                         if (POS.Rows.Count > 0)
@@ -681,9 +676,9 @@ namespace SmartxAPI.Controllers
                             int i = 1;
                             foreach (DataRow dRow in POS.Rows)
                             {
-                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode + "-POS-" + i);
+                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User,"PosProductImages"),ItemCode + "-POS-" + i);
                                 dRow["X_ImageName"] = ItemCode + "-POS-" + i + ".jpg";
-                                dRow["X_ImageLocation"] = DocumentPath;
+                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User,"PosProductImages");
                                 dRow["N_ItemID"] = N_ItemID;
                                 i++;
 
@@ -700,9 +695,9 @@ namespace SmartxAPI.Controllers
                             int j = 1;
                             foreach (DataRow dRow in ECOM.Rows)
                             {
-                                writefile(dRow["I_Image"].ToString(), DocumentPath, ItemCode + "-ECOM-" + j);
+                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User,"EcomProductImages"),ItemCode + "-ECOM-" + j);
                                 dRow["X_ImageName"] = ItemCode + "-ECOM-" + j + ".jpg";
-                                dRow["X_ImageLocation"] = DocumentPath;
+                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User,"EcomProductImages");
                                 dRow["N_ItemID"] = N_ItemID;
                                 j++;
 
@@ -773,53 +768,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-        public bool writefile(string FileString, string Path, string Name)
-        {
-
-            string imageName = "\\" + Name + ".jpg";
-            string imgPath = Path + imageName;
-
-            byte[] imageBytes = Convert.FromBase64String(FileString);
-
-            System.IO.File.WriteAllBytes(imgPath, imageBytes);
-            return true;
-
-
-        }
-
-        // [HttpGet("saveimages")]
-        // public ActionResult SaveDisplayImages([FromBody] DataSet ds)
-        // {
-        //     DataTable POS = ds.Tables["POS"];
-        //     DataTable ECOM = ds.Tables["ECOM"];
-        //     object Result = 0;
-        //     string path = "";
-        //     string s = "";
-        //     using (SqlConnection connection = new SqlConnection(connectionString))
-        //     {
-        //         connection.Open();
-        //         SqlTransaction transaction = connection.BeginTransaction();
-        //         int nCompanyID = myFunctions.GetCompanyID(User);
-        //         object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-        //         string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-
-        //         if (POS.Rows.Count > 0)
-        //         {
-        //             DocumentPath = DocumentPath + "/DisplayImages";
-        //             System.IO.Directory.CreateDirectory(DocumentPath);
-
-        //         }
-        //         foreach (DataRow dRow in POS.Rows)
-        //         {
-        //             writefile(dRow["I_Image"].ToString(), DocumentPath,ItemCode);
-
-        //         }
-        //     }
-
-
-        //     return Ok();
-        // }
-
 
 
         //GET api/Projects/list

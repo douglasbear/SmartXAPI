@@ -352,7 +352,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     DataTable StageTable;
-                    StageTable = ds.Tables["stage"];
+                    StageTable = ds.Tables["stageorder"];
                     SortedList Params = new SortedList();
                     int i=0;
 

@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                             {
                                 object fileName = dr1["X_ImageName"];
                                 if(fileName==null)fileName="";
-                                dr["x_ImageURL"] = myFunctions.GetTempFileURL(User,"productcategory",fileName.ToString());
+                                dr["x_ImageURL"] = myFunctions.GetTempFileName(User,"productcategory",fileName.ToString());
 
                             }
                         }
@@ -113,12 +113,10 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    //Image Retriving
-                    //Image Retriving
+
                     string _sqlImageQuery = "SELECT X_ImageName from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
                     Images = dLayer.ExecuteScalar(_sqlImageQuery, Params, connection);
-                    // string _sqlImageQuery1 = "SELECT X_ImageLocation from Inv_DisplayImages where N_ItemID=" + nCategoryID + " and N_CompanyID=" + nCompanyID;
-                    // ImageLocation = dLayer.ExecuteScalar(_sqlImageQuery1, Params, connection);
+
                     dt = myFunctions.AddNewColumnToDataTable(dt, "I_Image", typeof(System.String), "");
 
                     if (Images != null)
@@ -305,10 +303,6 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    // object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + N_CompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection, transaction);
-                    // string DocumentPath = this.docPath;
-                    // DocumentPath = DocumentPath + "DisplayImages";
-                    // System.IO.Directory.CreateDirectory(DocumentPath);
                     dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_CategoryDisplayID, "", connection, transaction);
 
                     if (i_Image != null || i_Image != "")
@@ -326,7 +320,7 @@ namespace SmartxAPI.Controllers
 
 
                         DataRow row = dt.NewRow();
-                        writefile(i_Image.ToString(), myFunctions.GetUploadsPath(User,"productcategory"), X_CategoryCode + "-Category");
+                        myFunctions.writeImageFile(i_Image.ToString(), myFunctions.GetUploadsPath(User,"productcategory"), X_CategoryCode + "-Category");
                         row["X_ImageName"] = X_CategoryCode + "-Category.jpg";
                         row["X_ImageLocation"] =  myFunctions.GetUploadsPath(User,"productcategory");
                         row["N_ImageID"] = 0;
@@ -379,19 +373,7 @@ namespace SmartxAPI.Controllers
             }
             return DeptCode;
         }
-        public bool writefile(string FileString, string Path, string Name)
-        {
 
-            string imageName = "\\" + Name + ".jpg";
-            string imgPath = Path + imageName;
-
-            byte[] imageBytes = Convert.FromBase64String(FileString);
-
-            System.IO.File.WriteAllBytes(imgPath, imageBytes);
-            return true;
-
-
-        }
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nCategoryDisplayID)
         {

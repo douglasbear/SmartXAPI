@@ -68,6 +68,21 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_Accounts";
                         if (dt.TableName == "Products Stock")
                             xTableName = "Mig_Stock";
+                        if (dt.TableName == "Employee List")
+                            xTableName = "Mig_Employee";
+                        if (dt.TableName == "products stock")
+                            xTableName = "Mig_Stock";
+                        if (dt.TableName == "FixedAssets List")
+                            xTableName = "_Mig_AssetList";
+                        if (dt.TableName == "Salary History")
+                            xTableName = "Mig_EmployeeSalaryHistory";
+                        if (dt.TableName == "Employee Salary")
+                            xTableName = "Mig_EmployeeSalary";
+                        if (dt.TableName == "Leave History")
+                            xTableName = "Mig_EmployeeLeaveHistory";
+
+
+
 
                         if (dt.TableName == "Product List")
                         {
@@ -88,7 +103,7 @@ namespace SmartxAPI.Controllers
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,dt.TableName + " Uploaded Error"));
+                                return Ok(_api.Error(User, dt.TableName + " Uploaded Error"));
                             }
                             Mastertable.Clear();
                             Params.Remove("X_Type");
@@ -103,14 +118,43 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Uploaded Error"));
+                        return Ok(_api.Error(User, "Uploaded Error"));
                     }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+        [HttpGet("dataList")]
+        public ActionResult GetDepartmentList(string parent)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    string sqlCommandText = "select * from VW_TableCount where  N_CompanyID= " + nCompanyID + "";
+
+
+
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    dt = _api.Format(dt);
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
             }
         }
     }

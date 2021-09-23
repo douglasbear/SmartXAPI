@@ -24,8 +24,6 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
         private readonly int FormID;
-        private readonly string reportPath;
-        private readonly string startupPath;
         public Gen_Attachments(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
             api = apifun;
@@ -33,8 +31,6 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 0;
-            reportPath = conf.GetConnectionString("ReportPath");
-            startupPath = conf.GetConnectionString("StartupPath");
         }
 
 

@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
                     string username = myFunctions.GetUserLoginName(User);
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
-                    string activeDbUri = "ObConnection";
+                    string activeDbUri = "SmartxConnection";
                     bool b_AppNotExist=false;
 
                     try
@@ -318,7 +318,7 @@ namespace SmartxAPI.Controllers
                if (reqType == "customer")
                 {
                     SortedList Res = new SortedList();
-                    string seperator = "$+$-!";
+                    string seperator = "$e$-!";
                     string[] cred = customerKey.Split(seperator);
 
             int companyID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[0]));
