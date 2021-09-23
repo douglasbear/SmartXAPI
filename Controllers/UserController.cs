@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
-            seperator = "$+$-!";
+            seperator = "$e$-!";
         }
         [HttpPost("login")]
         public ActionResult Authenticate([FromBody] Sec_AuthenticateDto model)
