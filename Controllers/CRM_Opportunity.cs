@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or d_ClosingDate like'%" + xSearchkey + "%'or x_nextStep like'%" + xSearchkey + "%'or x_Contact like'%" + xSearchkey + "%'or x_Mobile like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%'or x_StatusType like'%" + xSearchkey + "%')";
+                Searchkey = " and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or d_ClosingDate like'%" + xSearchkey + "%'or x_nextStep like'%" + xSearchkey + "%'or x_Contact like'%" + xSearchkey + "%'or x_Mobile like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%'or x_StatusType like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_OpportunityID desc";
