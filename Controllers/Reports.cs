@@ -272,36 +272,36 @@ namespace SmartxAPI.Controllers
 
                         //QR Code Generate For Invoice
 
-                        object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
-                        object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
-                        object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
-                        object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                        // object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                        // object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                        // object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
+                        // object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
 
-                        DateTime dt = DateTime.Parse(SalesDate.ToString());
-                        var Date = dt.ToString("dd/MM/yyyy");
-                        string Amount = Convert.ToDecimal(Total).ToString("0.00");
-                        string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
+                        // DateTime dt = DateTime.Parse(SalesDate.ToString());
+                        // var Date = dt.ToString("dd/MM/yyyy");
+                        // string Amount = Convert.ToDecimal(Total).ToString("0.00");
+                        // string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
 
-                        String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate : " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
-                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData, "500", "500");
-                        WebResponse response = default(WebResponse);
-                        Stream remoteStream = default(Stream);
-                        StreamReader readStream = default(StreamReader);
-                        WebRequest request = WebRequest.Create(url);
-                        response = request.GetResponse();
-                        remoteStream = response.GetResponseStream();
-                        readStream = new StreamReader(remoteStream);
-                        string path = "C://OLIVOSERVER2020/olivoreports/QR/";
-                        DirectoryInfo info = new DirectoryInfo(path);
-                        if (!info.Exists)
-                        {
-                            info.Create();
-                        }
-                        string pathfile = Path.Combine(path, "QR.png");
-                        using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
-                        {
-                            remoteStream.CopyTo(outputFileStream);
-                        }
+                        // String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate : " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
+                        // var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData, "500", "500");
+                        // WebResponse response = default(WebResponse);
+                        // Stream remoteStream = default(Stream);
+                        // StreamReader readStream = default(StreamReader);
+                        // WebRequest request = WebRequest.Create(url);
+                        // response = request.GetResponse();
+                        // remoteStream = response.GetResponseStream();
+                        // readStream = new StreamReader(remoteStream);
+                        // string path = "C://OLIVOSERVER2020/olivoreports/QR/";
+                        // DirectoryInfo info = new DirectoryInfo(path);
+                        // if (!info.Exists)
+                        // {
+                        //     info.Create();
+                        // }
+                        // string pathfile = Path.Combine(path, "QR.png");
+                        // using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
+                        // {
+                        //     remoteStream.CopyTo(outputFileStream);
+                        // }
                         //QR End Here
 
                         bool SaveDraft = false;
