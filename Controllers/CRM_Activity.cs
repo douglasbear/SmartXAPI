@@ -284,10 +284,10 @@ namespace SmartxAPI.Controllers
                             row1["B_IsAttachment"] = 0;
                             row1["N_SettingsID"] = 0;
                             row1["N_UserID"] = nUserID;
-                            if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
-                            {
-                                row1["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
-                            }
+                            // if (MasterTable.Rows[0]["b_IsAutoMail"].ToString() == "True")
+                            // {
+                            //     row1["N_RemCategoryID"] = MasterTable.Rows[0]["N_ScheduleCategoryID"].ToString();
+                            // }
                             dtSave.Rows.Add(row1);
                             myReminders.ReminderSave(dLayer, dtSave, connection, transaction);
                         }
