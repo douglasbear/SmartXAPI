@@ -9,6 +9,7 @@ using System.Data;
 using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
+using System.Collections.Generic;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -178,6 +179,11 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     DataTable MasterTable = new DataTable();
                     DataTable DetailTable = new DataTable();
+                    DataTable ProductInfoTable = new DataTable();
+
+                    List<SortedList> ProductInfo = new List<SortedList>();
+
+
                     string Mastersql = "";
                     string DetailSql = "";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
@@ -204,9 +210,34 @@ namespace SmartxAPI.Controllers
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
+
+                    //Product Information 
+                    SortedList element = new SortedList();
+                    int N_ItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_MainItemID"].ToString());
+                    object productName = dLayer.ExecuteScalar("Select X_ItemName from Inv_ItemMaster Where N_ItemID =" + N_ItemID + " and N_CompanyID= @nCompanyID ", Params, connection);
+                    element.Add("Product", productName.ToString());
+                    string[] name = {"Model", "Colour","Phone Category", "Device", "Category"};
+                    int i=0;
+
+                    //int nParentID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_CategoryDisplayID"].ToString());
+                    int nParentID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CategoryDisplayID from Inv_ItemCategoryDisplayMaster where N_ItemID="+N_ItemID+"",Params,connection).ToString());
+                    while (nParentID >0)
+                    {
+                        
+                        object phoneName = dLayer.ExecuteScalar("Select X_CategoryDisplay from Inv_ItemCategoryDisplay Where N_CategoryDisplayID =" + nParentID + " and N_CompanyID= @nCompanyID ", Params, connection);
+                        element.Add( name[i], phoneName.ToString());
+                        nParentID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_ParentID from Inv_ItemCategoryDisplay Where N_CategoryDisplayID =" + nParentID + " and N_CompanyID= @nCompanyID ", Params, connection).ToString());
+                        i=i+1;
+                    }
+                    ProductInfo.Add(element);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ProductInformations", typeof(List<SortedList>), ProductInfo);
+
+                  
+
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
                     return Ok(_api.Success(dt));
+
 
 
                 }
@@ -217,6 +248,10 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+
+
     }
 }
 
