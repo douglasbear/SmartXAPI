@@ -56,11 +56,11 @@ namespace SmartxAPI.Controllers
                     int N_StarRating = myFunctions.getIntVAL(MasterRow["n_StarRating"].ToString());
                     string X_ReviewCaption = MasterRow["X_ReviewCaption"].ToString();
 
-                   if(n_ProjectID>0)
-                   {
-                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set X_ReviewCaption='" +X_ReviewCaption+ "' where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection,transaction);
-                    dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StarRating=" +N_StarRating+ " where N_CompanyID="+N_CompanyID+" and N_ProjectID=" +n_ProjectID, Params, connection,transaction);
-                   }
+                    if (n_ProjectID > 0)
+                    {
+                        dLayer.ExecuteNonQuery("update Inv_CustomerProjects set X_ReviewCaption='" + X_ReviewCaption + "' where N_CompanyID=" + N_CompanyID + " and N_ProjectID=" + n_ProjectID, Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("update Inv_CustomerProjects set N_StarRating=" + N_StarRating + " where N_CompanyID=" + N_CompanyID + " and N_ProjectID=" + n_ProjectID, Params, connection, transaction);
+                    }
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved"));
@@ -100,34 +100,46 @@ namespace SmartxAPI.Controllers
         [HttpGet("list")]
         public ActionResult PrjReview(string xSearchkey, string xSortBy)
         {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandCount = "";
-            string sqlCommandText = "";
-            string Searchkey = "";
-            Params.Add("@p1", nCompanyId);
-            if (xSearchkey != null && xSearchkey.Trim() != "")
-
-                Searchkey = " and (x_ReviewCode like '%" + xSearchkey + "%' or X_ProjectName like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%' )";
-            if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by N_ProjectID desc";
-
-
-
-            sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 " + xSortBy + Searchkey;
-
-            SortedList OutPut = new SortedList();
-
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyId = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+
+                    string sqlCommandCount = "";
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyId);
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+
+                        Searchkey = " and (x_ReviewCode like '%" + xSearchkey + "%' or X_ProjectName like'%" + xSearchkey + "%'or X_CustomerName like'%" + xSearchkey + "%' )";
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_ProjectID desc";
+
+
+                    string Customer = dLayer.ExecuteScalar("select  N_CustomerID from sec_User where N_UserID=" + nUserID + " and N_CompanyID=" + nCompanyId + "", Params, connection).ToString();
+                    if (Customer != "null" && Customer!="")
+                    {
+                        sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_CustomerID=" + myFunctions.getIntVAL(Customer) + " " + xSortBy + Searchkey;
+                    }
+                    else
+                    {
+                       // return Ok(_api.Warning("No Results Found"));
+                        Customer="0";
+                         sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_CustomerID=" + myFunctions.getIntVAL(Customer) + " " + xSortBy + Searchkey;
+                    }
+
+                    SortedList OutPut = new SortedList();
+
+
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomerProjects where N_CompanyID=@p1" + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_InvCustomerProjects where N_CompanyID=@p1 and N_CustomerID=" + myFunctions.getIntVAL(Customer) + "" + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
