@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
                     int N_ItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_MainItemID"].ToString());
                     object productName = dLayer.ExecuteScalar("Select X_ItemName from Inv_ItemMaster Where N_ItemID =" + N_ItemID + " and N_CompanyID= @nCompanyID ", Params, connection);
                     element.Add("Product", productName.ToString());
-                    string[] name = {"Model", "Colour","Phone Category", "Device", "Category"};
+                    string[] name = {"Model", "Colour","PhoneCategory", "Device", "Category"};
                     int i=0;
 
                     //int nParentID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_CategoryDisplayID"].ToString());
