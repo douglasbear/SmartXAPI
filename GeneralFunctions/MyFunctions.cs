@@ -20,6 +20,7 @@ using System.Text;
 using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -29,14 +30,16 @@ namespace SmartxAPI.GeneralFunctions
         private readonly string masterDBConnectionString;
         private readonly string connectionString;
         private readonly IConfiguration config;
-        private readonly string reportPath;
+        private readonly string TempFilesPath;
+        private readonly string uploadedImagesPath;
         public MyFunctions(IConfiguration conf)
         {
-            ApprovalLink = conf.GetConnectionString("ApprovalLink");
+            ApprovalLink = conf.GetConnectionString("AppURL");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
             connectionString = conf.GetConnectionString("SmartxConnection");
             config = conf;
-            reportPath = conf.GetConnectionString("ReportPath");
+            uploadedImagesPath = conf.GetConnectionString("UploadedImagesPath");
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
 
         }
 
@@ -354,7 +357,7 @@ namespace SmartxAPI.GeneralFunctions
             int nNextApprovalID = nTransApprovalLevel + 1;
             string xLastUserName = "", xEntryTime = "";
             int nTempStatusID = 0;
-            bool bIsEditable = false;
+
             int loggedInUserID = this.GetUserID(User);
 
 
@@ -527,6 +530,11 @@ namespace SmartxAPI.GeneralFunctions
                 NextRewChec = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);//+ " and N_ActionTypeID=110"
                 if (NextRewChec != null)
                     nNextActionLevelID = this.getIntVAL(NextRewChec.ToString());
+
+                object bIsEditable = false;
+                bIsEditable = dLayer.ExecuteScalar("Select Isnull (B_IsEditable,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);//+ " and N_ActionTypeID=110"
+                if (bIsEditable == null)
+                    bIsEditable = false;
 
 
                 if (nTransID > 0)
@@ -735,7 +743,7 @@ namespace SmartxAPI.GeneralFunctions
                     }
                     else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
                     {
-                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920)
+                        if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 && nTransStatus != 929)
                         {
                             if (nTransStatus == 913 || nTransStatus == 7)
                             {
@@ -823,10 +831,13 @@ namespace SmartxAPI.GeneralFunctions
                 }
 
                 //Blocking edit control of Approvers
-                if (!bIsEditable)
+                if (this.getBoolVAL(bIsEditable.ToString()) || nNextApprovalLevel == 1)
                 {
-                    if (nNextApprovalLevel != 1)
-                        Response["isEditable"] = false;
+                    Response["isEditable"] = true;
+                }
+                else
+                {
+                    Response["isEditable"] = false;
                 }
             }
             Response["ApprovalID"] = nApprovalID;
@@ -1003,7 +1014,7 @@ namespace SmartxAPI.GeneralFunctions
                 return "";
         }
 
-        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID,int CompanyID)
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID)
         {
 
             try
@@ -1082,7 +1093,7 @@ namespace SmartxAPI.GeneralFunctions
                         // string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
                         // if (Bcc != "")
                         //     message.Bcc.Add(Bcc);
-                        
+
                         client.Send(message);
 
                     }
@@ -1476,6 +1487,74 @@ namespace SmartxAPI.GeneralFunctions
             return User.FindFirst(ClaimTypes.Upn)?.Value;
         }
 
+        public string GetUploadsPath(ClaimsPrincipal User, string DocType)
+        {
+            string folderName = "General";
+            switch (DocType.ToLower())
+            {
+                case "productcategory":
+                    folderName = "Product_Category_Images";
+                    break;
+                case "ecomproductimages":
+                    folderName = "Ecom_Product_Images";
+                    break;
+                case "posproductimages":
+                    folderName = "Pos_Product_Images";
+                    break;
+                default: break;
+            }
+            string docPath = uploadedImagesPath + this.GetClientID(User) + "/" + this.GetCompanyID(User) + "/" + folderName + "/";
+            if (!Directory.Exists(docPath))
+                Directory.CreateDirectory(docPath);
+
+            return docPath;
+        }
+
+        public bool writeImageFile(string FileString, string Path, string Name)
+        {
+
+            string imageName = "\\" + Name + ".jpg";
+            string imgPath = Path + imageName;
+
+            byte[] imageBytes = Convert.FromBase64String(FileString);
+
+            System.IO.File.WriteAllBytes(imgPath, imageBytes);
+            return true;
+
+
+        }
+
+        public string GetTempFileName(ClaimsPrincipal User, string DocType, string fileName)
+        {
+            string tempFileName = this.RandomString() + fileName;
+            string filePath = this.GetUploadsPath(User, DocType);
+            if (Directory.Exists(filePath) && File.Exists(filePath + fileName) && Directory.Exists(this.TempFilesPath))
+            {
+                // File.Copy(filePath+fileName, this.tempFilePath+tempFileName, true);
+                try
+                {
+                    File.Copy(Path.Combine(filePath, fileName), Path.Combine(this.TempFilesPath, tempFileName), true);
+                }
+                catch (IOException copyError)
+                {
+                    Console.WriteLine(copyError.Message);
+                }
+            }
+            return tempFileName;
+        }
+
+        public string GetTempFilePath()
+        {
+            return this.TempFilesPath;
+        }
+
+        private static Random random = new Random();
+        public string RandomString(int length = 6)
+        {
+            const string chars = "ABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789";
+            return new string(Enumerable.Repeat(chars, length)
+              .Select(s => s[random.Next(s.Length)]).ToArray());
+        }
 
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection)
         {
@@ -1487,7 +1566,7 @@ namespace SmartxAPI.GeneralFunctions
                 if (ExportTable.Rows.Count > 0)
                 {
                     // foreach (DataRow dr in ExportTable.Rows)
-                    GenerateExportFile(reportPath.ToString(), ExportTable, _filename);
+                    GenerateExportFile(this.TempFilesPath.ToString(), ExportTable, _filename);
                 }
                 result = true;
             }
@@ -1613,9 +1692,14 @@ namespace SmartxAPI.GeneralFunctions
         public bool ContainColumn(string columnName, DataTable table);
         public DataTable GetSettingsTable();
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User);
-        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID,int CompanyID);
+        public bool SendMail(string ToMail, string Body, string Subjectval, IDataAccessLayer dLayer, int FormID, int ReferID, int CompanyID);
         public bool CheckClosedYear(int N_CompanyID, int nFnYearID, IDataAccessLayer dLayer, SqlConnection connection);
         public bool CheckActiveYearTransaction(int nCompanyID, int nFnYearID, DateTime dTransDate, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
         public bool ExportToExcel(ClaimsPrincipal User, string _fillquery, string _filename, IDataAccessLayer dLayer, SqlConnection connection);
+        public string GetUploadsPath(ClaimsPrincipal User, string DocType);
+        public string GetTempFileName(ClaimsPrincipal User, string DocType, string FileName);
+        public string GetTempFilePath();
+        public string RandomString(int length = 6);
+        public bool writeImageFile(string FileString, string Path, string Name);
     }
 }

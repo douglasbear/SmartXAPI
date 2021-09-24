@@ -24,9 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
         StringBuilder message = new StringBuilder();
-        private string X_WpsPath = "";
-        private string X_WpsFileName = "";
-        private readonly string reportPath;
+        private readonly string TempFilesPath;
 
 
 
@@ -39,7 +37,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 190;
-            reportPath = conf.GetConnectionString("ReportPath");
+            TempFilesPath = conf.GetConnectionString("TempFilesPath");
 
         }
 
@@ -302,27 +300,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object N_Result = dLayer.ExecuteScalar("Select X_Value from Gen_Settings Where X_Description ='csvpath' and N_CompanyID= @p1 and X_Group='Payroll '", Params, connection);
-                    if (N_Result != null && N_Result.ToString() != "")
-                    {
-                        if (!Directory.Exists(N_Result.ToString() + "\\" + myCompanyID._WpsFolder))
-                            Directory.CreateDirectory(N_Result.ToString() + "\\" + myCompanyID._WpsFolder);
-                        X_WpsPath = N_Result.ToString() + "\\" + myCompanyID._WpsFolder + "\\";
-                    }
-                    else if (myCompanyID._DocumtPath != "")
-                    {
-                        if (!Directory.Exists(myCompanyID._DocumtPath + myCompanyID._WpsFolder))
-                            Directory.CreateDirectory(myCompanyID._DocumtPath + myCompanyID._WpsFolder);
-                        X_WpsPath = myCompanyID._DocumtPath + myCompanyID._WpsFolder + "\\";
-                    }
-                    else
-                    {
-                        object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection);
-                        string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-                        if (!Directory.Exists(DocumentPath + myCompanyID._WpsFolder))
-                            Directory.CreateDirectory(DocumentPath + myCompanyID._WpsFolder);
-                        X_WpsPath = DocumentPath + "\\" + myCompanyID._WpsFolder + "\\";
-                    }
+                    
                     DataSet dsBank = new DataSet();
                     if (dsBank.Tables.Contains("BankCSV"))
                         dsBank.Tables.Remove("BankCSV");
@@ -378,7 +356,7 @@ namespace SmartxAPI.Controllers
                 Params.Add("@p2", BankID);
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                X_WpsFileName = X_WpsPath + x_batchID + ".csv";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
                 string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID="+ BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -449,7 +427,7 @@ namespace SmartxAPI.Controllers
 
 
                 string FileCreateTime = DateTime.Now.ToString("yyyyMMdd") + DateTime.Now.ToString("HHmm");
-                X_WpsFileName = X_WpsPath + x_batchID + ".txt";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
 
                 string CSVData = "Select X_BankName,X_BankAccountNo,X_EmpName,X_EmpCode,X_Nationality,(N_BasicSalary+N_HA+N_OtherEarnings-N_OtherDeductions)as totalsalary ,X_Address,N_Payrate,X_BankCode,X_PaymentDescription,X_ReturnCode,N_BasicSalary,N_HA,N_OtherEarnings,N_OtherDeductions,X_IqamaNo,X_Transactionnumber,X_Transactionstatus,X_TransDate,X_Department,X_BranchName,X_BranchCode,X_PayrunText from [vw_pay_ProcessedDetails_CSV] where X_Batch='" + x_batchID + "' and N_EmpTypeID<>183 and TransBankID=" + BankID;
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -519,7 +497,7 @@ namespace SmartxAPI.Controllers
                 FileCreateTime = DateTime.Now.ToString("HHmm");
                 SalaryProcessCode = dtPayrun.ToString("yyyyMM");
                 //X_WpsFileName = X_WpsPath + FileCreateDate + "-" + FileCreateTime + ".txt";
-                X_WpsFileName = X_WpsPath + x_batchID + ".txt";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
                 StringBuilder sb = new StringBuilder();
                 SortedList Params = new SortedList();
                 Params.Add("@p1", nCompanyID);
@@ -600,7 +578,7 @@ namespace SmartxAPI.Controllers
             try
             {
 
-                X_WpsFileName = X_WpsPath + x_batchID + ".csv";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID + ".csv";
 
                 StringBuilder sb = new StringBuilder();
                 DataTable CSVData = new DataTable();
@@ -678,7 +656,7 @@ namespace SmartxAPI.Controllers
             DataTable CompanyBank = new DataTable();
             try
             {
-                X_WpsFileName = X_WpsPath + x_batchID.Trim() + ".csv";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID.Trim() + ".csv";
 
                 DateTime FromDate = dtpSalFrom;
                 DateTime ToDate = dtpSalTo;
@@ -790,7 +768,7 @@ namespace SmartxAPI.Controllers
             {
 
 
-                X_WpsFileName = X_WpsPath + x_batchID.Trim() + ".csv";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+ x_batchID.Trim() + ".csv";
 
                 StringBuilder sb = new StringBuilder();
                 DataSet dsCompany = new DataSet();
@@ -878,34 +856,9 @@ namespace SmartxAPI.Controllers
 
             try
             {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    object N_Result = dLayer.ExecuteScalar("Select X_Value from Gen_Settings Where X_Description ='csvpath' and N_CompanyID=@p1 and X_Group='Payroll '", Params, connection);
-                    if (N_Result != null && N_Result.ToString() != "")
-                    {
-                        if (!Directory.Exists(N_Result.ToString() + "\\" + myCompanyID._WpsFolder))
-                            Directory.CreateDirectory(N_Result.ToString() + "\\" + myCompanyID._WpsFolder);
-                        X_WpsPath = N_Result.ToString() + "\\" + myCompanyID._WpsFolder ;
-                    }
-                    else if (myCompanyID._DocumtPath != "")
-                    {
-                        if (!Directory.Exists(myCompanyID._DocumtPath + myCompanyID._WpsFolder))
-                            Directory.CreateDirectory(myCompanyID._DocumtPath + myCompanyID._WpsFolder);
-                        X_WpsPath = myCompanyID._DocumtPath + myCompanyID._WpsFolder ;
-                    }
-                    else
-                    {
-                        object obj = dLayer.ExecuteScalar("Select X_Value  From Gen_Settings Where N_CompanyID=" + nCompanyID + " and X_Group='188' and X_Description='EmpDocumentLocation'", connection);
-                        string DocumentPath = obj != null && obj.ToString() != "" ? obj.ToString() : this.reportPath;
-                        if (!Directory.Exists(DocumentPath + myCompanyID._WpsFolder))
-                            Directory.CreateDirectory(DocumentPath + myCompanyID._WpsFolder);
-                        X_WpsPath = DocumentPath + "\\" + myCompanyID._WpsFolder ;
+                
 
-                    }
-                }
-
-                X_WpsFileName = X_WpsPath+"\\"+x_Batch+".csv";
+                string X_WpsFileName = this.TempFilesPath +myFunctions.GetCompanyID(User)+"-"+x_Batch+".csv";
 
 
                 var path =X_WpsFileName;

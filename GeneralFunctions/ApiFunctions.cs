@@ -33,7 +33,7 @@ namespace SmartxAPI.GeneralFunctions
             return (new { StatusCode = Code, Message = ResMessage, Data = "" });
         }
 
-        public object Error( ClaimsPrincipal User,string message)
+        public object Error(ClaimsPrincipal User, string message)
         {
             return (new { type = "error", Message = message, Data = "" });
         }
@@ -100,7 +100,7 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-        public object Error( ClaimsPrincipal User, Exception ex)
+        public object Error(ClaimsPrincipal User, Exception ex)
         {
             string Msg = "";
             if (ex.Message.Length < 8)
@@ -155,8 +155,12 @@ namespace SmartxAPI.GeneralFunctions
 
             StringBuilder sb = new StringBuilder();
             sb.AppendLine(ex.Message);
-            File.AppendAllText( logPath + myFunctions.GetCompanyName(User) + " - " + "log.txt", sb.ToString());
-            sb.Clear();
+            if (!Directory.Exists(logPath))
+                Directory.CreateDirectory(logPath);
+
+                File.AppendAllText(logPath + myFunctions.GetCompanyName(User) + " - log.log", sb.ToString());
+                sb.Clear();
+
             return (new { type = "error", Message = Msg, Data = "" });
 
 
@@ -183,10 +187,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             var types = GetMimeTypes();
             var ext = Path.GetExtension(path).ToLowerInvariant();
-            if(types.ContainsKey(ext))
-            return types[ext];
+            if (types.ContainsKey(ext))
+                return types[ext];
             else
-            return "unknow";
+                return "unknow";
         }
 
         public Dictionary<string, string> GetMimeTypes()
@@ -208,11 +212,11 @@ namespace SmartxAPI.GeneralFunctions
         }
 
 
-                public string GetConnectionString(ClaimsPrincipal User,SqlConnection connection)
+        public string GetConnectionString(ClaimsPrincipal User, SqlConnection connection)
         {
             try
             {
-                
+
                 return "";
             }
             catch (Exception ex)
@@ -235,10 +239,10 @@ namespace SmartxAPI.GeneralFunctions
         public object Response(int Code, string Response);
         /*  End Of Deprecated Method  */
 
-        public object Error( ClaimsPrincipal User,Exception ex);
+        public object Error(ClaimsPrincipal User, Exception ex);
         public DataTable Format(DataTable table, string tableName);
         public DataTable Format(DataTable dt);
-        public object Error( ClaimsPrincipal User,string message);
+        public object Error(ClaimsPrincipal User, string message);
         public object Success(DataTable dataTable);
         public object Success(dynamic data);
         public object Success(DataTable dataTable, string message);

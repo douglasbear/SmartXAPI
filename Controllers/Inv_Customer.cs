@@ -173,7 +173,9 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
-                bool bEnableLogin = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
+                int bEnableLogin = 0;
+                if(MasterTable.Columns.Contains("B_EnablePortalLogin"))
+                bEnableLogin = Convert.ToInt32(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -214,7 +216,7 @@ namespace SmartxAPI.Controllers
                     {
                         int UserID = 0, UserCatID = 0;
                         string Pwd = myFunctions.EncryptString(CustomerCode);
-                        if(bEnableLogin)
+                        if(bEnableLogin == 1)
                         {
                             object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + nCustomerID, Params, connection, transaction);
                             if (objUser != null)
@@ -253,11 +255,11 @@ namespace SmartxAPI.Controllers
                                     int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
                                                                                 "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+UserCatID+",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View "+
                                                                                 "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-10) and N_CompanyID = -1", Params, connection, transaction);
-                                    if (Prevrows <= 0)
-                                    {
-                                        transaction.Rollback();
-                                        return Ok(api.Warning("Screen permission failed"));
-                                    } 
+                                    // if (Prevrows <= 0)
+                                    // {
+                                    //     transaction.Rollback();
+                                    //     return Ok(api.Warning("Screen permission failed"));
+                                    // } 
                                 }
                             }
 
@@ -491,7 +493,7 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-             sqlCommandText="select * from vw_InvCustomer where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+             sqlCommandText="select * from  vw_InvCustomer  where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
             }
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nCustomerID",nCustomerID);
@@ -500,10 +502,14 @@ namespace SmartxAPI.Controllers
                     {
                         connection.Open();
                         dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                        dt=myFunctions.AddNewColumnToDataTable(dt,"customerKey",typeof(string),"");
                         if(crmcustomerID>0)
                         {
                              dt.Rows[0]["x_CustomerCode"] = "@Auto";
                             
+                        }else{
+                            string seperator = "$e$-!";
+                                dt.Rows[0]["customerKey"] =  myFunctions.EncryptString(myFunctions.GetCompanyID(User).ToString())+seperator+myFunctions.EncryptString(dt.Rows[0]["n_CustomerID"].ToString()); 
                         }
                         dt.AcceptChanges();
                     

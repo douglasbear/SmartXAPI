@@ -126,7 +126,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -182,39 +182,112 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable = new DataTable();
                     DataTable HistoryTable = new DataTable();
                     DataTable CommentsTable = new DataTable();
+                    DataTable options = new DataTable();
 
 
                     string Mastersql = "";
                     string DetailSql = "";
                     string HistorySql = "";
                     string CommentsSql = "";
+                    string ActionSql = "";
+                    string nextAction = "";
+
 
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xTaskCode", xTaskCode);
                     Mastersql = "select * from vw_Tsk_TaskMaster where N_CompanyId=@nCompanyID and X_TaskCode=@xTaskCode  ";
 
+
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_Comments", typeof(string), "");
+
+
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
+                    object comments = dLayer.ExecuteScalar("select  isnull(MAX(N_CommentsID),0) from Tsk_TaskComments where N_ActionID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), Params, connection);
+                    if(comments==null)comments=0;
+                    if (myFunctions.getIntVAL( comments.ToString()) >0 )
+                    {
+                        object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
+                        MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
+                    }
+                    MasterTable.AcceptChanges();
                     Params.Add("@nTaskID", TaskID);
                     MasterTable = _api.Format(MasterTable, "Master");
 
                     //Detail
                     DetailSql = "select * from vw_Tsk_TaskCurrentStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    nextAction = DetailTable.Rows[0]["X_NextActions"].ToString();
                     DetailTable = _api.Format(DetailTable, "Details");
 
 
                     //History
-                    HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID ";
+                    HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID order by N_TaskStatusID";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
+
+
+
+                    foreach (DataRow row in HistoryTable.Rows)
+                    {
+                        object creator = row["x_Creator"];
+
+                        string duettime = row["d_DueDate"].ToString();
+                        DateTime _date;
+                        string day = "";
+                        if(duettime!=null && duettime!="")
+                        {
+                        _date = DateTime.Parse(duettime);
+                        day = _date.ToString("dd-MMM-yyyy HH:mm tt");
+                        }
+                        string time = row["d_EntryDate"].ToString();
+                        DateTime _date1;
+                        string day1 = "";
+                        if(time!=null && time!="")
+                        {
+                        _date1 = DateTime.Parse(time.ToString());
+                        day1 = _date1.ToString("dd-MMM-yyyy  HH:mm tt");
+                        }
+
+
+                        object assignee = row["x_Assignee"].ToString();
+
+                        if (row["x_HistoryText"].ToString().Contains("#CREATOR"))
+                        {
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#CREATOR", creator.ToString());
+                        }
+                        if (row["x_HistoryText"].ToString().Contains("#TIME"))
+                        {
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#TIME", day1);
+                        }
+                        if (row["x_HistoryText"].ToString().Contains("#DUEDATE"))
+                        {
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#DUEDATE", day);
+                        }
+                        if (row["x_HistoryText"].ToString().Contains("#ASSIGNEE"))
+                        {
+                            row["x_HistoryText"] = row["x_HistoryText"].ToString().Replace("#ASSIGNEE", assignee.ToString());
+                        }
+
+
+                    }
+                    HistoryTable.AcceptChanges();
                     HistoryTable = _api.Format(HistoryTable, "History");
+
 
 
                     //Comments
                     CommentsSql = "select * from vw_Tsk_TaskComments where N_ActionID=@nTaskID ";
                     CommentsTable = dLayer.ExecuteDataTable(CommentsSql, Params, connection);
                     CommentsTable = _api.Format(CommentsTable, "Comments");
+
+                    //ActionTable
+                    ActionSql = "select N_ActionID,X_ActionName as title ,B_SysDefault from Tsk_TaskAction Where N_ActionID in (" + nextAction + ") ";
+                    options = dLayer.ExecuteDataTable(ActionSql, Params, connection);
+                    options = _api.Format(options, "options");
+
+
+
 
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), 1324, 0, User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
@@ -224,6 +297,7 @@ namespace SmartxAPI.Controllers
                     dt.Tables.Add(HistoryTable);
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(CommentsTable);
+                    dt.Tables.Add(options);
 
                     return Ok(_api.Success(dt));
 
@@ -233,7 +307,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -282,19 +356,20 @@ namespace SmartxAPI.Controllers
 
                         while (true)
                         {
-                            
+
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Tsk_TaskMaster Where X_TaskCode ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
-                            if (N_Result == null)DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
-                                break;
+                            if (N_Result == null) DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            break;
                         }
                         X_TaskCode = DocNo;
 
 
-                        if (X_TaskCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
+                        if (X_TaskCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_TaskCode"] = X_TaskCode;
 
 
                     }
+                    
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
@@ -314,15 +389,19 @@ namespace SmartxAPI.Controllers
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() == "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() == "")
                     {
-                        DetailTable.Rows[0]["N_Status"] = 5;
+                        DetailTable.Rows[0]["N_Status"] = 1;
 
                     }
                     else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" || DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
-                        DetailTable.Rows[0]["N_Status"] = 1;
+                        DetailTable.Rows[0]["N_Status"] = 2;
+
+
+
+
                     }
 
-                    if (nProjectID>0)
+                    if (nProjectID > 0)
                     {
                         if (nTaskId == 0)
                         {
@@ -331,7 +410,7 @@ namespace SmartxAPI.Controllers
                             {
 
                                 int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
-                                dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_Order=" + Count + " and N_ProjectID="+MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
+                                dLayer.ExecuteNonQuery("update tsk_taskmaster set N_Order=" + NOrder + " where N_Order=" + Count + " and N_ProjectID=" + MasterTable.Rows[0]["N_ProjectID"].ToString(), Params, connection, transaction);
                                 MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
                                 MasterTable.Rows[0]["N_Order"] = Count.ToString();
                             }
@@ -343,18 +422,34 @@ namespace SmartxAPI.Controllers
                     if (nTaskId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable To Save"));
+                        return Ok(_api.Error(User, "Unable To Save"));
                     }
+                    else if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
+                    {
+                        DataRow row = DetailTable.NewRow();
+                        row["N_TaskID"] = nTaskId;
+                        row["n_TaskStatusID"] = 0;
+                        row["n_CompanyId"] = nCompanyID;
+                        row["n_AssigneeID"] = 0;
+                        row["n_CreaterID"] = myFunctions.GetUserID(User);
+                        row["n_SubmitterID"] = 0;
+                        row["n_ClosedUserID"] = 0;
+                        row["n_Status"] = 1;
+                        row["d_EntryDate"] = DetailTable.Rows[0]["d_EntryDate"];
+                        DetailTable.Rows.InsertAt(row, 0);
+                    }
+
+
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        DetailTable.Rows[0]["N_TaskID"] = nTaskId;
+                        DetailTable.Rows[i]["N_TaskID"] = nTaskId;
                     }
                     int nTaskStatusID = dLayer.SaveData("Tsk_TaskStatus", "N_TaskStatusID", DetailTable, connection, transaction);
                     if (nTaskStatusID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable To Save"));
+                        return Ok(_api.Error(User, "Unable To Save"));
                     }
 
                     if (Attachment.Rows.Count > 0)
@@ -366,7 +461,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
                     transaction.Commit();
@@ -375,7 +470,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -406,18 +501,18 @@ namespace SmartxAPI.Controllers
                     // }
 
 
-                    if (nStatus == "3" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    if (nStatus == "4" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() != DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_SubmitterID"].ToString();
 
                     }
-                    else if (nStatus == "3" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
+                    else if (nStatus == "9" && (DetailTable.Rows[0]["N_AssigneeID"].ToString() == DetailTable.Rows[0]["N_SubmitterID"].ToString()))
                     {
                         DetailTable.Rows[0]["N_AssigneeID"] = DetailTable.Rows[0]["N_ClosedUserID"].ToString();
                     }
-                    else if (nStatus == "4")
+                    else if (nStatus == "5")
                     {
-                        DetailTable.Rows[0]["N_AssigneeID"] = 0;
+                        // DetailTable.Rows[0]["N_AssigneeID"] = 0;
 
 
 
@@ -441,20 +536,21 @@ namespace SmartxAPI.Controllers
                     if (nTaskStatusID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable To Save"));
+                        return Ok(_api.Error(User, "Unable To Save"));
                     }
-                    if (nStatus == "4")
+                    if (nStatus == "5")
                     {
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
+                    dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                    return Ok(_api.Success("Task Updated"));
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -489,7 +585,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
                     transaction.Commit();
@@ -498,7 +594,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -531,7 +627,7 @@ namespace SmartxAPI.Controllers
                         if (nCommentsID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable To Save"));
+                            return Ok(_api.Error(User, "Unable To Save"));
                         }
 
                     }
@@ -541,7 +637,7 @@ namespace SmartxAPI.Controllers
                         if (nTaskStatusID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable To Save"));
+                            return Ok(_api.Error(User, "Unable To Save"));
                         }
 
 
@@ -554,7 +650,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -576,13 +672,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
         [HttpGet("calenderData")]
@@ -601,7 +697,7 @@ namespace SmartxAPI.Controllers
                 Criteria = " and N_AssigneeID=@nUserID ";
             }
 
-            string sqlCommandText = "Select X_TaskSummery as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " " + Criteria;
+            string sqlCommandText = "Select case when x_ProjectName is null then X_TaskSummery else X_TaskSummery + ' - ' + x_ProjectName end  as title,'true' as allDay,cast(D_TaskDate as Date) as start, dateadd(dd,1,cast(D_DueDate as date)) as 'end', N_TaskID,X_TaskCode  from vw_Tsk_TaskCurrentStatus Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try
@@ -623,7 +719,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -643,6 +739,11 @@ namespace SmartxAPI.Controllers
                     int N_ClosedUserID = myFunctions.GetUserID(User);
                     DateTime D_EntryDate = DateTime.Today;
                     DataTable DetailTable;
+
+                    if(nStatus.ToString()=="4")
+                    {
+                        nStatus=5;
+                    }
 
 
 
@@ -668,7 +769,7 @@ namespace SmartxAPI.Controllers
                         if (nID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable To Save"));
+                            return Ok(_api.Error(User, "Unable To Save"));
                         }
                         transaction.Commit();
                         return Ok(_api.Success(""));
@@ -687,7 +788,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 

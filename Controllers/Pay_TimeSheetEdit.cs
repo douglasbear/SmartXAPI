@@ -24,7 +24,6 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
         private readonly int FormID;
         StringBuilder message = new StringBuilder();
-        private readonly string reportPath;
         public Pay_TimeSheetEdit(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
             dLayer = dl;
@@ -33,7 +32,6 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             FormID = 793;
-            reportPath = conf.GetConnectionString("ReportPath");
 
         }
         [HttpGet("list")]

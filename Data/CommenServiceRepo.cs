@@ -131,7 +131,7 @@ namespace SmartxAPI.Data
                 Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
 
 
-                DataTable EmplData = dLayer.ExecuteDataTable("SELECT Pay_Employee.N_EmpID, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName,Pay_Employee.X_EmpNameLocale, Sec_User.N_UserID, Pay_Position.X_Position, Pay_Position.N_PositionID FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Sec_User ON Pay_Employee.N_CompanyID = Sec_User.N_CompanyID AND Pay_Employee.N_EmpID = Sec_User.N_EmpID where Sec_User.N_CompanyID=@nCompanyID  and Sec_User.N_UserID=@nUserID", Params, connection);
+                DataTable EmplData = dLayer.ExecuteDataTable("select N_EmpID,X_EmpCode,X_EmpName,X_EmpNameLocale,N_UserID,X_Position,N_PositionID,X_Department,N_DepartmentID from vw_PayEmployee where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_FnYearID=@nFnYearID ", Params, connection);
                 if (EmplData.Rows.Count > 0)
                 {
                     loginRes.N_EmpID = myFunctions.getIntVAL(EmplData.Rows[0]["N_EmpID"].ToString());
@@ -140,6 +140,8 @@ namespace SmartxAPI.Data
                     loginRes.X_EmpNameLocale = EmplData.Rows[0]["X_EmpNameLocale"].ToString();
                     loginRes.X_Position = EmplData.Rows[0]["X_Position"].ToString();
                     loginRes.N_PositionID = myFunctions.getIntVAL(EmplData.Rows[0]["N_PositionID"].ToString());
+                                        loginRes.X_Department = EmplData.Rows[0]["X_Department"].ToString();
+                    loginRes.N_DepartmentID = myFunctions.getIntVAL(EmplData.Rows[0]["N_DepartmentID"].ToString());
                 }
 
                 DataTable SalesExecutiveData = dLayer.ExecuteDataTable("select N_SalesmanID,X_SalesmanCode,X_SalesmanName from vw_InvSalesman where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_UserID=@nUserID", Params, connection);
@@ -153,6 +155,7 @@ namespace SmartxAPI.Data
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
                 string xGlobalUserID = "";
+                if(AppID!=10)
                 using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
                     cnn.Open();
@@ -177,6 +180,7 @@ namespace SmartxAPI.Data
                     case "all":
                     case "app":
                     case "switchcompany":
+                    case "customer":
                         var tokenHandler = new JwtSecurityTokenHandler();
                         var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                         var tokenDescriptor = new SecurityTokenDescriptor
@@ -226,7 +230,7 @@ namespace SmartxAPI.Data
                         using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
                             cnn2.Open();
-                            if (AppID != 6 && AppID != 8)
+                            if (AppID != 6 && AppID != 8 && AppID != 10)
                             {
                                 string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
                                 dLayer.ExecuteScalar(appUpdate, cnn2);

@@ -96,6 +96,38 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+         [HttpGet("workflowlist")]
+        public ActionResult ActivityWorkFlowList()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyID);
+            string sqlCommandText = "select * from vw_CRM_WorkflowMaster where N_CompanyID=@p1";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
         [HttpGet("details")]
         public ActionResult WorkFlowListDetails(string xActivityCode)
         {
@@ -262,5 +294,37 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+        [HttpDelete("deletelinewise")]
+        public ActionResult DeleteDataLineWise(int N_WActivityDetailID)
+        {
+
+            int Results = 0;
+            try
+            {
+                SortedList Params = new SortedList();
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    Results = dLayer.DeleteData("crm_workflowactivities", "N_WActivityDetailID", N_WActivityDetailID, "", connection, transaction);
+                    if (Results > 0)
+                    {
+                        dLayer.DeleteData("crm_workflowactivities", "N_WActivityDetailID", N_WActivityDetailID, "", connection, transaction);
+                    }
+                    transaction.Commit();
+                    return Ok(api.Success("Workflow deleted"));
+                }
+
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+
+
+
+        }
+
     }
 }

@@ -50,16 +50,15 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
             }
             else
             {
                 if (UserPattern != "")
                 {
-                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2";
+                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
-
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -369,9 +368,18 @@ namespace SmartxAPI.Controllers
             string Criteria = "";
             if (bySalesMan == true)
             {
-                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1";
+                Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
             }
-            string sqlCommandText = "Select X_Subject as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;
+            else
+            {
+                string UserPattern = myFunctions.GetUserPattern(User);
+                if (UserPattern != "")
+                {
+                    Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                    Params.Add("@p2", UserPattern);
+                }
+            }
+            string sqlCommandText = "Select case when x_relatedtoname is null then x_subject else x_subject + ' - ' + x_relatedtoname end  as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;
 
 
             try

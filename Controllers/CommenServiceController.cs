@@ -115,7 +115,7 @@ namespace SmartxAPI.Controllers
                     string username = myFunctions.GetUserLoginName(User);
                     int companyid = myFunctions.GetCompanyID(User);
                     string companyname = myFunctions.GetCompanyName(User);
-                    string activeDbUri = "ObConnection";
+                    string activeDbUri = "SmartxConnection";
                     bool b_AppNotExist=false;
 
                     try
@@ -297,14 +297,36 @@ namespace SmartxAPI.Controllers
 
                 }
                 
-                else if (reqType == "customer")
+                else
+                {
+                    return Ok(_api.Error(User,"Invalid Request"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,"Unauthorized Access"));
+            }
+        }
+
+        [AllowAnonymous]
+        [HttpGet("customer-login")]
+        public ActionResult AuthenticateCustomer(string reqType, int appID,string customerKey)
+        {
+            try
+            {
+
+               if (reqType == "customer")
                 {
                     SortedList Res = new SortedList();
-                    
+                    string seperator = "$e$-!";
+                    string[] cred = customerKey.Split(seperator);
+
+            int companyID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[0]));
+            int nCustomerID = myFunctions.getIntVAL(myFunctions.DecryptString(cred[1]));
                     using (SqlConnection conn = new SqlConnection(connectionString))
                     {
                         conn.Open();
-                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserName, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= 1";
+                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Inv_Customer.N_CustomerID= "+nCustomerID;
                         SortedList Params = new SortedList();
                         DataTable output = dLayer.ExecuteDataTable(sql, conn);
                         if (output.Rows.Count == 0)
@@ -314,7 +336,7 @@ namespace SmartxAPI.Controllers
 
                         DataRow dRow = output.Rows[0];
 
-                     var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserName"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 0, connectionString, myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0);
+                     var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 10, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0);
 
                     if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
 
