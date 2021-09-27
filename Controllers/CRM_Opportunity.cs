@@ -362,8 +362,8 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow dtRow in StageTable.Rows)
                     {
                         i=i+1;
-                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name=" +myFunctions.getIntVAL(dtRow["X_Name"].ToString()), Params, connection);
-                        dtRow["N_Sort"]=i;
+                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name='" +dtRow["X_Name"].ToString()+"'", Params, connection);
+            
                     }
                     return Ok(api.Success("Stage Updated"));
                 }

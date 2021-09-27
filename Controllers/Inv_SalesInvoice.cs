@@ -8,6 +8,10 @@ using System.Collections;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Security.Claims;
+using System.Net;
+using System.IO;
+using System.Drawing.Imaging;
+using QRCoder;
 
 namespace SmartxAPI.Controllers
 
@@ -278,7 +282,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID,int nServiceID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
         {
 
             try
@@ -389,11 +393,11 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dsSalesInvoice));
 
                     }
-                     else
+                    else
                     if (nServiceID > 0)
                     {
-                         QueryParamsList.Add("@nServiceID", nServiceID);
-                         string Mastersql = "select * from Vw_InvServiceMasterToInvoice where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID";
+                        QueryParamsList.Add("@nServiceID", nServiceID);
+                        string Mastersql = "select * from Vw_InvServiceMasterToInvoice where N_CompanyId=@nCompanyID and N_ServiceID=@nServiceID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
@@ -1278,6 +1282,39 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_SalesID", N_SalesID);
                     Result.Add("x_SalesNo", InvoiceNo);
+
+                    // //QR Code Generate For Invoice
+
+                    // double Total = myFunctions.getVAL(MasterRow["n_TaxAmt"].ToString()) + myFunctions.getVAL(MasterRow["n_BillAmt"].ToString());
+                    // object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=" + N_CompanyID, CustParams, connection, transaction);
+
+                    // DateTime dt = DateTime.Parse(MasterRow["d_SalesDate"].ToString());
+                    // var Date = dt.ToString("dd/MM/yyyy");
+                    // string Amount=Convert.ToDecimal(Total).ToString("0.00");
+                    // string VatAmount=Convert.ToDecimal(MasterRow["n_TaxAmt"]).ToString("0.00");
+
+                    // String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate : " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
+                    // var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData, "500", "500");
+                    // WebResponse response = default(WebResponse);
+                    // Stream remoteStream = default(Stream);
+                    // StreamReader readStream = default(StreamReader);
+                    // WebRequest request = WebRequest.Create(url);
+                    // response = request.GetResponse();
+                    // remoteStream = response.GetResponseStream();
+                    // readStream = new StreamReader(remoteStream);
+                    // string path = "C://OLIVOSERVER2020/olivoreports/QR/";
+                    // DirectoryInfo info = new DirectoryInfo(path);
+                    // if (!info.Exists)
+                    // {
+                    //     info.Create();
+                    // }
+                    // string pathfile = Path.Combine(path, "QR.png");
+                    // using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
+                    // {
+                    //     remoteStream.CopyTo(outputFileStream);
+                    // }
+                    // //QR End Here
+
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Sales invoice saved"));
 
