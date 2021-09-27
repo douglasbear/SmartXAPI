@@ -258,6 +258,12 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(_api.Warning("user with this email id already exists"));
                         }
+                        object nUserLimit = dLayer.ExecuteScalar("SELECT N_UserLimit FROM ClientMaster where N_ClientID=@nClientID" + skipUserSql, userParams, olivoCon, olivoTxn);
+                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_CompanyID=@nCompanyID  ", userParams, connection,transaction);
+                        if (myFunctions.getIntVAL(nUserLimit.ToString()) < myFunctions.getIntVAL(nUserCount.ToString()))
+                        {
+                            return Ok(_api.Warning("user limit exeeded"));
+                        }
 
                         if (nGlobalUserID > 0 && nUserID == 0)
                         {

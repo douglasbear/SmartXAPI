@@ -227,9 +227,12 @@ namespace SmartxAPI.Controllers
                     int N_CategoryDisplayID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CategoryDisplayID"].ToString());
                     int N_ParentID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ParentID"].ToString());
                     int N_Position = myFunctions.getIntVAL(MasterTable.Rows[0]["n_Position"].ToString());
-                    string i_Image = MasterTable.Rows[0]["I_Image"].ToString();
-                    if (MasterTable.Columns.Contains("I_Image"))
+                    string i_Image = "";
+                    if (MasterTable.Columns.Contains("I_Image")){
+                        i_Image = MasterTable.Rows[0]["I_Image"].ToString();
                         MasterTable.Columns.Remove("I_Image");
+                    }
+                        
 
                     //  if(MasterTable.Columns.Contains)
                     // MasterTable.Rows[0]["n_ManagerID"]=myFunctions.getIntVAL(MasterTable.Rows[0]["n_Empid"].ToString());  // commented by rks
@@ -305,7 +308,7 @@ namespace SmartxAPI.Controllers
 
                     dLayer.DeleteData("Inv_DisplayImages", "N_ItemID", N_CategoryDisplayID, "", connection, transaction);
 
-                    if (i_Image != null || i_Image != "")
+                    if (i_Image != null && i_Image != "")
                     {
                         DataTable dt = new DataTable();
                         dt.Clear();

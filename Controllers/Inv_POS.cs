@@ -293,6 +293,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "warranty", typeof(DataTable), null);
 
                     foreach (DataRow item in dt.Rows)
                     {
@@ -309,6 +310,16 @@ namespace SmartxAPI.Controllers
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
                             item["SubItems"] = subTbl;
                         }
+
+                        string warrantySql = "SELECT vw_InvItem_Search.description, Inv_ItemWarranty.N_Qty as N_Qty" +
+                        " FROM            Inv_ItemUnit RIGHT OUTER JOIN " +
+                                                " vw_InvItem_Search LEFT OUTER JOIN " +
+                                                " Inv_ItemWarranty ON vw_InvItem_Search.N_CompanyID = Inv_ItemWarranty.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_ItemWarranty.N_ItemID ON Inv_ItemUnit.N_ItemID = vw_InvItem_Search.N_ItemID AND  " +
+                                                " Inv_ItemUnit.N_CompanyID = vw_InvItem_Search.N_CompanyID " +
+                        " WHERE        (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
+
+                            DataTable warrantyTbl = dLayer.ExecuteDataTable(warrantySql, connection);
+                            item["warranty"] = warrantyTbl;
                     }
                     dt.AcceptChanges();
 
@@ -380,7 +391,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        [HttpGet("images")]
+      [HttpGet("images")]
         public ActionResult GetImages(int nItemID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -452,24 +463,26 @@ namespace SmartxAPI.Controllers
                     else
                         _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_CompanyID=@nCompanyID";
 
-
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
-
-
-
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "X_ImageURL", typeof(string), "");
+                    foreach (DataRow dr1 in dt.Rows)
+                    {
+                        object fileName = dr1["X_ImageName"];
+                        if (fileName == null) fileName = "";
+                        dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
+                    }
+                    dt.AcceptChanges();
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
 
                 }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-
             }
             catch (Exception e)
             {
@@ -636,7 +649,7 @@ namespace SmartxAPI.Controllers
 
                         if (values == "@Auto") // Generate Warranty Entry
                         {
-                            
+
                             SortedList warrantyParams = new SortedList();
                             warrantyParams.Add("@nCompanyID", N_CompanyID);
                             warrantyParams.Add("@nFnYearID", N_FnYearID);
@@ -1281,7 +1294,7 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                    dsSalesInvoice.Tables.Add();
+                    dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
                     dsSalesInvoice.Tables.Add(salesAddInfo);
 
