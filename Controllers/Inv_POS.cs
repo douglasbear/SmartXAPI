@@ -380,7 +380,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        [HttpGet("images")]
+      [HttpGet("images")]
         public ActionResult GetImages(int nItemID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
@@ -452,24 +452,26 @@ namespace SmartxAPI.Controllers
                     else
                         _sqlQuery = "SELECT * from vw_ItemPOSCloud where X_ItemCode<>'001' and N_CompanyID=@nCompanyID";
 
-
                     dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
-
-
-
-
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "X_ImageURL", typeof(string), "");
+                    foreach (DataRow dr1 in dt.Rows)
+                    {
+                        object fileName = dr1["X_ImageName"];
+                        if (fileName == null) fileName = "";
+                        dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
+                    }
+                    dt.AcceptChanges();
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
 
                 }
-                dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(_api.Success(dt));
-                }
-
             }
             catch (Exception e)
             {
@@ -636,7 +638,7 @@ namespace SmartxAPI.Controllers
 
                         if (values == "@Auto") // Generate Warranty Entry
                         {
-                            
+
                             SortedList warrantyParams = new SortedList();
                             warrantyParams.Add("@nCompanyID", N_CompanyID);
                             warrantyParams.Add("@nFnYearID", N_FnYearID);
