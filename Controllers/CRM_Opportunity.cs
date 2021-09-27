@@ -49,7 +49,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or d_ClosingDate like'%" + xSearchkey + "%'or x_nextStep like'%" + xSearchkey + "%'or x_Contact like'%" + xSearchkey + "%'or x_Mobile like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%'or x_StatusType like'%" + xSearchkey + "%')";
+                Searchkey = " and (X_Opportunity like'%" + xSearchkey + "%'or X_OpportunityCode like'%" + xSearchkey + "%'or N_ExpRevenue like'%" + xSearchkey + "%'or X_Stage like'%" + xSearchkey + "%'or d_ClosingDate like'%" + xSearchkey + "%'or x_nextStep like'%" + xSearchkey + "%'or x_Contact like'%" + xSearchkey + "%'or x_Mobile like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%'or x_StatusType like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_OpportunityID desc";
@@ -362,8 +362,8 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow dtRow in StageTable.Rows)
                     {
                         i=i+1;
-                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name=" +myFunctions.getIntVAL(dtRow["X_Name"].ToString()), Params, connection);
-                        dtRow["N_Sort"]=i;
+                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name='" +dtRow["X_Name"].ToString()+"'", Params, connection);
+            
                     }
                     return Ok(api.Success("Stage Updated"));
                 }
