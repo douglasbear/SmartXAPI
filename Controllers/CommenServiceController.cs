@@ -106,7 +106,7 @@ namespace SmartxAPI.Controllers
                     {
                         if(xAppVersion!=xVersion)
                         {
-                            return Ok(_api.Warning("Version error! Build version is "+xVersion));
+                            return Ok(_api.Warning("Version error! Build version is "+xVersion+" and Database version is "+xAppVersion));
                         }
                     }
                 }
