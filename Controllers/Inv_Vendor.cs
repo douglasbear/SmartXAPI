@@ -263,7 +263,7 @@ namespace SmartxAPI.Controllers
                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"b_DirPosting",typeof(int),0); 
                     }
                     
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + xVendorCode + "'";
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + VendorCode + "'";
                     string X_Crieteria="N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                     nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID",DupCriteria,X_Crieteria, MasterTable, connection, transaction);
                     if (nVendorID <= 0)
