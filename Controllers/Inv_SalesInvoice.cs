@@ -807,9 +807,6 @@ namespace SmartxAPI.Controllers
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
                     int N_NextApproverID = 0;
-                    int N_CustomerCompanyID = myFunctions.getIntVAL(MasterRow["N_CustomerCompanyID"].ToString());
-
-
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nSalesID", N_SalesID);
@@ -1284,14 +1281,13 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_SalesID", N_SalesID);
                     Result.Add("x_SalesNo", InvoiceNo);
-                    if (N_CustomerCompanyID > 0)
-                    {
-                        SortedList PurchaseParams = new SortedList();
-                        PurchaseParams.Add("@N_CompanyID", N_CompanyID);
-                        PurchaseParams.Add("@N_FnYearID", N_FnYearID);
-                        PurchaseParams.Add("@N_SalesID", N_SalesID);
-                        dLayer.ExecuteNonQueryPro("SP_Purchase_Ins", PurchaseParams, connection, transaction);
-                    }
+
+                    SortedList PurchaseParams = new SortedList();
+                    PurchaseParams.Add("@N_CompanyID", N_CompanyID);
+                    PurchaseParams.Add("@N_FnYearID", N_FnYearID);
+                    PurchaseParams.Add("@N_SalesID", N_SalesID);
+                    dLayer.ExecuteNonQueryPro("SP_SalesToPurchase_Ins", PurchaseParams, connection, transaction);
+
 
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Sales invoice saved"));
