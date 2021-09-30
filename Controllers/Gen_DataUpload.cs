@@ -42,6 +42,7 @@ namespace SmartxAPI.Controllers
                 SortedList Params = new SortedList();
                 Params.Add("N_CompanyID", nCompanyID);
                 Params.Add("N_FnYearID", nFnYearId);
+                int N_UserID= myFunctions.GetUserID(User);
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -63,7 +64,14 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName == "Vendor List")
                             xTableName = "Mig_Vendors";
                         if (dt.TableName == "Lead List")
+                        {
                             xTableName = "Mig_Leads";
+                            Mastertable.Columns.Add("N_UserID");
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_UserID"] = N_UserID;
+                            }
+                        }
                         if (dt.TableName == "Chart of Accounts")
                             xTableName = "Mig_Accounts";
                         if (dt.TableName == "Products Stock")
