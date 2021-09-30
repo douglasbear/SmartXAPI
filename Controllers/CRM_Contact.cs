@@ -54,12 +54,12 @@ namespace SmartxAPI.Controllers
         //                     case "x_ContactCode":
         //                         xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
         //                         break;
-                          
+
         //                     default: break;
         //                 }
         //         xSortBy = " order by " + xSortBy;
         //                 }
-             
+
         //      if(Count==0)
         //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
         //     else
@@ -90,14 +90,14 @@ namespace SmartxAPI.Controllers
         //             }
 
         //         }
-                
+
         //     }
         //     catch (Exception e)
         //     {
         //         return Ok(api.Error(User,e));
         //     }
         // }
-       [HttpGet("list")]
+        [HttpGet("list")]
         public ActionResult OpportunityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
@@ -115,28 +115,28 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                 Searchkey = "and (X_Contact like '%" + xSearchkey + "%'or X_ContactCode like'%" + xSearchkey + "%'or X_Department like'%" + xSearchkey + "%'or x_Phone like'%" + xSearchkey + "%')";
+                Searchkey = "and (X_Contact like '%" + xSearchkey + "%'or X_ContactCode like'%" + xSearchkey + "%'or X_Department like'%" + xSearchkey + "%'or x_Phone like'%" + xSearchkey + "%')";
 
-           if (xSortBy == null || xSortBy.Trim() == "")
+            if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by n_contactID desc";
             else
             {
-                        switch (xSortBy.Split(" ")[0])
-                        {
-                            case "x_ContactCode":
-                                xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
-                                break;
-                          
-                            default: break;
-                        }
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "x_ContactCode":
+                        xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
+                        break;
+
+                    default: break;
+                }
                 xSortBy = " order by " + xSortBy;
-                        }
-             
+            }
+
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 " + Pattern + Searchkey + " " + xSortBy;
             else
-                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ContactID not in (select top("+ Count +") N_ContactID from vw_CRMContact where N_CompanyID=@p1 "+ xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ContactID not in (select top(" + Count + ") N_ContactID from vw_CRMContact where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -167,17 +167,17 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
-         [HttpGet("listDetails")]
+        [HttpGet("listDetails")]
         public ActionResult ContactListInner()
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-           
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
             string sqlCommandText = "select  * from vw_CRMContact where N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
             try
@@ -185,7 +185,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
@@ -197,11 +197,11 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -210,8 +210,8 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-  
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
             string sqlCommandText = "select * from vw_CRMContact where N_CompanyID=@p1 and x_ContactCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xContactCode);
@@ -222,7 +222,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -236,7 +236,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -268,8 +268,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1308);
                         ContactCode = dLayer.GetAutoNumber("CRM_Contact", "x_ContactCode", Params, connection, transaction);
-                        if (ContactCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Contact Code")); }
+                        if (ContactCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Contact Code")); }
                         MasterTable.Rows[0]["x_ContactCode"] = ContactCode;
+                    }
+                    if (MasterTable.Columns.Contains("X_SalesmanName"))
+                    {
+
+                        MasterTable.Columns.Remove("X_SalesmanName");
+
                     }
 
 
@@ -277,7 +283,7 @@ namespace SmartxAPI.Controllers
                     if (nContactID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -288,20 +294,20 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
-      
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nContactID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
+                SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nFormID", 1308);
                 QueryParams.Add("@nContactID", nContactID);
 
@@ -314,19 +320,19 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_ContactID",nContactID.ToString());
-                    return Ok(api.Success(res,"Contact deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_ContactID", nContactID.ToString());
+                    return Ok(api.Success(res, "Contact deleted"));
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete Contact"));
+                    return Ok(api.Error(User, "Unable to delete Contact"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
