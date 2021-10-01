@@ -78,22 +78,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-
-                if (reqType == "all")
-                {
-                    int userid = myFunctions.GetUserID(User);
-                    int companyid = myFunctions.GetCompanyID(User);
-                    string companyname = myFunctions.GetCompanyName(User);
-                    string username = myFunctions.GetUserLoginName(User);
-                    int AppID = appID;
-
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
-
-                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
-
-                    return Ok(_api.Success(user));
-                }
-                using (SqlConnection con = new SqlConnection(connectionString))
+                 using (SqlConnection con = new SqlConnection(connectionString))
                 {
                     con.Open();
                     SortedList Params = new SortedList();
@@ -110,6 +95,22 @@ namespace SmartxAPI.Controllers
                         }
                     }
                 }
+
+                if (reqType == "all")
+                {
+                    int userid = myFunctions.GetUserID(User);
+                    int companyid = myFunctions.GetCompanyID(User);
+                    string companyname = myFunctions.GetCompanyName(User);
+                    string username = myFunctions.GetUserLoginName(User);
+                    int AppID = appID;
+
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User));
+
+                    if (user == null) { return Ok(_api.Error(User,"Unauthorized Access")); }
+
+                    return Ok(_api.Success(user));
+                }
+               
                 if (reqType == "switchCompany")
                 {
                     int userid = 0;
