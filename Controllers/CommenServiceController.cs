@@ -74,10 +74,27 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("auth-user")]
-        public ActionResult AuthenticateUser(string reqType, int appID, int nCompanyID, string xCompanyName,string customerKey)
+        public ActionResult AuthenticateUser(string reqType, int appID, int nCompanyID, string xCompanyName,string customerKey,string xVersion)
         {
             try
             {
+                 using (SqlConnection con = new SqlConnection(connectionString))
+                {
+                    con.Open();
+                    SortedList Params = new SortedList();
+                    string xAppVersion="";
+
+                    object AppVersion = dLayer.ExecuteScalar("select TOP 1 X_AppVersion from Gen_SystemSettings order by D_EntryDate DESC", Params, con);
+                    if(AppVersion!=null)xAppVersion=AppVersion.ToString();
+
+                    if(xAppVersion!="")
+                    {
+                        if(xAppVersion!=xVersion)
+                        {
+                            return Ok(_api.Warning("Version error! Build version is "+xVersion+" and Database version is "+xAppVersion));
+                        }
+                    }
+                }
 
                 if (reqType == "all")
                 {
@@ -93,6 +110,7 @@ namespace SmartxAPI.Controllers
 
                     return Ok(_api.Success(user));
                 }
+               
                 if (reqType == "switchCompany")
                 {
                     int userid = 0;
