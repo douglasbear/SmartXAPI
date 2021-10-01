@@ -130,11 +130,11 @@ namespace SmartxAPI.Controllers
                     {
                         Criteria = Criteria + " and N_ManagerID=@nEmpID";
                     }
-                    else if (listType == "myTeam")
-                    {
-                        Criteria = Criteria + " and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID ";
+                    // else if (listType == "myTeam")
+                    // {
+                    //     Criteria = Criteria + " and N_SupervisorID=@nEmpID and N_EmpID<>@nEmpID ";
 
-                    }
+                    // }
 
                     if (bAllBranchData == false)
                     {
@@ -147,7 +147,7 @@ namespace SmartxAPI.Controllers
                         Searchkey = " and ( X_EmpName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%' or X_Sex like '%" + xSearchkey + "%' or X_Position like '%" + xSearchkey + "%' or X_Department like '%" + xSearchkey + "%' or D_HireDate like '%" + xSearchkey + "%' or X_Nationality like '%" + xSearchkey + "%' or X_EmailID like '%" + xSearchkey + "%' or X_IqamaNo like '%" + xSearchkey + "%' or X_BloodGroup like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by X_EmpCode desc";
+                        xSortBy = " order by X_EmpCode asc";
                     else if (xSortBy.Contains("d_HireDate"))
                         xSortBy = " order by cast(D_HireDate as DateTime) " + xSortBy.Split(" ")[1];
                     else
@@ -156,12 +156,12 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Web_MyTeamList " + Criteria + Searchkey +Pattern + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Web_MyTeamList " + Criteria + Pattern + Searchkey + " and N_EmpID not in (select top(" + Count + ") N_EmpID from Vw_Web_MyTeamList " + Criteria + Searchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_Web_MyTeamList " + Criteria + Pattern + Searchkey + " and N_EmpID not in (select top(" + Count + ") N_EmpID from Vw_Web_MyTeamList " + Criteria + Pattern+ Searchkey + xSortBy + " ) " + xSortBy;
                     SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_Web_MyTeamList " + Criteria + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_Web_MyTeamList " + Criteria +Pattern + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
