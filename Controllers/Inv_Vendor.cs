@@ -431,6 +431,38 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
+       [HttpGet("listdetails")]
+        public ActionResult ListDetails(int nCompanyID, int nFnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
+            string sqlCommandText = "select * from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@p2";
+           
+          
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
 
         
     }
