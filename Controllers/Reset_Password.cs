@@ -40,95 +40,99 @@ namespace SmartxAPI.Controllers
 
         //Save....
         [HttpGet("ChangePassword")]
-        public ActionResult savedata(string xOldPasswd,string xNewpasswd,string xConfirmpasswd)
+        public ActionResult savedata(string xOldPasswd, string xNewpasswd, string xConfirmpasswd)
         {
             try
-            {   
-                DataSet dt = new DataSet();       
+            {
+                DataSet dt = new DataSet();
                 int nUserID = myFunctions.GetUserID(User);
                 int nCompanyID = myFunctions.GetCompanyID(User);
 
                 SortedList Params = new SortedList();
-                int ID=0;
-                ID=ValidatePasswordMatching(xOldPasswd,xNewpasswd,xConfirmpasswd);
-                if(ID==1)
+                int ID = 0;
+                ID = ValidatePasswordMatching(xOldPasswd, xNewpasswd, xConfirmpasswd);
+                if (ID == 1)
                     return Ok(api.Warning("Invalid Password"));
-                if(ID==2)
+                if (ID == 2)
                     return Ok(api.Warning("Password Not Matching"));
-                if(ID==3)
+                if (ID == 3)
                     return Ok(api.Warning("Please Choose Different Password"));
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     //  SqlTransaction transaction = connection.BeginTransaction();
-                    int days=0;
+                    int days = 0;
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nUserID", nUserID);
                     object pObjExpPrdCat = dLayer.ExecuteScalar("SELECT Sec_UserCategory.N_PwdExpPeriod FROM  Sec_UserCategory INNER JOIN Sec_User ON Sec_UserCategory.N_CompanyID = Sec_User.N_CompanyID AND Sec_UserCategory.N_UserCategoryID = Sec_User.N_UserCategoryID where Sec_User.N_UserID=@nUserID and Sec_User.N_CompanyID=@nCompanyID", Params, connection);
                     if (pObjExpPrdCat == null || pObjExpPrdCat.ToString() == "0" || pObjExpPrdCat.ToString() == "")
                     {
-                    object pObjExpPrd = dLayer.ExecuteScalar("SELECT N_Value FROM  Gen_Settings where N_CompanyID=@nCompanyID and X_Group ='Application' and X_Description ='PasswordExpiryDays'", Params, connection);
-                    if (pObjExpPrd != null)
-                        days = myFunctions.getIntVAL(pObjExpPrd.ToString());
+                        object pObjExpPrd = dLayer.ExecuteScalar("SELECT N_Value FROM  Gen_Settings where N_CompanyID=@nCompanyID and X_Group ='Application' and X_Description ='PasswordExpiryDays'", Params, connection);
+                        if (pObjExpPrd != null)
+                            days = myFunctions.getIntVAL(pObjExpPrd.ToString());
                     }
                     else
-                    days = myFunctions.getIntVAL(pObjExpPrdCat.ToString());
-                    string password=EncryptString(xNewpasswd);
+                        days = myFunctions.getIntVAL(pObjExpPrdCat.ToString());
+                    string password = EncryptString(xNewpasswd);
 
                     dLayer.ExecuteNonQuery("Update Sec_User set X_Password='" + password + "',D_ExpireDate='" + myFunctions.getDateVAL(Convert.ToDateTime(System.DateTime.Today).AddDays(days)) + "' where N_UserID=@nUserID and N_CompanyID=@nCompanyID", Params, connection);
-                    
-                    using (SqlConnection olivCon = new SqlConnection(masterDBConnectionString))
-                {
-                    olivCon.Open();
-                    
-                    dLayer.ExecuteNonQuery("Update Users set X_Password='" + password + "' where N_UserID="+myFunctions.GetGlobalUserID(User)+" and N_ClientID="+myFunctions.GetClientID(User)+" and X_EmailID='"+myFunctions.GetEmailID(User)+"'", olivCon);
 
-                }
-                    
-                    
+                    using (SqlConnection olivCon = new SqlConnection(masterDBConnectionString))
+                    {
+                        olivCon.Open();
+
+                        dLayer.ExecuteNonQuery("Update Users set X_Password='" + password + "' where N_UserID=" + myFunctions.GetGlobalUserID(User) + " and N_ClientID=" + myFunctions.GetClientID(User) + " and X_EmailID='" + myFunctions.GetEmailID(User) + "'", olivCon);
+
+                    }
+
+
                     return Ok(api.Success(dt));
-                  
+
                 }
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
 
 
         }
-        private int ValidatePasswordMatching(string xOldPasswd,string xNewpasswd,string xConfirmpasswd)
+        private int ValidatePasswordMatching(string xOldPasswd, string xNewpasswd, string xConfirmpasswd)
         {
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList Params = new SortedList();
 
             using (SqlConnection connection = new SqlConnection(connectionString))
+            {
+                connection.Open();
+                using (SqlConnection olivCon = new SqlConnection(masterDBConnectionString))
                 {
-                    connection.Open();
-
-                    string _CurrentPasswd = "Select X_Password from Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID";
+                    olivCon.Open();
+                    string _UserID = dLayer.ExecuteScalar("Select X_UserID from sec_user where N_UserID="+nUserID+"  and N_CompanyID="+nCompanyID+"",Params,connection).ToString();
+                    string _CurrentPasswd = "Select X_Password from users where X_EmailID='"+_UserID+"'";
                     Params.Add("@nCompanyID", nCompanyID);
                     Params.Add("@nUserID", nUserID);
-                    object pObjCurrpwd = dLayer.ExecuteScalar(_CurrentPasswd, Params, connection);
-                     if (DecryptString( pObjCurrpwd.ToString()) != xOldPasswd)
-                     {
-                         return 1;
-                     }
-                     if (xNewpasswd != xConfirmpasswd)
-                     {
+                    object pObjCurrpwd = dLayer.ExecuteScalar(_CurrentPasswd, Params, olivCon);
+                    if (DecryptString(pObjCurrpwd.ToString()) != xOldPasswd)
+                    {
+                        return 1;
+                    }
+                    if (xNewpasswd != xConfirmpasswd)
+                    {
                         return 2;
-                     }
-                     if (xNewpasswd== DecryptString(pObjCurrpwd.ToString()))
-                     {
-                         return 3;
-                     }
-            return 0;
+                    }
+                    if (xNewpasswd == DecryptString(pObjCurrpwd.ToString()))
+                    {
+                        return 3;
+                    }
+                    return 0;
                 }
+            }
         }
 
-         public string DecryptString(string inputString)
+        public string DecryptString(string inputString)
         {
             MemoryStream memStream = null;
             try
@@ -172,7 +176,7 @@ namespace SmartxAPI.Controllers
                 byte[] key = { };
                 byte[] IV = { 12, 21, 43, 17, 57, 35, 67, 27 };
                 string encryptKey = "aXb2uy4z";
-                key =System.Text.Encoding.UTF8.GetBytes(encryptKey);
+                key = System.Text.Encoding.UTF8.GetBytes(encryptKey);
                 byte[] byteInput = System.Text.Encoding.UTF8.GetBytes(inputString);
                 DESCryptoServiceProvider provider = new DESCryptoServiceProvider();
                 memStream = new MemoryStream();
@@ -190,6 +194,6 @@ namespace SmartxAPI.Controllers
         }
 
 
-      
+
     }
 }
