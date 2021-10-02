@@ -38,12 +38,18 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
             int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern = "";
             if (UserPattern != "")
             {
                 Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
                 Params.Add("@p2", UserPattern);
+            }
+            else
+            {
+                Pattern = " and N_UserID=" + nUserID;
+
             }
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
@@ -354,16 +360,16 @@ namespace SmartxAPI.Controllers
                     DataTable StageTable;
                     StageTable = ds.Tables["stageorder"];
                     SortedList Params = new SortedList();
-                    int i=0;
+                    int i = 0;
 
                     int nCompanyId = myFunctions.GetCompanyID(User);
                     Params.Add("@p1", nCompanyId);
 
                     foreach (DataRow dtRow in StageTable.Rows)
                     {
-                        i=i+1;
-                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name='" +dtRow["X_Name"].ToString()+"'", Params, connection);
-            
+                        i = i + 1;
+                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name='" + dtRow["X_Name"].ToString() + "'", Params, connection);
+
                     }
                     return Ok(api.Success("Stage Updated"));
                 }

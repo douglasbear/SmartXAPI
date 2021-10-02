@@ -59,6 +59,10 @@ namespace SmartxAPI.Controllers
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
+                else
+                {
+                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                }
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -377,6 +381,10 @@ namespace SmartxAPI.Controllers
                 {
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
+                }
+                else
+                {
+                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                 }
             }
             string sqlCommandText = "Select case when x_relatedtoname is null then x_subject else x_subject + ' - ' + x_relatedtoname end  as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;

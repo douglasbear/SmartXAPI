@@ -40,11 +40,17 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string UserPattern = myFunctions.GetUserPattern(User);
+            int nUserID = myFunctions.GetUserID(User);
             string Pattern = "";
             if (UserPattern != "")
             {
                 Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
                 Params.Add("@p2", UserPattern);
+            }
+            else
+            {
+                Pattern = " and N_UserID=" + nUserID;
+
             }
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
