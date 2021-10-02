@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
         //     }
         // }
         [HttpGet("list")]
-        public ActionResult OpportunityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -134,10 +134,12 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 " + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ContactID not in (select top(" + Count + ") N_ContactID from vw_CRMContact where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " and N_ContactID not in (select top(" + Count + ") N_ContactID from vw_CRMContact where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p3", nFnYearId);
+
 
             SortedList OutPut = new SortedList();
 
@@ -149,7 +151,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1" + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1 and N_FnYearId=@p3" + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
