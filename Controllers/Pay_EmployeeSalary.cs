@@ -196,15 +196,15 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                // DataTable DetailTable;
-                // DataTable SalaryTable;
-                // DataTable BenefitTable;
-                // DataTable AccrualTable;
+                DataTable DetailTable;
+                DataTable SalaryTable;
+                DataTable BenefitTable;
+                DataTable AccrualTable;
                 MasterTable = ds.Tables["master"];
-                // DetailTable = ds.Tables["details"];
-                // SalaryTable = ds.Tables["salary"];
-                // BenefitTable = ds.Tables["benefit"];
-                // AccrualTable = ds.Tables["accrual"];
+                DetailTable = ds.Tables["details"];
+                SalaryTable = ds.Tables["salary"];
+                BenefitTable = ds.Tables["benefit"];
+                AccrualTable = ds.Tables["accrual"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nGradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_GradeID"].ToString());
@@ -253,47 +253,80 @@ namespace SmartxAPI.Controllers
 
                     nGradeID = dLayer.SaveData("Pay_SalaryGrade", "N_GradeID", MasterTable, connection, transaction);
 
-                    // if (nGradeID > 0)
-                    // {
-                    //     double nPayValue = 0;
-                    //     for (int j = 0; j < SalaryTable.Rows.Count; j++)
-                    //     {
-                    //         string SalarySelect = SalaryTable.Rows[j]["b_SalarySelect"].ToString();
-                    //         if (SalarySelect == "True")
-                    //         {
-                    //             nPayValue = myFunctions.getIntVAL(SalaryTable.Rows[j]["n_Value"].ToString());;
-                    //             nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", SalaryTable, connection, transaction);
-                    //         }
-                    //     }
-                    //     SalaryTable.Columns.Remove("b_SalarySelect");
+                    if (nGradeID > 0)
+                    {
+                        //Salary
+                        DetailTable.Rows.Clear();
+                        for (int j = 0; j < SalaryTable.Rows.Count; j++)
+                        {
+                            DataRow row = DetailTable.NewRow();
+                            row["N_CompanyID"] = nCompanyID;
+                            row["N_GradeID"] = nGradeID;
+                            row["N_PayID"] = myFunctions.getIntVAL(SalaryTable.Rows[j]["n_PayID"].ToString());
+                            row["N_PayFactor"] = 0;
+                            row["B_StartDate"] = 0;
+                            row["B_EndDate"] = 0;
+                            row["B_InActive"] = 0;
+                            row["X_Method"] = "";
+                            row["N_Value"] = myFunctions.getVAL(SalaryTable.Rows[j]["n_Value"].ToString());
+                            row["N_LedgerID"] = 0;
+                            row["N_ReferenceID"] = 1;
+                            // row["X_TicketType"] = 1;
+                            // row["N_TicketAmount"] = 1;
+                            // row["X_TicketNotes"] = 1;
+                            row["N_MinRange"] = myFunctions.getVAL(SalaryTable.Rows[j]["n_MinValue"].ToString());
+                            row["N_MaxRange"] = myFunctions.getVAL(SalaryTable.Rows[j]["n_MaxValue"].ToString());
+                            DetailTable.Rows.Add(row);
+                        }
+                        int nSalDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
 
-                    //     for (int j = 0; j < BenefitTable.Rows.Count; j++)
-                    //     {
-                    //         string BenefitSelect = BenefitTable.Rows[j]["b_BenefitSelect"].ToString();
-                    //         if (BenefitSelect == "True")
-                    //         {
-                    //             nPayValue = myFunctions.getIntVAL(BenefitTable.Rows[j]["n_Value"].ToString());;
-                    //             nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", BenefitTable, connection, transaction);
-                    //         }
-                    //     }
-                    //     BenefitTable.Columns.Remove("b_BenefitSelect");
+                        //Benefit
+                        DetailTable.Rows.Clear();
+                        for (int j = 0; j < BenefitTable.Rows.Count; j++)
+                        {
+                            DataRow row = DetailTable.NewRow();
+                            row["N_CompanyID"] = nCompanyID;
+                            row["N_GradeID"] = nGradeID;
+                            row["N_PayID"] = myFunctions.getIntVAL(BenefitTable.Rows[j]["n_PayID"].ToString());
+                            row["N_PayFactor"] = 0;
+                            row["B_StartDate"] = 0;
+                            row["B_EndDate"] = 0;
+                            row["B_InActive"] = 0;
+                            row["X_Method"] = "";
+                            row["N_Value"] = myFunctions.getVAL(BenefitTable.Rows[j]["n_Value"].ToString());
+                            row["N_LedgerID"] = 0;
+                            row["N_ReferenceID"] = 2;
+                            DetailTable.Rows.Add(row);
+                          
+                        }
+                        int nBenefitDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
 
-                    //     for (int j = 0; j < AccrualTable.Rows.Count; j++)
-                    //     {
-                    //         string AccrualSelect = AccrualTable.Rows[j]["b_AccrualSelect"].ToString();
-                    //         if (AccrualSelect == "True")
-                    //         {
-                    //             nPayValue = myFunctions.getIntVAL(AccrualTable.Rows[j]["n_Accrued"].ToString());;
-                    //             nGradeDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", AccrualTable, connection, transaction);
-                    //         }
-                    //     }
-                    //     AccrualTable.Columns.Remove("b_AccrualSelect");
-                    // }
-                    // else
-                    // {
-                    //     transaction.Rollback();
-                    //     return Ok(_api.Error(User,"Unable to save"));
-                    // }
+                        //Accrual
+                        DetailTable.Rows.Clear();
+                        for (int j = 0; j < AccrualTable.Rows.Count; j++)
+                        {
+                            DataRow row = DetailTable.NewRow();
+                            row["N_CompanyID"] = nCompanyID;
+                            row["N_GradeID"] = nGradeID;
+                            row["N_PayID"] = myFunctions.getIntVAL(AccrualTable.Rows[j]["n_VacTypeID"].ToString());
+                            row["N_PayFactor"] = 0;
+                            row["B_StartDate"] = 0;
+                            row["B_EndDate"] = 0;
+                            row["B_InActive"] = 0;
+                            row["X_Method"] = "";
+                            row["N_Value"] = myFunctions.getVAL(AccrualTable.Rows[j]["n_Accrued"].ToString());
+                            row["N_LedgerID"] = 0;
+                            row["N_ReferenceID"] = 3;
+                            DetailTable.Rows.Add(row);
+                        }
+                        int nAccrualDetailsID = dLayer.SaveData("Pay_SalaryGradeDetails", "N_GradeDetailsID", DetailTable, connection, transaction);
+                           
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
 
                     //dLayer.DeleteData("Pay_SalaryGradeDetails", "N_GradeID", nGradeID, "", connection, transaction);
 

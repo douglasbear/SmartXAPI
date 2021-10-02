@@ -30,11 +30,16 @@ namespace SmartxAPI.Controllers
         }
         [AllowAnonymous]
         [HttpGet("list")]
-        public ActionResult GetCountryList(int nCompanyId)
+        public ActionResult GetCountryList(int nCompanyId,int N_AllowCompany)
         {
-            DataTable dt = new DataTable();
+            DataTable dt = new DataTable(); 
             SortedList Params = new SortedList();
-            string sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1  order by N_CountryID";
+            string sqlCommandText ="";
+
+            if(N_AllowCompany!=0)
+                sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1 and ISNULL(B_AllowCompany,0)=1 order by N_CountryID";
+            else
+                sqlCommandText = "select X_CountryCode,X_CountryName,x_Currency,N_CompanyID,N_CountryID,B_TaxImplement from Acc_Country where N_CompanyID=@p1  order by N_CountryID";
             Params.Add("@p1", nCompanyId);
 
             try

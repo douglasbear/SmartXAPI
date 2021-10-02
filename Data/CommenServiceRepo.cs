@@ -130,8 +130,14 @@ namespace SmartxAPI.Data
                 loginRes.N_CurrencyDecimal = myFunctions.getIntVAL(dLayer.ExecuteScalar("select ISNULL(N_Decimal,0)  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1", Params, connection).ToString());
                 Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
 
+                string EmpSql = "SELECT        vw_PayEmployee.N_EmpID, vw_PayEmployee.X_EmpCode, vw_PayEmployee.X_EmpName, vw_PayEmployee.X_EmpNameLocale, Sec_User.N_UserID, vw_PayEmployee.X_Position, vw_PayEmployee.N_PositionID, " +
+                                "         vw_PayEmployee.X_Department, vw_PayEmployee.N_DepartmentID " +
+                                "FROM            vw_PayEmployee RIGHT OUTER JOIN " +
+                                "        Sec_User ON vw_PayEmployee.N_CompanyID = Sec_User.N_CompanyID AND vw_PayEmployee.N_EmpID = Sec_User.N_EmpID  where  N_FnYearID=@nFnYearID  and  Sec_User.N_CompanyID=@nCompanyID and Sec_User.N_UserID=@nUserID ";
 
-                DataTable EmplData = dLayer.ExecuteDataTable("select N_EmpID,X_EmpCode,X_EmpName,X_EmpNameLocale,N_UserID,X_Position,N_PositionID,X_Department,N_DepartmentID from vw_PayEmployee where N_CompanyID=@nCompanyID and N_UserID=@nUserID and N_FnYearID=@nFnYearID ", Params, connection);
+                DataTable EmplData = dLayer.ExecuteDataTable(EmpSql, Params, connection);
+
+
                 if (EmplData.Rows.Count > 0)
                 {
                     loginRes.N_EmpID = myFunctions.getIntVAL(EmplData.Rows[0]["N_EmpID"].ToString());
@@ -140,7 +146,7 @@ namespace SmartxAPI.Data
                     loginRes.X_EmpNameLocale = EmplData.Rows[0]["X_EmpNameLocale"].ToString();
                     loginRes.X_Position = EmplData.Rows[0]["X_Position"].ToString();
                     loginRes.N_PositionID = myFunctions.getIntVAL(EmplData.Rows[0]["N_PositionID"].ToString());
-                                        loginRes.X_Department = EmplData.Rows[0]["X_Department"].ToString();
+                    loginRes.X_Department = EmplData.Rows[0]["X_Department"].ToString();
                     loginRes.N_DepartmentID = myFunctions.getIntVAL(EmplData.Rows[0]["N_DepartmentID"].ToString());
                 }
 
@@ -155,23 +161,23 @@ namespace SmartxAPI.Data
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
 
                 string xGlobalUserID = "";
-                if(AppID!=10)
-                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
-                {
-                    cnn.Open();
-                    string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
-
-                    DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
-                    if (globalInfo.Rows.Count > 0)
+                if (AppID != 10)
+                    using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                     {
-                        object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
-                        if (AllowMultipleCompany == null)
-                            AllowMultipleCompany = 0;
-                        globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany);
-                        loginRes.GlobalUserInfo = globalInfo;
-                        xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
+                        cnn.Open();
+                        string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
+
+                        DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
+                        if (globalInfo.Rows.Count > 0)
+                        {
+                            object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
+                            if (AllowMultipleCompany == null)
+                                AllowMultipleCompany = 0;
+                            globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany);
+                            loginRes.GlobalUserInfo = globalInfo;
+                            xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
+                        }
                     }
-                }
 
 
 
