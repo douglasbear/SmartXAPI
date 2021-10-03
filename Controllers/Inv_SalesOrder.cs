@@ -138,7 +138,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("details")]
@@ -275,11 +275,23 @@ namespace SmartxAPI.Controllers
 
                         }
                     }
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesDone", typeof(int), InSales != null ? 1 : 0);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(string), InSales);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote != null ? 1 : 0);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DeliveryNoteNo", typeof(string), InDeliveryNote);
-                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderCanceled", typeof(string), CancelStatus);
+                    if (InDeliveryNote != null)
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InDeliveryNote != null ? "Delivery Note Processed" : "");
+                    if (InDeliveryNote != null && InSales != null)
+                    {
+                        MasterTable.Columns.Remove("TxnStatus");
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
+                    }
+                    else if (InSales != null)
+                    {
+                        MasterTable.Columns.Remove("TxnStatus");
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
+                    }
+
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_SalesReceiptNo", typeof(string), InSales);
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "DeliveryNoteDone", typeof(int), InDeliveryNote != null ? 1 : 0);
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DeliveryNoteNo", typeof(string), InDeliveryNote);
+                    //MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderCanceled", typeof(string), CancelStatus);
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
 
@@ -355,6 +367,7 @@ namespace SmartxAPI.Controllers
                     DataTable Terms = dLayer.ExecuteDataTable(TermsSql, Params, connection);
                     Terms = _api.Format(Terms, "Terms");
 
+
                     dt.Tables.Add(Attachments);
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);
@@ -364,7 +377,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -423,7 +436,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
 
@@ -479,7 +492,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex));
+                                return Ok(_api.Error(User, ex));
                             }
                         }
 
@@ -505,7 +518,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
         //Delete....
@@ -528,7 +541,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error(User,"Transaction not Found"));
+                        return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -553,7 +566,7 @@ namespace SmartxAPI.Controllers
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to delete Sales Order"));
+                            return Ok(_api.Error(User, "Unable to delete Sales Order"));
                         }
                         else
                         {
@@ -567,7 +580,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Sales invoice processed! Unable to delete Sales Order"));
+                        return Ok(_api.Error(User, "Sales invoice processed! Unable to delete Sales Order"));
 
                     }
 
@@ -600,7 +613,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
@@ -641,7 +654,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -967,7 +980,7 @@ namespace SmartxAPI.Controllers
                 ItemDetails = dLayer.ExecuteDataTable(pageQry + sql + pageQryEnd + qry, paramList, connection);
                 if (ItemDetails.Rows.Count == 0)
                 {
-                    return Ok(_api.Error(User,"No Items Found"));
+                    return Ok(_api.Error(User, "No Items Found"));
                 }
                 return Ok(_api.Success(_api.Format(ItemDetails)));
             }

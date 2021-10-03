@@ -223,7 +223,9 @@ namespace SmartxAPI.Controllers
 
 
                     //History
-                    HistorySql = "select * from vw_Tsk_TaskStatus where N_CompanyId=@nCompanyID and N_TaskID=@nTaskID order by N_TaskStatusID";
+                    HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator from vw_Tsk_TaskStatus  where N_TaskID="+TaskID+" "+
+                     "union all "+
+                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator from vw_Tsk_TaskComments  where N_ActionID="+TaskID+"  ) as temptable order by D_EntryDate";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
 
 
