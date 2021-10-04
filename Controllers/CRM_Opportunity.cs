@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, Items, Activity;
+                DataTable MasterTable, Items, Activity, Participants;
                 MasterTable = ds.Tables["master"];
                 Items = ds.Tables["Items"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -261,6 +261,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                   
 
 
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
@@ -354,16 +355,16 @@ namespace SmartxAPI.Controllers
                     DataTable StageTable;
                     StageTable = ds.Tables["stageorder"];
                     SortedList Params = new SortedList();
-                    int i=0;
+                    int i = 0;
 
                     int nCompanyId = myFunctions.GetCompanyID(User);
                     Params.Add("@p1", nCompanyId);
 
                     foreach (DataRow dtRow in StageTable.Rows)
                     {
-                        i=i+1;
-                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name='" +dtRow["X_Name"].ToString()+"'", Params, connection);
-            
+                        i = i + 1;
+                        dLayer.ExecuteNonQuery("update Gen_LookUpTable set N_Sort=" + i + " where N_CompanyID=@p1 and X_Name='" + dtRow["X_Name"].ToString() + "'", Params, connection);
+
                     }
                     return Ok(api.Success("Stage Updated"));
                 }
@@ -373,7 +374,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
         }
-
+      
     }
-
 }

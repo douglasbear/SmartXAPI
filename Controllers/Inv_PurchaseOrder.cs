@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
                             case "orderNo":
                                 xSortBy = "N_POrderID " + xSortBy.Split(" ")[1];
                                 break;
-                                case "orderDate":
+                            case "orderDate":
                                 xSortBy = "Cast([Order Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "n_Amount":
@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -184,7 +184,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("listDetails")]
@@ -199,31 +199,31 @@ namespace SmartxAPI.Controllers
             if (xPRSNo == null) xPRSNo = "";
             string Mastersql = "";
 
-           if (bAllBranchData == true)
+            if (bAllBranchData == true)
             {
-                Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID,Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate,"+ 
-                            "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, "+
-                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, "+
-                            "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, "+
-                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, "+
-                            "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Inv_PurchaseOrder.N_TaxCategoryID2, "+
-                            "Inv_PurchaseOrder.N_TaxPercentage2, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON "+
-                            "Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN "+
-                            "Inv_Vendor ON Acc_CurrencyMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Vendor.N_CurrencyID ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN "+
-                            "Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory_1.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory_1.N_PkeyID "+
+                Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID,Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate," +
+                            "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, " +
+                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
+                            "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, " +
+                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
+                            "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Inv_PurchaseOrder.N_TaxCategoryID2, " +
+                            "Inv_PurchaseOrder.N_TaxPercentage2, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON " +
+                            "Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN " +
+                            "Inv_Vendor ON Acc_CurrencyMaster.N_CompanyID = Inv_Vendor.N_CompanyID AND Acc_CurrencyMaster.N_CurrencyID = Inv_Vendor.N_CurrencyID ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN " +
+                            "Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory_1.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory_1.N_PkeyID " +
                             " Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.N_FnYearID=@p2 and Inv_PurchaseOrder.X_POrderNo=@p3";
             }
             else
             {
-                Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate, "+
-                            "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, "+
-                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, "+
-                            "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, "+
-                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, "+
-                            "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 "+
-                            "FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND "+
-                            "Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Vendor ON Acc_CurrencyMaster.N_CurrencyID = Inv_Vendor.N_CurrencyID AND Acc_CurrencyMaster.N_CompanyID = Inv_Vendor.N_CompanyID ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND "+
-                            "Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory_1.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory_1.N_PkeyID "+
+                Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate, " +
+                            "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, " +
+                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
+                            "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, " +
+                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
+                            "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 " +
+                            "FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND " +
+                            "Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN Inv_Vendor ON Acc_CurrencyMaster.N_CurrencyID = Inv_Vendor.N_CurrencyID AND Acc_CurrencyMaster.N_CompanyID = Inv_Vendor.N_CompanyID ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND " +
+                            "Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID LEFT OUTER JOIN Gen_Defaults ON Inv_PurchaseOrder.N_POType = Gen_Defaults.N_TypeId LEFT OUTER JOIN Inv_Location ON Inv_PurchaseOrder.N_LocationID = Inv_Location.N_LocationID LEFT OUTER JOIN Acc_TaxCategory AS Acc_TaxCategory_1 ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory_1.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID = Acc_TaxCategory_1.N_PkeyID " +
                             "Where Inv_PurchaseOrder.N_CompanyID=@p1 and Inv_PurchaseOrder.X_POrderNo=@p3 and Inv_PurchaseOrder.N_BranchID=@nBranchID and Inv_PurchaseOrder.N_FnYearID=@p2";
                 Params.Add("@nBranchID", nBranchID);
             }
@@ -241,12 +241,17 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
+                    object InPurchase = dLayer.ExecuteScalar("select 1 from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID, Params, connection);
+                    if (InPurchase != null)
+                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
+
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
 
                     //PurchaseOrder Details
-                    int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
+
 
                     string DetailSql = "";
                     bool MaterailRequestVisible = myFunctions.CheckPermission(nCompanyId, 556, "Administrator", "X_UserCategory", dLayer, connection);
@@ -314,7 +319,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -351,7 +356,7 @@ namespace SmartxAPI.Controllers
                     if (N_POrderID > 0)
                     {
                         if (CheckProcessed(N_POrderID))
-                            return Ok(api.Error(User,"Transaction Started!"));
+                            return Ok(api.Error(User, "Transaction Started!"));
                     }
                     int N_VendorID = myFunctions.getIntVAL(Master["n_VendorID"].ToString());
                     if (myFunctions.checkIsNull(Master, "n_POTypeID"))
@@ -441,7 +446,7 @@ namespace SmartxAPI.Controllers
                     if (N_POrderID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Error"));
+                        return Ok(api.Error(User, "Error"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -464,7 +469,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User,ex));
+                            return Ok(api.Error(User, ex));
                         }
                     }
 
@@ -519,7 +524,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error(User,"Transaction not Found"));
+                        return Ok(api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
 
@@ -546,11 +551,11 @@ namespace SmartxAPI.Controllers
                         if (Results <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to delete Purchase Order"));
+                            return Ok(api.Error(User, "Unable to delete Purchase Order"));
                         }
                         else
                         {
-                            myAttachments.DeleteAttachment(dLayer, 1,nPOrderID,VendorID, nFnYearID, this.FormID,User, transaction, connection);
+                            myAttachments.DeleteAttachment(dLayer, 1, nPOrderID, VendorID, nFnYearID, this.FormID, User, transaction, connection);
 
                             transaction.Commit();
                             return Ok(api.Success("Purchase Order deleted"));
@@ -561,9 +566,9 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objPurchaseProcessed.ToString()) > 0)
-                            return Ok(api.Error(User,"Purchase invoice processed! Unable to delete"));
+                            return Ok(api.Error(User, "Purchase invoice processed! Unable to delete"));
                         else
-                            return Ok(api.Error(User,"Unable to delete!"));
+                            return Ok(api.Error(User, "Unable to delete!"));
 
                     }
 
@@ -597,7 +602,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
