@@ -279,12 +279,14 @@ namespace SmartxAPI.Controllers
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InDeliveryNote != null ? "Delivery Note Processed" : "");
                     if (InDeliveryNote != null && InSales != null)
                     {
-                        MasterTable.Columns.Remove("TxnStatus");
+                        if (MasterTable.Columns.Contains("TxnStatus"))
+                            MasterTable.Columns.Remove("TxnStatus");
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
                     }
                     else if (InSales != null)
                     {
-                        MasterTable.Columns.Remove("TxnStatus");
+                       if (MasterTable.Columns.Contains("TxnStatus"))
+                            MasterTable.Columns.Remove("TxnStatus");
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
                     }
 
