@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -289,12 +289,16 @@ namespace SmartxAPI.Controllers
                     {
                         Master.Rows[0]["B_SalesOrderProcessed"] = 1;
                         Master.Rows[0]["X_SalesOrderNo"] = objxSalesOrder;
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Sales Order Processed");
                     }
                     object objxDeliveryNoteNo = myFunctions.checkProcessed("Inv_DeliveryNote", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
                     if (objxDeliveryNoteNo.ToString() != "")
                     {
                         Master.Rows[0]["B_DeliveryNoteProcessed"] = 1;
                         Master.Rows[0]["X_DeliveryNoteNo"] = objxDeliveryNoteNo;
+                        if (Master.Columns.Contains("TxnStatus"))
+                            Master.Columns.Remove("TxnStatus");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Delivery Note Processed");
 
                     }
                     object objxSalesNo = myFunctions.checkProcessed("Inv_Sales", "X_ReceiptNo", "N_QuotationID", "@nQuotationID", "N_CompanyID=@nCompanyID and B_IsSaveDraft=0", Params, dLayer, connection);
@@ -302,6 +306,9 @@ namespace SmartxAPI.Controllers
                     {
                         Master.Rows[0]["B_SalesProcessed"] = 1;
                         Master.Rows[0]["X_SalesReceiptNo"] = objxSalesNo;
+                        if (Master.Columns.Contains("TxnStatus"))
+                            Master.Columns.Remove("TxnStatus");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
 
@@ -394,7 +401,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -460,7 +467,7 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    int N_CrmCompanyID = MasterTable.Columns.Contains("N_CrmCompanyID") ? myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString()):0;
+                    int N_CrmCompanyID = MasterTable.Columns.Contains("N_CrmCompanyID") ? myFunctions.getIntVAL(MasterRow["N_CrmCompanyID"].ToString()) : 0;
                     int N_ContactID = MasterTable.Columns.Contains("N_ContactID") ? myFunctions.getIntVAL(MasterRow["N_ContactID"].ToString()) : 0;
                     int N_NextApproverID = 0;
 
@@ -514,7 +521,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 80);
                         Params.Add("N_BranchID", Master["n_BranchId"].ToString());
                         QuotationNo = dLayer.GetAutoNumber("Inv_SalesQuotation", "x_QuotationNo", Params, connection, transaction);
-                        if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Quotation Number")); }
+                        if (QuotationNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Quotation Number")); }
                         MasterTable.Rows[0]["x_QuotationNo"] = QuotationNo;
 
                     }
@@ -543,7 +550,7 @@ namespace SmartxAPI.Controllers
                     if (N_QuotationID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Quotation"));
+                        return Ok(_api.Error(User, "Unable to save Quotation"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
@@ -558,7 +565,7 @@ namespace SmartxAPI.Controllers
                     if (N_QuotationDetailId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Quotation"));
+                        return Ok(_api.Error(User, "Unable to save Quotation"));
                     }
                     else
                     {
@@ -589,7 +596,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex));
+                                return Ok(_api.Error(User, ex));
                             }
                         }
                         //transaction.Commit();
@@ -605,7 +612,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -811,7 +818,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", N_QuotationID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerID,0) as N_CustomerID,X_QuotationNo from Inv_SalesQuotation where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@nTransID";
 
                     // string Sql = "select isNull(Inv_SalesQuotation.N_UserID,0) as N_UserID,isNull(Inv_SalesQuotation.N_ProcStatus,0) as N_ProcStatus,isNull(Inv_SalesQuotation.N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(Inv_SalesQuotation.N_CustomerID,0) as N_CustomerID,Inv_SalesQuotation.X_QuotationNo, CASE WHEN ISNULL(Inv_SalesQuotation.N_CrmCompanyID,0)>0 THEN CRM_Customer.X_Customer ELSE CRM_Contact.X_Contact END AS X_CName" +
                     //             " from Inv_SalesQuotation LEFT OUTER JOIN CRM_Customer ON Inv_SalesQuotation.N_CompanyId = CRM_Customer.N_CompanyId AND Inv_SalesQuotation.N_FnYearId = CRM_Customer.N_FnYearId AND  Inv_SalesQuotation.N_CrmCompanyID = CRM_Customer.N_CustomerID LEFT OUTER JOIN" +
@@ -820,7 +827,7 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(_api.Error(User,"Transaction not Found"));
+                        return Ok(_api.Error(User, "Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
                     int N_CustomerID = myFunctions.getIntVAL(TransRow["N_CustomerID"].ToString());
@@ -864,7 +871,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to delete Sales Quotation"));
+                            return Ok(_api.Error(User, "Unable to delete Sales Quotation"));
                         }
                         // SortedList DeleteParams = new SortedList(){
                         //         {"N_CompanyID",nCompanyID},
@@ -890,11 +897,11 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                         if (myFunctions.getIntVAL(objSalesProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User,"Sales invoice processed! Unable to delete"));
+                            return Ok(_api.Error(User, "Sales invoice processed! Unable to delete"));
                         else if (myFunctions.getIntVAL(objOrderProcessed.ToString()) > 0)
-                            return Ok(_api.Error(User,"Sales order processed! Unable to delete"));
+                            return Ok(_api.Error(User, "Sales order processed! Unable to delete"));
                         else
-                            return Ok(_api.Error(User,"Unable to delete!"));
+                            return Ok(_api.Error(User, "Unable to delete!"));
 
                     }
 
@@ -926,7 +933,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
