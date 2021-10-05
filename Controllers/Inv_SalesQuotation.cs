@@ -348,7 +348,8 @@ namespace SmartxAPI.Controllers
                             Params["@xClassItemCode"] = var["ClassItemCode"].ToString();
                             Params["@nItemID"] = var["N_ItemId"].ToString();
                             object subQty = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemDetails where N_MainItemId=(select N_ItemId from Inv_Itemmaster where X_itemcode=@xClassItemCode) and N_ItemId=@nItemID and N_CompanyID=@nCompanyID", Params, connection);
-                            var["X_UpdatedSPrice"] = subQty.ToString();
+                            if(subQty!=null)
+                                var["SubQty"] = subQty.ToString();
                         }
                         else
                         {

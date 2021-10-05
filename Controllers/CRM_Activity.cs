@@ -59,6 +59,10 @@ namespace SmartxAPI.Controllers
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
+                else
+                {
+                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                }
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -172,14 +176,17 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable;
+                DataTable MasterTable, Participants;
                 MasterTable = ds.Tables["master"];
+                Participants = ds.Tables["Participants"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nActivityID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ActivityID"].ToString());
                 string bClosed = MasterTable.Rows[0]["b_Closed"].ToString();
                 string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
                 int nUserID = myFunctions.GetUserID(User);
+                int N_InviteID = 0;
+                
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -237,6 +244,18 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                     
+                        if (Participants.Rows.Count > 0)
+                        {
+                            for (int j = 0; j < Participants.Rows.Count; j++)
+                            {
+                                dLayer.DeleteData("CRM_ActivityInvites", "N_InviteID", myFunctions.getIntVAL(Participants.Rows[j]["n_InviteID"].ToString()), "", connection, transaction);
+                                Participants.Rows[j]["N_ActivityID"] = nActivityID;
+                            }
+                            N_InviteID = dLayer.SaveData("CRM_ActivityInvites", "N_InviteID", Participants, connection, transaction);
+
+                        }
+
                         DataTable dtSave = new DataTable();
                         dtSave.Clear();
                         dtSave.Columns.Add("N_CompanyID");
@@ -355,6 +374,46 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("partcipantList")]
+        public ActionResult ParticipantList(int nProjectID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
+                    object employees = "";
+                    string SqlCommandText = "";
+                    employees = dLayer.ExecuteScalar("select X_EmpsID from Inv_CustomerProjects where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID + "", Params, connection);
+                    if (employees != null && employees.ToString() != "")
+                    {
+                        SqlCommandText = "select * from Vw_EmpUserPartcipants Where  N_CompanyID=" + nCompanyID + " and N_EmpID in (" + employees.ToString() + ")";
+
+                    }
+                    dt = dLayer.ExecuteDataTable(SqlCommandText, Params, connection);
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+
+        }
+
         [HttpGet("calenderData")]
         public ActionResult GetcalenderData(bool bySalesMan)
 
@@ -377,6 +436,10 @@ namespace SmartxAPI.Controllers
                 {
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
+                }
+                else
+                {
+                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                 }
             }
             string sqlCommandText = "Select case when x_relatedtoname is null then x_subject else x_subject + ' - ' + x_relatedtoname end  as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;

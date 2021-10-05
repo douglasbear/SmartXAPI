@@ -34,110 +34,174 @@ namespace SmartxAPI.Controllers
             N_FormID = 974;
         }
 
-        [HttpGet("salaryDetails")]
-        public ActionResult GetSalaryDetails(int nFnYearID)
+        // [HttpGet("salaryDetails")]
+        // public ActionResult GetSalaryDetails(int nFnYearID)
+        // {
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     Params.Add("@p1", nCompanyID);
+        //     Params.Add("@p2", nFnYearID);
+
+        //     string sqlCommandText = "Select * from vw_PayMaster Where N_CompanyID=@p1 and (N_Paymethod=0 or N_Paymethod=3) and (N_PayTypeID <>11 and N_PayTypeID <>12 ) and N_FnYearID=@p2 and N_PaymentID=5 and B_InActive=0";
+
+
+        //     SortedList OutPut = new SortedList();
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+        //             OutPut.Add("Details", _api.Format(dt));
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(_api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(_api.Success(OutPut));
+        //             }
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
+        // [HttpGet("benefitDetails")]
+        // public ActionResult GetBenefitDetails(int nFnYearID)
+        // {
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     Params.Add("@p1", nCompanyID);
+        //     Params.Add("@p2", nFnYearID);
+
+        //     string sqlCommandText = "Select * from vw_PayMaster Where ( N_CompanyID=@p1 and  N_FnYearID=@p2 and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@p1 and  N_FnYearID=@p2) and isnull(B_InActive,0)=0 order by N_PayTypeID";
+
+        //     SortedList OutPut = new SortedList();
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+        //             OutPut.Add("Details", _api.Format(dt));
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(_api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(_api.Success(OutPut));
+        //             }
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
+        // [HttpGet("accrualSettings")]
+        // public ActionResult GetAccrualSettings(int nFnYearID, int nCountryID)
+        // {
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     Params.Add("@p1", nCompanyID);
+        //     Params.Add("@p2", nCountryID);
+
+        //     string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and N_CountryID=@p2 and isnull(B_InActive,0)=0 order by X_Type desc";
+
+        //     SortedList OutPut = new SortedList();
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+        //             OutPut.Add("Details", _api.Format(dt));
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(_api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(_api.Success(OutPut));
+        //             }
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
+         [HttpGet("default")]
+        public ActionResult GetEmployeeDefault(int nFnYearID, int nCountryID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable dt = new DataTable();
+            DataTable  pay_benifits, pay_EmpAccruls, pay_PaySetup;
+
+            SortedList Result = new SortedList();
             SortedList Params = new SortedList();
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nFnYearID);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nCountryID", nCountryID);
 
-            string sqlCommandText = "Select * from vw_PayMaster Where N_CompanyID=@p1 and (N_Paymethod=0 or N_Paymethod=3) and (N_PayTypeID <>11 and N_PayTypeID <>12 ) and N_FnYearID=@p2 and N_PaymentID=5 and B_InActive=0";
-
-
-            SortedList OutPut = new SortedList();
-
+            string accrualSql = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period,B_InActive from vw_PayAccruedCode_List Where N_CompanyID=@nCompanyID and isnull(N_CountryID,0)=@nCountryID and isnull(B_InActive,0)=0 order by X_Type desc";
+            string paySetupSql = "Select * from vw_PayMaster Where N_CompanyID=@nCompanyID and (N_Paymethod=0 or N_Paymethod=3) and (N_PayTypeID <>11 and N_PayTypeID <>12 ) and N_FnYearID=@nFnYearID and N_PaymentID=5 and B_InActive=0"; 
+            string payBenifitsSql = "Select * from vw_PayMaster Where ( N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@nCompanyID and  N_FnYearID=@nFnYearID) and isnull(B_InActive,0)=0 order by N_PayTypeID";
+            
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                    OutPut.Add("Details", _api.Format(dt));
-                    if (dt.Rows.Count == 0)
+                    pay_PaySetup = dLayer.ExecuteDataTable(paySetupSql, Params, connection);
+                    pay_EmpAccruls = dLayer.ExecuteDataTable(accrualSql, Params, connection);
+                    pay_benifits = dLayer.ExecuteDataTable(payBenifitsSql, Params, connection);
+                    pay_PaySetup = myFunctions.AddNewColumnToDataTable(pay_PaySetup, "summeryInfo", typeof(DataTable), null);
+                    foreach (DataRow dRow in pay_PaySetup.Rows)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                        DataTable dtNode = new DataTable();
+                        int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
+                        string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
+                        DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
+
+                        dRow["summeryInfo"] = summeryInfo;
+
                     }
-                    else
+                    pay_benifits = myFunctions.AddNewColumnToDataTable(pay_benifits, "summeryInfo", typeof(DataTable), null);
+                    foreach (DataRow dRow in pay_benifits.Rows)
                     {
-                        return Ok(_api.Success(OutPut));
+                        DataTable dtNode = new DataTable();
+                        int N_PayID = myFunctions.getIntVAL(dRow["N_PayID"].ToString());
+                        string Pay_SummaryPercentageSql = "SELECT    * From Pay_SummaryPercentage inner join Pay_PayType on Pay_SummaryPercentage.N_PayTypeID = Pay_PayType.N_PayTypeID and Pay_SummaryPercentage.N_CompanyID = Pay_PayType.N_CompanyID  Where Pay_SummaryPercentage.N_PayID =" + N_PayID + " and Pay_SummaryPercentage.N_CompanyID=" + myFunctions.GetCompanyID(User);
+                        DataTable summeryInfo = dLayer.ExecuteDataTable(Pay_SummaryPercentageSql, connection);
+
+                        dRow["summeryInfo"] = summeryInfo;
+
                     }
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User,e));
-            }
-        }
+                    pay_PaySetup.AcceptChanges();
+                    pay_PaySetup = _api.Format(pay_PaySetup);
+                    pay_EmpAccruls = _api.Format(pay_EmpAccruls);
+                    pay_benifits = _api.Format(pay_benifits);
+                    Result.Add("salary", pay_PaySetup);
+                    Result.Add("accrual", pay_EmpAccruls);
+                    Result.Add("benefit", pay_benifits);
 
-        [HttpGet("benefitDetails")]
-        public ActionResult GetBenefitDetails(int nFnYearID)
-        {
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nFnYearID);
+                    return Ok(_api.Success(Result));
 
-            string sqlCommandText = "Select * from vw_PayMaster Where ( N_CompanyID=@p1 and  N_FnYearID=@p2 and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@p1 and  N_FnYearID=@p2) and isnull(B_InActive,0)=0 order by N_PayTypeID";
-
-            SortedList OutPut = new SortedList();
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                    OutPut.Add("Details", _api.Format(dt));
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Success(OutPut));
-                    }
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(_api.Error(User,e));
-            }
-        }
-
-        [HttpGet("accrualSettings")]
-        public ActionResult GetAccrualSettings(int nFnYearID, int nCountryID)
-        {
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            Params.Add("@p1", nCompanyID);
-            Params.Add("@p2", nCountryID);
-
-            string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and N_CountryID=@p2 and isnull(B_InActive,0)=0 order by X_Type desc";
-
-            SortedList OutPut = new SortedList();
-
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-
-                    OutPut.Add("Details", _api.Format(dt));
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Success(OutPut));
-                    }
                 }
             }
             catch (Exception e)
@@ -153,7 +217,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable MasterTable = new DataTable();
-            DataTable DetailTable = new DataTable();
+            DataTable SG_Salary, SG_Benefits, SG_Accruals;
             string Mastersql = "Select * from vw_Pay_SalaryGrade Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_GradeID=@nGradeID";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
@@ -176,11 +240,21 @@ namespace SmartxAPI.Controllers
 
                     int N_GradeID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_GradeID"].ToString());
 
-                    string DetailSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID;
+                    string SG_SalarySql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID+" and N_ReferenceID=1";
+                    string SG_BenefitsSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID+" and N_ReferenceID=2";
+                    string SG_AccrualsSql = "select * from Pay_SalaryGradeDetails where N_CompanyID=" + nCompanyID + " and N_GradeID=" + N_GradeID+" and N_ReferenceID=3";
 
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
-                    DetailTable = _api.Format(DetailTable, "Details");
-                    dt.Tables.Add(DetailTable);
+                    SG_Salary = dLayer.ExecuteDataTable(SG_SalarySql, Params, connection);
+                    SG_Benefits = dLayer.ExecuteDataTable(SG_BenefitsSql, Params, connection);
+                    SG_Accruals = dLayer.ExecuteDataTable(SG_AccrualsSql, Params, connection);
+
+                    SG_Salary = _api.Format(SG_Salary, "pay_Salary");
+                    SG_Benefits = _api.Format(SG_Benefits, "pay_Benefits");
+                    SG_Accruals = _api.Format(SG_Accruals, "pay_Accruals");
+
+                    dt.Tables.Add(SG_Salary);
+                    dt.Tables.Add(SG_Benefits);
+                    dt.Tables.Add(SG_Accruals);
                 }
                 return Ok(_api.Success(dt));
             }
@@ -238,7 +312,7 @@ namespace SmartxAPI.Controllers
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
                                 {"X_TransType","Employee Salary Grade"},
-                                {"N_VoucherID",nGradeID},};
+                                {"N_VoucherID",nGradeID}};
                         try
                         {
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
@@ -344,23 +418,24 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCompanyID, int nGradeID)
         {
             int nUserID = myFunctions.GetUserID(User);
+            int Results=0;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    // SortedList deleteParams = new SortedList()
-                    //         {
-                    //             {"N_CompanyID",nCompanyID},
-                    //             {"X_TransType","Employee Salary Grade"},
-                    //             {"N_VoucherID",nGradeID},
-                    //             {"N_UserID",nUserID},
-                    //             {"X_SystemName","WebRequest"},
-
-
-                    //         };
-                    // dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
-                    int Results = dLayer.DeleteData("Pay_SalaryGrade", "N_GradeID", nGradeID, "", connection);
+                    SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType","Employee Salary Grade"},
+                                {"N_VoucherID",nGradeID}};
+                    try
+                    {
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection);
+                    }
+                    catch (Exception ex)
+                    {
+                        return Ok(_api.Error(User,ex));
+                    }
                     if (Results <= 0)
                     {
                         return Ok(_api.Error(User,"Unable to Delete"));
