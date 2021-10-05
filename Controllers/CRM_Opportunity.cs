@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                DataTable MasterTable, Items, Activity;
+                DataTable MasterTable, Items, Activity, Participants;
                 MasterTable = ds.Tables["master"];
                 Items = ds.Tables["Items"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -268,6 +268,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                   
 
 
                         dLayer.SaveData("Crm_Products", "N_CrmItemID", Items, connection, transaction);
@@ -380,7 +381,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, ex));
             }
         }
-
+      
     }
-
 }
