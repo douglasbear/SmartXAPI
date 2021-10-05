@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bySalesMan)
+        public ActionResult ActivityList( int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bySalesMan)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -59,6 +59,10 @@ namespace SmartxAPI.Controllers
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
                 }
+                else
+                {
+                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
+                }
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -70,12 +74,12 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 and N_FnYearId=@p3 " + Searchkey + Criteria + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + Criteria + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRM_Activity where N_CompanyID=@p1 and N_FnYearId=@p3 " + Searchkey + Criteria + " and N_ActivityID not in (select top(" + Count + ") N_ActivityID from vw_CRM_Activity where N_CompanyID=@p1 " + Criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@nUserID", nUserID);
-
+            Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
 
 
@@ -86,7 +90,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 " + Searchkey + Criteria;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Activity where N_CompanyID=@p1 and N_FnYearId=@p3 " + Searchkey + Criteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -432,6 +436,10 @@ namespace SmartxAPI.Controllers
                 {
                     Criteria = " and Left(X_Pattern,Len(@p2))=@p2 and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                     Params.Add("@p2", UserPattern);
+                }
+                else
+                {
+                    Criteria = " and N_UserID=@nUserID and isnull(B_Closed,0)<>1 and x_subject<>'Lead Created' and x_subject<>'Lead Closed'";
                 }
             }
             string sqlCommandText = "Select case when x_relatedtoname is null then x_subject else x_subject + ' - ' + x_relatedtoname end  as title,'true' as allDay,cast(D_ScheduleDate as Date) as start,cast(D_ScheduleDate as Date) as 'end',N_ActivityID,X_ActivityCode,X_Status from vw_CRM_Activity Where N_CompanyID= " + nCompanyID + " " + Criteria;
