@@ -300,7 +300,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("pay_EmpAccruls", pay_EmpAccruls);
                     Result.Add("pay_benifits", pay_benifits);
                     Result.Add("pay_Codes", pay_Codes);
-                    Result.Add("pay_OtherInfo", pay_OtherInfo);
+                    Result.Add("pay_OtherInfo", pay_OtherInfo); 
 
                     return Ok(_api.Success(Result));
 
