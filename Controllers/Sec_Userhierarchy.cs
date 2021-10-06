@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            N_FormID = 1349;//form id of cost center
+            N_FormID = 1397;//form id of cost center
         }
 
         [HttpGet("chart")]

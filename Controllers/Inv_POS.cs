@@ -817,7 +817,7 @@ namespace SmartxAPI.Controllers
 
                             try
                             {
-                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                                // dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
                             }
                             catch (Exception ex)
                             {
