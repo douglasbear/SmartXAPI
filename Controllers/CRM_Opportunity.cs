@@ -35,8 +35,9 @@ namespace SmartxAPI.Controllers
         public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
+            DataTable dtRevenue = new DataTable();
             SortedList Params = new SortedList();
-            string sqlCommandCount = "";
+            string sqlCommandCount = "",sqlCommandTotRevenue="";
 
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -81,8 +82,13 @@ namespace SmartxAPI.Controllers
 
                     sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and  isnull(N_ClosingStatusID,0) = 0 " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";
+                    dtRevenue = dLayer.ExecuteDataTable(sqlCommandTotRevenue, Params, connection);
+
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
+                    OutPut.Add("TotRevenue",  api.Format(dtRevenue));
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Success(OutPut));
