@@ -261,6 +261,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     Results = dLayer.DeleteData("Inv_DiscountMaster", "N_DiscID", n_DiscountId, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
+                    dLayer.DeleteData("Inv_DiscountDetails", "N_DiscID", n_DiscountId, "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection);
 
                 }
                 if (Results > 0)

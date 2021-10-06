@@ -145,7 +145,29 @@ namespace SmartxAPI.Controllers
                     var password = UserTable.Rows[0]["password"].ToString();
                     var emailID = UserTable.Rows[0]["emailID"].ToString();
                     int appType = myFunctions.getIntVAL(UserTable.Rows[0]["appType"].ToString());
+                    var version = UserTable.Rows[0]["version"].ToString();
 
+                    using (SqlConnection con = new SqlConnection(connectionString))
+                    {
+                        con.Open();
+                        if(!myFunctions.CheckVersion(version,dLayer,con))
+                        {
+                            return Ok(_api.Warning("Version error! Please contact the administrator!"));
+                        }
+                        // SortedList Params = new SortedList();
+                        // string xAppVersion="";
+
+                        // object AppVersion = dLayer.ExecuteScalar("select TOP 1 X_AppVersion from Gen_SystemSettings order by D_EntryDate DESC", Params, con);
+                        // if(AppVersion!=null)xAppVersion=AppVersion.ToString();
+
+                        // if(xAppVersion!="")
+                        // {
+                        //     if(xAppVersion!=version)
+                        //     {
+                        //         return Ok(_api.Warning("Version error! Build version is "+version+" and Database version is "+xAppVersion));
+                        //     }
+                        // }
+                    }
 
                     if (emailID == null || password == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 

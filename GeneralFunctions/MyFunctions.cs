@@ -1636,7 +1636,24 @@ namespace SmartxAPI.GeneralFunctions
             return res;
         }
 
+        public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection)
+        {
+            SortedList Params = new SortedList();
+            string xAppVersion="";
+            String xAPIVersion=myCompanyID._APIVersion;
 
+            object AppVersion = dLayer.ExecuteScalar("select TOP 1 X_AppVersion from Gen_SystemSettings order by D_EntryDate DESC", Params, connection);
+            if(AppVersion!=null)xAppVersion=AppVersion.ToString();
+
+            if(xAppVersion!="")
+            {
+                if((xAppVersion!=xSrcVersion)||(xAppVersion!=xAPIVersion)||(xSrcVersion!=xAPIVersion))
+                {                   
+                    return false;
+                }
+            }
+            return true;
+        }
     }
 
 
@@ -1701,5 +1718,6 @@ namespace SmartxAPI.GeneralFunctions
         public string GetTempFilePath();
         public string RandomString(int length = 6);
         public bool writeImageFile(string FileString, string Path, string Name);
+        public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection);
     }
 }
