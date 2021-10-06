@@ -213,7 +213,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nLeadID", n_LeadID);
                     if (CreateCustomer == true)
                     {
-                        CustomerSql = "select 0 as 'N_CustomerID',0 as 'X_CustomerCode',X_Company as X_Customer,X_Phone2 as X_Phone,X_Fax,X_Website,X_State,X_Street,X_City,N_CountryID,N_CompanyId,N_FnYearId,N_EmployeesCount as X_Employee,N_AnnRevenue From CRM_Leads where N_LeadID=@nLeadID";
+                        CustomerSql = "select 0 as 'N_CustomerID',0 as 'X_CustomerCode',X_Company as X_Customer,X_Phone2 as X_Phone,X_Fax,X_Website,X_State,X_Street,X_City,N_CountryID,N_CompanyId,N_FnYearId,N_EmployeesCount as X_Employee,N_AnnRevenue,N_UserID From CRM_Leads where N_LeadID=@nLeadID";
                         CustomerTbl = dLayer.ExecuteDataTable(CustomerSql, Params, connection, transaction);
                         if (CustomerTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Customer ")); }
                         if (CustomerTbl.Rows[0]["X_Customer"].ToString() != "")
@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (CreateContact == true)
                     {
-                        ContactSql = "select N_CompanyID,N_FnYearId,0 as 'N_ContactID',0 as 'X_ContactCode',X_ContactName as 'X_Contact',X_Title,X_Email,X_Phone1 as 'X_Phone' From CRM_Leads where N_LeadID=@nLeadID";
+                        ContactSql = "select N_CompanyID,N_FnYearId,0 as 'N_ContactID',0 as 'X_ContactCode',X_ContactName as 'X_Contact',X_Title,X_Email,N_UserID,X_Phone1 as 'X_Phone' From CRM_Leads where N_LeadID=@nLeadID";
                         ContactTbl = dLayer.ExecuteDataTable(ContactSql, Params, connection, transaction);
                         if (ContactTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Contact")); }
 
@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
                     }
                     if (CreateProject == true)
                     {
-                        ProjectSql = "select N_CompanyID,N_FnYearId,0 as 'N_ProjectID',0 as 'X_ProjectCode',X_ProjectName,X_ProjectLocation as 'X_Location',X_ProjectDescription as 'X_Description' From CRM_Leads where N_LeadID=@nLeadID";
+                        ProjectSql = "select N_CompanyID,N_FnYearId,0 as 'N_ProjectID',0 as 'X_ProjectCode',X_ProjectName,X_ProjectLocation as 'X_Location',X_ProjectDescription as 'X_Description',N_UserID From CRM_Leads where N_LeadID=@nLeadID";
                         ProjectTbl = dLayer.ExecuteDataTable(ProjectSql, Params, connection, transaction);
                         if (ProjectTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Project")); }
                         if (ProjectTbl.Rows[0]["X_ProjectName"].ToString() != "")

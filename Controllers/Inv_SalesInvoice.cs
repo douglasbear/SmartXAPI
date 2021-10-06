@@ -1282,13 +1282,17 @@ namespace SmartxAPI.Controllers
                     Result.Add("n_SalesID", N_SalesID);
                     Result.Add("x_SalesNo", InvoiceNo);
 
-                    SortedList PurchaseParams = new SortedList();
-                    PurchaseParams.Add("@N_CompanyID", N_CompanyID);
-                    PurchaseParams.Add("@N_FnYearID", N_FnYearID);
-                    PurchaseParams.Add("@N_SalesID", N_SalesID);
-                    dLayer.ExecuteNonQueryPro("SP_SalesToPurchase_Ins", PurchaseParams, connection, transaction);
+                    object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection);
 
+                    if (N_CustomerVendorID != null)
+                    {
+                        SortedList PurchaseParams = new SortedList();
+                        PurchaseParams.Add("@N_CompanyID", N_CompanyID);
+                        PurchaseParams.Add("@N_FnYearID", N_FnYearID);
+                        PurchaseParams.Add("@N_SalesID", N_SalesID);
+                        dLayer.ExecuteNonQueryPro("SP_SalesToPurchase_Ins", PurchaseParams, connection, transaction);
 
+                    }
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Sales invoice saved"));
 
