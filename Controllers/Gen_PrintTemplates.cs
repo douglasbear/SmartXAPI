@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_UserRole_Disp where N_CompanyID=" + nCompanyID + " and Category <> 'Olivo' and Category <> 'Administrator'";
+            string sqlCommandText = "select * from vw_UserRole_Disp where N_CompanyID=" + nCompanyID + " and Category <> 'Olivo'";
             Params.Add("@nCompanyID", nCompanyID);
             try
             {
@@ -62,7 +62,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("module")]
@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -123,7 +123,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("fillData")]
@@ -168,28 +168,29 @@ namespace SmartxAPI.Controllers
                         int index;
                         foreach (var files in Directory.GetFiles(@X_ReportFilePath, "*.rpt"))
                         {
-                          
+
                             SortedList element = new SortedList();
                             index = Path.GetFileName(files).IndexOf(".");
                             if (index > 0)
                             {
                                 element.Add("templateName", Path.GetFileName(files).Substring(0, index).ToString());
-                                  string imagepath=@X_ReportFilePath+Path.GetFileName(files).Substring(0, index).ToString()+".jpg";
+                                string imagepath = @X_ReportFilePath + Path.GetFileName(files).Substring(0, index).ToString() + ".jpg";
                                 if (System.IO.File.Exists(imagepath))
                                 {
                                     Byte[] bytes = System.IO.File.ReadAllBytes(imagepath);
                                     element.Add("templateimage", Convert.ToBase64String(bytes));
                                 }
-                               
+                                else
+                                {
+                                   
+                                    element.Add("templateimage", "no Image");
+
+                                }
+
 
                             }
                             templates.Add(element);
                         }
-
-
-
-
-
 
 
 
@@ -200,7 +201,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -212,7 +213,7 @@ namespace SmartxAPI.Controllers
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                     connection.Open();
+                    connection.Open();
                     DataTable MasterTable;
                     SqlTransaction transaction;
                     transaction = connection.BeginTransaction();
@@ -223,11 +224,11 @@ namespace SmartxAPI.Controllers
                     int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
                     var x_SelectedReport = MasterTable.Rows[0]["x_TemplateName"].ToString();
                     int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
-                    int a=1;
+                    int a = 1;
                     object result = 0;
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintTemplate',1,'" + x_SelectedReport + "','" + X_UserCategoryName + "'", connection, transaction);
                     dLayer.ExecuteNonQuery("SP_GeneralDefaults_ins " + nCompanyID + ",'" + ReportSelectingScreenID + "' ,'PrintCopy'," + n_CopyNos + ",''", connection, transaction);
-                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + ","+a+" ", connection, transaction);
+                    dLayer.ExecuteNonQuery("SP_GenPrintTemplatess_ins " + nCompanyID + "," + ReportSelectingScreenID + " ,'" + x_SelectedReport + "'," + N_UserCategoryId + "," + n_CopyNos + "," + a + " ", connection, transaction);
 
 
                     transaction.Commit();
@@ -237,47 +238,47 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
-    //     [HttpGet("getFile")]
-    //     public ActionResult GetImages(string X_ReportFilePath,)
-    //     {
-    //         DataTable dt = new DataTable();
-    //         SortedList Params = new SortedList();
-    //         try
-    //         {
-    //             using (SqlConnection connection = new SqlConnection(connectionString))
-    //             {
-    //                 connection.Open();
-    //                 SortedList param = new SortedList();
-    //                 param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
-    //                 path = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection).ToString();
-    //             }
+        //     [HttpGet("getFile")]
+        //     public ActionResult GetImages(string X_ReportFilePath,)
+        //     {
+        //         DataTable dt = new DataTable();
+        //         SortedList Params = new SortedList();
+        //         try
+        //         {
+        //             using (SqlConnection connection = new SqlConnection(connectionString))
+        //             {
+        //                 connection.Open();
+        //                 SortedList param = new SortedList();
+        //                 param.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+        //                 path = dLayer.ExecuteScalar("select ISNULL(X_Value,'') AS X_Value from Gen_Settings where X_Description ='EmpDocumentLocation' and N_CompanyID =@nCompanyID", param, connection).ToString();
+        //             }
 
 
-    //         }
-    //         catch (Exception e)
-    //         {
-    //             return Ok(api.Error(User,e));
-    //         }
-    //         path = path + filename;
+        //         }
+        //         catch (Exception e)
+        //         {
+        //             return Ok(api.Error(User,e));
+        //         }
+        //         path = path + filename;
 
-    //         var memory = new MemoryStream();
-    //         using (var stream = new FileStream(path, FileMode.Open))
-    //         {
-    //             await stream.CopyToAsync(memory);
-    //         }
-    //         memory.Position = 0;
-    //         return File(memory, api.GetContentType(path), Path.GetFileName(path));
-    //     }
+        //         var memory = new MemoryStream();
+        //         using (var stream = new FileStream(path, FileMode.Open))
+        //         {
+        //             await stream.CopyToAsync(memory);
+        //         }
+        //         memory.Position = 0;
+        //         return File(memory, api.GetContentType(path), Path.GetFileName(path));
+        //     }
 
 
-    // }
-    //  if (lstReportTemplate.SelectedItems.Count > 0)
-    //         {
-    //             X_ReportTempPath = @X_ReportFilePath + lstReportTemplate.SelectedItem.ToString() + ".jpg";
-    //             this.pbItem.ImageLocation = X_ReportTempPath;
+        // }
+        //  if (lstReportTemplate.SelectedItems.Count > 0)
+        //         {
+        //             X_ReportTempPath = @X_ReportFilePath + lstReportTemplate.SelectedItem.ToString() + ".jpg";
+        //             this.pbItem.ImageLocation = X_ReportTempPath;
     }
 }
 
