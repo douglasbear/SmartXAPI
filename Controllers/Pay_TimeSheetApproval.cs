@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -560,7 +560,7 @@ namespace SmartxAPI.Controllers
                                         }
 
                                     }
-                                
+
 
 
                                     N_OfficeHours = myFunctions.getVAL(row["N_Workhours"].ToString());
@@ -575,28 +575,36 @@ namespace SmartxAPI.Controllers
                                         CompsateDed += HoursToMinutes(N_CompsateDed);
                                     if (N_OfficeHours != 0)
                                         OfficeHours += HoursToMinutes(N_OfficeHours);
-                                    
+
                                 }
 
                                 Master.Add("N_WorkdHrs", N_WorkdHrs);
                                 Master.Add("N_WorkHours", N_WorkHours);
 
-                                EmpGrpWorkhours = _api.Format(EmpGrpWorkhours, "EmpGrpWorkhours");
-                                settingsTable = _api.Format(settingsTable, "settingsTable");
-                                PayAttendence = _api.Format(PayAttendence, "PayAttendence");
-                                PayOffDays = _api.Format(PayOffDays, "PayOffDays");
-                                PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
-                                // Master = _api.Format(Master, "Master");
+                                // EmpGrpWorkhours = _api.Format(EmpGrpWorkhours, "EmpGrpWorkhours");
+                                // settingsTable = _api.Format(settingsTable, "settingsTable");
+                                // PayAttendence = _api.Format(PayAttendence, "PayAttendence");
+                                // PayOffDays = _api.Format(PayOffDays, "PayOffDays");
+                                // PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
+                                // // Master = _api.Format(Master, "Master");
 
-                                dt.Tables.Add(EmpGrpWorkhours);
-                                dt.Tables.Add(settingsTable);
-                                dt.Tables.Add(PayAttendence);
-                                dt.Tables.Add(PayOffDays);
-                                dt.Tables.Add(PayWorkingHours);
-                      
+                                // dt.Tables.Add(EmpGrpWorkhours);
+                                // dt.Tables.Add(settingsTable);
+                                // dt.Tables.Add(PayAttendence);
+                                // dt.Tables.Add(PayOffDays);
+                                // dt.Tables.Add(PayWorkingHours);
+
                                 //dt.Tables.Add(Master);
 
-                                //return Ok(_api.Success(dt));                             
+                                //return Ok(_api.Success(dt)); 
+                                // SummaryTable.Clear();
+                                // SummaryTable.Columns.Add("N_EmpID");
+                                // SummaryTable.Columns.Add("N_OfficeHours");
+                                // SummaryTable.Columns.Add("N_AdditionTime");
+                                // SummaryTable.Columns.Add("N_DeductionTime");
+                                // SummaryTable.Columns.Add("N_CompsateDed");
+                                // SummaryTable.Columns.Add("N_NetDeduction");
+                                // SummaryTable.Columns.Add("N_ExtraHours");
 
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
@@ -626,14 +634,15 @@ namespace SmartxAPI.Controllers
                                 CompsateDed = MinutesToHours(CompsateDed);
                                 N_NetDeduction = MinutesToHours(N_NetDeduction);
                                 N_ExtraHours = MinutesToHours(N_ExtraHours);
+                                DataRow newRow = SummaryTable.NewRow();
 
-                                SummaryTable.Rows[0]["N_EmpID"] = myFunctions.getIntVAL(nEmpID.ToString());
-                                SummaryTable.Rows[0]["N_OfficeHours"] = myFunctions.getVAL(OfficeHours.ToString());
-                                SummaryTable.Rows[0]["N_AdditionTime"] = myFunctions.getVAL(additionTime.ToString());
-                                SummaryTable.Rows[0]["N_DeductionTime"] = myFunctions.getVAL(deductionTime.ToString());
-                                SummaryTable.Rows[0]["N_CompsateDed"] = myFunctions.getVAL(CompsateDed.ToString());
-                                SummaryTable.Rows[0]["N_NetDeduction"] = myFunctions.getVAL(N_NetDeduction.ToString());
-                                SummaryTable.Rows[0]["N_ExtraHours"] = myFunctions.getVAL(N_ExtraHours.ToString());
+                                newRow["N_EmpID"] = myFunctions.getIntVAL(nEmpID.ToString());
+                                newRow["N_OfficeHours"] = myFunctions.getVAL(OfficeHours.ToString());
+                                newRow["N_AdditionTime"] = myFunctions.getVAL(additionTime.ToString());
+                                newRow["N_DeductionTime"] = myFunctions.getVAL(deductionTime.ToString());
+                                newRow["N_CompsateDed"] = myFunctions.getVAL(CompsateDed.ToString());
+                                newRow["N_NetDeduction"] = myFunctions.getVAL(N_NetDeduction.ToString());
+                                newRow["N_ExtraHours"] = myFunctions.getVAL(N_ExtraHours.ToString());
 
                                 SummaryTable.AcceptChanges();
 
@@ -650,7 +659,7 @@ namespace SmartxAPI.Controllers
                                 dt.Tables.Add(PayOffDays);
                                 dt.Tables.Add(PayWorkingHours);
                                 dt.Tables.Add(SummaryTable);
-                      
+
                                 //dt.Tables.Add(Master);
 
                                 //return Ok(_api.Success(dt));
@@ -673,7 +682,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -751,7 +760,7 @@ namespace SmartxAPI.Controllers
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     for (int j = 0; j < EmpTable.Rows.Count; j++)
@@ -762,7 +771,7 @@ namespace SmartxAPI.Controllers
                     if (nTimesheetEmpID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     for (int k = 0; k < DetailTable.Rows.Count; k++)
@@ -773,7 +782,7 @@ namespace SmartxAPI.Controllers
                     if (nImportDetailID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     transaction.Commit();
@@ -782,7 +791,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
