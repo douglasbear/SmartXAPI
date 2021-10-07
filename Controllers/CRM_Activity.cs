@@ -401,9 +401,9 @@ namespace SmartxAPI.Controllers
                     if (employees != null && employees.ToString() != "")
                     {
                         SqlCommandText = "select * from Vw_EmpUserPartcipants Where  N_CompanyID=" + nCompanyID + " and N_EmpID in (" + employees.ToString() + ")";
-
+                        dt = dLayer.ExecuteDataTable(SqlCommandText, Params, connection);
                     }
-                    dt = dLayer.ExecuteDataTable(SqlCommandText, Params, connection);
+                    
                     dt = api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
