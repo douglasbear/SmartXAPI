@@ -286,7 +286,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     // Auto Gen
-                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID',N_UserID,N_LeadID,N_BranchID,N_LocationID From CRM_Leads where N_LeadID=@nLeadID";
+                    string OprSql = "select N_CompanyID,N_FnYearId,0 as 'N_OpportunityID',0 as 'X_OpportunityCode',X_Lead as 'X_Opportunity',N_Probability,X_Email,X_Phone1 as 'X_Mobile',N_SalesmanID,N_AnnRevenue as 'N_ExpRevenue',N_LeadSource as 'N_LeadSourceID',N_Subsource as 'N_SubsourceID',X_Referredby as 'X_RefferedBy',X_ProjectDescription as 'X_Description',0 as 'N_CustomerID',0 as 'N_ContactID',0 as 'N_ProjectID',N_UserID,N_LeadID,N_BranchID,N_LocationID From CRM_Leads where N_LeadID=@nLeadID";
                     OprTbl = dLayer.ExecuteDataTable(OprSql, Params, connection, transaction);
                     if (OprTbl.Rows.Count == 0) { transaction.Rollback(); return Ok(api.Error(User,"Unable to Create Opportunity")); }
                     string OpportunityCode = "";
