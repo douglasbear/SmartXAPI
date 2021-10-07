@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult ActivityList( int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bySalesMan)
+        public ActionResult ActivityList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bySalesMan)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
@@ -186,7 +186,7 @@ namespace SmartxAPI.Controllers
                 string xStatus = MasterTable.Rows[0]["X_Status"].ToString();
                 int nUserID = myFunctions.GetUserID(User);
                 int N_InviteID = 0;
-                
+
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -212,15 +212,23 @@ namespace SmartxAPI.Controllers
                             object Count = dLayer.ExecuteScalar("select MAX(isnull(N_Order,0)) from crm_activity where N_ReffID=" + MasterTable.Rows[0]["N_ReffID"].ToString(), Params, connection, transaction);
                             if (Count != null)
                             {
+                                if (myFunctions.getIntVAL(Count.ToString()) > 0)
+                                {
 
-                                int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
-                                dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
-                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
-                                MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                                    int NOrder = myFunctions.getIntVAL(Count.ToString()) + 1;
+                                    dLayer.ExecuteNonQuery("update crm_activity set N_Order=" + NOrder + " where N_Order=" + Count, Params, connection, transaction);
+                                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_Order", typeof(int), 0);
+                                    MasterTable.Rows[0]["N_Order"] = Count.ToString();
+                                }
                             }
                         }
 
                     }
+                    if (myFunctions.ContainColumn("N_BranchID", MasterTable))
+                        MasterTable.Columns.Remove("N_BranchID");
+                    if (myFunctions.ContainColumn("X_Body", MasterTable))
+                        MasterTable.Columns.Remove("X_Body");
+
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
                     if (nActivityID > 0)
@@ -244,7 +252,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                     
+
                         if (Participants.Rows.Count > 0)
                         {
                             for (int j = 0; j < Participants.Rows.Count; j++)
