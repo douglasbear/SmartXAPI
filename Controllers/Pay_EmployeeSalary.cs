@@ -34,117 +34,117 @@ namespace SmartxAPI.Controllers
             N_FormID = 974;
         }
 
-        // [HttpGet("salaryDetails")]
-        // public ActionResult GetSalaryDetails(int nFnYearID)
-        // {
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     Params.Add("@p1", nCompanyID);
-        //     Params.Add("@p2", nFnYearID);
+        [HttpGet("salaryDetails")]
+        public ActionResult GetSalaryDetails(int nFnYearID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
 
-        //     string sqlCommandText = "Select * from vw_PayMaster Where N_CompanyID=@p1 and (N_Paymethod=0 or N_Paymethod=3) and (N_PayTypeID <>11 and N_PayTypeID <>12 ) and N_FnYearID=@p2 and N_PaymentID=5 and B_InActive=0";
+            string sqlCommandText = "Select * from vw_PayMaster Where N_CompanyID=@p1 and (N_Paymethod=0 or N_Paymethod=3) and (N_PayTypeID <>11 and N_PayTypeID <>12 ) and N_FnYearID=@p2 and N_PaymentID=5 and B_InActive=0";
 
 
-        //     SortedList OutPut = new SortedList();
+            SortedList OutPut = new SortedList();
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-        //             OutPut.Add("Details", _api.Format(dt));
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(_api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(_api.Success(OutPut));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(User,e));
-        //     }
-        // }
+                    OutPut.Add("Details", _api.Format(dt));
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
 
-        // [HttpGet("benefitDetails")]
-        // public ActionResult GetBenefitDetails(int nFnYearID)
-        // {
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     Params.Add("@p1", nCompanyID);
-        //     Params.Add("@p2", nFnYearID);
+        [HttpGet("benefitDetails")]
+        public ActionResult GetBenefitDetails(int nFnYearID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
 
-        //     string sqlCommandText = "Select * from vw_PayMaster Where ( N_CompanyID=@p1 and  N_FnYearID=@p2 and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@p1 and  N_FnYearID=@p2) and isnull(B_InActive,0)=0 order by N_PayTypeID";
+            string sqlCommandText = "Select * from vw_PayMaster Where ( N_CompanyID=@p1 and  N_FnYearID=@p2 and N_PaymentID in (6,7)  and (N_PaytypeID <>14 ) and (N_Paymethod=0 or N_Paymethod=3) or N_PayTypeID = 11 and N_CompanyID=@p1 and  N_FnYearID=@p2) and isnull(B_InActive,0)=0 order by N_PayTypeID";
 
-        //     SortedList OutPut = new SortedList();
+            SortedList OutPut = new SortedList();
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-        //             OutPut.Add("Details", _api.Format(dt));
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(_api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(_api.Success(OutPut));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(User,e));
-        //     }
-        // }
+                    OutPut.Add("Details", _api.Format(dt));
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
 
-        // [HttpGet("accrualSettings")]
-        // public ActionResult GetAccrualSettings(int nFnYearID, int nCountryID)
-        // {
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
-        //     Params.Add("@p1", nCompanyID);
-        //     Params.Add("@p2", nCountryID);
+        [HttpGet("accrualSettings")]
+        public ActionResult GetAccrualSettings(int nFnYearID, int nCountryID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nCountryID);
 
-        //     string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and N_CountryID=@p2 and isnull(B_InActive,0)=0 order by X_Type desc";
+            string sqlCommandText = "select N_vacTypeID,Name,N_Accrued,X_Type,X_Period from vw_PayAccruedCode_List Where N_CompanyID=@p1 and N_CountryID=@p2 and isnull(B_InActive,0)=0 order by X_Type desc";
 
-        //     SortedList OutPut = new SortedList();
+            SortedList OutPut = new SortedList();
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-        //             OutPut.Add("Details", _api.Format(dt));
-        //             if (dt.Rows.Count == 0)
-        //             {
-        //                 return Ok(_api.Warning("No Results Found"));
-        //             }
-        //             else
-        //             {
-        //                 return Ok(_api.Success(OutPut));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(User,e));
-        //     }
-        // }
+                    OutPut.Add("Details", _api.Format(dt));
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
 
          [HttpGet("default")]
         public ActionResult GetEmployeeDefault(int nFnYearID, int nCountryID)

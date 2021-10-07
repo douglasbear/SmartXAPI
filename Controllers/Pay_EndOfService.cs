@@ -606,7 +606,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nCountryID", nCountryID);
-            string sqlCommandText = "select N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,ServiceEndStatus from vw_ServiceEndSettings where N_CompanyID=@nCompanyID and N_CountryID=@nCountryID group by N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,ServiceEndStatus order by X_ServiceEndCode";
+            string sqlCommandText = "select N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,ServiceEndStatus from vw_ServiceEndSettings where N_CompanyID=@nCompanyID group by N_ServiceEndID,X_ServiceEndCode,N_ServiceEndStatusID,X_ServiceEndStatusDesc,ServiceEndStatus order by X_ServiceEndCode";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
