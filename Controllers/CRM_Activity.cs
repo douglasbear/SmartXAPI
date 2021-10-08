@@ -425,7 +425,7 @@ namespace SmartxAPI.Controllers
                         SqlCommandText = "select * from Vw_EmpUserPartcipants Where  N_CompanyID=" + nCompanyID + " and N_EmpID in (" + employees.ToString() + ")";
                         dt = dLayer.ExecuteDataTable(SqlCommandText, Params, connection);
                     }
-                    
+
                     dt = api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
@@ -497,5 +497,24 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-    }
-}
+        [HttpGet("updateParticipantList")]
+        public ActionResult UpdateDashboard(int nStatusID, int nActivityID, int nUserID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    Params.Add("N_CompanyID", nCompanyID);
+                    dLayer.ExecuteNonQuery("Update CRM_ActivityInvites Set N_StatusID="+nStatusID+" where  N_CompanyID="+nCompanyID+" and N_ActivityID="+nActivityID+"", Params, connection);
+                    return Ok(api.Success("Status Updated"));
+
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(api.Error(User, ex));
+            }
+        }
