@@ -115,12 +115,17 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult ActivityListDetails(string xActivityCode, int nopportunityID)
         {
-            DataTable dt = new DataTable();
+
+            DataSet dsCrmActivity = new DataSet();
+            DataTable CrmMaster = new DataTable();
+            DataTable participantList = new DataTable();
             SortedList Params = new SortedList();
+            SortedList PartParams = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRM_Activity where N_CompanyID=@p1 and X_ActivityCode=@p3";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", xActivityCode);
+            PartParams.Add("@p1", nCompanyId);
             object Company, Oppportunity, Contact, CustomerID;
 
 
@@ -130,7 +135,22 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    CrmMaster = dLayer.ExecuteDataTable(sqlCommandText, Params, connection, transaction);
+                    if (CrmMaster.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
+
+                    DataRow MasterRow = CrmMaster.Rows[0];
+                    int nActivityID = myFunctions.getIntVAL(MasterRow["N_ActivityID"].ToString());
+                    string sqlParticipant = "select * from CRM_ActivityInvites where N_CompanyID=" + nCompanyId + " and N_ActivityID=" + nActivityID + "";
+                    participantList = dLayer.ExecuteDataTable(sqlParticipant, PartParams, connection, transaction);
+
+
+
+
+
+
+
+
+
                     if (nopportunityID > 0)
                     {
                         Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
@@ -139,26 +159,28 @@ namespace SmartxAPI.Controllers
                         CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
 
 
-                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@CompanyName", Company.ToString());
-                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@ContactName", Contact.ToString());
-                        dt.Rows[0]["x_Body"] = dt.Rows[0]["x_Body"].ToString().Replace("@LeadName", Oppportunity.ToString());
+                        CrmMaster.Rows[0]["x_Body"] = CrmMaster.Rows[0]["x_Body"].ToString().Replace("@CompanyName", Company.ToString());
+                        CrmMaster.Rows[0]["x_Body"] = CrmMaster.Rows[0]["x_Body"].ToString().Replace("@ContactName", Contact.ToString());
+                        CrmMaster.Rows[0]["x_Body"] = CrmMaster.Rows[0]["x_Body"].ToString().Replace("@LeadName", Oppportunity.ToString());
 
-                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@CompanyName", Company.ToString());
-                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@ContactName", Contact.ToString());
-                        dt.Rows[0]["x_TempSubject"] = dt.Rows[0]["x_TempSubject"].ToString().Replace("@LeadName", Oppportunity.ToString());
-                        dt.AcceptChanges();
+                        CrmMaster.Rows[0]["x_TempSubject"] = CrmMaster.Rows[0]["x_TempSubject"].ToString().Replace("@CompanyName", Company.ToString());
+                        CrmMaster.Rows[0]["x_TempSubject"] = CrmMaster.Rows[0]["x_TempSubject"].ToString().Replace("@ContactName", Contact.ToString());
+                        CrmMaster.Rows[0]["x_TempSubject"] = CrmMaster.Rows[0]["x_TempSubject"].ToString().Replace("@LeadName", Oppportunity.ToString());
+                        CrmMaster.AcceptChanges();
 
                     }
                 }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Warning("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                CrmMaster = api.Format(CrmMaster, "CrmMaster");
+                participantList = api.Format(participantList, "participantList");
+                dsCrmActivity.Tables.Add(CrmMaster);
+                dsCrmActivity.Tables.Add(participantList);
+
+
+
+
+
+                return Ok(api.Success(dsCrmActivity));
+
             }
             catch (Exception e)
             {
