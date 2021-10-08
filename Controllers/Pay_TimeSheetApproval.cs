@@ -613,6 +613,8 @@ namespace SmartxAPI.Controllers
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_CompsateDed", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetDeduction", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_ExtraHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_WorkedHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_WorkHours", typeof(double), 0);
 
                                 if (CompsateDed < 0)
                                 {
@@ -643,6 +645,9 @@ namespace SmartxAPI.Controllers
                                 newRow["N_CompsateDed"] = myFunctions.getVAL(CompsateDed.ToString());
                                 newRow["N_NetDeduction"] = myFunctions.getVAL(N_NetDeduction.ToString());
                                 newRow["N_ExtraHours"] = myFunctions.getVAL(N_ExtraHours.ToString());
+                                newRow["N_WorkedHours"] = myFunctions.getVAL(N_WorkdHrs.ToString());
+                                newRow["N_WorkHours"] = myFunctions.getVAL(N_WorkHours.ToString());
+                                 SummaryTable.Rows.Add(newRow);//Accept this line ==>Aswin
 
                                 SummaryTable.AcceptChanges();
 
@@ -651,6 +656,8 @@ namespace SmartxAPI.Controllers
                                 PayAttendence = _api.Format(PayAttendence, "PayAttendence");
                                 PayOffDays = _api.Format(PayOffDays, "PayOffDays");
                                 PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
+                                SummaryTable = _api.Format(SummaryTable, "SummaryTable");//Accept this line ==>Aswin
+
                                 // Master = _api.Format(Master, "Master");
 
                                 dt.Tables.Add(EmpGrpWorkhours);
