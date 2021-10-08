@@ -508,7 +508,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     SortedList Params = new SortedList();
                     Params.Add("N_CompanyID", nCompanyID);
-                    dLayer.ExecuteNonQuery("Update CRM_ActivityInvites Set N_StatusID="+nStatusID+" where  N_CompanyID="+nCompanyID+" and N_ActivityID="+nActivityID+"", Params, connection);
+                    dLayer.ExecuteNonQuery("Update CRM_ActivityInvites Set N_StatusID="+nStatusID+" where  N_CompanyID="+nCompanyID+" and N_ActivityID="+nActivityID+" and N_UserID="+nUserID+"", Params, connection);
                     return Ok(api.Success("Status Updated"));
 
                 }
