@@ -105,14 +105,13 @@ namespace SmartxAPI.Controllers
 
 
                 }
-                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(OutPut));
                 }
 
             }
@@ -549,7 +548,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("loanListAll")]
-        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID, string xSearchkey)
+        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -561,29 +560,49 @@ namespace SmartxAPI.Controllers
             QueryParams.Add("@nFnYearID", nFnYearID);
 
             string sqlCommandText = "";
+            string sqlCommandCount = "";
+            int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (X_EmpName like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%')";
 
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_LoanID desc";
+            else if(xSortBy.Contains("d_LoanIssueDate"))
+                xSortBy =" order by cast(D_LoanIssueDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if(xSortBy.Contains("d_LoanPeriodFrom"))
+                xSortBy =" order by cast(D_LoanPeriodFrom as DateTime) " + xSortBy.Split(" ")[1];
+            else if(xSortBy.Contains("d_LoanPeriodTo"))
+                xSortBy =" order by cast(D_LoanPeriodTo as DateTime) " + xSortBy.Split(" ")[1];
+            else
+                xSortBy = " order by " + xSortBy;
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + xSortBy + " ) " + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + "order by N_LoanID Desc";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                    sqlCommandCount = "select count(*) as N_Count from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
                 }
-                dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
                     return Ok(api.Notice("No Results Found"));
                 }
                 else
                 {
-                    return Ok(api.Success(dt));
+                    return Ok(api.Success(OutPut));
                 }
-
             }
             catch (Exception e)
             {
