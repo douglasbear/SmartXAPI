@@ -564,7 +564,7 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_EmpName like'%" + xSearchkey + "%'or X_EmpCode like'%" +xSearchkey+ "%'or X_Remarks like'%" + xSearchkey + "%') ";
+                Searchkey = "and (X_EmpName like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%'or X_EmpCode like'%" + xSearchkey + "%'or N_LoanID like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_LoanID desc";
