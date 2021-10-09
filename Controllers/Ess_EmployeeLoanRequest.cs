@@ -563,7 +563,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_EmpName like'%" + xSearchkey + "%'or X_Remarks like'%" + xSearchkey + "%')";
+                Searchkey = " and (X_EmpName like'%" + xSearchkey + "%'or X_EmpCode like'%" +xSearchkey+ "%'or X_Remarks like'%" + xSearchkey + "%') ";
 
 
             try
@@ -571,7 +571,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID order by N_LoanID Desc";
+                    sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID "+Searchkey+" order by N_LoanID Desc";
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
                 }
                 dt = api.Format(dt);
