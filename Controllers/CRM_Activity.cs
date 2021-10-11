@@ -250,6 +250,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("N_BranchID");
                     if (myFunctions.ContainColumn("X_Body", MasterTable))
                         MasterTable.Columns.Remove("X_Body");
+                    if (myFunctions.ContainColumn("x_MeetingMintus", MasterTable))
+                        MasterTable.Columns.Remove("x_MeetingMintus");
 
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
