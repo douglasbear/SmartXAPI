@@ -144,13 +144,6 @@ namespace SmartxAPI.Controllers
                     participantList = dLayer.ExecuteDataTable(sqlParticipant, PartParams, connection, transaction);
 
 
-
-
-
-
-
-
-
                     if (nopportunityID > 0)
                     {
                         Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
