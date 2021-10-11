@@ -496,6 +496,7 @@ namespace SmartxAPI.Controllers
         {
             int Results = 0;
             int nCompanyID = myFunctions.GetCompanyID(User);
+            if (xSalBatch == null) xSalBatch = "";
             try
             {
                 SortedList Params = new SortedList();
