@@ -337,20 +337,8 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     Results = dLayer.DeleteData("CRM_Opportunity", "N_OpportunityID", nOpportunityID, "", connection, transaction);
-                    if (Results==0) {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to delete Opportunity"));
-                    }
-                    Results = dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
-                    if (Results==0) {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to delete Opportunity"));
-                    }
-                    Results = dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
-                    if (Results==0) {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to delete Opportunity"));
-                    }
+                    dLayer.DeleteData("Crm_Products", "N_OpportunityID", nOpportunityID, "", connection, transaction);
+                    dLayer.DeleteData("CRM_Activity", "N_ReffID", nOpportunityID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)
