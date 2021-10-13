@@ -92,7 +92,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                        if (dt.TableName == "Product List")
+                        if (dt.TableName == "Product List" || dt.TableName == "Products")
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -116,6 +116,17 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName == "Package Items")
                         {
                             xTableName = "Mig_PackageItem";
+                            Mastertable.Columns.Add("N_CompanyID");
+                            foreach (DataRow dtRow in Mastertable.Rows)
+                            {
+                                dtRow["N_CompanyID"] = nCompanyID;
+                            }
+                        }
+
+
+                        if (dt.TableName == "Warranty Items")
+                        {
+                            xTableName = "Mig_WarrantyItem";
                             Mastertable.Columns.Add("N_CompanyID");
                             foreach (DataRow dtRow in Mastertable.Rows)
                             {
