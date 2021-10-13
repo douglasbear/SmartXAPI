@@ -109,7 +109,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("pricelist")]
-        public ActionResult GetPriceListDetails(int nCustomerID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, int nQty)
+        public ActionResult GetPriceListDetails(int nCustomerID, int nFnYearID, int nItemID, int nCategoryID, int nItemUnitID, double nQty)
         {
             DataTable dtPriceList = new DataTable();
 
