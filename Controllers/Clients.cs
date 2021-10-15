@@ -377,5 +377,33 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult clientDetails(int nClientID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string sqlCommandText = "select * from vw_ClientDetails where N_ClientID=@nClientID";
+            Params.Add("@nClientID", nClientID);
+            try
+            {
+                using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                {
+                    olivoCon.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, olivoCon);
+                }
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
     }
 }
