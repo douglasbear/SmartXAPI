@@ -56,12 +56,13 @@ namespace SmartxAPI.Controllers
                     string Email = MasterRow["X_ContactEmail"].ToString();
                     string Body = MasterRow["X_Body"].ToString();
                     string Subjectval = MasterRow["x_TempSubject"].ToString();
-                    // int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     int nTemplateID = myFunctions.getIntVAL(MasterRow["n_TemplateID"].ToString());
+                    int nopportunityID = myFunctions.getIntVAL(MasterRow["N_OpportunityID"].ToString());
                     Toemail = Email.ToString();
                     object companyemail = "";
                     object companypassword = "";
-                    // object Company, Oppportunity, Contact, CustomerID;
+                    object Company, Oppportunity, Contact, CustomerID;
+                    int nCompanyId = myFunctions.GetCompanyID(User);
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                     companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -81,45 +82,29 @@ namespace SmartxAPI.Controllers
                             else
                                 body = "";
 
+                            if (nopportunityID > 0)
+                            {
+                                Oppportunity = dLayer.ExecuteScalar("select x_Opportunity from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Contact = dLayer.ExecuteScalar("Select x_Contact from vw_CRMOpportunity where N_CompanyID=" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                Company = dLayer.ExecuteScalar("select x_customer from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+                                CustomerID = dLayer.ExecuteScalar("select N_CustomerID from vw_CRMOpportunity where N_CompanyID =" + nCompanyId + " and N_OpportunityID=" + nopportunityID, Params, connection, transaction);
+
+
+                                Body = Body.ToString().Replace("@CompanyName", Company.ToString());
+                                Body = Body.ToString().Replace("@ContactName", Contact.ToString());
+                                Body = Body.ToString().Replace("@LeadName", Oppportunity.ToString());
+
+                                Subjectval = Subjectval.ToString().Replace("@CompanyName", Company.ToString());
+                                Subjectval =Subjectval.ToString().Replace("@ContactName", Contact.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@LeadName", Oppportunity.ToString());
+
+
+                            }
+
                             string Sender = companyemail.ToString();
                             Subject = Subjectval;
                             MailBody = body.ToString();
-                            // SmtpClient client = new SmtpClient
-                            // {
-                            //     Host = "smtp.gmail.com",
-                            //     Port = 587,
-                            //     EnableSsl = true,
-                            //     DeliveryMethod = SmtpDeliveryMethod.Network,
-                            //     Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
-                            //     Timeout = 10000,
-                            // };
-
-                            // MailMessage message = new MailMessage();
-                            // message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
-                            // message.From = new MailAddress(Sender);
-                            // message.Subject = Subject;
-                            // message.Body = MailBody;
-                            // message.From = new MailAddress("sanjay.kv@olivotech.com", "Al Raza Photography");
-
-                            // message.IsBodyHtml = true; //HTML email  
-                            // string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
-                            // if (CC != "")
-                            //     message.CC.Add(CC);
-
-                            // string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
-                            // if (Bcc != "")
-                            //     message.Bcc.Add(Bcc);
-
-                            //Attachments
-                            // DataTable Attachments = dLayer.ExecuteDataTable("select * from Dms_ScreenAttachments where N_CompanyID=" + companyid + " and n_formid=" + 1348 + " and N_TransID=" + nTemplateID, Params, connection, transaction);
-                            // foreach (DataRow var in Attachments.Rows)
-                            // {
-                            //     message.Attachments.Add(new Attachment(var["x_refName"].ToString()));
-
-                            // }
-                            myFunctions.SendMail(Toemail, Body, Subject, dLayer,1348,nTemplateID,companyid);
-
-                            //client.Send(message);
+                            myFunctions.SendMail(Toemail, Body, Subject, dLayer, 1348, nTemplateID, companyid);
 
                         }
                     }
@@ -146,7 +131,7 @@ namespace SmartxAPI.Controllers
 
             catch (Exception ie)
             {
-                return Ok(api.Error(User,ie));
+                return Ok(api.Error(User, ie));
             }
         }
         public static string GetCCMail(int ID, int nCompanyID, SqlConnection connection, SqlTransaction transaction, IDataAccessLayer dLayer)
@@ -167,7 +152,7 @@ namespace SmartxAPI.Controllers
             else
                 return "";
         }
-        
+
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
@@ -196,7 +181,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1302);
                         TemplateCode = dLayer.GetAutoNumber("Gen_MailTemplates", "X_TemplateCode", Params, connection, transaction);
-                        if (TemplateCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Code")); }
+                        if (TemplateCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Code")); }
                         MasterTable.Rows[0]["X_TemplateCode"] = TemplateCode;
                     }
                     var X_Body = MasterTable.Rows[0]["X_Body"].ToString();
@@ -235,7 +220,7 @@ namespace SmartxAPI.Controllers
                     if (nTemplateID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -248,7 +233,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -297,7 +282,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("details")]
@@ -308,7 +293,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandText = "";
-            
+
             sqlCommandText = "select  * from Gen_MailTemplates where N_CompanyID=@p1 and N_TemplateID=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", n_TemplateID);
@@ -321,9 +306,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    
+
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    
+
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(api.Warning("No Results Found"));
@@ -338,7 +323,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpDelete("delete")]
@@ -365,13 +350,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete Email Template"));
+                    return Ok(api.Error(User, "Unable to delete Email Template"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 

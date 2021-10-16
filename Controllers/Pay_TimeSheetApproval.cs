@@ -316,7 +316,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (nEmpID > 0)
                             {
-                                double additionTime = 0, deductionTime = 0, CompsateDed = 0, OfficeHours = 0;
+                                double additionTime = 0, deductionTime = 0, CompsateDed = 0, OfficeHours = 0, AbsentCount = 0;
                                 double N_additionTime = 0, N_deductionTime = 0, N_CompsateDed = 0, N_OfficeHours = 0, N_ExtraHours = 0;
                                 double balanc = 0, N_NetDeduction = 0;
 
@@ -377,35 +377,50 @@ namespace SmartxAPI.Controllers
                                 string Sql4 = "Select * from vw_pay_WorkingHours Where N_CompanyID =" + nCompanyID;
                                 PayWorkingHours = dLayer.ExecuteDataTable(Sql4, secParams, connection);
                                 //-------------------------------------------------------------------------------------------------------
-                                //Default Paycodes
-                                foreach (DataRow kvar in PayAttendence.Rows)
+                                DateTime Date = dtpFromdate;
+                                do
                                 {
-                                    DateTime Date = Convert.ToDateTime(kvar["D_date"].ToString());
-                                    foreach (DataRow Var1 in PayOffDays.Rows)
+                                    DataRow[] CheckDate = PayAttendence.Select("D_date = '" + Date + "'");
+                                    if (CheckDate.Length == 0)
                                     {
-                                        if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
-                                        {
-                                            kvar["X_Remarks"] = Var1["X_Remarks"];
-                                            kvar["N_Vacation"] = 2;
-                                        }
-                                    }
-                                }
-                                PayAttendence.AcceptChanges();
-                                foreach (DataRow Tvar in PayAttendence.Rows)
-                                {
+                                        DataRow rowPA = PayAttendence.NewRow();
+                                        rowPA["D_date"] = Date;
+                                        rowPA["N_EmpId"] = nEmpID;
 
-                                    DateTime Date1 = Convert.ToDateTime(Tvar["D_date"].ToString());
-                                    foreach (DataRow Var2 in PayWorkingHours.Rows)
-                                    {
-                                        if (((int)Date1.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
-                                        {
-                                            Tvar["N_Workhours"] = Var2["N_Workhours"];
-                                        }
+                                        PayAttendence.Rows.Add(rowPA);
                                     }
-                                }
+                                    Date = Date.AddDays(1);
+                                } while (Date <= dtpTodate);
+
                                 PayAttendence.AcceptChanges();
+
                                 foreach (DataRow row in PayAttendence.Rows)
                                 {
+                                    DateTime Date5 = Convert.ToDateTime(row["D_date"].ToString());
+                                    if (Date5.ToString() == "9/12/2021 12:00:00 AM")
+                                    {
+
+                                    }
+                                    //Default Paycodes
+                                    foreach (DataRow Var1 in PayOffDays.Rows)
+                                    {
+                                        if (nCategoryID == myFunctions.getIntVAL(Var1["N_CategoryID"].ToString()) && ((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var1["N_DayID"].ToString()) || myFunctions.getDateVAL(Date5) == myFunctions.getDateVAL(Convert.ToDateTime(Var1["D_Date"].ToString())))
+                                        {
+                                            row["X_Remarks"] = Var1["X_Remarks"];
+                                            row["N_Vacation"] = 2;
+                                        }
+                                    }
+                                    PayAttendence.AcceptChanges();
+                                    foreach (DataRow Var2 in PayWorkingHours.Rows)
+                                    {
+                                        if (((int)Date5.DayOfWeek) + 1 == myFunctions.getIntVAL(Var2["N_WHID"].ToString()))
+                                        {
+                                            row["N_Workhours"] = Var2["N_Workhours"];
+                                        }
+                                    }
+                                    PayAttendence.AcceptChanges();
+
+
                                     if (bCategoryWiseAddition)
                                     {
                                         row["OverTime"] = myFunctions.getVAL(row["OverTime"].ToString()).ToString("0.00");
@@ -432,7 +447,6 @@ namespace SmartxAPI.Controllers
                                     {
                                         N_Diffrence = HoursToMinutes(Convert.ToDouble(row["N_Diff"].ToString()));
                                         N_NonDedApp = HoursToMinutes(N_NonDedApp);
-
                                         N_NonDedApp += N_Diffrence;
 
                                         N_NonDedApp = MinutesToHours(N_NonDedApp);
@@ -442,80 +456,90 @@ namespace SmartxAPI.Controllers
                                     {
                                         row["Attandance"] = "A";
 
-
-
                                     }
                                     else
                                     {
-                                        if (myFunctions.getVAL(row["N_TotHours"].ToString()) < myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
+                                        if (myFunctions.getVAL(row["N_Tothours"].ToString()) > 0)
                                         {
-                                            if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
+                                            if (myFunctions.getVAL(row["N_TotHours"].ToString()) < myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
                                             {
-
-                                                row["X_Type"] = row["X_Description"];
-                                                row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
-                                                row["Attandance"] = "P";
-
-
-                                            }
-                                            else
-                                            {
-                                                row["X_Type"] = X_Deductions;
-                                                row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
-                                                row["Attandance"] = "A";
-                                            }
-                                        }
-                                        else if (myFunctions.getVAL(row["N_TotHours"].ToString()) > myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
-                                        {
-                                            if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
-                                            {
-                                                row["X_Type"] = row["X_Description"];
-                                                row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
-                                                row["Attandance"] = "P";
-                                            }
-                                            else
-                                            {
-                                                if (myFunctions.getIntVAL(row["OverTime"].ToString()) > 0)
+                                                if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
                                                 {
-                                                    row["X_Type"] = X_Additions;
-                                                    row["N_PayID"] = myFunctions.getIntVAL(N_AdditionPayID.ToString());
+
+                                                    row["X_Type"] = row["X_Description"];
+                                                    row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
                                                     row["Attandance"] = "P";
 
 
                                                 }
-                                                else if (myFunctions.getVAL(row["Deduction"].ToString()) > 0)
+                                                else
                                                 {
                                                     row["X_Type"] = X_Deductions;
                                                     row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
+                                                    row["Attandance"] = "A";
+                                                }
+                                            }
+                                            else if (myFunctions.getVAL(row["N_TotHours"].ToString()) > myFunctions.getVAL(row["N_MinWorkhours"].ToString()))
+                                            {
+                                                if (myFunctions.getBoolVAL(row["B_IsApproved"].ToString()) == true)
+                                                {
+                                                    row["X_Type"] = row["X_Description"];
+                                                    row["N_PayID"] = myFunctions.getIntVAL(row["N_OTPayID"].ToString());
                                                     row["Attandance"] = "P";
                                                 }
                                                 else
                                                 {
-                                                    row["X_Type"] = "";
-                                                    row["N_PayID"] = 0;
-                                                    row["Attandance"] = "P";
+                                                    if (myFunctions.getIntVAL(row["OverTime"].ToString()) > 0)
+                                                    {
+                                                        row["X_Type"] = X_Additions;
+                                                        row["N_PayID"] = myFunctions.getIntVAL(N_AdditionPayID.ToString());
+                                                        row["Attandance"] = "P";
 
+
+                                                    }
+                                                    else if (myFunctions.getVAL(row["Deduction"].ToString()) > 0)
+                                                    {
+                                                        row["X_Type"] = X_Deductions;
+                                                        row["N_PayID"] = myFunctions.getIntVAL(N_DeductionPayID.ToString());
+                                                        row["Attandance"] = "P";
+                                                    }
+                                                    else
+                                                    {
+                                                        row["X_Type"] = "";
+                                                        row["N_PayID"] = 0;
+                                                        row["Attandance"] = "P";
+
+                                                    }
                                                 }
                                             }
-                                        }
-                                        else
-                                        {
+                                            else
+                                            {
 
-                                            row["X_Type"] = "";
-                                            row["N_PayID"] = 0;
-                                            row["Attandance"] = "P";
+                                                row["X_Type"] = "";
+                                                row["N_PayID"] = 0;
+                                                row["Attandance"] = "P";
+                                            }
                                         }
                                     }
                                     if ((row["x_Remarks"].ToString() == "" || row["x_Remarks"].ToString() == null) && row["Attandance"].ToString() != "P")
                                     {
                                         DateTime Date3 = Convert.ToDateTime(row["D_date"].ToString());
-                                        if (Date3 > Convert.ToDateTime(myFunctions.GetFormatedDate(systemDate.ToString())))
+                                        if (Date3 > Convert.ToDateTime(systemDate.ToString()))
                                             row["Attandance"] = "";
                                         else
                                         {
-                                            row["X_Type"] = X_DefaultAbsentCode;
-                                            row["N_PayID"] = N_DefaultAbsentID;
-                                            row["Attandance"] = "A";
+                                            object ShiftGroup = dLayer.ExecuteScalar("select X_GroupName from Pay_EmpShiftDetails where N_EmpID=" + nEmpID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and D_Date='" + myFunctions.getDateVAL(Date3) + "' and D_In1='00:00:00.0000000' and D_Out1='00:00:00.0000000' and D_In2='00:00:00.0000000' and D_Out2='00:00:00.0000000'", Params, connection);
+                                            if (ShiftGroup != null)
+                                            {
+                                                row["x_Remarks"] = ShiftGroup.ToString();
+                                                row["Attandance"] = "";
+                                            }
+                                            else
+                                            {
+                                                row["X_Type"] = X_DefaultAbsentCode;
+                                                row["N_PayID"] = N_DefaultAbsentID;
+                                                row["Attandance"] = "A";
+                                            }
                                         }
                                     }
 
@@ -549,21 +573,19 @@ namespace SmartxAPI.Controllers
                                                 //in out 1 & 2 should be " validate in front end
                                             }
                                         }
-                                        if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date4))
-                                        {
-                                            if (row["Attandance"].ToString() != "A")
-                                            {
-                                                N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
-                                                N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));
-
-                                            }
-                                        }
-
                                     }
 
+                                    if (myFunctions.getDateVAL(Convert.ToDateTime(row["D_Date"].ToString())) == myFunctions.getDateVAL(Date5))
+                                    {
+                                        if (row["Attandance"].ToString() != "A")
+                                        {
+                                            N_WorkdHrs += HoursToMinutes(myFunctions.getVAL(row["N_Tothours"].ToString()));
+                                            N_WorkHours += HoursToMinutes(myFunctions.getVAL(row["N_Workhours"].ToString()));
 
+                                        }
+                                    }
 
-                                    N_OfficeHours = myFunctions.getVAL(row["N_Workhours"].ToString());
+                                    N_OfficeHours = myFunctions.getVAL(row["N_DutyHours"].ToString());///////////////////////////////////
                                     N_additionTime = myFunctions.getVAL(row["OverTime"].ToString());
                                     N_deductionTime = myFunctions.getVAL(row["Deduction"].ToString());
                                     N_CompsateDed = myFunctions.getVAL(row["CompMinutes"].ToString());
@@ -575,36 +597,10 @@ namespace SmartxAPI.Controllers
                                         CompsateDed += HoursToMinutes(N_CompsateDed);
                                     if (N_OfficeHours != 0)
                                         OfficeHours += HoursToMinutes(N_OfficeHours);
+                                    if (row["Attandance"].ToString() == "A")
+                                        AbsentCount++;
 
                                 }
-
-                                Master.Add("N_WorkdHrs", N_WorkdHrs);
-                                Master.Add("N_WorkHours", N_WorkHours);
-
-                                // EmpGrpWorkhours = _api.Format(EmpGrpWorkhours, "EmpGrpWorkhours");
-                                // settingsTable = _api.Format(settingsTable, "settingsTable");
-                                // PayAttendence = _api.Format(PayAttendence, "PayAttendence");
-                                // PayOffDays = _api.Format(PayOffDays, "PayOffDays");
-                                // PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
-                                // // Master = _api.Format(Master, "Master");
-
-                                // dt.Tables.Add(EmpGrpWorkhours);
-                                // dt.Tables.Add(settingsTable);
-                                // dt.Tables.Add(PayAttendence);
-                                // dt.Tables.Add(PayOffDays);
-                                // dt.Tables.Add(PayWorkingHours);
-
-                                //dt.Tables.Add(Master);
-
-                                //return Ok(_api.Success(dt)); 
-                                // SummaryTable.Clear();
-                                // SummaryTable.Columns.Add("N_EmpID");
-                                // SummaryTable.Columns.Add("N_OfficeHours");
-                                // SummaryTable.Columns.Add("N_AdditionTime");
-                                // SummaryTable.Columns.Add("N_DeductionTime");
-                                // SummaryTable.Columns.Add("N_CompsateDed");
-                                // SummaryTable.Columns.Add("N_NetDeduction");
-                                // SummaryTable.Columns.Add("N_ExtraHours");
 
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_EmpID", typeof(int), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_OfficeHours", typeof(double), 0);
@@ -613,6 +609,18 @@ namespace SmartxAPI.Controllers
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_CompsateDed", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetDeduction", typeof(double), 0);
                                 SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_ExtraHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_AbsentCount", typeof(int), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDepApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_WorkdHrs", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_WorkHours", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonCompMin", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_CompDed", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_Balance", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_Adjustment", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetDedApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddition", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NetAddApp", typeof(double), 0);
+                                SummaryTable = myFunctions.AddNewColumnToDataTable(SummaryTable, "N_NonDedApp", typeof(double), 0);
 
                                 if (CompsateDed < 0)
                                 {
@@ -634,6 +642,24 @@ namespace SmartxAPI.Controllers
                                 CompsateDed = MinutesToHours(CompsateDed);
                                 N_NetDeduction = MinutesToHours(N_NetDeduction);
                                 N_ExtraHours = MinutesToHours(N_ExtraHours);
+                                N_WorkdHrs = MinutesToHours(N_WorkdHrs);
+                                N_WorkHours = MinutesToHours(N_WorkHours);
+
+                                double N_NonCompMin = (-1 * CompsateDed);
+                                double N_CompDed = (-1 * CompsateDed);
+                                double N_Balance = additionTime + deductionTime;
+                                double Adjustment = 0, Balance = 0;
+                                if ((N_Balance % 60) < 0)
+                                {
+                                    Balance = ((int)N_Balance / 1) + (-1 * N_Balance % 1) * .60;
+                                    Adjustment = ((int)N_Balance / 1) + (-1 * N_Balance % 1) * .60;
+                                }
+                                else
+                                {
+                                    Balance = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
+                                    Adjustment = ((int)N_Balance / 1) + (N_Balance % 1) * .60;
+                                }
+
                                 DataRow newRow = SummaryTable.NewRow();
 
                                 newRow["N_EmpID"] = myFunctions.getIntVAL(nEmpID.ToString());
@@ -642,7 +668,19 @@ namespace SmartxAPI.Controllers
                                 newRow["N_DeductionTime"] = myFunctions.getVAL(deductionTime.ToString());
                                 newRow["N_CompsateDed"] = myFunctions.getVAL(CompsateDed.ToString());
                                 newRow["N_NetDeduction"] = myFunctions.getVAL(N_NetDeduction.ToString());
+                                newRow["N_NetDedApp"] = myFunctions.getVAL(N_NetDeduction.ToString());
+                                newRow["N_NetAddition"] = myFunctions.getVAL(additionTime.ToString());
+                                newRow["N_NetAddApp"] = myFunctions.getVAL(additionTime.ToString());
                                 newRow["N_ExtraHours"] = myFunctions.getVAL(N_ExtraHours.ToString());
+                                newRow["N_AbsentCount"] = myFunctions.getIntVAL(AbsentCount.ToString());
+                                newRow["N_NonDedApp"] = myFunctions.getVAL(N_NonDedApp.ToString());
+                                newRow["N_WorkdHrs"] = myFunctions.getVAL(N_WorkdHrs.ToString());
+                                newRow["N_WorkHours"] = myFunctions.getVAL(N_WorkHours.ToString());
+                                newRow["N_NonCompMin"] = myFunctions.getVAL(N_NonCompMin.ToString());
+                                newRow["N_CompDed"] = myFunctions.getVAL(N_CompDed.ToString());
+                                newRow["N_Balance"] = myFunctions.getVAL(Balance.ToString());
+                                newRow["N_Adjustment"] = myFunctions.getVAL(Adjustment.ToString());
+                                SummaryTable.Rows.Add(newRow);
 
                                 SummaryTable.AcceptChanges();
 
@@ -651,6 +689,8 @@ namespace SmartxAPI.Controllers
                                 PayAttendence = _api.Format(PayAttendence, "PayAttendence");
                                 PayOffDays = _api.Format(PayOffDays, "PayOffDays");
                                 PayWorkingHours = _api.Format(PayWorkingHours, "PayWorkingHours");
+                                SummaryTable = _api.Format(SummaryTable, "SummaryTable");//Accept this line ==>Aswin
+
                                 // Master = _api.Format(Master, "Master");
 
                                 dt.Tables.Add(EmpGrpWorkhours);

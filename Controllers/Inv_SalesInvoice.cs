@@ -1282,7 +1282,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("n_SalesID", N_SalesID);
                     Result.Add("x_SalesNo", InvoiceNo);
 
-                    object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection);
+                    object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection,transaction);
 
                     if (N_CustomerVendorID != null)
                     {

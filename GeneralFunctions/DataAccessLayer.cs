@@ -16,15 +16,18 @@ using System.Collections;
 using System.IO;
 using System.Text.RegularExpressions;
 using System.Security.Claims;
-
+using System.Text;
+using Microsoft.Extensions.Configuration;
 namespace SmartxAPI.GeneralFunctions
 {
     public class DataAccessLayer : IDataAccessLayer
     {
         private readonly IMyFunctions myFunctions;
-        public DataAccessLayer(IMyFunctions myFun)
+        private readonly string logPath;
+        public DataAccessLayer(IMyFunctions myFun, IConfiguration conf)
         {
             myFunctions = myFun;
+            logPath = conf.GetConnectionString("LogPath");
         }
 
         public int ExecuteNonQuery(string sqlCommandText, SqlConnection connection)
@@ -526,12 +529,24 @@ namespace SmartxAPI.GeneralFunctions
                 paramList.Add("X_FieldList", FieldList);
                 paramList.Add("X_FieldValue", FieldValues);
                 Result = (int)ExecuteScalarPro("SAVE_DATA", paramList, connection, transaction);
-                FieldValues = "";
+               
+
+                StringBuilder sb = new StringBuilder();
+                sb.AppendLine(j+" ");
+                sb.AppendLine(FieldValues);
+                if (!Directory.Exists(logPath))
+                    Directory.CreateDirectory(logPath);
+
+                    File.AppendAllText(logPath + "Sqllog.log", sb.ToString());
+                    sb.Clear();
+ FieldValues = "";
                 if (Result <= 0) return 0;
             }
 
             return Result;
         }
+
+        
 
         public int SaveData(string TableName, string IDFieldName,string X_DupCritieria,string X_Critieria, DataTable DataTable, SqlConnection connection, SqlTransaction transaction)
         {
