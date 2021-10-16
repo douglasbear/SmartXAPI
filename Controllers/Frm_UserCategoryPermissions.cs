@@ -84,7 +84,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("moduleList")]
-        public ActionResult GetModuleList(int nLanguageID)
+        public ActionResult GetModuleList(int nLanguageID,int nUserCategoryID)
         {
             try
             {
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
                     string x_UserCategoryName = "";
                     string sqlCommandText = "";
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    int userCategoryID = myFunctions.GetUserCategory(User);
+                    int userCategoryID = nUserCategoryID;
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                     object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        sqlCommandText = "Select * from vw_UserMenus_Disp Where  N_LanguageID=" + nLanguageID + "  and N_ParentMenuID = 0 and X_ControlNo = '0' and X_UserCategory='" + x_UserCategoryName + "' and N_CompanyID=" + nCompanyID + "";
+                        sqlCommandText = "Select * from vw_UserMenus_Disp Where  N_LanguageID=" + nLanguageID + "  and N_ParentMenuID = 0 and X_ControlNo = '0' and B_ShowOnline=1 and X_UserCategory='" + x_UserCategoryName + "' and N_CompanyID=" + nCompanyID + "";
                     }
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
