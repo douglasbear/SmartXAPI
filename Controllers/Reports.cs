@@ -414,7 +414,7 @@ namespace SmartxAPI.Controllers
                     string Toemail = "";
 
                     Toemail = mail;
-                    object companyemail = "";
+                    object companyemail = ""; 
                     object companypassword = "";
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
