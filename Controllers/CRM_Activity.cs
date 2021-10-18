@@ -250,6 +250,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Columns.Remove("N_BranchID");
                     if (myFunctions.ContainColumn("X_Body", MasterTable))
                         MasterTable.Columns.Remove("X_Body");
+                    if (myFunctions.ContainColumn("x_MeetingMintus", MasterTable))
+                        MasterTable.Columns.Remove("x_MeetingMintus");
 
 
                     nActivityID = dLayer.SaveData("CRM_Activity", "n_ActivityID", MasterTable, connection, transaction);
@@ -508,7 +510,7 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     SortedList Params = new SortedList();
                     Params.Add("N_CompanyID", nCompanyID);
-                    dLayer.ExecuteNonQuery("Update CRM_ActivityInvites Set N_StatusID="+nStatusID+" where  N_CompanyID="+nCompanyID+" and N_ActivityID="+nActivityID+"", Params, connection);
+                    dLayer.ExecuteNonQuery("Update CRM_ActivityInvites Set N_StatusID="+nStatusID+" where  N_CompanyID="+nCompanyID+" and N_ActivityID="+nActivityID+" and N_UserID="+nUserID+"", Params, connection);
                     return Ok(api.Success("Status Updated"));
 
                 }
