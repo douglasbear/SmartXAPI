@@ -77,7 +77,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -95,10 +95,10 @@ namespace SmartxAPI.Controllers
                     string x_UserCategoryName = "";
                     string sqlCommandText = "";
                     int nCompanyID = myFunctions.GetCompanyID(User);
-                    int userCategoryID = nUserCategoryID;
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
-                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID =" + userCategoryID + "", Params, connection);
+                    string userCategoryID = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User Where N_CompanyID =" + nCompanyID + " and N_UserID=" + myFunctions.GetUserID(User) + "", Params, connection).ToString();
+                    object x_UserCategory = dLayer.ExecuteScalar("Select X_UserCategory from Sec_UserCategory Where N_UserCategoryID in  (" + userCategoryID + ")", Params, connection);
                     if (x_UserCategory != null)
                     {
                         x_UserCategoryName = x_UserCategory.ToString();
@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        sqlCommandText = "Select * from vw_UserMenus_Disp Where  N_LanguageID=" + nLanguageID + "  and N_ParentMenuID = 0 and X_ControlNo = '0' and B_ShowOnline=1 and X_UserCategory='" + x_UserCategoryName + "' and N_CompanyID=" + nCompanyID + "";
+                        sqlCommandText = "Select * from vw_UserMenus_Disp Where  N_LanguageID=" + nLanguageID + "  and N_ParentMenuID = 0 and X_ControlNo = '0' and N_UserCategoryID in (" + userCategoryID + ") and N_CompanyID=" + nCompanyID + "";
                     }
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("fillData")]
@@ -223,14 +223,14 @@ namespace SmartxAPI.Controllers
                     }
                     SecAllMenus.AcceptChanges();
 
-                   
+
                     foreach (DataRow PRows in SecAllMenus.Rows)
                     {
                         if (PRows["x_Text"].ToString() == "Seperator")
-                         { 
-                            PRows.Delete(); 
-                            continue; 
-                            }
+                        {
+                            PRows.Delete();
+                            continue;
+                        }
 
                     }
                     SecAllMenus.AcceptChanges();
@@ -253,7 +253,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -301,7 +301,7 @@ namespace SmartxAPI.Controllers
                         if (nInternalID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to save"));
+                            return Ok(_api.Error(User, "Unable to save"));
                         }
                     }
 
@@ -333,7 +333,7 @@ namespace SmartxAPI.Controllers
                         if (N_InternalID <= 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to save"));
+                            return Ok(_api.Error(User, "Unable to save"));
                         }
 
 
@@ -348,7 +348,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
     }

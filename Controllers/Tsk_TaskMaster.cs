@@ -205,8 +205,8 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int TaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString());
                     object comments = dLayer.ExecuteScalar("select  isnull(MAX(N_CommentsID),0) from Tsk_TaskComments where N_ActionID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_TaskID"].ToString()), Params, connection);
-                    if(comments==null)comments=0;
-                    if (myFunctions.getIntVAL( comments.ToString()) >0 )
+                    if (comments == null) comments = 0;
+                    if (myFunctions.getIntVAL(comments.ToString()) > 0)
                     {
                         object x_Comments = dLayer.ExecuteScalar("select  X_Comments from Tsk_TaskComments where N_CommentsID=" + myFunctions.getIntVAL(comments.ToString()), Params, connection);
                         MasterTable.Rows[0]["x_Comments"] = x_Comments.ToString();
@@ -223,9 +223,9 @@ namespace SmartxAPI.Controllers
 
 
                     //History
-                    HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator from vw_Tsk_TaskStatus  where N_TaskID="+TaskID+" "+
-                     "union all "+
-                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator from vw_Tsk_TaskComments  where N_ActionID="+TaskID+"  ) as temptable order by D_EntryDate";
+                    HistorySql = "select * from (select N_TaskID,N_CreaterID, D_EntryDate,X_HistoryText,X_Assignee,D_DueDate,D_TaskDate,X_Creator from vw_Tsk_TaskStatus  where N_TaskID=" + TaskID + " " +
+                     "union all " +
+                     "select N_ActionID as N_TaskID ,N_Creator as N_CreaterID,D_EntryDate,'Commented by #CREATOR on #TIME - ' + X_Comments as X_HistoryText,'' as x_Assignee,GETDATE() as D_DueDate,GETDATE() as D_TaskDate,X_UserName as X_Creator from vw_Tsk_TaskComments  where N_ActionID=" + TaskID + "  ) as temptable order by D_EntryDate";
                     HistoryTable = dLayer.ExecuteDataTable(HistorySql, Params, connection);
 
 
@@ -237,18 +237,18 @@ namespace SmartxAPI.Controllers
                         string duettime = row["d_DueDate"].ToString();
                         DateTime _date;
                         string day = "";
-                        if(duettime!=null && duettime!="")
+                        if (duettime != null && duettime != "")
                         {
-                        _date = DateTime.Parse(duettime);
-                        day = _date.ToString("dd-MMM-yyyy HH:mm tt");
+                            _date = DateTime.Parse(duettime);
+                            day = _date.ToString("dd-MMM-yyyy HH:mm tt");
                         }
                         string time = row["d_EntryDate"].ToString();
                         DateTime _date1;
                         string day1 = "";
-                        if(time!=null && time!="")
+                        if (time != null && time != "")
                         {
-                        _date1 = DateTime.Parse(time.ToString());
-                        day1 = _date1.ToString("dd-MMM-yyyy  HH:mm tt");
+                            _date1 = DateTime.Parse(time.ToString());
+                            day1 = _date1.ToString("dd-MMM-yyyy  HH:mm tt");
                         }
 
 
@@ -371,7 +371,7 @@ namespace SmartxAPI.Controllers
 
 
                     }
-                    
+
 
                     if (DetailTable.Rows[0]["N_AssigneeID"].ToString() != "0" && DetailTable.Rows[0]["N_AssigneeID"].ToString() != "")
                     {
@@ -545,11 +545,11 @@ namespace SmartxAPI.Controllers
 
                         dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET B_Closed=1 where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     }
-                      SortedList Result = new SortedList(); 
+                    SortedList Result = new SortedList();
                     Result.Add("n_AssigneeID", DetailTable.Rows[0]["N_AssigneeID"]);
                     dLayer.ExecuteNonQuery("Update Tsk_TaskMaster SET d_DueDate='" + MasterTable.Rows[0]["d_DueDate"] + "' where N_TaskID=" + nTaskID + " and N_CompanyID=" + nCompanyID.ToString(), connection, transaction);
                     transaction.Commit();
-                   return Ok(_api.Success(Result, "Task Updated Successfully"));
+                    return Ok(_api.Success(Result, "Task Updated Successfully"));
                 }
             }
             catch (Exception ex)
@@ -659,7 +659,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nTaskID)
+        public ActionResult DeleteData(int nTaskID,int nFnyearID)
         {
             int Results = 0;
             try
@@ -672,6 +672,10 @@ namespace SmartxAPI.Controllers
                     Results = dLayer.DeleteData("Tsk_TaskMaster", "N_TaskID", nTaskID, "", connection);
                     if (Results > 0)
                     {
+                         SqlTransaction transaction = connection.BeginTransaction();
+
+                        myAttachments.DeleteAttachment(dLayer, 1, nTaskID, nTaskID, nFnyearID,1324, User, transaction, connection);
+                        transaction.Commit();
                         return Ok(_api.Success("deleted"));
                     }
                     else
@@ -744,9 +748,9 @@ namespace SmartxAPI.Controllers
                     DateTime D_EntryDate = DateTime.Today;
                     DataTable DetailTable;
 
-                    if(nStatus.ToString()=="4")
+                    if (nStatus.ToString() == "4")
                     {
-                        nStatus=5;
+                        nStatus = 5;
                     }
 
 
