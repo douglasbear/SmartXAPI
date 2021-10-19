@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string Pattern = "";
             if (UserPattern != "")
             {
-                Pattern = " and Left(X_Pattern,Len(@p2))=@p2 or N_LoginUserID="+nUserID;
+                Pattern = " and (Left(X_Pattern,Len(@p2))=@p2 or N_LoginUserID="+nUserID+")";
                 Params.Add("@p2", UserPattern);
             }
             else

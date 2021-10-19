@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by X_ProjectCode";
+            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
             

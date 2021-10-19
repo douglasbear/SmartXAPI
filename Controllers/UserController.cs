@@ -157,7 +157,8 @@ namespace SmartxAPI.Controllers
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                       // return Ok(_api.Warning("No Results Found"));
+                       return Ok(_api.Success(OutPut));
                     }
                     else
                     {
@@ -185,7 +186,7 @@ namespace SmartxAPI.Controllers
 
                 int nClientID = myFunctions.GetClientID(User);
                 int globalUserID, userID, nUserID, nGlobalUserID = 0;
-
+                string exclude = " and X_UserID<>'Olivo' and X_Email LIKE '_%@__%.__%'";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -259,7 +260,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Warning("user with this email id already exists"));
                         }
                         object nUserLimit = dLayer.ExecuteScalar("SELECT N_UserLimit FROM ClientMaster where N_ClientID=@nClientID" , userParams, olivoCon, olivoTxn);
-                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_CompanyID=@nCompanyID  ", userParams, connection,transaction);
+                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_CompanyID=@nCompanyID  "+exclude, userParams, connection,transaction);
                         if (myFunctions.getIntVAL(nUserLimit.ToString()) < myFunctions.getIntVAL(nUserCount.ToString()))
                         {
                             return Ok(_api.Warning("user limit exeeded"));
@@ -611,25 +612,44 @@ namespace SmartxAPI.Controllers
         {
             int Results = 0;
             SortedList Params = new SortedList();
-
+            int nClientID = myFunctions.GetClientID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCategory = "Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
+            string sqlCategory = "Select X_UserCategory from Sec_User  inner join Sec_UserCategory on Sec_User.X_UserCategoryList = Sec_UserCategory.N_UserCategoryID where Sec_User.X_UserID=@p3 and Sec_User.N_CompanyID =@p1";
             string sqlTrans = "select COUNT(*) from vw_UserTransaction where n_userid=@p2";
             string sqlUser = "select X_UserID from sec_user where n_userid=@p2";
+
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nUserId);
+            Params.Add("@nClientID", nClientID);
+            
+           
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    
                     object UserDt = dLayer.ExecuteScalar(sqlUser, Params, connection);
                     Params.Add("@p3", UserDt.ToString());
-                    object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
-                    if (Category == null)
-                        return Ok(_api.Error(User, "Unable to delete User"));
-                    else if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
-                        return Ok(_api.Error(User, "Unable to delete User"));
+                     using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                    {
+                        olivoCon.Open();
+                        SqlTransaction olivoTxn = olivoCon.BeginTransaction();
+                      
+                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(*) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID" , Params, olivoCon, olivoTxn);
+                         if (myFunctions.getIntVAL(nUseradmin.ToString()) >0)
+                        {
+                             return Ok(_api.Error(User, "Unable to delete User"));
+                        }
+
+                        
+                       // nCliUserId = dLayer.ExecuteScalar("select N_UserID from Users where X_AdminUserID=@p3 and N_ClientID=@nClientID" , Params, olivoCon, olivoTxn);
+                    // object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
+                    // if (Category == null)
+                    //     return Ok(_api.Error(User, "Unable to delete User"));
+                    
+                    // if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
+                    //     return Ok(_api.Error(User, "Unable to delete User"));
                     else
                     {
                         int N_CountTransUser = 0;
@@ -639,16 +659,31 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to delete User"));
                     }
 
-                    Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "", connection);
+                        Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "", connection);
+                  
+                        int N_CliUserID = 0;
+                        object CountCliUser =  dLayer.ExecuteScalar("select N_UserID from Users where X_EmailID=@p3 and N_ClientID=@nClientID " , Params, olivoCon, olivoTxn);
+                        if(CountCliUser!=null)
+                        {
+                        N_CliUserID = myFunctions.getIntVAL(CountCliUser.ToString());
+                        Params.Add("@p4", N_CliUserID); 
+                        dLayer.ExecuteNonQuery("DELETE FROM Users WHERE N_UserID=@p4 ", Params, olivoCon, olivoTxn);
+                         
+                        }
+                        
+                    
 
                     if (Results > 0)
-                    {
+                    {   
+                        olivoTxn.Commit(); 
                         return Ok(_api.Success("User deleted"));
                     }
                     else
                     {
                         return Ok(_api.Error(User, "Unable to delete User"));
                     }
+                    }
+
 
                 }
             }

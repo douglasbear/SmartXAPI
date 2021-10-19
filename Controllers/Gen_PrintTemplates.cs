@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module from vw_PrintTemplateUserMenus where  N_LanguageID = " + nLanguageID + " and N_ParentMenuID = 0 and N_UserCategoryID=" + n_UserCategoryId + " and N_CompanyID=" + nCompanyID + "and X_ControlNo = '0' group by N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module";
+            string sqlCommandText = "select N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module from vw_PrintTemplateUserMenus where  N_LanguageID = " + nLanguageID + " and N_ParentMenuID = 0 and N_UserCategoryID=" + n_UserCategoryId + " and N_CompanyID=" + nCompanyID + " and X_ControlNo = '0' group by N_CompanyID,N_LanguageID,N_ParentMenuID,X_UserCategory,N_MenuID,X_Text,X_ControlNo,N_UserCategoryID,X_Module";
             Params.Add("@nCompanyID", nCompanyID);
             try
             {
@@ -81,14 +81,9 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
+
                     return Ok(_api.Success(dt));
-                }
+
             }
             catch (Exception e)
             {
@@ -102,7 +97,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + "and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies";
 
             Params.Add("@nCompanyID", nCompanyID);
             try
