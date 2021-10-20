@@ -14,7 +14,7 @@ using System.Threading.Tasks;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("employeeWorkGroyp")]
+    [Route("employeeWorkGroup")]
     [ApiController]
     public class Pay_EmployeeWorkGroup : ControllerBase
     {
