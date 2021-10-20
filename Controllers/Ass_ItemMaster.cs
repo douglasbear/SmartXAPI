@@ -178,7 +178,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult ItemMasterListDetails(string xItemCode, int nBranchID, bool bAllBranchData)
+        public ActionResult ItemMasterListDetails(string xItemCode, int nBranchID, bool bAllBranchData, int nFnYearID)
         {
             DataSet dt = new DataSet();
             DataTable MasterTable = new DataTable();
@@ -195,14 +195,15 @@ namespace SmartxAPI.Controllers
 
             string Condn = "";
             if (bAllBranchData)
-                Condn = "X_ItemCode=@p2 and N_CompanyID=@p1";
+                Condn = "X_ItemCode=@p2 and N_CompanyID=@p1 and N_FnYearID=@p5";
             else
-                Condn = "X_ItemCode=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
+                Condn = "X_ItemCode=@p2 and N_CompanyID=@p1 and N_BranchID=@p3 and N_FnYearID=@p5";
 
             sqlCommandText = "select * from vw_AssetMaster where " + Condn + "";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xItemCode);
             Params.Add("@p3", nBranchID);
+            Params.Add("@p5", nFnYearID);
 
             try
             {
