@@ -321,14 +321,17 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     // DataTable AccrualValues=new DataTable();;
-                    foreach (DataRow row in Accrual.Rows)
+
+                    for (int x = Accrual.Rows.Count - 1; x >= 0; x--)
                     {
-                        if (myFunctions.getBoolVAL(row["b_IsChecked"].ToString()) == false)
+                        DataRow dr = Accrual.Rows[x];
+                        if (myFunctions.getBoolVAL(dr["b_IsChecked"].ToString()) == false)
                         {
-                            row.Delete();
-                            Accrual.AcceptChanges();
+                            dr.Delete();
                         }
                     }
+
+                    Accrual.AcceptChanges();
                     Accrual.Columns.Remove("b_IsChecked");
                     dLayer.SaveData("Pay_EmpAccruls", "N_EmpAccID", Accrual, connection, transaction);
                     transaction.Commit();
