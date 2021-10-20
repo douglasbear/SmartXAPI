@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                     if (nItemID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     if (nItemID > 0)
                     {
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                     if (nAddlInfoID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -167,13 +167,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete Lead"));
+                    return Ok(api.Error(User, "Unable to delete Lead"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -211,14 +211,39 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                       MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "d_NextMaintanance", typeof(string), 0);
 
-                    MasterTable = api.Format(MasterTable, "Master");
+
+                 
                     if (MasterTable.Rows.Count == 0) { return Ok(api.Warning("No data found")); }
                     nItemID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_itemID"].ToString());
 
                     HistorysqlCommand = "Select D_StartDate, D_EndDate ,X_Description , X_RefNo ,N_Amount,X_Branch,N_BookValue,X_CostcentreName,X_ProjectName,ProjectPeriod,N_TypeOrder,X_EmpName,Dep_Amount from vw_Ass_ItemHistory where N_ItemID=@p4 and N_CompanyID=@p1 order by D_EndDate,N_TypeOrder";
                     Params.Add("@p4", nItemID);
                     HistoryTable = dLayer.ExecuteDataTable(HistorysqlCommand, Params, connection);
+                    int i = -1;
+
+                    foreach (DataRow Avar in HistoryTable.Rows)
+                    {
+                        i = i + 1;
+                    }
+                    DateTime today = Convert.ToDateTime(HistoryTable.Rows[i]["D_EndDate"]);
+                    if (today.Month == 12)
+                    {
+                        //DateTime endOfMonth = new DateTime(today.Year + 1, 1, DateTime.DaysInMonth(today.Year + 1, 1));
+                        DateTime endOfMonth = new DateTime( Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Year,  Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Month, DateTime.DaysInMonth( Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Year,  Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Month));
+                       
+                        MasterTable.Rows[0]["d_NextMaintanance"]= endOfMonth.ToShortDateString();
+
+                    }
+                    else
+                    {
+                        //DateTime endOfMonth = new DateTime(today.Year, today.Month + 1, DateTime.DaysInMonth(today.Year, today.Month + 1));
+                        DateTime endOfMonth = new DateTime( Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Year,  Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Month, DateTime.DaysInMonth( Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Year, Convert.ToDateTime(MasterTable.Rows[0]["d_PurchaseDate"]).Month));
+                        MasterTable.Rows[0]["d_NextMaintanance"]= endOfMonth.ToShortDateString();
+
+                    }
+                       MasterTable = api.Format(MasterTable, "Master");
 
                     HistoryTable = api.Format(HistoryTable, "History");
 
@@ -248,7 +273,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpGet("assetList")]
@@ -259,7 +284,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
-           
+
             string sqlCommandText = "Select *  from vw_AssetMaster Where N_CompanyID= " + nCompanyID + "";
 
 
@@ -282,7 +307,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -318,7 +343,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -350,7 +375,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
