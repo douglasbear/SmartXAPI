@@ -46,7 +46,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_HistoryCode like '%" + xSearchkey + "%' or X_EmpName like '%" + xSearchkey + "%' or X_EmpCode like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by n_historyid desc";
