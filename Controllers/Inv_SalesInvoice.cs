@@ -318,8 +318,31 @@ namespace SmartxAPI.Controllers
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
+                        int N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
                         string DetailSql = "";
-                        DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteId=@nDeliveryNoteID";
+                         DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID ";
+
+
+
+
+                        // object DeliveryNoteID = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
+                        // if (DeliveryNoteID == null)
+                        // {
+                        //     DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID=" + N_salesOrderID + " ";
+                        // }
+                        // else
+                        // {
+                        //     if (myFunctions.getIntVAL(DeliveryNoteID.ToString()) > 0)
+                        //     {
+                        //         DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID=" + N_salesOrderID + " and N_DeliveryNoteID<> " + DeliveryNoteID + " ";
+
+                        //     }
+                        //     else
+                        //     {
+                        //         DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID=" + N_salesOrderID + " ";
+                        //     }
+                        // }
+
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
                         if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString()) > 0)
@@ -1282,7 +1305,7 @@ namespace SmartxAPI.Controllers
                     Result.Add("n_SalesID", N_SalesID);
                     Result.Add("x_SalesNo", InvoiceNo);
 
-                    object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection,transaction);
+                    object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
                     if (N_CustomerVendorID != null)
                     {

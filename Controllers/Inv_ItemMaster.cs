@@ -498,6 +498,12 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save, Product name alrady exist"));
                         }
 
+                        string xBarcode="";
+                        if(MasterTable.Rows[k]["X_Barcode"].ToString()=="")
+                        {
+                            xBarcode=AutoGenerateBarCode( MasterTable.Rows[k]["X_ItemCode"].ToString(),myFunctions.getIntVAL(MasterTable.Rows[k]["N_CategoryID"].ToString()),nCompanyID, dLayer, connection,transaction);
+                            MasterTable.Rows[k]["X_Barcode"]=xBarcode;
+                        }
 
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
                         Byte[] imageBitmap = new Byte[image.Length];
@@ -769,6 +775,61 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        private string AutoGenerateBarCode(string xItemCode,int nCatID,int nCompanyID,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction)
+        {
+            try
+            {
+                int i = 0;
+                string X_CatCode = "00";
+                string X_ItemCategory = "",X_Barcode="";
+                if (nCatID!=0)
+                {
+                    X_ItemCategory=dLayer.ExecuteScalar("select X_CategoryCode from Inv_ItemCategory WHERE N_CategoryID="+nCatID+" and N_CompanyID="+nCompanyID, connection, transaction).ToString();
+                    X_CatCode = X_ItemCategory;
+                }
+                do
+                {
+                    i += 1;
+                    xItemCode = xItemCode.Length < 6 ? xItemCode.PadLeft(6, '0') : xItemCode.Substring(xItemCode.Length - 6);
+                    X_CatCode = X_CatCode.Length < 2 ? X_CatCode.PadLeft(2, '0') : X_CatCode.Substring(X_CatCode.Length - 2);
+                    string X_StartWith = "99";
+                    string X_CheckSum = CalculateChecksum(X_StartWith + (i.ToString()).PadLeft(2, '0') + X_CatCode + xItemCode).ToString();
+                    X_Barcode = X_StartWith + (i.ToString()).PadLeft(2, '0') + X_CatCode + xItemCode + X_CheckSum;
+                } while (dLayer.ExecuteScalar("SELECT X_BARCODE FROM Inv_ItemMaster WHERE X_BARCODE = '" + X_Barcode + "'", connection, transaction) != null);
+
+
+                return X_Barcode;
+            }
+            catch (Exception ex)
+            {
+                //msg.msgError(ex.Message);
+                return "";
+            }
+        }
+
+        public int CalculateChecksum(string code)
+        {
+            try
+            {
+                if (code == null || code.Length != 12)
+                    throw new ArgumentException("Code length should be 12, i.e. excluding the checksum digit");
+
+                int sum = 0;
+                for (int i = 0; i < 12; i++)
+                {
+                    int v;
+                    if (!int.TryParse(code[i].ToString(), out v))
+                        throw new ArgumentException("Invalid character encountered in specified code.");
+                    sum += (i % 2 == 0 ? v : v * 3);
+                }
+                int check = 10 - (sum % 10);
+                return check % 10;
+            }
+            catch (Exception)
+            {
+                return 0;
+            }
+        }
 
         //GET api/Projects/list
         [HttpGet("class")]

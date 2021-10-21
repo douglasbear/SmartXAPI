@@ -153,13 +153,13 @@ namespace SmartxAPI.GeneralFunctions
                     // }
             }
 
-            StringBuilder sb = new StringBuilder();
-            sb.AppendLine(ex.Message);
-            if (!Directory.Exists(logPath))
-                Directory.CreateDirectory(logPath);
+            // StringBuilder sb = new StringBuilder();
+            // sb.AppendLine(ex.Message);
+            // if (!Directory.Exists(logPath))
+            //     Directory.CreateDirectory(logPath);
 
-                File.AppendAllText(logPath + myFunctions.GetCompanyName(User) + " - log.log", sb.ToString());
-                sb.Clear();
+            //     File.AppendAllText(logPath + myFunctions.GetCompanyName(User) + " - log.log", sb.ToString());
+            //     sb.Clear();
 
             return (new { type = "error", Message = Msg, Data = "" });
 

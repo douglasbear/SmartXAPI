@@ -43,15 +43,15 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string sqlCommandCount = "";
             string Searchkey = "";
-            
+
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or X_OrderNo like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or D_DeliveryDate like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
-                xSortBy = " order by [Invoice No] desc";   
+                xSortBy = " order by [Invoice No] desc";
             else
             {
-             switch (xSortBy.Split(" ")[0])
+                switch (xSortBy.Split(" ")[0])
                 {
                     case "invoiceNo":
                         xSortBy = "[Invoice No] " + xSortBy.Split(" ")[1];
@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("details")]
@@ -136,6 +136,30 @@ namespace SmartxAPI.Controllers
                         string DetailSql = "";
                         DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+
+
+
+
+                        SortedList DelParams = new SortedList();
+                        DelParams.Add("N_CompanyID", nCompanyId);
+                        DelParams.Add("N_SalesOrderID", nSalesOrderID);
+                        DelParams.Add("FnYearID", nFnYearId);
+                        DelParams.Add("@N_Type", 0);
+                        DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInDelNot_Disp", DelParams, Con);
+                        foreach (DataRow Avar in OrderToDel.Rows)
+                        {
+                            foreach (DataRow Kvar in DetailTable.Rows)
+                            {
+                                if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
+                                {
+                                    Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
+                                    Kvar["N_Qty"] = Avar["N_Qty"];
+
+                                }
+                            }
+                        }
+                        DetailTable.AcceptChanges();
+
                         DetailTable = _api.Format(DetailTable, "Details");
                         dsSalesInvoice.Tables.Add(MasterTable);
                         dsSalesInvoice.Tables.Add(DetailTable);
@@ -207,7 +231,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -275,7 +299,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", 729);
                         Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Delivery Number")); }
+                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Delivery Number")); }
                         MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                     }
                     else
@@ -293,7 +317,7 @@ namespace SmartxAPI.Controllers
                             catch (Exception ex)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User,ex));
+                                return Ok(_api.Error(User, ex));
                             }
                         }
                     }
@@ -301,7 +325,7 @@ namespace SmartxAPI.Controllers
                     if (N_DeliveryNoteID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Delivery Invoice!"));
+                        return Ok(_api.Error(User, "Unable to save Delivery Invoice!"));
                     }
                     // if (B_UserLevel)
                     // {
@@ -338,7 +362,7 @@ namespace SmartxAPI.Controllers
                     if (N_DeliveryNoteDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Delivery Note!"));
+                        return Ok(_api.Error(User, "Unable to save Delivery Note!"));
                     }
                     else
                     {
@@ -365,18 +389,18 @@ namespace SmartxAPI.Controllers
                             {
                                 transaction.Rollback();
                                 if (ex.Message == "50")
-                                    return Ok(_api.Error(User,"Day Closed"));
+                                    return Ok(_api.Error(User, "Day Closed"));
                                 else if (ex.Message == "51")
-                                    return Ok(_api.Error(User,"Year Closed"));
+                                    return Ok(_api.Error(User, "Year Closed"));
                                 else if (ex.Message == "52")
-                                    return Ok(_api.Error(User,"Year Exists"));
+                                    return Ok(_api.Error(User, "Year Exists"));
                                 else if (ex.Message == "53")
-                                    return Ok(_api.Error(User,"Period Closed"));
+                                    return Ok(_api.Error(User, "Period Closed"));
                                 else if (ex.Message == "54")
-                                    return Ok(_api.Error(User,"Txn Date"));
+                                    return Ok(_api.Error(User, "Txn Date"));
                                 else if (ex.Message == "55")
-                                    return Ok(_api.Error(User,"Product is not available for delivery"));
-                                else return Ok(_api.Error(User,ex));
+                                    return Ok(_api.Error(User, "Product is not available for delivery"));
+                                else return Ok(_api.Error(User, ex));
                             }
                             SortedList CustomerParams = new SortedList();
                             CustomerParams.Add("@nCustomerID", N_CustomerID);
@@ -390,7 +414,7 @@ namespace SmartxAPI.Controllers
                                 catch (Exception ex)
                                 {
                                     transaction.Rollback();
-                                    return Ok(_api.Error(User,ex));
+                                    return Ok(_api.Error(User, ex));
                                 }
                             }
                         }
@@ -401,7 +425,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
         // private bool ValidateIMEIs(int row,DataSet ds,int nSalesID,string imeiFrom,string imeiTo,SortedList QueryParams,SqlConnection connection,SqlTransaction transaction)
@@ -513,13 +537,13 @@ namespace SmartxAPI.Controllers
                     if (Results <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to delete delivery note"));
+                        return Ok(_api.Error(User, "Unable to delete delivery note"));
                     }
                     else
                     {
                         dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
 
-                        myAttachments.DeleteAttachment(dLayer, 1,nDeliveryNoteID,nCustomerID, nFnYearID, this.FormID,User, transaction, connection);
+                        myAttachments.DeleteAttachment(dLayer, 1, nDeliveryNoteID, nCustomerID, nFnYearID, this.FormID, User, transaction, connection);
                     }
                     //Attachment delete code here
 
@@ -529,7 +553,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
@@ -578,7 +602,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
     }

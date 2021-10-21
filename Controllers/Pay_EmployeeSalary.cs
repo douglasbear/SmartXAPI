@@ -221,7 +221,7 @@ namespace SmartxAPI.Controllers
             string Mastersql = "Select * from vw_Pay_SalaryGrade Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_GradeID=@nGradeID";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            Params.Add("@nGradeID", nGradeID);
+            Params.Add("@nGradeID", nGradeID); 
 
             try
             {
@@ -449,6 +449,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        
     }
 
 }
