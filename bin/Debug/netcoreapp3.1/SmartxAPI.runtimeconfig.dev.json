@@ -1,38 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 94daf3f2689a508dda5dd3eb25bf58e442f4aae4
->>>>>>> 230dfc99aaff5a46e5a297d2e47ca673cc220330
->>>>>>> 5a2093b2b6f763473748456789f40e07bf081176
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 9ed09db141a2ed0ea68f83bb342d8a900d45fb37
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> 823e3f2d68ddaabc64ac7ffa164bfe664e8f2a4a
-=======
       "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\LENOVO\\.nuget\\packages"
->>>>>>> 0019966a9fd1113933ec239491e38965a5c89ba4
     ]
   }
 }
