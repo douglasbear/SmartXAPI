@@ -64,11 +64,13 @@ namespace SmartxAPI.Controllers
                     //Business Hours Table
                     workingHoursSql = "Select * from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_WHID";
                     WorkingHours = dLayer.ExecuteDataTable(workingHoursSql, Params, Con);
+                    WorkingHours = _api.Format(WorkingHours,"WorkingHours");
                     if (WorkingHours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
                     //Additional Business Hours
                     AdditionalWorkingHourssql = "Select * from Pay_AdditionalWorkingDays Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_ID";
                     AdditionalWorkingHours = dLayer.ExecuteDataTable(AdditionalWorkingHourssql, Params, Con);
+                    AdditionalWorkingHours = _api.Format(AdditionalWorkingHours,"AdditionalWorkingHours"); 
                     // if (AdditionalWorkingHours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     PayWorkGroup.Tables.Add(WorkingHours);
                     PayWorkGroup.Tables.Add(AdditionalWorkingHours);
