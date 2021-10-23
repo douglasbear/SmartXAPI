@@ -1887,7 +1887,7 @@ namespace SmartxAPI.GeneralFunctions
                                 row1["N_AssetInventoryDetailsID"] = N_DprID;       
                                 TransTable.Rows.Add(row);
 
-                                int N_TransID = dLayer.SaveData("Ass_Transactions", "N_ActionID", DepreciationTable, connection, transaction);
+                                int N_TransID = dLayer.SaveData("Ass_Transactions", "N_ActionID", TransTable, connection, transaction);
                                 if (N_TransID <= 0)
                                 {
                                     transaction.Rollback();
