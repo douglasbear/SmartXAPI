@@ -187,8 +187,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("N_CompanyID", nCompanyID);
                     Params.Add("N_FnYearID", nFnyearID);
-                    Params.Add("piRefId", piRefId);
-                    Params.Add("piPKeyId", piPKeyId);
+                    Params.Add("@N_RefId", piRefId);
+                    Params.Add("@N_PKeyId", piPKeyId);
                     try
                     {
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Gen_LookupTable", Params, connection, transaction);
