@@ -139,7 +139,7 @@ namespace SmartxAPI.Controllers
                     }
                     for (int i = 0; i < WorkingHours.Rows.Count; i++)
                     {
-                        WorkingHours.Rows[i]["categoryID"] = nPkeyID;
+                        WorkingHours.Rows[i]["N_CatagoryID"] = nPkeyID;
                     }
                     int N_ID = dLayer.SaveData("Pay_WorkingHours", "N_ID", WorkingHours, con, transaction);
                     if (N_ID <= 0)
@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
                     {
                         for (int i = 0; i < AdditionalWorkingHours.Rows.Count; i++)
                         {
-                            WorkingHours.Rows[i]["N_CategoryID"] = nPkeyID;
+                            WorkingHours.Rows[i]["N_CatagoryID"] = nPkeyID;
                         }
                         N_ID = dLayer.SaveData("Pay_WorkingHours", "N_ID", WorkingHours, con, transaction);
                         if (N_ID <= 0)
