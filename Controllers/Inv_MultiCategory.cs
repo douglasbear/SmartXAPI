@@ -66,6 +66,7 @@ namespace SmartxAPI.Controllers
                             {
                                 object fileName = dr1["X_ImageName"];
                                 if(fileName==null)fileName="";
+                                if(fileName.ToString()!="")
                                 dr["x_ImageURL"] = myFunctions.GetTempFileName(User,"productcategory",fileName.ToString());
 
                             }
@@ -170,7 +171,7 @@ namespace SmartxAPI.Controllers
                         if (B_ShowChild == true)
                         {
 
-                            sqlCommandText = "select * from Inv_ItemCategoryDisplay where N_CategoryDisplayID not in(select N_ParentID from Inv_ItemCategoryDisplay  ) and    N_ParentID >0 and N_CompanyID= " + nCompanyID + "";
+                            sqlCommandText = "select * from Inv_ItemCategoryDisplay where N_CategoryDisplayID not in(select distinct isnull(N_ParentID,0) from Inv_ItemCategoryDisplay  ) and   isnull(N_ParentID,0) >0 and N_CompanyID= " + nCompanyID + "";
                         }
                         else
                         {

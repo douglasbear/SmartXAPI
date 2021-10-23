@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ( X_ServiceCode like '%" + xSearchkey + "%' or  D_EntryDate like '%" + xSearchkey + "%'  ) ";
+                Searchkey = "and ( X_ServiceCode like '%" + xSearchkey + "%' or  D_EntryDate like '%" + xSearchkey + "%' or  X_CustomerName like '%" + xSearchkey + "%' or  X_Remarks like '%" + xSearchkey + "%' ) ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ServiceID desc";
@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         MasterTable = _api.Format(MasterTable, "Master");
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                         MasterTable.AcceptChanges();
+                        MasterTable.AcceptChanges();
                         MasterTable = _api.Format(MasterTable, "Master");
 
 
@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
                         DetailTable = _api.Format(DetailTable, "Details");
 
 
-                       
+
                         dt.Tables.Add(MasterTable);
                         dt.Tables.Add(DetailTable);
                         return Ok(_api.Success(dt));
@@ -232,6 +232,49 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nServiceID, int nFnyearID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+                    SortedList Params = new SortedList();
+                    Params.Add("@nServiceID", nServiceID);
+                    Params.Add("@nFnyearID", nFnyearID);
+                    Results = dLayer.DeleteData("Inv_ServiceDetails", "N_ServiceID", nServiceID, "", connection);
+                    dLayer.ExecuteNonQuery("Delete from Inv_ServiceMaster Where N_ServiceID=@nServiceID and N_FnYearID=@nFnyearID", Params, connection);
+                    if (Results > 0)
+                    {
+                        return Ok(_api.Success("deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User, "Unable to delete"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }
 

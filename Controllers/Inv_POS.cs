@@ -291,6 +291,8 @@ namespace SmartxAPI.Controllers
 
                         object fileName = item["X_ImageName"];
                         if (fileName == null) fileName = "";
+
+                        if(fileName.ToString()!="")
                         item["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
 
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
@@ -301,18 +303,18 @@ namespace SmartxAPI.Controllers
                                                 " vw_InvItem_Search LEFT OUTER JOIN " +
                                                 " Inv_ItemDetails ON vw_InvItem_Search.N_CompanyID = Inv_ItemDetails.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_ItemDetails.N_ItemID ON Inv_ItemUnit.N_ItemID = vw_InvItem_Search.N_ItemID AND  " +
                                                 " Inv_ItemUnit.N_CompanyID = vw_InvItem_Search.N_CompanyID " +
-                        " WHERE        (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
+                        " WHERE    Inv_ItemUnit.N_DefaultType=10 and     (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
 
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
                             item["SubItems"] = subTbl;
                         }
 
-                        string warrantySql = "SELECT vw_InvItem_Search.description, Inv_ItemWarranty.N_Qty as N_Qty" +
+                        string warrantySql = "SELECT vw_InvItem_Search.description, Inv_ItemWarranty.N_Qty as N_Qty,Inv_ItemUnit.x_ItemUnit" +
                         " FROM            Inv_ItemUnit RIGHT OUTER JOIN " +
                                                 " vw_InvItem_Search LEFT OUTER JOIN " +
                                                 " Inv_ItemWarranty ON vw_InvItem_Search.N_CompanyID = Inv_ItemWarranty.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_ItemWarranty.N_ItemID ON Inv_ItemUnit.N_ItemID = vw_InvItem_Search.N_ItemID AND  " +
                                                 " Inv_ItemUnit.N_CompanyID = vw_InvItem_Search.N_CompanyID " +
-                        " WHERE        (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
+                        " WHERE     Inv_ItemUnit.N_DefaultType=10 and   (vw_InvItem_Search.N_CompanyID = " + nCompanyId + ") AND (vw_InvItem_Search.B_InActive = 0) and N_MainItemID=" + myFunctions.getIntVAL(item["N_ItemID"].ToString());
 
                         DataTable warrantyTbl = dLayer.ExecuteDataTable(warrantySql, connection);
                         item["warranty"] = warrantyTbl;
@@ -465,6 +467,7 @@ namespace SmartxAPI.Controllers
                     {
                         object fileName = dr1["X_ImageName"];
                         if (fileName == null) fileName = "";
+                        if(fileName.ToString()!="")
                         dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
                     }
                     dt.AcceptChanges();
