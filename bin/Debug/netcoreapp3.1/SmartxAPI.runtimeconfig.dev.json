@@ -1,76 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\linju scaria\\.nuget\\packages"
-=======
->>>>>>> 98c32d54067f68ae737fe67396fca620f97c8f3b
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
-<<<<<<< HEAD
-=======
-      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\linju scaria\\.nuget\\packages"
->>>>>>> 3c806bb847ede5e1f07797f9496f1102d55121f4
-=======
->>>>>>> 5eec9775af87de12a92f5ec947cee6647a7f8fa1
->>>>>>> 98c32d54067f68ae737fe67396fca620f97c8f3b
-=======
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 94daf3f2689a508dda5dd3eb25bf58e442f4aae4
->>>>>>> 230dfc99aaff5a46e5a297d2e47ca673cc220330
->>>>>>> 5a2093b2b6f763473748456789f40e07bf081176
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 9ed09db141a2ed0ea68f83bb342d8a900d45fb37
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> 823e3f2d68ddaabc64ac7ffa164bfe664e8f2a4a
-=======
-      "C:\\Users\\LENOVO\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\LENOVO\\.nuget\\packages"
-<<<<<<< HEAD
-<<<<<<< HEAD
->>>>>>> 0019966a9fd1113933ec239491e38965a5c89ba4
-=======
->>>>>>> a0a4f537e11c4c2a5b3c172638a8b94445c4154b
->>>>>>> d1a6ca8c1e9412ca46fe64077e88448b62ba823b
->>>>>>> 3c806bb847ede5e1f07797f9496f1102d55121f4
-=======
       "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> 2b3c391e67d10dcf066e59a2ef6aeac27699b6e3
-=======
->>>>>>> a0a4f537e11c4c2a5b3c172638a8b94445c4154b
->>>>>>> d1a6ca8c1e9412ca46fe64077e88448b62ba823b
-=======
->>>>>>> 0019966a9fd1113933ec239491e38965a5c89ba4
->>>>>>> 5eec9775af87de12a92f5ec947cee6647a7f8fa1
->>>>>>> 98c32d54067f68ae737fe67396fca620f97c8f3b
-=======
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
->>>>>>> 39b9dc059fa2a339e3b5b757c5f0b1f872557255
     ]
   }
 }
