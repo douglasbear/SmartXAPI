@@ -218,6 +218,8 @@ namespace SmartxAPI.Controllers
                     int ReportSelectingScreenID = myFunctions.getIntVAL(MasterTable.Rows[0]["screenID"].ToString());
                     int N_UserCategoryId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserCategoryId"].ToString());
                     var x_SelectedReport = MasterTable.Rows[0]["x_TemplateName"].ToString();
+                    if(x_SelectedReport.Contains(".rpt")){}
+                    else{x_SelectedReport=x_SelectedReport+".rpt";}
                     int n_CopyNos = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CopyNos"].ToString());
                     int a = 1;
                     object result = 0;
