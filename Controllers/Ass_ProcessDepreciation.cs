@@ -91,17 +91,63 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("details")]
-        public ActionResult GetProcessDepreciation(int nFnYearID, int nBranchID, string xDepriciationNo)
+        [HttpGet("lastDate")]
+        public ActionResult GetLatDate(int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="",sqlCmd2="";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
+
+            sqlCommandText = "select D_RunDate from Ass_Depreciation where N_CompanyID=@p1 and N_FnYearID=@p2 group by D_RunDate having COUNT(*)>=1 order by D_RunDate DESC ";
+            SortedList OutPut = new SortedList();
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCmd2="select count(*) as X_TotalCount from (select N_ItemID, COUNT(*) as coun,D_RunDate  from Ass_Depreciation where N_FnYearID =@p2 group by N_ItemID,D_RunDate) AS subquery ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCmd2, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok();
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
+        [HttpGet("details")]
+        public ActionResult GetProcessDepreciation(int nFnYearID, int nBranchID, string xDepriciationNo,bool b_AllBranchData)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string cond="",sqlCommandText="";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nBranchID);
             Params.Add("@p4", xDepriciationNo);
-            string sqlCommandText = "select * from Ass_Depreciation where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and X_DepriciationNo=@p4";
+
+            if(b_AllBranchData)
+                cond="N_FnYearID=@p2 and N_CompanyID=@p1";
+            else
+                cond="N_FnYearID=@p2 and N_CompanyID=@p1 and N_BranchID=@p3";
+
+            sqlCommandText = "select * from vw_Ass_Transaction_Disp where "+cond+" and X_DepriciationNo=@p4";
 
             try
             {
@@ -149,6 +195,7 @@ namespace SmartxAPI.Controllers
                     int N_AllBranchData = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AllBranchData"].ToString());
                     DateTime D_RunDate = Convert.ToDateTime(MasterTable.Rows[0]["D_RunDate"].ToString());
                     int N_UserID = myFunctions.GetUserID(User);
+                    MasterTable.Columns.Remove("N_AllBranchData");
                     var values = MasterTable.Rows[0]["X_DepriciationNo"].ToString();
                     if (values == "@Auto")
                     {
