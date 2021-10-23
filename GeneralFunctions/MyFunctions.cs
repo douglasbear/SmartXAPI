@@ -1654,6 +1654,269 @@ namespace SmartxAPI.GeneralFunctions
             }
             return true;
         }
+
+        public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction)
+        {
+
+            DataSet dsFunction = new DataSet();
+
+            string X_lastRundate = "";
+            object Result = "";
+            DateTime StartDate, EndDate, Suspnsn_FromDate, Suspnsn_ToDate, RunDate;
+            TimeSpan suspnsn = TimeSpan.Zero;
+            Double DepreciationAmt = 0;
+            Double TotalDepAmt = 0;
+            int N_DeprID = 0, N_ActionID = 0, N_SuspendID = 0;
+            bool B_completed = true;
+            RunDate = D_EndDate;
+            DataTable DepTable;
+            DataTable AssSuspensionTable;
+            DataTable AssTransactionTable;
+            string SqlCmd1="",SqlCmd2="",SqlCmd3="";
+            SortedList Params = new SortedList();
+
+            SqlCmd1="SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where Ass_AssetMaster.N_ItemID=" + N_ItemID + " group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt";
+            DepTable = dLayer.ExecuteDataTable(SqlCmd1, Params, connection,transaction);
+
+            if (DepTable.Rows.Count > 0)
+            {
+                String ItemCode = DepTable.Rows[0]["X_ItemCode"].ToString();
+                int BranchId = this.getIntVAL(DepTable.Rows[0]["N_BranchID"].ToString());
+
+                Double N_Price = this.getVAL(DepTable.Rows[0]["N_Price"].ToString());
+                Double BookValue = this.getVAL(DepTable.Rows[0]["N_BookValue"].ToString());
+                Double LifePeriod = this.getVAL(DepTable.Rows[0]["N_LifePeriod"].ToString());
+                DateTime D_PurchaseDate = Convert.ToDateTime(DepTable.Rows[0]["D_PurchaseDate"]);
+                DateTime D_PlacedDate = Convert.ToDateTime(DepTable.Rows[0]["D_PlacedDate"]);
+
+                if (DepTable.Rows[0]["D_EndDate"].ToString() != "")
+                    X_lastRundate = Convert.ToDateTime(DepTable.Rows[0]["D_EndDate"]).ToShortDateString();
+                else
+                    X_lastRundate = "";
+
+                int N_CategoryID = this.getIntVAL(DepTable.Rows[0]["N_CategoryID"].ToString());
+                double N_lifetime = 0.0;
+                if ((LifePeriod * 12) > 0)
+                {
+                    string[] temp = (LifePeriod * 12).ToString().Split('.');
+
+                    N_lifetime = this.getIntVAL(temp[0]);
+                }
+
+                DateTime D_Lifeperiod = D_PurchaseDate.AddMonths(this.getIntVAL(N_lifetime.ToString()));
+                int N_CurLife = (D_Lifeperiod - D_PlacedDate).Days;
+
+                // ---- Set the start and end date of depreciation 
+
+                if (X_lastRundate != "")
+                {
+                    StartDate = Convert.ToDateTime(X_lastRundate.ToString());
+                    StartDate = StartDate.AddDays(1);
+                    if (Convert.ToDateTime(X_lastRundate.ToString()).Year < StartDate.Year)
+                    {
+                        if (Convert.ToDateTime(X_lastRundate.ToString()) != StartDate.AddDays(-1))
+                            StartDate = Convert.ToDateTime(X_lastRundate.ToString());
+                    }
+                }
+                else
+                {
+                    DateTime Fn_startdate = Convert.ToDateTime(D_PlacedDate);
+                    if (D_PlacedDate.Date < Fn_startdate)
+                        StartDate = Fn_startdate;
+                    else
+                        StartDate = D_PlacedDate;
+                }
+                if (StartDate.Year > D_Lifeperiod.Year && StartDate.Month > D_Lifeperiod.Month)
+                {
+                    return false;
+                }
+                if (LifePeriod == 0)
+                {
+                    return false;
+                }
+                EndDate = D_EndDate;
+
+                //-------- SUSPENSION 
+
+                SqlCmd2="select N_SuspendID,D_FromDate,D_ToDate from Ass_Suspension Where N_ItemID ='" + N_ItemID + "'  and D_FromDate <='" + StartDate.ToString("s") + "'";
+                AssSuspensionTable= dLayer.ExecuteDataTable(SqlCmd2, Params, connection,transaction);
+
+                if (D_PlacedDate <= EndDate)
+                {
+                    int endmonth = EndDate.Month;
+                    bool flag = false;
+                    if (StartDate.Month == EndDate.Month)
+                        flag = true;
+                    while (StartDate <= D_EndDate)
+                    {
+                        if (StartDate.Month == endmonth)
+                            EndDate = D_EndDate;
+                        else
+                        {
+                            EndDate = StartDate.AddMonths(1);
+                            EndDate = EndDate.AddDays(-(EndDate.Day));
+                        }
+                        if (EndDate > D_PlacedDate.AddDays((LifePeriod * 365) - 1))
+                        {
+                            EndDate = D_PlacedDate.AddDays((LifePeriod * 365) - 1);
+                            flag = true;
+                        }
+                        if (AssSuspensionTable.Rows.Count > 0)
+                        {
+                            foreach (DataRow dSpnrow in AssSuspensionTable.Rows)
+                            {
+                                Suspnsn_FromDate = Convert.ToDateTime(dSpnrow["D_FromDate"]);
+                                Suspnsn_ToDate = Convert.ToDateTime(dSpnrow["D_ToDate"]);
+
+                                N_SuspendID = this.getIntVAL(dSpnrow["N_SuspendID"].ToString());
+                                if (StartDate > Suspnsn_FromDate && StartDate > Suspnsn_ToDate)
+                                    suspnsn = TimeSpan.Zero;
+                                else
+                                {
+                                    if (Suspnsn_ToDate < EndDate)
+                                    {
+                                        DateTime dt;
+                                        if (StartDate > Suspnsn_FromDate)
+                                            suspnsn += Suspnsn_ToDate.AddDays(1) - StartDate;
+                                        else
+                                            suspnsn += Suspnsn_ToDate.AddDays(1) - Suspnsn_FromDate;
+                                    }
+                                    else
+                                    {
+                                        if (StartDate > Suspnsn_FromDate)
+                                            suspnsn += EndDate - StartDate.AddDays(-1);
+                                        else
+                                            suspnsn += EndDate - Suspnsn_FromDate.AddDays(-1);
+                                    }
+                                }
+
+                            }
+                        }
+
+                        //--Taking Current book value amount
+                        SqlCmd3="select MAX(N_LifePeriod) AS N_LifePeriod, SUM(N_Amount) AS N_BookValue from Ass_Transactions where X_Type <> 'Depreciation' and D_EndDate <='" + EndDate.ToString("yyyy-MM-dd") + "' and  N_ItemID=" + N_ItemID;
+                        AssTransactionTable = dLayer.ExecuteDataTable(SqlCmd3, Params, connection,transaction);
+
+                        BookValue = this.getVAL(AssTransactionTable.Rows[0]["N_BookValue"].ToString());
+                        LifePeriod = this.getVAL(AssTransactionTable.Rows[0]["N_LifePeriod"].ToString());
+
+                        //--Taking Total Depreciation processed amount
+                        TotalDepAmt = this.getVAL(dLayer.ExecuteScalar("select SUM(N_Amount) from Ass_Depreciation where N_ItemID = " + N_ItemID,Params,connection,transaction).ToString());
+
+                        //--Check Total Dep Amount with Book value
+                        if (BookValue >= TotalDepAmt)
+                        {
+                            //--- Depreciation Amount Calculation
+                            int TotalDays = 0;
+                            TimeSpan ts = EndDate - StartDate - suspnsn;
+
+                            if ((StartDate.Month == 2 && ts.Days >= 27) || ts.Days >= 29)
+                                TotalDays = 30;
+                            else
+                                TotalDays = this.getIntVAL(ts.Days.ToString()) + 1;
+                            
+                            DepreciationAmt = Math.Round(((this.getVAL((TotalDays).ToString()) / (LifePeriod * 12.0 * 30.0))) * BookValue, 2);
+                            
+                            double SalvageAmt = this.getVAL(DepTable.Rows[0]["N_SalvageAmt"].ToString());
+
+                            if (DepreciationAmt > BookValue - SalvageAmt - TotalDepAmt)
+                                DepreciationAmt = BookValue - SalvageAmt - TotalDepAmt; 
+
+   
+                            if (BookValue - TotalDepAmt + DepreciationAmt > SalvageAmt)
+                            {
+                                DataTable DepreciationTable = new DataTable();
+                                DepreciationTable.Clear();
+                                DepreciationTable.Columns.Add("N_CompanyID");
+                                DepreciationTable.Columns.Add("N_FnYearID");
+                                DepreciationTable.Columns.Add("X_DepriciationNo");
+                                DepreciationTable.Columns.Add("D_StartDate");
+                                DepreciationTable.Columns.Add("D_EndDate");
+                                DepreciationTable.Columns.Add("D_RunDate");
+                                DepreciationTable.Columns.Add("N_Amount");
+                                DepreciationTable.Columns.Add("N_UserID");
+                                DepreciationTable.Columns.Add("N_SuspendID");
+                                DepreciationTable.Columns.Add("N_ItemID");
+                                DepreciationTable.Columns.Add("N_DeprID");
+
+                                DataRow row = DepreciationTable.NewRow();
+                                row["N_DeprID"] = 0;
+                                row["N_CompanyID"] = N_CompanyID;
+                                row["N_FnYearID"] = N_FnYearID;
+                                row["X_DepriciationNo"] = X_DeprNo;
+                                row["D_StartDate"] = getDateVAL(StartDate);
+                                row["D_EndDate"] = getDateVAL(EndDate);
+                                row["D_RunDate"] = getDateVAL(RunDate);
+                                row["N_Amount"] = DepreciationAmt;
+                                row["N_UserID"] = N_UserID;
+                                row["N_SuspendID"] = N_SuspendID;
+                                row["N_ItemID"] = N_ItemID;
+                                DepreciationTable.Rows.Add(row);
+
+                                int N_DprID = dLayer.SaveData("Ass_Depreciation", "N_DeprID", DepreciationTable, connection, transaction);
+                                if (N_DprID <= 0)
+                                {
+                                    transaction.Rollback();
+                                }
+
+                                DataTable TransTable = new DataTable();
+                                TransTable.Clear();
+                                TransTable.Columns.Add("N_CompanyID");
+                                TransTable.Columns.Add("N_FnYearID");
+                                TransTable.Columns.Add("N_Price");
+                                TransTable.Columns.Add("N_LifePeriod");
+                                TransTable.Columns.Add("D_StartDate");
+                                TransTable.Columns.Add("D_EndDate");
+                                TransTable.Columns.Add("X_Type");
+                                TransTable.Columns.Add("N_Amount");
+                                TransTable.Columns.Add("N_ItemID");
+                                TransTable.Columns.Add("N_AssetInventoryDetailsID");
+                                TransTable.Columns.Add("N_ActionID");
+
+                                DataRow row1 = TransTable.NewRow();
+                                row1["N_ActionID"] = 0;
+                                row1["N_CompanyID"] = N_CompanyID;
+                                row1["N_FnYearID"] = N_FnYearID;
+                                row1["N_Price"] = N_Price;
+                                row1["N_LifePeriod"] = LifePeriod;
+                                row1["D_StartDate"] = getDateVAL(StartDate);
+                                row1["D_EndDate"] = getDateVAL(EndDate);
+                                row1["X_Type"] = "Depreciation";
+                                row1["N_Amount"] = DepreciationAmt;
+                                row1["N_ItemID"] = N_ItemID;
+                                row1["N_AssetInventoryDetailsID"] = N_DprID;       
+                                TransTable.Rows.Add(row);
+
+                                int N_TransID = dLayer.SaveData("Ass_Transactions", "N_ActionID", DepreciationTable, connection, transaction);
+                                if (N_TransID <= 0)
+                                {
+                                    transaction.Rollback();
+                                }  
+                            }
+                        }
+
+                        if (!flag)
+                            StartDate = EndDate.AddDays(1);
+                        else
+                            break;
+                    }
+                }
+            }
+
+            // --- Posting Depreciation 
+            if (B_completed)
+            {
+                SortedList PostParams = new SortedList(){
+                                    {"N_CompanyID",N_CompanyID.ToString()},
+                                    {"X_InventoryMode","Depreciation"},
+                                    {"N_InternalID",N_DeprID},
+                                    {"N_UserID",N_UserID}};
+                dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostParams, connection, transaction);
+
+            }
+            return B_completed;
+        }
+
     }
 
 
@@ -1719,5 +1982,6 @@ namespace SmartxAPI.GeneralFunctions
         public string RandomString(int length = 6);
         public bool writeImageFile(string FileString, string Path, string Name);
         public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection);
+        public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction);
     }
 }
