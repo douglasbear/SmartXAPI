@@ -125,6 +125,7 @@ namespace SmartxAPI
         public static string prevVal = "";
         public static string newVal = "";
         // public static string _APIVersion = "21.10.4.3"; //Provision
-        public static string _APIVersion = "21.10.9.1";
+        // public static string _APIVersion = "21.10.9.1"; //Testing_AlRaza_CRM
+        public static string _APIVersion = "21.10.4.2"; //OlivoSmartx2020_Aswin
     }
 } 
