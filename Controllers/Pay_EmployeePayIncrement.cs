@@ -237,17 +237,21 @@ namespace SmartxAPI.Controllers
 
 
 
-                    int N_FnYearID = 1;//myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
+                    int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
                     int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
                     string x_HistoryNo = MasterRow["x_HistoryCode"].ToString();
                     int N_EmpID = myFunctions.getIntVAL(MasterRow["N_EmpID"].ToString());
+
+if(MasterTable.Columns.Contains("n_FnYearID")){
+      MasterTable.Columns.Remove("n_FnYearID");
+}
 
                     if (x_HistoryNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", N_CompanyID);
                         Params.Add("N_YearID", N_FnYearID);
                         Params.Add("N_FormID", 305);
-                        Params.Add("N_BranchID", 1);
+                        Params.Add("N_BranchID", myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString()));
                         x_HistoryNo = dLayer.GetAutoNumber("Pay_PayHistoryMaster", "X_HistoryCode", Params, connection, transaction);
                         if (x_HistoryNo == "")
                         {

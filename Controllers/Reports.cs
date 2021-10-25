@@ -267,7 +267,7 @@ namespace SmartxAPI.Controllers
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
-                    if (nFormID == 64)
+                    if (nFormID == 64 || nFormID == 894)
                     {
 
                         //QR Code Generate For Invoice
