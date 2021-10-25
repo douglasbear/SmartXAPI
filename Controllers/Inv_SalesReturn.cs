@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
         [HttpGet("listdetails")]
@@ -150,6 +150,8 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable SalesReturn = new DataTable();
+                DataTable SalesReturnDetails = new DataTable();
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -227,7 +229,7 @@ namespace SmartxAPI.Controllers
 
                     SalesReturn = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     SalesReturn = _api.Format(SalesReturn, "Master");
-        
+
                     if (xReceiptNo != "" && xReceiptNo != null)
                     {
                         object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + myFunctions.getIntVAL(SalesReturn.Rows[0]["N_TaxCategoryID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
@@ -239,9 +241,9 @@ namespace SmartxAPI.Controllers
                             SalesReturn.AcceptChanges();
                         }
                     }
-                    if(xReceiptNo==null && !SalesReturn.Columns.Contains("x_DisplayName") )
+                    if (xReceiptNo == null && !SalesReturn.Columns.Contains("x_DisplayName"))
                     {
-                         object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + myFunctions.getIntVAL(SalesReturn.Rows[0]["N_TaxCategoryID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
+                        object MainTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + myFunctions.getIntVAL(SalesReturn.Rows[0]["N_TaxCategoryID"].ToString()) + " and N_CompanyID=" + nCompanyId, Params, connection);
                         if (MainTax != null)
                         {
                             SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "x_DisplayName", typeof(string), null);
@@ -276,6 +278,31 @@ namespace SmartxAPI.Controllers
                             sqlCommandText2 = "Select * from vw_InvSalesReturn_Display Where N_CompanyID=@CompanyID and N_SalesID=@nSalesID";
                         else
                             sqlCommandText2 = "Select * from vw_InvDeliveryReturn_Disp Where N_CompanyID=@CompanyID and N_DeliveryNoteId=@nSalesID";
+
+                        // SalesReturnDetails = new DataTable();
+                        SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                        if (SalesReturnDetails.Columns.Contains("N_RetQty"))
+                        {
+                            foreach (DataRow var1 in SalesReturnDetails.Rows)
+                            {
+                                if (var1["N_RetQty"] != null && var1["N_RetQty"].ToString() != "")
+                                {
+                                    if(var1["N_RetQty"].ToString() != var1["N_RetQty"].ToString())
+                                    {
+                                    var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
+                                    var1["n_RetQty"] = 0.00;
+                                    SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
+                                    SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
+                                    SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
+                                    SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
+                                    }
+
+                                }
+
+                            }
+                        }
+                        SalesReturnDetails.AcceptChanges();
+                        SalesReturn.AcceptChanges();
                     }
                     else
                     {
@@ -283,9 +310,14 @@ namespace SmartxAPI.Controllers
                             sqlCommandText2 = "Select * from vw_InvSalesRetunEdit_Display Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
                         else
                             sqlCommandText2 = "Select * from vw_InvDeliveryRetunEdit Where N_CompanyID=@CompanyID and N_FnYearID=@FnYearID and N_DebitNoteId=@DebitNoteID and N_RetQty<>0";
+
+                        SalesReturnDetails = new DataTable();
+                        SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+
+
                     }
-                    DataTable SalesReturnDetails = new DataTable();
-                    SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+
+
                     SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
                     DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = _api.Format(Attachments, "attachments");
@@ -298,7 +330,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -347,7 +379,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);
-                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Return Number")); }
+                        if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
                         MasterTable.Rows[0]["X_DebitNoteNo"] = InvoiceNo;
                     }
 
@@ -370,7 +402,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                         // string sqlCommandText = "";
                         // SortedList DeleteParams = new SortedList();
@@ -407,7 +439,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
 
@@ -461,7 +493,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                         dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     else
-                        return Ok(_api.Error(User,"Payment processed! Unable to delete"));
+                        return Ok(_api.Error(User, "Payment processed! Unable to delete"));
 
 
                 }
@@ -474,7 +506,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
         }
@@ -523,7 +555,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
