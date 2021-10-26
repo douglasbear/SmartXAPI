@@ -268,8 +268,10 @@ namespace SmartxAPI.Controllers
                             {
                                 if (var1["RetQty"] != null && var1["RetQty"].ToString() != "")
                                 {
-                                    var1["n_PQty"] = (myFunctions.getIntVAL(var1["N_PQty"].ToString()) - myFunctions.getIntVAL(var1["n_RetQty"].ToString())).ToString();
-                                    var1["n_RetQty"] = 0.00;
+                                    var1["n_PQty"] = (myFunctions.getIntVAL(var1["N_PQty"].ToString()) - myFunctions.getIntVAL(var1["RetQty"].ToString())).ToString();
+                                    var1["RetQty"] = 0.00;
+                                    MasterTable.Rows[0]["N_CreditNoteId"] = 0;
+                                    MasterTable.Rows[0]["X_CreditNoteNo"] = "@Auto";
                                 }
 
                             }

@@ -64,11 +64,13 @@ namespace SmartxAPI.Controllers
                     //Business Hours Table
                     workingHoursSql = "Select * from Pay_WorkingHours Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_WHID";
                     WorkingHours = dLayer.ExecuteDataTable(workingHoursSql, Params, Con);
+                    WorkingHours = _api.Format(WorkingHours,"WorkingHours");
                     if (WorkingHours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
 
                     //Additional Business Hours
                     AdditionalWorkingHourssql = "Select * from Pay_AdditionalWorkingDays Where N_CompanyID =" + nCompanyID + "and N_CatagoryID=" + categoryID + " order by N_ID";
                     AdditionalWorkingHours = dLayer.ExecuteDataTable(AdditionalWorkingHourssql, Params, Con);
+                    AdditionalWorkingHours = _api.Format(AdditionalWorkingHours,"AdditionalWorkingHours"); 
                     // if (AdditionalWorkingHours.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     PayWorkGroup.Tables.Add(WorkingHours);
                     PayWorkGroup.Tables.Add(AdditionalWorkingHours);
@@ -137,7 +139,7 @@ namespace SmartxAPI.Controllers
                     }
                     for (int i = 0; i < WorkingHours.Rows.Count; i++)
                     {
-                        WorkingHours.Rows[i]["categoryID"] = nPkeyID;
+                        WorkingHours.Rows[i]["N_CatagoryID"] = nPkeyID;
                     }
                     int N_ID = dLayer.SaveData("Pay_WorkingHours", "N_ID", WorkingHours, con, transaction);
                     if (N_ID <= 0)
@@ -149,7 +151,7 @@ namespace SmartxAPI.Controllers
                     {
                         for (int i = 0; i < AdditionalWorkingHours.Rows.Count; i++)
                         {
-                            WorkingHours.Rows[i]["N_CategoryID"] = nPkeyID;
+                            WorkingHours.Rows[i]["N_CatagoryID"] = nPkeyID;
                         }
                         N_ID = dLayer.SaveData("Pay_WorkingHours", "N_ID", WorkingHours, con, transaction);
                         if (N_ID <= 0)
@@ -185,8 +187,8 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("N_CompanyID", nCompanyID);
                     Params.Add("N_FnYearID", nFnyearID);
-                    Params.Add("piRefId", piRefId);
-                    Params.Add("piPKeyId", piPKeyId);
+                    Params.Add("@N_RefId", piRefId);
+                    Params.Add("@N_PKeyId", piPKeyId);
                     try
                     {
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Gen_LookupTable", Params, connection, transaction);

@@ -287,7 +287,7 @@ namespace SmartxAPI.Controllers
                             {
                                 if (var1["N_RetQty"] != null && var1["N_RetQty"].ToString() != "")
                                 {
-                                    if(var1["N_RetQty"].ToString() != var1["N_RetQty"].ToString())
+                                    if(var1["N_Qty"].ToString() != var1["N_RetQty"].ToString())
                                     {
                                     var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
                                     var1["n_RetQty"] = 0.00;

@@ -586,7 +586,7 @@ namespace SmartxAPI.Controllers
                         myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), false);
 
                     //sales return count(draft and non draft)
-                    object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and isnull(B_IsSaveDraft,0)=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
 
                     object DNQty = dLayer.ExecuteScalar("Select SUM(N_Qty) from vw_InvSalesReturn_Display Where N_CompanyID="+nCompanyId+" and N_SalesID=@nSalesID", QueryParamsList, Con);
                     object OrderQty1 =dLayer.ExecuteScalar("Select SUM(N_RetQty) from vw_InvSalesReturn_Display Where N_CompanyID="+nCompanyId+"and N_SalesID=@nSalesID", QueryParamsList, Con);
