@@ -368,8 +368,10 @@ namespace SmartxAPI.Controllers
                             // if(myFunctions.getIntVAL(PayDetailTable.Rows[j]["N_PayID"].ToString())==0)
                             //     PayDetailTable.Rows[j].Delete();
                         }
+                        if(PayDetailTable.Columns.Contains("IsAccrued")){
                         PayDetailTable.Columns.Remove("IsAccrued");
                         PayDetailTable.AcceptChanges();
+                        }
 
                         int nTransDetailsID=0;
                         nTransDetailsID = dLayer.SaveData("Pay_PaymentDetails", "N_TransDetailsID", "", "", PayDetailTable, connection, transaction);
