@@ -255,9 +255,17 @@ namespace SmartxAPI.Controllers
                         EndDate = D_RunDate;
                         EndDate = EndDate.AddMonths(1);
                         EndDate = EndDate.AddDays(-(EndDate.Day));
+                        SortedList ProcParams = new SortedList(){
+                            {"N_CompanyID",N_CompanyID.ToString()},
+                            {"N_FnYearID",N_FnYearID.ToString()},
+                            {"N_ItemID",myFunctions.getIntVAL(drow["N_ItemID"].ToString())},
+                            {"D_EndDate",Convert.ToDateTime(EndDate.ToString())},
+                            {"N_UserID",myFunctions.GetUserID(User).ToString()},
+                            {"X_DeprNo",myFunctions.getIntVAL(DepreciationNo.ToString())}
+                        };
                         if (N_DeprCalcID == 195 || N_DeprCalcID == 242)
                         {
-                            B_completed = Convert.ToBoolean(dLayer.ExecuteScalarPro("SP_Ass_Depreciation_WDV" + N_CompanyID + "," + N_FnYearID + "," + N_ItemID + ",'" + EndDate + "'," + N_UserID + ", '" + DepreciationNo + "'",Params, connection, transaction).ToString());
+                            B_completed = Convert.ToBoolean(dLayer.ExecuteScalarPro("SP_Ass_Depreciation_WDV" ,ProcParams, connection, transaction).ToString());
                         }
                         else
                             B_completed = myFunctions.Depreciation(dLayer,N_CompanyID,N_FnYearID,N_UserID,N_ItemID, EndDate, DepreciationNo.Trim(),connection, transaction);
