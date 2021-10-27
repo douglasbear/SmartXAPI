@@ -70,6 +70,65 @@ namespace SmartxAPI.Controllers
 
         }
 
+        [HttpGet("projectlist")]
+        public ActionResult GetAllProjectlist(int? nCompanyId,int? nFnYearID ,int nCustomerID,bool bAllBranchData,int nBranchID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            string Criteria = "";
+            
+           if (bAllBranchData == true)
+            {
+                if (nCustomerID > 0)
+                   Criteria =  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 and   (N_CustomerID =@p3 or  N_CustomerID=0 )";
+                else
+                    Criteria=  " and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+            }
+            else
+            {
+                if (nCustomerID > 0)
+                    Criteria = " and  ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0  and  (N_CustomerID =@p3 or  N_CustomerID=0 ) and  N_BranchID=@p4";
+                else
+                    Criteria = " and  N_BranchID=@p4 and ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+
+            }
+
+            //  if (bAllBranchData == true)
+            //        Criteria = "AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+            //  else
+            //         Criteria = "and  N_BranchID=" + N_BranchID + " AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
+
+            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria;
+            Params.Add("@p1", nCompanyId);
+            Params.Add("@p3", nCustomerID);
+            Params.Add("@p4", nBranchID);
+            Params.Add("@p5", nFnYearID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                       return Ok(api.Success(dt));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+
+
+        }
+
 
         //Save....
         [HttpPost("save")]
