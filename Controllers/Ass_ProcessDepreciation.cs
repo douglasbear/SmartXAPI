@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string cond="",sqlCommandText="";
+            string cond="",sqlCommandText="",sqlCmd2="";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nBranchID);
@@ -155,6 +155,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCmd2="select count(*) as X_TotalCount from (select N_ItemID, COUNT(*) as coun,D_RunDate  from Ass_Depreciation where N_FnYearID =@p2 group by N_ItemID,D_RunDate) AS subquery ";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCmd2, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "n_assetEffected", typeof(int), TotalCount);
                     if (dt.Rows.Count == 0)
                     {
                         return Ok(_api.Warning("No Results Found"));
@@ -236,7 +239,6 @@ namespace SmartxAPI.Controllers
                     SqlCmd = "SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,ISNULL(Ass_AssetMaster.N_DeprCalcID,0) AS N_DeprCalcID FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where " + Condn + " and dbo.Ass_AssetMaster.N_Status<2 and isnull(dbo.Ass_AssetMaster.N_SaveDraft,0) = 0  group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,Ass_AssetMaster.N_DeprCalcID,dbo.Ass_AssetMaster.N_SaveDraft";
                     DepTable = dLayer.ExecuteDataTable(SqlCmd, Params, connection,transaction);
 
-                    MasterTable.Columns.Remove("N_AllBranchData");
                     N_DeprID = dLayer.SaveData("Ass_DepreciationMaster", "N_DeprID", MasterTable, connection, transaction);
                     if (N_DeprID <= 0)
                     {
@@ -255,7 +257,7 @@ namespace SmartxAPI.Controllers
                         EndDate = EndDate.AddDays(-(EndDate.Day));
                         if (N_DeprCalcID == 195 || N_DeprCalcID == 242)
                         {
-                            B_completed = Convert.ToBoolean(dLayer.ExecuteNonQueryPro("SP_Ass_Depreciation_WDV " + N_CompanyID + "," + N_FnYearID + "," + N_ItemID + ",'" + EndDate + "'," + N_UserID + ", '" + DepreciationNo + "'",Params, connection, transaction).ToString());
+                            B_completed = Convert.ToBoolean(dLayer.ExecuteScalarPro("SP_Ass_Depreciation_WDV" + N_CompanyID + "," + N_FnYearID + "," + N_ItemID + ",'" + EndDate + "'," + N_UserID + ", '" + DepreciationNo + "'",Params, connection, transaction).ToString());
                         }
                         else
                             B_completed = myFunctions.Depreciation(dLayer,N_CompanyID,N_FnYearID,N_UserID,N_ItemID, EndDate, DepreciationNo.Trim(),connection, transaction);
