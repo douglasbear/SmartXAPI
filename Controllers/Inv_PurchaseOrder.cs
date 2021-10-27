@@ -199,13 +199,17 @@ namespace SmartxAPI.Controllers
             if (xPRSNo == null) xPRSNo = "";
             string Mastersql = "";
 
-            if (bAllBranchData == true)
+           if (bAllBranchData == true)
             {
                 Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID,Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate," +
                             "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, " +
                             "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
                             "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, " +
+<<<<<<< HEAD
                             "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, ,Inv_CustomerProjects.X_ProjectName,Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
+=======
+                            "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments ,Inv_CustomerProjects.X_ProjectName,Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
+>>>>>>> 44554e73910fefd598a37288768441d7c3e40aea
                             "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Inv_PurchaseOrder.N_TaxCategoryID2, " +
                             "Inv_PurchaseOrder.N_TaxPercentage2, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 FROM Inv_Purchase RIGHT OUTER JOIN Inv_PurchaseOrder LEFT OUTER JOIN Acc_TaxCategory ON Inv_PurchaseOrder.N_CompanyID = Acc_TaxCategory.N_CompanyID AND Inv_PurchaseOrder.N_TaxCategoryID2 = Acc_TaxCategory.N_PkeyID ON " +
                             "Inv_Purchase.N_POrderID = Inv_PurchaseOrder.N_POrderID AND Inv_Purchase.N_CompanyID = Inv_PurchaseOrder.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseOrder.N_FnYearID AND Inv_Purchase.N_BranchId = Inv_PurchaseOrder.N_BranchID LEFT OUTER JOIN Acc_CurrencyMaster RIGHT OUTER JOIN " +
@@ -217,7 +221,11 @@ namespace SmartxAPI.Controllers
             {
                 Mastersql = "SELECT Inv_PurchaseOrder.N_CompanyID, Inv_PurchaseOrder.N_DiscountDisplay, Inv_PurchaseOrder.N_TaxPercentage, Inv_PurchaseOrder.N_TaxCategoryID, Inv_PurchaseOrder.N_FnYearID, Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.X_POrderNo, Inv_PurchaseOrder.N_VendorID, Inv_PurchaseOrder.D_EntryDate, Inv_PurchaseOrder.D_POrderDate, " +
                             "Inv_PurchaseOrder.N_InvoiceAmt, Inv_PurchaseOrder.N_DiscountAmt, Inv_PurchaseOrder.N_CashPaid, Inv_PurchaseOrder.N_FreightAmt, Inv_PurchaseOrder.N_userID, Inv_PurchaseOrder.N_Processed, Inv_PurchaseOrder.N_PurchaseID, Inv_PurchaseOrder.N_LocationID, Inv_PurchaseOrder.X_Description, Inv_PurchaseOrder.N_BranchID, " +
+<<<<<<< HEAD
                             "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode, ,Inv_CustomerProjects.X_ProjectName,Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
+=======
+                            "Inv_PurchaseOrder.B_CancelOrder, Inv_PurchaseOrder.D_ExDelvDate, Inv_PurchaseOrder.N_ProjectID, Inv_PurchaseOrder.X_Currency, Inv_PurchaseOrder.N_ExchangeRate, Inv_PurchaseOrder.X_QutationNo, Inv_PurchaseOrder.X_PaymentMode,Inv_CustomerProjects.X_ProjectName,Inv_PurchaseOrder.X_DeliveryPlace, Inv_PurchaseOrder.N_ApproveLevel, Inv_PurchaseOrder.N_ProcStatus, " +
+>>>>>>> 44554e73910fefd598a37288768441d7c3e40aea
                             "Inv_PurchaseOrder.N_QuotationID, Inv_PurchaseOrder.N_InvoiceAmtF, Inv_PurchaseOrder.N_DiscountAmtF, Inv_PurchaseOrder.N_CashPaidF, Inv_PurchaseOrder.N_FreightAmtF, Inv_PurchaseOrder.N_CurrencyID, Inv_PurchaseOrder.B_IsSaveDraft, Inv_PurchaseOrder.N_DeliveryPlaceID, Inv_PurchaseOrder.X_TandC, Inv_PurchaseOrder.X_Attention, " +
                             "Inv_PurchaseOrder.N_TaxAmt, Inv_PurchaseOrder.N_TaxAmtF, Inv_PurchaseOrder.N_InvDueDays, Inv_PurchaseOrder.N_NextApprovalID, Inv_PurchaseOrder.N_ApprovalLevelId, Inv_PurchaseOrder.N_POType, Inv_PurchaseOrder.X_Comments, Inv_PurchaseOrder.N_WSID, Inv_PurchaseOrder.N_SOId, Inv_PurchaseOrder.N_POTypeID, " +
                             "Inv_PurchaseOrder.D_ContractEndDate, Inv_PurchaseOrder.D_MailDate, Inv_PurchaseOrder.N_MailUserID, Inv_Location.X_LocationName, Gen_Defaults.X_TypeName, Inv_Vendor.X_VendorName, Inv_Purchase.X_InvoiceNo, Acc_TaxCategory_1.X_DisplayName, Acc_CurrencyMaster.X_CurrencyName, Acc_CurrencyMaster.B_default, Acc_TaxCategory.X_DisplayName AS X_DisplayName2 " +
@@ -228,8 +236,11 @@ namespace SmartxAPI.Controllers
                 Params.Add("@nBranchID", nBranchID);
             }
 
+<<<<<<< HEAD
 
 
+=======
+>>>>>>> 44554e73910fefd598a37288768441d7c3e40aea
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearId);
             Params.Add("@p3", xPOrderId);
