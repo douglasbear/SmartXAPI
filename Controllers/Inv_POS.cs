@@ -292,8 +292,8 @@ namespace SmartxAPI.Controllers
                         object fileName = item["X_ImageName"];
                         if (fileName == null) fileName = "";
 
-                        if(fileName.ToString()!="")
-                        item["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
+                        if (fileName.ToString() != "")
+                            item["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
 
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
                         {
@@ -467,8 +467,8 @@ namespace SmartxAPI.Controllers
                     {
                         object fileName = dr1["X_ImageName"];
                         if (fileName == null) fileName = "";
-                        if(fileName.ToString()!="")
-                        dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
+                        if (fileName.ToString() != "")
+                            dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
                     }
                     dt.AcceptChanges();
                     dt = _api.Format(dt);
@@ -1409,6 +1409,64 @@ namespace SmartxAPI.Controllers
             }
 
             return TxnStatus;
+        }
+        [HttpGet("subitemList")]
+        public ActionResult GetSubItem(int mainItemID)
+        {
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
+                    string SubItemList = "";
+                    string SubItemRow = "";
+                    DataTable subItems = new DataTable();
+                    DataTable subItemList = new DataTable();
+                    DataTable itemDetails = new DataTable();
+                    int flag = 0;
+                    DataTable ProductList = new DataTable();
+
+                    string ItemDetails = "select * from Inv_ItemDetails where N_CompanyID=" + nCompanyID + "";
+                    itemDetails = dLayer.ExecuteDataTable(ItemDetails, Params, Con);
+
+                    SubItemList = "select * from Vw_Product_SubItems where N_CompanyID=" + nCompanyID + " and N_MainItemID=" + mainItemID + "";
+                    subItems = dLayer.ExecuteDataTable(SubItemList, Params, Con);
+                    if (subItems.Rows.Count > 0)
+                    {
+                        foreach (DataRow Avar in subItems.Rows)
+                        {
+                            SubItemRow = "select * from Vw_Product_SubItems where N_CompanyID=" + nCompanyID + " and N_MainItemID=" + myFunctions.getIntVAL(Avar["N_ItemID"].ToString()) + " ";
+                            subItemList = dLayer.ExecuteDataTable(SubItemRow, Params, Con);
+                            if (subItemList.Rows.Count > 0)
+                            {
+                                DataRow[] drProductDetails = subItemList.Select("N_ItemID = " + subItemList.Rows[0]["N_ItemID"].ToString());
+                                ProductList = drProductDetails.CopyToDataTable();
+                                ProductList.AcceptChanges();
+
+                            }
+                            else
+                            {
+                                DataRow[] drProductDetails = subItems.Select("N_ItemID = " + Avar["N_ItemID"].ToString());
+                                ProductList = drProductDetails.CopyToDataTable();
+                                ProductList.AcceptChanges();
+
+                            }
+
+
+                        }
+
+                    }
+                    return Ok(_api.Success(ProductList));
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
         }
     }
 }
