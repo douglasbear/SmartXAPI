@@ -133,7 +133,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -180,7 +180,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -249,6 +249,10 @@ namespace SmartxAPI.Controllers
                         {
                             DetailSql = "Select vw_InvPurchaseReturnEdit_Disp.*,dbo.SP_Stock(vw_InvPurchaseReturnEdit_Disp.N_ItemID) As N_Stock from vw_InvPurchaseReturnEdit_Disp Where N_CompanyID=@p1 and X_CreditNoteNo=@p3 and N_FnYearID =@p2 and N_RetQty<>0 and N_BranchId=@p5";
                         }
+
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+
+
                     }
                     else
                     {
@@ -256,9 +260,25 @@ namespace SmartxAPI.Controllers
                             DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4";
                         else
                             DetailSql = "Select vw_InvPurchaseDetails_Display.*,dbo.SP_Stock(vw_InvPurchaseDetails_Display.N_ItemID) As N_Stock  from vw_InvPurchaseDetails_Display Where N_CompanyID=@p1 and X_InvoiceNo=@p4 and N_BranchID=@p5";
+
+                        DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                        if (DetailTable.Columns.Contains("RetQty"))
+                        {
+                            foreach (DataRow var1 in DetailTable.Rows)
+                            {
+                                if (var1["RetQty"] != null && var1["RetQty"].ToString() != "")
+                                {
+                                    var1["n_PQty"] = (myFunctions.getIntVAL(var1["N_PQty"].ToString()) - myFunctions.getIntVAL(var1["RetQty"].ToString())).ToString();
+                                    var1["RetQty"] = 0.00;
+                                    MasterTable.Rows[0]["N_CreditNoteId"] = 0;
+                                    MasterTable.Rows[0]["X_CreditNoteNo"] = "@Auto";
+                                }
+
+                            }
+                        }
+                        DetailTable.AcceptChanges();
                     }
 
-                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
                 }
@@ -266,7 +286,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -319,7 +339,7 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
                     }
 
@@ -339,7 +359,7 @@ namespace SmartxAPI.Controllers
                     }
                     DetailTable.Columns.Remove("N_UnitQty");
                     int N_QuotationDetailId = dLayer.SaveData("Inv_PurchaseReturnDetails", "n_CreditNoteDetailsID", DetailTable, connection, transaction);
-                    
+
 
                     SortedList InsParams = new SortedList(){
                                 {"N_CompanyID",MasterTable.Rows[0]["n_CompanyId"].ToString()},
@@ -362,7 +382,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -389,7 +409,7 @@ namespace SmartxAPI.Controllers
                     if (myFunctions.getIntVAL(objPaymentProcessed.ToString()) == 0)
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", deleteParams, connection, transaction);
                     else
-                        return Ok(_api.Error(User,"Payment processed! Unable to delete"));
+                        return Ok(_api.Error(User, "Payment processed! Unable to delete"));
                     transaction.Commit();
                 }
 
@@ -398,7 +418,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
 
 
@@ -437,7 +457,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(User,e));
+                return StatusCode(403, _api.Error(User, e));
             }
         }
 

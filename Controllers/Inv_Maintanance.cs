@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -262,19 +260,30 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+        [HttpPost("UpdateStatus")]
+        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
 
-
-
-
-
-
-
-
-
-
-
-
-
+                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set B_Status = " + nStatus + " where N_CompanyID =" + nCompanyID + " and N_ServiceID = " + nCompanyID + "", Params, connection);
+                    if (remarks != "")
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"' where N_CompanyID =" + nCompanyID + " and N_ServiceID = " + nCompanyID + "", Params, connection);
+                    }
+                    return Ok(_api.Success("Closed"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
     }
 }
-
