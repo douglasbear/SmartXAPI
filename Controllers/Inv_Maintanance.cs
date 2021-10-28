@@ -260,8 +260,8 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-        [HttpPost("UpdateStatus")]
-        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID)
+        [HttpGet("UpdateStatus")]
+        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus)
         {
             try
             {
@@ -272,10 +272,10 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
 
-                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set B_Status = " + nStatus + " where N_CompanyID =" + nCompanyID + " and N_ServiceID = " + nCompanyID + "", Params, connection);
+                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set B_Status = " + nStatus + ", X_Status = '" + xStatus +"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     if (remarks != "")
                     {
-                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"' where N_CompanyID =" + nCompanyID + " and N_ServiceID = " + nCompanyID + "", Params, connection);
+                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     }
                     return Ok(_api.Success("Closed"));
                 }
