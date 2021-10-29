@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                 categorySql = " and N_CategoryID=@p2 ";
 
             if (mainItemID > 0)
-                parentItemFilterSql = " and N_ItemID in (select N_ItemID from Inv_ItemDetails where N_MainItemID=@mainItemID  and N_CompanyID=@p1) ";
+                parentItemFilterSql = " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemDetails where N_MainItemID=@mainItemID  and N_CompanyID=@p1) ";
 
 
 
