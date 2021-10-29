@@ -216,7 +216,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID)
+        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID, int mainItemID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -227,6 +227,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandCount = "";
             string Searchkey = "";
             string categorySql = "";
+            string parentItemFilterSql = "";
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
@@ -238,6 +239,9 @@ namespace SmartxAPI.Controllers
             if (nCategoryID > 0)
                 categorySql = " and N_CategoryID=@p2 ";
 
+            if (mainItemID > 0)
+                parentItemFilterSql = " and N_ItemID in (select N_ItemID from Inv_ItemDetails where N_MainItemID=@mainItemID  and N_CompanyID=@p1) ";
+
 
 
             if (dispCatID != 0)
@@ -248,7 +252,7 @@ namespace SmartxAPI.Controllers
                          " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName" +
 " FROM            vw_InvItem_Search LEFT OUTER JOIN" +
                         " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN" +
-                        " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + categorySql + Searchkey;
+                        " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + categorySql + parentItemFilterSql + Searchkey;
 
 
             Params.Add("@p1", nCompanyId);
@@ -258,6 +262,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@PSize", PageSize);
             Params.Add("@Offset", Page);
             Params.Add("@p5", Page);
+            Params.Add("@mainItemID", mainItemID);
 
 
             SortedList OutPut = new SortedList();
@@ -292,8 +297,8 @@ namespace SmartxAPI.Controllers
                         object fileName = item["X_ImageName"];
                         if (fileName == null) fileName = "";
 
-                        if(fileName.ToString()!="")
-                        item["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
+                        if (fileName.ToString() != "")
+                            item["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
 
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
                         {
@@ -467,8 +472,8 @@ namespace SmartxAPI.Controllers
                     {
                         object fileName = dr1["X_ImageName"];
                         if (fileName == null) fileName = "";
-                        if(fileName.ToString()!="")
-                        dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
+                        if (fileName.ToString() != "")
+                            dr1["X_ImageURL"] = myFunctions.GetTempFileName(User, "posproductimages", fileName.ToString());
                     }
                     dt.AcceptChanges();
                     dt = _api.Format(dt);
@@ -1409,6 +1414,31 @@ namespace SmartxAPI.Controllers
             }
 
             return TxnStatus;
+        }
+
+        [HttpGet("subitemList")]
+        public ActionResult GetSubItem(int mainItemID)
+        {
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
+                    SortedList Params = new SortedList();
+                    string ItemDetails = "SELECT * FROM ( SELECT b.*,ROW_NUMBER() OVER (PARTITION BY b.N_MainItemID ORDER BY b.N_ItemID DESC) AS N_RowNumber FROM Vw_Product_SubItems AS a LEFT OUTER JOIN " +
+                                        " Vw_Product_SubItems AS b ON  a.N_CompanyID = b.N_CompanyID AND (a.N_ItemID = b.N_MainItemID OR (a.N_ClassID<>1 and a.N_ItemID = b.N_ItemID and b.N_MainItemID = @mainItemID)) " +
+                                        " WHERE (a.N_CompanyID = @nCompanyID) AND (a.N_MainItemID = @mainItemID) ) as tbl WHERE N_RowNumber = 1";
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    Params.Add("@mainItemID", mainItemID);
+                    DataTable ProductList = dLayer.ExecuteDataTable(ItemDetails, Params, Con);
+                    return Ok(_api.Success(_api.Format(ProductList)));
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
         }
     }
 }
