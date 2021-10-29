@@ -1425,7 +1425,7 @@ namespace SmartxAPI.Controllers
                 {
                     Con.Open();
                     SortedList Params = new SortedList();
-                    string ItemDetails = "SELECT * FROM ( SELECT b.*,ROW_NUMBER() OVER (PARTITION BY b.N_MainItemID ORDER BY b.D_EntryDate DESC) AS N_RowNumber FROM Vw_Product_SubItems AS a LEFT OUTER JOIN " +
+                    string ItemDetails = "SELECT * FROM ( SELECT b.*,ROW_NUMBER() OVER (PARTITION BY b.N_MainItemID ORDER BY b.N_ItemID DESC) AS N_RowNumber FROM Vw_Product_SubItems AS a LEFT OUTER JOIN " +
                                         " Vw_Product_SubItems AS b ON  a.N_CompanyID = b.N_CompanyID AND (a.N_ItemID = b.N_MainItemID OR (a.N_ClassID<>1 and a.N_ItemID = b.N_ItemID and b.N_MainItemID = @mainItemID)) " +
                                         " WHERE (a.N_CompanyID = @nCompanyID) AND (a.N_MainItemID = @mainItemID) ) as tbl WHERE N_RowNumber = 1";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
