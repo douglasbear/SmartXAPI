@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
-                    string xTransType = "PURCHASE";
+                    string xTransType = "FTPURCHASE";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
