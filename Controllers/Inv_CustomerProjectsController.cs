@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             //  else
             //         Criteria = "and  N_BranchID=" + N_BranchID + " AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
 
-            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria;
+            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria +" order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nCustomerID);
             Params.Add("@p4", nBranchID);
