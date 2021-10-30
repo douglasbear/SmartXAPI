@@ -281,17 +281,23 @@ namespace SmartxAPI.Controllers
                             dLayer.SaveImage("Acc_Company", "i_Header", headerBitmap, "N_CompanyID", N_CompanyId, connection, transaction);
                         object N_FnYearId = myFunctions.getIntVAL(GeneralTable.Rows[0]["n_FnYearID"].ToString());
                         string pwd = "";
+                        string xUsrName="",xPhoneNo="";
                         using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                         {
                             cnn.Open();
+                            SortedList Param = new SortedList();
                             string sqlGUserInfo = "SELECT X_Password FROM Users where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
-
                             pwd = dLayer.ExecuteScalar(sqlGUserInfo, cnn).ToString();
+
+                            string sqlClientmaster = "SELECT TOP 1 * FROM clientmaster where x_EmailID='" + GeneralTable.Rows[0]["x_AdminName"].ToString() + "'";
+                            DataTable dtClientmaster = dLayer.ExecuteDataTable(sqlClientmaster,Param, cnn);
+                            xUsrName=dtClientmaster.Rows[0]["X_ClientName"].ToString();
+                            xPhoneNo=dtClientmaster.Rows[0]["X_ContactNumber"].ToString();
                         }
 
 
-                        if (values == "@Auto") 
-                        {
+                        if (values == "@Auto")  
+                        {               
                             SortedList proParams1 = new SortedList(){
                                         {"N_CompanyID",N_CompanyId},
                                         {"X_ModuleCode","500"},
@@ -299,7 +305,8 @@ namespace SmartxAPI.Controllers
                                         {"X_AdminName",GeneralTable.Rows[0]["x_AdminName"].ToString()},
                                         {"X_AdminPwd",pwd},
                                         {"X_Currency",MasterTable.Rows[0]["x_Currency"].ToString()},
-                                        {"N_AppID",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_AppType"].ToString())}
+                                        {"N_AppID",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_AppType"].ToString())},
+                                        {"X_UserName",xUsrName}
                                         };
                             dLayer.ExecuteNonQueryPro("SP_NewAdminCreation", proParams1, connection, transaction);
 
@@ -322,6 +329,14 @@ namespace SmartxAPI.Controllers
                                         {"@nFnYearID",N_FnYearId},
                                         {"@nTaxType",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_TaxType"].ToString())}};
                         dLayer.ExecuteNonQuery("UPDATE Acc_FnYear set N_TaxType=@nTaxType where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", taxParams, connection, transaction);
+
+                        int SalesManrows = dLayer.ExecuteNonQuery("INSERT INTO Inv_Salesman(N_CompanyID, N_SalesmanID, X_SalesmanCode, X_SalesmanName, X_PhoneNo1, X_Email, B_Inactive, N_FnYearID, D_Entrydate, N_BranchID)"+
+                                                                    "select "+N_CompanyId+",MAX(ISNULL(N_SalesmanID,0))+1,MAX(ISNULL(X_SalesmanCode,100))+1,'"+xUsrName+"','"+xPhoneNo+"','"+GeneralTable.Rows[0]["x_AdminName"].ToString()+"',0,"+N_FnYearId+",GETDATE(),0 from Inv_Salesman", Params, connection,transaction);
+                        if (SalesManrows <= 0)
+                        {
+                            return Ok(api.Warning("Salesman Creation failed"));
+                        } 
+
                         transaction.Commit();
 
                         return Ok(api.Success("Company successfully saved"));
