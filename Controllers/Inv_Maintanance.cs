@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ( X_ServiceCode like '%" + xSearchkey + "%' or  D_EntryDate like '%" + xSearchkey + "%' or  X_CustomerName like '%" + xSearchkey + "%' or  X_Remarks like '%" + xSearchkey + "%' ) ";
+                Searchkey = "and ( X_ServiceCode like '%" + xSearchkey + "%' or  D_EntryDate like '%" + xSearchkey + "%' or  X_CustomerName like '%" + xSearchkey + "%' or  X_Remarks like '%" + xSearchkey + "%' or  X_Status like '%" + xSearchkey + "%' ) ";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ServiceID desc";
