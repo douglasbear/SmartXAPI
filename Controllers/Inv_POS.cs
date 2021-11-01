@@ -240,7 +240,7 @@ namespace SmartxAPI.Controllers
                 categorySql = " and N_CategoryID=@p2 ";
 
             if (mainItemID > 0)
-                parentItemFilterSql = " and N_ItemID in (select N_ItemID from Inv_ItemDetails where N_MainItemID=@mainItemID  and N_CompanyID=@p1) ";
+                parentItemFilterSql = " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemDetails where N_MainItemID=@mainItemID  and N_CompanyID=@p1) ";
 
 
 
@@ -825,25 +825,40 @@ namespace SmartxAPI.Controllers
 
                             try
                             {
-                                // dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
                             }
                             catch (Exception ex)
                             {
-                                transaction.Rollback();
-                                if (ex.Message == "50")
+                               
+                                if (ex.Message == "50"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Day Closed"));
+                                    }
                                 else if (ex.Message == "51")
-                                    return Ok(_api.Error(User, "Year Closed"));
-                                else if (ex.Message == "52")
+                                    {
+                                         transaction.Rollback();
+                                        return Ok(_api.Error(User, "Year Closed"));
+                                        }
+                                else if (ex.Message == "52"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Year Exists"));
-                                else if (ex.Message == "53")
+                                    }
+                                else if (ex.Message == "53"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Period Closed"));
-                                else if (ex.Message == "54")
+                                    }
+                                else if (ex.Message == "54"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Txn Date"));
-                                else if (ex.Message == "55")
-                                    return Ok(_api.Error(User, "Quantity exceeds!"));
-                                else
+                                    }
+                                else if (ex.Message == "55"){
+                                    dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                                    // return Ok(_api.Error(User, "Quantity exceeds!"));
+                                }
+                                else{
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, ex));
+                                    }
                             }
 
 
