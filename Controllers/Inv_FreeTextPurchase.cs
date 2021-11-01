@@ -55,23 +55,23 @@ namespace SmartxAPI.Controllers
                 if (!CheckClosedYear)
                     {
                     if (b_AllBranchData)
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1";
+                        xCriteria = " and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1";
                      else
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1";
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
                 else
                     {
                     if (b_AllBranchData)
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                     else
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
                 if (xSearchkey != null && xSearchkey.Trim() != "")
                     Searchkey = "and ( X_ServiceCode like '%" + xSearchkey + "%' or  D_EntryDate like '%" + xSearchkey + "%' or  X_CustomerName like '%" + xSearchkey + "%' or  X_Remarks like '%" + xSearchkey + "%' ) ";
 
                 if (xSortBy == null || xSortBy.Trim() == "")
-                    xSortBy = " order by N_ServiceID desc";
+                    xSortBy = " order by N_purchaseID desc";
                 else
                     xSortBy = " order by " + xSortBy;
                 if (Count == 0)
@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                 SortedList OutPut = new SortedList();
 
                 dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where N_FnYearID=@p2 " + xCriteria + Searchkey;
                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                 OutPut.Add("Details", _api.Format(dt));
                 OutPut.Add("TotalCount", TotalCount);
