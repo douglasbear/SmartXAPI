@@ -1,5 +1,3 @@
-using AutoMapper;
-using SmartxAPI.Data;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -128,9 +126,9 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  * from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_ServiceID not in (select top(" + Count + ") N_ServiceID from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2) " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ") *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_ServiceID not in (select top(" + Count + ") N_ServiceID from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2) " + Searchkey;
 
 
             SortedList OutPut = new SortedList();
@@ -262,19 +260,30 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
+        [HttpGet("UpdateStatus")]
+        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
 
-
-
-
-
-
-
-
-
-
-
-
-
+                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set N_Status = " + nStatus + " where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
+                    if (remarks != "")
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
+                    }
+                    return Ok(_api.Success("Closed"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
     }
 }
-
