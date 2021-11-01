@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_WActivityCode like'%" + xSearchkey + "%'or X_WActivity like'%" + xSearchkey + "%')";
+                Searchkey = " and (X_WActivityCode like'%" + xSearchkey + "%'or X_WActivity like'%" + xSearchkey + "%' or N_ActivityCount like'%" + xSearchkey + "%' or cast(D_Date as VarChar) like'%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_WActivityID desc";
