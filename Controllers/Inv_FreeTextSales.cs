@@ -10,9 +10,9 @@ using Microsoft.Data.SqlClient;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("freeTextPurchase")]
+    [Route("freeTextSales")]
     [ApiController]
-    public class Inv_FreeTextPurchase : ControllerBase
+    public class Inv_FreeTextSales : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -20,18 +20,18 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
 
-        public Inv_FreeTextPurchase(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Inv_FreeTextSales(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 380;
+            FormID = 372;
         }
         private readonly string connectionString;
         [HttpGet("list")]
-        public ActionResult FreeTextPurchaseList(int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
+        public ActionResult FreeTextSalesList(int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -42,7 +42,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
-                    string xTransType = "FTPURCHASE";
+                    string xTransType = "FTSALES";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
@@ -55,34 +55,34 @@ namespace SmartxAPI.Controllers
                 if (!CheckClosedYear)
                     {
                     if (b_AllBranchData)
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1";
+                        xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1";
                      else
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1";
+                        xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1";
                     }
                 else
                     {
                     if (b_AllBranchData)
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                        xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyId=@p1";
                     else
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
+                        xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchId=@p3 and N_CompanyId=@p1";
                     }
 
                 if (xSearchkey != null && xSearchkey.Trim() != "")
                     Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' ) ";
 
                 if (xSortBy == null || xSortBy.Trim() == "")
-                    xSortBy = " order by N_PurchaseID desc";
+                    xSortBy = " order by N_SalesId desc";
                 else
                     xSortBy = " order by " + xSortBy;
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
 
                 SortedList OutPut = new SortedList();
 
                 dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                sqlCommandCount = "select count(*) as N_Count  from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                 OutPut.Add("Details", _api.Format(dt));
                 OutPut.Add("TotalCount", TotalCount);
