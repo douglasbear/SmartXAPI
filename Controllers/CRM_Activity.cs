@@ -72,7 +72,7 @@ namespace SmartxAPI.Controllers
             }
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (x_subject like '%" + xSearchkey + "%')";
+                Searchkey = "and (x_subject like '%" + xSearchkey + "%' or x_Status like '%" + xSearchkey + "%' or d_ScheduleDate like '%" + xSearchkey + "%' or x_ActivityType like '%" + xSearchkey + "%' or x_OpportunityName '%" + xSearchkey + "%' or x_Contact '%" + xSearchkey + "%' or x_RelatedToNotes '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by d_scheduleDate Desc";

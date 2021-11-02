@@ -825,7 +825,7 @@ namespace SmartxAPI.Controllers
 
                             try
                             {
-                                // dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
                             }
                             catch (Exception ex)
                             {
@@ -840,8 +840,10 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, "Period Closed"));
                                 else if (ex.Message == "54")
                                     return Ok(_api.Error(User, "Txn Date"));
-                                else if (ex.Message == "55")
-                                    return Ok(_api.Error(User, "Quantity exceeds!"));
+                                else if (ex.Message == "55"){
+                                    dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                                    // return Ok(_api.Error(User, "Quantity exceeds!"));
+                                }
                                 else
                                     return Ok(_api.Error(User, ex));
                             }
