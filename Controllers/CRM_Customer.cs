@@ -57,7 +57,7 @@ namespace SmartxAPI.Controllers
 
             string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_Customer like '%" + xSearchkey + "%'or X_CustomerCode like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_Customer like '%" + xSearchkey + "%'or X_CustomerCode like '%" + xSearchkey + "%' or X_Industry like '%" + xSearchkey + "%' or x_CustomerCategory like '%" + xSearchkey + "%'or n_AnnRevenue like '%" + xSearchkey + "%' or x_Employee like '%" + xSearchkey + "%'or x_City like '%" + xSearchkey + "%'or x_Phone like '%" + xSearchkey + "%'or x_SalesmanName like '%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_CustomerID desc";
@@ -212,7 +212,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Customer Created"));
+                        return Ok(api.Success("Company Created"));
                     }
                 }
             }
