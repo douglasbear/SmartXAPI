@@ -75,9 +75,9 @@ namespace SmartxAPI.Controllers
                 else
                     xSortBy = " order by " + xSortBy;
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Customer Code] as X_Code,[Customer] as X_Customer from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Customer Code] as X_Code,[Customer] as X_Customer from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
 
                 SortedList OutPut = new SortedList();
 
