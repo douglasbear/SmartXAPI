@@ -829,23 +829,36 @@ namespace SmartxAPI.Controllers
                             }
                             catch (Exception ex)
                             {
-                                transaction.Rollback();
-                                if (ex.Message == "50")
+                               
+                                if (ex.Message == "50"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Day Closed"));
+                                    }
                                 else if (ex.Message == "51")
-                                    return Ok(_api.Error(User, "Year Closed"));
-                                else if (ex.Message == "52")
+                                    {
+                                         transaction.Rollback();
+                                        return Ok(_api.Error(User, "Year Closed"));
+                                        }
+                                else if (ex.Message == "52"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Year Exists"));
-                                else if (ex.Message == "53")
+                                    }
+                                else if (ex.Message == "53"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Period Closed"));
-                                else if (ex.Message == "54")
+                                    }
+                                else if (ex.Message == "54"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Txn Date"));
+                                    }
                                 else if (ex.Message == "55"){
                                     dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
                                     // return Ok(_api.Error(User, "Quantity exceeds!"));
                                 }
-                                else
+                                else{
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, ex));
+                                    }
                             }
 
 
