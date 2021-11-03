@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
                 if (nVendorID > 0)
                     sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_VendorID=@p4 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
                 else
-                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 ";//and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
             }
         
 

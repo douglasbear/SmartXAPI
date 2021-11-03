@@ -222,7 +222,8 @@ namespace SmartxAPI.Controllers
                                             nCatID=myFunctions.getIntVAL(CatID.ToString());
                                         }
 
-                                        String xCatList="";
+                                        //Company User Update
+                                        String xCatList="",xAdmCatList="";
                                         object catList = dLayer.ExecuteScalar("select X_UserCategoryList from Sec_User where N_CompanyID="+companyid+" and N_UserID="+ myFunctions.GetUserID(User), paramList, cnn);
                                         if (catList!=null)
                                         {
@@ -230,14 +231,33 @@ namespace SmartxAPI.Controllers
                                         }
 
                                         dLayer.ExecuteScalar("Update Sec_User set X_UserCategoryList='" + xCatList + "' where N_CompanyID="+companyid+" and N_UserID=" + myFunctions.GetUserID(User), cnn);
-
+                                        //Company User Screen Permission Update
                                         int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
                                                                             "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+nCatID+",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View "+
                                                                             "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*(@nAppID)) and N_CompanyID = -1", paramList, cnn);
                                         if (Prevrows <= 0)
                                         {
                                             return Ok(_api.Warning("Screen permission failed"));
-                                        }                                     
+                                        } 
+    
+                                        //Admin User Screen Permission Update
+                                        int nAdmCatID=0;
+                                         object AdmCatID = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID="+companyid+" and X_UserCategory='Admin'", paramList, cnn);
+                                        if (AdmCatID!=null)
+                                        {
+                                            nAdmCatID=myFunctions.getIntVAL(AdmCatID.ToString());
+                                        }
+                                        int AdmPrevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)"+
+                                                                            "select ROW_NUMBER() over(order by n_menuid)+(select MAX(N_InternalID) from Sec_UserPrevileges),"+nAdmCatID+",N_MenuID,1,1,1,1,null "+
+			                                                                " from Sec_Menus where N_MenuID in (select N_MenuID from vw_SetAdminSettings where N_ModuleID =0 OR N_ModuleID in "+
+			                                                                " (SELECT Sec_Menus.N_ParentMenuID FROM Sec_Menus INNER JOIN Sec_UserPrevileges ON Sec_Menus.N_MenuID = Sec_UserPrevileges.N_MenuID "+
+                                                                            " WHERE Sec_UserPrevileges.N_UserCategoryID=(-1*("+appID+")) GROUP BY Sec_Menus.N_ParentMenuID)) "+
+			                                                                " and N_MenuID NOT IN (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID="+nAdmCatID+") GROUP BY N_MenuID ", paramList, cnn);
+                                        if (AdmPrevrows <= 0)
+                                        {
+                                            return Ok(_api.Warning("Screen permission failed"));
+                                        } 
+                                                                            
                                     }
 
                                 }

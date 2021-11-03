@@ -56,7 +56,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText ="";
              string Searchkey = "";
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (X_ProjectName like '%" + xSearchkey + "%')";
+                Searchkey = " and (X_ProjectName like '%" + xSearchkey + "%' or N_Value like'%" + xSearchkey + "%' or X_Contact like'%" + xSearchkey + "%'or X_Phone like'%" + xSearchkey + "%' or X_City like'%" + xSearchkey + "%' or D_StartDate like'%" + xSearchkey + "%' or X_Description like'%" + xSearchkey + "%' )";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ProjectID desc";

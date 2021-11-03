@@ -320,28 +320,29 @@ namespace SmartxAPI.Controllers
                         MasterTable = _api.Format(MasterTable, "Master");
                         int N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
                         string DetailSql = "";
-                         DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID ";
+                        //  DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID ";
 
 
 
+                        string DeliveryNoteAppend = "";
+                        DataTable DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
+                        if (DeliveryNoteID.Rows.Count > 0)
+                        {
 
-                        // object DeliveryNoteID = dLayer.ExecuteScalar("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
-                        // if (DeliveryNoteID == null)
-                        // {
-                        //     DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID=" + N_salesOrderID + " ";
-                        // }
-                        // else
-                        // {
-                        //     if (myFunctions.getIntVAL(DeliveryNoteID.ToString()) > 0)
-                        //     {
-                        //         DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID=" + N_salesOrderID + " and N_DeliveryNoteID<> " + DeliveryNoteID + " ";
+                            foreach (DataRow Avar in DeliveryNoteID.Rows)
+                            {
+                                DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
+                            }
+                            DeliveryNoteAppend = DeliveryNoteAppend.Substring(1);
+                            DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID<> " + DeliveryNoteAppend + " ";
 
-                        //     }
-                        //     else
-                        //     {
-                        //         DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID=" + N_salesOrderID + " ";
-                        //     }
-                        // }
+                        }
+                        else
+                        {
+                            DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
+
+                        }
+
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
@@ -585,8 +586,17 @@ namespace SmartxAPI.Controllers
                         myFunctions.AddNewColumnToDataTable(masterTable, "B_PaymentProcessed", typeof(Boolean), false);
 
                     //sales return count(draft and non draft)
-                    object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and B_IsSaveDraft=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+                    object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and isnull(B_IsSaveDraft,0)=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
 
+                    object DNQty = dLayer.ExecuteScalar("Select SUM(N_Qty) from vw_InvSalesReturn_Display Where N_CompanyID="+nCompanyId+" and N_SalesID=@nSalesID", QueryParamsList, Con);
+                    object OrderQty1 =dLayer.ExecuteScalar("Select SUM(N_RetQty) from vw_InvSalesReturn_Display Where N_CompanyID="+nCompanyId+"and N_SalesID=@nSalesID", QueryParamsList, Con);
+                    if (DNQty != null && OrderQty1 != null)
+                    {
+                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) !=myFunctions.getIntVAL(DNQty.ToString()) )
+                        {
+                            objSalesReturn = null;
+                        }
+                    }
 
                     myFunctions.AddNewColumnToDataTable(masterTable, "X_DebitNoteNo", typeof(string), objSalesReturn);
 
