@@ -56,9 +56,9 @@ namespace SmartxAPI.Controllers
                 if (!CheckClosedYear)
                     {
                         if (b_AllBranchData)
-                            xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
+                            xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
                         else
-                            xCriteria = " N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+                            xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
                     }
                 else
                     {
@@ -76,13 +76,13 @@ namespace SmartxAPI.Controllers
                 else
                     xSortBy = " order by " + xSortBy;
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
                     SortedList OutPut = new SortedList();
 
                 dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
-                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where N_FnYearID=@p2 " + xCriteria + Searchkey;
+                sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
                 object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                 OutPut.Add("Details", _api.Format(dt));
                 OutPut.Add("TotalCount", TotalCount);
@@ -216,9 +216,11 @@ public ActionResult SaveData([FromBody] DataSet ds)
             if (N_InvoiceDetailId <= 0)
             {
                 transaction.Rollback();
-                return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                return Ok(_api.Error(User, "Unable to save!"));
             }
+            transaction.Commit();
             return Ok(_api.Success("Successfully saved"));
+           
         }
     }
     catch (Exception ex)
