@@ -123,14 +123,20 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("typeList")]
-        public ActionResult GetLoanTypeList(int? nCompanyID, int nFnYearID)
+        public ActionResult GetLoanTypeList(int? nCompanyID, int nFnYearID, bool bIsPrepaid)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
+            int nIsPrepaid=0;
+            if(bIsPrepaid) nIsPrepaid=1;
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@bIsPrepaid", nIsPrepaid);
             string sqlCommandText = "";
-            sqlCommandText = "select * from Pay_PayMaster where N_PayTypeID=8 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
+            if (bIsPrepaid)
+                sqlCommandText = "select * from Pay_PayMaster where N_PayTypeID=8 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid";
+            else
+                sqlCommandText = "select * from Pay_PayMaster where N_PayTypeID=8 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid";
 
             try
             {
@@ -548,7 +554,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("loanListAll")]
-        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetEmployeeAllLoanRequest(int nFnYearID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bIsPrepaid)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -556,8 +562,11 @@ namespace SmartxAPI.Controllers
 
 
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int nIsPrepaid=0;
+            if(bIsPrepaid) nIsPrepaid=1;
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@bIsPrepaid", nIsPrepaid);
 
             string sqlCommandText = "";
             string sqlCommandCount = "";
@@ -577,11 +586,19 @@ namespace SmartxAPI.Controllers
             else
                 xSortBy = " order by " + xSortBy;
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + xSortBy + " ) " + xSortBy;
-
+            if (bIsPrepaid)
+            {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid  " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid  " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsPrepaid=@bIsPrepaid " + xSortBy + " ) " + xSortBy;
+            }
+            else {
+                if (Count == 0)
+                    sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid  " + Searchkey + " " + xSortBy;
+                else
+                    sqlCommandText = "select top(" + nSizeperpage + ") N_CompanyID,N_EmpID,X_EmpCode,X_EmpName,N_LoanTransID,N_LoanID,D_LoanIssueDate,D_EntryDate,X_Remarks,D_LoanPeriodFrom,D_LoanPeriodTo,N_LoanAmount,N_Installments,N_FnYearID,B_IsSaveDraft,X_Guarantor1,X_Guarantor2,N_FormID,x_Description from vw_Pay_LoanIssueList where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid  " + Searchkey + " and N_LoanTransID not in (select top(" + Count + ") N_LoanTransID from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_IsPrepaid=@bIsPrepaid " + xSortBy + " ) " + xSortBy;
+            }
             SortedList OutPut = new SortedList();
 
             try
@@ -590,7 +607,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
-                    sqlCommandCount = "select count(*) as N_Count from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Pay_LoanIssueList where  N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and isNull(B_IsPrepaid,0)=@bIsPrepaid " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
