@@ -283,12 +283,12 @@ namespace SmartxAPI.Controllers
                     N_PurchaseID = myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString());
                     Master = _api.Format(Master, "Master");
                     if (showAllBranch)
-                        X_DetailsSql = "Select Inv_PurchaseDetails.,Acc_MastLedger. ,vw_InvPurchaseDetails.X_DisplayName, vw_InvPurchaseDetails.N_TaxPerc1, vw_InvPurchaseDetails.N_TaxID1,  vw_InvPurchaseDetails.N_TaxID2, vw_InvPurchaseDetails.N_TaxPerc2, vw_InvPurchaseDetails.X_DisplayName2,vw_InvPurchaseDetails.X_ActVendor from Inv_PurchaseDetails " +
+                        X_DetailsSql = "Select Inv_PurchaseDetails.*,Acc_MastLedger.*,vw_InvPurchaseDetails.X_DisplayName, vw_InvPurchaseDetails.N_TaxPerc1, vw_InvPurchaseDetails.N_TaxID1,  vw_InvPurchaseDetails.N_TaxID2, vw_InvPurchaseDetails.N_TaxPerc2, vw_InvPurchaseDetails.X_DisplayName2,vw_InvPurchaseDetails.X_ActVendor from Inv_PurchaseDetails " +
                             " LEFT OUTER JOIN vw_InvPurchaseDetails ON Inv_PurchaseDetails.N_CompanyID = vw_InvPurchaseDetails.N_CompanyID AND   Inv_PurchaseDetails.N_PurchaseDetailsID = vw_InvPurchaseDetails.N_PurchaseDetailsID LEFT OUTER JOIN  Acc_MastLedger ON Inv_PurchaseDetails.N_LedgerID = Acc_MastLedger.N_LedgerID AND Inv_PurchaseDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
                             " Where Inv_PurchaseDetails.N_CompanyID=" + nCompanyId + " and Inv_PurchaseDetails.N_PurchaseID=" + N_PurchaseID + " and Acc_MastLedger.N_FnYearID=" + nFnYearId + "";
 
                     else
-                        X_DetailsSql = "Select Inv_PurchaseDetails.,Acc_MastLedger. ,vw_InvPurchaseDetails.X_DisplayName, vw_InvPurchaseDetails.N_TaxPerc1, vw_InvPurchaseDetails.N_TaxID1,  vw_InvPurchaseDetails.N_TaxID2, vw_InvPurchaseDetails.N_TaxPerc2, vw_InvPurchaseDetails.X_DisplayName2,vw_InvPurchaseDetails.X_ActVendor from Inv_PurchaseDetails " +
+                        X_DetailsSql = "Select Inv_PurchaseDetails.*,Acc_MastLedger.*,vw_InvPurchaseDetails.X_DisplayName, vw_InvPurchaseDetails.N_TaxPerc1, vw_InvPurchaseDetails.N_TaxID1,  vw_InvPurchaseDetails.N_TaxID2, vw_InvPurchaseDetails.N_TaxPerc2, vw_InvPurchaseDetails.X_DisplayName2,vw_InvPurchaseDetails.X_ActVendor from Inv_PurchaseDetails " +
                              " LEFT OUTER JOIN vw_InvPurchaseDetails ON Inv_PurchaseDetails.N_CompanyID = vw_InvPurchaseDetails.N_CompanyID AND   Inv_PurchaseDetails.N_PurchaseDetailsID = vw_InvPurchaseDetails.N_PurchaseDetailsID LEFT OUTER JOIN  Acc_MastLedger ON Inv_PurchaseDetails.N_LedgerID = Acc_MastLedger.N_LedgerID AND Inv_PurchaseDetails.N_CompanyID = Acc_MastLedger.N_CompanyID" +
                             " Where Inv_PurchaseDetails.N_CompanyID=" + nCompanyId + " and Inv_PurchaseDetails.N_PurchaseID=" + N_PurchaseID + " and ISNULL(Inv_PurchaseDetails.N_BranchId,0)=" + nBranchId + "  and Acc_MastLedger.N_FnYearID=" + nFnYearId + "";
 
