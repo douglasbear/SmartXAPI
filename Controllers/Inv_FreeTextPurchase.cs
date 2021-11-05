@@ -30,7 +30,7 @@ namespace SmartxAPI.Controllers
             FormID = 380;
         }
         private readonly string connectionString;
-        [HttpGet("list")]
+       [HttpGet("list")]
         public ActionResult FreeTextPurchaseList(int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
         {
             try
@@ -132,9 +132,14 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_ItemID", typeof(int), 0);
                     if (itemID != null)
-                        dt.Rows[0]["N_ItemID"] = myFunctions.getIntVAL(itemID.ToString());
+                        foreach (DataRow var in dt.Rows)
+                        {
+
+                            var["N_ItemID"] = myFunctions.getIntVAL(itemID.ToString());
+                        }
 
                 }
+                dt.AcceptChanges();
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -182,7 +187,7 @@ namespace SmartxAPI.Controllers
                             SortedList DelParam = new SortedList();
                             DelParam.Add("N_CompanyID", nCompanyID);
                             DelParam.Add("X_TransType", xTransType);
-                            DelParam.Add("N_PurchaseId", nPurchaseID);
+                            DelParam.Add("N_VoucherID", nPurchaseID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                         }
                         catch (Exception ex)
@@ -230,6 +235,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                     }
+                    transaction.Commit();
                     return Ok(_api.Success("Successfully saved"));
                 }
             }
