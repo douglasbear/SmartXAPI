@@ -52,32 +52,23 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p4", xTransType);
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
 
-                    if (!CheckClosedYear)
+                if (!CheckClosedYear)
                     {
                         if (b_AllBranchData)
                             xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
                         else
                             xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
                     }
-                    else
+                else
                     {
-                        if (b_AllBranchData)
-                            xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
-                        else
-                            xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
+                    if (b_AllBranchData)
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                    else
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
-                    if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' ) ";
-
-                    if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_PurchaseID desc";
-                    else
-                        xSortBy = " order by " + xSortBy;
-                    if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
-                    else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                if (xSearchkey != null && xSearchkey.Trim() != "")
+                    Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' ) ";
 
                 if (xSortBy == null || xSortBy.Trim() == "")
                     xSortBy = " order by N_PurchaseID desc";
@@ -292,12 +283,8 @@ namespace SmartxAPI.Controllers
 
             catch (Exception e)
             {
-                transaction.Rollback();
-                return Ok(_api.Error(User, "Unable to save!"));
+                return Ok(_api.Error(User, e));
             }
-            transaction.Commit();
-            return Ok(_api.Success("Successfully saved"));
-           
         }
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nPurchaseID, string X_TransType)
