@@ -613,7 +613,7 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_TransType","SALES"},
                                 {"N_VoucherID",N_SalesID}};
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("", DeleteParams, connection, transaction);
                         }
                     }
                     N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", MasterTable, connection, transaction);
