@@ -1470,6 +1470,11 @@ namespace SmartxAPI.GeneralFunctions
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
         }
+        public string GetUserCategoryList(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.AuthenticationInstant)?.Value;
+        }
+        
         public int GetClientID(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.PrimaryGroupSid)?.Value);
@@ -1968,6 +1973,7 @@ namespace SmartxAPI.GeneralFunctions
         public int GetCompanyID(ClaimsPrincipal User);
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+        public string GetUserCategoryList(ClaimsPrincipal User);
         public int GetClientID(ClaimsPrincipal User);
         public int GetGlobalUserID(ClaimsPrincipal User);
         public string GetUserName(ClaimsPrincipal User);
