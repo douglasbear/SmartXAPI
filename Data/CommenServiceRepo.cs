@@ -206,7 +206,8 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.Email,username),
                         new Claim(ClaimTypes.Upn,username),
                         new Claim(ClaimTypes.Uri,uri),
-                        new Claim(ClaimTypes.SerialNumber,userPattern.ToString())
+                        new Claim(ClaimTypes.SerialNumber,userPattern.ToString()),
+                        new Claim(ClaimTypes.AuthenticationInstant ,loginRes.X_UserCategoryIDList.ToString())
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -387,14 +388,21 @@ namespace SmartxAPI.Data
                         {
                             Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
                         new Claim(ClaimTypes.NameIdentifier,loginRes.N_UserID.ToString()),
-                        new Claim(ClaimTypes.Name,loginRes.X_UserName.ToString()),
+                        new Claim(ClaimTypes.Name,loginRes.X_UserFullName.ToString()),
                         new Claim(ClaimTypes.Role,loginRes.X_UserCategory),
                         new Claim(ClaimTypes.GroupSid,loginRes.N_UserCategoryID.ToString()),
                         new Claim(ClaimTypes.StreetAddress,loginRes.X_CompanyName),
                         new Claim(ClaimTypes.Sid,loginRes.N_CompanyID.ToString()),
-                        new Claim(ClaimTypes.UserData,xGlobalUserID.ToString()),
                         new Claim(ClaimTypes.Version,"V0.1"),
-                        new Claim(ClaimTypes.System,AppID.ToString())
+                        new Claim(ClaimTypes.System,AppID.ToString()),
+                        new Claim(ClaimTypes.PrimarySid,globalUserID.ToString()),
+                        new Claim(ClaimTypes.PrimaryGroupSid,clientID.ToString()),
+                        new Claim(ClaimTypes.UserData,xGlobalUserID.ToString()),
+                        new Claim(ClaimTypes.Email,username),
+                        new Claim(ClaimTypes.Upn,username),
+                        new Claim(ClaimTypes.Uri,uri),
+                        new Claim(ClaimTypes.SerialNumber,userPattern.ToString()),
+                        new Claim(ClaimTypes.AuthenticationInstant ,loginRes.X_UserCategoryIDList.ToString())
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(rkey), SecurityAlgorithms.HmacSha256Signature)
