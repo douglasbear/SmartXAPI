@@ -394,8 +394,8 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if(POrderID>0)
-                            {
+                            // if(POrderID>0)
+                            // {
                                 for (int k = 0 ;k < DetailTable.Rows.Count;k++)
                                 {
                                     dLayer.ExecuteNonQuery("Update Inv_PurchaseOrderDetails Set N_Processed=1  Where N_POrderID=" + POrderID + " and N_POrderDetailsID=" + DetailTable.Rows[k]["N_POrderDetailsID"] + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
@@ -529,7 +529,7 @@ namespace SmartxAPI.Controllers
                                         return Ok(_api.Error(User,"Error"));
                                     } 
                                 }                  
-                            }
+                            // }
                         }
                     }
 
