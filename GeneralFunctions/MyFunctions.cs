@@ -914,10 +914,18 @@ namespace SmartxAPI.GeneralFunctions
                     MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), N_SaveDraft);
                 }
             }
-            else if (N_IsApprovalSystem == 0)
-            {
-                MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), 0);
-            }
+            // else if (N_IsApprovalSystem == 0)
+            // {
+            //     if (MasterTable.Columns.Contains("B_IssaveDraft"))
+            //     {
+            //         MasterTable.Rows[0]["B_IssaveDraft"] = 0;
+            //     }
+            //     else
+            //     {
+            //         MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), 0);
+            //     }
+                
+            // }
             return MasterTable;
         }
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)

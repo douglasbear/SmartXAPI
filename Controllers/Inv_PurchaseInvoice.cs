@@ -613,12 +613,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
-                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
-                        MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    if (MasterTable.Columns.Contains("N_Procstatus"))
-                        MasterTable.Columns.Remove("N_Procstatus");
-                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
-                        MasterTable.Columns.Remove("B_IsSaveDraft");
+
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
