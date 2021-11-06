@@ -54,17 +54,17 @@ namespace SmartxAPI.Controllers
 
                 if (!CheckClosedYear)
                     {
-                    if (b_AllBranchData)
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1";
-                     else
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1";
+                        if (b_AllBranchData)
+                            xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
+                        else
+                            xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
                     }
                 else
                     {
                     if (b_AllBranchData)
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                     else
-                        xCriteria = "N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
+                        xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
                 if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -75,11 +75,10 @@ namespace SmartxAPI.Controllers
                 else
                     xSortBy = " order by " + xSortBy;
                 if (Count == 0)
-                    sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
-
-                SortedList OutPut = new SortedList();
+                    sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                    SortedList OutPut = new SortedList();
 
                 dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
                 sqlCommandCount = "select count(*) as N_Count  from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
@@ -103,7 +102,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("accounts")]
-        public ActionResult AccountList(int nFnYearID, bool bShowAllAccount)
+        public ActionResult AccountList(int nFnYearID, bool bShowAllAccount, bool isSales)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -111,18 +110,36 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
-            if (bShowAllAccount)
-                sqlCommandText = "SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and   N_PostingBahavID=11";
-            else
-                sqlCommandText = "SELECT N_CompanyID,N_LedgerID,X_Level,N_FnYearID,B_Inactive,X_Type,[Account Code] AS x_AccountCode,Account FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and x_type ='E' and N_PostingBahavID=11";
 
+            if (isSales)
+            {
+                sqlCommandText = "SELECT * FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 ";
+
+            }
+            else
+            {
+                if (bShowAllAccount)
+                    sqlCommandText = "SELECT * FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and   N_PostingBahavID=11";
+                else
+                    sqlCommandText = "SELECT * FROM vw_AccMastLedger WHERE N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_Inactive=0 and x_type ='E' and N_PostingBahavID=11";
+            }
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object itemID = dLayer.ExecuteScalar("select N_ItemID From Inv_ItemMaster where N_CompanyID=" + nCompanyID + " and X_ItemCode=001", Params, connection);
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_ItemID", typeof(int), 0);
+                    if (itemID != null)
+                        foreach (DataRow var in dt.Rows)
+                        {
+
+                            var["N_ItemID"] = myFunctions.getIntVAL(itemID.ToString());
+                        }
+
                 }
+                dt.AcceptChanges();
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
@@ -170,7 +187,7 @@ namespace SmartxAPI.Controllers
                             SortedList DelParam = new SortedList();
                             DelParam.Add("N_CompanyID", nCompanyID);
                             DelParam.Add("X_TransType", xTransType);
-                            DelParam.Add("N_PurchaseId", nPurchaseID);
+                            DelParam.Add("N_VoucherID", nPurchaseID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                         }
                         catch (Exception ex)
@@ -218,6 +235,7 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                     }
+                    transaction.Commit();
                     return Ok(_api.Success("Successfully saved"));
                 }
             }
@@ -274,24 +292,40 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nPurchaseID, string X_TransType)
+        {
 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    var nUserID = myFunctions.GetUserID(User);
+                    SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType",X_TransType},
+                                {"N_VoucherID",nPurchaseID},
+                                {"N_UserID",nUserID},
+                                 {"X_SystemName","WebRequest"}};
+                    int Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
 
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete Purchase"));
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success(" Purchase deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
 
 
     }
