@@ -460,7 +460,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nFnYearID", nFnYearID);
             // string sqlCommandText = "Select * from Pay_PayType where N_CompanyID=@nCompanyID and N_PerPayMethod=0 or N_PerPayMethod=3 or N_PerPayMethod=30 and n_PerPayPayment=5 order by N_PayTypeID";
-            string sqlCommandText = "Select * from vw_PayCode where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_InActive = 0 and  (B_IsPrepaid=1 or isnull(B_isInvoice,0) = 1) or isnull(B_IsCategory,0)=1 and N_TypeID<>322 ";
+            string sqlCommandText = "Select x_Description as x_Paycode,* from vw_PayCode where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and B_InActive = 0 and  (B_IsPrepaid=1 or isnull(B_isInvoice,0) = 1) or isnull(B_IsCategory,0)=1 and N_TypeID<>322 ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
