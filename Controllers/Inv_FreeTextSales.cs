@@ -40,13 +40,14 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    //int nCompanyID = myFunctions.GetCompanyID(User);
+                     int nCompanyId=myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
                     string xTransType = "FTSALES";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
-                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
                     Params.Add("@p4", xTransType);
@@ -55,20 +56,20 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (b_AllBranchData)
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1 ";
                         else
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1 ";
                     }
                     else
                     {
                         if (b_AllBranchData)
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyId=@p1 ";
                         else
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchId=@p3 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchId=@p3 and N_CompanyId=@p1 ";
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' ) ";
+                        Searchkey = " and ( [Invoice No] like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%' or [Customer] like '%" + xSearchkey + "%' or n_InvDueDays like '%" + xSearchkey + "%' ) ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_SalesId desc";
