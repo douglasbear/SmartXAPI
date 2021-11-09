@@ -75,9 +75,9 @@ namespace SmartxAPI.Controllers
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Customer Code] as X_Code,[Customer] as X_Customer from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Customer Code] as X_Code,[Customer] as X_Customer from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
 
                     SortedList OutPut = new SortedList();
 
@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
                     }
                     dtsaleamountdetails.Rows[0]["N_CommissionAmt"] = N_SChrgAmt.ToString();
                     dtsaleamountdetails.Rows[0]["N_CommissionPer"] = N_ServiceCharge.ToString();
-                    dtsaleamountdetails.Rows[0][" N_TaxID"] = N_TaxID.ToString();
+                    dtsaleamountdetails.Rows[0]["N_TaxID"] = N_TaxID.ToString();
                     dtsaleamountdetails.Rows[0]["N_CommissionAmtF"] = N_SChrgAmt.ToString();
                     dtsaleamountdetails.AcceptChanges();
 
@@ -209,6 +209,20 @@ namespace SmartxAPI.Controllers
                     PostingParam.Add("N_InternalID", nSalesID);
                     PostingParam.Add("N_UserID", nUserID);
                     PostingParam.Add("X_SystemName", "ERP Cloud");
+
+                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+
+                        DetailTable.Rows[j]["N_SalesID"] = nSalesID;
+
+                    }
+                   int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
+                        if (N_InvoiceDetailId <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
+                        }
+
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
