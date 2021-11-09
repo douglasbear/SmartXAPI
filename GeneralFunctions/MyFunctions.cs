@@ -1654,7 +1654,6 @@ namespace SmartxAPI.GeneralFunctions
             }
             return true;
         }
-
         public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction)
         {
 
