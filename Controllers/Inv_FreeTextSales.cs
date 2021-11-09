@@ -139,8 +139,8 @@ namespace SmartxAPI.Controllers
                             SortedList DelParam = new SortedList();
                             DelParam.Add("N_CompanyID", nCompanyID);
                             DelParam.Add("X_TransType", xTransType);
-                            DelParam.Add("N_PurchaseId", nSalesID);
-                            dLayer.ExecuteNonQueryPro(" ", DelParam, connection, transaction);
+                            DelParam.Add("N_VoucherID", nSalesID);
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                         }
                         catch (Exception ex)
                         {
