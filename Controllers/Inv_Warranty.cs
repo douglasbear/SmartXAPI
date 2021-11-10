@@ -189,10 +189,10 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xWarrantyRefCode", xWarrantyRefCode);
                     Mastersql = ""
-                    + "SELECT        Inv_WarrantyContract.*, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName "
+                    + "SELECT   Top(1)     Inv_WarrantyContract.*, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName "
                     + "FROM            Inv_WarrantyContract LEFT OUTER JOIN "
                     + "                         Inv_Customer ON Inv_WarrantyContract.N_FnYearID = Inv_Customer.N_FnYearID AND Inv_WarrantyContract.N_CompanyID = Inv_Customer.N_CompanyID AND "
-                    + "                         Inv_WarrantyContract.N_CustomerID = Inv_Customer.N_CustomerID where Inv_WarrantyContract.X_WarrantyNo=@xWarrantyRefCode and Inv_WarrantyContract.N_CompanyID=@nCompanyID";
+                    + "                         Inv_WarrantyContract.N_CustomerID = Inv_Customer.N_CustomerID where Inv_WarrantyContract.X_WarrantyNo=@xWarrantyRefCode and Inv_WarrantyContract.N_CompanyID=@nCompanyID  order by N_WarrantyID desc";
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int N_WarrantyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WarrantyID"].ToString());
@@ -200,19 +200,33 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nWarrantyID", N_WarrantyID);
                     MasterTable = _api.Format(MasterTable, "Master");
                     //Detail
-                    DetailSql = ""
-                    + "SELECT        Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, "
-                    + "                         Inv_WarrantyContractDetails.N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks, "
-                    + "                         Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName "
-                    + "FROM            Inv_WarrantyContractDetails LEFT OUTER JOIN "
-                    + "                         Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID LEFT OUTER JOIN "
-                    + "                         Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
+                    // DetailSql = ""
+                    // + "SELECT        Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, "
+                    // + "                         Inv_WarrantyContractDetails.N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks, "
+                    // + "                         Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName "
+                    // + "FROM            Inv_WarrantyContractDetails LEFT OUTER JOIN "
+                    // + "                         Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID LEFT OUTER JOIN "
+                    // + "                         Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
+
+                    DetailSql =" SELECT        Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, "+
+                         " Inv_WarrantyContractDetails.N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks,  "+
+                         " Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName, isnull(Inv_WarrantyContractDetails.N_Qty,0)-isnull(vw_WarrantyItemSummery.N_UsedQty,0) as N_AvlQty "+
+" FROM            Inv_WarrantyContractDetails LEFT OUTER JOIN "+
+      "                   vw_WarrantyItemSummery ON Inv_WarrantyContractDetails.N_ItemID = vw_WarrantyItemSummery.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = vw_WarrantyItemSummery.N_CompanyID AND "+
+     "                    Inv_WarrantyContractDetails.N_WarrantyID = vw_WarrantyItemSummery.N_WarrantyID LEFT OUTER JOIN "+
+    "                     Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID LEFT OUTER JOIN "+
+   "                      Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID "+
+ " where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
+
+
+
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
 
                     //Product Information 
                     SortedList element = new SortedList();
+                    if (DetailTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int N_ItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_MainItemID"].ToString());
                     object productName = dLayer.ExecuteScalar("Select X_ItemName from Inv_ItemMaster Where N_ItemID =" + N_ItemID + " and N_CompanyID= @nCompanyID ", Params, connection);
                     element.Add("Product", productName.ToString());

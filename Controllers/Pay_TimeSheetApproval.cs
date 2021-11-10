@@ -732,20 +732,19 @@ namespace SmartxAPI.Controllers
             try
             {
                 DataTable MasterTable;
-                DataTable DetailTable;
-                DataTable EmpTable;
+                DataTable MasterDetailTable;
+                DataTable DetailTable; 
                 MasterTable = ds.Tables["master"];
+                MasterDetailTable = ds.Tables["masterDetails"];
                 DetailTable = ds.Tables["details"];
-                EmpTable = ds.Tables["employees"];
 
+                bool bSavePaycode=false;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
-                int nTimesheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimesheetID"].ToString());
-                if (MasterTable.Columns.Contains("n_EmpId"))
-                {
-                    int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpId"].ToString());
-                }
+                int N_TimeSheetApproveID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimeSheetApproveID"].ToString());
+                int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
+                MasterTable.Columns.Remove("N_SProcessType");
 
                 DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
                 DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
@@ -758,72 +757,80 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
 
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, dFromDate, dLayer, connection, transaction))
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    }
+
                     // Auto Gen
                     string X_BatchCode = "";
                     var values = MasterTable.Rows[0]["X_BatchCode"].ToString();
                     if (values == "@Auto")
                     {
-                        // Params.Add("N_CompanyID", nCompanyID);
-                        // Params.Add("N_YearID", nFnYearId);
-                        // Params.Add("N_FormID", this.FormID);
-                        // Params.Add("N_BranchID", nBranchID);
-                        // X_BatchCode = dLayer.GetAutoNumber("Pay_TimeSheetEntry", "X_BatchCode", Params, connection, transaction);
-                        // if (X_BatchCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate timesheet entry Code")); }
-                        // MasterTable.Rows[0]["X_BatchCode"] = X_BatchCode;
-
                         bool OK = true;
                         int NewNo = 0, loop = 1;
                         string X_TmpBatchCode = "";
                         while (OK)
                         {
-                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_BatchID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString()), connection, transaction).ToString());
+                            NewNo = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) + " + loop + " As Count FRom Pay_TimeSheetApproveMaster Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And N_BatchID = " + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString()), connection, transaction).ToString());
                             X_TmpBatchCode = dSalDate.Year.ToString("00##") + dSalDate.Month.ToString("0#") + NewNo.ToString("0#");
-                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_TimeSheetEntry Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And X_BatchCode = '" + X_TmpBatchCode + "'", connection, transaction).ToString()) == 0)
+                            if (myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Isnull(Count(*),0) FRom Pay_TimeSheetApproveMaster Where N_CompanyID=" + nCompanyID + " And N_FnyearID = " + nFnYearId + " And X_BatchCode = '" + X_TmpBatchCode + "'", connection, transaction).ToString()) == 0)
                                 OK = false;
                             loop += 1;
                         }
                         MasterTable.Rows[0]["X_BatchCode"] = X_TmpBatchCode;
                     }
 
-                    if (nTimesheetID > 0)
+                    if (N_TimeSheetApproveID > 0)
                     {
-                        dLayer.DeleteData("Pay_TimesheetEntryEmp", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID, connection, transaction);
-                        dLayer.DeleteData("Pay_TimeSheetEntry", "N_TimesheetID", nTimesheetID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
-                    }
-                    for (int l = 0; l < EmpTable.Rows.Count; l++)
-                    {
-                        dLayer.ExecuteNonQuery("delete from Pay_TimeSheetImport where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and  D_Date >= '" + myFunctions.getDateVAL(dFromDate) + "' and D_Date<=' " + myFunctions.getDateVAL(dToDate) + "' and N_EmpID=" + myFunctions.getIntVAL(EmpTable.Rows[l]["N_EmpID"].ToString()), connection, transaction);
-                    }
+                        dLayer.DeleteData("Pay_TimeSheet", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Pay_TimeSheetMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
+                        dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
+                    }                 
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
-                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetEntry", "N_TimesheetID", DupCriteria, "", MasterTable, connection, transaction);
+                    N_TimeSheetApproveID = dLayer.SaveData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", DupCriteria, "", MasterTable, connection, transaction);
+                    if (N_TimeSheetApproveID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save"));
+                    }
+
+                    int nTimesheetmasterID=0;
+                    for (int j = 0; j < MasterDetailTable.Rows.Count; j++)
+                    {
+                        MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
+                        MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString())+j).ToString();
+
+                       
+                    
+                        nTimesheetmasterID = dLayer.SaveDataWithIndex("Pay_TimeSheetMaster", "N_TimeSheetID","","",j, MasterDetailTable, connection, transaction);
+                        if (nTimesheetmasterID <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save"));
+                        }
+                      
+                        foreach (DataRow var in DetailTable.Rows)
+                        {
+                            if (MasterDetailTable.Rows[j]["N_EmpID"].ToString() != var["N_EmpID"].ToString()) continue;
+
+                            var["N_EmpID"] = MasterDetailTable.Rows[j]["N_EmpID"];
+                            var["N_TimeSheetID"] = nTimesheetmasterID;
+                            var["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
+                        }
+                    }
+
+                    int nTimesheetID=0;
+                    nTimesheetID = dLayer.SaveData("Pay_TimeSheet", "N_SheetID", DetailTable, connection, transaction);
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
-
-                    for (int j = 0; j < EmpTable.Rows.Count; j++)
-                    {
-                        EmpTable.Rows[j]["N_TimesheetID"] = nTimesheetID;
-                    }
-                    int nTimesheetEmpID = dLayer.SaveData("Pay_TimesheetEntryEmp", "N_TimeSheetEmpID", EmpTable, connection, transaction);
-                    if (nTimesheetEmpID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
-                    }
-
-                    for (int k = 0; k < DetailTable.Rows.Count; k++)
-                    {
-                        DetailTable.Rows[k]["N_TimesheetID"] = nTimesheetID;
-                    }
-                    int nImportDetailID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", DetailTable, connection, transaction);
-                    if (nImportDetailID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
-                    }
+                        
+                    
 
                     transaction.Commit();
                     return Ok(_api.Success("Saved Successfully"));
