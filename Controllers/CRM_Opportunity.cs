@@ -32,17 +32,22 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen)
         {
             DataTable dt = new DataTable();
             DataTable dtRevenue = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "",sqlCommandTotRevenue="";
+            string criteria = "";
 
             int nCompanyId = myFunctions.GetCompanyID(User);
             int nUserID = myFunctions.GetUserID(User);
             string UserPattern = myFunctions.GetUserPattern(User);
             string Pattern = "";
+
+            if (screen=="Opportunity")
+                criteria = "and (N_ClosingStatusID=0 or N_ClosingStatusID is null)";
+
             if (UserPattern != "")
             {
                 Pattern = " and (Left(X_Pattern,Len(@p2))=@p2 or N_LoginUserID="+nUserID+")";
@@ -65,9 +70,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + Pattern + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern + Searchkey + " and N_OpportunityID not in (select top(" + Count + ") N_OpportunityID from vw_CRMOpportunity where N_CompanyID=@p1 " + criteria + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
@@ -80,7 +85,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and  isnull(N_ClosingStatusID,0) = 0 " + Pattern;
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and  isnull(N_ClosingStatusID,0) = 0 " + criteria + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     //sqlCommandTotRevenue = "select N_StageID,X_Stage,SUM(ISNULL(N_ExpRevenue,0)) AS N_TotExpRevenue from vw_CRMOpportunity where N_CompanyID=@p1 and N_FnYearId=@p3 and isnull(N_ClosingStatusID,0) = 0 " + Pattern +" group by N_StageID,X_Stage";

@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                 if (CurrentInvoice.Rows.Count > 0) Data.Add("invoiceData", CurrentInvoice);
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("customerbySource", CurrentCustomer);
-                if (CurrentCustomer.Rows.Count > 0) Data.Add("opportunityData", CurrentCustomer);
+                if (OpenOpportunities.Rows.Count > 0) Data.Add("opportunityData", OpenOpportunities);
                
 
                 return Ok(api.Success(Data));
@@ -266,5 +266,6 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+
     }
 }
