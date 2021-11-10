@@ -1034,7 +1034,7 @@ namespace SmartxAPI.Controllers
                     };
                 DataTable masterTable = new DataTable();
 
-                string sql = "select N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,D_ExpiryDate,Stock from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID=@N_LocationID and Stock>0";
+                string sql = "select N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,D_ExpiryDate,Stock from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID=@N_LocationID and Stock>0 and ISNULL(X_BatchCode,'')<>''";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
