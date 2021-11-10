@@ -335,5 +335,3 @@ namespace SmartxAPI.Controllers
         }
     }
 }
-
-
