@@ -613,7 +613,7 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_TransType","SALES"},
                                 {"N_VoucherID",N_SalesID}};
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("", DeleteParams, connection, transaction);
                         }
                     }
                     N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", MasterTable, connection, transaction);
@@ -703,6 +703,49 @@ namespace SmartxAPI.Controllers
                             }
 
 
+// GENERATE Maintanance Entry
+
+                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode,0 as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status,'' as X_ClosedRemarks from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID",warrantyParams,connection,transaction);
+
+                            DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",warrantyParams,connection,transaction);
+
+                            if(MaintananceMaster.Rows.Count>0 && MaintananceDetails.Rows.Count>0){
+                                string X_ServiceCode ="";
+
+                         
+                                    Params["N_FormID"] =  1394;
+
+                                    while (true)
+                                    {
+
+                                        X_ServiceCode = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                                        break;
+                                    }
+
+
+                                    if (X_ServiceCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate maintanance entry")); }
+                                    MaintananceMaster.Rows[0]["X_ServiceCode"] = X_ServiceCode;
+
+
+
+
+                               int nServiceID = dLayer.SaveData("Inv_ServiceMaster", "N_ServiceID", MaintananceMaster, connection, transaction);
+                                if (nServiceID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable to generate maintanance entry."));
+                                }
+                                for (int i = 0; i < MaintananceDetails.Rows.Count; i++)
+                                {
+                                    MaintananceDetails.Rows[i]["N_ServiceID"] = nServiceID;
+                                }
+                                int nServiceDetailsID = dLayer.SaveData("Inv_ServiceDetails", "N_ServiceDetailsID", MaintananceDetails, connection, transaction);
+                                if (nServiceDetailsID <= 0)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, "Unable to generate maintanance entry.."));
+                                }
+                            }
 
                         }
 
@@ -825,25 +868,40 @@ namespace SmartxAPI.Controllers
 
                             try
                             {
-                                // dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("SP_SalesDetails_InsCloud", StockPostingParams, connection, transaction);
                             }
                             catch (Exception ex)
                             {
-                                transaction.Rollback();
-                                if (ex.Message == "50")
+                               
+                                if (ex.Message == "50"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Day Closed"));
+                                    }
                                 else if (ex.Message == "51")
-                                    return Ok(_api.Error(User, "Year Closed"));
-                                else if (ex.Message == "52")
+                                    {
+                                         transaction.Rollback();
+                                        return Ok(_api.Error(User, "Year Closed"));
+                                        }
+                                else if (ex.Message == "52"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Year Exists"));
-                                else if (ex.Message == "53")
+                                    }
+                                else if (ex.Message == "53"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Period Closed"));
-                                else if (ex.Message == "54")
+                                    }
+                                else if (ex.Message == "54"){
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, "Txn Date"));
-                                else if (ex.Message == "55")
-                                    return Ok(_api.Error(User, "Quantity exceeds!"));
-                                else
+                                    }
+                                else if (ex.Message == "55"){
+                                    dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
+                                    // return Ok(_api.Error(User, "Quantity exceeds!"));
+                                }
+                                else{
+                                     transaction.Rollback();
                                     return Ok(_api.Error(User, ex));
+                                    }
                             }
 
 

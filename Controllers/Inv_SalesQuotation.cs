@@ -538,12 +538,6 @@ namespace SmartxAPI.Controllers
                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_QuotationNo='" + QuotationNo + "'";
                     MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
 
-                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
-                        MasterTable.Columns.Remove("B_IsSaveDraft");
-                    if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
-                        MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    if (MasterTable.Columns.Contains("N_ProcStatus"))
-                        MasterTable.Columns.Remove("N_ProcStatus");
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                     N_QuotationID = dLayer.SaveData("Inv_SalesQuotation", "N_QuotationId", DupCriteria, "", MasterTable, connection, transaction);

@@ -914,10 +914,18 @@ namespace SmartxAPI.GeneralFunctions
                     MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), N_SaveDraft);
                 }
             }
-            else if (N_IsApprovalSystem == 0)
-            {
-                MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), 0);
-            }
+            // else if (N_IsApprovalSystem == 0)
+            // {
+            //     if (MasterTable.Columns.Contains("B_IssaveDraft"))
+            //     {
+            //         MasterTable.Rows[0]["B_IssaveDraft"] = 0;
+            //     }
+            //     else
+            //     {
+            //         MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), 0);
+            //     }
+                
+            // }
             return MasterTable;
         }
         public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
@@ -1462,6 +1470,11 @@ namespace SmartxAPI.GeneralFunctions
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
         }
+        public string GetUserCategoryList(ClaimsPrincipal User)
+        {
+            return User.FindFirst(ClaimTypes.AuthenticationInstant)?.Value;
+        }
+        
         public int GetClientID(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.PrimaryGroupSid)?.Value);
@@ -1959,6 +1972,7 @@ namespace SmartxAPI.GeneralFunctions
         public int GetCompanyID(ClaimsPrincipal User);
         public string GetCompanyName(ClaimsPrincipal User);
         public int GetUserCategory(ClaimsPrincipal User);
+        public string GetUserCategoryList(ClaimsPrincipal User);
         public int GetClientID(ClaimsPrincipal User);
         public int GetGlobalUserID(ClaimsPrincipal User);
         public string GetUserName(ClaimsPrincipal User);

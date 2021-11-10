@@ -448,6 +448,7 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_ItemDetails", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMEmployee", "N_MainItem", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Inv_BOMAsset", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
+                        dLayer.DeleteData("Inv_ItemWarranty", "N_MainItemID", myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString()), "N_CompanyID=" + nCompanyID, connection, transaction);
                     }
                     //Adding variant product in master table
                     MasterTable = MasterTableNew.Clone();

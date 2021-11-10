@@ -282,17 +282,6 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.DeleteData("Pay_EmpAnyRequest", "N_RequestID", nRequestID, "", connection, transaction);
                     }
-                     if(MasterTable.Columns.Contains("B_IsSaveDraft"))
-                    {
-                        
-                            MasterTable.Columns.Remove("B_IsSaveDraft");
-                        
-                    }
-
-                    if(MasterTable.Columns.Contains("N_ApprovalLevelID")){
-
-                            MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    }
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
                    

@@ -638,12 +638,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
 
                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
-                   if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
-                        MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    if (MasterTable.Columns.Contains("N_Procstatus"))
-                        MasterTable.Columns.Remove("N_Procstatus");
-                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
-                        MasterTable.Columns.Remove("B_IsSaveDraft");
+
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
@@ -1157,12 +1152,7 @@ namespace SmartxAPI.Controllers
                     MasterTable.Rows[0]["N_UserID"] = myFunctions.GetUserID(User);
 
                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "N_RequestType", typeof(int), this.FormID);
-                   if (MasterTable.Columns.Contains("N_ApprovalLevelID"))
-                        MasterTable.Columns.Remove("N_ApprovalLevelID");
-                    if (MasterTable.Columns.Contains("N_Procstatus"))
-                        MasterTable.Columns.Remove("N_Procstatus");
-                    if (MasterTable.Columns.Contains("B_IsSaveDraft"))
-                        MasterTable.Columns.Remove("B_IsSaveDraft");
+
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
