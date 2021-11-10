@@ -40,13 +40,14 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
-                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    //int nCompanyID = myFunctions.GetCompanyID(User);
+                     int nCompanyId=myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
                     string xTransType = "FTSALES";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
-                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
                     Params.Add("@p4", xTransType);
@@ -55,29 +56,29 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (b_AllBranchData)
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1 ";
                         else
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1 ";
                     }
                     else
                     {
                         if (b_AllBranchData)
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyId=@p1 ";
                         else
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchId=@p3 and N_CompanyId=@p1";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchId=@p3 and N_CompanyId=@p1 ";
                     }
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' ) ";
+                        Searchkey = " and ( [Invoice No] like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%' or [Customer] like '%" + xSearchkey + "%' or n_InvDueDays like '%" + xSearchkey + "%' ) ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_SalesId desc";
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Customer Code] as X_Code,[Customer] as X_Customer from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Customer Code] as X_Code,[Customer] as X_Customer from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where ) " + xCriteria + Searchkey;
 
                     SortedList OutPut = new SortedList();
 
@@ -139,8 +140,8 @@ namespace SmartxAPI.Controllers
                             SortedList DelParam = new SortedList();
                             DelParam.Add("N_CompanyID", nCompanyID);
                             DelParam.Add("X_TransType", xTransType);
-                            DelParam.Add("N_PurchaseId", nSalesID);
-                            dLayer.ExecuteNonQueryPro(" ", DelParam, connection, transaction);
+                            DelParam.Add("N_VoucherID", nSalesID);
+                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -192,7 +193,7 @@ namespace SmartxAPI.Controllers
                     }
                     dtsaleamountdetails.Rows[0]["N_CommissionAmt"] = N_SChrgAmt.ToString();
                     dtsaleamountdetails.Rows[0]["N_CommissionPer"] = N_ServiceCharge.ToString();
-                    dtsaleamountdetails.Rows[0][" N_TaxID"] = N_TaxID.ToString();
+                    dtsaleamountdetails.Rows[0]["N_TaxID"] = N_TaxID.ToString();
                     dtsaleamountdetails.Rows[0]["N_CommissionAmtF"] = N_SChrgAmt.ToString();
                     dtsaleamountdetails.AcceptChanges();
 
@@ -209,6 +210,20 @@ namespace SmartxAPI.Controllers
                     PostingParam.Add("N_InternalID", nSalesID);
                     PostingParam.Add("N_UserID", nUserID);
                     PostingParam.Add("X_SystemName", "ERP Cloud");
+
+                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+
+                        DetailTable.Rows[j]["N_SalesID"] = nSalesID;
+
+                    }
+                   int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
+                        if (N_InvoiceDetailId <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
+                        }
+
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
