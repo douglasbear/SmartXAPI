@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                 if (CurrentInvoice.Rows.Count > 0) Data.Add("invoiceData", CurrentInvoice);
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("customerbySource", CurrentCustomer);
-                if (CurrentCustomer.Rows.Count > 0) Data.Add("opportunityData", CurrentCustomer);
+                if (OpenOpportunities.Rows.Count > 0) Data.Add("opportunityData", OpenOpportunities);
                
 
                 return Ok(api.Success(Data));
@@ -267,45 +267,5 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        [HttpGet("monthlyList")]
-        public ActionResult GetMonthlyList(string screen)
-        {
-            DataTable dt = new DataTable();
-            SortedList Params = new SortedList();
-            int nCompanyID = myFunctions.GetCompanyID(User);
-            Params.Add("@nCompanyID", nCompanyID);
-            string sqlCommandText = "";
-
-            if (screen=="Order")
-                sqlCommandText = "SELECT * FROM vw_InvSalesOrderNo_Search WHERE MONTH(Cast(D_OrderDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_OrderDate)= YEAR(CURRENT_TIMESTAMP) and N_CompanyID =@nCompanyID ";
-            else if (screen=="Quotation")
-                sqlCommandText = "SELECT * FROM vw_InvSalesQuotationNo_Search WHERE MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID =@nCompanyID ";
-            else if (screen=="Invoice")
-                sqlCommandText = "SELECT * FROM vw_InvSalesInvoiceNo_Search WHERE MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP) and N_CompanyID =@nCompanyID ";
-            else
-                sqlCommandText = "select * from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID =@nCompanyID ";
-            
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                dt = api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
-            }
-            catch (Exception e)
-            {
-                return Ok(api.Error(User,e));
-            }
-        }
     }
 }
