@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
                     dtVariantList = dLayer.ExecuteDataTable(variant, QueryParams, connection);
                     dtVariantList = _api.Format(dtVariantList, "variantList");
 
-                    string itemUnits = "SELECT Inv_ItemUnit.*, Gen_Defaults.X_TypeName FROM   Inv_ItemUnit LEFT OUTER JOIN Gen_Defaults ON Inv_ItemUnit.N_DefaultType = Gen_Defaults.N_TypeCode and  N_DefaultId =104  where  N_ItemID = @nItemID and N_CompanyID=@nCompanyID";
+                    string itemUnits = "SELECT Inv_ItemUnit.*, Gen_Defaults.X_TypeName FROM   Inv_ItemUnit LEFT OUTER JOIN Gen_Defaults ON Inv_ItemUnit.N_DefaultType = Gen_Defaults.N_TypeCode and  N_DefaultId =104  where  N_ItemID = @nItemID and N_CompanyID=@nCompanyID order by N_Defaulttype";
                     dtItemUnits = dLayer.ExecuteDataTable(itemUnits, QueryParams, connection);
                     dtItemUnits = _api.Format(dtItemUnits, "itemUnits");
 
