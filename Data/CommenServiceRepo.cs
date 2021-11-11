@@ -102,6 +102,7 @@ namespace SmartxAPI.Data
                                     N_TaxType = myFunctions.getIntVAL(dr["N_TaxType"].ToString()),
                                     X_UserFullName = dr["X_UserFullName"].ToString(),
                                     X_UserCategoryIDList = dr["X_UserCategoryIDList"].ToString(),
+                                    X_BranchCode = dr["X_BranchCode"].ToString(),
                                 }).ToList()
                         .FirstOrDefault();
 
@@ -116,6 +117,7 @@ namespace SmartxAPI.Data
                     loginRes.X_BranchName = dLayer.ExecuteScalar("Select X_BranchName From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
                     loginRes.N_BranchID = dLayer.ExecuteScalar("Select N_BranchID From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
                     loginRes.B_AllBranchesData = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster Where N_CompanyID=@nCompanyID and B_DefaultBranch=1", Params, connection).ToString());
+                    loginRes.X_BranchCode = dLayer.ExecuteScalar("Select X_BranchCode From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
                 }
                 Params.Add("@nBranchID", loginRes.N_BranchID);
                 // loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and N_TypeID=2 and B_IsDefault=1  and N_BranchID=@nBranchID",Params, connection).ToString();
@@ -281,11 +283,11 @@ namespace SmartxAPI.Data
                                         NParentMenuId = Convert.ToInt32(dr["N_ParentMenuId"]),
                                         NOrder = Convert.ToInt32(dr["N_Order"]),
                                         NHasChild = (bool)(dr["N_HasChild"] == System.DBNull.Value ? false : dr["N_HasChild"]),
-                                        BVisible = (bool)(dr["B_Visible"].ToString()=="1"?true:false),
-                                        BEdit = (bool)(dr["B_Edit"].ToString()=="1"?true:false),
-                                        BDelete = (bool)(dr["B_Delete"].ToString()=="1"?true:false),
-                                        BSave = (bool)(dr["B_Save"].ToString()=="1"?true:false),
-                                        BView = (bool)(dr["B_View"].ToString()=="1"?true:false),
+                                        BVisible = (bool)(dr["B_Visible"].ToString() == "1" ? true : false),
+                                        BEdit = (bool)(dr["B_Edit"].ToString() == "1" ? true : false),
+                                        BDelete = (bool)(dr["B_Delete"].ToString() == "1" ? true : false),
+                                        BSave = (bool)(dr["B_Save"].ToString() == "1" ? true : false),
+                                        BView = (bool)(dr["B_View"].ToString() == "1" ? true : false),
                                         XShortcutKey = dr["X_ShortcutKey"].ToString(),
                                         XCaptionAr = dr["X_CaptionAr"].ToString(),
                                         XFormNameWithTag = dr["X_FormNameWithTag"].ToString(),
