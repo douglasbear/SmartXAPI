@@ -204,7 +204,7 @@ namespace SmartxAPI.Controllers
 
 
 
-
+ 
 
         [HttpGet("details")]
         public ActionResult GetItemDetails(int nItemID, int nLocationID, int nBranchID)
@@ -307,7 +307,7 @@ namespace SmartxAPI.Controllers
                     dtVariantList = dLayer.ExecuteDataTable(variant, QueryParams, connection);
                     dtVariantList = _api.Format(dtVariantList, "variantList");
 
-                    string itemUnits = "SELECT Inv_ItemUnit.*, Gen_Defaults.X_TypeName FROM   Inv_ItemUnit LEFT OUTER JOIN Gen_Defaults ON Inv_ItemUnit.N_DefaultType = Gen_Defaults.N_TypeCode and  N_DefaultId =104  where  N_ItemID = @nItemID and N_CompanyID=@nCompanyID";
+                    string itemUnits = "SELECT Inv_ItemUnit.*, Gen_Defaults.X_TypeName FROM   Inv_ItemUnit LEFT OUTER JOIN Gen_Defaults ON Inv_ItemUnit.N_DefaultType = Gen_Defaults.N_TypeCode and  N_DefaultId =104  where  N_ItemID = @nItemID and N_CompanyID=@nCompanyID order by N_Defaulttype";
                     dtItemUnits = dLayer.ExecuteDataTable(itemUnits, QueryParams, connection);
                     dtItemUnits = _api.Format(dtItemUnits, "itemUnits");
 
@@ -1019,11 +1019,37 @@ namespace SmartxAPI.Controllers
             {
                 return Ok(_api.Error(User, "Can't be delete,It has been used!"));
             }
-
-
         }
 
+        [HttpGet("batchList")]
+        public ActionResult GetBatchList( int nLocationID, int itemId)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            try
+            {
+                SortedList mParamsList = new SortedList()
+                    {
+                        {"@N_CompanyID",nCompanyId},
+                        {"@N_LocationID",nLocationID},
+                        {"@N_ItemID",itemId}
+                    };
+                DataTable masterTable = new DataTable();
 
+                string sql = "select N_CompanyID,N_ItemID,N_LocationID,X_BatchCode,D_ExpiryDate,Stock from vw_BatchwiseStockDisp where N_CompanyID=@N_CompanyID and N_ItemID=@N_ItemID and N_LocationID=@N_LocationID and Stock>0 and ISNULL(X_BatchCode,'')<>''";
+
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
+                }
+                if (masterTable.Rows.Count == 0) { return Ok(_api.Notice("No Data Found")); }
+                return Ok(_api.Success(masterTable));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }    
 
         // public void CopyFiles(IDataAccessLayer dLayer, string filename, string subject, int folderId, bool overwriteexisting, string category, string fileData, string destpath, string filecode, int attachID, int FormID, string strExpireDate, int remCategoryId, int transId, int partyID, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         // {
