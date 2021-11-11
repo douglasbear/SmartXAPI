@@ -106,17 +106,19 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult ProductionOrderList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult ProductionOrderList(int nFnYearId,int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+            int nUserID=myFunctions.GetUserID(User);
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "";
+            string sqlCommandText = "",xCondition="";
             string Searchkey = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
+            Params.Add("@p3", nUserID);
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and ( X_ServiceCode like '%" + xSearchkey + "%' or  D_EntryDate like '%" + xSearchkey + "%' or  X_CustomerName like '%" + xSearchkey + "%' or  X_Remarks like '%" + xSearchkey + "%' or  X_Status like '%" + xSearchkey + "%' ) ";
 
@@ -125,10 +127,16 @@ namespace SmartxAPI.Controllers
             // xSortBy = " order by batch desc,D_TransDate desc";
             else
                 xSortBy = " order by " + xSortBy;
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  " + Searchkey;
+
+            if(nFormID==1394)
+                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=371) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_AssigneeID=@p3)";
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "and N_ServiceID not in (select top(" + Count + ") N_ServiceID from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2) " + Searchkey;
+                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=372) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_AssigneeID=@p3) ";
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  "+xCondition+" " + Searchkey;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 "+xCondition+" " + Searchkey + "and N_ServiceID not in (select top(" + Count + ") N_ServiceID from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 "+xCondition+" ) " + Searchkey;
 
 
             SortedList OutPut = new SortedList();
@@ -141,7 +149,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 "+xCondition+" "+xCondition+" " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
