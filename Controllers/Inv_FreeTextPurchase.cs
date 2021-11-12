@@ -272,7 +272,7 @@ namespace SmartxAPI.Controllers
                     DataTable Master = new DataTable();
                     DataTable Details = new DataTable();
                     int N_PurchaseID = 0;
-                    string X_MasterSql = "";
+                    string X_MasterSql = "";    
                     string X_DetailsSql = "";
                     if (showAllBranch)
                         X_MasterSql = "Select * from vw_Inv_FreePurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ";

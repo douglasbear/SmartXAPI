@@ -56,6 +56,7 @@ namespace SmartxAPI.Controllers
                     dt.Columns.Add("B_Asset");
                     dt.Columns.Add("B_RepaymentDate");
                     dt.Columns.Add("B_EmpFilterByPrj");
+                    dt.Columns.Add("x_BranchCode");
                    
 
 
