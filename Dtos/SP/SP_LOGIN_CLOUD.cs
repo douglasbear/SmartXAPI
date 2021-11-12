@@ -49,7 +49,7 @@ namespace SmartxAPI.Dtos.SP
         public DateTime Expiry { get; set; }
         [NotMapped]
         public List<MenuDto> MenuList { get; set; }
-                [NotMapped]
+        [NotMapped]
         public List<MenuDto> AccessList { get; set; }
         [NotMapped]
         public string I_CompanyLogo { get; set; }
@@ -65,7 +65,7 @@ namespace SmartxAPI.Dtos.SP
         public int N_PositionID { get; set; }
         [NotMapped]
         public string X_Position { get; set; }
-                [NotMapped]
+        [NotMapped]
         public int N_DepartmentID { get; set; }
         [NotMapped]
         public string X_Department { get; set; }
@@ -85,6 +85,8 @@ namespace SmartxAPI.Dtos.SP
         public int N_AppID { get; set; }
         [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
+
+        public string X_BranchCode { get; set; }
 
 
     }
