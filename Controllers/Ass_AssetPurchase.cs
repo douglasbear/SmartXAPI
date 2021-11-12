@@ -394,14 +394,15 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            // if(POrderID>0)
-                            // {
+                            if(POrderID>0)
+                            {
                                 for (int k = 0 ;k < DetailTable.Rows.Count;k++)
                                 {
                                     dLayer.ExecuteNonQuery("Update Inv_PurchaseOrderDetails Set N_Processed=1  Where N_POrderID=" + POrderID + " and N_POrderDetailsID=" + DetailTable.Rows[k]["N_POrderDetailsID"] + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
                                 }
                                 dLayer.ExecuteNonQuery("Update Inv_PurchaseOrder  Set N_Processed=1,N_PurchaseID="+N_AssetInventoryID+"   Where N_POrderID=" + POrderID + " and N_CompanyID=" + MasterTable.Rows[0]["n_CompanyId"], connection, transaction);                                  
-                                
+                            }
+                            
                                 int nCount=DetailTable.Rows.Count;
                                 for (int j = 0 ;j < nCount;j++)
                                 {   
@@ -504,7 +505,7 @@ namespace SmartxAPI.Controllers
                                         }
                                     }
                                     AssMasterTableNew.Rows[j]["X_ItemCode"]=X_ItemCode;
-                                    AssMasterTableNew.Rows[j]["N_ItemCodeId"]=N_ItemCodeId;
+                                    AssMasterTableNew.Rows[j]["N_ItemCodeId"]=N_ItemCodeId; 
                                 //}
                                     N_MasterID=dLayer.SaveDataWithIndex("Ass_AssetMaster","N_ItemID","","",j,AssMasterTableNew,connection,transaction); 
                                     if(N_MasterID<=0)
