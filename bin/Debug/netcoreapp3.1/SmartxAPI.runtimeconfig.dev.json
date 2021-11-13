@@ -2,9 +2,13 @@
   "runtimeOptions": {
     "additionalProbingPaths": [
 <<<<<<< HEAD
+<<<<<<< HEAD
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
 =======
+=======
+<<<<<<< HEAD
+>>>>>>> 219f86ed12a28ddf8f50e128755401f611124292
 <<<<<<< HEAD
       "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\aswin\\.nuget\\packages"
@@ -42,7 +46,18 @@
       "C:\\Users\\Aky77\\.nuget\\packages"
 >>>>>>> 1fa4f88c9028bfee1de5f64957c24d8609f53ad9
 >>>>>>> 56b0f5a1e4cf4255117a0d48e45b01846a935b76
+<<<<<<< HEAD
 >>>>>>> d7c5e3f2b302ef521cb926c479537395dbd5127d
+=======
+=======
+      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Dell\\.nuget\\packages"
+>>>>>>> a8115da5171eecae555ae33de74bcc1d026e1336
+=======
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+>>>>>>> aa0b4fb13b95145b620fd2f5211cac2d85f3919c
+>>>>>>> 219f86ed12a28ddf8f50e128755401f611124292
     ]
   }
 }
