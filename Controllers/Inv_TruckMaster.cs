@@ -186,11 +186,11 @@ namespace SmartxAPI.Controllers
                     if (nTruckID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save Accrual Code");
+                        return Ok("Unable to save");
                     }
                     transaction.Commit();
 
-                    return Ok(api.Success(" Accrual Code Created"));
+                    return Ok(api.Success("successfully created"));
                 }
             }
             catch (Exception ex)
