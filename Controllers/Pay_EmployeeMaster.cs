@@ -1855,6 +1855,7 @@ namespace SmartxAPI.Controllers
                         ParamsAccount.Add("X_Department", xDepartment);
                         ParamsAccount.Add("X_EmpName", xEmpName);
                         ParamsAccount.Add("N_UserID", nUserID);
+                        ParamsAccount.Add("N_FnYearID", nFnYearID);
                         ParamsAccount.Add("X_Form", "Pay_EmployeeMaster");
 
                         if (myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LedgerID"].ToString()) == 0)
