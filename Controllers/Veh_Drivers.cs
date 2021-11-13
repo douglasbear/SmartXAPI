@@ -150,6 +150,7 @@ namespace SmartxAPI.Controllers
                     int nDriversID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_DriversID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xDriversCode = MasterTable.Rows[0]["x_DriversCode"].ToString();
+                    MasterTable.Columns.Remove("n_FnYearID");
 
                     if (xDriversCode == "@Auto")
                     {
