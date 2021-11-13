@@ -478,12 +478,13 @@ namespace SmartxAPI.Controllers
                                 dLayer.ExecuteScalar("Update Inv_PurchaseOrder Set N_Processed=1  Where N_POrderID=" + n_POrderID + " and N_CompanyID=" + nCompanyID, connection, transaction);
 
                             }
-                            // SortedList StockPosting = new SortedList();
-                            // StockPosting.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                            // StockPosting.Add("N_MRNID", N_GRNID);
-                            // StockPosting.Add("N_UserID", nUserID);
-                            // StockPosting.Add("X_SystemName", "ERP Cloud");
-                            // dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_MRN]", StockPosting, connection, transaction);
+                            
+                            SortedList StockPosting = new SortedList();
+                            StockPosting.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                            StockPosting.Add("N_MRNID", N_GRNID);
+                            StockPosting.Add("N_UserID", nUserID);
+                            StockPosting.Add("X_SystemName", "ERP Cloud");
+                            dLayer.ExecuteNonQueryPro("[SP_Inv_AllocateNegStock_MRN]", StockPosting, connection, transaction);
 
                             SortedList PostingParam = new SortedList();
                             PostingParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
