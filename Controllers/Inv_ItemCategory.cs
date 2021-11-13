@@ -37,9 +37,9 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
+            int nCompanyId = myFunctions.GetCompanyID(User);
 
-            string sqlCommandText = "select Code as N_CategoryID,Category as X_Category,CategoryCode as X_CategoryCode from vw_InvItemCategory_Disp where N_CompanyID=@p1 order by CategoryCode";
+            string sqlCommandText = "select Inv_ItemCategory.N_CompanyID,Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category, Inv_ItemCategory.X_CategoryCode,Inv_ItemCategory.N_ParentCategoryID, Inv_ItemCategory_1.X_Category as X_ParentCategory from Inv_ItemCategory LEFT OUTER JOIN Inv_ItemCategory AS Inv_ItemCategory_1 ON Inv_ItemCategory.N_CompanyID = Inv_ItemCategory_1.N_CompanyID AND Inv_ItemCategory.N_ParentCategoryID = Inv_ItemCategory_1.N_CategoryID where Inv_ItemCategory.N_CompanyID=@p1";
             Params.Add("@p1", nCompanyId);
 
             try
@@ -60,22 +60,22 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
-        [HttpGet("listdetails")]
-        public ActionResult GetItemCategoryDetails(int nCompanyId,int nFnYearID, int n_CategoryId)
+        [HttpGet("details")]
+        public ActionResult GetItemCategoryDetails(int nFnYearID, int nCategoryId)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select TOP 1 *,Code as X_CategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and (N_FnYearID =@p3 or N_FnYearID is null ) and N_Level=0 Order By N_CategoryID";
+            string sqlCommandText = "Select TOP 1 *,Code as X_CategoryCode from vw_InvItemCategory Where N_CompanyID=@p1 and (N_FnYearID =@p3 or N_FnYearID is null ) and n_CategoryID=@p2 Order By N_CategoryID";
 
-            Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", n_CategoryId);
+            Params.Add("@p1", myFunctions.GetCompanyID(User));
+            Params.Add("@p2", nCategoryId);
             Params.Add("@p3", nFnYearID);
-            
+
 
             try
             {
@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
@@ -114,6 +114,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int N_CategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CategoryID"].ToString());
                     int N_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearId"].ToString());
+                    int nCompanyID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyId"].ToString());
                     SortedList Params = new SortedList();
                     // Auto Gen
                     string CategoryCode = "";
@@ -124,27 +125,30 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", N_FnYearId);
                         Params.Add("N_FormID", 73);
                         CategoryCode = dLayer.GetAutoNumber("Inv_ItemCategory", "X_CategoryCode", Params, connection, transaction);
-                        if (CategoryCode == "") { return StatusCode(409, _api.Response(409, "Unable to generate Category Code")); }
+                        if (CategoryCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
                     MasterTable.Columns.Remove("N_FnYearId");
-                    MasterTable.Columns.Remove("N_CategoryID");
-                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", N_CategoryID, MasterTable, connection, transaction);
+                    MasterTable.Columns.Remove("b_IsParent");
+                    string X_Category = MasterTable.Rows[0]["X_Category"].ToString();
+                    string DupCriteria = "X_Category='" + X_Category + "' and N_CompanyID="+nCompanyID+"";
+                    N_CategoryID = dLayer.SaveData("Inv_ItemCategory", "N_CategoryID", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_CategoryID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok( _api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save...Category Name Exists"));
                     }
+
                     else
                     {
                         transaction.Commit();
-                        return GetItemCategoryDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()),N_FnYearId, N_CategoryID);
+                        return Ok(_api.Success("Product Category Saved"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest( _api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
@@ -152,25 +156,38 @@ namespace SmartxAPI.Controllers
         public ActionResult DeleteData(int nCategoryID)
         {
             int Results = 0;
+
             try
             {
-                                using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "",connection);
-                if (Results > 0)
-                {
-                    return StatusCode(200, _api.Response(200, "Product category deleted"));
-                }
-                else
-                {
-                    return StatusCode(409, _api.Response(409, "Unable to delete product category"));
-                }
+                    object xCategory = dLayer.ExecuteScalar("Select X_Category From Inv_ItemCategory Where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
+                    object Objcount = dLayer.ExecuteScalar("Select count(*) From Inv_ItemMaster where N_CategoryID=" + nCategoryID + " and N_CompanyID =" + myFunctions.GetCompanyID(User), connection);
+                    int Obcount = myFunctions.getIntVAL(Objcount.ToString());
+                    if (Obcount != 0)
+                    {
+
+                        return Ok(_api.Error(User,"Unable to Delete.Product category Allready Used"));
+                    }
+
+                    Results = dLayer.DeleteData("Inv_ItemCategory", "N_CategoryID", nCategoryID, "", connection);
+                    if (Results > 0)
+                    {
+
+                        dLayer.ExecuteNonQuery("Update  Gen_Settings SET  X_Value='' Where X_Group ='Inventory' and X_Description='Default Item Category' and X_Value='" + xCategory.ToString() + "'", connection);
+
+                        return Ok(_api.Success("Product category deleted"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Error(User,"Unable to delete product category"));
+                    }
                 }
             }
             catch (Exception ex)
             {
-                return StatusCode(403, _api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
 
 

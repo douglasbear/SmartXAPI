@@ -38,37 +38,56 @@ namespace SmartxAPI.Controllers
             FormID = 1232;
         }
          [HttpGet("list")]
-        public ActionResult GetWaiveRequestList(string xReqType)
+        public ActionResult GetWaiveRequestList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-
+            string sqlCommandCount = "";
             int nUserID = myFunctions.GetUserID(User);
             int nCompanyID = myFunctions.GetCompanyID(User);
             QueryParams.Add("@nCompanyID", nCompanyID);
             QueryParams.Add("@nUserID", nUserID);
             string sqlCommandText = "";
+            int Count= (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_RequestCode like'%" + xSearchkey + "%'or X_Notes like'%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_RequestCode desc";
+            else if(xSortBy.Contains("x_RequestDate"))
+                xSortBy =" order by cast(X_RequestDate as DateTime) " + xSortBy.Split(" ")[1];
+            else if(xSortBy.Contains("x_Date"))
+                xSortBy =" order by cast(X_Date as DateTime) " + xSortBy.Split(" ")[1];
+            else
+                xSortBy = " order by " + xSortBy;
+
+                string groupBy=" group by N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes ";
+             
+             if(Count==0)
+                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID  and B_IsSaveDraft=0 " + Searchkey+ groupBy + " " + xSortBy;
+            else
+                sqlCommandText = "select top("+ nSizeperpage +") N_CompanyID,N_RequestID,N_UserID,N_EmpID,B_ISsaveDraft,X_RequestDate,X_Date,X_RequestCode,X_Notes from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID  and B_IsSaveDraft=0 " + Searchkey + " and N_RequestID not in (select top("+ Count +") N_RequestID from vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and B_IsSaveDraft=0 and N_UserID=@nUserID " + groupBy  + xSortBy + " ) " + groupBy + xSortBy;
+
+            SortedList OutPut = new SortedList();
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID", QueryParams, connection);
+                    object nEmpID = dLayer.ExecuteScalar("Select N_EmpID From Sec_User where N_UserID=@nUserID and N_CompanyID=@nCompanyID ", QueryParams, connection);
                     if (nEmpID != null)
                     {
                         QueryParams.Add("@nEmpID", myFunctions.getIntVAL(nEmpID.ToString()));
-                        QueryParams.Add("@xStatus", xReqType);
-                        if (xReqType.ToLower() == "all")
-                            sqlCommandText = "Select * From vw_AnytimeRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID order by D_RequestDate Desc";
-                        else
-                        if (xReqType.ToLower() == "pending")
-                            sqlCommandText = "select * from vw_AnytimeRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status not in ('Reject','Approved')  order by D_RequestDate Desc ";
-                        else
-                            sqlCommandText = "Select * From vw_AnytimeRequestList where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and X_Status=@xStatus order by D_RequestDate Desc";
-
                         dt = dLayer.ExecuteDataTable(sqlCommandText, QueryParams, connection);
+                        sqlCommandCount = "select count(*) as N_Count From vw_Anytimerequest where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and  N_ReqByEmp=@nEmpID and B_IsSaveDraft=0 " + Searchkey + "";
+                        object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, QueryParams, connection);
+                        OutPut.Add("Details", api.Format(dt));
+                        OutPut.Add("TotalCount", TotalCount);
+                    }else{
+                    return Ok(api.Notice("No Results Found"));
                     }
 
 
@@ -86,7 +105,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -135,7 +154,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -159,7 +178,8 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    string _sqlQuery = "SELECT Pay_AnytimeRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName,Pay_Employee.X_EmpNameLocale, Pay_Position.X_Position FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_AnytimeRequest ON Pay_Employee.N_EmpID = Pay_AnytimeRequest.N_EmpID AND Pay_Employee.N_CompanyID = Pay_AnytimeRequest.N_CompanyID  where Pay_AnytimeRequest.X_RequestCode=@xRequestCode and  Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
+                    //string _sqlQuery = "SELECT Pay_AnytimeRequest.*, Pay_Employee.X_EmpCode, Pay_Employee.X_EmpName,Pay_Employee.X_EmpNameLocale, Pay_Position.X_Position FROM Pay_Position RIGHT OUTER JOIN Pay_Employee ON Pay_Position.N_PositionID = Pay_Employee.N_PositionID AND Pay_Position.N_CompanyID = Pay_Employee.N_CompanyID RIGHT OUTER JOIN Pay_AnytimeRequest ON Pay_Employee.N_EmpID = Pay_AnytimeRequest.N_EmpID AND Pay_Employee.N_CompanyID = Pay_AnytimeRequest.N_CompanyID  where Pay_AnytimeRequest.X_RequestCode=@xRequestCode and  Pay_AnytimeRequest.N_CompanyID=@nCompanyID";
+                     string _sqlQuery = "SELECT * from vw_Anytimerequest where vw_Anytimerequest.X_RequestCode=@xRequestCode and  vw_Anytimerequest.N_CompanyID=@nCompanyID";
                 
                         dt = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                  }
@@ -176,7 +196,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -201,6 +221,7 @@ namespace SmartxAPI.Controllers
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterRow["n_EmpID"].ToString());
+                int N_NextApproverID=0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -210,15 +231,17 @@ namespace SmartxAPI.Controllers
                     SortedList EmpParams = new SortedList();
                     EmpParams.Add("@nCompanyID", nCompanyID);
                     EmpParams.Add("@nEmpID", nEmpID);
-                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID", EmpParams, connection, transaction);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
                     if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()))
                     {
                         int N_PkeyID = nRequestID;
                         string X_Criteria = "N_RequestID=" + N_PkeyID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_AnytimeRequest", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
-                        myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                        N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", N_PkeyID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         transaction.Commit();
+                        myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
                         return Ok(api.Success("Waive Request Approval updated" + "-" + x_RequestCode));
                     }
 
@@ -230,7 +253,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_BranchID", nBranchID);
 
                         x_RequestCode = dLayer.GetAutoNumber("Pay_AnytimeRequest", "x_RequestCode", Params, connection, transaction);
-                        if (x_RequestCode == "") { return Ok(api.Error("Unable to generate Waive Request Number")); }
+                        if (x_RequestCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Waive Request Number")); }
                             MasterTable.Rows[0]["x_RequestCode"] = x_RequestCode;
                     }
                     else
@@ -246,12 +269,13 @@ namespace SmartxAPI.Controllers
                     if (nRequestID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
-                         myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
+                         N_NextApproverID=myFunctions.LogApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, x_RequestCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                          transaction.Commit();
+                         myFunctions.SendApprovalMail(N_NextApproverID,FormID,nRequestID,"Waive Request",x_RequestCode,dLayer,connection,transaction,User);
                     }
                     Dictionary<string,string> res=new Dictionary<string, string>();
                     res.Add("x_RequestCode",x_RequestCode.ToString());
@@ -260,7 +284,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -285,9 +309,15 @@ namespace SmartxAPI.Controllers
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
                     {
-                        return Ok(api.Error("Transaction not Found"));
+                        return Ok(api.Error(User,"Transaction not Found"));
                     }
                     DataRow TransRow = TransData.Rows[0];
+                    int EmpID = myFunctions.getIntVAL(TransRow["N_EmpID"].ToString());
+                                        SortedList EmpParams = new SortedList();
+                    EmpParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+                    EmpParams.Add("@nEmpID", EmpID);
+                    EmpParams.Add("@nFnYearID", nFnYearID);
+                    object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", EmpParams, connection);
 
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.FormID, nRequestID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, myFunctions.getIntVAL(TransRow["N_EmpID"].ToString()), 2003, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
@@ -297,7 +327,7 @@ namespace SmartxAPI.Controllers
                                                                                 string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus=myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_AnytimeRequest", X_Criteria, "", User, dLayer, connection, transaction);
+                    string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, "Waive Request", nRequestID, TransRow["X_RequestCode"].ToString(), ProcStatus, "Pay_AnytimeRequest", X_Criteria, objEmpName.ToString(), User, dLayer, connection, transaction);
                     if (status != "Error" )
                     {
                     transaction.Commit();
@@ -306,13 +336,13 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to delete Waive Request"));
+                        return Ok(api.Error(User,"Unable to delete Waive Request"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 

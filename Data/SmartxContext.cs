@@ -21,7 +21,7 @@ namespace SmartxAPI.Data
 
         /*    SP Dtos           */
 
-         public virtual DbSet<SP_LOGIN> SP_LOGIN { get; set; }
+         public virtual DbSet<SP_LOGIN_CLOUD> SP_LOGIN_CLOUD { get; set; }
 
 
 

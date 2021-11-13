@@ -44,7 +44,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2";
+            string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 order by N_SalesmanID DESC";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnyearID);
 
@@ -68,45 +68,47 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(_api.Error(e));
+                return Ok(_api.Error(User,e));
             }
         }
 
-        //List
-        // [HttpGet("listdetails")]
-        // public ActionResult GetAllSalesExecutivesDetails(int? nCompanyID, int? nFnyearID, int? n_SalesmanID)
-        // {
-        //     DataTable dt = new DataTable();
-        //     SortedList Params = new SortedList();
 
-        //     string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 and n_SalesmanID=@p3";
-        //     Params.Add("@p1", nCompanyID);
-        //     Params.Add("@p2", nFnyearID);
-        //     Params.Add("@p3", n_SalesmanID);
+     
+        //details
+        [HttpGet("details")]
+        public ActionResult GetAllSalesExecutivesDetails(int? n_SalesmanID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-        //         }
-        //         dt = _api.Format(dt);
-        //         if (dt.Rows.Count == 0)
-        //         {
-        //             return Ok(_api.Notice("No Results Found"));
-        //         }
-        //         else
-        //         {
-        //             return Ok(dt);
-        //         }
+            string sqlCommandText = "select * from vw_InvSalesman where n_SalesmanID=@p3";
+            // Params.Add("@p1", nCompanyID);
+            // Params.Add("@p2", nFnyearID);
+            Params.Add("@p3", n_SalesmanID);
 
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return BadRequest(_api.Error(ex));
-        //     }
-        // }
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                     return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
 
         //Save....
         [HttpPost("save")]
@@ -121,11 +123,11 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                    string ExecutiveCode = MasterTable.Rows[0]["X_SalesmanCode"].ToString();
-                    string SalesmanName = MasterTable.Rows[0]["X_SalesmanName"].ToString();
+                    string ExecutiveCode = MasterTable.Rows[0]["x_SalesmanCode"].ToString();
+                    string SalesmanName = MasterTable.Rows[0]["x_SalesmanName"].ToString();
                     string nCompanyID = MasterTable.Rows[0]["n_CompanyId"].ToString();
                     string nFnYearID = MasterTable.Rows[0]["n_FnYearId"].ToString();
-                    int N_SalesmanID= myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());
+                    int N_SalesmanID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_SalesmanID"].ToString());
                     if (ExecutiveCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -133,78 +135,99 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
                         ExecutiveCode = dLayer.GetAutoNumber("inv_salesman", "X_SalesmanCode", Params, connection, transaction);
-                        if (ExecutiveCode == "") { return Ok(_api.Error("Unable to generate Sales Executive Code")); }
+                        if (ExecutiveCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Sales Executive Code")); }
                         MasterTable.Rows[0]["X_SalesmanCode"] = ExecutiveCode;
 
-                    }else
+                    }
+                    else
                     {
                         dLayer.DeleteData("inv_salesman", "N_SalesmanID", N_SalesmanID, "", connection, transaction);
                     }
 
-                        MasterTable.Columns.Remove("n_SalesmanID");
-                        MasterTable.AcceptChanges();
-
-
-                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", N_SalesmanID, MasterTable, connection, transaction);
+                    N_SalesmanID = dLayer.SaveData("inv_salesman", "N_SalesmanID", MasterTable, connection, transaction);
                     if (N_SalesmanID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error("Unable to save"));
+                        return Ok(_api.Error(User,"Unable to save"));
                     }
                     else
                     {
 
                         SortedList nParams = new SortedList();
-                        nParams.Add("@p1",nCompanyID);
-                        nParams.Add("@p2",nFnYearID);
+                        nParams.Add("@p1", nCompanyID);
+                        nParams.Add("@p2", nFnYearID);
                         string sqlCommandText = "select * from vw_InvSalesman where N_CompanyID=@p1 and N_FnYearID=@p2 ";
-                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection,transaction);
+                        DataTable outputDt = dLayer.ExecuteDataTable(sqlCommandText, nParams, connection, transaction);
                         outputDt = _api.Format(outputDt, "NewSalesMan");
-
+                        transaction.Commit();
                         return Ok(_api.Success(outputDt, "Salesman Saved"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(_api.Error(ex));
+                return Ok(_api.Error(User,ex));
             }
         }
 
-
-
-                [HttpDelete("delete")]
+   [HttpDelete("delete")]
         public ActionResult DeleteData(int nSalesmanID)
+        {
+            int Results = 0;
+            try
             {
-                int Results = 0;
-                try
-                {
-                    using (SqlConnection connection = new SqlConnection(connectionString))
+                using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "",connection);
-                }
+                    Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "", connection);
                     if (Results > 0)
                     {
-                        return Ok(_api.Success("Sales Executive deleted"));
+                        return Ok( _api.Success("Sales Executive deleted"));
                     }
                     else
                     {
-                        return Ok(_api.Error("Unable to delete Sales Executive"));
+                        return Ok(_api.Error(User,"Unable to delete Sales Executive"));
                     }
-
                 }
-                catch (Exception ex)
-                {
-                    return BadRequest(_api.Error(ex));
-                }
-
-
             }
-
-
-
-
-
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
         }
+
+        // [HttpDelete("delete")]
+        // public ActionResult DeleteData(int nSalesmanID)
+        // {
+        //     int Results = 0;
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             Results = dLayer.DeleteData("inv_salesman", "N_SalesmanID", nSalesmanID, "", connection);
+        //         }
+        //         if (Results > 0)
+        //         {
+        //             return Ok(_api.Success("Sales Executive deleted"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Error(User,"Unable to delete Sales Executive"));
+        //         }
+
+        //     }
+        //     catch (Exception ex)
+        //     {
+        //         return Ok(_api.Error(User,ex));
+        //     }
+
+
+        // }
+
+
+
+
+
     }
+}

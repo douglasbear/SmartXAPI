@@ -53,28 +53,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
-            }
-        }
-
-        [HttpGet("ml-datasetold")]
-        public ActionResult GetControllsList()
-        {
-            try
-            {
-                var LanguageList = _repository.GetControllsListAsync();
-                if (!LanguageList.Any())
-                {
-                    return StatusCode(200, _api.Response(200, "No Results Found"));
-                }
-                else
-                {
-                    return Ok(LanguageList);
-                }
-            }
-            catch (Exception e)
-            {
-                return StatusCode(403, _api.Error(e));
+                return StatusCode(403, _api.Error(User,e));
             }
         }
 
@@ -85,7 +64,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_WebLanMultilingual where LanguageId=@p1";
+            string sqlCommandText = "select * from vw_WebLanMultilingual where LanguageId=@p1 order by X_WFormName,X_WControlName,Text";
             Params.Add("@p1", nLangId);
 
             try
@@ -112,7 +91,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, _api.Error(e));
+                return Ok(_api.Error(User,e.Message));
             }
         }
     }

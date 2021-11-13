@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public CRM_Customer(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -34,21 +33,43 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult LeadList(int nPage,int nSizeperpage)
+        public ActionResult CustomerList(int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             string sqlCommandCount = "";
             int nCompanyId=myFunctions.GetCompanyID(User);
+            string UserPattern = myFunctions.GetUserPattern(User);
+            int nUserID = myFunctions.GetUserID(User);
+            string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
+                Params.Add("@p2", UserPattern);
+            }
+            else
+            {
+                Pattern = " and N_UserID=" + nUserID;
+
+            }
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (X_Customer like '%" + xSearchkey + "%'or X_CustomerCode like '%" + xSearchkey + "%' or X_Industry like '%" + xSearchkey + "%' or x_CustomerCategory like '%" + xSearchkey + "%'or n_AnnRevenue like '%" + xSearchkey + "%' or x_Employee like '%" + xSearchkey + "%'or x_City like '%" + xSearchkey + "%'or x_Phone like '%" + xSearchkey + "%'or x_SalesmanName like '%" + xSearchkey + "%' )";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_CustomerID desc";
+            else
+                xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1)";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " and N_CustomerID not in (select top("+ Count +") N_CustomerID from vw_CRMCustomer where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
-
+            Params.Add("@p3", nFnYearId);
             SortedList OutPut = new SortedList();
 
 
@@ -59,7 +80,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMCustomer where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -77,12 +98,46 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
+            }
+        }
+        [HttpGet("listDetails")]
+        public ActionResult CustomerListInner()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+           
+            string sqlCommandText = "select  * from vw_CRMCustomer where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
             }
         }
 
+
         [HttpGet("details")]
-        public ActionResult LeadListDetails(string xCustomerCode)
+        public ActionResult CustomerListDetails(string xCustomerCode)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -112,7 +167,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -144,7 +199,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1306);
                         LeadCode = dLayer.GetAutoNumber("CRM_Customer", "x_CustomerCode", Params, connection, transaction);
-                        if (LeadCode == "") { return Ok(api.Error("Unable to generate Customer Code")); }
+                        if (LeadCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Customer Code")); }
                         MasterTable.Rows[0]["x_CustomerCode"] = LeadCode;
                     }
 
@@ -152,18 +207,18 @@ namespace SmartxAPI.Controllers
                     if (nCustomerID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Customer Created"));
+                        return Ok(api.Success("Company Created"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -195,13 +250,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Customer"));
+                    return Ok(api.Error(User,"Unable to delete Customer"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

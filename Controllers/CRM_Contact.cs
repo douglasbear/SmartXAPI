@@ -22,7 +22,6 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        private readonly int FormID;
 
         public CRM_Contact(IApiFunctions apifun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
         {
@@ -33,21 +32,119 @@ namespace SmartxAPI.Controllers
         }
 
 
+        // [HttpGet("list")]
+        // public ActionResult ContactList(int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyId=myFunctions.GetCompanyID(User);
+        //     string sqlCommandCount = "";
+        //     int Count= (nPage - 1) * nSizeperpage;
+        //     string sqlCommandText ="";
+        //     string Searchkey = "";
+        //     if (xSearchkey != null && xSearchkey.Trim() != "")
+        //         Searchkey = "and (X_Contact like '%" + xSearchkey + "%'or X_ContactCode like'%" + xSearchkey + "%'or X_Department like'%" + xSearchkey + "%')";
+
+        //     if (xSortBy == null || xSortBy.Trim() == "")
+        //         xSortBy = " order by n_contactID desc";
+        //     else
+        //     {
+        //                 switch (xSortBy.Split(" ")[0])
+        //                 {
+        //                     case "x_ContactCode":
+        //                         xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
+        //                         break;
+
+        //                     default: break;
+        //                 }
+        //         xSortBy = " order by " + xSortBy;
+        //                 }
+
+        //      if(Count==0)
+        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+        //     else
+        //         sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 " + Searchkey + " and N_ContactID not in (select top("+ Count +") N_ContactID from vw_CRMContact where N_CompanyID=@p1 "+Searchkey + xSortBy + " ) " + xSortBy;
+        //     Params.Add("@p1", nCompanyId);
+
+        //     SortedList OutPut = new SortedList();
+
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+
+        //             sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1 "+Searchkey;
+        //             object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+        //             OutPut.Add("Details", api.Format(dt));
+        //             OutPut.Add("TotalCount", TotalCount);
+        //             if (dt.Rows.Count == 0)
+        //             {
+        //                 return Ok(api.Warning("No Results Found"));
+        //             }
+        //             else
+        //             {
+        //                 return Ok(api.Success(OutPut));
+        //             }
+
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(User,e));
+        //     }
+        // }
         [HttpGet("list")]
-        public ActionResult ContactList(int nPage,int nSizeperpage)
+        public ActionResult OpportunityList(int nFnYearId,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandCount = "";
-            int Count= (nPage - 1) * nSizeperpage;
-            string sqlCommandText ="";
-             
-             if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1";
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            string UserPattern = myFunctions.GetUserPattern(User);
+             int nUserID = myFunctions.GetUserID(User);
+            string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
+                Params.Add("@p2", UserPattern);
+            }
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRMContact where N_CompanyID=@p1 and N_ContactID not in (select top("+ Count +") N_ContactID from vw_CRMContact where N_CompanyID=@p1)";
+            {
+                Pattern = " and N_UserID=" + nUserID;
+            }
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (X_Contact like '%" + xSearchkey + "%'or x_Customer like'%" + xSearchkey + "%'or x_Phone like'%" + xSearchkey + "%'or x_Email like'%" + xSearchkey + "%'or x_SalesmanName like'%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by n_contactID desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "x_ContactCode":
+                        xSortBy = "N_contactID " + xSortBy.Split(" ")[1];
+                        break;
+
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+
+
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_CRMContact where N_CompanyID=@p1 and N_FnYearId=@p3 " + Pattern + Searchkey + " and N_ContactID not in (select top(" + Count + ") N_ContactID from vw_CRMContact where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p3", nFnYearId);
+
 
             SortedList OutPut = new SortedList();
 
@@ -57,9 +154,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRMContact where N_CompanyID=@p1 and N_FnYearId=@p3" + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -73,11 +170,45 @@ namespace SmartxAPI.Controllers
                     }
 
                 }
-                
+
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User, e));
+            }
+        }
+
+        [HttpGet("listDetails")]
+        public ActionResult ContactListInner()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
+            string sqlCommandText = "select  * from vw_CRMContact where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -86,8 +217,8 @@ namespace SmartxAPI.Controllers
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            int nCompanyId=myFunctions.GetCompanyID(User);
-  
+            int nCompanyId = myFunctions.GetCompanyID(User);
+
             string sqlCommandText = "select * from vw_CRMContact where N_CompanyID=@p1 and x_ContactCode=@p2";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", xContactCode);
@@ -98,7 +229,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
@@ -112,7 +243,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -144,8 +275,14 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", 1308);
                         ContactCode = dLayer.GetAutoNumber("CRM_Contact", "x_ContactCode", Params, connection, transaction);
-                        if (ContactCode == "") { return Ok(api.Error("Unable to generate Contact Code")); }
+                        if (ContactCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Contact Code")); }
                         MasterTable.Rows[0]["x_ContactCode"] = ContactCode;
+                    }
+                    if (MasterTable.Columns.Contains("X_SalesmanName"))
+                    {
+
+                        MasterTable.Columns.Remove("X_SalesmanName");
+
                     }
 
 
@@ -153,7 +290,7 @@ namespace SmartxAPI.Controllers
                     if (nContactID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -164,20 +301,20 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
-      
+
         [HttpDelete("delete")]
         public ActionResult DeleteData(int nContactID)
         {
 
-             int Results = 0;
+            int Results = 0;
             try
-            {                        
+            {
                 SortedList Params = new SortedList();
-                SortedList QueryParams = new SortedList();                
+                SortedList QueryParams = new SortedList();
                 QueryParams.Add("@nFormID", 1308);
                 QueryParams.Add("@nContactID", nContactID);
 
@@ -190,19 +327,19 @@ namespace SmartxAPI.Controllers
                 }
                 if (Results > 0)
                 {
-                    Dictionary<string,string> res=new Dictionary<string, string>();
-                    res.Add("N_ContactID",nContactID.ToString());
-                    return Ok(api.Success(res,"Contact deleted"));
+                    Dictionary<string, string> res = new Dictionary<string, string>();
+                    res.Add("N_ContactID", nContactID.ToString());
+                    return Ok(api.Success(res, "Contact deleted"));
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Contact"));
+                    return Ok(api.Error(User, "Unable to delete Contact"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User, ex));
             }
 
 

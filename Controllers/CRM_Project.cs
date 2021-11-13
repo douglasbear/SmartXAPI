@@ -34,19 +34,39 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult LeadList(int nFnYearId,int nPage,int nSizeperpage)
+        public ActionResult LeadList(int nFnYearId,int nPage,int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
+            string UserPattern = myFunctions.GetUserPattern(User);
+            int nUserID = myFunctions.GetUserID(User);
+            string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@p2))=@p2";
+                Params.Add("@p2", UserPattern);
+            }
+            else
+            {
+                Pattern = " and N_UserID=" + nUserID;
+            }
             string sqlCommandCount = "";
             int Count= (nPage - 1) * nSizeperpage;
             string sqlCommandText ="";
+             string Searchkey = "";
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = " and (X_ProjectName like '%" + xSearchkey + "%' or N_Value like'%" + xSearchkey + "%' or X_Contact like'%" + xSearchkey + "%'or X_Phone like'%" + xSearchkey + "%' or X_City like'%" + xSearchkey + "%' or D_StartDate like'%" + xSearchkey + "%' or X_Description like'%" + xSearchkey + "%' )";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by N_ProjectID desc";
+            else
+                xSortBy = " order by " + xSortBy;
              
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 order by X_ProjectCode DESC ";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 " + Pattern + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_CRM_Project where N_CompanyID=@p1 order by X_ProjectCode DESC) order by X_ProjectCode DESC";
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_CRM_Project where N_CompanyID=@p1 " + Pattern + Searchkey + " and N_ProjectID not in (select top("+ Count +") N_ProjectID from vw_CRM_Project where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
             Params.Add("@p1", nCompanyId);
 
             SortedList OutPut = new SortedList();
@@ -59,7 +79,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Project where N_CompanyID=@p1 ";
+                    sqlCommandCount = "select count(*) as N_Count  from vw_CRM_Project where N_CompanyID=@p1 " + Pattern;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -77,19 +97,52 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
+            }
+        }
+         [HttpGet("listDetails")]
+        public ActionResult ProjectListInner()
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyId=myFunctions.GetCompanyID(User);
+           
+            string sqlCommandText = "select  * from vw_CRM_Project where N_CompanyID=@p1";
+            Params.Add("@p1", nCompanyId);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params,connection);
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+
+                }
+                
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
             }
         }
 
         [HttpGet("details")]
-        public ActionResult LeadListDetails(string xLeadNo)
+        public ActionResult LeadListDetails(string xProjectNo)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId=myFunctions.GetCompanyID(User);
             string sqlCommandText = "select * from vw_CRM_Project where N_CompanyID=@p1 and X_ProjectCode=@p3";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p3", xLeadNo);
+            Params.Add("@p3", xProjectNo);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -109,7 +162,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(e));
+                return Ok(api.Error(User,e));
             }
         }
 
@@ -141,7 +194,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         LeadCode = dLayer.GetAutoNumber("CRM_Project", "x_ProjectCode", Params, connection, transaction);
-                        if (LeadCode == "") { return Ok(api.Error("Unable to generate Lead Code")); }
+                        if (LeadCode == "") {transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Lead Code")); }
                         MasterTable.Rows[0]["x_ProjectCode"] = LeadCode;
                     }
 
@@ -150,7 +203,7 @@ namespace SmartxAPI.Controllers
                     if (nLeadID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error("Unable to save"));
+                        return Ok(api.Error(User,"Unable to save"));
                     }
                     else
                     {
@@ -161,7 +214,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
         }
 
@@ -189,13 +242,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error("Unable to delete Project"));
+                    return Ok(api.Error(User,"Unable to delete Project"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(ex));
+                return Ok(api.Error(User,ex));
             }
 
 

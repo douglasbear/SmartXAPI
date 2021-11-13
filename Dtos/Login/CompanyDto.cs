@@ -8,6 +8,7 @@ namespace SmartxAPI.Dtos.Login
 		public string X_CompanyCode { get; set; }
 		public int N_CompanyID { get; set; }
         public string X_Country { get; set; }
+        public int N_CountryID { get; set; }
         public int N_CurrencyID { get; set; }
         public string X_CurrencyName {get;set;}
         public string N_BranchID { get; set; }
@@ -16,5 +17,6 @@ namespace SmartxAPI.Dtos.Login
 		public string N_LocationID { get; set; }
 		public string I_CompanyLogo { get; set; }
         public int N_TaxType { get; set; }
+        public int N_CurrencyDecimal { get; set; }
     }
 }
