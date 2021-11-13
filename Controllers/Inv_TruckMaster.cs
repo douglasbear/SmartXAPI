@@ -126,7 +126,8 @@ namespace SmartxAPI.Controllers
                 dt = api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(api.Notice("No Results Found"));
+                    //return Ok(api.Notice("No Results Found"));
+                     return Ok(api.Success(dt));
 
                 }
                 else
@@ -186,11 +187,11 @@ namespace SmartxAPI.Controllers
                     if (nTruckID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok("Unable to save");
+                        return Ok("Unable to save ");
                     }
                     transaction.Commit();
 
-                    return Ok(api.Success("successfully created"));
+                    return Ok(api.Success("Sucessfully Created"));
                 }
             }
             catch (Exception ex)
