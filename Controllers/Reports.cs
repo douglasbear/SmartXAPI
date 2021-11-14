@@ -304,18 +304,18 @@ namespace SmartxAPI.Controllers
                         }
                         //QR End Here
 
-                        bool SaveDraft = false;
-                        object ObjSaveDraft = dLayer.ExecuteScalar("select b_issavedraft from inv_sales WHERE N_CompanyID =@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
-                        if (ObjSaveDraft != null)
-                        {
-                            SaveDraft = myFunctions.getBoolVAL(ObjSaveDraft.ToString());
-                            if (SaveDraft == true)
-                            {
-                                ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=644", QueryParams, connection, transaction);
-                                ReportName = ObjReportName.ToString();
-                                ReportName = ReportName.Remove(ReportName.Length - 4);
-                            }
-                        }
+                        // bool SaveDraft = false;
+                        // object ObjSaveDraft = dLayer.ExecuteScalar("select b_issavedraft from inv_sales WHERE N_CompanyID =@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        // if (ObjSaveDraft != null)
+                        // {
+                        //     SaveDraft = myFunctions.getBoolVAL(ObjSaveDraft.ToString());
+                        //     if (SaveDraft == true)
+                        //     {
+                        //         ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=644", QueryParams, connection, transaction);
+                        //         ReportName = ObjReportName.ToString();
+                        //         ReportName = ReportName.Remove(ReportName.Length - 4);
+                        //     }
+                        // }
 
                     }
 
