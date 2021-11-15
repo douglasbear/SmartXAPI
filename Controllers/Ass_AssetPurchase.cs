@@ -75,7 +75,7 @@ namespace SmartxAPI.Controllers
                 if (nVendorID > 0)
                     sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_VendorID=@p4 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
                 else
-                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 ";//and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
+                    sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and isnull(N_FormID,129)=@p5";
             }
         
 
@@ -363,6 +363,14 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User,"Error"));
                         }
                     }
+
+                    AssMasterTable = myFunctions.AddNewColumnToDataTable(AssMasterTable, "n_AssItemName", typeof(string), "");
+                    for (int j = 0 ;j < AssMasterTable.Rows.Count;j++)
+                    {
+                        AssMasterTable.Rows[j]["n_AssItemName"]=AssMasterTable.Rows[j]["x_AssItemName"];
+                    }
+                    AssMasterTable.Columns.Remove("x_AssItemName");
+
                     for (int j = 0 ;j < DetailTable.Rows.Count;j++)
                     {
                         DetailTable.Rows[j]["N_AssetInventoryID"]=N_AssetInventoryID;
