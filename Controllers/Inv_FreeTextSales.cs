@@ -226,7 +226,7 @@ namespace SmartxAPI.Controllers
 
                     try
                     {
-                        dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                      //  dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
                     }
                     catch (Exception ex)
                     {
