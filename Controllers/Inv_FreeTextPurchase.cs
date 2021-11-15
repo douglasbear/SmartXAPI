@@ -231,6 +231,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_PurchaseID"] = nPurchaseID;
 
                     }
+                    
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)
