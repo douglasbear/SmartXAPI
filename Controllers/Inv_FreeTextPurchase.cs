@@ -75,9 +75,9 @@ namespace SmartxAPI.Controllers
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey ;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where ) " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey+ " ) ";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
@@ -128,14 +128,17 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    object classID=dLayer.ExecuteScalar("select N_ClassID from Inv_itemClass where X_ClassName='Non Stock Item'", Params, connection);
                     object itemID = dLayer.ExecuteScalar("select N_ItemID From Inv_ItemMaster where N_CompanyID=" + nCompanyID + " and X_ItemCode=001", Params, connection);
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_ItemID", typeof(int), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_ClassID", typeof(int), 0);
                     if (itemID != null)
                         foreach (DataRow var in dt.Rows)
                         {
 
                             var["N_ItemID"] = myFunctions.getIntVAL(itemID.ToString());
+                            var["N_ClassID"] = myFunctions.getIntVAL(classID.ToString());
                         }
 
                 }
@@ -228,6 +231,7 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_PurchaseID"] = nPurchaseID;
 
                     }
+                    
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
                     if (N_InvoiceDetailId <= 0)
