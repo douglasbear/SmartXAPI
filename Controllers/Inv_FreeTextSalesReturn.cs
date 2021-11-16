@@ -27,7 +27,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 372;
+            FormID = 385;
         }
         private readonly string connectionString;
         [HttpGet("list")]
@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     string X_ReceiptNo = MasterTable.Rows[0]["X_ReceiptNo"].ToString();
                     int N_BillAmt = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
-                    string xTransType = "FTSALES";
+                    string xTransType = "DEBIT NOTE";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     if (nSalesID > 0)
                     {
