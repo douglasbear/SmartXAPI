@@ -34,13 +34,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult VehicleDriversList(int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, bool bAllBranchData)
+        public ActionResult VehicleDriversList(int nBranchID, string xSearchkey, string xSortBy, bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             string sqlCommandCount = "", xCriteria = "";
-            int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
             Params.Add("@p1", nCompanyID);
@@ -59,10 +58,7 @@ namespace SmartxAPI.Controllers
             else
                 xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2 ";
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Veh_Drivers where" + xCriteria + Searchkey + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from Veh_Drivers where" + xCriteria + Searchkey + "and N_DriversID not in (select top(" + Count + ") N_DriversID from Veh_Drivers where" + xCriteria + xSortBy + " ) " + xSortBy;
+            sqlCommandText = "select * from Veh_Drivers where" + xCriteria + Searchkey + xSortBy;
 
             SortedList OutPut = new SortedList();
 
@@ -94,7 +90,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetVehicleDriver(int nFnYearID, int nBranchID, string xDriversCode, bool bAllBranchData)
+        public ActionResult GetVehicleDriver(int nFnYearID, int nBranchID, int nDriversID, bool bAllBranchData)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -102,14 +98,14 @@ namespace SmartxAPI.Controllers
             string xCriteria = "", sqlCommandText = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nBranchID);
-            Params.Add("@p3", xDriversCode);
+            Params.Add("@p3", nDriversID);
 
             if (bAllBranchData)
-                xCriteria = " N_CompanyID=@p1";
+                xCriteria = " N_CompanyID=@p1 ";
             else
-                xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2";
+                xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2 ";
 
-            sqlCommandText = "select * from Veh_Drivers where" + xCriteria + "and xDriversCode=@p3";
+            sqlCommandText = "select * from Veh_Drivers where " + xCriteria + " and N_DriversID=@p3";
 
             try
             {
