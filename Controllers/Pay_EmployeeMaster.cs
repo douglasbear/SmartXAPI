@@ -1246,7 +1246,7 @@ namespace SmartxAPI.Controllers
                             {
                                 dRow["n_FormID"] = 1228;
                             }
-                            myAttachments.SaveAttachment(dLayer, Attachment, X_EmpUpdateCode, nEmpUpdateID, MasterTable.Rows[0]["x_EmpName"].ToString(), X_EmpUpdateCode, nEmpUpdateID, "Employee Update", User, connection, transaction);
+                            myAttachments.SaveAttachment(dLayer, Attachment, X_EmpUpdateCode, nEmpUpdateID, MasterTable.Rows[0]["x_EmpName"].ToString(),  MasterTable.Rows[0]["X_EmpCode"].ToString(), nEmpID, "Employee Update", User, connection, transaction);
                         }
 
                         if(N_SaveDraft==0)
@@ -1489,7 +1489,7 @@ namespace SmartxAPI.Controllers
                         Dependence  = dLayer.ExecuteDataTable(Dependence_sqlQuery, QueryParams, connection);
                         Education = dLayer.ExecuteDataTable(Edu_sqlQuery, QueryParams, connection);
                         History  = dLayer.ExecuteDataTable(History_sqlQuery, QueryParams, connection);
-                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), 1228, nFnYearID, User, connection);
+                        DataTable Attachements = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(Master.Rows[0]["N_EmpID"].ToString()), myFunctions.getIntVAL(Master.Rows[0]["N_EmpUpdateID"].ToString()), 1228, nFnYearID, User, connection);
 
                         Contacts = _api.Format(Contacts, "pay_EmployeeSub");
                         Dependence = _api.Format(Dependence, "pay_EmployeeDependence");
