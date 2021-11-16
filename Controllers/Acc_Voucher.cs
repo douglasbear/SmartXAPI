@@ -125,13 +125,25 @@ namespace SmartxAPI.Controllers
             Params.Add("@VoucherNo", xVoucherNo);
             Params.Add("@TransType", xTransType);
             int nFormID = 0;
+            int nFlag = 0;
 
             if (xTransType.ToLower() == "pv")
+            {
+                nFlag = 0;
                 nFormID = 1;
+            }
+
             else if (xTransType.ToLower() == "rv")
+            {
                 nFormID = 2;
+                nFlag = 0;
+            }
+
             else if (xTransType.ToLower() == "jv")
+            {
                 nFormID = 3;
+                nFlag=0;
+            }
 
             try
             {
@@ -156,7 +168,7 @@ namespace SmartxAPI.Controllers
                     ProParams.Add("N_CompanyID", nCompanyId);
                     ProParams.Add("N_FnYearID", nFnYearId);
                     ProParams.Add("N_VoucherID", nVoucherID);
-                    ProParams.Add("N_Flag", nFormID);
+                    ProParams.Add("N_Flag", nFlag);
 
                     Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp", ProParams, connection);
                     Acc_CostCentreTrans = api.Format(Acc_CostCentreTrans, "costCenterTrans");

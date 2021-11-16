@@ -10,9 +10,9 @@ using Microsoft.Data.SqlClient;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
-    [Route("freeTextSales")]
+    [Route("freeTextSalesReturn")]
     [ApiController]
-    public class Inv_FreeTextSales : ControllerBase
+    public class Inv_FreeTextSalesReturn : ControllerBase
     {
         private readonly IApiFunctions _api;
         private readonly IDataAccessLayer dLayer;
@@ -20,18 +20,18 @@ namespace SmartxAPI.Controllers
         private readonly IMyFunctions myFunctions;
         private readonly IMyAttachments myAttachments;
 
-        public Inv_FreeTextSales(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
+        public Inv_FreeTextSalesReturn(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf, IMyAttachments myAtt)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 372;
+            FormID = 385;
         }
         private readonly string connectionString;
         [HttpGet("list")]
-        public ActionResult FreeTextSalesList(int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
+        public ActionResult FreeTextSalesReturnList(int nFnYearID, int nBranchID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -43,7 +43,7 @@ namespace SmartxAPI.Controllers
                     //int nCompanyID = myFunctions.GetCompanyID(User);
                      int nCompanyId=myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
-                    string xTransType = "FTSALES";
+                    string xTransType = "DEBIT NOTE";
                     int Count = (nPage - 1) * nSizeperpage;
                     string sqlCommandText = "";
                     string Searchkey = "";
@@ -51,22 +51,12 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
                     Params.Add("@p4", xTransType);
-                    bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
-
-                    if (!CheckClosedYear)
-                    {
-                        if (b_AllBranchData)
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1 ";
-                        else
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1 ";
-                    }
-                    else
-                    {
+                   
                         if (b_AllBranchData)
                             xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyId=@p1 ";
                         else
                             xCriteria = "N_SalesType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchId=@p3 and N_CompanyId=@p1 ";
-                    }
+                    
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = " and ( [Invoice No] like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%' or [Customer] like '%" + xSearchkey + "%' or n_InvDueDays like '%" + xSearchkey + "%' ) ";
@@ -131,7 +121,7 @@ namespace SmartxAPI.Controllers
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     string X_ReceiptNo = MasterTable.Rows[0]["X_ReceiptNo"].ToString();
                     int N_BillAmt = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
-                    string xTransType = "FTSALES";
+                    string xTransType = "DEBIT NOTE";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     if (nSalesID > 0)
                     {
