@@ -129,9 +129,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if(nFormID==1394)
-                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=371) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_AssigneeID=@p3)";
+                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=371) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 )";// and ( N_AssigneeID=@p3 or N_AssigneeID is null )
             else
-                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=372) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_AssigneeID=@p3) ";
+                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=372) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 ) "; //and ( N_AssigneeID=@p3 or N_AssigneeID is null )
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  "+xCondition+" " + Searchkey;

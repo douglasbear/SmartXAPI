@@ -101,11 +101,11 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", nDriversID);
 
             if (bAllBranchData)
-                xCriteria = " N_CompanyID=@p1";
+                xCriteria = " N_CompanyID=@p1 ";
             else
-                xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2";
+                xCriteria = " N_CompanyID=@p1 and N_BranchID=@p2 ";
 
-            sqlCommandText = "select * from Veh_Drivers where" + xCriteria + "and N_DriversID=@p3";
+            sqlCommandText = "select * from Veh_Drivers where " + xCriteria + " and N_DriversID=@p3";
 
             try
             {
