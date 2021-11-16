@@ -235,7 +235,7 @@ namespace SmartxAPI.Controllers
 
                     //int nParentID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_CategoryDisplayID"].ToString());
                     int nParentID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CategoryDisplayID from Inv_ItemCategoryDisplayMaster where N_ItemID="+N_ItemID+"",Params,connection).ToString());
-                    while (nParentID >0)
+                    while (nParentID >0 && i<=4)
                     {
                         
                         object phoneName = dLayer.ExecuteScalar("Select X_CategoryDisplay from Inv_ItemCategoryDisplay Where N_CategoryDisplayID =" + nParentID + " and N_CompanyID= @nCompanyID ", Params, connection);
