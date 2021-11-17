@@ -259,6 +259,7 @@ namespace SmartxAPI.Controllers
                             X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=" + nPurchaseNO + " and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
 
                         }
+                        
                     }
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
