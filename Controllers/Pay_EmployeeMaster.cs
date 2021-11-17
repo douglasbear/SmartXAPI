@@ -1007,7 +1007,7 @@ namespace SmartxAPI.Controllers
 
                             }
                             //Update Contacts
-                            if(myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString())>0)
+                            if( ContactsTable.Rows.Count>0 && myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString())>0)
                             {
                                 QueryParams.Add("@N_ContactDetailsID",myFunctions.getIntVAL(ContactsTable.Rows[0]["N_ContactDetailsID"].ToString()));
 
@@ -1037,12 +1037,13 @@ namespace SmartxAPI.Controllers
                                 }
 
                                 ContactsTable.AcceptChanges(); 
-
+                                if(ContactsTable.Rows.Count>0){
                                 int nContactsID = dLayer.SaveData("Pay_EmployeeSub", "N_ContactDetailsID", ContactsTable, connection, transaction);
                                 if (nContactsID <= 0)
                                 {
                                     transaction.Rollback();
                                     return Ok(_api.Error(User,"Unable to save"));
+                                }
                                 }
                             }
 
