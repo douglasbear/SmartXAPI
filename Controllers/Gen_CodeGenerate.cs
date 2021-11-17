@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
 
 
                     }
-                    if (formID == 64)
+                    if (formID == 64|| formID== 1346 )
                     {
                         masterTable = "Inv_Sales";
                         column = "X_ReceiptNo";
@@ -106,6 +106,17 @@ namespace SmartxAPI.Controllers
                             if (newCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate ")); }
                             
                         }
+                         else if (formID == 1346)
+                        {
+                            Params.Add("N_CompanyID", nCompanyID);
+                            Params.Add("N_YearID", nFnYearID);
+                            Params.Add("N_FormID", 1346);
+            
+                            newCode = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
+                            if (newCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate ")); }
+                            
+                        }
+
                     }
 
 
