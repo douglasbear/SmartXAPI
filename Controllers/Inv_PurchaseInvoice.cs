@@ -499,7 +499,9 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
-            int n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
+            int n_MRNID = 0;
+            if(MasterTable.Columns.Contains("N_RsID"))
+            n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
             int Dir_Purchase=1;
             if(n_MRNID!=0)Dir_Purchase=0;
 
