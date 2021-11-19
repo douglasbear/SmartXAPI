@@ -208,21 +208,46 @@ namespace SmartxAPI.Controllers
                     // + "                         Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID LEFT OUTER JOIN "
                     // + "                         Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
 
-                    DetailSql =" SELECT        Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, "+
-                         " Inv_WarrantyContractDetails.N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks,  "+
-                         " Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName, isnull(Inv_WarrantyContractDetails.N_Qty,0)-isnull(vw_WarrantyItemSummery.N_UsedQty,0) as N_AvlQty "+
-" FROM            Inv_WarrantyContractDetails LEFT OUTER JOIN "+
-      "                   vw_WarrantyItemSummery ON Inv_WarrantyContractDetails.N_ItemID = vw_WarrantyItemSummery.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = vw_WarrantyItemSummery.N_CompanyID AND "+
-     "                    Inv_WarrantyContractDetails.N_WarrantyID = vw_WarrantyItemSummery.N_WarrantyID LEFT OUTER JOIN "+
-    "                     Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID LEFT OUTER JOIN "+
-   "                      Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID "+
+                    DetailSql = " SELECT        Inv_WarrantyContractDetails.N_CompanyID, Inv_WarrantyContractDetails.N_WarrantyID, Inv_WarrantyContractDetails.N_WarrantyDetailsID, Inv_WarrantyContractDetails.N_ItemID, Inv_WarrantyContractDetails.N_MainItemID, " +
+                         " isNull(Inv_WarrantyContractDetails.N_Qty,0) as N_Qty, Inv_WarrantyContractDetails.N_BranchID, Inv_WarrantyContractDetails.N_LocationID, Inv_WarrantyContractDetails.N_ItemUnitID, Inv_WarrantyContractDetails.X_ItemRemarks,  " +
+                         " Inv_ItemUnit.X_ItemUnit, Inv_ItemMaster.X_ItemCode, Inv_ItemMaster.X_ItemName, isnull(Inv_WarrantyContractDetails.N_Qty,0)-isnull(vw_WarrantyItemSummery.N_UsedQty,0) as N_AvlQty,Inv_ItemMaster.N_ClassID " +
+" FROM            Inv_WarrantyContractDetails LEFT OUTER JOIN " +
+      "                   vw_WarrantyItemSummery ON Inv_WarrantyContractDetails.N_ItemID = vw_WarrantyItemSummery.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = vw_WarrantyItemSummery.N_CompanyID AND " +
+     "                    Inv_WarrantyContractDetails.N_WarrantyID = vw_WarrantyItemSummery.N_WarrantyID LEFT OUTER JOIN " +
+    "                     Inv_ItemMaster ON Inv_WarrantyContractDetails.N_ItemID = Inv_ItemMaster.N_ItemID AND Inv_WarrantyContractDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID LEFT OUTER JOIN " +
+   "                      Inv_ItemUnit ON Inv_ItemMaster.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_ItemMaster.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID " +
  " where Inv_WarrantyContractDetails.N_CompanyID=@nCompanyID and Inv_WarrantyContractDetails.N_WarrantyID=@nWarrantyID";
-
 
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
 
+
+                    foreach (DataRow DRows in DetailTable.Rows)
+                    {
+                        if (myFunctions.getIntVAL(DRows["N_ClassID"].ToString()) == 1)
+                        {
+
+                            string balanceSql = " SELECT       SUM(ISNULL(Inv_ServiceDetails.N_Qty, 0)) AS N_UsedQty " +
+" FROM            Inv_ServiceDetails LEFT OUTER JOIN " +
+"                        Inv_ItemMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ServiceDetails.N_ItemID = Inv_ItemMaster.N_ItemID LEFT OUTER JOIN " +
+"                       Inv_ItemDetails ON Inv_ServiceDetails.N_CompanyID = Inv_ItemDetails.N_CompanyID AND Inv_ServiceDetails.N_ItemID = Inv_ItemDetails.N_MainItemID RIGHT OUTER JOIN " +
+"                      Inv_ServiceMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ServiceMaster.N_CompanyID AND Inv_ServiceDetails.N_ServiceID = Inv_ServiceMaster.N_ServiceID " +
+"					 where Inv_ItemMaster.N_ClassID=1 and  Inv_ServiceDetails.N_ItemID=" + DRows["N_ItemID"].ToString() + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and Inv_ServiceMaster.N_WarrantyID=" + N_WarrantyID +
+" GROUP BY Inv_ServiceMaster.N_CompanyID, Inv_ServiceMaster.N_WarrantyID, Inv_ItemDetails.N_ItemID ";
+
+                            object balance = dLayer.ExecuteScalar(DetailSql, Params, connection);
+                            if (balance == null)
+                                balance = 0;
+
+                            int qty = myFunctions.getIntVAL(DRows["N_Qty"].ToString());
+                            DRows["N_AvlQty"] = qty - myFunctions.getIntVAL(balance.ToString());
+
+
+                        }
+
+                    }
+DetailTable.AcceptChanges();
 
                     //Product Information 
                     SortedList element = new SortedList();
@@ -230,23 +255,23 @@ namespace SmartxAPI.Controllers
                     int N_ItemID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_MainItemID"].ToString());
                     object productName = dLayer.ExecuteScalar("Select X_ItemName from Inv_ItemMaster Where N_ItemID =" + N_ItemID + " and N_CompanyID= @nCompanyID ", Params, connection);
                     element.Add("Product", productName.ToString());
-                    string[] name = {"Model", "Colour","PhoneCategory", "Device", "Category"};
-                    int i=0;
+                    string[] name = { "Model", "Colour", "PhoneCategory", "Device", "Category" };
+                    int i = 0;
 
                     //int nParentID = myFunctions.getIntVAL(DetailTable.Rows[0]["N_CategoryDisplayID"].ToString());
-                    int nParentID=  myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CategoryDisplayID from Inv_ItemCategoryDisplayMaster where N_ItemID="+N_ItemID+"",Params,connection).ToString());
-                    while (nParentID >0)
+                    int nParentID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CategoryDisplayID from Inv_ItemCategoryDisplayMaster where N_ItemID=" + N_ItemID + "", Params, connection).ToString());
+                    while (nParentID > 0 && i <= 4)
                     {
-                        
+
                         object phoneName = dLayer.ExecuteScalar("Select X_CategoryDisplay from Inv_ItemCategoryDisplay Where N_CategoryDisplayID =" + nParentID + " and N_CompanyID= @nCompanyID ", Params, connection);
-                        element.Add( name[i], phoneName.ToString());
+                        element.Add(name[i], phoneName.ToString());
                         nParentID = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select N_ParentID from Inv_ItemCategoryDisplay Where N_CategoryDisplayID =" + nParentID + " and N_CompanyID= @nCompanyID ", Params, connection).ToString());
-                        i=i+1;
+                        i = i + 1;
                     }
                     ProductInfo.Add(element);
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ProductInformations", typeof(List<SortedList>), ProductInfo);
 
-                  
+
 
                     dt.Tables.Add(MasterTable);
                     dt.Tables.Add(DetailTable);

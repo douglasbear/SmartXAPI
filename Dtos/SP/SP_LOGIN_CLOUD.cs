@@ -40,6 +40,7 @@ namespace SmartxAPI.Dtos.SP
         public bool B_AllBranchesData { get; set; }
         public int N_TaxType { get; set; }
         public string X_UserFullName { get; set; }
+        public string X_BranchCode { get; set; }
         public string X_UserCategoryIDList { get; set; }
         [NotMapped]
         public string Token { get; set; }
@@ -84,9 +85,14 @@ namespace SmartxAPI.Dtos.SP
         [NotMapped]
         public int N_AppID { get; set; }
         [NotMapped]
+        public bool B_AllowEdit { get; set; }
+        [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
 
-        public string X_BranchCode { get; set; }
+
+
+
+
 
 
     }

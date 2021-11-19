@@ -140,6 +140,10 @@ namespace SmartxAPI.GeneralFunctions
                         Msg = ex.Message;
                         break;
                     }
+                    if(ex.Message.Contains("ResponseText-")){
+                         Msg = ex.Message.Replace("ResponseText- ","");
+                        break;
+                    }
                     break;
                     // if (env.EnvironmentName == "Development")
                     // {
