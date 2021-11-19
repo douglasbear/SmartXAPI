@@ -233,6 +233,8 @@ namespace SmartxAPI.Controllers
             string X_MasterSql = "";
             string X_DetailsSql = "";
 
+            if(xGrnNo==null)xGrnNo="";
+
             if (nPurchaseNO != null)
 
             {
@@ -250,16 +252,19 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    if (xGrnNo != null || xGrnNo != "")
+                    if (xGrnNo != "")
                     {
+                         Params.Add("@xGrnNo", xGrnNo);
                         object res = dLayer.ExecuteScalar("select X_InvoiceNo from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_RsID in ( Select N_MRNID from Inv_MRN where N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and X_MRNNo='" + xGrnNo + "')", Params, connection);
                         if (res != null)
                         {
                             nPurchaseNO = res.ToString();
                             X_MasterSql = "select * from vw_Inv_PurchaseDisp where N_CompanyID=@CompanyID and X_InvoiceNo=" + nPurchaseNO + " and N_FnYearID=@YearID and X_TransType=@TransType" + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
-
                         }
-                        
+                        else
+                        {
+                             X_MasterSql = "select * from vw_Inv_MRNAsInvoiceMaster where N_CompanyID=@CompanyID and X_MRNNo=@xGrnNo and N_FnYearID=@YearID and B_IsSaveDraft<>1 " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                        }
                     }
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
@@ -290,6 +295,13 @@ namespace SmartxAPI.Controllers
                     {
                         X_DetailsSql = "select * from vw_Inv_PurchaseOrderAsInvoiceDetails where N_CompanyID=@CompanyID and N_POrderID=" + N_POrderID + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
                     }
+                    else if(xGrnNo != null || xGrnNo != "")
+                    {
+                        int n_MRNID = myFunctions.getIntVAL(dtPurchaseInvoice.Rows[0]["N_MRNID"].ToString());
+
+                        X_DetailsSql = "Select *,dbo.SP_Cost(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvMRNDetails.N_ItemID,vw_InvMRNDetails.N_CompanyID) As N_UnitSPrice  from vw_InvMRNDetails Where N_CompanyID=@CompanyID and N_MRNID=" + n_MRNID;
+                    }
+
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
 
                     if (nPurchaseNO != null)
@@ -487,6 +499,10 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["N_POrderID"].ToString());
+            int n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
+            int Dir_Purchase=1;
+            if(n_MRNID!=0)Dir_Purchase=0;
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -530,16 +546,28 @@ namespace SmartxAPI.Controllers
                         {
                             try
                             {
+                                // SortedList PostingMRNParam = new SortedList();
+                                // PostingMRNParam.Add("N_CompanyID", nCompanyID);
+                                // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
+                                // PostingMRNParam.Add("N_UserID", nUserID);
+                                // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+                                // PostingMRNParam.Add("X_UseMRN", "");
+                                // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+                                // PostingMRNParam.Add("N_MRNID", 0);
+
+                                // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+
                                 SortedList PostingMRNParam = new SortedList();
-                                PostingMRNParam.Add("N_CompanyID", nCompanyID);
+                                PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                                 PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
                                 PostingMRNParam.Add("N_UserID", nUserID);
                                 PostingMRNParam.Add("X_SystemName", "ERP Cloud");
                                 PostingMRNParam.Add("X_UseMRN", "");
                                 PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                                PostingMRNParam.Add("N_MRNID", 0);
+                                PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
+                                PostingMRNParam.Add("N_MRNID", n_MRNID);
 
-                                dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+                                dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
 
                                 SortedList PostingParam = new SortedList();
@@ -656,6 +684,17 @@ namespace SmartxAPI.Controllers
                     {
                         try
                         {
+                            // SortedList PostingMRNParam = new SortedList();
+                            // PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                            // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
+                            // PostingMRNParam.Add("N_UserID", nUserID);
+                            // PostingMRNParam.Add("X_SystemName", "ERP Cloud");
+                            // PostingMRNParam.Add("X_UseMRN", "");
+                            // PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
+                            // PostingMRNParam.Add("N_MRNID", 0);
+
+                            // dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+
                             SortedList PostingMRNParam = new SortedList();
                             PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
@@ -663,9 +702,10 @@ namespace SmartxAPI.Controllers
                             PostingMRNParam.Add("X_SystemName", "ERP Cloud");
                             PostingMRNParam.Add("X_UseMRN", "");
                             PostingMRNParam.Add("N_SaveDraft", N_SaveDraft);
-                            PostingMRNParam.Add("N_MRNID", 0);
+                            PostingMRNParam.Add("B_DirectPurchase", Dir_Purchase);
+                            PostingMRNParam.Add("N_MRNID", n_MRNID);
 
-                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNposting]", PostingMRNParam, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("[SP_Inv_MRNprocessing]", PostingMRNParam, connection, transaction);
 
 
                             SortedList PostingParam = new SortedList();
