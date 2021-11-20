@@ -233,6 +233,8 @@ namespace SmartxAPI.Controllers
             string X_MasterSql = "";
             string X_DetailsSql = "";
 
+            if(xGrnNo==null)xGrnNo="";
+
             if (nPurchaseNO != null)
 
             {
@@ -250,9 +252,9 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    if (xGrnNo != null || xGrnNo != "")
+                    if (xGrnNo != "")
                     {
-                        Params.Add("@xGrnNo", xGrnNo);
+                         Params.Add("@xGrnNo", xGrnNo);
                         object res = dLayer.ExecuteScalar("select X_InvoiceNo from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_RsID in ( Select N_MRNID from Inv_MRN where N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and X_MRNNo='" + xGrnNo + "')", Params, connection);
                         if (res != null)
                         {
@@ -702,7 +704,6 @@ namespace SmartxAPI.Controllers
                     {
                         try
                         {
-
                             // SortedList PostingMRNParam = new SortedList();
                             // PostingMRNParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
                             // PostingMRNParam.Add("N_PurchaseID", N_PurchaseID);
