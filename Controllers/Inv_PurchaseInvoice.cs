@@ -667,11 +667,31 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
                     DetailTable.Columns.Remove("X_ItemUnit");
-                    int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
-                    if (N_InvoiceDetailId <= 0)
+                    int N_InvoiceDetailId =0;
+                    DataTable DetailTableCopy = DetailTable.Clone();
+                    DetailTable.Columns.Remove("n_MRNDetailsID");
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                        N_InvoiceDetailId= dLayer.SaveDataWithIndex("Inv_PurchaseDetails", "n_PurchaseDetailsID","","",j, DetailTable, connection, transaction);
+                        if (N_InvoiceDetailId <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
+                        }
+
+                        if(n_MRNID>0)
+                        {
+                            dLayer.ExecuteScalar("Update Inv_MRNDetails Set N_SPrice=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()) + ",N_PurchaseDetailsID=" +N_InvoiceDetailId + " Where N_ItemID=" + myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()) + "  and N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID + " and N_MRNDetailsID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_MRNDetailsID"].ToString()), connection, transaction);
+
+                            SortedList UpdateStockParam = new SortedList();
+                            UpdateStockParam.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
+                            UpdateStockParam.Add("N_MRNID", n_MRNID);
+                            UpdateStockParam.Add("N_ItemID",  myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()));
+                            UpdateStockParam.Add("N_SPrice", myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()));
+
+                            dLayer.ExecuteNonQueryPro("[SP_UpdateStock_MRN]", UpdateStockParam, connection, transaction);
+
+                        }
                     }
 
                     if (N_PurchaseID > 0)
