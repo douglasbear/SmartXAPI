@@ -3,74 +3,21 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+<<<<<<< HEAD
+      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sreej\\.nuget\\packages"
+=======
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages"
+>>>>>>> 85c055d67f12154be3d057f053374a3a62b80110
+=======
+      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Aky77\\.nuget\\packages"
+>>>>>>> 2e908f4d4d38569e038006c5c676e29a5b22b1b9
+=======
       "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Administrator\\.nuget\\packages"
-=======
-=======
-<<<<<<< HEAD
->>>>>>> 219f86ed12a28ddf8f50e128755401f611124292
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
->>>>>>> 08d7d4b2a508feb7ad59c555c8f4425228103c0b
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> 5993b774291a43c943add2cefa2fed93703a5f9b
->>>>>>> 06aaf685a150f45518b3ee8bf533a6c6cccd0d51
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 82a37c890282a0b04a644e8d3034bc94c4395f3a
-=======
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
->>>>>>> 7c4169658e78ad827b69347694be68c8e75c7e04
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> 1fa4f88c9028bfee1de5f64957c24d8609f53ad9
->>>>>>> 56b0f5a1e4cf4255117a0d48e45b01846a935b76
-<<<<<<< HEAD
->>>>>>> d7c5e3f2b302ef521cb926c479537395dbd5127d
-=======
-=======
-      "C:\\Users\\Dell\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Dell\\.nuget\\packages"
->>>>>>> a8115da5171eecae555ae33de74bcc1d026e1336
-=======
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
->>>>>>> aa0b4fb13b95145b620fd2f5211cac2d85f3919c
-<<<<<<< HEAD
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> 43acd26349c5082e333478f679bc48c128ca0b78
-=======
-      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\SANJAY\\.nuget\\packages"
->>>>>>> dad90c03e131dd3fc6d0ce7d097d3c2d0eadba62
-=======
->>>>>>> 219f86ed12a28ddf8f50e128755401f611124292
->>>>>>> 414f07d27c457b4a9a6f550ea9effbf4a8c186e2
+>>>>>>> 59785e56f5ff1b6ef69f941521974c9af62e4917
     ]
   }
 }

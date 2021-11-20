@@ -329,17 +329,18 @@ namespace SmartxAPI.Controllers
 
 
 
-                        string DeliveryNoteAppend = "";
+                        string DeliveryNoteAppend = "0";
                         DataTable DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
                         if (DeliveryNoteID.Rows.Count > 0)
                         {
 
                             foreach (DataRow Avar in DeliveryNoteID.Rows)
                             {
+                                if(Avar["N_DeliveryNoteID"].ToString()!="0")
                                 DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
-                            DeliveryNoteAppend = DeliveryNoteAppend.Substring(1);
-                            DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID<> " + DeliveryNoteAppend + " ";
+                            // DeliveryNoteAppend = DeliveryNoteAppend.Substring(1);
+                            DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
 
                         }
                         else
@@ -994,7 +995,9 @@ namespace SmartxAPI.Controllers
                         {
                             Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                             Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                            Params.Add("N_FormID", 1346);
+                            // Params.Add("N_FormID", 1346);
+                            Params.Add("N_FormID", this.N_FormID);
+                            
                             while (true)
                             {
                                 InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();

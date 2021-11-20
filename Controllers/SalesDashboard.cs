@@ -45,6 +45,7 @@ namespace SmartxAPI.Controllers
 
              string sqlCustomerbySource = "select top(5) Customer as X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_InvSalesInvoiceNo_Search where N_CompanyID = " + nCompanyID + " group by Customer order by COUNT(*) Desc";
              string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where (N_ClosingStatusID=0 or N_ClosingStatusID is null) and N_CompanyID = " + nCompanyID + "";
+             string sqlReceivedRevenue = "SELECT SUM(Inv_PayReceiptDetails.N_AmountF-Inv_PayReceiptDetails.N_DiscountAmtF)as N_ReceivedAmount FROM Inv_PayReceiptDetails INNER JOIN Inv_PayReceipt ON Inv_PayReceiptDetails.N_PayReceiptId = Inv_PayReceipt.N_PayReceiptId AND Inv_PayReceiptDetails.N_CompanyID = Inv_PayReceipt.N_CompanyID where Inv_PayReceipt.X_Type in ('SR','SA') and MONTH(Cast(Inv_PayReceiptDetails.D_Entrydate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(Inv_PayReceiptDetails.D_Entrydate)= YEAR(CURRENT_TIMESTAMP) and Inv_PayReceiptDetails.N_CompanyID = " + nCompanyID + "";
             // string sqlOpenQuotation = "SELECT COUNT(*) as N_ThisMonth,sum(Cast(REPLACE(N_Amount,',','') as Numeric(10,2)) ) as TotalAmount FROM vw_InvSalesQuotationNo_Search WHERE MONTH(D_QuotationDate) = MONTH(CURRENT_TIMESTAMP) AND YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
             // "select X_LeadSource,CAST(COUNT(*) as varchar(50)) as N_Percentage from vw_CRMLeads group by X_LeadSource";
             // string sqlPipelineoppotunity = "select count(*) as N_Count from CRM_Opportunity where N_ClosingStatusID=0 or N_ClosingStatusID is null";
@@ -56,6 +57,7 @@ namespace SmartxAPI.Controllers
             DataTable CurrentQuotation = new DataTable();
             DataTable CurrentCustomer = new DataTable();
             DataTable OpenOpportunities = new DataTable();
+            DataTable ReceivedRevenue = new DataTable();
 
             try
             {
@@ -68,6 +70,7 @@ namespace SmartxAPI.Controllers
                     CurrentQuotation = dLayer.ExecuteDataTable(sqlCurrentQuotation, Params, connection);
                     CurrentCustomer = dLayer.ExecuteDataTable(sqlCustomerbySource, Params, connection);
                     OpenOpportunities = dLayer.ExecuteDataTable(sqlPipelineoppotunity, Params, connection);
+                    ReceivedRevenue = dLayer.ExecuteDataTable(sqlReceivedRevenue, Params, connection);
                      if(B_customer) 
                      { 
                      Data.Add("permision",true);
@@ -81,6 +84,7 @@ namespace SmartxAPI.Controllers
                 CurrentQuotation.AcceptChanges();
                 CurrentCustomer.AcceptChanges();
                 OpenOpportunities.AcceptChanges();
+                ReceivedRevenue.AcceptChanges();
                
 
                 if (CurrentOrder.Rows.Count > 0) Data.Add("orderData", CurrentOrder);
@@ -88,6 +92,7 @@ namespace SmartxAPI.Controllers
                 if (CurrentQuotation.Rows.Count > 0) Data.Add("quotationData", CurrentQuotation);
                 if (CurrentCustomer.Rows.Count > 0) Data.Add("customerbySource", CurrentCustomer);
                 if (OpenOpportunities.Rows.Count > 0) Data.Add("opportunityData", OpenOpportunities);
+                if (ReceivedRevenue.Rows.Count > 0) Data.Add("receivedRevenue", ReceivedRevenue);
                
 
                 return Ok(api.Success(Data));
