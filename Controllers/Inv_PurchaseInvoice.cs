@@ -666,9 +666,12 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
                         DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
+                    if(DetailTable.Columns.Contains("X_ItemUnit"))
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_InvoiceDetailId =0;
-                    DataTable DetailTableCopy = DetailTable.Clone();
+                    DataTable DetailTableCopy = DetailTable.Copy();
+                    DetailTableCopy.AcceptChanges();
+                    if(DetailTable.Columns.Contains("n_MRNDetailsID"))
                     DetailTable.Columns.Remove("n_MRNDetailsID");
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
