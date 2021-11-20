@@ -619,7 +619,7 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",N_PurchaseID},
                                                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
-                                {"B_MRNVisible","0"}};
+                                {"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
                         try
                         {
