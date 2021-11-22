@@ -564,7 +564,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + ",N_ItemTypeID=0 where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
 
 
                         foreach (DataRow var in ItemUnits.Rows) var["n_BaseUnitID"] = BaseUnitID;
@@ -1051,6 +1051,98 @@ namespace SmartxAPI.Controllers
             }
         }    
 
+        //  [HttpGet("costAndStock_Test")]
+        // public ActionResult GetCostAndStock(int nItemID,int nCompanyID)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList OutPut = new SortedList();
+        //     string sqlCostCommand="",sqlStockCommad="";
+        //     double UnitQty=1, nLastCost = 0;
+        //     int nUnitID = 0;
+
+        //     sqlCostCommand ="Select top 1 Inv_PurchaseDetails.N_PPrice,Inv_PurchaseDetails.N_ItemUnitID from Inv_Purchase INNER JOIN Inv_PurchaseDetails ON Inv_Purchase.N_CompanyID = Inv_PurchaseDetails.N_CompanyID and Inv_Purchase.N_PurchaseID = Inv_PurchaseDetails.N_PurchaseID where Inv_PurchaseDetails.N_ItemID = " + nItemID + " and Inv_Purchase.N_CompanyID = " + nCompanyID + " order by Inv_Purchase.N_PurchaseID desc";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCostCommand, connection);
+                   
+        //             if (dt.Rows.Count > 0)
+        //             {
+        //                 DataRow drow = dt.Rows[0];
+        //                 nLastCost =myFunctions.getVAL(drow["N_PPrice"].ToString());
+        //                 nUnitID =myFunctions.getIntVAL(drow["N_ItemUnitID"].ToString());
+        //             }
+
+        //             object res = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=" + nCompanyID + " and N_ItemID = " + nItemID + " and N_ItemUnitID=" + nUnitID,  connection);
+        //             if (res != null)
+        //                 UnitQty = myFunctions.getVAL(res.ToString());
+
+        //             nLastCost = nLastCost / UnitQty;
+        //         }
+        //         OutPut.Add("LastCost", nLastCost);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Warning("no result found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(OutPut));
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+
+        // }
+
+         [HttpGet("costAndStock")]
+        public ActionResult GetCostAndStock(int nItemID,int nLocationID,string xBatch,DateTime dDate)
+        {
+            DataTable dt = new DataTable();
+            string sqlCommandText="";
+            if(xBatch==null)xBatch="";
+            int nCompanyID =myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (xBatch != "")
+                        sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_BatchStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "',0)As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
+                    else
+                    {
+                        bool bStockByDate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowAvlStockByDate", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+                        if (!bStockByDate)
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+                        else
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStockByDate(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location','" + myFunctions.getDateVAL(dDate) + "')As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
+                    }
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+                   
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("no result found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
         // public void CopyFiles(IDataAccessLayer dLayer, string filename, string subject, int folderId, bool overwriteexisting, string category, string fileData, string destpath, string filecode, int attachID, int FormID, string strExpireDate, int remCategoryId, int transId, int partyID, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         // {
         //     try
