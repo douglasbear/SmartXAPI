@@ -995,7 +995,9 @@ namespace SmartxAPI.Controllers
                         {
                             Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                             Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                            Params.Add("N_FormID", 1346);
+                            // Params.Add("N_FormID", 1346);
+                            Params.Add("N_FormID", this.N_FormID);
+                            
                             while (true)
                             {
                                 InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();

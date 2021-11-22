@@ -151,7 +151,7 @@ namespace SmartxAPI.Data
                     loginRes.X_Department = EmplData.Rows[0]["X_Department"].ToString();
                     loginRes.N_DepartmentID = myFunctions.getIntVAL(EmplData.Rows[0]["N_DepartmentID"].ToString());
                 }
-
+                loginRes.B_AllowEdit = true ;
                 DataTable SalesExecutiveData = dLayer.ExecuteDataTable("select N_SalesmanID,X_SalesmanCode,X_SalesmanName,b_AllowEdit from vw_InvSalesman where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_UserID=@nUserID", Params, connection);
                 if (SalesExecutiveData.Rows.Count > 0)
                 {
