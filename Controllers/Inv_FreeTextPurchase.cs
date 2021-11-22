@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
                         else
                             xCriteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
-         
+
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and ( [Invoice No] like '%" + xSearchkey + "%' or [Invoice Date] like '%" + xSearchkey + "%' or Vendor like '%" + xSearchkey + "%' or InvoiceNetAmt like '%" + xSearchkey + "%' or x_Description like '%" + xSearchkey + "%' or n_InvDueDays like '%" + xSearchkey + "%' ) ";
 
@@ -75,9 +75,9 @@ namespace SmartxAPI.Controllers
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey ;
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate ,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey+ " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Invoice No] as invoiceNo ,Vendor,InvoiceNetAmt,x_Description,n_InvDueDays from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + "and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search where " + xCriteria + Searchkey + " ) ";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
@@ -128,7 +128,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    object classID=dLayer.ExecuteScalar("select N_ClassID from Inv_itemClass where X_ClassName='Non Stock Item'", Params, connection);
+                    object classID = dLayer.ExecuteScalar("select N_ClassID from Inv_itemClass where X_ClassName='Non Stock Item'", Params, connection);
                     object itemID = dLayer.ExecuteScalar("select N_ItemID From Inv_ItemMaster where N_CompanyID=" + nCompanyID + " and X_ItemCode=001", Params, connection);
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_ItemID", typeof(int), 0);
@@ -170,9 +170,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable CostCenterTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    CostCenterTable = ds.Tables["CostCenterTable"];
                     DataRow MasterRow = MasterTable.Rows[0];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -185,6 +187,7 @@ namespace SmartxAPI.Controllers
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
                     if (nPurchaseID > 0)
                     {
+                        
                         try
                         {
                             SortedList DelParam = new SortedList();
@@ -192,6 +195,7 @@ namespace SmartxAPI.Controllers
                             DelParam.Add("X_TransType", xTransType);
                             DelParam.Add("N_VoucherID", nPurchaseID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
+                            int dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", nPurchaseID, "N_VoucherID= " + nPurchaseID + " and N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -225,26 +229,45 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                     }
 
+                    ////costcentre
+                    DetailTable.Columns.Remove("X_ItemUnit");
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
 
                         DetailTable.Rows[j]["N_PurchaseID"] = nPurchaseID;
 
+                        int N_InvoiceDetailId = dLayer.SaveDataWithIndex("Inv_PurchaseDetails", "n_PurchaseDetailsID", "", "", j, DetailTable, connection, transaction);
+
+
+                        if (N_InvoiceDetailId > 0)
+                        {
+                            for (int k = 0; k < CostCenterTable.Rows.Count; k++)
+                            {
+                                if (myFunctions.getIntVAL(CostCenterTable.Rows[k]["rowID"].ToString()) == j)
+                                {
+                                    CostCenterTable.Rows[k]["N_VoucherID"] = nPurchaseID;
+                                    CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+                                }
+                            }
+                        }
+
+
                     }
-                    
-                    DetailTable.Columns.Remove("X_ItemUnit");
-                    int N_InvoiceDetailId = dLayer.SaveData("Inv_PurchaseDetails", "n_PurchaseDetailsID", DetailTable, connection, transaction);
-                    if (N_InvoiceDetailId <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
-                    }
+                    if (CostCenterTable.Columns.Contains("rowID"))
+                        CostCenterTable.Columns.Remove("rowID");
+                    if (CostCenterTable.Columns.Contains("percentage"))
+                        CostCenterTable.Columns.Remove("percentage");
+
+                    CostCenterTable.AcceptChanges();
+
+                    int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", "", "", CostCenterTable, connection, transaction);
+
                     SortedList PostingParam = new SortedList();
-                    PostingParam.Add("N_CompanyID",nCompanyID );
-                    PostingParam.Add("X_InventoryMode",xTransType);
-                    PostingParam.Add("N_InternalID",nPurchaseID);
+                    PostingParam.Add("N_CompanyID", nCompanyID);
+                    PostingParam.Add("X_InventoryMode", xTransType);
+                    PostingParam.Add("N_InternalID", nPurchaseID);
                     PostingParam.Add("N_UserID", nUserID);
-                    PostingParam.Add("X_SystemName","WebRequest");
+                    PostingParam.Add("X_SystemName", "WebRequest");
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
@@ -275,8 +298,9 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     DataTable Master = new DataTable();
                     DataTable Details = new DataTable();
+                    DataTable Acc_CostCentreTrans = new DataTable();
                     int N_PurchaseID = 0;
-                    string X_MasterSql = "";    
+                    string X_MasterSql = "";
                     string X_DetailsSql = "";
                     if (showAllBranch)
                         X_MasterSql = "Select * from vw_Inv_FreePurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ";
@@ -298,6 +322,19 @@ namespace SmartxAPI.Controllers
 
                     Details = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     Details = _api.Format(Details, "Details");
+
+
+                    SortedList ProParams = new SortedList();
+                    ProParams.Add("N_CompanyID", nCompanyId);
+                    ProParams.Add("N_FnYearID", nFnYearId);
+                    ProParams.Add("N_VoucherID", N_PurchaseID);
+                    ProParams.Add("N_Flag", 1);
+                    ProParams.Add("X_Type","PURCHASE");
+
+                    Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp_CLOUD", ProParams, connection);
+                    Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
+                    dt.Tables.Add(Acc_CostCentreTrans);
+
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
                     return Ok(_api.Success(dt));
