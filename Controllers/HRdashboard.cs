@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
 
             string sqlEmpCount = "select (select  count(*) from pay_employee where N_Status not in (2,3) and N_CompanyID = "+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_ActEmp ,(select  count(*) from pay_employee where N_Status  in (2,3) and N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+") as N_SepEmp";
             //string sqlPayables= "select sum(N_BalanceAmount) as N_Amount from vw_InvPayables where N_CompanyId = "+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
-            string sqlEmpByCountry= "select X_Nationality,count(*) as N_Percentage from Pay_Employee where isnull(X_Nationality,'') <>'' and N_CompanyID ="+nCompanyID+" group by X_Nationality ";
+            string sqlEmpByCountry= "select X_Nationality,count(*) as N_Percentage from Pay_Employee where N_Status not in (2,3) and isnull(X_Nationality,'') <>'' and N_CompanyID ="+nCompanyID+" group by X_Nationality ";
 
             string sqlEmpByDpt = "select X_Department,N_Male,N_Female from vw_DptWiseEmployee where N_CompanyID ="+nCompanyID+" and N_FnYearId= "+nFnYearId+"";
            
