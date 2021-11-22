@@ -161,5 +161,6 @@ namespace SmartxAPI.Controllers
                 return BadRequest(api.Error(User, e));
             }
         }
+
     }
 }
