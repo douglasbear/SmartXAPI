@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
                     DataTable dt = new DataTable();
                     SortedList Params = new SortedList();
                     //int nCompanyID = myFunctions.GetCompanyID(User);
-                     int nCompanyId=myFunctions.GetCompanyID(User);
+                    int nCompanyId = myFunctions.GetCompanyID(User);
                     string sqlCommandCount = "", xCriteria = "";
                     string xTransType = "FTSALES";
                     int Count = (nPage - 1) * nSizeperpage;
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                     if (Count == 0)
                         sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey+ " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ") [Invoice Date] as invoiceDate,[Customer] as X_Customer,[Invoice No] as invoiceNo,X_BillAmt,n_InvDueDays from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + "and N_SalesId not in (select top(" + Count + ") N_SalesId from vw_InvSalesInvoiceNo_Search where " + xCriteria + Searchkey + " ) ";
 
                     SortedList OutPut = new SortedList();
 
@@ -115,9 +115,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable CostCenterTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    CostCenterTable = ds.Tables["CostCenterTable"];
                     DataTable dtsaleamountdetails; ;
                     dtsaleamountdetails = ds.Tables["saleamountdetails"];
                     DataRow MasterRow = MasterTable.Rows[0];
@@ -142,6 +144,7 @@ namespace SmartxAPI.Controllers
                             DelParam.Add("X_TransType", xTransType);
                             DelParam.Add("N_VoucherID", nSalesID);
                             dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
+                             int dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", nSalesID, "N_VoucherID= " + nSalesID + " and N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID, connection, transaction);
                         }
                         catch (Exception ex)
                         {
@@ -211,19 +214,34 @@ namespace SmartxAPI.Controllers
                     PostingParam.Add("N_UserID", nUserID);
                     PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                     for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
 
                         DetailTable.Rows[j]["N_SalesID"] = nSalesID;
-
-                    }
-                   int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
-                        if (N_InvoiceDetailId <= 0)
+                        int N_InvoiceDetailId = dLayer.SaveDataWithIndex("Inv_SalesDetails", "n_SalesDetailsID", "", "", j, DetailTable, connection, transaction);
+                          if (N_InvoiceDetailId > 0)
                         {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to save Sales Invoice!"));
+                            for (int k = 0; k < CostCenterTable.Rows.Count; k++)
+                            {
+                                if (myFunctions.getIntVAL(CostCenterTable.Rows[k]["rowID"].ToString()) == j)
+                                {
+                                    CostCenterTable.Rows[k]["N_VoucherID"] = nSalesID;
+                                    CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+                                }
+                            }
                         }
 
+                    }
+                      if (CostCenterTable.Columns.Contains("rowID"))
+                        CostCenterTable.Columns.Remove("rowID");
+                    if (CostCenterTable.Columns.Contains("percentage"))
+                        CostCenterTable.Columns.Remove("percentage");
+
+                    CostCenterTable.AcceptChanges();
+
+                    int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", "", "", CostCenterTable, connection, transaction);
+
+            
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
@@ -257,6 +275,7 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     DataTable Master = new DataTable();
                     DataTable Details = new DataTable();
+                       DataTable Acc_CostCentreTrans = new DataTable();
                     int N_SalesID = 0;
                     string X_MasterSql = "";
                     string X_DetailsSql = "";
@@ -286,6 +305,19 @@ namespace SmartxAPI.Controllers
                                    " Where Inv_SalesDetails.N_CompanyID=" + nCompanyId + " and Inv_SalesDetails.N_SalesID=" + N_SalesID + " and Acc_MastLedger.N_FnYearID=" + nFnYearId;
                     Details = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     Details = _api.Format(Details, "Details");
+
+                        SortedList ProParams = new SortedList();
+                    ProParams.Add("N_CompanyID", nCompanyId);
+                    ProParams.Add("N_FnYearID", nFnYearId);
+                    ProParams.Add("N_VoucherID", N_SalesID);
+                    ProParams.Add("N_Flag", 1);
+                    ProParams.Add("X_Type","SALES");
+
+                    Acc_CostCentreTrans = dLayer.ExecuteDataTablePro("SP_Acc_Voucher_Disp_CLOUD", ProParams, connection);
+                    Acc_CostCentreTrans = _api.Format(Acc_CostCentreTrans, "costCenterTrans");
+                    dt.Tables.Add(Acc_CostCentreTrans);
+
+
                     dt.Tables.Add(Details);
                     dt.Tables.Add(Master);
                     return Ok(_api.Success(dt));
@@ -324,10 +356,10 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to delete Sales"));
                     }
-                      transaction.Commit();
+                    transaction.Commit();
                     return Ok(_api.Success("Sales  deleted"));
                 }
-            } 
+            }
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
