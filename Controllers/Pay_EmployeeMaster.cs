@@ -1195,7 +1195,6 @@ namespace SmartxAPI.Controllers
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + xEmpCode.Trim() + "'";
                     string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
-
                     string n_LoanAmountLimit = dtMasterTable.Rows[0]["n_LoanAmountLimit"].ToString();
                     string n_LoanCountLimit = dtMasterTable.Rows[0]["n_LoanCountLimit"].ToString();
                     string n_LoanEligible = dtMasterTable.Rows[0]["n_LoanEligible"].ToString();
