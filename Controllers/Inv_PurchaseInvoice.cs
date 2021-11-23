@@ -613,35 +613,35 @@ namespace SmartxAPI.Controllers
 
                     if (N_PurchaseID > 0)
                     {
-                        SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
-                                {"X_TransType","PURCHASE"},
-                                {"N_VoucherID",N_PurchaseID},
-                                                                {"N_UserID",nUserID},
-                                {"X_SystemName","WebRequest"},
-                                {"B_MRNVisible",n_MRNID>0?"1":"0"}};
+                        // SortedList DeleteParams = new SortedList(){
+                        //         {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
+                        //         {"X_TransType","PURCHASE"},
+                        //         {"N_VoucherID",N_PurchaseID},
+                        //                                         {"N_UserID",nUserID},
+                        //         {"X_SystemName","WebRequest"},
+                        //         {"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
-                        try
-                        {
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            if (ex.Message.Contains("50"))
-                                return Ok(_api.Error(User, "DayClosed"));
-                            else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error(User, "YearClosed"));
-                            else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error(User, "YearExists"));
-                            else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error(User, "PeriodClosed"));
-                            else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error(User, "TxnDate"));
-                            else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error(User, "TransactionStarted"));
-                            return Ok(_api.Error(User, ex.Message));
-                        }
+                        // try
+                        // {
+                        //     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        // }
+                        // catch (Exception ex)
+                        // {
+                        //     transaction.Rollback();
+                        //     if (ex.Message.Contains("50"))
+                        //         return Ok(_api.Error(User, "DayClosed"));
+                        //     else if (ex.Message.Contains("51"))
+                        //         return Ok(_api.Error(User, "YearClosed"));
+                        //     else if (ex.Message.Contains("52"))
+                        //         return Ok(_api.Error(User, "YearExists"));
+                        //     else if (ex.Message.Contains("53"))
+                        //         return Ok(_api.Error(User, "PeriodClosed"));
+                        //     else if (ex.Message.Contains("54"))
+                        //         return Ok(_api.Error(User, "TxnDate"));
+                        //     else if (ex.Message.Contains("55"))
+                        //         return Ok(_api.Error(User, "TransactionStarted"));
+                        //     return Ok(_api.Error(User, ex.Message));
+                        // }
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
