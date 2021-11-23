@@ -493,6 +493,7 @@ namespace SmartxAPI.Controllers
             }
             return false;
         }
+
         private bool checkSalaryProcess(string fromDate, int nCompanyID, string dLoanPeriodTo, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             DateTime dtpEffectiveDateFrom = Convert.ToDateTime(fromDate.ToString());
