@@ -619,7 +619,7 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",N_PurchaseID},
                                                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
-                                {"B_MRNVisible","0"}};
+                                {"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
                         try
                         {
@@ -666,9 +666,16 @@ namespace SmartxAPI.Controllers
                         DetailTable.Rows[j]["N_PurchaseID"] = N_PurchaseID;
                         DetailTable.Rows[j]["N_ItemUnitID"] = UnitID;
                     }
+                    if(DetailTable.Columns.Contains("X_ItemUnit"))
                     DetailTable.Columns.Remove("X_ItemUnit");
                     int N_InvoiceDetailId =0;
+<<<<<<< HEAD
                     DataTable DetailTableCopy = DetailTable.Clone();
+=======
+                    DataTable DetailTableCopy = DetailTable.Copy();
+                    DetailTableCopy.AcceptChanges();
+                    if(DetailTable.Columns.Contains("n_MRNDetailsID"))
+>>>>>>> cd71530d28441c177f56806bf82cf43eb76a31df
                     DetailTable.Columns.Remove("n_MRNDetailsID");
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {

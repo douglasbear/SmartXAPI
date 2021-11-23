@@ -1100,12 +1100,20 @@ namespace SmartxAPI.Controllers
         // }
 
          [HttpGet("costAndStock")]
+<<<<<<< HEAD
         public ActionResult GetCostAndStock(int nItemID,int nCompanyID,int nLocationID,string xBatch,DateTime dDate)
+=======
+        public ActionResult GetCostAndStock(int nItemID,int nLocationID,string xBatch,DateTime dDate)
+>>>>>>> cd71530d28441c177f56806bf82cf43eb76a31df
         {
             DataTable dt = new DataTable();
             string sqlCommandText="";
             if(xBatch==null)xBatch="";
+<<<<<<< HEAD
 
+=======
+            int nCompanyID =myFunctions.GetCompanyID(User);
+>>>>>>> cd71530d28441c177f56806bf82cf43eb76a31df
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
