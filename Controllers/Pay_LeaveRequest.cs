@@ -1006,6 +1006,9 @@ namespace SmartxAPI.Controllers
                 DateTime DateTo = Convert.ToDateTime(dDateTo.ToString());
 
                 if (var["d_VacDateFrom"].ToString() == "" || var["d_VacDateTo"].ToString() == "") continue;
+                bool nonpaidLeave= myFunctions.getBoolVAL(dLayer.ExecuteScalar("select b_DeductSalary from Pay_VacationType where N_VacTypeID="+myFunctions.getIntVAL(var["n_VacTypeID"].ToString()) +"and N_CompanyID="+nCompanyID+"",Params,connection,transaction).ToString());
+                if(!nonpaidLeave) continue;
+
 
                 if (checkperiod(Convert.ToDateTime(dDateTo), nCompanyID, nFnYearID, nEmpID, Params, connection, transaction))
                 {
