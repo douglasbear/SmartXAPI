@@ -464,16 +464,17 @@ namespace SmartxAPI.Controllers
             object EmpLoanCount = dLayer.ExecuteScalar("SELECT isnull(COUNT(N_LoanTransID),0) From Pay_LoanIssue Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpId =@nEmpID", Params, connection, transaction);
             if (EmpLoanCount != null)
                 N_EmpLoanCount = myFunctions.getIntVAL(EmpLoanCount.ToString());
-            if (N_LoanLimitCount == 0)
-            {
-                return false;
-            }
+            // if (N_LoanLimitCount == 0)
+            // {
+            //     return false;
+            // }
             else if ((N_EmpLoanCount + 1) > N_LoanLimitCount && N_EmpLoanCount != 0)
             {
                 return true;
             }
             return false;
         }
+
         private bool checkSalaryProcess(string fromDate, int nCompanyID, string dLoanPeriodTo, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
             DateTime dtpEffectiveDateFrom = Convert.ToDateTime(fromDate.ToString());

@@ -1200,11 +1200,20 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+
+                        
                         if (empImage.Length > 0)
                             dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 
                         nSavedEmpID = nEmpID;
                         QueryParams.Add("@nSavedEmpID", nEmpID);
+
+
+                         dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanAmountLimit=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID and n_LoanAmountLimit=0", QueryParams, connection, transaction);
+                         dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanCountLimit=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID and n_LoanCountLimit=0", QueryParams, connection, transaction);
+                         dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanEligible=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID and n_LoanEligible=0", QueryParams, connection, transaction);
+
+
                         //inserting to [Log_ScreenActivity
                         string ipAddress = "";
                         if (Request.Headers.ContainsKey("X-Forwarded-For"))
