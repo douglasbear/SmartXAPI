@@ -1192,26 +1192,31 @@ namespace SmartxAPI.Controllers
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID + " and X_EmpCode='" + xEmpCode.Trim() + "'";
                     string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID =" + nFnYearID;
+                    string n_LoanAmountLimit = dtMasterTable.Rows[0]["n_LoanAmountLimit"].ToString();
+                    string n_LoanCountLimit = dtMasterTable.Rows[0]["n_LoanCountLimit"].ToString();
+                    string n_LoanEligible = dtMasterTable.Rows[0]["n_LoanEligible"].ToString();
                     nEmpID = dLayer.SaveData("pay_Employee", "n_EmpID", DupCriteria, X_Crieteria, dtMasterTable, connection, transaction);
                     if (nEmpID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
                     else
                     {
 
-                        
+
                         if (empImage.Length > 0)
                             dLayer.SaveImage("pay_Employee", "i_Employe_Image", empImageBitmap, "n_EmpID", nEmpID, connection, transaction);
 
                         nSavedEmpID = nEmpID;
                         QueryParams.Add("@nSavedEmpID", nEmpID);
 
-
-                         dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanAmountLimit=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID and n_LoanAmountLimit=0", QueryParams, connection, transaction);
-                         dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanCountLimit=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID and n_LoanCountLimit=0", QueryParams, connection, transaction);
-                         dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanEligible=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID and n_LoanEligible=0", QueryParams, connection, transaction);
+                        if (n_LoanAmountLimit == "")
+                            dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanAmountLimit=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID ", QueryParams, connection, transaction);
+                        if (n_LoanCountLimit == "")
+                            dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanCountLimit=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID ", QueryParams, connection, transaction);
+                        if (n_LoanEligible == "")
+                            dLayer.ExecuteNonQuery("Update pay_Employee Set n_LoanEligible=null Where N_CompanyID =@nCompanyID And N_EmpID =@nSavedEmpID ", QueryParams, connection, transaction);
 
 
                         //inserting to [Log_ScreenActivity
