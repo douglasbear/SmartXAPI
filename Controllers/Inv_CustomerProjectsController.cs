@@ -39,7 +39,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 order by N_ProjectID desc";
+            string sqlCommandText = "select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p2 and X_ProjectCode is not null  order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p2", nFnYearID);
             
@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             //  else
             //         Criteria = "and  N_BranchID=" + N_BranchID + " AND ISNULL(B_IsSaveDraft,0)=0 and ISNULL(B_InActive,0)=0 ";
 
-            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria +" order by N_ProjectID desc";
+            string sqlCommandText = "select * from vw_InvCustomerProjects where N_CompanyID=@p1 and N_FnYearID=@p5" + Criteria +" and X_ProjectCode is not null order by N_ProjectID desc";
             Params.Add("@p1", nCompanyId);
             Params.Add("@p3", nCustomerID);
             Params.Add("@p4", nBranchID);
@@ -471,6 +471,7 @@ namespace SmartxAPI.Controllers
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (x_projectcode like '%" + xSearchkey + "%'or x_projectname like'%" + xSearchkey + "%' or x_CustomerName like '%" + xSearchkey + "%' or x_District like '%" + xSearchkey + "%' or d_StartDate like '%" + xSearchkey + "%' or n_ContractAmt like '%" + xSearchkey + "%')";
 
+            Searchkey = Searchkey + " and X_ProjectCode is not null ";
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ProjectID desc";
             else
