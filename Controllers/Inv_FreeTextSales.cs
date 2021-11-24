@@ -266,6 +266,8 @@ namespace SmartxAPI.Controllers
         public ActionResult GetSalesDetails(int nCompanyId, int nFnYearId, string xInvoiceNO, string xTransType, bool showAllBranch, int nBranchId)
         {
 
+
+xInvoiceNO= xInvoiceNO.Replace("%2F","/");
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

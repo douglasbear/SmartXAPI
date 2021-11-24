@@ -315,6 +315,48 @@ namespace SmartxAPI.Controllers
                             CostCenterTable.Columns.Remove("percentage");
 
                         CostCenterTable.AcceptChanges();
+                        
+                        DataTable costcenter = new DataTable();
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_CostCenterTransID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_CompanyID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_FnYearID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_InventoryType",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_InventoryID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_InventoryDetailsID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_CostCentreID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_Amount",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_LedgerID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_BranchID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"X_Narration",typeof(string),"");
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"X_Naration",typeof(string),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"D_Entrydate",typeof(DateTime),null);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_GridLineNo",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_EmpID",typeof(int),0);
+                        costcenter = myFunctions.AddNewColumnToDataTable(costcenter,"N_ProjectID",typeof(int),0);
+
+, , , , , N_Segment_1, N_Segment_2, N_Segment_3, N_Segment_4, N_Amount, X_Naration, D_Entrydate, N_BranchID, N_Segment_5, 
+                         D_RepaymentDate, N_InstNo, N_PayID, B_IsCategory, 
+                        foreach (DataRow dRow in CostCenterTable.Rows)
+                        {
+                            DataRow row = costcenter.NewRow();
+                            row["N_CostCenterTransID"] = dRow["N_VoucherSegmentID"];
+                            row["N_CompanyID"] = dRow["N_CompanyID"];
+                            row["N_FnYearID"] = dRow["N_FnYearID"];
+                            row["N_InventoryType"] = 1;
+                            row["N_InventoryID"] = dRow["N_VoucherID"];
+                            row["N_CostCentreID"] = dRow["N_VoucherDetailsID"];
+                            row["N_Amount"] = dRow["N_AmountF"];
+                            row["N_LedgerID"] = dRow[""];
+                            row["N_BranchID"] = dRow[""];
+                            row["X_Narration"] = dRow[""];
+                            row["X_Naration"] = dRow[""];
+                            row["D_Entrydate"] = dRow[""];
+                            row["N_GridLineNo"] = dRow[""];
+                            row["N_EmpID"] = dRow[""];
+                            row["N_ProjectID"] = dRow[""];
+                            costcenter.Rows.Add(row);
+                        }
+
 
                         int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", "", "", CostCenterTable, connection, transaction);
 
