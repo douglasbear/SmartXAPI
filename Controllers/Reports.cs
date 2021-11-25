@@ -283,7 +283,7 @@ namespace SmartxAPI.Controllers
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
 
                         String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate and Time: " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
-                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData, "500", "500");
+                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData.Replace("&","%26"), "500", "500");
                         WebResponse response = default(WebResponse);
                         Stream remoteStream = default(Stream);
                         StreamReader readStream = default(StreamReader);
