@@ -583,7 +583,7 @@ namespace SmartxAPI.Controllers
                 Params.Add("@nCompanyID", nCompanyID);
                 Params.Add("@nCustomerID", nCustomerID);
                 Params.Add("@nFnYearID", nFnYearID);
-                sqlCommmand = "select Sum(X_BillAmt) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
+                sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
