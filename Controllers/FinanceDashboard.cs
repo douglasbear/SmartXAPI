@@ -161,5 +161,65 @@ namespace SmartxAPI.Controllers
                 return BadRequest(api.Error(User, e));
             }
         }
+       [HttpGet("statementsOfAccounts")]
+        public ActionResult TrialBalanceList(string xLedgerCode,int nFnYearID, int nPage, int nSizeperpage, bool b_AllBranchData, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string Searchkey = "";
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nUserID);
+                    Params.Add("@p4", xLedgerCode);
+         
+
+                  object LedgeridObj = dLayer.ExecuteScalar("select N_LedgerID From Acc_MastLedger where X_LedgerCode = @p4 and N_CompanyID =@p1 and N_FnYearID=@p2",Params, connection);
+
+                  int nLedgerID = myFunctions.getIntVAL(LedgeridObj.ToString());
+                   Params.Add("@p5", nLedgerID);
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and ( X_LedgerName like '%" + xSearchkey + "%' or X_LedgerCode like '%" + xSearchkey + "%' or N_Opening like '%" + xSearchkey + "%' or N_Debit like '%" + xSearchkey + "%' or N_Credit like '%" + xSearchkey + "%' or N_Balance like '%" + xSearchkey + "%' ) ";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_LedgerID desc";
+                    else
+                        xSortBy = " order by " + xSortBy;
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_StatementsOfAccounts_Detailed  where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey ;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_StatementsOfAccounts_Detailed  where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey + "and N_LedgerID not in (select top(" + Count + ") N_LedgerID from vw_StatementsOfAccounts_Detailed where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey+ " ) ";
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
+                    string sqlCommandCount = "select count(*) as N_Count  from vw_StatementsOfAccounts_Detailed  where N_CompanyID=@p1 and N_FnYearID=@p2 and N_LedgerID=@p5" + Searchkey;
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return BadRequest(api.Error(User, e));
+            }
+        }
+
     }
 }
