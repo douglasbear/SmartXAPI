@@ -1010,6 +1010,7 @@ namespace SmartxAPI.Controllers
 
                 if (var["d_VacDateFrom"].ToString() == "" || var["d_VacDateTo"].ToString() == "") continue;
 
+
                 if (checkperiod(Convert.ToDateTime(dDateTo), nCompanyID, nFnYearID, nEmpID, Params, connection, transaction))
                 {
                     String Todate = Convert.ToDateTime(dDateTo).Year.ToString("00##") + Convert.ToDateTime(dDateTo).Month.ToString("0#");
