@@ -267,7 +267,7 @@ namespace SmartxAPI.Controllers
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
-                    if (nFormID == 64 || nFormID == 894)
+                    if (nFormID == 64 || nFormID == 894 || nFormID == 372)
                     {
 
                         //QR Code Generate For Invoice
@@ -282,7 +282,7 @@ namespace SmartxAPI.Controllers
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
 
-                        String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate : " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
+                        String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate and Time: " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
                         var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData, "500", "500");
                         WebResponse response = default(WebResponse);
                         Stream remoteStream = default(Stream);
