@@ -304,8 +304,9 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(api.Warning("Salary Already Processed!"));
                         }
-                        object loanLimitAmount = dLayer.ExecuteScalar("SELECT N_LoanAmountLimit From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
+                        object loanLimitAmount = dLayer.ExecuteScalar("SELECT N_LoanAmountLimit From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID +" and N_FnyearID="+nFnYearID, Params, connection, transaction);//----Credit Balance
 
+                            if(loanLimitAmount != null)
                             if (!checkMaxAmount(n_LoanAmount, nCompanyID, nFnYearID, nEmpID, QueryParams, connection, transaction))
                             {
                                 transaction.Rollback();
@@ -530,9 +531,9 @@ namespace SmartxAPI.Controllers
         }
         private bool checkMaxAmount(double n_LoanAmount, int nCompanyID, int nFnYearID, int nEmpID, SortedList Params, SqlConnection connection, SqlTransaction transaction)
         {
-            object N_LoanLimitAmount1 = dLayer.ExecuteScalar("SELECT N_LoanAmountLimit From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID, Params, connection, transaction);//----Credit Balance
+            object N_LoanLimitAmount1 = dLayer.ExecuteScalar("SELECT N_LoanAmountLimit From Pay_Employee Where N_CompanyID=" + nCompanyID + " and N_EmpId = " + nEmpID +" and N_FnyearID="+nFnYearID, Params, connection, transaction);//----Credit Balance
             
-            if(N_LoanLimitAmount1==null) return true;
+            if(N_LoanLimitAmount1==null || myFunctions.getVAL(N_LoanLimitAmount1.ToString())==0) return true;
             string xLoanLimitAmountS = N_LoanLimitAmount1.ToString();
             double N_LoanLimitAmount = myFunctions.getVAL(N_LoanLimitAmount1.ToString());
 
