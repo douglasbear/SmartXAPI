@@ -278,7 +278,7 @@ namespace SmartxAPI.Controllers
                         object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
 
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
-                        var Date = dt.ToString("dd/MM/yyyy");
+                        var Date = dt.ToString();
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
 
