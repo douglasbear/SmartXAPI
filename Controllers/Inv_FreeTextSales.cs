@@ -56,9 +56,9 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (b_AllBranchData)
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1 ";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyId=@p1 and N_FnYearID=@p2 ";
                         else
-                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1 ";
+                            xCriteria = "N_SalesType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchId=@p3 and N_CompanyId=@p1 and N_FnYearID=@p2 ";
                     }
                     else
                     {
