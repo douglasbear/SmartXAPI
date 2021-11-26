@@ -350,6 +350,37 @@ namespace SmartxAPI.Controllers
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
                     if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_PurchaseID = myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString());
+
+
+                    object purID = dLayer.ExecuteScalar("select N_PurchaseID from Inv_Purchase where N_FreeTextReturnID =" + N_PurchaseID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "", Params, connection);
+                    if (purID != null)
+                    {
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "IsReturnDone", typeof(bool), true);
+                        // Master = myFunctions.AddNewColumnToDataTable(Master, "X_ReturnCode", typeof(string), RetQty.ToString());
+                    }
+                    else
+                    {
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "IsReturnDone", typeof(bool), false);
+                        //dtPurchaseInvoice = myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "X_ReturnCode", typeof(string), "");
+                    }
+
+                    object purchaseAmount = dLayer.ExecuteScalar("Select N_InvoiceAmt from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ", Params, connection);
+                    object returnAmout = dLayer.ExecuteScalar("Select Sum(N_InvoiceAmt)  from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='CREDIT NOTE' and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
+
+                    if (myFunctions.getVAL(purchaseAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
+                    {
+
+                        Master.Rows[0]["IsReturnDone"] = true;
+                    }
+                    else
+                    {
+                         Master.Rows[0]["IsReturnDone"] = false;
+                    }
+                    Master.AcceptChanges();
+
+
+
+
                     Master = _api.Format(Master, "Master");
                     if (showAllBranch)
                         X_DetailsSql = "Select Inv_PurchaseDetails.*,Acc_MastLedger.*,vw_InvPurchaseDetails.X_DisplayName, vw_InvPurchaseDetails.N_TaxPerc1, vw_InvPurchaseDetails.N_TaxID1,  vw_InvPurchaseDetails.N_TaxID2, vw_InvPurchaseDetails.N_TaxPerc2, vw_InvPurchaseDetails.X_DisplayName2,vw_InvPurchaseDetails.X_ActVendor from Inv_PurchaseDetails " +
