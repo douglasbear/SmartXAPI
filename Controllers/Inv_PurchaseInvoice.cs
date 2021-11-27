@@ -642,6 +642,14 @@ namespace SmartxAPI.Controllers
                         //         return Ok(_api.Error(User, "TransactionStarted"));
                         //     return Ok(_api.Error(User, ex.Message));
                         // }
+
+                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID,connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID,connection, transaction);
+                        dLayer.ExecuteNonQuery(" Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =4 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID,connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
+            
+                        dLayer.ExecuteNonQuery("Delete from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -803,7 +811,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPurchaseID, int nFnYearID, string comments)
+        public ActionResult DeleteData(int nPurchaseID, int nFnYearID, string comments,int nMRNID)
         {
             if (comments == null)
             {
@@ -856,7 +864,8 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",nPurchaseID},
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
-                                {"@B_MRNVisible","0"}};
+                                //{"@B_MRNVisible","0"}};
+                                 {"B_MRNVisible",nMRNID>0?"1":"0"}};
 
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
