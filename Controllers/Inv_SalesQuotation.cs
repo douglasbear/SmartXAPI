@@ -228,10 +228,14 @@ namespace SmartxAPI.Controllers
                         object xProjectName = dLayer.ExecuteScalar("select X_ProjectName from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", Params, connection);
                         if (xProjectName != null)
                             Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectName", typeof(string), xProjectName.ToString());
+                        object xProjectcode = dLayer.ExecuteScalar("select X_Projectcode from Inv_CustomerProjects where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID", Params, connection);
+                        if (xProjectcode != null)
+                            Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectCode", typeof(string), xProjectcode.ToString());
                     }
                     else
                     {
                         Master = myFunctions.AddNewColumnToDataTable(Master, "X_ProjectName", typeof(string), "");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "x_ProjectCode", typeof(string), "");
                     }
 
 

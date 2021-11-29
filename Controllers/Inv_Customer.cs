@@ -198,11 +198,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (MasterTable.Columns.Contains("b_DirPosting"))
-                    {
-                        MasterTable.Rows[0]["b_DirPosting"] = 0;
-                    }
-                    else
+                    if (!MasterTable.Columns.Contains("b_DirPosting"))
                     {
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_DirPosting", typeof(int), 0);
                     }
