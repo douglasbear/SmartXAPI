@@ -20,15 +20,17 @@ namespace SmartxAPI.Controllers
     {
         private readonly IDataAccessLayer dLayer;
         private readonly IApiFunctions api;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
         private readonly IMyFunctions myFunctions;
         private readonly int N_FormID = 74;
 
-        public InvCustomerProjectsController(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf)
+        public InvCustomerProjectsController(IDataAccessLayer dl, IMyFunctions myFun, IApiFunctions apiFun, IConfiguration conf,IMyAttachments myAtt)
         {
             dLayer = dl;
             api = apiFun;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -138,13 +140,15 @@ namespace SmartxAPI.Controllers
             {
                 DataTable MasterTable, TaskMaster, TaskStatus;
                 MasterTable = ds.Tables["master"];
+                DataTable Attachment = ds.Tables["attachments"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nProjectID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString());
                 int nWTaskID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_WTaskID"].ToString());
                 string X_ProjectCode = MasterTable.Rows[0]["X_ProjectCode"].ToString();
+                string X_ProjectName = MasterTable.Rows[0]["X_ProjectName"].ToString();
                 object N_WorkFlowID = "";
-
+               
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -153,6 +157,7 @@ namespace SmartxAPI.Controllers
                     // Auto Gen
                     string ProjectCode = "";
                     var values = MasterTable.Rows[0]["X_ProjectCode"].ToString();
+                   
                     if (values == "@Auto")
 
                     {
@@ -295,6 +300,19 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                           if (Attachment.Rows.Count > 0)
+                    {
+                         try
+                        {
+                           //myAttachments.SaveAttachment(dLayer, Attachment, X_ProjectCode, nProjectID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+                           myAttachments.SaveAttachment(dLayer, Attachment, X_ProjectCode, nProjectID, X_ProjectName, X_ProjectCode, nProjectID, "Project Document", User, connection, transaction);
+                              }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
                         transaction.Commit();
                         return Ok(api.Success("Project Information Created"));
                     }
@@ -307,7 +325,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nProjectID)
+        public ActionResult DeleteData(int nProjectID,int nFnyearID)
         {
 
             int Results = 0;
@@ -319,6 +337,8 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("inv_CustomerProjects", "N_ProjectID", nProjectID, "", connection, transaction);
+                     myAttachments.DeleteAttachment(dLayer, 1, nProjectID, nProjectID,nFnyearID,74, User, transaction, connection);
+                       
                     transaction.Commit();
                 }
                 if (Results > 0)
@@ -341,54 +361,114 @@ namespace SmartxAPI.Controllers
         }
 
 
-        [HttpGet("Details")]
-        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
 
+  [HttpGet("details")]
+        public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
         {
+            DataSet ds = new DataSet();
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            if (xProjectCode == null) xProjectCode = "";
             string sqlCommandText = "";
-            //sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
-            if (nOpportunityID > 0)
+             if (nOpportunityID > 0)
             {
                 sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
                 "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_CustomerID AS N_CrmCustomerID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType,vw_CRMOpportunity.N_WTaskID,vw_CRMOpportunity.X_WTask " +
                 "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID " +
                 "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
             }
-            else
-                sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
-
+           else
+          sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+                
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
             Params.Add("@xProjectCode", xProjectCode);
             Params.Add("@nOpportunityID", nOpportunityID);
-
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                }
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(api.Notice("No Results Found"));
-                }
-                else
-                {
-                    return Ok(api.Success(dt));
-                }
+                   
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["N_ProjectID"].ToString()), myFunctions.getIntVAL(dt.Rows[0]["N_ProjectID"].ToString()), 74, 0, User, connection);
+                    Attachments = api.Format(Attachments, "attachments");
+                   
+                        dt = api.Format(dt, "master");
+                        ds.Tables.Add(dt);
+                        ds.Tables.Add(Attachments);
 
+                        return Ok(api.Success(ds));
+                    }
+                }
             }
             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
             }
+
         }
+
+
+
+
+
+        // [HttpGet("Details")]
+        // public ActionResult GetCustomerProjectDetails(string xProjectCode, int nFnYearId, int nOpportunityID)
+
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList Params = new SortedList();
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     if (xProjectCode == null) xProjectCode = "";
+        //     string sqlCommandText = "";
+        //     //sqlCommandText = "select 0 as N_ProjectID,'@Auto' as X_ProjectCode,* from vw_CRMOpportunity where N_OpportunityID=@nOpportunityID and N_CompanyID=@nCompanyID and N_FnYearID=@YearID";
+        //     if (nOpportunityID > 0)
+        //     {
+        //         sqlCommandText = "select TOP 1 0 as N_ProjectID,'@Auto' as X_ProjectCode,vw_CRMOpportunity.N_CompanyId,vw_CRMOpportunity.N_FnYearID,vw_CRMOpportunity.N_OpportunityID, ISNULL(Inv_Customer.N_CustomerID,0) AS N_CustomerID, Inv_Customer.X_CustomerCode, Inv_Customer.X_CustomerName, " +
+        //         "vw_CRMOpportunity.N_ContactID,vw_CRMOpportunity.X_Contact,vw_CRMOpportunity.X_ProjectName,vw_CRMOpportunity.N_CustomerID AS N_CrmCustomerID,vw_CRMOpportunity.N_WorkType,vw_CRMOpportunity.X_WorkType,vw_CRMOpportunity.N_WTaskID,vw_CRMOpportunity.X_WTask " +
+        //         "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID " +
+        //         "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
+        //     }
+          
+        //     else
+        //   sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
+        //            DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_ProjectID"].ToString()), 74, 0, User, connection);
+        //             Attachments = _api.Format(Attachments, "attachments");
+        //     Params.Add("@nCompanyID", nCompanyID);
+        //     Params.Add("@YearID", nFnYearId);
+        //     Params.Add("@xProjectCode", xProjectCode);
+        //     Params.Add("@nOpportunityID", nOpportunityID);
+            
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+
+        //             dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+        //         }
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(api.Notice("No Results Found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(api.Success(dt));
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(api.Error(User, e));
+        //     }
+        // }
         [HttpGet("AccountList")]
         public ActionResult GetAccountList()
         {

@@ -255,39 +255,39 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nSalesID, string X_TransType)
-        // {
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nSalesID, string X_TransType)
+        {
 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             int nCompanyID = myFunctions.GetCompanyID(User);
-        //             var nUserID = myFunctions.GetUserID(User);
-        //             SortedList DeleteParams = new SortedList(){
-        //                         {"N_CompanyID",nCompanyID},
-        //                         {"X_TransType",X_TransType},
-        //                         {"N_VoucherID",nSalesID},
-        //                         {"N_UserID",nUserID},
-        //                          {"X_SystemName","WebRequest"}};
-        //             int Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    var nUserID = myFunctions.GetUserID(User);
+                    SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType",X_TransType},
+                                {"N_VoucherID",nSalesID},
+                                {"N_UserID",nUserID},
+                                 {"X_SystemName","WebRequest"}};
+                    int Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);
 
-        //             if (Results <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User, "Unable to delete Sales"));
-        //             }
-        //             transaction.Commit();
-        //             return Ok(_api.Success("Sales  deleted"));
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User, ex));
-        //     }
-        // }
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete Sales return"));
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Sales Return deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
     }
 }
