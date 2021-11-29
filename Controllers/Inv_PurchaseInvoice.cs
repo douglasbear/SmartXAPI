@@ -306,7 +306,7 @@ namespace SmartxAPI.Controllers
 
                     dtPurchaseInvoiceDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
 
-                    X_FreightSql = "Select * FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_PurchaseID;
+                    X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_PurchaseID;
                     dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
 
                     if (nPurchaseNO != null)
