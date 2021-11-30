@@ -290,7 +290,9 @@ namespace SmartxAPI.Controllers
                         VatAmount = StringToHex(VatAmount.ToString().Length + VatAmount.ToString());
 
                         // String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate and Time: " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
-                        String QrData = "01"+ Company + "02"+ VatNumber + "03" + Date + "04" + Amount + "05" + VatAmount;
+                        String QrData = "01" + Company + "02" + VatNumber + "03" + Date + "04" + Amount + "05" + VatAmount;
+                        var plainTextBytes = System.Text.Encoding.UTF8.GetBytes(QrData);
+                        QrData= System.Convert.ToBase64String(plainTextBytes);
                         var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData.Replace("&", "%26"), "500", "500");
                         WebResponse response = default(WebResponse);
                         Stream remoteStream = default(Stream);
