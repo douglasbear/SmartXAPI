@@ -60,7 +60,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Success(Result));
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)
