@@ -65,6 +65,118 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+         [HttpGet("details")]
+
+        public ActionResult GetData(int xReasonCode)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            string sqlCommandText = "select * from Inv_PurchaseFreightReason where N_CompanyID=@p1 and x_ReasonCode=@p2";
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", xReasonCode);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt =_api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    MasterTable = ds.Tables["master"];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nResonID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReasonID"].ToString());
+                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    string xReasonCode = MasterTable.Rows[0]["x_ReasonCode"].ToString();
+                     MasterTable.Columns.Remove("n_FnYearID");
+
+
+                    if (xReasonCode == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                          Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", this.FormID);
+
+                        
+                        
+                        xReasonCode = dLayer.GetAutoNumber("Inv_PurchaseFreightReason", "x_ReasonCode", Params, connection, transaction);
+                        if (xReasonCode == "")
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to generate Freight Code"));
+                        }
+                        MasterTable.Rows[0]["x_ReasonCode"] = xReasonCode;
+                    }
+
+                    else
+                    {
+                        dLayer.DeleteData("Inv_PurchaseFreightReason", "N_ReasonID", nResonID, "", connection, transaction);
+                    }
+                    nResonID = dLayer.SaveData("Inv_PurchaseFreightReason", "N_ReasonID", MasterTable, connection, transaction);
+
+                    if (nResonID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Warning("Unable to save"));
+                    }
+                    else
+                    {
+                        transaction.Commit();
+                        return Ok(_api.Success("save successfully"));
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+
+
     }
 }
-        
+
+
+
+
+
+
+
+
+
+
+
