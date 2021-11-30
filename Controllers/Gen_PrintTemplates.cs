@@ -92,12 +92,12 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("screen")]
-        public ActionResult GetScreen(int nLanguageID, int n_UserCategoryID, int nModuleID)
+        public ActionResult GetScreen(int nLanguageID, int n_UserCategoryID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " and N_ParentMenuID=" + nModuleID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies";
+            string sqlCommandText = "select N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies from vw_PrintSelectDispRpt_Web where  N_LanguageID = " + nLanguageID + " and B_Visible = 'true' and N_UserCategoryID=" + n_UserCategoryID + " and N_CompanyID=" + nCompanyID + " group by N_UserCategoryID,N_MenuID,X_Text,N_ParentMenuID,x_RptName,N_PrintCopies";
 
             Params.Add("@nCompanyID", nCompanyID);
             try

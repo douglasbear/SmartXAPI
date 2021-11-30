@@ -287,9 +287,9 @@ namespace SmartxAPI.Controllers
                     if (nPurchaseNO != null)
                     {
                         if (B_MRNVisible)
-                            X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,Inv_MRN.X_MRNNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Left Outer Join Inv_MRN On vw_InvPurchaseDetails.N_RsID=Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND  vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID LEFT OUTER JOIN Inv_MRN ON vw_InvPurchaseDetails.N_RsID = Inv_MRN.N_MRNID  Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                         else
-                            X_DetailsSql = "Select vw_InvPurchaseDetails.*,Inv_PurchaseOrder.X_POrderNo,dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID,vw_InvPurchaseDetails.N_CompanyID) As N_UnitSPrice   from vw_InvPurchaseDetails Left Outer Join Inv_PurchaseOrder On vw_InvPurchaseDetails.N_POrderID=Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
+                            X_DetailsSql = "SELECT vw_InvPurchaseDetails.*, Inv_PurchaseOrder.X_POrderNo, dbo.SP_Cost(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID, '') AS N_UnitLPrice,dbo.SP_SellingPrice(vw_InvPurchaseDetails.N_ItemID, vw_InvPurchaseDetails.N_CompanyID) AS N_UnitSPrice, Inv_MRNDetails.N_MRNDetailsID FROM vw_InvPurchaseDetails LEFT OUTER JOIN Inv_MRNDetails ON vw_InvPurchaseDetails.N_CompanyID = Inv_MRNDetails.N_CompanyID AND vw_InvPurchaseDetails.N_PurchaseDetailsID = Inv_MRNDetails.N_PurchaseDetailsID LEFT OUTER JOIN Inv_PurchaseOrder ON vw_InvPurchaseDetails.N_POrderID = Inv_PurchaseOrder.N_POrderID Where vw_InvPurchaseDetails.N_CompanyID=@CompanyID and vw_InvPurchaseDetails.N_PurchaseID=" + N_PurchaseID + (showAllBranch ? "" : " and vw_InvPurchaseDetails.N_BranchId=@BranchID");
                     }
                     else if (xPOrderNo != null)
                     {
@@ -613,35 +613,43 @@ namespace SmartxAPI.Controllers
 
                     if (N_PurchaseID > 0)
                     {
-                        SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
-                                {"X_TransType","PURCHASE"},
-                                {"N_VoucherID",N_PurchaseID},
-                                                                {"N_UserID",nUserID},
-                                {"X_SystemName","WebRequest"},
-                                {"B_MRNVisible",n_MRNID>0?"1":"0"}};
+                        // SortedList DeleteParams = new SortedList(){
+                        //         {"N_CompanyID",masterRow["n_CompanyId"].ToString()},
+                        //         {"X_TransType","PURCHASE"},
+                        //         {"N_VoucherID",N_PurchaseID},
+                        //                                         {"N_UserID",nUserID},
+                        //         {"X_SystemName","WebRequest"},
+                        //         {"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
-                        try
-                        {
-                            dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
-                        }
-                        catch (Exception ex)
-                        {
-                            transaction.Rollback();
-                            if (ex.Message.Contains("50"))
-                                return Ok(_api.Error(User, "DayClosed"));
-                            else if (ex.Message.Contains("51"))
-                                return Ok(_api.Error(User, "YearClosed"));
-                            else if (ex.Message.Contains("52"))
-                                return Ok(_api.Error(User, "YearExists"));
-                            else if (ex.Message.Contains("53"))
-                                return Ok(_api.Error(User, "PeriodClosed"));
-                            else if (ex.Message.Contains("54"))
-                                return Ok(_api.Error(User, "TxnDate"));
-                            else if (ex.Message.Contains("55"))
-                                return Ok(_api.Error(User, "TransactionStarted"));
-                            return Ok(_api.Error(User, ex.Message));
-                        }
+                        // try
+                        // {
+                        //     dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+                        // }
+                        // catch (Exception ex)
+                        // {
+                        //     transaction.Rollback();
+                        //     if (ex.Message.Contains("50"))
+                        //         return Ok(_api.Error(User, "DayClosed"));
+                        //     else if (ex.Message.Contains("51"))
+                        //         return Ok(_api.Error(User, "YearClosed"));
+                        //     else if (ex.Message.Contains("52"))
+                        //         return Ok(_api.Error(User, "YearExists"));
+                        //     else if (ex.Message.Contains("53"))
+                        //         return Ok(_api.Error(User, "PeriodClosed"));
+                        //     else if (ex.Message.Contains("54"))
+                        //         return Ok(_api.Error(User, "TxnDate"));
+                        //     else if (ex.Message.Contains("55"))
+                        //         return Ok(_api.Error(User, "TransactionStarted"));
+                        //     return Ok(_api.Error(User, ex.Message));
+                        // }
+
+                        dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID,connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID,connection, transaction);
+                        dLayer.ExecuteNonQuery(" Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =4 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID,connection, transaction);
+                        dLayer.ExecuteNonQuery("Delete From Inv_Purchase Where (N_PurchaseID = " + N_PurchaseID + " OR (N_PurchaseType =5 and N_PurchaseRefID =  " + N_PurchaseID + ")) and N_CompanyID = " + nCompanyID, connection, transaction);
+            
+                        dLayer.ExecuteNonQuery("Delete from Inv_Purchase where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID, connection, transaction);
                     }
                     MasterTable.Rows[0]["n_userID"] = myFunctions.GetUserID(User);
 
@@ -803,7 +811,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nPurchaseID, int nFnYearID, string comments)
+        public ActionResult DeleteData(int nPurchaseID, int nFnYearID, string comments,int nMRNID)
         {
             if (comments == null)
             {
@@ -856,7 +864,8 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",nPurchaseID},
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
-                                {"@B_MRNVisible","0"}};
+                                //{"@B_MRNVisible","0"}};
+                                 {"B_MRNVisible",nMRNID>0?"1":"0"}};
 
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)

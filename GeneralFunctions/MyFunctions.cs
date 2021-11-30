@@ -494,6 +494,13 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
+                    object ApprlID = dLayer.ExecuteScalar("select N_ApprovalID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_Formid=@nFormID and N_TransID=@nTransID group by N_ApprovalID", ApprovalParams, connection);
+                    if (ApprlID != null)
+                    {
+                        int N_ApprvalID = this.getIntVAL(ApprlID.ToString());
+                        ApprovalParams["@nApprovalID"] = N_ApprvalID;
+                    }
+
                     MaxLevel = dLayer.ExecuteScalar("Select Isnull (MAX(N_LevelID),0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
 
                     if ((nTransApprovalLevel > nNextApprovalLevel) && nTransStatus != 4 && nTransStatus != 3)
@@ -738,6 +745,10 @@ namespace SmartxAPI.GeneralFunctions
                             ApprovalParams["@nTransStatus"] = nTransStatus;
                         }
                         NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        if (nSubmitter != nTransApprovalLevel)
+                        {
+                            NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=(select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=111 and N_Status=1) and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        }
                         if (NextApprovalUser != null)
                             xLastUserName = NextApprovalUser.ToString();
                     }
@@ -757,6 +768,10 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                         NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        if (nSubmitter != nTransApprovalLevel)
+                        {
+                            NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=(select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=111 and N_Status=1) and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        }
                         if (NextApprovalUser != null)
                             xLastUserName = NextApprovalUser.ToString();
                     }
