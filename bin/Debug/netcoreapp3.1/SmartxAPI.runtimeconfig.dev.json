@@ -1,8 +1,44 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+=======
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages"
+>>>>>>> 40d720cee1a2ff1e99a350ddb5a5947bea46728c
+=======
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages"
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+<<<<<<< HEAD
+>>>>>>> cd71530d28441c177f56806bf82cf43eb76a31df
+<<<<<<< HEAD
+=======
+>>>>>>> 62f01194f56b726997fd0f1893a9079861c3f7be
+>>>>>>> e821517750e5a0683326f359d011b6d0135407d9
+=======
+>>>>>>> 947c6f6731e9778ea2204b00dc42f5fd7a5417b4
+>>>>>>> 0a22c2ed639717895e3718cd75e00157296348b1
+=======
+      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Aky77\\.nuget\\packages"
+>>>>>>> ff51d9cb9375d2e0e5a4d2345198eda5909ab4d2
+=======
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+>>>>>>> 784f69eab714f292277afa75f2978087a73ec1e0
+=======
       "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\sreej\\.nuget\\packages"
+>>>>>>> 706c7fd8704c46f80667a8cbb2bf148689c6775d
     ]
   }
 }
