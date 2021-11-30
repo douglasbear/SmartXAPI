@@ -312,7 +312,7 @@ namespace SmartxAPI.Controllers
                     if (xPath != null && xPath != "")
                     {
                         object returnID = dLayer.ExecuteScalar("Select N_PurchaseID from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
-                        if (myFunctions.getIntVAL(returnID.ToString()) > 0)
+                        if (returnID!=null)
                         {
                             object purchaseAmount = dLayer.ExecuteScalar("Select N_InvoiceAmt from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ", Params, connection);
                             object returnAmout = dLayer.ExecuteScalar("Select Sum(N_InvoiceAmt)  from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='CREDIT NOTE' and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
