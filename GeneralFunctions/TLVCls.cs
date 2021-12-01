@@ -17,8 +17,8 @@ namespace zatca.einvoicing
         {
             this.Seller = Encoding.UTF8.GetBytes(Seller);
             this.VatNo = Encoding.UTF8.GetBytes(TaxNo);
-
-            this.dateTime = Encoding.UTF8.GetBytes(dateTime.ToString());
+            var DateVal = dateTime.ToString("s") + "Z";
+            this.dateTime = Encoding.UTF8.GetBytes(DateVal.ToString());
             this.Total = Encoding.UTF8.GetBytes(Total.ToString());
             this.Tax = Encoding.UTF8.GetBytes(Tax.ToString());
         }
