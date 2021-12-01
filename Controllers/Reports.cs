@@ -279,15 +279,10 @@ namespace SmartxAPI.Controllers
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
                         object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
-                        var Date = dt.ToString();
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
                         string Company = myFunctions.GetCompanyName(User);
-
-                        //  dt=new DateTimeOffset(dt).ToUnixTimeSeconds();
-                        // TimeZoneInfo.ConvertTime(utcDateTime, tz);
-
-                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt.ToUniversalTime(), Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));              
+                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));              
                         var plainTextBytes = tlv.ToBase64();
 
                         var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
