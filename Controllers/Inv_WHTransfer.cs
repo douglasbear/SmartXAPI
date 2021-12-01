@@ -33,7 +33,7 @@ namespace SmartxAPI.Controllers
         private readonly string connectionString;
 
         [HttpGet("list")]
-        public ActionResult GetLocationDetails(int? nCompanyId, string prs,bool bLocationRequired,bool bAllBranchData,int nBranchID)
+        public ActionResult GetLocationDetails(int? nCompanyId, string prs, bool bLocationRequired, bool bAllBranchData, int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -46,15 +46,15 @@ namespace SmartxAPI.Controllers
                 if (!bLocationRequired)
                 {
                     if (bAllBranchData == true)
-                       sqlCommandText = "select * from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
-                    
+                        sqlCommandText = "select * from vw_InvLocation_Disp where N_MainLocationID =0 and N_CompanyID=" + nCompanyId;
+
                     else
-                        sqlCommandText = "select * from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" +nCompanyId + " and  N_BranchID=" + nBranchID;
-                    
+                        sqlCommandText = "select * from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
+
                 }
                 else
                 {
-                   sqlCommandText = "select * from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
+                    sqlCommandText = "select * from vw_InvLocation_Disp where  N_MainLocationID =0 and N_CompanyID=" + nCompanyId + " and  N_BranchID=" + nBranchID;
                 }
             }
 
@@ -78,43 +78,76 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
 
         [HttpGet("productInformation")]
-        public ActionResult ProductInfo(int? nCompanyID, int nLocationIDFrom)
+
+        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID)
         {
+
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            Params.Add("@nCompanyID", nCompanyID);
-            Params.Add("@nLocationIDFrom", nLocationIDFrom);
-            string sqlCommandText = "";
 
-            sqlCommandText = "select * from vw_UC_ItemWithStockQty where N_CompanyID=@nCompanyID and B_Inactive=0 and [Product Code]<>'001' and N_ClassID<>4 and N_ClassID<>5 and N_LocationID=@nLocationIDFrom and B_Inactive=0 ";
+
+            string qry = "";
+            string Category = "";
+            string Condition = "";
+            if (query != "" && query != null)
+            {
+                qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query) ";
+                Params.Add("@query", "%" + query + "%");
+            }
+            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
+            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
+
+            string sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + "and N_ClassID<>4 " + qry + Category + Condition;
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", 0);
+            Params.Add("@p3", "001");
+            Params.Add("@p4", 1);
+            Params.Add("@PSize", PageSize);
+            Params.Add("@Offset", Page);
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string sql = pageQry + sqlComandText + pageQryEnd;
+                    dt = dLayer.ExecuteDataTable(sql, Params, connection);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "SubItems", typeof(DataTable), null);
+
+                    foreach (DataRow item in dt.Rows)
+                    {
+                        if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1)
+                        {
+
+                            string subItemSql = "Select *,dbo.[SP_LocationStock](vw_invitemdetails.N_ItemID," + nLocationIDFrom + ") As N_Stock,dbo.SP_Cost_Loc(vw_invitemdetails.N_ItemID,vw_invitemdetails.N_CompanyID,''," + nLocationIDFrom + ") As N_LPrice ,dbo.SP_SellingPrice(vw_invitemdetails.N_ItemID,vw_invitemdetails.N_CompanyID) As N_SPrice from vw_invitemdetails where N_MainItemId=" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + " ";
+                            DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
+                            item["SubItems"] = subTbl;
+                        }
+                    }
+                    dt.AcceptChanges();
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
-                    return Ok(_api.Notice("No Results Found"));
+                    return Ok(_api.Warning("No Results Found"));
                 }
                 else
                 {
                     return Ok(_api.Success(dt));
                 }
+
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
+
         }
 
 
@@ -173,7 +206,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -200,6 +233,8 @@ namespace SmartxAPI.Controllers
                     int nTransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                    int nLocationIDfrom = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDFrom"].ToString());
+                    int nLocationIDto = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationIDTo"].ToString());
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
                     string X_TransType = "TRANSFER";
 
@@ -209,16 +244,14 @@ namespace SmartxAPI.Controllers
                     // int nActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionTypeID"].ToString());
                     if (nTransferId > 0)
                     {
-                        SortedList deleteParams = new SortedList()
-                            {
-                                {"N_CompanyID",nCompanyID},
-                                {"X_TransType",X_TransType},
-                                {"N_TransferId",nTransferId}
-                            };
-                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
+                        SortedList DelParam = new SortedList();
+                        DelParam.Add("N_CompanyID", nCompanyID);
+                        DelParam.Add("X_TransType", X_TransType);
+                        DelParam.Add("N_VoucherID", nTransferId);
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DelParam, connection, transaction);
                     }
                     DocNo = MasterRow["X_ReferenceNo"].ToString();
-                    int nSavedraft = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SaveDraft"].ToString());
+                   // int nSavedraft = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SaveDraft"].ToString());
                     if (X_ReferenceNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyID);
@@ -235,7 +268,7 @@ namespace SmartxAPI.Controllers
                         X_ReferenceNo = DocNo;
 
 
-                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate")); }
+                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
                         MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
 
                     }
@@ -244,13 +277,13 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Inv_TransferStock", "N_TransferId", nTransferId, "", connection, transaction);
                     }
 
-                    MasterTable.Columns.Remove("N_FnYearID");
+                  
 
                     nTransferId = dLayer.SaveData("Inv_TransferStock", "N_TransferId", MasterTable, connection, transaction);
                     if (nTransferId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable To Save"));
+                        return Ok(_api.Error(User, "Unable To Save"));
                     }
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
@@ -261,16 +294,48 @@ namespace SmartxAPI.Controllers
                     if (nTransferDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable To Save"));
+                        return Ok(_api.Error(User, "Unable To Save"));
                     }
                     else
                     {
-                        if (nSavedraft != 1)
-                        {
+                        
+                            SortedList StockParam = new SortedList();
+                            StockParam.Add("N_CompanyID", nCompanyID);
+                            StockParam.Add("N_TransferID", nTransferId);
+                            StockParam.Add("@N_WarehouseIdFrom", nLocationIDfrom);
+                            StockParam.Add("@N_WarehouseIdTo", nLocationIDto);
+                            StockParam.Add("N_UserID", nUserID);
 
-                            dLayer.ExecuteScalarPro("SP_Inv_StockTransfer ", Params, connection, transaction).ToString();
-                            dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting ", Params, connection, transaction).ToString();
-                        }
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_Inv_StockTransfer ", StockParam, connection, transaction).ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+
+                            SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", nCompanyID);
+                            PostingParam.Add("X_InventoryMode", X_TransType);
+                            PostingParam.Add("N_InternalID", nTransferId);
+                            PostingParam.Add("N_UserID", nUserID);
+                            PostingParam.Add("X_SystemName", "WebRequest");
+                            try
+                            {
+                                dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
+                            }
+                            catch (Exception ex)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, ex));
+                            }
+
+
+
+
+                      
 
                     }
 
@@ -282,7 +347,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -316,13 +381,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -374,7 +439,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 

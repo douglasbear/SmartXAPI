@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_Accounts";
                         if (dt.TableName == "Products Stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName == "Employee List")
+                        if (dt.TableName == "Employee List" || dt.TableName == "Employees")
                             xTableName = "Mig_Employee";
                         if (dt.TableName == "products stock")
                             xTableName = "Mig_Stock";

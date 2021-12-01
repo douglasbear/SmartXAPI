@@ -16,6 +16,7 @@ using System.Net;
 using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Mail;
+using System.Text;
 
 namespace SmartxAPI.Controllers
 {
@@ -53,7 +54,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( "+myFunctions.GetUserCategoryList(User)+" ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
+            string sqlCommandText = "Select vwUserMenus.*,Lan_MultiLingual.X_Text from vwUserMenus Inner Join Sec_UserPrevileges On vwUserMenus.N_MenuID=Sec_UserPrevileges.N_MenuID And Sec_UserPrevileges.N_UserCategoryID = vwUserMenus.N_UserCategoryID And  Sec_UserPrevileges.N_UserCategoryID in ( " + myFunctions.GetUserCategoryList(User) + " ) and vwUserMenus.B_Show=1 inner join Lan_MultiLingual on vwUserMenus.N_MenuID=Lan_MultiLingual.N_FormID and Lan_MultiLingual.N_LanguageId=@nLangId and X_ControlNo ='0' Where LOWER(vwUserMenus.X_Caption) <>'seperator' and vwUserMenus.N_ParentMenuID=@nMenuId Order By vwUserMenus.N_Order";
             Params.Add("@nMenuId", nMenuId == 0 ? 318 : nMenuId);
             Params.Add("@nLangId", nLangId);
             Params.Add("@nUserCatID", myFunctions.GetUserCategoryList(User));
@@ -272,18 +273,50 @@ namespace SmartxAPI.Controllers
 
                         //QR Code Generate For Invoice
 
-                        object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
-                        object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
+                        object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
+                        object TaxAmount = dLayer.ExecuteScalar("select N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         object VatNumber = dLayer.ExecuteScalar("select x_taxregistrationNo from acc_company where N_CompanyID=@nCompanyId", QueryParams, connection, transaction);
-                        object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID="+nPkeyID, QueryParams, connection, transaction);
-
+                        object SalesDate = dLayer.ExecuteScalar("select D_SalesDate from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
                         DateTime dt = DateTime.Parse(SalesDate.ToString());
                         var Date = dt.ToString();
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
 
-                        String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate and Time: " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
-                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", QrData.Replace("&","%26"), "500", "500");
+                        //HEX
+                        string Company = myFunctions.GetCompanyName(User).Length.ToString("X2")+ StringToHex(myFunctions.GetCompanyName(User).Trim());
+                        VatNumber = VatNumber.ToString().Length.ToString("X2") + StringToHex( VatNumber.ToString());
+                        Date = Date.ToString().Length.ToString("X2") + StringToHex( Date.ToString());
+                        Amount = Amount.ToString().Length.ToString("X2") + StringToHex( Amount.ToString());
+                        VatAmount = VatAmount.ToString().Length.ToString("X2") + StringToHex( VatAmount.ToString());
+
+                        // String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate and Time: " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
+                        string QrData = "01" + Company + "02" + VatNumber + "03" + Date + "04" + Amount + "05" + VatAmount;
+                        byte [] tag1 = System.Text.Encoding.UTF8.GetBytes("01");
+                        byte [] tag2 = System.Text.Encoding.UTF8.GetBytes("02");
+                        byte [] tag3 = System.Text.Encoding.UTF8.GetBytes("03");
+                        byte [] tag4 = System.Text.Encoding.UTF8.GetBytes("04");
+                        byte [] tag5 = System.Text.Encoding.UTF8.GetBytes("05");
+
+                        byte [] CompanyByte = System.Text.Encoding.UTF8.GetBytes(Company);
+                        byte [] VatNumberByte = System.Text.Encoding.UTF8.GetBytes(VatNumber.ToString());
+                        byte [] DateByte = System.Text.Encoding.UTF8.GetBytes(Date);
+                        byte [] AmountByte = System.Text.Encoding.UTF8.GetBytes(Amount);
+                        byte [] VatAmountByte = System.Text.Encoding.UTF8.GetBytes(VatAmount);
+
+                        byte[] rv = new byte[tag1.Length + CompanyByte.Length + tag2.Length+ VatNumberByte.Length + tag3.Length + DateByte.Length + tag4.Length + AmountByte.Length + tag5.Length + VatAmountByte.Length ];
+                        // byte[] rv = new byte[ tag1 , CompanyByte];
+                        System.Buffer.BlockCopy(tag1, 0, rv, 0, tag1.Length);
+                        System.Buffer.BlockCopy(CompanyByte, 0, rv, tag1.Length , CompanyByte.Length);
+                        System.Buffer.BlockCopy(tag2, 0, rv, tag1.Length + CompanyByte.Length , tag2.Length);
+                        System.Buffer.BlockCopy(VatNumberByte, 0, rv, tag1.Length + CompanyByte.Length + tag2.Length , VatNumberByte.Length);
+                        System.Buffer.BlockCopy(tag3, 0, rv, tag1.Length + CompanyByte.Length + tag2.Length + VatNumberByte.Length, tag3.Length);
+                        System.Buffer.BlockCopy(DateByte, 0, rv, tag1.Length + CompanyByte.Length + tag2.Length + VatNumberByte.Length + tag3.Length, DateByte.Length);
+
+                        var plainTextBytes = Convert.ToBase64String(rv);
+                     
+
+
+                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
                         WebResponse response = default(WebResponse);
                         Stream remoteStream = default(Stream);
                         StreamReader readStream = default(StreamReader);
@@ -328,6 +361,16 @@ namespace SmartxAPI.Controllers
 
             }
 
+        }
+        private string StringToHex(string hexstring)
+        {
+            StringBuilder sb = new StringBuilder();
+            foreach (char t in hexstring)
+            {
+                //Note: X for upper, x for lower case letters
+                sb.Append(Convert.ToInt32(t).ToString("x"));
+            }
+            return sb.ToString();
         }
 
         [HttpGet("getscreenprint")]
@@ -414,7 +457,7 @@ namespace SmartxAPI.Controllers
                     string Toemail = "";
 
                     Toemail = mail;
-                    object companyemail = ""; 
+                    object companyemail = "";
                     object companypassword = "";
 
                     companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
