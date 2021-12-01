@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
-                        if (dt.TableName == "Customer List")
+                        if (dt.TableName == "Customer List" || dt.TableName == "Customers" || dt.TableName == "Customer")
                             xTableName = "Mig_Customers";
                         if (dt.TableName == "Vendor List")
                             xTableName = "Mig_Vendors";
