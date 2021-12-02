@@ -115,6 +115,7 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
                     int nPurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PurchaseID"].ToString());
                     string X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
+                    int nPurchaseMapID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FreeTextReturnID"].ToString());
                     string xTransType = "CREDIT NOTE";
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
                     if (nPurchaseID > 0)
@@ -154,6 +155,8 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["x_InvoiceNo"] = X_InvoiceNo;
                     }
                     nPurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
+                    // dLayer.ExecuteNonQuery("Update Inv_Purchase  Set N_FreeTextReturnID=" + nPurchaseID + "   Where N_PurchaseID=" + nPurchaseMapID + " and N_FnYearID=" + nFnYearID + " and N_CompanyID=" + nCompanyID, connection, transaction);
+
 
 
                     if (nPurchaseID <= 0)
@@ -284,7 +287,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listdetails")]
-        public ActionResult GetPurchaseeDetails(int nCompanyId, int nFnYearId, string xInvoiceNO, string xTransType, bool showAllBranch, int nBranchId)
+        public ActionResult GetPurchaseeDetails(int nCompanyId, int nFnYearId, string xInvoiceNO, string xTransType, bool showAllBranch, int nBranchId, string xPath)
         {
             try
             {
@@ -295,20 +298,107 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     DataTable Master = new DataTable();
                     DataTable Details = new DataTable();
+                    DataTable ReturnDetails = new DataTable();
                     DataTable Acc_CostCentreTrans = new DataTable();
                     int N_PurchaseID = 0;
                     string X_MasterSql = "";
                     string X_DetailsSql = "";
                     X_MasterSql = "Select * from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ";
+
                     Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-                    if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     N_PurchaseID = myFunctions.getIntVAL(Master.Rows[0]["N_PurchaseID"].ToString());
+                    if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "isReturnDone", typeof(bool), false);
+                    if (xPath != null && xPath != "")
+                    {
+                        object returnID = dLayer.ExecuteScalar("Select N_PurchaseID from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
+                        if (returnID!=null)
+                        {
+                            object purchaseAmount = dLayer.ExecuteScalar("Select N_InvoiceAmt from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='" + xTransType + "' and X_InvoiceNo='" + xInvoiceNO + "' ", Params, connection);
+                            object returnAmout = dLayer.ExecuteScalar("Select Sum(N_InvoiceAmt)  from vw_Inv_FreeTextPurchase_Disp  Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_TransType='CREDIT NOTE' and N_FreeTextReturnID=" + N_PurchaseID + " ", Params, connection);
+
+                            if (myFunctions.getVAL(purchaseAmount.ToString()) == myFunctions.getVAL(returnAmout.ToString()))
+                            {
+                                Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
+                                Master.Rows[0]["isReturnDone"] = true;
+                                Master.AcceptChanges();
+
+                            }
+                            else
+                            {
+                                Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
+                                Master.Rows[0]["N_PurchaseID"] = 0;
+                                Master.Rows[0]["X_InvoiceNo"] = "@Auto";
+                                Master.AcceptChanges();
+                            }
+                            string X_PurchaseDetails = "Select * From vw_Inv_Purchasedetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "  and N_FreeTextReturnID=" + N_PurchaseID + " ";
+                            ReturnDetails = dLayer.ExecuteDataTable(X_PurchaseDetails, Params, connection);
+
+                        }
+                        else
+                        {
+
+                            Master.Rows[0]["N_FreeTextReturnID"] = N_PurchaseID;
+                            Master.Rows[0]["N_PurchaseID"] = 0;
+                            Master.Rows[0]["X_InvoiceNo"] = "@Auto";
+                            Master.AcceptChanges();
+
+                        }
+
+
+                    }
+
+
+
                     Master = _api.Format(Master, "Master");
 
 
                     X_DetailsSql = "Select * From vw_Inv_Purchasedetails Where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + "   and N_PurchaseID= " + N_PurchaseID + "";
 
+
+
                     Details = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "flag", typeof(int), 0);
+                    if (xPath != null && xPath != "")
+                    {
+                        if (ReturnDetails.Rows.Count > 0)
+                        {
+                            foreach (DataRow var1 in Details.Rows)
+                            {
+                                foreach (DataRow var2 in ReturnDetails.Rows)
+                                {
+                                    if (myFunctions.getIntVAL(var1["N_LedgerID"].ToString()) == myFunctions.getIntVAL(var2["N_LedgerID"].ToString()))
+                                    {
+                                        if (myFunctions.getVAL(var1["N_PpriceF"].ToString()) > myFunctions.getVAL(var2["N_PpriceF"].ToString()))
+                                        {
+                                            var1["N_PpriceF"] = (myFunctions.getVAL(var1["N_PpriceF"].ToString()) - myFunctions.getVAL(var2["N_PpriceF"].ToString())).ToString();
+                                            var1["N_Pprice"] = (myFunctions.getVAL(var1["N_Pprice"].ToString()) - myFunctions.getVAL(var2["N_Pprice"].ToString())).ToString();
+                                        }
+                                        else if (myFunctions.getVAL(var1["N_PpriceF"].ToString()) == myFunctions.getVAL(var2["N_PpriceF"].ToString()))
+                                        {
+
+                                            var1["flag"] = 1;
+
+
+                                        }
+
+                                    }
+
+
+                                }
+                            }
+                        }
+                    }
+                    foreach (DataRow var3 in Details.Rows)
+                    {
+                        if(myFunctions.getIntVAL(var3["flag"].ToString())==1)
+                        {
+                         var3.Delete();
+
+                        }
+                    }
+                    Details.AcceptChanges();
+
                     Details = _api.Format(Details, "Details");
                     SortedList ProParams = new SortedList();
                     ProParams.Add("N_CompanyID", nCompanyId);
@@ -323,7 +413,7 @@ namespace SmartxAPI.Controllers
                     string CostcenterSql = "SELECT X_EmpCode, X_EmpName, N_ProjectID as N_Segment_3,N_EmpID as N_Segment_4, X_ProjectCode,X_ProjectName,N_EmpID,N_ProjectID,N_CompanyID,N_FnYearID, " +
                     " N_VoucherID, N_VoucherDetailsID, N_CostCentreID,X_CostCentreName,X_CostCentreCode,N_BranchID,X_BranchName,X_BranchCode , " +
                     " N_Amount, N_LedgerID, N_CostCenterTransID, N_GridLineNo,X_Naration,0 AS N_AssetID, '' As X_AssetCode, " +
-                    " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory " +
+                    " GETDATE() AS D_RepaymentDate, '' AS X_AssetName,'' AS X_PayCode,0 AS N_PayID,0 AS N_Inst,CAST(0 AS BIT) AS B_IsCategory,D_Entrydate " +
                     " FROM   vw_InvFreeTextPurchaseCostCentreDetails where N_InventoryID = " + N_PurchaseID + " And N_InventoryType=2 And N_FnYearID=" + nFnYearId +
                     " And N_CompanyID=" + nCompanyId + " Order By N_InventoryID,N_VoucherDetailsID ";
 
@@ -338,6 +428,8 @@ namespace SmartxAPI.Controllers
 
                 }
             }
+
+
 
             catch (Exception e)
             {
