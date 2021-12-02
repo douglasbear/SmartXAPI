@@ -17,6 +17,7 @@ using System.Threading.Tasks;
 using System.Linq;
 using System.Net.Mail;
 using System.Text;
+using zatca.einvoicing;
 
 namespace SmartxAPI.Controllers
 {
@@ -281,40 +282,13 @@ namespace SmartxAPI.Controllers
                         var Date = dt.ToString();
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
+                        string Company = myFunctions.GetCompanyName(User);
 
-                        //HEX
-                        string Company = myFunctions.GetCompanyName(User).Length.ToString("X2")+ StringToHex(myFunctions.GetCompanyName(User).Trim());
-                        VatNumber = VatNumber.ToString().Length.ToString("X2") + StringToHex( VatNumber.ToString());
-                        Date = Date.ToString().Length.ToString("X2") + StringToHex( Date.ToString());
-                        Amount = Amount.ToString().Length.ToString("X2") + StringToHex( Amount.ToString());
-                        VatAmount = VatAmount.ToString().Length.ToString("X2") + StringToHex( VatAmount.ToString());
+                        //  dt=new DateTimeOffset(dt).ToUnixTimeSeconds();
+                        // TimeZoneInfo.ConvertTime(utcDateTime, tz);
 
-                        // String QrData = "Seller’s name : " + myFunctions.GetCompanyName(User) + "%0A%0AVAT Number : " + VatNumber + "%0A%0ADate and Time: " + Date + "%0A%0AInvoice Total (with VAT) : " + Amount + "%0A%0AVAT total : " + VatAmount;
-                        string QrData = "01" + Company + "02" + VatNumber + "03" + Date + "04" + Amount + "05" + VatAmount;
-                        byte [] tag1 = System.Text.Encoding.UTF8.GetBytes("01");
-                        byte [] tag2 = System.Text.Encoding.UTF8.GetBytes("02");
-                        byte [] tag3 = System.Text.Encoding.UTF8.GetBytes("03");
-                        byte [] tag4 = System.Text.Encoding.UTF8.GetBytes("04");
-                        byte [] tag5 = System.Text.Encoding.UTF8.GetBytes("05");
-
-                        byte [] CompanyByte = System.Text.Encoding.UTF8.GetBytes(Company);
-                        byte [] VatNumberByte = System.Text.Encoding.UTF8.GetBytes(VatNumber.ToString());
-                        byte [] DateByte = System.Text.Encoding.UTF8.GetBytes(Date);
-                        byte [] AmountByte = System.Text.Encoding.UTF8.GetBytes(Amount);
-                        byte [] VatAmountByte = System.Text.Encoding.UTF8.GetBytes(VatAmount);
-
-                        byte[] rv = new byte[tag1.Length + CompanyByte.Length + tag2.Length+ VatNumberByte.Length + tag3.Length + DateByte.Length + tag4.Length + AmountByte.Length + tag5.Length + VatAmountByte.Length ];
-                        // byte[] rv = new byte[ tag1 , CompanyByte];
-                        System.Buffer.BlockCopy(tag1, 0, rv, 0, tag1.Length);
-                        System.Buffer.BlockCopy(CompanyByte, 0, rv, tag1.Length , CompanyByte.Length);
-                        System.Buffer.BlockCopy(tag2, 0, rv, tag1.Length + CompanyByte.Length , tag2.Length);
-                        System.Buffer.BlockCopy(VatNumberByte, 0, rv, tag1.Length + CompanyByte.Length + tag2.Length , VatNumberByte.Length);
-                        System.Buffer.BlockCopy(tag3, 0, rv, tag1.Length + CompanyByte.Length + tag2.Length + VatNumberByte.Length, tag3.Length);
-                        System.Buffer.BlockCopy(DateByte, 0, rv, tag1.Length + CompanyByte.Length + tag2.Length + VatNumberByte.Length + tag3.Length, DateByte.Length);
-
-                        var plainTextBytes = Convert.ToBase64String(rv);
-                     
-
+                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt.ToUniversalTime(), Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));              
+                        var plainTextBytes = tlv.ToBase64();
 
                         var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
                         WebResponse response = default(WebResponse);
@@ -324,7 +298,7 @@ namespace SmartxAPI.Controllers
                         response = request.GetResponse();
                         remoteStream = response.GetResponseStream();
                         readStream = new StreamReader(remoteStream);
-                        string path = "C://OLIVOSERVER2020/olivoreports/QR/";
+                        string path = "C://OLIVOSERVER2020/QR/";
                         DirectoryInfo info = new DirectoryInfo(path);
                         if (!info.Exists)
                         {
