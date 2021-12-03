@@ -1018,7 +1018,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and b_IsSaveDraft=1", connection, transaction);
-                        if (N_Resultval != null)
+                        if (N_Resultval == null) //  Changed by RKS [Inv Counter issue need to fix ] 
                             InvoiceNo = "@Auto";
                         if (N_SalesID == 0 && InvoiceNo != "@Auto")
                         {
