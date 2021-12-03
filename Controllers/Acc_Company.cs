@@ -330,12 +330,12 @@ namespace SmartxAPI.Controllers
                                         {"@nTaxType",myFunctions.getIntVAL(GeneralTable.Rows[0]["n_TaxType"].ToString())}};
                         dLayer.ExecuteNonQuery("UPDATE Acc_FnYear set N_TaxType=@nTaxType where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID", taxParams, connection, transaction);
 
-                        int SalesManrows = dLayer.ExecuteNonQuery("INSERT INTO Inv_Salesman(N_CompanyID, N_SalesmanID, X_SalesmanCode, X_SalesmanName, X_PhoneNo1, X_Email, B_Inactive, N_FnYearID, D_Entrydate, N_BranchID)"+
-                                                                    "select "+N_CompanyId+",MAX(ISNULL(N_SalesmanID,0))+1,MAX(ISNULL(X_SalesmanCode,100))+1,'"+xUsrName+"','"+xPhoneNo+"','"+GeneralTable.Rows[0]["x_AdminName"].ToString()+"',0,"+N_FnYearId+",GETDATE(),0 from Inv_Salesman", Params, connection,transaction);
-                        if (SalesManrows <= 0)
-                        {
-                            return Ok(api.Warning("Salesman Creation failed"));
-                        } 
+                        // int SalesManrows = dLayer.ExecuteNonQuery("INSERT INTO Inv_Salesman(N_CompanyID, N_SalesmanID, X_SalesmanCode, X_SalesmanName, X_PhoneNo1, X_Email, B_Inactive, N_FnYearID, D_Entrydate, N_BranchID)"+
+                        //                                             "select "+N_CompanyId+",MAX(ISNULL(N_SalesmanID,0))+1,MAX(ISNULL(X_SalesmanCode,100))+1,'"+xUsrName+"','"+xPhoneNo+"','"+GeneralTable.Rows[0]["x_AdminName"].ToString()+"',0,"+N_FnYearId+",GETDATE(),0 from Inv_Salesman", Params, connection,transaction);
+                        // if (SalesManrows <= 0)
+                        // {
+                        //     return Ok(api.Warning("Salesman Creation failed"));
+                        // } 
 
                         transaction.Commit();
 
