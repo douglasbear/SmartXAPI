@@ -591,7 +591,7 @@ namespace SmartxAPI.Controllers
                 int amount = myFunctions.getIntVAL(invoiceamt.ToString()) - myFunctions.getIntVAL(returnamt.ToString());
                    
                    //OutPut.Add("N_Amount",typeof(System.Int32));
-                   OutPut.Add("TotalCount", TotalCount);
+                   OutPut.Add("TotalCount", amount);
                 //    foreach(DataRow row in dt.Rows)
                 //     {
                 //    row["N_Amount"] = amount;
