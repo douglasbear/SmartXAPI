@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
 
                     for (int i = 0; i < DetailTable.Rows.Count; i++)
                     {
-                        DetailTable.Rows[0]["N_AdjustmentID"] = nAdjustmentID;
+                        DetailTable.Rows[i]["N_AdjustmentID"] = nAdjustmentID;
                     }
                     int nAdjustmentDetailID = dLayer.SaveData("Inv_StockAdjustmentDetails", "N_AdjustmentDetailsID", DetailTable, connection, transaction);
                     if (nAdjustmentDetailID <= 0)
