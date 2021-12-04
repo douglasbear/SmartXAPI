@@ -570,43 +570,36 @@ namespace SmartxAPI.Controllers
         [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
-            try
-            {
-                DataTable dt = new DataTable();
+             DataTable dt = new DataTable();
                 int nCompanyID = myFunctions.GetCompanyID(User);
                 string sqlCommmand = "";
                 SortedList Params = new SortedList();
                 Params.Add("@nCompanyID", nCompanyID);
                 Params.Add("@nCustomerID", nCustomerID);
                 Params.Add("@nFnYearID", nFnYearID);
-                //sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
-                // sqlCommmand1 = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from Inv_SalesReturnMaster where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
+                sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
                 SortedList OutPut = new SortedList();
+            try
+            {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
-                object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalReturnAmount,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params,connection);
-                object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params,connection);
+                   dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
+                object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params,connection);
+                object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params,connection);
+                 if (returnamt == null)
+                {
+                    returnamt="0";
+                }
+                 if (invoiceamt == null)
+                {
+                    invoiceamt="0";
+                }
                 int amount = myFunctions.getIntVAL(invoiceamt.ToString()) - myFunctions.getIntVAL(returnamt.ToString());
-                   
-                   //OutPut.Add("N_Amount",typeof(System.Int32));
-                   OutPut.Add("TotalCount", amount);
-                //    foreach(DataRow row in dt.Rows)
-                //     {
-                //    row["N_Amount"] = amount;
                
-                //      }
-                //     dt = api.Format(dt);
-                    // if (dt.Rows.Count == 0)
-                    // {
-                    //     return Ok(api.Notice("No Results Found"));
-                    // }
-                    // else
-                    // {
-                        return Ok(api.Success(OutPut));
-                    //}
-
+                   OutPut.Add("TotalCount", amount);
+                   return Ok(api.Success(OutPut));
+                  
                 }
             }
             catch (Exception e)
