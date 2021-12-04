@@ -34,9 +34,10 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetDayReopen(int nCompanyID,int nFnYearID,int nBranchID)
+        public ActionResult GetDayReopen(int nFnYearID,int nBranchID)
         {
             DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
             SortedList Params = new SortedList();
             Params.Add("@p1",nCompanyID);
             Params.Add("@p2",nFnYearID);
@@ -60,7 +61,7 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Success(Result));
+                    return Ok(_api.Success(dt));
                 }
             }
             catch (Exception e)

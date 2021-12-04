@@ -554,8 +554,8 @@ namespace SmartxAPI.Controllers
                             masterTable.Rows[0]["X_PlateNo"] = objPlateNo.ToString();
                     }
 
-                    if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-                        masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
+                    // if (masterTable.Rows[0]["X_TandC"].ToString() == "")
+                    //     masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
                     int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
                     if (N_TermsID > 0)
                     {
@@ -1017,24 +1017,28 @@ namespace SmartxAPI.Controllers
 
                     else
                     {
-                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and b_IsSaveDraft=1", connection, transaction);
-                        if (N_Resultval == null) //  Changed by RKS [Inv Counter issue need to fix ] 
-                            InvoiceNo = "@Auto";
-                        if (N_SalesID == 0 && InvoiceNo != "@Auto")
-                        {
-                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
-                            if (N_DocNumber == null)
-                            {
-                                N_DocNumber = 0;
-                            }
-                            if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID , connection, transaction);
+                        if (N_SalesID == 0 && N_Resultval != null) //  Changed by RKS [Inv Counter issue need to fix ] 
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User, "Not a valid Doc No"));
+                                return Ok(_api.Error(User, "Invoice number already in use"));
                             }
+                            // InvoiceNo = "@Auto";
+                        // if (N_SalesID == 0 && InvoiceNo != "@Auto")
+                        // {
+                        //     object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        //     if (N_DocNumber == null)
+                        //     {
+                        //         N_DocNumber = 0;
+                        //     }
+                        //     if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                        //     {
+                        //         transaction.Rollback();
+                        //         return Ok(_api.Error(User, "Not a valid Doc No"));
+                        //     }
 
 
-                        }
+                        // }
 
                         if (InvoiceNo == "@Auto")
                         {
