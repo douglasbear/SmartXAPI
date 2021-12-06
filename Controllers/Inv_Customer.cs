@@ -169,15 +169,26 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 DataTable Attachment = ds.Tables["attachments"];
+                 bool b_AutoGenerate=false;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
-                bool b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
+                int flag=0;
+
+                if(MasterTable.Columns.Contains("b_AutoGenerate"))
+                {
+                       b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
+                        MasterTable.Columns.Remove("b_AutoGenerate");
+                }
+              
                 string x_CustomerName = (MasterTable.Rows[0]["x_CustomerName"].ToString());
-                int flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
-                MasterTable.Columns.Remove("b_AutoGenerate");
-                MasterTable.Columns.Remove("flag");
+                if(MasterTable.Columns.Contains("flag"))
+                {
+                 flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
+                 MasterTable.Columns.Remove("flag");
+                }
+
                 bool showConformationLedger = false;
 
 
