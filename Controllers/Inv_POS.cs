@@ -184,14 +184,21 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listcategory")]
-        public ActionResult GetDepartmentList()
+        public ActionResult GetDepartmentList(int nLocationID,int nBranchID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nLocationID", nLocationID);
 
-            string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID=@nCompanyID";
+            // string sqlCommandText = "Select N_CategoryID,X_Category from Inv_ItemCategory Where N_CompanyID= @nCompanyID and N_CompanyID=@nCompanyID";
+
+            string sqlCommandText = "SELECT        Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category " +
+" FROM            Inv_ItemCategory LEFT OUTER JOIN " +
+  "                       vw_UC_Item ON Inv_ItemCategory.N_CompanyID = vw_UC_Item.N_CompanyID AND Inv_ItemCategory.X_Category = vw_UC_Item.Category " +
+" Where  Inv_ItemCategory.N_CompanyID= @nCompanyID and Inv_ItemCategory.N_CompanyID=@nCompanyID and vw_UC_Item.N_CompanyID=@nCompanyID and vw_UC_Item.N_LocationID=@nLocationID and  vw_UC_Item.N_BranchID=@nBranchID " ;
 
             try
             {
@@ -201,14 +208,8 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 dt = _api.Format(dt);
-                if (dt.Rows.Count == 0)
-                {
-                    return Ok(_api.Notice("No Results Found"));
-                }
-                else
-                {
+
                     return Ok(_api.Success(dt));
-                }
             }
             catch (Exception e)
             {
@@ -216,7 +217,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("items")]
-        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID, int mainItemID)
+        public ActionResult GetItems(int nCategoryID, string xSearchkey, int PageSize, int Page, int nCustomerID, int dispCatID, int mainItemID,int nLocationID,int nBranchID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -228,6 +229,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             string categorySql = "";
             string parentItemFilterSql = "";
+            string BranchandLocation = "";
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
@@ -248,11 +250,16 @@ namespace SmartxAPI.Controllers
                 Searchkey = Searchkey + " and vw_InvItem_Search.N_ItemID in (select N_ItemID from Inv_ItemCategoryDisplayMaster where N_CategoryDisplayID=" + dispCatID + ")";
 
 
+                BranchandLocation = " and vw_UC_Item.N_BranchID=@nBranchID and vw_UC_Item.N_LocationID=@nLocationID ";
+
+
             sqlCommandText = "  vw_InvItem_Search.*, " +
-                         " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName" +
+                         " dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID, vw_InvItem_Search.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, '' AS i_Image, Inv_DisplayImages.X_ImageName,vw_UC_Item.N_LocationID, vw_UC_Item.N_BranchID" +
 " FROM            vw_InvItem_Search LEFT OUTER JOIN" +
                         " Inv_DisplayImages ON vw_InvItem_Search.N_CompanyID = Inv_DisplayImages.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_DisplayImages.N_ItemID LEFT OUTER JOIN" +
-                        " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + categorySql + parentItemFilterSql + Searchkey;
+                        " Inv_ItemUnit ON vw_InvItem_Search.N_StockUnitID = Inv_ItemUnit.N_ItemUnitID AND vw_InvItem_Search.N_CompanyID = Inv_ItemUnit.N_CompanyID FULL OUTER JOIN"+ 
+                        " vw_UC_Item ON vw_InvItem_Search.N_CompanyID = vw_UC_Item.N_CompanyID AND vw_InvItem_Search.N_ItemID = vw_UC_Item.N_ItemID "+
+                        " where vw_InvItem_Search.N_CompanyID=@p1 and vw_InvItem_Search.B_Inactive=0 and vw_InvItem_Search.[Item Code]<> @p3 and vw_InvItem_Search.N_ItemTypeID<>@p4  and vw_InvItem_Search.N_ItemID=Inv_ItemUnit.N_ItemID " + BranchandLocation + categorySql + parentItemFilterSql + Searchkey;
 
 
             Params.Add("@p1", nCompanyId);
@@ -263,6 +270,8 @@ namespace SmartxAPI.Controllers
             Params.Add("@Offset", Page);
             Params.Add("@p5", Page);
             Params.Add("@mainItemID", mainItemID);
+            Params.Add("@nLocationID", nLocationID);
+            Params.Add("@nBranchID", nBranchID);
 
 
             SortedList OutPut = new SortedList();
