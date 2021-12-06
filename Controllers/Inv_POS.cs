@@ -860,14 +860,14 @@ namespace SmartxAPI.Controllers
 
                         if (N_SaveDraft == 0)
                         {
-                            // SortedList PostingParam = new SortedList();
-                            // PostingParam.Add("N_CompanyID", N_CompanyID);
-                            // PostingParam.Add("X_InventoryMode", "SALES");
-                            // PostingParam.Add("N_InternalID", N_SalesID);
-                            // PostingParam.Add("N_UserID", N_UserID);
-                            // PostingParam.Add("X_SystemName", "ERP Cloud");
+                            SortedList PostingParam = new SortedList();
+                            PostingParam.Add("N_CompanyID", N_CompanyID);
+                            PostingParam.Add("X_InventoryMode", "SALES");
+                            PostingParam.Add("N_InternalID", N_SalesID);
+                            PostingParam.Add("N_UserID", N_UserID);
+                            PostingParam.Add("X_SystemName", "ERP Cloud");
 
-                            // dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostingParam, connection, transaction);
 
                             SortedList StockPostingParams = new SortedList();
                             StockPostingParams.Add("N_CompanyID", N_CompanyID);
