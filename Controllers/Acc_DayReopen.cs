@@ -84,13 +84,21 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
-                    int nCloseID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CloseID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nBranchID);
                 
-                    nCloseID = dLayer.SaveData("Acc_DayReopen", "n_CloseID", MasterTable, connection, transaction);
-                    
-                    transaction.Commit();
-                    return Ok(_api.Success("Saved")) ;
+                   for (int i = 1; i < MasterTable.Rows.Count; i++)
+                    {
+                        if (MasterTable.Rows[i]["b_Select"]=="True")
+                        {
+                            int N_ClosedID = myFunctions.getIntVAL(MasterTable.Rows[i]["n_CloseID"].ToString());
+                            dLayer.ExecuteNonQuery("update  Acc_Dayclosing set B_Closed=0 where N_CloseID=" + N_ClosedID + " and N_CompanyID=@p1 and N_BranchID=@p2 ", Params, connection, transaction);
+                        };
+                    }
+                        transaction.Commit();
+                        return Ok(_api.Success("Saved")) ;
                 }
             }
             catch (Exception ex)
