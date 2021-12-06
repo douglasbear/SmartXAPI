@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetMaterialDispatchList(int? nCompanyId, int nFnYearId,int nProjectID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetMaterialDispatchList(int? nCompanyId, int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
