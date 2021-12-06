@@ -894,14 +894,15 @@ namespace SmartxAPI.Controllers
                                      transaction.Rollback();
                                     return Ok(_api.Error(User, "Txn Date"));
                                     }
-                                else if (ex.Message == "55"){
+                                else {
+                                // if (ex.Message == "55"){
                                     dLayer.ExecuteNonQuery("update  Inv_Sales set B_IsSaveDraft=1 where N_SalesID=@nSalesID and N_CompanyID=@nCompanyID and N_BranchID=@nBranchID", QueryParams, connection, transaction);
                                     // return Ok(_api.Error(User, "Quantity exceeds!"));
                                 }
-                                else{
-                                     transaction.Rollback();
-                                    return Ok(_api.Error(User, ex));
-                                    }
+                                // else{
+                                //      transaction.Rollback();
+                                //     return Ok(_api.Error(User, ex));
+                                //     }
                             }
 
 

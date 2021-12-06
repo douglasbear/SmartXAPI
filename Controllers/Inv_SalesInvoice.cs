@@ -289,7 +289,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
         {
-
+if(xInvoiceNo!=null)
+xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             try
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
@@ -828,6 +829,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction;
+                    // if(!MasterTable.Rows.Contains("n_PaymentMethodID"))
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"n_PaymentMethodID",typeof(int),1);
+
                     DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
 
@@ -838,6 +842,7 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+                    
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -1323,7 +1328,7 @@ namespace SmartxAPI.Controllers
 
                     object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
-                    if (N_CustomerVendorID != null)
+                    if (N_CustomerVendorID.ToString() != "")
                     {
                         SortedList PurchaseParams = new SortedList();
                         PurchaseParams.Add("@N_CompanyID", N_CompanyID);
