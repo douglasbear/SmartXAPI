@@ -568,33 +568,40 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-        [HttpGet("totalInvoiceAmount")]
+       [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
+            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommmand = "";
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nCustomerID", nCustomerID);
+            Params.Add("@nFnYearID", nFnYearID);
+            sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
+            SortedList OutPut = new SortedList();
             try
             {
-                DataTable dt = new DataTable();
-                int nCompanyID = myFunctions.GetCompanyID(User);
-                string sqlCommmand = "";
-                SortedList Params = new SortedList();
-                Params.Add("@nCompanyID", nCompanyID);
-                Params.Add("@nCustomerID", nCustomerID);
-                Params.Add("@nFnYearID", nFnYearID);
-                sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
-                    dt = api.Format(dt);
-                    if (dt.Rows.Count == 0)
+                    object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
+                    object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
+                    if (returnamt.ToString() == "")
                     {
-                        return Ok(api.Notice("No Results Found"));
+                        returnamt = "0";
                     }
-                    else
+                    if (invoiceamt == null)
                     {
-                        return Ok(api.Success(dt));
+                        invoiceamt = "0";
                     }
+                    double amount = myFunctions.getVAL(invoiceamt.ToString()) - myFunctions.getVAL(returnamt.ToString());
+                    dt.Rows[0]["TotalInvoiceAmount"] = amount.ToString();
+                    dt.AcceptChanges();
+                    
+
+                    return Ok(api.Success(dt));
 
                 }
             }

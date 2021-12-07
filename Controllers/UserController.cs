@@ -157,8 +157,8 @@ namespace SmartxAPI.Controllers
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
-                       // return Ok(_api.Warning("No Results Found"));
-                       return Ok(_api.Success(OutPut));
+                        // return Ok(_api.Warning("No Results Found"));
+                        return Ok(_api.Success(OutPut));
                     }
                     else
                     {
@@ -186,6 +186,7 @@ namespace SmartxAPI.Controllers
 
                 int nClientID = myFunctions.GetClientID(User);
                 int globalUserID, userID, nUserID, nGlobalUserID = 0;
+                bool bSalesPerson;
                 string exclude = " and X_UserID<>'Olivo' and X_Email LIKE '_%@__%.__%'";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -199,6 +200,9 @@ namespace SmartxAPI.Controllers
                         olivoCon.Open();
                         SqlTransaction olivoTxn = olivoCon.BeginTransaction();
                         nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                        
+                       
+                        bSalesPerson =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Salesperson"].ToString());
                         nGlobalUserID = myFunctions.getIntVAL(globalUser.Rows[0]["n_UserID"].ToString());
 
 
@@ -210,6 +214,11 @@ namespace SmartxAPI.Controllers
                         userParams.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                         userParams.Add("@nGlobalUserID", globalUser.Rows[0]["n_UserID"].ToString());
                         userParams.Add("@xEmailID", globalUser.Rows[0]["x_EmailID"].ToString());
+
+                      
+                         MasterTable.Columns.Remove("b_Salesperson");
+
+
 
 
                         string skipUserSql = "";
@@ -259,8 +268,8 @@ namespace SmartxAPI.Controllers
                         {
                             return Ok(_api.Warning("user with this email id already exists"));
                         }
-                        object nUserLimit = dLayer.ExecuteScalar("SELECT N_UserLimit FROM ClientMaster where N_ClientID=@nClientID" , userParams, olivoCon, olivoTxn);
-                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_CompanyID=@nCompanyID  "+exclude, userParams, connection,transaction);
+                        object nUserLimit = dLayer.ExecuteScalar("SELECT N_UserLimit FROM ClientMaster where N_ClientID=@nClientID", userParams, olivoCon, olivoTxn);
+                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_CompanyID=@nCompanyID  " + exclude, userParams, connection, transaction);
                         if (myFunctions.getIntVAL(nUserLimit.ToString()) < myFunctions.getIntVAL(nUserCount.ToString()))
                         {
                             return Ok(_api.Warning("user limit exeeded"));
@@ -326,14 +335,19 @@ namespace SmartxAPI.Controllers
                         userID = dLayer.SaveData("Sec_User", "n_UserID", MasterTable, connection, transaction);
                         if (userID > 0)
                         {
-                            object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
-                            //
-                            if (myFunctions.getIntVAL(salesManCount.ToString()) == 0)
+                            if (bSalesPerson)
                             {
-                                object salesManMax = dLayer.ExecuteScalar("select max(N_SalesmanID)+1 from Inv_SalesMan ", connection, transaction);
-                                object salesManCodeMax = dLayer.ExecuteScalar("select max(cast(X_SalesManCode as numeric))+1 from Inv_SalesMan ", connection, transaction);
-                                object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values(" + myFunctions.GetCompanyID(User) + "," + (myFunctions.getIntVAL(salesManMax.ToString())) + ",'" + (myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString() + "','" + MasterTable.Rows[0]["X_UserName"].ToString() + "','" + MasterTable.Rows[0]["X_UserID"].ToString() + "',0,0,2," + userID + ",2)", connection, transaction);
+
+                                object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
+                                //
+                                if (myFunctions.getIntVAL(salesManCount.ToString()) == 0)
+                                {
+                                    object salesManMax = dLayer.ExecuteScalar("select max(N_SalesmanID)+1 from Inv_SalesMan ", connection, transaction);
+                                    object salesManCodeMax = dLayer.ExecuteScalar("select max(cast(X_SalesManCode as numeric))+1 from Inv_SalesMan ", connection, transaction);
+                                    object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values(" + myFunctions.GetCompanyID(User) + "," + (myFunctions.getIntVAL(salesManMax.ToString())) + ",'" + (myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString() + "','" + MasterTable.Rows[0]["X_UserName"].ToString() + "','" + MasterTable.Rows[0]["X_UserID"].ToString() + "',0,0,2," + userID + ",2)", connection, transaction);
+                                }
                             }
+
 
 
 
@@ -360,7 +374,7 @@ namespace SmartxAPI.Controllers
           + "</h1><p style='margin: 0 0 24px;'>" + userName + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
           + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Cloud Solutions, All rights reserved.</p></div>";
                                 string EmailSubject = myFunctions.GetCompanyName(User) + " invites you to join their Olivo Cloud Solutions";
-                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer,1,1,1);
+                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
                             }
                             else if (nUserID == 0)
                             {
@@ -382,7 +396,7 @@ namespace SmartxAPI.Controllers
           + "</h1><p style='margin: 0 0 24px;'>" + userName + " has invited you to join the " + myFunctions.GetCompanyName(User) + ". Join now to have access!"
           + "</p><a href='" + appUrl + "/login" + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Join Now</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Cloud Solutions, All rights reserved.</p></div>";
                                 string EmailSubject = myFunctions.GetCompanyName(User) + " invites you to join their Olivo Cloud Solutions";
-                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer,1,1,1);
+                                myFunctions.SendMail(MasterTable.Rows[0]["x_UserID"].ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
 
                             }
                         }
@@ -517,7 +531,7 @@ namespace SmartxAPI.Controllers
 + "</p><a href='" + appUrl + "/verifyUser#" + inviteCode + "' style='text-decoration: none;display: block;width: max-content;font-size: 18px;margin: 0 auto 24px;padding: 20px 40px;color: #ffffff;border-radius: 4px;background-color: #2c6af6;'>Reset Your Password</a><p style='margin: 24px 0 0 ;padding: 17px 0;text-align: center;background: #f4f5f6;color: #86898e;font-size: 14px;'>Copyright © 2021 Olivo Tech., All rights reserved.</p></div>";
                     string EmailSubject = "Olivo Cloud Solutions - Reset Password";
 
-                    myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer,1,1,1);
+                    myFunctions.SendMail(emailID.ToString(), EmailBody, EmailSubject, dLayer, 1, 1, 1);
 
                 }
                 return Ok(_api.Success("Password Reset Mail Send"));
@@ -621,67 +635,67 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nUserId);
             Params.Add("@nClientID", nClientID);
-            
-           
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    
+
                     object UserDt = dLayer.ExecuteScalar(sqlUser, Params, connection);
                     Params.Add("@p3", UserDt.ToString());
-                     using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
+                    using (SqlConnection olivoCon = new SqlConnection(masterDBConnectionString))
                     {
                         olivoCon.Open();
                         SqlTransaction olivoTxn = olivoCon.BeginTransaction();
-                      
-                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(*) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID" , Params, olivoCon, olivoTxn);
-                         if (myFunctions.getIntVAL(nUseradmin.ToString()) >0)
+
+                        object nUseradmin = dLayer.ExecuteScalar("SELECT count(*) FROM ClientMaster where X_AdminUserID=@p3 and N_ClientID=@nClientID", Params, olivoCon, olivoTxn);
+                        if (myFunctions.getIntVAL(nUseradmin.ToString()) > 0)
                         {
-                             return Ok(_api.Error(User, "Unable to delete User"));
+                            return Ok(_api.Error(User, "Unable to delete User"));
                         }
 
-                        
-                       // nCliUserId = dLayer.ExecuteScalar("select N_UserID from Users where X_AdminUserID=@p3 and N_ClientID=@nClientID" , Params, olivoCon, olivoTxn);
-                    // object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
-                    // if (Category == null)
-                    //     return Ok(_api.Error(User, "Unable to delete User"));
-                    
-                    // if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
-                    //     return Ok(_api.Error(User, "Unable to delete User"));
-                    else
-                    {
-                        int N_CountTransUser = 0;
-                        object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
-                        N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
-                        if (N_CountTransUser > 0)
-                            return Ok(_api.Error(User, "Unable to delete User"));
-                    }
+
+                        // nCliUserId = dLayer.ExecuteScalar("select N_UserID from Users where X_AdminUserID=@p3 and N_ClientID=@nClientID" , Params, olivoCon, olivoTxn);
+                        // object Category = dLayer.ExecuteScalar(sqlCategory, Params, connection);
+                        // if (Category == null)
+                        //     return Ok(_api.Error(User, "Unable to delete User"));
+
+                        // if (Category.ToString() == "Olivo" || Category.ToString().ToLower() == "administrator")
+                        //     return Ok(_api.Error(User, "Unable to delete User"));
+                        else
+                        {
+                            int N_CountTransUser = 0;
+                            object CountTransUser = dLayer.ExecuteScalar(sqlTrans, Params, connection);
+                            N_CountTransUser = myFunctions.getIntVAL(CountTransUser.ToString());
+                            if (N_CountTransUser > 0)
+                                return Ok(_api.Error(User, "Unable to delete User"));
+                        }
 
                         Results = dLayer.DeleteData("sec_User", "N_UserId", nUserId, "", connection);
-                  
-                        int N_CliUserID = 0;
-                        object CountCliUser =  dLayer.ExecuteScalar("select N_UserID from Users where X_EmailID=@p3 and N_ClientID=@nClientID " , Params, olivoCon, olivoTxn);
-                        if(CountCliUser!=null)
-                        {
-                        N_CliUserID = myFunctions.getIntVAL(CountCliUser.ToString());
-                        Params.Add("@p4", N_CliUserID); 
-                        dLayer.ExecuteNonQuery("DELETE FROM Users WHERE N_UserID=@p4 ", Params, olivoCon, olivoTxn);
-                         
-                        }
-                        
-                    
 
-                    if (Results > 0)
-                    {   
-                        olivoTxn.Commit(); 
-                        return Ok(_api.Success("User deleted"));
-                    }
-                    else
-                    {
-                        return Ok(_api.Error(User, "Unable to delete User"));
-                    }
+                        int N_CliUserID = 0;
+                        object CountCliUser = dLayer.ExecuteScalar("select N_UserID from Users where X_EmailID=@p3 and N_ClientID=@nClientID ", Params, olivoCon, olivoTxn);
+                        if (CountCliUser != null)
+                        {
+                            N_CliUserID = myFunctions.getIntVAL(CountCliUser.ToString());
+                            Params.Add("@p4", N_CliUserID);
+                            dLayer.ExecuteNonQuery("DELETE FROM Users WHERE N_UserID=@p4 ", Params, olivoCon, olivoTxn);
+
+                        }
+
+
+
+                        if (Results > 0)
+                        {
+                            olivoTxn.Commit();
+                            return Ok(_api.Success("User deleted"));
+                        }
+                        else
+                        {
+                            return Ok(_api.Error(User, "Unable to delete User"));
+                        }
                     }
 
 

@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpDelete("delete")]
-        public ActionResult DeleteData(int nItemID)
+        public ActionResult DeleteData(int nAdjustmentID)
         {
 
             try
@@ -129,10 +129,10 @@ namespace SmartxAPI.Controllers
                     var nUserID = myFunctions.GetUserID(User);
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-                                {"N_ItemID",nItemID},
-                                {"N_UserID",nUserID},
+                                {"N_AdjustmentID",nAdjustmentID},
+                               
                                 };
-                    int Results = dLayer.ExecuteNonQueryPro("vw_InvStockAdjustment_Disp", DeleteParams, connection, transaction);
+                    int Results = dLayer.ExecuteNonQueryPro("", DeleteParams, connection, transaction);
 
                     if (Results <= 0)
                     {
@@ -254,45 +254,100 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-        [HttpGet("listdetails")]
+
+
+  [HttpGet("listdetails")]
         public ActionResult GetSalesDetails(int nCompanyId, int nFnYearId, string xRefNo, string xTransType, bool showAllBranch, int nBranchId, string xPath)
         {
 
-            try
-            {
-                using (SqlConnection connection = new SqlConnection(connectionString))
-                {
-                    connection.Open();
-                    DataSet dt = new DataSet();
-                    SortedList Params = new SortedList();
-                    DataTable Master = new DataTable();
-                    DataTable Details = new DataTable();
-                    string X_MasterSql = "";
-                    string X_DetailsSql = "";
-                    if (showAllBranch)
+            DataSet ds = new DataSet();
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            //string sqlCommandText = "";
+              string X_MasterSql = "";
+          if (showAllBranch)
                     {
                         X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
                     }
                     else
                     {
 
-
                         X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
                     }
-                    Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-                    if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-                  dt.Tables.Add(Master);
-                    return Ok(_api.Success(dt));
+           
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
+                  
+                    dt.AcceptChanges();
 
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                     
+                        dt = _api.Format(dt, "master");
+                        ds.Tables.Add(dt);
+                        
+                        return Ok(_api.Success(ds));
+                    }
                 }
             }
-
-
             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
             }
+
         }
+
+
+        
+        // [HttpGet("listdetails")]
+        // public ActionResult GetSalesDetails(int nCompanyId, int nFnYearId, string xRefNo, string xTransType, bool showAllBranch, int nBranchId, string xPath)
+        // {
+
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             DataSet dt = new DataSet();
+        //             SortedList Params = new SortedList();
+        //             DataTable Master = new DataTable();
+        //             DataTable Details = new DataTable();
+        //             string X_MasterSql = "";
+        //             string X_DetailsSql = "";
+        //             if (showAllBranch)
+        //             {
+        //                 X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
+        //             }
+        //             else
+        //             {
+
+
+        //                 X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
+        //             }
+        //             Master = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
+        //             if (Master.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+        //              Master = _api.Format(Master, "Master");
+        //              dt.Tables.Add(Master);
+        //             return Ok(_api.Success(dt));
+
+        //         }
+        //     }
+
+
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
     }
 }
 
