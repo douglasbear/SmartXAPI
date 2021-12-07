@@ -212,6 +212,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("saveSettings")]
         public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue)
         {
+            if(xValue==null)
+            xValue="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
