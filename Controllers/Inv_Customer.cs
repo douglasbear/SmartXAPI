@@ -544,14 +544,15 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             if (crmcustomerID > 0)
             {
-                sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_CustomerID=" + crmcustomerID + "";
+                sqlCommandText = "select   X_Customer as X_CustomerName,X_Phone as X_PhoneNo1,* from vw_CRMCustomer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=" + crmcustomerID + "";
             }
             else
             {
-                sqlCommandText = "select * from  vw_InvCustomer  where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID";
+                sqlCommandText = "select * from  vw_InvCustomer  where N_CompanyID=@nCompanyID and N_CustomerID=@nCustomerID and N_FnYearID=@nFnYearID ";
             }
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nCustomerID", nCustomerID);
+            Params.Add("@nFnYearID", nFnYearID);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -623,7 +624,7 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-        [HttpGet("totalInvoiceAmount")]
+       [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
             DataTable dt = new DataTable();
