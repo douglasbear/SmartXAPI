@@ -97,7 +97,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -145,7 +145,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -166,17 +166,17 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by N_VendorID desc";
             else
             {
-                 switch (xSortBy.Split(" ")[0])
-                        {
-                            case "x_VendorCode":
-                                xSortBy = "N_VendorID " + xSortBy.Split(" ")[1];
-                                break;
-                          
-                            default: break;
-                        }  
-             xSortBy = " order by " + xSortBy;
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "x_VendorCode":
+                        xSortBy = "N_VendorID " + xSortBy.Split(" ")[1];
+                        break;
+
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
             }
-              
+
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ") N_VendorID,X_VendorCode,X_VendorName,N_CountryID,X_Country,N_TypeID,X_TypeName,N_CurrencyID,X_CurrencyName,X_ContactName,X_Address,X_PhoneNo1,X_VendorType from vw_InvVendor where N_CompanyID=@p1 and B_Inactive=@p2 " + Searchkey + " " + xSortBy;
             else
@@ -200,7 +200,7 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                       // return Ok(_api.Warning("No Results Found"));
+                        // return Ok(_api.Warning("No Results Found"));
                         return Ok(_api.Success(OutPut));
                     }
                     else
@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -235,6 +235,24 @@ namespace SmartxAPI.Controllers
                 int nVendorID = myFunctions.getIntVAL(MasterRow["n_VendorID"].ToString());
                 int nCompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyId"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+                bool b_AutoGenerate = false;
+                int flag = 0;
+                //gLAccount AutoGen
+                if (MasterTable.Columns.Contains("b_AutoGenerate"))
+                {
+                    b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
+                    MasterTable.Columns.Remove("b_AutoGenerate");
+                }
+
+                string x_VendorName = (MasterTable.Rows[0]["x_VendorName"].ToString());
+                if (MasterTable.Columns.Contains("flag"))
+                {
+                    flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
+                    MasterTable.Columns.Remove("flag");
+                }
+
+                bool showConformationLedger = false;
+
                 QueryParams.Add("@nCompanyID", MasterRow["n_CompanyId"].ToString());
                 QueryParams.Add("@nFnYearID", MasterRow["n_FnYearId"].ToString());
                 QueryParams.Add("@nFormID", 52);
@@ -253,26 +271,65 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         VendorCode = dLayer.GetAutoNumber("Inv_Vendor", "x_VendorCode", Params, connection, transaction);
-                        if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to save")); }
+                        if (VendorCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to save")); }
                         MasterTable.Rows[0]["x_VendorCode"] = VendorCode;
                     }
 
-                    if(MasterTable.Columns.Contains("b_DirPosting")){
-                        MasterTable.Rows[0]["b_DirPosting"] = 0;
-                    }else{
-                       MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"b_DirPosting",typeof(int),0); 
-                    }
-                    
-                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + VendorCode + "'";
-                    string X_Crieteria="N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
-                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID",DupCriteria,X_Crieteria, MasterTable, connection, transaction);
-                    if (nVendorID <= 0)
+                    if (MasterTable.Columns.Contains("b_DirPosting"))
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        MasterTable.Rows[0]["b_DirPosting"] = 0;
                     }
                     else
                     {
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_DirPosting", typeof(int), 0);
+                    }
+
+                    string DupCriteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and X_VendorCode='" + VendorCode + "'";
+                    string X_Crieteria = "N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
+                    nVendorID = dLayer.SaveData("Inv_Vendor", "N_VendorID", DupCriteria, X_Crieteria, MasterTable, connection, transaction);
+                    if (nVendorID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save"));
+                    }
+                    else
+                    {
+                        object N_GroupID = dLayer.ExecuteScalar("select Isnull(N_FieldValue,0) FRom Acc_AccountDefaults Where X_FieldDescr ='Vendor Account Group' and N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID, Params, connection, transaction);
+                        string X_LedgerName = "";
+                        if (b_AutoGenerate)
+                        {
+                            X_LedgerName = x_VendorName;
+                            if (N_GroupID != null)
+                            {
+                                object N_LedgerID = dLayer.ExecuteScalar("select N_LedgerID FRom Acc_MastLedger Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" +nFnYearID + " and N_GroupID =" + N_GroupID + " and X_LedgerName ='" + X_LedgerName + "' ", Params, connection, transaction);
+                                if (N_LedgerID != null)
+                                {
+                                    if (flag == 2)//for confirmation of same ledger creattion 
+                                    {
+                                        showConformationLedger = true;
+                                        return Ok(_api.Success(showConformationLedger));
+                                    }
+
+                                    if (flag == 1)//for same account for olready exist 
+                                    {
+                                        dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " +nCompanyID + "," + nVendorID + ",'" +nVendorID+ "','" + X_LedgerName + "'," +myFunctions.GetUserID(User) + "," + nFnYearID + "," + "Vendor",  Params, connection, transaction);
+                                    }
+                                    else// update ledger id
+                                    {
+                                         dLayer.ExecuteNonQuery("Update Inv_Vendor Set N_LedgerID =" +  myFunctions.getIntVAL(N_LedgerID.ToString())  + " Where N_VendorID=" + nVendorID + "and N_CompanyID= " +nCompanyID + " and  N_FnYearID = " + nFnYearID,Params, connection, transaction);
+                                        
+                                    }
+                                }
+                                else
+                                {
+                                    dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " + nCompanyID+ "," + nVendorID + ",'" + nVendorID+ "','" + X_LedgerName + "'," +myFunctions.GetUserID(User)+ "," +nFnYearID + "," + "Vendor", Params, connection, transaction);
+                                }
+                            }
+                           // else
+                           // msg.msgError("No DefaultGroup");
+                       }
+
+
 
                         SortedList nParams = new SortedList();
                         nParams.Add("@nCompanyID", nCompanyID);
@@ -285,18 +342,18 @@ namespace SmartxAPI.Controllers
                         if (outputDt.Rows.Count == 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,"Unable to save"));
+                            return Ok(_api.Error(User, "Unable to save"));
                         }
                         DataRow NewRow = outputDt.Rows[0];
 
                         try
                         {
-                            myAttachments.SaveAttachment(dLayer, Attachment,  MasterTable.Rows[0]["x_VendorCode"].ToString()+"-"+MasterTable.Rows[0]["x_VendorName"].ToString(), 0, MasterTable.Rows[0]["x_VendorName"].ToString(), MasterTable.Rows[0]["x_VendorCode"].ToString(), nVendorID, "Vendor Document", User, connection, transaction);
+                            myAttachments.SaveAttachment(dLayer, Attachment, MasterTable.Rows[0]["x_VendorCode"].ToString() + "-" + MasterTable.Rows[0]["x_VendorName"].ToString(), 0, MasterTable.Rows[0]["x_VendorName"].ToString(), MasterTable.Rows[0]["x_VendorCode"].ToString(), nVendorID, "Vendor Document", User, connection, transaction);
                         }
                         catch (Exception ex)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User,ex));
+                            return Ok(_api.Error(User, ex));
                         }
 
                         transaction.Commit();
@@ -306,7 +363,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -328,7 +385,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     if (myFunctions.getBoolVAL(myFunctions.checkProcessed("Acc_FnYear", "B_YearEndProcess", "N_FnYearID", "@nFnYearID", "N_CompanyID=@nCompanyID ", QueryParams, dLayer, connection)))
-                        return Ok(_api.Error(User,"Year is closed, Cannot create new Vendor..."));
+                        return Ok(_api.Error(User, "Year is closed, Cannot create new Vendor..."));
 
                     SqlTransaction transaction = connection.BeginTransaction();
                     Results = dLayer.DeleteData("Inv_Vendor", "N_VendorID", nVendorID, "", connection, transaction);
@@ -343,22 +400,22 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(_api.Error(User,"Unable to delete vendor"));
+                    return Ok(_api.Error(User, "Unable to delete vendor"));
                 }
 
             }
             catch (Exception ex)
             {
                 if (ex.Message.Contains("REFERENCE constraint"))
-                    return Ok(_api.Error(User,"Unable to delete vendor! It has been used."));
+                    return Ok(_api.Error(User, "Unable to delete vendor! It has been used."));
                 else
-                    return Ok(_api.Error(User,ex));
+                    return Ok(_api.Error(User, ex));
             }
 
 
         }
-  [HttpGet("details")]
-        public ActionResult ActivityListDetails(string xVendorCode,int nFnYearID)
+        [HttpGet("details")]
+        public ActionResult ActivityListDetails(string xVendorCode, int nFnYearID)
         {
             DataSet ds = new DataSet();
             DataTable dt = new DataTable();
@@ -374,7 +431,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                
+
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
@@ -382,10 +439,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        DataTable Attachments = myAttachments.ViewAttachment(dLayer,myFunctions.getIntVAL(dt.Rows[0]["n_VendorID"].ToString()), 0, this.FormID, nFnYearID, User, connection);
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(dt.Rows[0]["n_VendorID"].ToString()), 0, this.FormID, nFnYearID, User, connection);
                         Attachments = _api.Format(Attachments, "attachments");
                         dt = _api.Format(dt, "master");
-                        
+
                         ds.Tables.Add(dt);
                         ds.Tables.Add(Attachments);
 
@@ -395,12 +452,12 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
-          [HttpGet("default")]
-        public ActionResult GetDefault(int nFnYearID,int nLangID,int nFormID)
+        [HttpGet("default")]
+        public ActionResult GetDefault(int nFnYearID, int nLangID, int nFormID)
         {
             try
             {
@@ -409,7 +466,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
 
                     SortedList Params = new SortedList();
-                    Params.Add("@nCompanyID",myFunctions.GetCompanyID(User));
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
 
                     DataTable QList = myFunctions.GetSettingsTable();
                     QList.Rows.Add("DEFAULT_ACCOUNTS", "Creditor Account");
@@ -417,9 +474,9 @@ namespace SmartxAPI.Controllers
 
                     QList.AcceptChanges();
 
-                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User),nFnYearID, connection);
+                    DataTable Details = dLayer.ExecuteSettingsPro("SP_GenSettings_Disp", QList, myFunctions.GetCompanyID(User), nFnYearID, connection);
 
-                        SortedList OutPut = new SortedList(){
+                    SortedList OutPut = new SortedList(){
                             {"settings",_api.Format(Details)}
                         };
                     return Ok(_api.Success(OutPut));
@@ -428,10 +485,10 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
-       [HttpGet("listdetails")]
+        [HttpGet("listdetails")]
         public ActionResult ListDetails(int nCompanyID, int nFnYearID)
         {
             DataTable dt = new DataTable();
@@ -439,8 +496,8 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             string sqlCommandText = "select * from vw_InvVendor where N_CompanyID=@p1 and N_FnYearID=@p2";
-           
-          
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -460,10 +517,10 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
-        
+
     }
 }
