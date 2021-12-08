@@ -81,7 +81,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
-                    MasterTable = ds.Tables["master"];
+                    MasterTable = ds.Tables["details"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
@@ -91,7 +91,7 @@ namespace SmartxAPI.Controllers
                 
                    for (int i = 0; i < MasterTable.Rows.Count; i++)
                     {
-                        if (MasterTable.Rows[i]["b_Select"]=="True")
+                        if (MasterTable.Rows[i]["b_Closed"].ToString()=="True")
                         {
                             int N_ClosedID = myFunctions.getIntVAL(MasterTable.Rows[i]["n_CloseID"].ToString());
                             dLayer.ExecuteNonQuery("update  Acc_Dayclosing set B_Closed=0 where N_CloseID=" + N_ClosedID + " and N_CompanyID=@p1 and N_BranchID=@p2 ", Params, connection, transaction);
