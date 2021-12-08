@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
 
                         if (dt.TableName == "Customer List" || dt.TableName == "Customers" || dt.TableName == "Customer")
                             xTableName = "Mig_Customers";
-                        if (dt.TableName == "Vendor List")
+                        if (dt.TableName == "Vendor List"  || dt.TableName == "Vendors" || dt.TableName == "Vendor")
                             xTableName = "Mig_Vendors";
                         if (dt.TableName == "Lead List")
                         {

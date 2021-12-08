@@ -169,10 +169,29 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 MasterTable = ds.Tables["master"];
                 DataTable Attachment = ds.Tables["attachments"];
+                 bool b_AutoGenerate=false;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchId"].ToString());
                 int nCustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CustomerId"].ToString());
+                int flag=0;
+
+                if(MasterTable.Columns.Contains("b_AutoGenerate"))
+                {
+                       b_AutoGenerate = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_AutoGenerate"].ToString());
+                        MasterTable.Columns.Remove("b_AutoGenerate");
+                }
+              
+                string x_CustomerName = (MasterTable.Rows[0]["x_CustomerName"].ToString());
+                if(MasterTable.Columns.Contains("flag"))
+                {
+                 flag = myFunctions.getIntVAL(MasterTable.Rows[0]["flag"].ToString());
+                 MasterTable.Columns.Remove("flag");
+                }
+
+                bool showConformationLedger = false;
+
+
                 int bEnableLogin = 0;
                 if (MasterTable.Columns.Contains("B_EnablePortalLogin"))
                     bEnableLogin = Convert.ToInt32(MasterTable.Rows[0]["B_EnablePortalLogin"].ToString());
@@ -198,6 +217,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
+
                     if (!MasterTable.Columns.Contains("b_DirPosting"))
                     {
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "b_DirPosting", typeof(int), 0);
@@ -213,6 +233,42 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+                        object N_GroupID = dLayer.ExecuteScalar("Select Isnull(N_FieldValue,0) From Acc_AccountDefaults Where N_CompanyID=" + nCompanyID + " and X_FieldDescr ='Customer Account Group' and N_FnYearID=" + nFnYearId, Params, connection, transaction);
+                        string X_LedgerName = "";
+                        if (b_AutoGenerate)
+                        {
+                            X_LedgerName = x_CustomerName;
+                            if (N_GroupID != null)
+                            {
+                                object N_LedgerID = dLayer.ExecuteScalar("Select Isnull(N_LedgerID,0) From Acc_MastLedger Where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearId + " and X_LedgerName='" + X_LedgerName + "' and N_GroupID=" + myFunctions.getIntVAL(N_GroupID.ToString()), Params, connection, transaction);
+                                if (N_LedgerID != null)
+                                {
+                                    if (flag == 2)//for confirmation of same ledger creattion 
+                                    {
+                                        showConformationLedger = true;
+                                        return Ok(api.Success(showConformationLedger));
+                                    }
+
+                                    if (flag == 1)//for same account for olready exist 
+                                    {
+                                        dLayer.ExecuteNonQuery("SP_Inv_CreateCustomerAccount " + nCompanyID + "," + nCustomerID + ",'" + CustomerCode + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearId + "," + "Customer", Params, connection, transaction);
+                                    }
+                                    else// update ledger id
+                                    {
+                                        dLayer.ExecuteNonQuery("Update Inv_Customer Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_CustomerID =" + nCustomerID + " and N_CompanyID=" + nCompanyID + " and N_FnyearID= " + nFnYearId, Params, connection, transaction);
+                                    }
+                                }
+                                else
+                                {
+                                    dLayer.ExecuteNonQuery("SP_Inv_CreateCustomerAccount " + nCompanyID + "," + nCustomerID + ",'" + CustomerCode + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearId + "," + "Customer", Params, connection, transaction);
+                                }
+                            }
+                            // else
+                            // msg.msgError("No DefaultGroup");
+                        }
+
+
+
                         int UserID = 0, UserCatID = 0;
                         string Pwd = myFunctions.EncryptString(CustomerCode);
                         if (bEnableLogin == 1)
@@ -568,33 +624,40 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User, e));
             }
         }
-        [HttpGet("totalInvoiceAmount")]
+       [HttpGet("totalInvoiceAmount")]
         public ActionResult GetCustomerDetail(int nCustomerID, int nFnYearID)
         {
+            DataTable dt = new DataTable();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommmand = "";
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nCustomerID", nCustomerID);
+            Params.Add("@nFnYearID", nFnYearID);
+            sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
+            SortedList OutPut = new SortedList();
             try
             {
-                DataTable dt = new DataTable();
-                int nCompanyID = myFunctions.GetCompanyID(User);
-                string sqlCommmand = "";
-                SortedList Params = new SortedList();
-                Params.Add("@nCompanyID", nCompanyID);
-                Params.Add("@nCustomerID", nCustomerID);
-                Params.Add("@nFnYearID", nFnYearID);
-                sqlCommmand = "select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID";
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommmand, Params, connection);
-                    dt = api.Format(dt);
-                    if (dt.Rows.Count == 0)
+                    object invoiceamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalInvoiceAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
+                    object returnamt = dLayer.ExecuteScalar("select sum(Cast(REPLACE(N_TotalPaidAmount,',','') as Numeric(10,2)) ) as TotalReturnAmount from vw_InvDebitNo_Search where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", Params, connection);
+                    if (returnamt.ToString() == "")
                     {
-                        return Ok(api.Notice("No Results Found"));
+                        returnamt = "0";
                     }
-                    else
+                    if (invoiceamt == null)
                     {
-                        return Ok(api.Success(dt));
+                        invoiceamt = "0";
                     }
+                    double amount = myFunctions.getVAL(invoiceamt.ToString()) - myFunctions.getVAL(returnamt.ToString());
+                    dt.Rows[0]["TotalInvoiceAmount"] = amount.ToString();
+                    dt.AcceptChanges();
+                    
+
+                    return Ok(api.Success(dt));
 
                 }
             }
