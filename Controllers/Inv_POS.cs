@@ -198,7 +198,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "SELECT        Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category " +
 " FROM            Inv_ItemCategory LEFT OUTER JOIN " +
   "                       vw_UC_Item ON Inv_ItemCategory.N_CompanyID = vw_UC_Item.N_CompanyID AND Inv_ItemCategory.X_Category = vw_UC_Item.Category " +
-" Where  Inv_ItemCategory.N_CompanyID= @nCompanyID and Inv_ItemCategory.N_CompanyID=@nCompanyID and vw_UC_Item.N_CompanyID=@nCompanyID and vw_UC_Item.N_LocationID=@nLocationID and  vw_UC_Item.N_BranchID=@nBranchID " ;
+" Where  Inv_ItemCategory.N_CompanyID= @nCompanyID and Inv_ItemCategory.N_CompanyID=@nCompanyID and vw_UC_Item.N_CompanyID=@nCompanyID and vw_UC_Item.N_LocationID=@nLocationID and  vw_UC_Item.N_BranchID=@nBranchID  group by Inv_ItemCategory.N_CategoryID, Inv_ItemCategory.X_Category" ;
 
             try
             {
