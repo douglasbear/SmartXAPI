@@ -186,7 +186,8 @@ namespace SmartxAPI.Controllers
 
                 int nClientID = myFunctions.GetClientID(User);
                 int globalUserID, userID, nUserID, nGlobalUserID = 0;
-                bool bSalesPerson;
+                bool bSalesPerson=false;
+               
                 string exclude = " and X_UserID<>'Olivo' and X_Email LIKE '_%@__%.__%'";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -202,8 +203,14 @@ namespace SmartxAPI.Controllers
                         nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
                         
                        
+                       if(MasterTable.Columns.Contains("b_Salesperson"))
+                {
                         bSalesPerson =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Salesperson"].ToString());
-                        nGlobalUserID = myFunctions.getIntVAL(globalUser.Rows[0]["n_UserID"].ToString());
+                        MasterTable.Columns.Remove("b_Salesperson");
+                }
+
+                   
+                     nGlobalUserID = myFunctions.getIntVAL(globalUser.Rows[0]["n_UserID"].ToString());
 
 
                         transaction = connection.BeginTransaction();
@@ -216,7 +223,7 @@ namespace SmartxAPI.Controllers
                         userParams.Add("@xEmailID", globalUser.Rows[0]["x_EmailID"].ToString());
 
                       
-                         MasterTable.Columns.Remove("b_Salesperson");
+                         //MasterTable.Columns.Remove("b_Salesperson");
 
 
 
