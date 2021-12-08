@@ -45,7 +45,7 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             if (nPartyType ==1){
                 if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or x_VendorName like '%"+ xSearchkey + "%' or [Net Amount] like '%"+ xSearchkey + "%')";
+                Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or [Customer Name] like '%"+ xSearchkey + "%' or cast([Adjustment Date] as VarChar) like '%" + xSearchkey + "%' or X_Notes like '%"+ xSearchkey + "%' or [Net Amount] like '%"+ xSearchkey + "%')";
             }
             else {
                 if (xSearchkey != null && xSearchkey.Trim() != "")

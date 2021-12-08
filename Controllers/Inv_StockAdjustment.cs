@@ -268,12 +268,12 @@ namespace SmartxAPI.Controllers
               string X_MasterSql = "";
           if (showAllBranch)
                     {
-                        X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
+                        X_MasterSql = "Select description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
                     }
                     else
                     {
 
-                        X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
+                        X_MasterSql = "Select  description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
                     }
            
             try

@@ -289,7 +289,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
         {
-
+if(xInvoiceNo!=null)
+xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             try
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
@@ -554,8 +555,8 @@ namespace SmartxAPI.Controllers
                             masterTable.Rows[0]["X_PlateNo"] = objPlateNo.ToString();
                     }
 
-                    if (masterTable.Rows[0]["X_TandC"].ToString() == "")
-                        masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
+                    // if (masterTable.Rows[0]["X_TandC"].ToString() == "")
+                    //     masterTable.Rows[0]["X_TandC"] = myFunctions.ReturnSettings("64", "TermsandConditions", "X_Value", "N_UserCategoryID", "0", QueryParamsList, dLayer, Con);
                     int N_TermsID = myFunctions.getIntVAL(masterTable.Rows[0]["N_TermsID"].ToString());
                     if (N_TermsID > 0)
                     {
@@ -828,6 +829,9 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction;
+                    // if(!MasterTable.Rows.Contains("n_PaymentMethodID"))
+                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"n_PaymentMethodID",typeof(int),1);
+
                     DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
 
@@ -838,6 +842,7 @@ namespace SmartxAPI.Controllers
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
+                    
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
@@ -1017,24 +1022,28 @@ namespace SmartxAPI.Controllers
 
                     else
                     {
-                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and b_IsSaveDraft=1", connection, transaction);
-                        if (N_Resultval == null) //  Changed by RKS [Inv Counter issue need to fix ] 
-                            InvoiceNo = "@Auto";
-                        if (N_SalesID == 0 && InvoiceNo != "@Auto")
-                        {
-                            object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
-                            if (N_DocNumber == null)
-                            {
-                                N_DocNumber = 0;
-                            }
-                            if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID , connection, transaction);
+                        if (N_SalesID == 0 && N_Resultval != null) //  Changed by RKS [Inv Counter issue need to fix ] 
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User, "Not a valid Doc No"));
+                                return Ok(_api.Error(User, "Invoice number already in use"));
                             }
+                            // InvoiceNo = "@Auto";
+                        // if (N_SalesID == 0 && InvoiceNo != "@Auto")
+                        // {
+                        //     object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        //     if (N_DocNumber == null)
+                        //     {
+                        //         N_DocNumber = 0;
+                        //     }
+                        //     if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                        //     {
+                        //         transaction.Rollback();
+                        //         return Ok(_api.Error(User, "Not a valid Doc No"));
+                        //     }
 
 
-                        }
+                        // }
 
                         if (InvoiceNo == "@Auto")
                         {
@@ -1319,7 +1328,7 @@ namespace SmartxAPI.Controllers
 
                     object N_CustomerVendorID = dLayer.ExecuteScalar("Select N_CustomerVendorID From Inv_Customer where N_CustomerID=@N_CustomerID and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
 
-                    if (N_CustomerVendorID != null)
+                    if (N_CustomerVendorID.ToString() != "")
                     {
                         SortedList PurchaseParams = new SortedList();
                         PurchaseParams.Add("@N_CompanyID", N_CompanyID);

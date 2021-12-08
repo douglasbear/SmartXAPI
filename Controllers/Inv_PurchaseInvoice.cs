@@ -887,7 +887,7 @@ namespace SmartxAPI.Controllers
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
                                 //{"@B_MRNVisible","0"}};
-                                 {"B_MRNVisible",nMRNID>0?"1":"0"}};
+                                 {"B_MRNVisible","1"}};
 
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
