@@ -89,7 +89,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nBranchID);
                 
-                   for (int i = 1; i < MasterTable.Rows.Count; i++)
+                   for (int i = 0; i < MasterTable.Rows.Count; i++)
                     {
                         if (MasterTable.Rows[i]["b_Select"]=="True")
                         {
