@@ -127,12 +127,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
-                    SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyID},
-                                {"N_AdjustmentID",nAdjustmentID},
-                               
-                                };
-                    int Results = dLayer.ExecuteNonQueryPro("", DeleteParams, connection, transaction);
+                    int Results=0;
+                    SortedList DelParam = new SortedList();
+                        DelParam.Add("N_CompanyID", nCompanyID);
+                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
+                        Results=dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
 
                     if (Results <= 0)
                     {
