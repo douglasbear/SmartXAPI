@@ -79,13 +79,13 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and ( N_ItemID like '%" + xSearchkey + "%') ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_ItemID desc";
+                        xSortBy = " order by X_RefNo desc";
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + "and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + "and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) " + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);

@@ -53,7 +53,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
-
+                    Params.Add("@p4", nLocationID);
 
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
@@ -61,16 +61,16 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_Type=1 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 and N_LocationID=@p4";
                     }
                     else
                     {
                         if (bAllBranchData)
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                         else
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_LocationFrom=" + nLocationID + " and N_BranchID=@p3 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_LocationID=@p4 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
 
@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and [Site from] like '%" + xSearchkey + "%'";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_TransferID asc";
+                        xSortBy = " order by N_ReceivableId asc";
                     else
                         xSortBy = " order by " + xSortBy;
 
@@ -89,7 +89,7 @@ namespace SmartxAPI.Controllers
 
                     }
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceivableStock_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceivableStock_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_ReceivableId not in (select top(" + Count + ") N_ReceivableId from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();
@@ -121,37 +121,40 @@ namespace SmartxAPI.Controllers
         }
 
 
-       
-
-
         [HttpGet("transferList")]
         public ActionResult GettransferList( int nFnYearID )
         {
-            int nCompanyId = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
+            string sqlCommandText = "select [reference No] as x_reference,* from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Processed=0";
             try
             {
-                SortedList mParamsList = new SortedList()
-                    {
-                        {"@p1",nCompanyId},
-                        {"@p2", nFnYearID},
-                       
-                    };
-                DataTable masterTable = new DataTable();
-
-                string sql = "select * from vw_InvTransfer_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Processed=0";
-
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    masterTable = dLayer.ExecuteDataTable(sql, mParamsList, connection);
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-                if (masterTable.Rows.Count == 0) { return Ok(_api.Notice("No Data Found")); }
-                return Ok(_api.Success(masterTable));
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
-        }  
+        }
+
+
+
+        
     }
 }
