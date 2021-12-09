@@ -291,6 +291,63 @@ namespace SmartxAPI.Controllers
         }
 
 
+               [HttpGet("listDetails")]
+        public ActionResult viewDetails(string xRefNo, int nFnYearID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    Params.Add("@xReceiptNo", xRefNo);
+                    Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
+
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    DataTable Details = new DataTable();
+                    string Mastersql = "";
+                    //string DetailSql = "";
+                    string DetailGetSql = "";
+
+
+                    // if (bAllBranchData)
+                    //  xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID";
+                    // else
+                    //     xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
+
+                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyOD=" + nCompanyID + " and [MemoNo]='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
+
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    int N_ReceivableId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceivableId"].ToString());
+                ////////
+                    Params.Add("@N_ReceivableId", N_ReceivableId);
+                    DetailGetSql ="Select * from vw_InvReceivableStockDetails  Where N_CompanyID=" +nCompanyID+ " and N_ReceivableId=" + N_ReceivableId+"";
+                    Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
+
+                    Details = _api.Format(Details, "Details");
+                    dt.Tables.Add(Details);
+                    dt.Tables.Add(MasterTable);
+                    return Ok(_api.Success(dt));
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+
+
+
+
+
+
 
     }
 }
