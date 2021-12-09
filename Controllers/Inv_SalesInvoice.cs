@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
 
-                    if (screen=="Invoice")
+                    if (screen == "Invoice")
                         criteria = "and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -289,8 +289,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("details")]
         public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
         {
-if(xInvoiceNo!=null)
-xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
+            if (xInvoiceNo != null)
+                xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             try
             {
                 using (SqlConnection Con = new SqlConnection(connectionString))
@@ -337,8 +337,8 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
 
                             foreach (DataRow Avar in DeliveryNoteID.Rows)
                             {
-                                if(Avar["N_DeliveryNoteID"].ToString()!="0")
-                                DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
+                                if (Avar["N_DeliveryNoteID"].ToString() != "0")
+                                    DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
                             // DeliveryNoteAppend = DeliveryNoteAppend.Substring(1);
                             DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
@@ -595,11 +595,11 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                     //sales return count(draft and non draft)
                     object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and isnull(B_IsSaveDraft,0)=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
 
-                    object DNQty = dLayer.ExecuteScalar("Select SUM(N_Qty) from vw_InvSalesReturn_Display Where N_CompanyID="+nCompanyId+" and N_SalesID=@nSalesID", QueryParamsList, Con);
-                    object OrderQty1 =dLayer.ExecuteScalar("Select SUM(N_RetQty) from vw_InvSalesReturn_Display Where N_CompanyID="+nCompanyId+"and N_SalesID=@nSalesID", QueryParamsList, Con);
+                    object DNQty = dLayer.ExecuteScalar("Select SUM(N_Qty) from vw_InvSalesReturn_Display Where N_CompanyID=" + nCompanyId + " and N_SalesID=@nSalesID", QueryParamsList, Con);
+                    object OrderQty1 = dLayer.ExecuteScalar("Select SUM(N_RetQty) from vw_InvSalesReturn_Display Where N_CompanyID=" + nCompanyId + "and N_SalesID=@nSalesID", QueryParamsList, Con);
                     if (DNQty != null && OrderQty1 != null)
                     {
-                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) !=myFunctions.getIntVAL(DNQty.ToString()) )
+                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) != myFunctions.getIntVAL(DNQty.ToString()))
                         {
                             objSalesReturn = null;
                         }
@@ -681,7 +681,7 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                     Attachments = _api.Format(Attachments, "attachments");
                     saleamountdetails = _api.Format(saleamountdetails, "saleamountdetails");
 
-                    SortedList Status = StatusSetup(nSalesID, nFnYearId, Con);
+                    SortedList Status = StatusSetup(nSalesID, nFnYearId, myFunctions.getIntVAL(myFunctions.getBoolVAL(masterTable.Rows[0]["B_IsSaveDraft"].ToString())), Con);
                     masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "TxnStatus", typeof(SortedList), Status);
                     dsSalesInvoice.Tables.Add(masterTable);
                     dsSalesInvoice.Tables.Add(detailTable);
@@ -699,7 +699,7 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
         }
 
 
-        private SortedList StatusSetup(int nSalesID, int nFnYearID, SqlConnection connection)
+        private SortedList StatusSetup(int nSalesID, int nFnYearID, int isDraft, SqlConnection connection)
         {
 
             object objInvoiceRecievable = null, objBal = null;
@@ -712,6 +712,17 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
             TxnStatus.Add("SaveEnabled", true);
             TxnStatus.Add("ReceiptNumbers", "");
             int nCompanyID = myFunctions.GetCompanyID(User);
+
+
+            if (isDraft == 1)
+            {
+                TxnStatus["SaveEnabled"] = true;
+                TxnStatus["DeleteEnabled"] = true;
+                TxnStatus["Alert"] = "";
+                TxnStatus["Label"] = "Draft";
+                TxnStatus["LabelColor"] = "Red";
+                return TxnStatus;
+            }
 
             objInvoiceRecievable = dLayer.ExecuteScalar("SELECT SUM(isnull((Inv_Sales.N_BillAmt-Inv_Sales.N_DiscountAmt + Inv_Sales.N_FreightAmt +isnull(Inv_Sales.N_OthTaxAmt,0)+ Inv_Sales.N_TaxAmt),0)) as N_InvoiceAmount FROM Inv_Sales where Inv_Sales.N_SalesId=" + nSalesID + " and Inv_Sales.N_CompanyID=" + nCompanyID, connection);
             objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + nSalesID + " and X_Type='SALES' and N_CompanyID=" + nCompanyID, connection);
@@ -829,8 +840,6 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                 {
                     connection.Open();
                     SqlTransaction transaction;
-                    // if(!MasterTable.Rows.Contains("n_PaymentMethodID"))
-                    // MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable,"n_PaymentMethodID",typeof(int),1);
 
                     DataRow MasterRow = MasterTable.Rows[0];
                     transaction = connection.BeginTransaction();
@@ -842,13 +851,15 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                     int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-                    
+
                     int N_PaymentMethodID = myFunctions.getIntVAL(MasterRow["n_PaymentMethodID"].ToString());
                     int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
                     int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
                     int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
                     int N_AmtSplit = 0;
+                    int N_IsProforma = 0;
                     int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
+                    N_IsProforma = MasterTable.Columns.Contains("b_IsProforma") ? myFunctions.getIntVAL(MasterRow["b_IsProforma"].ToString()) : 0;
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
                     int N_NextApproverID = 0;
                     QueryParams.Add("@nCompanyID", N_CompanyID);
@@ -874,41 +885,7 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                     else
                         B_AllowCashPay = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select cast(count(N_CustomerID) as bit) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID  and N_AllowCashPay=1 and (N_BranchId=@nBranchID or N_BranchId=0)", QueryParams, connection, transaction).ToString());
 
-                    // if (N_PaymentMethodID == 2 && B_AllowCashPay || B_POS)
-                    // {
-                    //     int count = myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_CustomerID) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchId=@nBranchID or N_BranchId=0) and N_EnablePopup=1", QueryParams, connection, transaction).ToString());
-                    //     if (count > 0)
-                    //     {
-                    //         N_AmtSplit = 1;
-                    //         //Filling sales amount details
-                    //         //                            DataTable dtsaleamountdetails = new DataTable();
-                    //         // if (ds.Tables.Contains("saleamountdetails"))
-                    //         //     ds.Tables.Remove("saleamountdetails");
-                    //         string qry = "";
-                    //         if (N_SalesID > 0)
-                    //         {
-                    //             if (ds.Tables.Contains("saleamountdetails"))
-                    //                 ds.Tables.Remove("saleamountdetails");
-                    //             object ObjSaleAmountCustID = dLayer.ExecuteScalar("Select TOP (1) ISNULL(N_CustomerID,0) from vw_SalesAmount_Customer where N_SalesID=@nSalesID", QueryParams, connection, transaction);
-                    //             if (ObjSaleAmountCustID != null)
-                    //             {
-                    //                 if (myFunctions.getIntVAL(ObjSaleAmountCustID.ToString()) == N_CustomerID)
-                    //                     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=@nSalesID";
-                    //                 else
-                    //                     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
-                    //             }
-                    //             else
-                    //                 qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
-                    //             dtsaleamountdetails = dLayer.ExecuteDataTable(qry, QueryParams, connection, transaction);
-                    //         }
-                    //         // else
-                    //         //     qry = "Select * from vw_SalesAmount_Customer where N_SalesID=0";
 
-                    //         dtsaleamountdetails = _api.Format(dtsaleamountdetails, "saleamountdetails");
-                    //         //ds.Tables.Add(dtsaleamountdetails);
-
-                    //     }
-                    // }
                     //saving data
                     InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
 
@@ -988,21 +965,21 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                             {
                                 N_DocNumber = 0;
                             }
-                            if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
+                            if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User, "Not a valid Doc No"));
+                                return Ok(_api.Error(User, "Invoice number already in use"));
                             }
-
-
                         }
                         if (InvoiceNo == "@Auto")
                         {
                             Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                             Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                            // Params.Add("N_FormID", 1346);
-                            Params.Add("N_FormID", this.N_FormID);
-                            
+                            if (N_IsProforma == 1)
+                                Params.Add("N_FormID", 1346);
+                            else
+                                Params.Add("N_FormID", this.N_FormID);
+
                             while (true)
                             {
                                 InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
@@ -1013,44 +990,33 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                             if (InvoiceNo == "")
                             {
                                 transaction.Rollback();
-                                return Ok(_api.Error(User, "Unable to generate Quotation Number"));
+                                return Ok(_api.Error(User, "Unable to generate Invoice Number"));
                             }
                             MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
                         }
                     }
-                    //  InvoiceNo = MasterRow["x_ReceiptNo"].ToString();
-
                     else
                     {
-                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID , connection, transaction);
-                        if (N_SalesID == 0 && N_Resultval != null) //  Changed by RKS [Inv Counter issue need to fix ] 
-                            {
-                                transaction.Rollback();
-                                return Ok(_api.Error(User, "Invoice number already in use"));
-                            }
-                            // InvoiceNo = "@Auto";
-                        // if (N_SalesID == 0 && InvoiceNo != "@Auto")
-                        // {
-                        //     object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
-                        //     if (N_DocNumber == null)
-                        //     {
-                        //         N_DocNumber = 0;
-                        //     }
-                        //     if (myFunctions.getVAL(N_DocNumber.ToString()) == 1)
-                        //     {
-                        //         transaction.Rollback();
-                        //         return Ok(_api.Error(User, "Not a valid Doc No"));
-                        //     }
-
-
-                        // }
+                        object N_Resultval = dLayer.ExecuteScalar("Select 1 from Inv_Sales Where X_ReceiptNo ='" + InvoiceNo + "' and N_CompanyID= " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                        if (N_Resultval == null)
+                        {
+                            N_Resultval = 0;
+                        }
+                        if (N_SalesID == 0 && myFunctions.getVAL(N_Resultval.ToString()) >= 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Invoice number already in use"));
+                        }
 
                         if (InvoiceNo == "@Auto")
                         {
 
                             Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
                             Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-                            Params.Add("N_FormID", this.N_FormID);
+                            if (N_IsProforma == 1)
+                                Params.Add("N_FormID", 1346);
+                            else
+                                Params.Add("N_FormID", this.N_FormID);
                             Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
                             while (true)
                             {
@@ -1092,7 +1058,12 @@ xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
-                    string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_ReceiptNo='" + InvoiceNo + "' and N_FnyearID=" + N_FnYearID;
+
+                    string dupInvNo = InvoiceNo;
+                    if (MasterRow["x_ReceiptNo"].ToString() != "@Auto")
+                        dupInvNo = MasterRow["x_ReceiptNo"].ToString();
+
+                    string DupCriteria = "N_CompanyID=" + N_CompanyID + " and X_ReceiptNo='" + dupInvNo + "' and N_FnyearID=" + N_FnYearID;
                     N_SalesID = dLayer.SaveData("Inv_Sales", "N_SalesId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_SalesID <= 0)
                     {

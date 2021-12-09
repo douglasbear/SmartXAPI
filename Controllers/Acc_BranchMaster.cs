@@ -149,6 +149,14 @@ namespace SmartxAPI.Controllers
                     int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
+                    string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";    
+               
+                 Byte[] logoBitmap = new Byte[logo.Length];
+                 logoBitmap = Convert.FromBase64String(logo);
+                 if (myFunctions.ContainColumn("i_Logo", MasterTable))
+                        MasterTable.Columns.Remove("i_Logo");
+                 MasterTable.AcceptChanges();
+
                     if(MasterTable.Columns.Contains("n_FnYearID"))
                     MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
@@ -201,7 +209,8 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-
+                        if (logo.Length > 0)
+                        dLayer.SaveImage("Acc_BranchMaster", "I_Logo", logoBitmap, "N_BranchID", nBranchID, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("Branch Saved"));
                     }

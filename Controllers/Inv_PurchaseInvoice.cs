@@ -271,6 +271,14 @@ namespace SmartxAPI.Controllers
 
                     dtPurchaseInvoice = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
 
+                   
+                    object objPayment = dLayer.ExecuteScalar("SELECT dbo.Inv_PayReceipt.X_Type, dbo.Inv_PayReceiptDetails.N_InventoryId FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId Where dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and  dbo.Inv_PayReceipt.B_IsDraft <> 1 and dbo.Inv_PayReceiptDetails.N_InventoryId in (select N_PurchaseID from Inv_Purchase where X_InvoiceNo='" + nPurchaseNO + "' and N_CompanyID=@CompanyID and N_FnYearID=@YearID)", Params, connection);
+                    if (objPayment != null)
+                        myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "B_PaymentProcessed", typeof(Boolean), true);
+                    else
+                        myFunctions.AddNewColumnToDataTable(dtPurchaseInvoice, "B_PaymentProcessed", typeof(Boolean), false);
+
+
 
                     if (dtPurchaseInvoice.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
                     dtPurchaseInvoice = _api.Format(dtPurchaseInvoice, "Master");
@@ -878,6 +886,9 @@ namespace SmartxAPI.Controllers
                     string X_Criteria = "N_PurchaseID=" + nPurchaseID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
                     string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
                     int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
+
+                     bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection,transaction);
+
                     if (ButtonTag == "6" || ButtonTag == "0")
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -886,8 +897,8 @@ namespace SmartxAPI.Controllers
                                 {"N_VoucherID",nPurchaseID},
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"},
-                                //{"@B_MRNVisible","0"}};
-                                 {"B_MRNVisible","1"}};
+                                {"B_MRNVisible",(nMRNID>0 && B_MRNVisible) ?"1":"0"}};
+                                  //{"B_MRNVisible",n_MRNID>0?"1":"0"}};
 
                         Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
                         if (Results <= 0)
