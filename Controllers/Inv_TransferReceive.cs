@@ -153,8 +153,144 @@ namespace SmartxAPI.Controllers
             }
         }
 
+         [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    string DocNo = "";
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nReceivableId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceivableId"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                    int N_TransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
+                    int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
+                
+                    string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
+                    string X_TransType = "STOCK RECEIVE";
+
+                    // int nUsercategoryID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserCategoryID"].ToString());
+                    // int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                    // int nLevelID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_Level"].ToString());
+                    // int nActionID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ActionTypeID"].ToString());
+                    if (nReceivableId > 0)
+                    {
+                        SortedList DelParam = new SortedList();
+                        DelParam.Add("N_CompanyID", nCompanyID);
+                        DelParam.Add("X_TransType", X_TransType);
+                        DelParam.Add("N_VoucherID", nReceivableId);
+                        DelParam.Add("a", 0);
+                        DelParam.Add("b", "");
+                        DelParam.Add("c", 0);
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DelParam, connection, transaction);
+                        // dba.ExecuteNonQuery("SP_Delete_Trans_With_PurchaseAccounts " + nCompanyID + ",'" + X_TransType + "'," +nReceivableId + ",0,'',0", DelParam, connection, transaction);
+                    }
+                    DocNo = MasterRow["X_ReferenceNo"].ToString();
+                    // int nSavedraft = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SaveDraft"].ToString());
+                    if (X_ReferenceNo == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_FormID", this.FormID);
+                        Params.Add("N_YearID", nFnYearID);
+
+                        while (true)
+                        {
+                            DocNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Inv_ReceivableStock Where X_ReferenceNo ='" + DocNo + "' and N_CompanyID= " + nCompanyID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        X_ReferenceNo = DocNo;
 
 
-        
+                        if (X_ReferenceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate")); }
+                        MasterTable.Rows[0]["X_ReferenceNo"] = X_ReferenceNo;
+
+                    }
+                    nReceivableId = dLayer.SaveData("Inv_ReceivableStock", "N_ReceivableId", MasterTable, connection, transaction);
+                    if (nReceivableId <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Save"));
+                    }
+
+                    for (int i = 0; i < DetailTable.Rows.Count; i++)
+                    {
+                        DetailTable.Rows[i]["N_ReceivableId"] = nReceivableId;
+                    }
+                    int N_ReceivableDetailsID = dLayer.SaveData("Inv_ReceivableStockDetails", "N_ReceivableDetailsID", DetailTable, connection, transaction);
+                    if (N_ReceivableDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Save"));
+                    }
+                    else
+                    {
+                        dLayer.ExecuteNonQuery("Update Inv_TransferStock Set N_Processed=1  Where N_TransferId=" + N_TransferId + " and N_CompanyID=" + nCompanyID,Params,connection,transaction);
+
+                        SortedList StockParam = new SortedList();
+                        StockParam.Add("N_CompanyID", nCompanyID);
+                        StockParam.Add("N_ReceivableId", nReceivableId);
+                        StockParam.Add("@N_LocationID", N_LocationID);
+                        StockParam.Add("N_UserID", nUserID);
+                        StockParam.Add("a", "");
+
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Inv_ReceivableStock ", StockParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
+                        SortedList PostingParam = new SortedList();
+                        PostingParam.Add("N_CompanyID", nCompanyID);
+                        PostingParam.Add("X_InventoryMode", X_TransType);
+                        PostingParam.Add("N_InternalID", nReceivableId);
+                        PostingParam.Add("N_UserID", nUserID);
+                        PostingParam.Add("X_SystemName", "WebRequest");
+                        try
+                        {
+                            dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting ", PostingParam, connection, transaction).ToString();
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, ex));
+                        }
+
+
+
+
+
+
+                    }
+
+
+
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+
     }
 }

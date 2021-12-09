@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             myAttachments = myAtt;
-            FormID = 1056;
+            FormID = 506;
         }
 
 
