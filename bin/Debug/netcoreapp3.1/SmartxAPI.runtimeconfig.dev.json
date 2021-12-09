@@ -1,64 +1,8 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\linju scaria\\.nuget\\packages"
-=======
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-<<<<<<< HEAD
-      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\rathe\\.nuget\\packages"
-=======
       "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\sreej\\.nuget\\packages"
->>>>>>> 305a4380a5ab79abc4720875363d8b07959d2236
-=======
-      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Sibin Babu\\.nuget\\packages"
->>>>>>> a9a80fd2500ef2448fe48a26a60ed3b20190f935
-=======
-      "C:\\Users\\Administrator\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Administrator\\.nuget\\packages"
->>>>>>> edcb669a5605a8385d80c0068b6a0f89f7158a7a
-=======
-      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\aswin\\.nuget\\packages"
->>>>>>> dfa799d9e85985c7a4f9d22417f2c708b12d420f
-=======
-      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\SANJAY\\.nuget\\packages"
-=======
-      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\sreej\\.nuget\\packages"
->>>>>>> 1cbfb503250beb051a754b6c9ac00fb79a6bb89a
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> 4e87b05506b1e9f19cfa503bf93d8cee6778f8dc
->>>>>>> e15be1793eb7a862ad7a951177c4ae5fdb6adc29
-<<<<<<< HEAD
-=======
-      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\sreej\\.nuget\\packages"
->>>>>>> a736f2747afdd9b8ebffc700b70ecff965d971b7
-=======
->>>>>>> 511967ee4dd6c593bb87c7ea4ac32c47eecdad9b
->>>>>>> 044d7724de03bfd46c132adfc050040d6c09593d
-=======
-      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\sreej\\.nuget\\packages"
->>>>>>> 4560f90960f96970f4590889f4d36d32d18828a9
-=======
-      "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
-      "C:\\Users\\Aky77\\.nuget\\packages"
->>>>>>> 7e16239b690081402785035fea8ad3ffe2606751
     ]
   }
 }
