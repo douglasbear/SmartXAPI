@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             myAttachments = myAtt;
-            FormID = 1056;
+            FormID = 506;
         }
 
 
@@ -79,13 +79,13 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and ( N_ItemID like '%" + xSearchkey + "%') ";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_ItemID desc";
+                        xSortBy = " order by X_RefNo desc";
                     else
                         xSortBy = " order by " + xSortBy;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey;
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + "and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) ";
+                        sqlCommandText = "select top(" + nSizeperpage + ")  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + "and N_ItemID not in (select top(" + Count + ") N_ItemID from vw_InvStockAdjustment_Disp where " + xCriteria + Searchkey + " ) " + " Group By  N_CompanyID,N_FnYearID,X_RefNo,AdjustDate,N_UserID,N_LoactionID,X_Description,X_LocationName";
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
@@ -127,12 +127,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
-                    SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyID},
-                                {"N_AdjustmentID",nAdjustmentID},
-                               
-                                };
-                    int Results = dLayer.ExecuteNonQueryPro("", DeleteParams, connection, transaction);
+                    int Results=0;
+                    SortedList DelParam = new SortedList();
+                        DelParam.Add("N_CompanyID", nCompanyID);
+                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
+                        Results=dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
 
                     if (Results <= 0)
                     {
@@ -268,12 +267,12 @@ namespace SmartxAPI.Controllers
               string X_MasterSql = "";
           if (showAllBranch)
                     {
-                        X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
+                        X_MasterSql = "Select description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
                     }
                     else
                     {
 
-                        X_MasterSql = "Select * from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
+                        X_MasterSql = "Select  description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
                     }
            
             try
