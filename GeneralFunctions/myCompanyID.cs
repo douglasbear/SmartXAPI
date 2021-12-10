@@ -125,6 +125,7 @@ namespace SmartxAPI
         public static string prevVal = "";
         public static string newVal = "";
 
+<<<<<<< HEAD
             // public static string _APIVersion = "21.10.8.2";
 
         // public static string _APIVersion = "21.11.8.2"; 
@@ -133,6 +134,9 @@ namespace SmartxAPI
          public static string _APIVersion = "21.10.19.2";
        // public static string _APIVersion = "21.11.18.1";
         // public static string _APIVersion = "21.12.1.2";
+=======
+        public static string _APIVersion = "21.12.1.2";
+>>>>>>> cf725032554fe125faf3a12309e4992377b785b1
 
     }
 } 
