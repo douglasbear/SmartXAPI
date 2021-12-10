@@ -176,6 +176,8 @@ namespace SmartxAPI.Controllers
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                     int N_TransferId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TransferId"].ToString());
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
+                    int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDfrom"].ToString());
+                    MasterTable.Columns.Remove("N_LocationIDfrom");
                 
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
                     string X_TransType = "STOCK RECEIVE";
@@ -241,13 +243,11 @@ namespace SmartxAPI.Controllers
 
                         SortedList StockParam = new SortedList();
                         StockParam.Add("N_CompanyID", nCompanyID);
-                        StockParam.Add("N_ReceivableId", nReceivableId);
-                       // StockParam.Add("@N_ReceiveId", nReceivableId);
-                        StockParam.Add("@N_LocationID", N_LocationID);
-                        // StockParam.Add("@N_WarehouseIdFrom", N_LocationID);
-                        // StockParam.Add("@N_WarehouseIdTo", N_LocationID);
+                        StockParam.Add("@N_ReceiveId", nReceivableId);
+                         StockParam.Add("@N_WarehouseIdFrom", N_LocationIDFrom);
+                          StockParam.Add("@N_WarehouseIdTo", N_LocationID);
                         StockParam.Add("N_UserID", nUserID);
-                        StockParam.Add("a", "");
+                        StockParam.Add("X_SystemName", "");
 
                         try
                         {
