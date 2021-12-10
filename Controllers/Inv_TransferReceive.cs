@@ -192,9 +192,9 @@ namespace SmartxAPI.Controllers
                         DelParam.Add("N_CompanyID", nCompanyID);
                         DelParam.Add("X_TransType", X_TransType);
                         DelParam.Add("N_VoucherID", nReceivableId);
-                        DelParam.Add("a", 0);
-                        DelParam.Add("b", "");
-                        DelParam.Add("c", 0);
+                        // DelParam.Add("a", 0);
+                        // DelParam.Add("b", "");
+                        // DelParam.Add("c", 0);
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DelParam, connection, transaction);
                         // dba.ExecuteNonQuery("SP_Delete_Trans_With_PurchaseAccounts " + nCompanyID + ",'" + X_TransType + "'," +nReceivableId + ",0,'',0", DelParam, connection, transaction);
                     }
