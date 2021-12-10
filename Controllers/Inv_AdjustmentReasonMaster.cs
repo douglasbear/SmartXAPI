@@ -113,6 +113,8 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nReasonID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReasonID"].ToString());
+                int nGroupID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
+                 MasterTable.Columns.Remove("n_GroupID");
 
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
