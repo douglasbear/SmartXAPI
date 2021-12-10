@@ -50,11 +50,12 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string Criteria = "";
                     string Searchkey = "";
+                    string X_TransType = "STOCK RECEIVE";
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
                     Params.Add("@p4", nLocationID);
-
+                 
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
 
@@ -68,9 +69,9 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1";
                         else
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_LocationID=@p4 and N_BranchID=@p3 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_LocationID=@p4 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
 
@@ -89,7 +90,7 @@ namespace SmartxAPI.Controllers
 
                     }
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceivableStock_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_ReceivableId not in (select top(" + Count + ") N_ReceivableId from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvReceivableStock_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_ReceivableId not in (select top(" + Count + ") N_ReceivableId from vw_InvReceivableStock_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();
@@ -241,7 +242,10 @@ namespace SmartxAPI.Controllers
                         SortedList StockParam = new SortedList();
                         StockParam.Add("N_CompanyID", nCompanyID);
                         StockParam.Add("N_ReceivableId", nReceivableId);
+                       // StockParam.Add("@N_ReceiveId", nReceivableId);
                         StockParam.Add("@N_LocationID", N_LocationID);
+                        // StockParam.Add("@N_WarehouseIdFrom", N_LocationID);
+                        // StockParam.Add("@N_WarehouseIdTo", N_LocationID);
                         StockParam.Add("N_UserID", nUserID);
                         StockParam.Add("a", "");
 
