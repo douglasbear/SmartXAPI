@@ -50,7 +50,7 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string Criteria = "";
                     string Searchkey = "";
-                    string X_TransType = "STOCK RECEIVE";
+                   
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
@@ -64,14 +64,14 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData)
                             Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 and N_LocationID=@p4";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
                     else
                     {
                         if (bAllBranchData)
                             Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1";
                         else
-                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_LocationID=@p4 and N_BranchID=@p3 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
                     }
 
 
@@ -192,7 +192,7 @@ namespace SmartxAPI.Controllers
                         DelParam.Add("N_CompanyID", nCompanyID);
                         DelParam.Add("X_TransType", X_TransType);
                         DelParam.Add("N_VoucherID", nReceivableId);
-                        // DelParam.Add("a", 0);
+                        //DelParam.Add("a", 0);
                         // DelParam.Add("b", "");
                         // DelParam.Add("c", 0);
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DelParam, connection, transaction);
@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-               [HttpGet("listDetails")]
+        [HttpGet("listDetails")]
         public ActionResult viewDetails(string xRefNo, int nFnYearID)
         {
             try
@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     // else
                     //     xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 
-                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyOD=" + nCompanyID + " and [MemoNo]='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
+                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyID=" + nCompanyID + " and [MemoNo]='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
