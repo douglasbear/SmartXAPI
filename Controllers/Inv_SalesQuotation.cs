@@ -320,6 +320,17 @@ namespace SmartxAPI.Controllers
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
 
+                    int N_ClosingRsnID = myFunctions.getIntVAL(Master.Rows[0]["N_ClosingRsnID"].ToString());
+                    object X_ClosingRsn = "",X_ClosingStaus="";
+                    if (N_ClosingRsnID.ToString() != "" && N_ClosingRsnID != 0)
+                    {
+                        Params.Add("@N_ClosingRsnID", N_ClosingRsnID);
+                        X_ClosingRsn = dLayer.ExecuteScalar("select X_Description from vw_Inv_QuotationclosingStatus where N_StatusID=@N_ClosingRsnID and N_CompanyID=@nCompanyID", Params, connection);
+                        X_ClosingStaus = dLayer.ExecuteScalar("select X_TypeName from vw_Inv_QuotationclosingStatus where N_StatusID=@N_ClosingRsnID and N_CompanyID=@nCompanyID", Params, connection);
+                    }
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_ClosingRsn", typeof(string), X_ClosingRsn.ToString());
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_ClosingStaus", typeof(string), X_ClosingStaus.ToString());
+
 
                     var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     DateTime quotationDate = myFunctions.GetFormatedDate(Master.Rows[0]["D_QuotationDate"].ToString());
