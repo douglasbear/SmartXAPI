@@ -106,10 +106,9 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStaus from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStaus from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + xSortBy;
 
 
 
@@ -319,6 +318,17 @@ namespace SmartxAPI.Controllers
                             Master.Columns.Remove("TxnStatus");
                         Master = myFunctions.AddNewColumnToDataTable(Master, "TxnStatus", typeof(string), "Invoice Processed");
                     }
+
+                    int N_ClosingRsnID = myFunctions.getIntVAL(Master.Rows[0]["N_ClosingRsnID"].ToString());
+                    object X_ClosingRsn = "",X_ClosingStaus="";
+                    if (N_ClosingRsnID.ToString() != "" && N_ClosingRsnID != 0)
+                    {
+                        Params.Add("@N_ClosingRsnID", N_ClosingRsnID);
+                        X_ClosingRsn = dLayer.ExecuteScalar("select X_Description from vw_Inv_QuotationclosingStatus where N_StatusID=@N_ClosingRsnID and N_CompanyID=@nCompanyID", Params, connection);
+                        X_ClosingStaus = dLayer.ExecuteScalar("select X_TypeName from vw_Inv_QuotationclosingStatus where N_StatusID=@N_ClosingRsnID and N_CompanyID=@nCompanyID", Params, connection);
+                    }
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_ClosingRsn", typeof(string), X_ClosingRsn.ToString());
+                    Master = myFunctions.AddNewColumnToDataTable(Master, "X_ClosingStaus", typeof(string), X_ClosingStaus.ToString());
 
 
                     var UserCategoryID = User.FindFirst(ClaimTypes.GroupSid)?.Value;
