@@ -292,6 +292,8 @@ namespace SmartxAPI.Controllers
                             
                         }
                     }
+                    //  transaction.Commit();
+                    //   return Ok(_api.Success("Saved"));
 
                     if (DetailTable.Rows.Count > 0)
                     {
