@@ -289,7 +289,7 @@ namespace SmartxAPI.Controllers
                         foreach (DataRow Rows in DetailTable.Rows)
                         {
                             dLayer.DeleteData("Sec_userPrevileges", "N_UserCategoryID", N_UserCategoryID, "N_MenuID=" + Rows["n_MenuID"].ToString(), connection, transaction);
-
+                            
                         }
                     }
 
