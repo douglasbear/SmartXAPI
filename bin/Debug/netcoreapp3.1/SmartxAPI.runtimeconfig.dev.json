@@ -3,6 +3,21 @@
     "additionalProbingPaths": [
 <<<<<<< HEAD
 <<<<<<< HEAD
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+=======
+>>>>>>> 2b09b1ba23063dd38a9c19fe249354412032e1da
 <<<<<<< HEAD
       "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\linju scaria\\.nuget\\packages"
@@ -50,6 +65,7 @@
 >>>>>>> a736f2747afdd9b8ebffc700b70ecff965d971b7
 =======
 >>>>>>> 511967ee4dd6c593bb87c7ea4ac32c47eecdad9b
+<<<<<<< HEAD
 >>>>>>> 044d7724de03bfd46c132adfc050040d6c09593d
 =======
       "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
@@ -59,6 +75,15 @@
       "C:\\Users\\Aky77\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\Aky77\\.nuget\\packages"
 >>>>>>> 7e16239b690081402785035fea8ad3ffe2606751
+=======
+>>>>>>> 19723eb7f161e397ed3193e6d30500300bbc2eb3
+>>>>>>> 2b09b1ba23063dd38a9c19fe249354412032e1da
+>>>>>>> 0b971055071d87b581d9a4579221f38b8d35341e
+>>>>>>> 2ae00820a2e9cf552bd4aad127b3626438329318
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> 0f15eb36a0ecbe295995980cf9395051dd405a70
     ]
   }
 }

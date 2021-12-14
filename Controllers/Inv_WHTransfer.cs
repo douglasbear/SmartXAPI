@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 367;
+            FormID = 575;
         }
         private readonly string connectionString;
 
@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("productInformation")]
 
-        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID)
+        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate)
         {
 
             DataTable dt = new DataTable();
@@ -102,8 +102,12 @@ namespace SmartxAPI.Controllers
             }
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
-
-            string sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + "and N_ClassID<>4 " + qry + Category + Condition;
+            string sqlComandText = "";
+            if (dtpInvDate == null || dtpInvDate.ToString() == "")
+                sqlComandText = "Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_CompanyID=" + nCompanyID + "and (N_ClassID<>1 AND N_ClassID<>4" + qry + Category + Condition;
+            else
+                sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + "and N_ClassID<>4 " + qry + Category + Condition;
+            // Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + N_LocationID + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Value.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + myCompanyID._CompanyID + "and (N_ClassID<>1 AND N_ClassID<>4)
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
             Params.Add("@p3", "001");
@@ -209,7 +213,8 @@ namespace SmartxAPI.Controllers
 
                     }
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                   
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();
@@ -463,19 +468,19 @@ namespace SmartxAPI.Controllers
                     DetailGetSql = "Select vw_InvTransferStockDetails.*,dbo.[SP_LocationStock](vw_InvTransferStockDetails.N_ItemID," + N_LocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID,''," + N_LocationIDFrom + ") As N_LPrice,dbo.SP_SellingPrice(vw_InvTransferStockDetails.N_ItemID,vw_InvTransferStockDetails.N_CompanyID) As N_UnitSPrice " +
                     " from vw_InvTransferStockDetails  Where vw_InvTransferStockDetails.N_CompanyID=" + nCompanyID + " and vw_InvTransferStockDetails.N_TransferId=" + nTransferId + "";
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
-                    Details=myFunctions.AddNewColumnToDataTable(Details,"N_ClassID", typeof(int), 0);
+                    Details = myFunctions.AddNewColumnToDataTable(Details, "N_ClassID", typeof(int), 0);
 
 
                     foreach (DataRow item in Details.Rows)
                     {
                         object classID = dLayer.ExecuteScalar(" Select N_ClassId,N_ItemId from Inv_ItemMaster where N_ItemID=" + myFunctions.getIntVAL(item["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID, Params, connection);
                         if (classID != null)
-                            {
-                                item["n_ClassID"]=myFunctions.getIntVAL(classID.ToString());
-                            }
-                            
+                        {
+                            item["n_ClassID"] = myFunctions.getIntVAL(classID.ToString());
+                        }
 
-                            
+
+
                     }
                     Details.AcceptChanges();
 

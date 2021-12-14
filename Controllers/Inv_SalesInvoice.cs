@@ -401,7 +401,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         QueryParamsList.Add("@nOrderID", nSalesOrderID);
-                        string Mastersql = "select * from vw_SalesOrderMasterToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
+                        string Mastersql = "select *,0 as B_IsProforma from vw_SalesOrderMasterToInvoice where N_CompanyId=@nCompanyID and N_SalesOrderId=@nOrderID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         if (!MasterTable.Columns.Contains("N_OpportunityID"))
@@ -413,6 +413,7 @@ namespace SmartxAPI.Controllers
                         if (isProfoma == 1)
                         {
                             MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                            MasterTable.Rows[0]["B_IsProforma"] = 1;
                         }
 
                         string DetailSql = "";
@@ -447,13 +448,14 @@ namespace SmartxAPI.Controllers
                     {
 
                         QueryParamsList.Add("@nQuotationID", nQuotationID);
-                        string Mastersql = "select * from vw_QuotationToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
+                        string Mastersql = "select *,0 as B_IsProforma from vw_QuotationToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         if (isProfoma == 1)
                         {
                             MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                            MasterTable.Rows[0]["B_IsProforma"] = 1;
                         }
 
                         Object CRMCustomerID = null;
@@ -503,13 +505,14 @@ namespace SmartxAPI.Controllers
                     {
 
                         QueryParamsList.Add("@nOpportunityID", n_OpportunityID);
-                        string Mastersql = "select * from vw_OpportunityToInvoice where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
+                        string Mastersql = "select *,0 as B_IsProforma from vw_OpportunityToInvoice where N_CompanyId=@nCompanyID and N_OpportunityID=@nOpportunityID";
                         DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable = _api.Format(MasterTable, "Master");
                         if (isProfoma == 1)
                         {
                             MasterTable.Rows[0]["B_IsSaveDraft"] = 1;
+                            MasterTable.Rows[0]["B_IsProforma"] = 1;
                         }
 
                         string DetailSql = "";
@@ -869,7 +872,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
 
-                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_SalesDate"].ToString()), dLayer, connection, transaction))
+                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff",System.Globalization.CultureInfo.InvariantCulture) , dLayer, connection, transaction))
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));

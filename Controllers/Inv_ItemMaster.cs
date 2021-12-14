@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -44,6 +44,12 @@ namespace SmartxAPI.Controllers
             string qry = "";
             string Category = "";
             string Condition = "";
+            string xCriteria = "";
+            // if (b_AllBranchData)
+            //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
+            // else
+            //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+
             if (query != "" && query != null)
             {
                 qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
@@ -99,7 +105,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
                         {
 
-                            string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID, Inv_ItemDetails.N_Qty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID WHERE(vw_InvItem_Search_cloud.N_CompanyID = "+nCompanyID+") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
+                            string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID, Inv_ItemDetails.N_Qty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
                             item["SubItems"] = subTbl;
                         }
@@ -125,7 +131,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId, bool b_AllBranchData,int nBranchID,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -134,6 +140,14 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
+            string xCriteria="";
+
+             if (b_AllBranchData)
+                xCriteria = "";
+            else
+                xCriteria = "and  N_BranchID=@p5";
+
+            
             if (xSearchkey != null && xSearchkey.Trim() != "")
                 Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%')";
 
@@ -159,7 +173,7 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " +xCriteria + Searchkey  + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
 
@@ -168,6 +182,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p2", 0);
             Params.Add("@p3", "001");
             Params.Add("@p4", 1);
+            Params.Add("@p5", nBranchID);
 
             SortedList OutPut = new SortedList();
 
@@ -204,7 +219,7 @@ namespace SmartxAPI.Controllers
 
 
 
- 
+
 
         [HttpGet("details")]
         public ActionResult GetItemDetails(int nItemID, int nLocationID, int nBranchID)
@@ -437,7 +452,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID", GeneralTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID", 53);
-                        
+
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
@@ -499,11 +514,11 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save, Product name already exist"));
                         }
 
-                        string xBarcode="";
-                        if(MasterTable.Rows[k]["X_Barcode"].ToString()=="")
+                        string xBarcode = "";
+                        if (MasterTable.Rows[k]["X_Barcode"].ToString() == "")
                         {
-                            xBarcode=AutoGenerateBarCode( MasterTable.Rows[k]["X_ItemCode"].ToString(),myFunctions.getIntVAL(MasterTable.Rows[k]["N_CategoryID"].ToString()),nCompanyID, dLayer, connection,transaction);
-                            MasterTable.Rows[k]["X_Barcode"]=xBarcode;
+                            xBarcode = AutoGenerateBarCode(MasterTable.Rows[k]["X_ItemCode"].ToString(), myFunctions.getIntVAL(MasterTable.Rows[k]["N_CategoryID"].ToString()), nCompanyID, dLayer, connection, transaction);
+                            MasterTable.Rows[k]["X_Barcode"] = xBarcode;
                         }
 
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
@@ -683,9 +698,9 @@ namespace SmartxAPI.Controllers
                             int i = 1;
                             foreach (DataRow dRow in POS.Rows)
                             {
-                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User,"PosProductImages"),ItemCode + "-POS-" + i);
+                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "PosProductImages"), ItemCode + "-POS-" + i);
                                 dRow["X_ImageName"] = ItemCode + "-POS-" + i + ".jpg";
-                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User,"PosProductImages");
+                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "PosProductImages");
                                 dRow["N_ItemID"] = N_ItemID;
                                 i++;
 
@@ -702,9 +717,9 @@ namespace SmartxAPI.Controllers
                             int j = 1;
                             foreach (DataRow dRow in ECOM.Rows)
                             {
-                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User,"EcomProductImages"),ItemCode + "-ECOM-" + j);
+                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "EcomProductImages"), ItemCode + "-ECOM-" + j);
                                 dRow["X_ImageName"] = ItemCode + "-ECOM-" + j + ".jpg";
-                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User,"EcomProductImages");
+                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "EcomProductImages");
                                 dRow["N_ItemID"] = N_ItemID;
                                 j++;
 
@@ -776,16 +791,16 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private string AutoGenerateBarCode(string xItemCode,int nCatID,int nCompanyID,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction)
+        private string AutoGenerateBarCode(string xItemCode, int nCatID, int nCompanyID, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
                 int i = 0;
                 string X_CatCode = "00";
-                string X_ItemCategory = "",X_Barcode="";
-                if (nCatID!=0)
+                string X_ItemCategory = "", X_Barcode = "";
+                if (nCatID != 0)
                 {
-                    X_ItemCategory=dLayer.ExecuteScalar("select X_CategoryCode from Inv_ItemCategory WHERE N_CategoryID="+nCatID+" and N_CompanyID="+nCompanyID, connection, transaction).ToString();
+                    X_ItemCategory = dLayer.ExecuteScalar("select X_CategoryCode from Inv_ItemCategory WHERE N_CategoryID=" + nCatID + " and N_CompanyID=" + nCompanyID, connection, transaction).ToString();
                     X_CatCode = X_ItemCategory;
                 }
                 do
@@ -1022,7 +1037,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("batchList")]
-        public ActionResult GetBatchList( int nLocationID, int itemId)
+        public ActionResult GetBatchList(int nLocationID, int itemId)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -1047,9 +1062,9 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
-        }    
+        }
 
         //  [HttpGet("costAndStock_Test")]
         // public ActionResult GetCostAndStock(int nItemID,int nCompanyID)
@@ -1067,7 +1082,7 @@ namespace SmartxAPI.Controllers
         //         {
         //             connection.Open();
         //             dt = dLayer.ExecuteDataTable(sqlCostCommand, connection);
-                   
+
         //             if (dt.Rows.Count > 0)
         //             {
         //                 DataRow drow = dt.Rows[0];
@@ -1099,13 +1114,13 @@ namespace SmartxAPI.Controllers
 
         // }
 
-         [HttpGet("costAndStock")]
-        public ActionResult GetCostAndStock(int nItemID,int nLocationID,string xBatch,DateTime dDate)
+        [HttpGet("costAndStock")]
+        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate)
         {
             DataTable dt = new DataTable();
-            string sqlCommandText="";
-            if(xBatch==null)xBatch="";
-            int nCompanyID =myFunctions.GetCompanyID(User);
+            string sqlCommandText = "";
+            if (xBatch == null) xBatch = "";
+            int nCompanyID = myFunctions.GetCompanyID(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -1124,7 +1139,7 @@ namespace SmartxAPI.Controllers
                     }
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
-                   
+
                 }
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)

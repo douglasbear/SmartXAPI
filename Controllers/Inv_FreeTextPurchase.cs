@@ -211,7 +211,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                       // Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
                         if (X_InvoiceNo == "")

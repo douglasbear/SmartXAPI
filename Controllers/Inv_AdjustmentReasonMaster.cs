@@ -33,14 +33,18 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetInvAdjustmentReason(int nFnYearID)
+        public ActionResult GetInvAdjustmentReason(int nFnYearID,bool adjustment)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@p2", nFnYearID);
-            string sqlCommandText="Select * from vw_Inv_StockAdjstmentReason_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@p2";
+            string sqlCommandText="";
+            sqlCommandText="Select * from vw_Inv_StockAdjstmentReason_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@p2";
+            if(adjustment)
+              sqlCommandText="Select X_Description as X_Reason,N_ReasonID,X_ReasonCode,b_ISstockIn from vw_Inv_StockAdjstmentReason_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@p2";
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -109,6 +113,8 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nReasonID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_ReasonID"].ToString());
+                int nGroupID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_GroupID"].ToString());
+                 MasterTable.Columns.Remove("n_GroupID");
 
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
