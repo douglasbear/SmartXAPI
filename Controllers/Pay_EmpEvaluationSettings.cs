@@ -102,6 +102,64 @@ namespace SmartxAPI.Controllers
             }
         }
 
+        [HttpGet("details")]
+        public ActionResult GetEmpEvalSettingsDetails(int nFnYearID, int nEvaluationID, bool bAllBranchData, int nBranchID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataSet dt = new DataSet();
+            SortedList Params = new SortedList();
+            DataTable MasterTable = new DataTable();
+            DataTable DetailTable = new DataTable();
+            DataTable EmpEvalTable = new DataTable();
+            string Mastersql = "";
+
+            if (bAllBranchData == true)
+                Mastersql = "select * from Pay_EmpEvaluationSettings where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EvaluationID=@p4 ";
+            else
+                Mastersql = "select * from Pay_EmpEvaluationSettings where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and N_EvaluationID=@p4 ";
+
+            Params.Add("@p1", nCompanyID);
+            Params.Add("@p2", nFnYearID);
+            Params.Add("@p3", nBranchID);
+            Params.Add("@p4", nEvaluationID);            
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
+
+                    if (MasterTable.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Data Found !!"));
+                    }
+
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    dt.Tables.Add(MasterTable);
+
+                    int n_EvaluationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_EvaluationID"].ToString());
+
+                    string DetailSql = "";
+
+                    DetailSql = "Select * from Pay_EmpEvaluationSettingsDetails where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EvaluationID=" + n_EvaluationID;
+                    DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
+
+                    EvaluatorSql = "Select * from Pay_EmpEvaluators where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EvaluationID=" + n_EvaluationID;
+                    EmpEvalTable = dLayer.ExecuteDataTable(EvaluatorSql, Params, connection);
+                    EmpEvalTable = _api.Format(EmpEvalTable, "Evaluators");
+                    dt.Tables.Add(EmpEvalTable);
+                }
+                return Ok(_api.Success(dt));
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
         [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
