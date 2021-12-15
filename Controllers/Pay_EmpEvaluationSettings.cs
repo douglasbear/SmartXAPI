@@ -46,7 +46,6 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
-                    string criteria = "";
 
                     Params.Add("@p1", nCompanyID);
                     Params.Add("@p2", nFnYearID);
@@ -146,6 +145,8 @@ namespace SmartxAPI.Controllers
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(DetailTable);
+
+                    string EvaluatorSql = "";
 
                     EvaluatorSql = "Select * from Pay_EmpEvaluators where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EvaluationID=" + n_EvaluationID;
                     EmpEvalTable = dLayer.ExecuteDataTable(EvaluatorSql, Params, connection);
