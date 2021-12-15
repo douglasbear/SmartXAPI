@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 367;
+            FormID = 575;
         }
         private readonly string connectionString;
 
@@ -213,7 +213,8 @@ namespace SmartxAPI.Controllers
 
                     }
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_Man_EmployeeMaintenance where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
+                   
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
                     Params.Add("@nCompanyId", nCompanyId);
 
                     SortedList OutPut = new SortedList();

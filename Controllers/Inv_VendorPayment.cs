@@ -370,7 +370,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", Master["n_FnYearID"].ToString());
                         Params.Add("N_FormID", this.N_FormID);
-                        Params.Add("N_BranchID", Master["n_BranchID"].ToString());
+                       // Params.Add("N_BranchID", Master["n_BranchID"].ToString());
 
                         PayReceiptNo = dLayer.GetAutoNumber("Inv_PayReceipt", "x_VoucherNo", Params, connection, transaction);
                         if (PayReceiptNo == "") { transaction.Rollback(); return Ok(api.Warning("Unable to generate Receipt Number")); }

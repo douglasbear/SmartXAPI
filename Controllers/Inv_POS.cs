@@ -714,7 +714,7 @@ namespace SmartxAPI.Controllers
 
 // GENERATE Maintanance Entry
 
-                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode,0 as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status,'' as X_ClosedRemarks from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID",warrantyParams,connection,transaction);
+                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode,0 as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status,'' as X_ClosedRemarks from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null",warrantyParams,connection,transaction);
 
                             DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",warrantyParams,connection,transaction);
 

@@ -239,10 +239,13 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", nFormID);
-                        Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+                       // Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+                        
                         while (true)
                         {
-                            xVoucherNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerateBranch", Params, connection, transaction).ToString();
+                       
+
+                            xVoucherNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "' and N_FnYearID =" + nFnYearId, connection, transaction);
                             if (N_Result == null)
                                 break;
