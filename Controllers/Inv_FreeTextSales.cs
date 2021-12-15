@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
                     int nSalesID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     string X_ReceiptNo = MasterTable.Rows[0]["X_ReceiptNo"].ToString();
-                    int N_BillAmt = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
+                    double N_BillAmt = myFunctions.getVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
                     string xTransType = "FTSALES";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     if (nSalesID > 0)
