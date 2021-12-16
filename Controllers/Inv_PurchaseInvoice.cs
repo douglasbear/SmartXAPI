@@ -665,6 +665,30 @@ namespace SmartxAPI.Controllers
                         //     return Ok(_api.Error(User, ex.Message));
                         // }
 
+                   
+                        object OPaymentDone= dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID "+
+                                                                                     " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID ="+nCompanyID+" and dbo.Inv_PayReceipt.N_FnYearID="+nFnYearID+" and  dbo.Inv_PayReceiptDetails.N_InventoryId="+N_PurchaseID, connection, transaction);
+                        if(OPaymentDone!=null)
+                        {
+                            if(myFunctions.getIntVAL(OPaymentDone.ToString()) ==1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
+                            }
+                        }
+
+                        object OReturnDone = dLayer.ExecuteScalar("SELECT DISTINCT 1 FROM Inv_Purchase INNER JOIN Inv_PurchaseReturnMaster ON Inv_Purchase.N_CompanyID = Inv_PurchaseReturnMaster.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseReturnMaster.N_FnYearID AND Inv_Purchase.N_PurchaseID = Inv_PurchaseReturnMaster.N_PurchaseId "+
+	                                                                                " where dbo.Inv_PurchaseReturnMaster.N_CompanyID ="+nCompanyID+" and dbo.Inv_PurchaseReturnMaster.N_FnYearID="+nFnYearID+" and  dbo.Inv_PurchaseReturnMaster.N_PurchaseId="+N_PurchaseID, connection, transaction);
+
+                        if(OReturnDone!=null)
+                        {
+                            if(myFunctions.getIntVAL(OReturnDone.ToString()) ==1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Purchase Return processed against this purchase."));
+                            }
+                        }
+
                         dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
                         dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID,connection, transaction);
                         dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID,connection, transaction);
