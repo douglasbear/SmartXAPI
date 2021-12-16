@@ -128,13 +128,13 @@ namespace SmartxAPI.Controllers
                     ValidationTable.Rows.Add(row);
                     ValidationTable = _api.Format(ValidationTable, "ValidationTable");
                     //  Disable create new year if new year exists.......
-                 
-                   
+
+
                     string sql = "Select top 1 ISNULL(N_FnYearID,0) as N_FnYearID,B_YearEndProcess from Acc_FnYear Where N_CompanyID =@nCompanyID  and D_Start > ( Select D_Start FRom Acc_FnYear Where N_FnYearID =@nFnYearID and N_CompanyID =@nCompanyID) order by D_Start";
                     NextYear = dLayer.ExecuteDataTable(sql, Params, connection);
                     NextYear = _api.Format(NextYear, "NextYear");
 
-                    
+
                     dt.Tables.Add(ValidationTable);
                     dt.Tables.Add(NextYear);
 
@@ -144,13 +144,56 @@ namespace SmartxAPI.Controllers
 
                 }
             }
-               catch (Exception e)
+            catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
             }
         }
-    }
-}
+        // [HttpPost("save")]
+        // public ActionResult SaveData([FromBody] DataSet ds)
+        // {
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             DataTable MasterTable;
+        //             SqlTransaction transaction;
+        //             transaction = connection.BeginTransaction();
+        //             MasterTable = ds.Tables["master"];
+        //             int nCompanyID = myFunctions.GetCompanyID(User);
+
+
+
+        //             int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+        //             bool b_NewYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewYear"].ToString());
+        //             var d_DateFrom = (MasterTable.Rows[0]["d_DateFrom"].ToString());
+        //             var d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
+        //             string X_CustomerVal= (MasterTable.Rows[0]["X_CustomerVal"].ToString());
+        //             string X_AccountVal= (MasterTable.Rows[0]["X_AccountVal"].ToString());
+        //             string X_VendorVal= (MasterTable.Rows[0]["X_VendorVal"].ToString());
+        //             int n_TaxTypeID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
+        //             if (b_NewYear)
+        //                object a=dLayer.ExecuteScalar("SP_FinancialYear_Create_wizard " + nCompanyID + "," + nFnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ", connection,transaction);
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+                }
+            }
 
 
 
