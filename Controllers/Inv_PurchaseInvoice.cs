@@ -521,7 +521,7 @@ namespace SmartxAPI.Controllers
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
             int Dir_Purchase = 1;
-            if (n_MRNID != 0) Dir_Purchase = 0;
+            
 
             try
             {
@@ -539,6 +539,10 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                     }
+
+                    bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection,transaction);
+
+                    if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
 
                     if (N_PurchaseID > 0)
                     {
@@ -708,7 +712,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                         }
 
-                        if (n_MRNID > 0)
+                        if (n_MRNID > 0 && B_MRNVisible)
                         {
                             dLayer.ExecuteScalar("Update Inv_MRNDetails Set N_SPrice=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()) + ",N_PurchaseDetailsID=" + N_InvoiceDetailId + " Where N_ItemID=" + myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()) + "  and N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID + " and N_MRNDetailsID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_MRNDetailsID"].ToString()), connection, transaction);
 
@@ -934,7 +938,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User, ex));
+                return Ok(_api.Error(User, ex.Message));
             }
 
 
