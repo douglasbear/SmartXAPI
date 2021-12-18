@@ -158,10 +158,13 @@ namespace SmartxAPI.Controllers
         //         {
         //             connection.Open();
         //             DataTable MasterTable;
-        //             SqlTransaction transaction;
-        //             transaction = connection.BeginTransaction();
+                  
+        //              SqlTransaction transaction = connection.BeginTransaction();
         //             MasterTable = ds.Tables["master"];
-        //             int nCompanyID = myFunctions.GetCompanyID(User);
+        //               int nCompanyID = myFunctions.GetCompanyID(User);
+
+        //             SortedList Params = new SortedList();
+
 
 
 
@@ -174,7 +177,7 @@ namespace SmartxAPI.Controllers
         //             string X_VendorVal= (MasterTable.Rows[0]["X_VendorVal"].ToString());
         //             int n_TaxTypeID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
         //             if (b_NewYear)
-        //                object a=dLayer.ExecuteScalar("SP_FinancialYear_Create_wizard " + nCompanyID + "," + nFnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ", connection,transaction);
+        //                  dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard " + nCompanyID + "," + nFnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ",Params, connection,transaction);
 
 
 

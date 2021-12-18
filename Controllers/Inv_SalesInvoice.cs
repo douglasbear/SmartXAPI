@@ -599,7 +599,7 @@ namespace SmartxAPI.Controllers
                     object objSalesReturn = dLayer.ExecuteScalar("select X_DebitNoteNo from Inv_SalesReturnMaster where N_SalesId =@nSalesID and isnull(B_IsSaveDraft,0)=0 and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
 
                     object DNQty = dLayer.ExecuteScalar("Select SUM(N_Qty) from vw_InvSalesReturn_Display Where N_CompanyID=" + nCompanyId + " and N_SalesID=@nSalesID", QueryParamsList, Con);
-                    object OrderQty1 = dLayer.ExecuteScalar("Select SUM(N_RetQty) from vw_InvSalesReturn_Display Where N_CompanyID=" + nCompanyId + "and N_SalesID=@nSalesID", QueryParamsList, Con);
+                    object OrderQty1 = dLayer.ExecuteScalar("Select SUM(N_Qty) from Inv_SalesDetails Where N_CompanyID=" + nCompanyId + "and N_SalesID=@nSalesID", QueryParamsList, Con);
                     if (DNQty != null && OrderQty1 != null)
                     {
                         if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) != myFunctions.getIntVAL(DNQty.ToString()))
