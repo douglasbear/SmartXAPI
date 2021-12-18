@@ -269,7 +269,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("UpdateStatus")]
-        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus)
+        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus,string dClosingDate)
         {
             try
             {
@@ -279,11 +279,11 @@ namespace SmartxAPI.Controllers
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
-
-                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set N_Status = " + nStatus + " where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
-                    if (remarks != "")
+                        //DateTime dCloseDate = Convert.ToDateTime(dClosingDate.ToString());
+                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set N_Status = " + nStatus + " , D_ClosingDate='"+dClosingDate+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
+                    if (remarks != "" || remarks!= null )
                     {
-                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
+                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"', D_ClosingDate='"+dClosingDate+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     }
                     return Ok(_api.Success("Closed"));
                 }

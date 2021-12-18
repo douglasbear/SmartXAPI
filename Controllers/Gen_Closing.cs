@@ -95,6 +95,9 @@ namespace SmartxAPI.Controllers
                     case 1302:
                         sql = "Update CRM_Opportunity set X_ClosingDescription=@Desc, N_ClosingStatusID=@ClosingID where N_OpportunityID=@nPkey and n_CompanyId=@nCompanyID";
                         break;
+                    case 80:
+                        sql = "Update Inv_SalesQuotation set N_ClosingRsnID=@ClosingID where N_QuotationId=@nPkey and n_CompanyId=@nCompanyID"; 
+                        break;   
                     default: return Ok(api.Warning("Invalid Form"));
                 }
                 using (SqlConnection connection = new SqlConnection(connectionString))
