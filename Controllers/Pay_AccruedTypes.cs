@@ -261,10 +261,11 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_VacCode"] = x_VacCode;
                         MasterTable.Columns.Remove("n_FnYearId");
                     }
-                    string DupCriteria = "N_companyID=" + N_CompanyID + " And x_VacCode = '" + values + "' and N_CountryID="+N_CountryID+"";
+                     string DupCriteria = "N_CompanyID=" + N_CompanyID + " and N_CountryID =" +N_CountryID+ " and (X_VacType='" +X_VacType + "' or X_VacCode='" + values + "') ";
 
 
-                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria, "", MasterTable, connection, transaction);
+                    n_VacTypeID = dLayer.SaveData("Pay_VacationType", "n_VacTypeID", DupCriteria,"N_CompanyID=" +N_CompanyID+" and N_CountryID = "+N_CountryID+"", MasterTable, connection, transaction);
+                   
                     if (n_VacTypeID <= 0)
                     {
                         transaction.Rollback();
