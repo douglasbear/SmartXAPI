@@ -351,6 +351,10 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+                    if (MasterTable.Columns.Contains("n_FormID"))
+                        MasterTable.Columns.Remove("n_FormID");
+                    if (MasterTable.Columns.Contains("x_TransType"))
+                        MasterTable.Columns.Remove("x_TransType");
                     nLoanTransID = dLayer.SaveData("Pay_LoanIssue", "n_LoanTransID", MasterTable, connection, transaction);
                     if (nLoanTransID <= 0)
                     {
