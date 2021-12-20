@@ -56,11 +56,11 @@ namespace SmartxAPI.Controllers
 
                     if (bAllBranchData == true)
                         {
-                            Searchkey = Searchkey + " and N_CompanyID=@p1 and N_FnYearID=@p2 ";
+                            Searchkey = Searchkey + "N_CompanyID=@p1 and N_FnYearID=@p2 ";
                         }
                     else
                         {
-                            Searchkey = Searchkey + " and N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 ";
+                            Searchkey = Searchkey + "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 ";
                         }
 
                     if (xSortBy == null || xSortBy.Trim() == "")
