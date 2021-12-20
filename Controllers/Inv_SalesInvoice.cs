@@ -529,10 +529,6 @@ namespace SmartxAPI.Controllers
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
 
-
-
-
-
                     SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
