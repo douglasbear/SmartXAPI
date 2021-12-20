@@ -55,13 +55,13 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and (X_EvaluationCode like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or x_EmpDep like '%" + xSearchkey + "%' or cast(D_PeriodFrom as VarChar) like '%" + xSearchkey + "%' or cast(D_PeriodTo as VarChar) like '%" + xSearchkey + "%')";
 
                     if (bAllBranchData == true)
-                        {
-                            Searchkey = Searchkey + "N_CompanyID=@p1 and N_FnYearID=@p2 ";
-                        }
+                    {
+                        Searchkey = Searchkey + "N_CompanyID=@p1 and N_FnYearID=@p2 ";
+                    }
                     else
-                        {
-                            Searchkey = Searchkey + "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 ";
-                        }
+                    {
+                        Searchkey = Searchkey + "N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 ";
+                    }
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_EvaluationID desc";
@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nBranchID);
-            Params.Add("@p4", nEvaluationID);            
+            Params.Add("@p4", nEvaluationID);
 
             try
             {
@@ -157,7 +157,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -175,7 +175,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                 int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                 int nEvaluationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EvaluationID"].ToString());
-                int  nEvaluationDetailsID = 0;
+                int nEvaluationDetailsID = 0;
                 int nEvaluatorsDetailsID = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -183,7 +183,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     SortedList Params = new SortedList();
-                   
+
                     // Auto Gen
                     string xEvaluationCode = "";
                     var values = MasterTable.Rows[0]["x_EvaluationCode"].ToString();
@@ -194,26 +194,38 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_EvaluationID", nEvaluationID);
                         xEvaluationCode = dLayer.GetAutoNumber("Pay_EmpEvaluationSettings", "X_EvaluationCode", Params, connection, transaction);
-                        if (xEvaluationCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Code")); }
+                        if (xEvaluationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Code")); }
                         MasterTable.Rows[0]["X_EvaluationCode"] = xEvaluationCode;
                     }
                     nEvaluationID = dLayer.SaveData("Pay_EmpEvaluationSettings", "N_EvaluationID", MasterTable, connection, transaction);
                     if (nEvaluationID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
-                    
+
                     dLayer.DeleteData("Pay_EmpEvaluationSettingsDetails", "N_EvaluationID", nEvaluationID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        nEvaluationDetailsID = dLayer.SaveData("Pay_EmpEvaluationSettingsDetails", "N_EvaluationDetailsID", DetailTable, connection, transaction);
+                        DetailTable.Rows[j]["n_EvaluationID"] = nEvaluationID;
+                    }
+                    nEvaluationDetailsID = dLayer.SaveData("Pay_EmpEvaluationSettingsDetails", "N_EvaluationDetailsID", DetailTable, connection, transaction);
+                    if (nEvaluationDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     dLayer.DeleteData("Pay_EmpEvaluators", "N_EvaluationID", nEvaluationID, "", connection, transaction);
                     for (int j = 0; j < EmpEvalTable.Rows.Count; j++)
                     {
-                        nEvaluatorsDetailsID = dLayer.SaveData("Pay_EmpEvaluators", "N_EvaluatorsDetailsID", EmpEvalTable, connection, transaction);
+                        EmpEvalTable.Rows[j]["n_EvaluationID"] = nEvaluationID;
+                    }
+                    nEvaluatorsDetailsID = dLayer.SaveData("Pay_EmpEvaluators", "N_EvaluatorsDetailsID", EmpEvalTable, connection, transaction);
+                    if (nEvaluatorsDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     transaction.Commit();
@@ -222,7 +234,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -250,13 +262,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete"));
+                        return Ok(_api.Error(User, "Unable to delete"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
