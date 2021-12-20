@@ -287,14 +287,14 @@ namespace SmartxAPI.Controllers
                             {
                                 if (var1["N_RetQty"] != null && var1["N_RetQty"].ToString() != "")
                                 {
-                                    if(var1["N_Qty"].ToString() != var1["N_RetQty"].ToString())
+                                    if (var1["N_Qty"].ToString() != var1["N_RetQty"].ToString())
                                     {
-                                    var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
-                                    var1["n_RetQty"] = 0.00;
-                                    SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
-                                    SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
-                                    SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
-                                    SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
+                                        var1["n_Qty"] = (myFunctions.getIntVAL(var1["N_Qty"].ToString()) - myFunctions.getIntVAL(var1["N_RetQty"].ToString())).ToString();
+                                        var1["n_RetQty"] = 0.00;
+                                        SalesReturn.Rows[0]["N_DebitNoteId"] = 0;
+                                        SalesReturn.Rows[0]["X_DebitNoteNo"] = "@Auto";
+                                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "B_Invoice", typeof(int), 1);
+                                        SalesReturn = myFunctions.AddNewColumnToDataTable(SalesReturn, "N_UserID", typeof(int), myFunctions.GetUserID(User));
                                     }
 
                                 }
@@ -303,6 +303,8 @@ namespace SmartxAPI.Controllers
                         }
                         SalesReturnDetails.AcceptChanges();
                         SalesReturn.AcceptChanges();
+                         SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                           dt.Tables.Add(SalesReturnDetails);
                     }
                     else
                     {
@@ -313,20 +315,37 @@ namespace SmartxAPI.Controllers
 
                         SalesReturnDetails = new DataTable();
                         SalesReturnDetails = dLayer.ExecuteDataTable(sqlCommandText2, Params, connection);
+                         SalesReturnDetails = myFunctions.AddNewColumnToDataTable(SalesReturnDetails, "n_UnitQty", typeof(int), 1);
+                       
+                        foreach (DataRow var1 in SalesReturnDetails.Rows)
+                        {
 
+                            object SalesUnit = dLayer.ExecuteScalar("SELECT X_ItemUnit from Inv_ItemUnit where N_ItemID=" + myFunctions.getIntVAL(var1["N_ItemID"].ToString()) + " and N_ItemUnitID=" + myFunctions.getIntVAL(var1["N_UnitID"].ToString()) + "", Params, connection);
+                            if (SalesUnit != null)
+                                var1["X_ItemUnit"] = SalesUnit.ToString();
+                            object unitQty = dLayer.ExecuteScalar("SELECT N_Qty from Inv_ItemUnit where N_ItemID=" + myFunctions.getIntVAL(var1["N_ItemID"].ToString()) + " and N_ItemUnitID=" + myFunctions.getIntVAL(var1["N_UnitID"].ToString()) + "", Params, connection);
+                            if (unitQty != null)
+                                var1["n_UnitQty"] = unitQty.ToString();
+                            else
+                                var1["n_UnitQty"] = 1;
+
+
+                        }
+                        SalesReturnDetails.AcceptChanges();
+
+
+                        SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
+                        DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                        Attachments = _api.Format(Attachments, "attachments");
+
+                        dt.Tables.Add(SalesReturnDetails);
+                        dt.Tables.Add(Attachments);
 
                     }
-
-
-                    SalesReturnDetails = _api.Format(SalesReturnDetails, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(SalesReturn.Rows[0]["N_DebitNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(SalesReturn.Rows[0]["N_FnYearID"].ToString()), User, connection);
-                    Attachments = _api.Format(Attachments, "attachments");
-
-                    dt.Tables.Add(SalesReturnDetails);
-                    dt.Tables.Add(Attachments);
+                    return Ok(_api.Success(dt));
 
                 }
-                return Ok(_api.Success(dt));
+
             }
             catch (Exception e)
             {

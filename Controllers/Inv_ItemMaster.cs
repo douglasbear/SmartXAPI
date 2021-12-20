@@ -1023,7 +1023,7 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
 
-                            return Ok(_api.Error(User, "Unable to delete product category"));
+                            return Ok(_api.Error(User, "Unable to delete product"));
                         }
                     }
                     transaction.Commit();

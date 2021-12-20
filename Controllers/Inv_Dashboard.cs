@@ -194,7 +194,7 @@ namespace SmartxAPI.Controllers
             else
                 criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID;
 
-            sqlAll = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+"";
+            sqlAll = "SELECT COUNT(*) as N_Count FROM vw_InvItem_Search_cloud WHERE "+criteria+"";
             sqlNoStock = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock = 0";
             sqlMinQty = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock <=N_MinQty";
             sqlReOrder = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock <=N_ReOrderQty";
