@@ -120,10 +120,11 @@ namespace SmartxAPI.Controllers
                     AmountParams.Add("N_CompanyID", nCompanyID);
                     int nUserID = myFunctions.GetUserID(User);
                     int nFnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearId"].ToString());
+                    int nBranchId = myFunctions.getIntVAL(MasterRow["n_BranchId"].ToString());
                     int nSalesID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesID"].ToString());
                     int N_CustomerID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CustomerID"].ToString());
                     string X_ReceiptNo = MasterTable.Rows[0]["X_ReceiptNo"].ToString();
-                    int N_BillAmt = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
+                    double N_BillAmt = myFunctions.getVAL(MasterTable.Rows[0]["N_BillAmt"].ToString());
                     string xTransType = "DEBIT NOTE";
                     DocNo = MasterRow["X_ReceiptNo"].ToString();
                     if (nSalesID > 0)
@@ -150,7 +151,8 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                       // Params.Add("N_BranchID", nBranchId);
+                        //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_ReceiptNo = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
                         if (X_ReceiptNo == "")

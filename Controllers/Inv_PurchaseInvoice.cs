@@ -521,7 +521,7 @@ namespace SmartxAPI.Controllers
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
             int Dir_Purchase = 1;
-            if (n_MRNID != 0) Dir_Purchase = 0;
+            
 
             try
             {
@@ -539,6 +539,10 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                     }
+
+                    bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection,transaction);
+
+                    if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
 
                     if (N_PurchaseID > 0)
                     {
@@ -661,6 +665,30 @@ namespace SmartxAPI.Controllers
                         //     return Ok(_api.Error(User, ex.Message));
                         // }
 
+                   
+                        object OPaymentDone= dLayer.ExecuteScalar("SELECT DISTINCT 1	FROM dbo.Inv_PayReceipt INNER JOIN dbo.Inv_PayReceiptDetails ON dbo.Inv_PayReceipt.N_PayReceiptId = dbo.Inv_PayReceiptDetails.N_PayReceiptId AND dbo.Inv_PayReceipt.N_CompanyID = dbo.Inv_PayReceiptDetails.N_CompanyID "+
+                                                                                     " WHERE dbo.Inv_PayReceipt.X_Type='PP' and dbo.Inv_PayReceiptDetails.X_TransType='PURCHASE' and dbo.Inv_PayReceipt.N_CompanyID ="+nCompanyID+" and dbo.Inv_PayReceipt.N_FnYearID="+nFnYearID+" and  dbo.Inv_PayReceiptDetails.N_InventoryId="+N_PurchaseID, connection, transaction);
+                        if(OPaymentDone!=null)
+                        {
+                            if(myFunctions.getIntVAL(OPaymentDone.ToString()) ==1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Purchase Payment processed against this purchase."));
+                            }
+                        }
+
+                        object OReturnDone = dLayer.ExecuteScalar("SELECT DISTINCT 1 FROM Inv_Purchase INNER JOIN Inv_PurchaseReturnMaster ON Inv_Purchase.N_CompanyID = Inv_PurchaseReturnMaster.N_CompanyID AND Inv_Purchase.N_FnYearID = Inv_PurchaseReturnMaster.N_FnYearID AND Inv_Purchase.N_PurchaseID = Inv_PurchaseReturnMaster.N_PurchaseId "+
+	                                                                                " where dbo.Inv_PurchaseReturnMaster.N_CompanyID ="+nCompanyID+" and dbo.Inv_PurchaseReturnMaster.N_FnYearID="+nFnYearID+" and  dbo.Inv_PurchaseReturnMaster.N_PurchaseId="+N_PurchaseID, connection, transaction);
+
+                        if(OReturnDone!=null)
+                        {
+                            if(myFunctions.getIntVAL(OReturnDone.ToString()) ==1)
+                            {
+                                transaction.Rollback();
+                                return Ok(_api.Error(User, "Purchase Return processed against this purchase."));
+                            }
+                        }
+
                         dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and X_VoucherNo='" + values + "' and N_FnYearID=" + nFnYearID + " and X_TransType = 'PURCHASE'", connection, transaction);
                         dLayer.ExecuteNonQuery("Delete FROM Inv_PurchaseFreights WHERE N_PurchaseID = " + N_PurchaseID + " and N_CompanyID = " + nCompanyID,connection, transaction);
                         dLayer.ExecuteNonQuery("Delete from Inv_PurchaseDetails where N_PurchaseID=" + N_PurchaseID + " and N_CompanyID=" + nCompanyID,connection, transaction);
@@ -708,7 +736,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Unable to save Purchase Invoice!"));
                         }
 
-                        if (n_MRNID > 0)
+                        if (n_MRNID > 0 && B_MRNVisible)
                         {
                             dLayer.ExecuteScalar("Update Inv_MRNDetails Set N_SPrice=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["N_PPrice"].ToString()) + ",N_PurchaseDetailsID=" + N_InvoiceDetailId + " Where N_ItemID=" + myFunctions.getIntVAL(DetailTableCopy.Rows[j]["N_ItemID"].ToString()) + "  and N_MRNID=" + n_MRNID + " and N_CompanyID=" + nCompanyID + " and N_MRNDetailsID=" + myFunctions.getVAL(DetailTableCopy.Rows[j]["n_MRNDetailsID"].ToString()), connection, transaction);
 
@@ -934,7 +962,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User, ex));
+                return Ok(_api.Error(User, ex.Message));
             }
 
 

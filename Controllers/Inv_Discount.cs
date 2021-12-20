@@ -128,13 +128,19 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nItemID", nItemID);
                     Params.Add("@nItemUnitID", nItemUnitID);
                     Params.Add("@nCategoryID", nCategoryID);
+                    object N_PriceTypeID = null;
 
-                    object N_PriceTypeID = dLayer.ExecuteScalar("select N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
+                    
+                    N_PriceTypeID = dLayer.ExecuteScalar("select N_Value from Gen_Settings where X_Group=64 and N_CompanyID=" + nCompanyId + " and X_Description='DefaultPriceList'", Params, connection);
+
+                    if(nCustomerID>0)
+                    N_PriceTypeID = dLayer.ExecuteScalar("select N_DiscsettingsID from inv_customer where N_CustomerID=" + nCustomerID + " and N_CompanyID=" + nCompanyId + " and N_FnyearID=" + nFnYearID, Params, connection);
+
 
                     if (N_PriceTypeID != null)
                     {
                         Params.Add("@nPriceTypeID", N_PriceTypeID.ToString());
-                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID";
+                        string pricelistAll = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID =@nPriceTypeID and N_ItemID=@nItemID and N_ItemUnitID=@nItemUnitID";
                         
                         string pricelistItem = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_ItemID=@nItemID";
                         string pricelistCategory = "Select * from vw_Discount Where N_CompanyID = @nCompanyID and N_FnYearID = @nFnYearID and N_DiscID = @nPriceTypeID and N_CategoryID=@nCategoryID";
