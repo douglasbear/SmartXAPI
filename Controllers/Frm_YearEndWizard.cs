@@ -149,37 +149,119 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             DataTable MasterTable;
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable MasterTable;
                   
-        //              SqlTransaction transaction = connection.BeginTransaction();
-        //             MasterTable = ds.Tables["master"];
-        //               int nCompanyID = myFunctions.GetCompanyID(User);
+                     SqlTransaction transaction = connection.BeginTransaction();
+                    MasterTable = ds.Tables["master"];
+                      int nCompanyID = myFunctions.GetCompanyID(User);
 
-        //             SortedList Params = new SortedList();
-
-
+                    SortedList Params = new SortedList();
 
 
-        //             int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
-        //             bool b_NewYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewYear"].ToString());
-        //             var d_DateFrom = (MasterTable.Rows[0]["d_DateFrom"].ToString());
-        //             var d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
-        //             string X_CustomerVal= (MasterTable.Rows[0]["X_CustomerVal"].ToString());
-        //             string X_AccountVal= (MasterTable.Rows[0]["X_AccountVal"].ToString());
-        //             string X_VendorVal= (MasterTable.Rows[0]["X_VendorVal"].ToString());
-        //             int n_TaxTypeID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
-        //             if (b_NewYear)
-        //                  dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard " + nCompanyID + "," + nFnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ",Params, connection,transaction);
 
 
+                    int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                    int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                    bool b_NewYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewYear"].ToString());
+                    bool b_closeYear =  myFunctions.getBoolVAL(MasterTable.Rows[0]["b_closeYear"].ToString());
+                    bool b_TransferBalance = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_closeYear"].ToString());
+                    var d_DateFrom = (MasterTable.Rows[0]["d_DateFrom"].ToString());
+                    var d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
+                    var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());
+                    string X_CustomerVal= (MasterTable.Rows[0]["X_CustomerVal"].ToString());
+                    string X_AccountVal= (MasterTable.Rows[0]["X_AccountVal"].ToString());
+                    string X_VendorVal= (MasterTable.Rows[0]["X_VendorVal"].ToString());
+                    int n_TaxTypeID=myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
+                    string Condn = "";
+                    bool B_Depreciation = false;
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+
+
+                    if (b_NewYear)
+                         dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard " + nCompanyID + "," + nFnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ",Params, connection,transaction);
+                    if (b_closeYear)
+                         dLayer.ExecuteScalarPro("SP_Acc_CloseFinYear" + nCompanyID + "," + nFnYearId + ",' ','" + nUserID + "','Close' ",Params, connection,transaction);
+
+                    if (nBranchID == 0)
+                 
+                        Condn = "dbo.Ass_PurchaseDetails.N_FnYearID=" + nFnYearId + " and dbo.Ass_AssetMaster.N_CompanyID=" + nCompanyID;
+                    else
+                        Condn = "dbo.Ass_AssetMaster.N_CompanyID=" + nCompanyID + "  and dbo.Ass_AssetMaster.N_BranchID=" + nBranchID + " and dbo.Ass_PurchaseDetails.N_FnYearID=" + nFnYearId;
+                   
+                    // if (MasterTable.Tables.Contains("Ass_ItemMaster"))
+                    //     MasterTable.Tables.Remove("Ass_ItemMaster");
+                   
+                    DataTable Ass_ItemMaster = dLayer.ExecuteDataTable("SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where " + Condn + " and dbo.Ass_AssetMaster.N_Status<2  group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID", Params, connection, transaction);
+                           
+                    if (Ass_ItemMaster.Rows.Count > 0)
+                    {
+                        DateTime EndDate = Convert.ToDateTime(MasterTable.Rows[0]["d_EndDate"]);
+                      
+                        
+                        foreach (DataRow dRow in Ass_ItemMaster.Rows)
+                        {
+                            if (dRow["D_EndDate"].ToString() == "")
+                            {
+                                 B_Depreciation = true;
+                              
+                            }
+                         
+                            else if (dRow["D_EndDate"].ToString() != EndDate.ToString())
+                            {
+                                 B_Depreciation = true;
+                            }
+                        }
+                    }
+                    
+                    
+                if (B_Depreciation)
+                {
+                    transaction.Rollback();
+                    return Ok(_api.Error(User, "NeedDepreciation"));
+                }
+                 SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_CompanyID", nCompanyID);
+                    PostingParam.Add("N_FnYearId", nFnYearId);
+                    PostingParam.Add("N_UserID", nUserID);
+                    PostingParam.Add("X_SystemName", "Transfer");
+                if (b_TransferBalance)
+                {
+                   
+                    bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + nFnYearId+ " and N_CompanyID =" + nCompanyID + "",Params, connection));
+                    if (YearProcessed == false)
+                    {
+                        
+                          return Ok(_api.Warning("Year not closed"));
+                          
+                    }
+                    dLayer.ExecuteNonQueryPro("SP_Acc_CloseFinYear " ,PostingParam, connection, transaction);
+                   // dLayer.ExecuteNonQueryPro("SP_Acc_CloseFinYear " + myCompanyID._CompanyID + "," + myCompanyID._FnYearID + "," + N_FnYearID.ToString() + ",'" + txtDefaultAccount.Text.Trim() + "'," + myCompanyID._UserID + ",'Transfer'", "TEXT", new DataTable());
+                }
+               
+
+                transaction.Commit();
+                return Ok(_api.Success("saved Sucessfully"));
+                // msg.waitMsg(MYG.ReturnMultiLingualVal("-1111", "X_ControlNo", "Success"));
+                // btnSave.Enabled = false;
+                // SummaryControlsVisibility(false);
+                // panel9.Visible = false;
+                // panel7.Visible = false;
+                }
+            }
+
+             catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
 
 
 
