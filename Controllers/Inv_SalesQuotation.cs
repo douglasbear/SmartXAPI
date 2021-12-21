@@ -151,7 +151,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("details")]
-        public ActionResult GetQuotationDetails(int xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID)
+        public ActionResult GetQuotationDetails(string xQuotationNo, int nFnYearId, bool bAllBranchData, int nBranchID, int n_OpportunityID)
         {
             DataSet dsQuotation = new DataSet();
             DataTable dtProcess = new DataTable();
