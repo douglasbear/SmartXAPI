@@ -233,7 +233,7 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
-            bool b_Custom=false;
+            bool b_Custom = false;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -261,7 +261,7 @@ namespace SmartxAPI.Controllers
 
                     object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    int N_Custom=myFunctions.getIntVAL(Custom.ToString());
+                    int N_Custom = myFunctions.getIntVAL(Custom.ToString());
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
@@ -270,9 +270,11 @@ namespace SmartxAPI.Controllers
                     }
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
-                    if(N_Custom==1)
+                    if (N_Custom == 1)
                     {
-                         ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User);
+                        RPTLocation = RPTLocation + "custom/";
+                        ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
+                        ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User)+".rpt";
                     }
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
@@ -288,7 +290,7 @@ namespace SmartxAPI.Controllers
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
                         string Company = myFunctions.GetCompanyName(User);
-                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));              
+                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
                         var plainTextBytes = tlv.ToBase64();
 
                         var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
@@ -305,7 +307,7 @@ namespace SmartxAPI.Controllers
                         {
                             info.Create();
                         }
-                        string pathfile = Path.Combine(path,"QR.png");
+                        string pathfile = Path.Combine(path, "QR.png");
                         using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
                         {
                             remoteStream.CopyTo(outputFileStream);
