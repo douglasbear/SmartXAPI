@@ -298,7 +298,7 @@ namespace SmartxAPI.Controllers
                         {
                             info.Create();
                         }
-                        string pathfile = Path.Combine(path,myFunctions.GetCompanyName(User)+nPkeyID+ ".png");
+                        string pathfile = Path.Combine(path,"QR.png");
                         using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
                         {
                             remoteStream.CopyTo(outputFileStream);
