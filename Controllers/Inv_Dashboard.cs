@@ -181,7 +181,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("count")]
-        public ActionResult GetCount(int nLocationID,bool bAllBranchData)
+        public ActionResult GetCount(int nLocationID,bool bAllBranchData, int nBranchID)
         {
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
@@ -192,9 +192,9 @@ namespace SmartxAPI.Controllers
             if(bAllBranchData)
                 criteria="N_CompanyID ="+nCompanyID;
             else
-                criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID;
+                criteria="N_CompanyID ="+nCompanyID+" and N_LocationID="+nLocationID+" and N_BranchID="+nBranchID;
 
-            sqlAll = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+"";
+            sqlAll = "SELECT COUNT(*) as N_Count FROM vw_InvItem_Search_cloud WHERE "+criteria+" and B_Inactive=0 and [Item Code]<> '001' and N_ItemTypeID<>1";
             sqlNoStock = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock = 0";
             sqlMinQty = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock <=N_MinQty";
             sqlReOrder = "SELECT COUNT(*) as N_Count FROM vw_stockstatusbylocation WHERE "+criteria+" and N_CurrStock <=N_ReOrderQty";

@@ -66,20 +66,37 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("accountList")]
-        public ActionResult GetAccountList(int nFnYearID)
+        public ActionResult GetAccountList(int nFnYearID,int nGroupID)
         {
             DataTable dt = new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select * from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 order by N_LedgerID";
-            Params.Add("@p1",nCompanyID);
-            Params.Add("@p2",nFnYearID);
+            string sqlCondition="";
 
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    bool B_PostedBehaviour = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Posting", "Electronic Account", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+
+                    if (nGroupID != 0)
+                        if(B_PostedBehaviour==false)
+                            sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and N_PostingBahavID=11 and  B_Inactive=0 and N_GroupID=@p3";
+                        else
+                        sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive=0 and N_GroupID=@p3";
+                    else
+                        if(B_PostedBehaviour==false)
+                            sqlCondition = "N_CompanyID=@p1 and N_PostingBahavID=11 and N_FnYearID=@p2 and B_Inactive=0";
+                        else
+                            sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive=0";
+
+                    string sqlCommandText = "select * from vw_AccMastLedger where "+ sqlCondition +" order by N_LedgerID";
+                    Params.Add("@p1",nCompanyID);
+                    Params.Add("@p2",nFnYearID);
+                    Params.Add("@p3",nGroupID);
+
+            
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
                 if (dt.Rows.Count == 0)
@@ -97,46 +114,51 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpGet("details")]
-        // public ActionResult GetAccBehaviourDetails(int nFnYearID)
-        // {
-        //     DataTable dt=new DataTable();
-        //     DataTable DetailTable;
-        //     DetailTable = ds.Tables["details"];
-        //     SortedList Params=new SortedList();
-        //     int SLNo = 1;
-        //     DetailTable.Rows = SLNo;
-        //     int nCompanyID = myFunctions.GetCompanyID(User);
-        //     string sqlCommandText="select * from Acc_VoucherMaster left outer join Acc_MastLedger on Acc_VoucherMaster.N_DefLedgerID = Acc_MastLedger.N_LedgerID and Acc_VoucherMaster.N_FnYearID=Acc_MastLedger.N_FnYearID and Acc_VoucherMaster.N_CompanyID=Acc_MastLedger.N_CompanyID Where Acc_VoucherMaster.N_CompanyID=@p1 and Acc_VoucherMaster.N_FnYearID=@p2 Order By N_VoucherID";
-        //     Params.Add("@p1",nCompanyID);
-        //     Params.Add("@p2",nFnYearID);
-        //     Params.Add("@p3",nGroupID);
-        //     if (dsTransaction.Tables.Contains("Acc_MastLedger"))
-        //         dsTransaction.Tables.Remove("Acc_MastLedger");
-        //     if(nGroupID !=0)
-        //     {
-        //         sqlCommandText="Select * from Acc_MastLedger  where (Isnull(X_CashTypeBehaviour,'') <> '' or Isnull(N_TransBehavID,0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and N_GroupID=@p3 and Acc_MastLedger.N_FnYearID=@p2 order  by X_LedgerName asc";
-        //     }
-        //     else{
-        //         sqlCommandText="Select * from Acc_MastLedger  where (Isnull(X_CashTypeBehaviour,'') <> '' or Isnull(N_TransBehavID,0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2 order  by X_LedgerName asc";
-        //     }
+        [HttpGet("details")]
+        public ActionResult GetAccBehaviourDetails(int nFnYearID,int nGroupID)
+        {
+            DataTable dt=new DataTable();
+            DataTable DetailTable;
+            SortedList Params=new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            string sqlCommandText="";
+           
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2",nFnYearID);
+            Params.Add("@p3",nGroupID);
 
-        //     try{
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //             {
-        //                 connection.Open();
-        //                 dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
-        //             }
-        //             if(dt.Rows.Count==0)
-        //                 {
-        //                     return Ok(_api.Notice("No Results Found" ));
-        //                 }else{
-        //                     return Ok(_api.Success(dt));
-        //                 }
-        //     }catch(Exception e){
-        //         return Ok(_api.Error(User,e));
-        //     }
-        // }
+            if(nGroupID !=0)
+                sqlCommandText="SELECT Acc_MastLedger.*, ISNULL(Acc_LedgerBehaviour.X_Description,'') AS X_CashBehaviour, ISNULL(Acc_LedgerBehaviour_1.X_Description,'') AS X_TransBehaviour, ISNULL(Acc_LedgerBehaviour_2.X_Description,'') AS X_LedgerBehaviour "+
+                                " FROM Acc_MastLedger LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_2 ON Acc_MastLedger.N_LedgerBehavID = Acc_LedgerBehaviour_2.N_LedgerBehaviourID LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_1 ON Acc_MastLedger.N_TransBehavID = Acc_LedgerBehaviour_1.N_LedgerBehaviourID "+
+                                " LEFT OUTER JOIN Acc_LedgerBehaviour ON Acc_MastLedger.N_CashBahavID = Acc_LedgerBehaviour.N_LedgerBehaviourID "+
+                                " WHERE (ISNULL(Acc_MastLedger.X_CashTypeBehaviour, '') <> '') OR (ISNULL(Acc_MastLedger.N_TransBehavID, 0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2 and Acc_MastLedger.N_GroupID=@p3"+
+                                " ORDER BY Acc_MastLedger.X_LedgerName";
+            else
+                sqlCommandText="SELECT Acc_MastLedger.*, ISNULL(Acc_LedgerBehaviour.X_Description,'') AS X_CashBehaviour, ISNULL(Acc_LedgerBehaviour_1.X_Description,'') AS X_TransBehaviour, ISNULL(Acc_LedgerBehaviour_2.X_Description,'') AS X_LedgerBehaviour "+
+                                " FROM Acc_MastLedger LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_2 ON Acc_MastLedger.N_LedgerBehavID = Acc_LedgerBehaviour_2.N_LedgerBehaviourID LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_1 ON Acc_MastLedger.N_TransBehavID = Acc_LedgerBehaviour_1.N_LedgerBehaviourID "+
+                                " LEFT OUTER JOIN Acc_LedgerBehaviour ON Acc_MastLedger.N_CashBahavID = Acc_LedgerBehaviour.N_LedgerBehaviourID "+
+                                " WHERE (ISNULL(Acc_MastLedger.X_CashTypeBehaviour, '') <> '') OR (ISNULL(Acc_MastLedger.N_TransBehavID, 0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2"+
+                                " ORDER BY Acc_MastLedger.X_LedgerName";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt=dLayer.ExecuteDataTable(sqlCommandText,Params,connection); 
+                }
+                if(dt.Rows.Count==0)
+                {
+                    return Ok(_api.Notice("No Results Found" ));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }catch(Exception e){
+                return Ok(_api.Error(User,e));
+            }
+        }
 
         [HttpPost("save")]
         public ActionResult SaveData([FromBody]DataSet ds)

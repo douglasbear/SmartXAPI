@@ -121,7 +121,7 @@ namespace SmartxAPI.Controllers
                      int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     string xReasonCode = MasterTable.Rows[0]["x_ReasonCode"].ToString();
                      MasterTable.Columns.Remove("n_FnYearID");
-
+      
 
                     if (xReasonCode == "@Auto")
                     {

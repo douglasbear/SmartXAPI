@@ -31,7 +31,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("glaccount/list")]
-        public ActionResult GetGLAccountList(int? nFnYearId, string xType, int nCashBahavID)
+        public ActionResult GetGLAccountList(int? nFnYearId, string xType, int nCashBahavID,int nGroupID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             string sqlCommandText = "";
@@ -46,6 +46,12 @@ namespace SmartxAPI.Controllers
                 Params.Add("@nCashBahavID", nCashBahavID);
 
                 sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_CashBahavID =@nCashBahavID and B_Inactive = 0  order by [Account Code]";
+            }
+            else if(nGroupID > 0)
+            {
+               Params.Add("@nGroupID", nGroupID);
+
+                sqlCommandText = "select [Account Code] as accountCode,Account,N_CompanyID,N_LedgerID,X_Level,N_FnYearID,N_CashBahavID,X_Type from vw_AccMastLedger where N_CompanyID=@p1 and N_FnYearID=@p2 and N_GroupID =@nGroupID and B_Inactive = 0  order by [Account Code]";  
             }
             else
             if (xType.ToLower() != "all")

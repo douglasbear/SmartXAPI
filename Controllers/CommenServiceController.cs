@@ -83,7 +83,7 @@ namespace SmartxAPI.Controllers
                     con.Open();
                     if(!myFunctions.CheckVersion(xVersion,dLayer,con))
                     {
-                        return Ok(_api.Warning("Version error! Please contact the administrator!"));
+                        return Ok(_api.Warning("Please clear browser cache (press Ctrl+F5) and try again!!"));
                     }
                     // SortedList Params = new SortedList();
                     // string xAppVersion="";

@@ -118,6 +118,9 @@ namespace SmartxAPI.GeneralFunctions
                 case "Invalid co":
                     Msg = ex.Message.Substring(0, 42);
                     break;
+                case "Not Enou":
+                 Msg = ex.Message;
+                    break;
                 default:
                     if (ex.Message.Contains("Invalid column name '") == true)
                     {

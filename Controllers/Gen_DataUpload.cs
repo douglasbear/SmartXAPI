@@ -59,9 +59,9 @@ namespace SmartxAPI.Controllers
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
-                        if (dt.TableName == "Customer List")
+                        if (dt.TableName == "Customer List" || dt.TableName == "Customers" || dt.TableName == "Customer")
                             xTableName = "Mig_Customers";
-                        if (dt.TableName == "Vendor List")
+                        if (dt.TableName == "Vendor List"  || dt.TableName == "Vendors" || dt.TableName == "Vendor")
                             xTableName = "Mig_Vendors";
                         if (dt.TableName == "Lead List")
                         {
@@ -143,7 +143,7 @@ namespace SmartxAPI.Controllers
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+                            // dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();

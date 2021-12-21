@@ -118,6 +118,7 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             DataTable dtGoodReceive = new DataTable();
             DataTable dtGoodReceiveDetails = new DataTable();
+            DataTable dtFreightCharges = new DataTable();
             int N_GRNID = 0;
             int N_POrderID = 0;
 
@@ -127,11 +128,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@BranchID", nBranchId);
             string X_MasterSql = "";
             string X_DetailsSql = "";
+            string X_FreightSql = "";
 
             if (nMRNNo != null)
             {
                 Params.Add("@GRNNo", nMRNNo);
-                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
+                X_MasterSql = "select N_CompanyID,N_VendorID,N_MRNID,N_FnYearID,D_MRNDate,N_BranchID,B_YearEndProcess,B_IsDirectMRN,[MRN No] AS x_MRNNo,X_VendorName,MRNDate,OrderNo,X_VendorInvoice,x_Description,N_FreightAmt from vw_InvMRNNo_Search where N_CompanyID=@CompanyID and [MRN No]=@GRNNo and N_FnYearID=@YearID " + (showAllBranch ? "" : " and  N_BranchId=@BranchID");
             }
             if (poNo != null)
             {
@@ -168,6 +170,10 @@ namespace SmartxAPI.Controllers
 
                     dtGoodReceiveDetails = dLayer.ExecuteDataTable(X_DetailsSql, Params, connection);
                     dtGoodReceiveDetails = _api.Format(dtGoodReceiveDetails, "Details");
+
+                    X_FreightSql = "Select *,X_ShortName as X_CurrencyName FROM vw_InvPurchaseFreights WHERE N_PurchaseID=" + N_GRNID;
+                    dtFreightCharges = dLayer.ExecuteDataTable(X_FreightSql, Params, connection);
+                    dtFreightCharges = _api.Format(dtFreightCharges, "freightCharges");
                     if (N_POrderID != 0)
                     {
                     }
@@ -180,6 +186,7 @@ namespace SmartxAPI.Controllers
                     }
                     dt.Tables.Add(dtGoodReceive);
                      dt.Tables.Add(dtGoodReceiveDetails);
+                     dt.Tables.Add(dtFreightCharges);
                   
 
                 }
@@ -369,10 +376,10 @@ namespace SmartxAPI.Controllers
         {
             DataTable MasterTable;
             DataTable DetailTable;
-            DataTable dtFreightChargeDist;
+            DataTable GRNFreight;
             MasterTable = ds.Tables["master"];
             DetailTable = ds.Tables["details"];
-            dtFreightChargeDist = ds.Tables["freightchargedist"];
+            GRNFreight = ds.Tables["freightCharges"];
             DataTable Attachment = ds.Tables["attachments"];
             SortedList Params = new SortedList();
             // Auto Gen
@@ -461,14 +468,6 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save Goods Receive Note!"));
                     }
-                    // if (dtFreightChargeDist.Rows.Count > 0)
-                    // {
-                    //     N_GRNFreightID = dLayer.SaveData("Inv_MRNFreights", "N_MRNFreightID", dtFreightChargeDist, connection, transaction); 
-                    // }
-                    // if(N_GRNFreightID > 0) {
-                    //     SortedList FreightToPurchaseParam = new SortedList();
-                    //     FreightToPurchaseParam.Add("N_FPurchaseID",);
-                    //}
                     if (N_SaveDraft == 0)
                     {
                         try
@@ -514,6 +513,19 @@ namespace SmartxAPI.Controllers
                             transaction.Rollback();
                             return Ok(_api.Error(User,ex));
                         }
+                    }
+
+                    if (GRNFreight.Rows.Count > 0)
+                    {
+                        if (!GRNFreight.Columns.Contains("N_PurchaseID"))
+                        {
+                            GRNFreight.Columns.Add("N_PurchaseID");
+                        }
+                        foreach (DataRow var in GRNFreight.Rows)
+                        {
+                            var["N_PurchaseID"] = N_GRNID;
+                        }
+                        dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", GRNFreight, connection, transaction);
                     }
                     transaction.Commit();
                 }

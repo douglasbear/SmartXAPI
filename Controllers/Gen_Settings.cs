@@ -212,6 +212,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("saveSettings")]
         public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue)
         {
+            if(xValue==null)
+            xValue="";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -231,7 +233,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", ParamSettings_Ins, connection, transaction);
                         transaction.Commit();
-                        return Ok(_api.Success("Terms & Conditions Saved"));
+                        return Ok(_api.Success("saved successfully"));
                     }
                     catch (Exception ex)
                     {
