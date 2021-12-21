@@ -102,25 +102,30 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult GetEmpEvalSettingsDetails(int nFnYearID, int nEvaluationID, bool bAllBranchData, int nBranchID)
+        public ActionResult GetEmpEvalSettingsDetails(int nFnYearID, string xEvaluationCode, bool bAllBranchData, int nBranchID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
+            SortedList qryParams = new SortedList();
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
             DataTable EmpEvalTable = new DataTable();
             string Mastersql = "";
 
             if (bAllBranchData == true)
-                Mastersql = "select * from Pay_EmpEvaluationSettings where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EvaluationID=@p4 ";
+                Mastersql = "select * from Pay_EmpEvaluationSettings where N_CompanyID=@p1 and N_FnYearID=@p2 and x_EvaluationCode=@p4 ";
             else
-                Mastersql = "select * from Pay_EmpEvaluationSettings where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and N_EvaluationID=@p4 ";
+                Mastersql = "select * from Pay_EmpEvaluationSettings where N_CompanyID=@p1 and N_FnYearID=@p2 and N_BranchID=@p3 and x_EvaluationCode=@p4 ";
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearID);
             Params.Add("@p3", nBranchID);
-            Params.Add("@p4", nEvaluationID);
+            Params.Add("@p4", xEvaluationCode);
+
+            qryParams.Add("@p1", nCompanyID);
+
+
 
             try
             {
@@ -148,8 +153,8 @@ namespace SmartxAPI.Controllers
 
                     string EvaluatorSql = "";
 
-                    EvaluatorSql = "Select * from Pay_EmpEvaluators where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EvaluationID=" + n_EvaluationID;
-                    EmpEvalTable = dLayer.ExecuteDataTable(EvaluatorSql, Params, connection);
+                    EvaluatorSql = "Select * from Pay_EmpEvaluators where N_CompanyID=@p1 and  N_EvaluationID=" + n_EvaluationID;
+                    EmpEvalTable = dLayer.ExecuteDataTable(EvaluatorSql, qryParams, connection);
                     EmpEvalTable = _api.Format(EmpEvalTable, "Evaluators");
                     dt.Tables.Add(EmpEvalTable);
                 }
@@ -213,7 +218,7 @@ namespace SmartxAPI.Controllers
                     if (nEvaluationDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
 
                     dLayer.DeleteData("Pay_EmpEvaluators", "N_EvaluationID", nEvaluationID, "", connection, transaction);
@@ -225,7 +230,7 @@ namespace SmartxAPI.Controllers
                     if (nEvaluatorsDetailsID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save"));
+                        return Ok(_api.Error(User, "Unable to save"));
                     }
                     transaction.Commit();
                     return Ok(_api.Success("Employee Evaluation Settings Saved"));
