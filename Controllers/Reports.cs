@@ -233,6 +233,7 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
+            bool b_Custom=false;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -259,6 +260,8 @@ namespace SmartxAPI.Controllers
                     critiria = "{" + Templatecritiria + "}=" + nPkeyID;
 
                     object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    int N_Custom=myFunctions.getIntVAL(Custom.ToString());
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
@@ -267,6 +270,10 @@ namespace SmartxAPI.Controllers
                     }
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if(N_Custom==1)
+                    {
+                         ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User);
+                    }
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
                     if (nFormID == 64 || nFormID == 894 || nFormID == 372)
@@ -298,7 +305,7 @@ namespace SmartxAPI.Controllers
                         {
                             info.Create();
                         }
-                        string pathfile = Path.Combine(path,myFunctions.GetCompanyName(User)+nPkeyID+ ".png");
+                        string pathfile = Path.Combine(path,"QR.png");
                         using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
                         {
                             remoteStream.CopyTo(outputFileStream);
