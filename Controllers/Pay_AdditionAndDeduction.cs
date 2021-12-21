@@ -609,7 +609,6 @@ if (xBatch != null)
                 }
 
                     return Ok(_api.Success(dt));
-
             }
             catch (Exception e)
             {
