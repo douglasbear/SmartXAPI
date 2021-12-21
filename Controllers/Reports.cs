@@ -271,7 +271,6 @@ namespace SmartxAPI.Controllers
                     ReportName = ReportName.Remove(ReportName.Length - 4);
                     if (nFormID == 64 || nFormID == 894 || nFormID == 372)
                     {
-]
                         //QR Code Generate For Invoice
 
                         object Total = dLayer.ExecuteScalar("select n_BillAmt+N_taxamtF from inv_sales where N_CompanyID=@nCompanyId and N_SalesID=" + nPkeyID, QueryParams, connection, transaction);
