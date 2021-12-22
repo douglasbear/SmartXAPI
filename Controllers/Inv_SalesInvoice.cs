@@ -1194,6 +1194,9 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
                         }
+                        if (DetailTable.Columns.Contains("n_Stock"))
+                            DetailTable.Columns.Remove("n_Stock");
+                            
                         int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
                         if (N_InvoiceDetailId <= 0)
                         {
