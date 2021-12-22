@@ -125,9 +125,13 @@ namespace SmartxAPI
         public static string prevVal = "";
         public static string newVal = "";
 
+<<<<<<< HEAD
           public static string _APIVersion = "21.12.1.2";
         // public static string _APIVersion = "21.12.11.2"; // Test apps olivobusiness
         //  public static string _APIVersion = "21.12.1.2"; // live provision new server
+=======
+        public static string _APIVersion = "21.12.21.2";
+>>>>>>> 4411b8164a91e71a815622ab1a015fc565d64ed8
 
     }
 } 

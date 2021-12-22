@@ -196,9 +196,14 @@ namespace SmartxAPI.Controllers
                     dLayer.DeleteData("Pay_EmpEvaluationDetails", "N_EvalID", nEvalID, "", connection, transaction);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        nEvalDetailsID = dLayer.SaveData("Pay_EmpEvaluationDetails", "N_EvalDetailsID", DetailTable, connection, transaction);
+                        DetailTable.Rows[j]["N_EvalID"] = nEvalID;
                     }
-
+                    nEvalDetailsID = dLayer.SaveData("Pay_EmpEvaluationDetails", "N_EvalDetailsID", DetailTable, connection, transaction);
+                    if (nEvalDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable To Save"));
+                    }
                     transaction.Commit();
                     return Ok(_api.Success("Employee Evaluation Settings Saved"));
                 }

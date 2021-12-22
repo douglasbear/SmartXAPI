@@ -160,7 +160,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
-                        Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
+                        //Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
 
                         X_ReceiptNo = dLayer.GetAutoNumber("Inv_Sales", "X_ReceiptNo", Params, connection, transaction);
                         if (X_ReceiptNo == "")
