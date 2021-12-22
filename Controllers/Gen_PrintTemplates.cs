@@ -297,7 +297,7 @@ namespace SmartxAPI.Controllers
                     //Create and Copy
 
                     string fileToCopy = RPTLocation + x_SelectedReport;
-                    x_SelectedReport = x_SelectedReport.Remove(ReportName.Length - 4);
+                    x_SelectedReport = x_SelectedReport.Remove(x_SelectedReport.Length - 4);
                     x_SelectedReport = x_SelectedReport + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User);
                     string destinationFile = RPTLocation + "/Custom/" + x_SelectedReport + ".rpt";
                     string destinationDirectory = RPTLocation + "/Custom/";
