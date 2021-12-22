@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
 
             
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%')";
+                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
                     case "n_Rate":
                         xSortBy = "Cast(REPLACE(n_Rate,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                         break;
-                    default: break;
+                    default: break; 
                 }
                 xSortBy = " order by " + xSortBy;
 
