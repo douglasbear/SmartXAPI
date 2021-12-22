@@ -166,7 +166,7 @@ namespace SmartxAPI.Controllers
                     case "n_Rate":
                         xSortBy = "Cast(REPLACE(n_Rate,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                         break;
-                    default: break;
+                    default: break; 
                 }
                 xSortBy = " order by " + xSortBy;
 
