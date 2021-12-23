@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData,bool partNoEnable)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -52,8 +52,16 @@ namespace SmartxAPI.Controllers
 
             if (query != "" && query != null)
             {
+                if(partNoEnable)
+                {
+                qry = " and (Description like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
+                Params.Add("@query", "%" + query + "%");
+                }
+                else
+                {
                 qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
                 Params.Add("@query", "%" + query + "%");
+                }
             }
             if (nCategoryID > 0)
                 Category = " and vw_InvItem_Search_cloud.N_CategoryID =" + nCategoryID;
@@ -149,7 +157,7 @@ namespace SmartxAPI.Controllers
 
             
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%')";
+                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
@@ -166,7 +174,7 @@ namespace SmartxAPI.Controllers
                     case "n_Rate":
                         xSortBy = "Cast(REPLACE(n_Rate,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
                         break;
-                    default: break;
+                    default: break; 
                 }
                 xSortBy = " order by " + xSortBy;
 
