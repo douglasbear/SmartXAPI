@@ -602,7 +602,7 @@ namespace SmartxAPI.Controllers
                     object OrderQty1 = dLayer.ExecuteScalar("Select SUM(N_Qty) from Inv_SalesDetails Where N_CompanyID=" + nCompanyId + "and N_SalesID=@nSalesID", QueryParamsList, Con);
                     if (DNQty != null && OrderQty1 != null)
                     {
-                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) != myFunctions.getIntVAL(DNQty.ToString()))
+                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) != myFunctions.getVAL(DNQty.ToString()))
                         {
                             objSalesReturn = null;
                         }
