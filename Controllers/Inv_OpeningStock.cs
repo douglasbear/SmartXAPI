@@ -62,17 +62,19 @@ namespace SmartxAPI.Controllers
 
 
 
-            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
+            // string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
+            // string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
+            string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
-
+           
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
-            string sqlComandText = " SELECT     vw_InvItem_Search.*,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice," +
+            string sqlComandText = " SELECT vw_InvItem_Search.*,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice," +
                                    " Inv_StockMaster.X_Type,Inv_StockMaster.N_OpenStock,isnull(Inv_StockMaster.N_StockID,0)as N_StockID,Inv_StockMaster.N_LPrice,Inv_StockMaster.N_SPrice," +
                                    " Inv_StockMaster.N_LocationID,Inv_StockMaster.X_BatchCode,Inv_StockMaster.D_ExpiryDate,Inv_StockMaster.N_ProjectID" +
-                                   "  FROM         vw_InvItem_Search LEFT OUTER JOIN" +
+                                   "  FROM vw_InvItem_Search LEFT OUTER JOIN" +
                                    "  Inv_StockMaster ON vw_InvItem_Search.N_CompanyID = Inv_StockMaster.N_CompanyID AND vw_InvItem_Search.N_ItemID = Inv_StockMaster.N_ItemID AND " +
-                                   "Inv_StockMaster.X_Type = 'Opening'    " + xCriteria + qry;
+                                   "Inv_StockMaster.X_Type = 'Opening' " + xCriteria + qry;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@PSize", PageSize);
