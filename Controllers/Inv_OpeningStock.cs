@@ -40,6 +40,7 @@ namespace SmartxAPI.Controllers
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
+         
             SortedList Params = new SortedList();
 
             string qry = "";
@@ -69,7 +70,7 @@ namespace SmartxAPI.Controllers
            
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
-            string sqlComandText ="Select *,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where  N_CompanyID=" +nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item')" + qry;
+            string sqlComandText ="vw_InvItem_Search.*,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where  N_CompanyID=" +nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item')" + qry;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@PSize", PageSize);
@@ -84,7 +85,37 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     string sql = pageQry + sqlComandText + pageQryEnd;
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
+
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_OpenStock", typeof(double), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_CrrentStock", typeof(double), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_StockID", typeof(int), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_LocationID", typeof(int), nLocationID);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "X_BatchCode", typeof(string), null);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "D_ExpiryDate", typeof(string), "");
+
+                    foreach (DataRow dRow in dt.Rows)
+                    {
+                           DataTable stockTable = new DataTable();
+                       string sqlStock= "SELECT isnull(N_OpenStock,0) as N_OpenStock,isnull(N_StockID,0) as N_StockID,isnull(N_LPrice,0) as N_LPrice,isnull(N_SPrice,0) as N_SPrice,,isnull(N_CrrentStock,0) as N_CrrentStock,isnull(N_LocationID,0) as N_LocationID,X_BatchCode,D_ExpiryDate FROM Inv_StockMaster where N_CompanyID="+nCompanyID+" and  N_ItemID= " + myFunctions.getIntVAL(dRow["N_ItemID"].ToString()) + " and N_LocationID=" + nLocationID + " and X_Type='Opening'";
+                        stockTable = dLayer.ExecuteDataTable(sqlStock, Params, connection);
+                       if( stockTable.Rows.Count==1)
+                        {
+                            dRow["N_OpenStock"]=stockTable.Rows[0]["N_OpenStock"];
+                            dRow["N_StockID"]=stockTable.Rows[0]["N_StockID"];
+                            dRow["N_CrrentStock"]=stockTable.Rows[0]["N_CrrentStock"];
+                            dRow["N_LPrice"]=stockTable.Rows[0]["N_LPrice"];
+                            dRow["N_SPrice"]=stockTable.Rows[0]["N_SPrice"];
+                            dRow["N_LocationID"]=stockTable.Rows[0]["N_LocationID"];
+                            dRow["X_BatchCode"]=stockTable.Rows[0]["X_BatchCode"];
+                            dRow["D_ExpiryDate"]=stockTable.Rows[0]["D_ExpiryDate"];
+
+
+                        }
+                
+                    }
+
                 }
+                dt.AcceptChanges();
                 dt = _api.Format(dt);
                 if (dt.Rows.Count == 0)
                 {
