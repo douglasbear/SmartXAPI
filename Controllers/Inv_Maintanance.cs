@@ -129,9 +129,9 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
             if(nFormID==1394)
-                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=371) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 )";// and ( N_AssigneeID=@p3 or N_AssigneeID is null )
+                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=371) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and ( N_AssigneeID=@p3 or N_AssigneeID is null or N_UserID=@p3))";// and ( N_AssigneeID=@p3 or N_AssigneeID is null )
             else
-                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=372) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 ) "; //and ( N_AssigneeID=@p3 or N_AssigneeID is null )
+                xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=372) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and ( N_AssigneeID=@p3 or N_AssigneeID is null or N_UserID=@p3)) "; //and ( N_AssigneeID=@p3 or N_AssigneeID is null )
 
             if (Count == 0)
                 sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  "+xCondition+" " + Searchkey;
@@ -269,7 +269,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("UpdateStatus")]
-        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus,string dClosingDate)
+        public ActionResult UpdateStatus(string remarks, int nStatus, int nServiceID, string xStatus,string dClosingDate, int nClosedUserID)
         {
             try
             {
@@ -280,10 +280,10 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     Params.Add("@nCompanyID", nCompanyID);
                         //DateTime dCloseDate = Convert.ToDateTime(dClosingDate.ToString());
-                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set N_Status = " + nStatus + " , D_ClosingDate='"+dClosingDate+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
+                    dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set N_Status = " + nStatus + " , D_ClosingDate='"+dClosingDate+"' , N_ClosedUserID='"+nClosedUserID+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     if (remarks != "" || remarks!= null )
                     {
-                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"', D_ClosingDate='"+dClosingDate+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
+                        dLayer.ExecuteNonQuery("Update Inv_ServiceMaster set X_ClosedRemarks ='"+remarks+"', D_ClosingDate='"+dClosingDate+"', N_ClosedUserID='"+nClosedUserID+"' where N_CompanyID = @nCompanyID and N_ServiceID = " + nServiceID + "", Params, connection);
                     }
                     return Ok(_api.Success("Closed"));
                 }
