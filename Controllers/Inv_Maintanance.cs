@@ -106,15 +106,15 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult ProductionOrderList(int nFnYearId,int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult ProductionOrderList(int nFnYearId, int nFormID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            int nUserID=myFunctions.GetUserID(User);
+            int nUserID = myFunctions.GetUserID(User);
             string sqlCommandCount = "";
             int Count = (nPage - 1) * nSizeperpage;
-            string sqlCommandText = "",xCondition="";
+            string sqlCommandText = "", xCondition = "";
             string Searchkey = "";
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", nFnYearId);
@@ -134,9 +134,9 @@ namespace SmartxAPI.Controllers
                 xCondition=" and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and N_WarrantyType=372) and N_ServiceID in (select N_ServiceID from Vw_InvServiceDetails where N_companyID=@p1 and ( N_AssigneeID=@p3 or N_AssigneeID is null or N_UserID=@p3)) "; //and ( N_AssigneeID=@p3 or N_AssigneeID is null )
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  "+xCondition+" " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ")  *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2  " + xCondition + " " + Searchkey;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 "+xCondition+" " + Searchkey + "and N_ServiceID not in (select top(" + Count + ") N_ServiceID from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 "+xCondition+" ) " + Searchkey;
+                sqlCommandText = "select top(" + nSizeperpage + ") *,Case isNull(N_Status,0) When 1 Then 'Completed' When 0 Then 'Ongoing' End as X_Status from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + xCondition + " " + Searchkey + "and N_ServiceID not in (select top(" + Count + ") N_ServiceID from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + xCondition + " ) " + Searchkey;
 
 
             SortedList OutPut = new SortedList();
@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText + xSortBy, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 "+xCondition+" "+xCondition+" " + Searchkey;
+                    sqlCommandCount = "select count(*) as N_Count  from Vw_InvService where N_CompanyID=@p1 and N_FnYearID=@p2 " + xCondition + " " + xCondition + " " + Searchkey;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -188,15 +188,26 @@ namespace SmartxAPI.Controllers
                     string DetailSql = "";
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
                     Params.Add("@xServiceCode", xServiceCode);
+                    int WarrantyID = 0;
                     if (xServiceCode != null && xServiceCode != null)
                     {
                         Mastersql = "select * from Vw_InvService where N_CompanyId=@nCompanyID and X_ServiceCode=@xServiceCode  ";
+                        object n_WarrantyID = dLayer.ExecuteScalar("select N_WarrantyID from Vw_InvService where N_CompanyId=@nCompanyID and X_ServiceCode=@xServiceCode", Params, connection);
+                        if (n_WarrantyID != null)
+                        {
+                            if (myFunctions.getIntVAL(n_WarrantyID.ToString()) > 0)
+                                WarrantyID = (myFunctions.getIntVAL(n_WarrantyID.ToString()));
+                        }
+
                     }
                     if (nWarrantyID > 0)
                     {
                         Mastersql = "select * from Vw_WarrantyToMaintananceMaster where N_CompanyId=@nCompanyID and N_WarrantyID=" + nWarrantyID + "  ";
                         MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                         MasterTable = _api.Format(MasterTable, "Master");
+                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_WarrantyNo", typeof(string), "");
+                        MasterTable.Rows[0]["x_WarrantyNo"] = MasterTable.Rows[0]["X_WarrantyCode"].ToString();
+
                         if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                         MasterTable.AcceptChanges();
                         MasterTable = _api.Format(MasterTable, "Master");
@@ -217,6 +228,44 @@ namespace SmartxAPI.Controllers
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int ServiceID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ServiceID"].ToString());
+                    int salesID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesID"].ToString());
+                    object periodTo;
+                    object warrantyNo;
+                    object N_salesWID = 0;
+                    object deviceDescription=null;
+                    object serialNo=null;
+
+
+                    if (WarrantyID > 0)
+                    {
+                        periodTo = dLayer.ExecuteScalar("select D_PeriodTo as D_PeriodTo from Inv_WarrantyContract where N_CompanyId=@nCompanyID  and N_WarrantyID=" + WarrantyID + "", Params, connection);
+                        warrantyNo = dLayer.ExecuteScalar("select X_WarrantyCode as x_WarrantyNo from Inv_WarrantyContract where N_CompanyId=@nCompanyID  and N_WarrantyID=" + WarrantyID + "", Params, connection);
+                        N_salesWID = dLayer.ExecuteScalar("select N_SalesID as x_WarrantyNo from Inv_WarrantyContract where N_CompanyId=@nCompanyID  and N_WarrantyID=" + WarrantyID + "", Params, connection);
+
+                    }
+                    else
+                    {
+                        periodTo = dLayer.ExecuteScalar("select D_PeriodTo as D_PeriodTo from Inv_WarrantyContract where N_CompanyId=@nCompanyID  and N_SalesID=" + salesID + "", Params, connection);
+                        warrantyNo = dLayer.ExecuteScalar("select X_WarrantyCode as x_WarrantyNo from Inv_WarrantyContract where N_CompanyId=@nCompanyID  and N_SalesID=" + salesID + "", Params, connection);
+                    }// MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "D_PeriodTo", typeof(string), "");
+
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_WarrantyNo", typeof(string), "");
+                    if (periodTo != null)
+                        MasterTable.Rows[0]["D_PeriodTo"] = periodTo.ToString();
+                    if (warrantyNo != null)
+                        MasterTable.Rows[0]["x_WarrantyNo"] = warrantyNo.ToString();
+                    if (myFunctions.getIntVAL(N_salesWID.ToString()) > 0)
+                    {
+                        deviceDescription = dLayer.ExecuteScalar("select X_SerialNo  from Inv_SalesAddInfo_ServicePackages where N_CompanyId=@nCompanyID  and N_InvoiceID=" + myFunctions.getIntVAL(N_salesWID.ToString()) + "", Params, connection);
+                        serialNo = dLayer.ExecuteScalar("select X_Description  from Inv_SalesAddInfo_ServicePackages where N_CompanyId=@nCompanyID  and N_InvoiceID=" + myFunctions.getIntVAL(N_salesWID.ToString()) + "", Params, connection);
+                    }
+                    if (deviceDescription!= null)
+                        MasterTable.Rows[0]["X_DeviceDescription"] = serialNo.ToString();
+                    if (serialNo != null)
+                        MasterTable.Rows[0]["X_SerialNo"] = deviceDescription.ToString();
+
+
+
                     MasterTable.AcceptChanges();
                     Params.Add("@nServiceID", ServiceID);
                     MasterTable = _api.Format(MasterTable, "Master");

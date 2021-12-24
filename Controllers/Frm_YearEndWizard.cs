@@ -167,7 +167,7 @@ namespace SmartxAPI.Controllers
 
 
 
-                    int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
+                    int n_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
                     bool b_NewYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewYear"].ToString());
                     bool b_closeYear =  myFunctions.getBoolVAL(MasterTable.Rows[0]["b_closeYear"].ToString());
@@ -183,17 +183,17 @@ namespace SmartxAPI.Controllers
                     bool B_Depreciation = false;
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
 
-
+object nFnYearID=null;
                     if (b_NewYear)
-                         dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard " + nCompanyID + "," + nFnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ",Params, connection,transaction);
+                       nFnYearID  = dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard " + nCompanyID + "," + n_FnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" +X_AccountVal + "','" + X_CustomerVal + "','" +X_VendorVal + "'," + n_TaxTypeID+" ",Params, connection,transaction);
                     if (b_closeYear)
-                         dLayer.ExecuteScalarPro("SP_Acc_CloseFinYear" + nCompanyID + "," + nFnYearId + ",' ','" + nUserID + "','Close' ",Params, connection,transaction);
+                         dLayer.ExecuteScalarPro("SP_Acc_CloseFinYear" + nCompanyID + "," + n_FnYearId + ",' ','" + nUserID + "','Close' ",Params, connection,transaction);
 
                     if (nBranchID == 0)
                  
-                        Condn = "dbo.Ass_PurchaseDetails.N_FnYearID=" + nFnYearId + " and dbo.Ass_AssetMaster.N_CompanyID=" + nCompanyID;
+                        Condn = "dbo.Ass_PurchaseDetails.N_FnYearID=" + n_FnYearId + " and dbo.Ass_AssetMaster.N_CompanyID=" + nCompanyID;
                     else
-                        Condn = "dbo.Ass_AssetMaster.N_CompanyID=" + nCompanyID + "  and dbo.Ass_AssetMaster.N_BranchID=" + nBranchID + " and dbo.Ass_PurchaseDetails.N_FnYearID=" + nFnYearId;
+                        Condn = "dbo.Ass_AssetMaster.N_CompanyID=" + nCompanyID + "  and dbo.Ass_AssetMaster.N_BranchID=" + nBranchID + " and dbo.Ass_PurchaseDetails.N_FnYearID=" + n_FnYearId;
                    
                    
                     DataTable Ass_ItemMaster = dLayer.ExecuteDataTable("SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where " + Condn + " and dbo.Ass_AssetMaster.N_Status<2  group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID", Params, connection, transaction);
@@ -226,13 +226,13 @@ namespace SmartxAPI.Controllers
                 }
                  SortedList PostingParam = new SortedList();
                     PostingParam.Add("N_CompanyID", nCompanyID);
-                    PostingParam.Add("N_FnYearId", nFnYearId);
+                    PostingParam.Add("N_FnYearId", n_FnYearId);
                     PostingParam.Add("N_UserID", nUserID);
                     PostingParam.Add("X_SystemName", "Transfer");
                 if (b_TransferBalance)
                 {
                    
-                    bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + nFnYearId+ " and N_CompanyID =" + nCompanyID + "",Params, connection));
+                    bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + n_FnYearId+ " and N_CompanyID =" + nCompanyID + "",Params, connection));
                     if (YearProcessed == false)
                     {
                         
