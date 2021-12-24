@@ -227,11 +227,11 @@ namespace SmartxAPI.Controllers
                         EmpEvalTable.Rows[j]["N_EvaluationID"] = nEvaluationID;
                     }
                     nEvaluatorsDetailsID = dLayer.SaveData("Pay_EmpEvaluators", "N_EvaluatorsDetailsID", EmpEvalTable, connection, transaction);
-                    if (nEvaluatorsDetailsID <= 0)
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Unable to save"));
-                    }
+                    // if (nEvaluatorsDetailsID <= 0)
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Unable to save"));
+                    // }
                     transaction.Commit();
                     return Ok(_api.Success("Employee Evaluation Settings Saved"));
                 }
