@@ -294,7 +294,8 @@ namespace SmartxAPI.Controllers
                         TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
                         var plainTextBytes = tlv.ToBase64();
 
-                        QRurl = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
+                        QRurl = string.Format(plainTextBytes);
+                        //QRurl = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
                         // WebResponse response = default(WebResponse);
                         // Stream remoteStream = default(Stream);
                         // StreamReader readStream = default(StreamReader);
