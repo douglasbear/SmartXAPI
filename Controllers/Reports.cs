@@ -38,6 +38,7 @@ namespace SmartxAPI.Controllers
         string ReportName = "";
         string critiria = "";
         string TableName = "";
+        string QRurl="";
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
         public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -211,7 +212,7 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var random = RandomString();
                     var dbName = connection.Database;
-                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf"; ;
+                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0";
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
@@ -293,25 +294,25 @@ namespace SmartxAPI.Controllers
                         TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
                         var plainTextBytes = tlv.ToBase64();
 
-                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
-                        WebResponse response = default(WebResponse);
-                        Stream remoteStream = default(Stream);
-                        StreamReader readStream = default(StreamReader);
-                        WebRequest request = WebRequest.Create(url);
-                        response = request.GetResponse();
-                        remoteStream = response.GetResponseStream();
-                        readStream = new StreamReader(remoteStream);
-                        string path = "C://OLIVOSERVER2020/QR/";
-                        DirectoryInfo info = new DirectoryInfo(path);
-                        if (!info.Exists)
-                        {
-                            info.Create();
-                        }
-                        string pathfile = Path.Combine(path, "QR.png");
-                        using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
-                        {
-                            remoteStream.CopyTo(outputFileStream);
-                        }
+                        QRurl = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
+                        // WebResponse response = default(WebResponse);
+                        // Stream remoteStream = default(Stream);
+                        // StreamReader readStream = default(StreamReader);
+                        // WebRequest request = WebRequest.Create(url);
+                        // response = request.GetResponse();
+                        // remoteStream = response.GetResponseStream();
+                        // readStream = new StreamReader(remoteStream);
+                        // string path = "C://OLIVOSERVER2020/QR/";
+                        // DirectoryInfo info = new DirectoryInfo(path);
+                        // if (!info.Exists)
+                        // {
+                        //     info.Create();
+                        // }
+                        // string pathfile = Path.Combine(path, "QR.png");
+                        // using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
+                        // {
+                        //     remoteStream.CopyTo(outputFileStream);
+                        // }
                         //QR End Here
 
                         // bool SaveDraft = false;
@@ -379,7 +380,7 @@ namespace SmartxAPI.Controllers
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID="+nFormID+"&QRUrl="+QRurl+"&N_PkeyID="+nPkeyID;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
                         {
@@ -557,7 +558,7 @@ namespace SmartxAPI.Controllers
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0";
                         var path = client.GetAsync(URL);
                         path.Wait();
 
@@ -764,7 +765,7 @@ namespace SmartxAPI.Controllers
                 }
 
 
-                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention +"&N_FormID=0&QRUrl=&N_PkeyID=0";
                 var path = client.GetAsync(URL);
 
                 path.Wait();
