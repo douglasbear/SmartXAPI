@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
                     dt = dLayer.ExecuteDataTable(sql, Params, connection);
 
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_OpenStock", typeof(double), 0);
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_CrrentStock", typeof(double), 0);
+                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(double), 0);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_StockID", typeof(int), 0);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_LocationID", typeof(int), nLocationID);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "X_BatchCode", typeof(string), null);
@@ -96,13 +96,13 @@ namespace SmartxAPI.Controllers
                     foreach (DataRow dRow in dt.Rows)
                     {
                            DataTable stockTable = new DataTable();
-                       string sqlStock= "SELECT isnull(N_OpenStock,0) as N_OpenStock,isnull(N_StockID,0) as N_StockID,isnull(N_LPrice,0) as N_LPrice,isnull(N_SPrice,0) as N_SPrice,,isnull(N_CrrentStock,0) as N_CrrentStock,isnull(N_LocationID,0) as N_LocationID,X_BatchCode,D_ExpiryDate FROM Inv_StockMaster where N_CompanyID="+nCompanyID+" and  N_ItemID= " + myFunctions.getIntVAL(dRow["N_ItemID"].ToString()) + " and N_LocationID=" + nLocationID + " and X_Type='Opening'";
+                       string sqlStock= "SELECT isnull(N_OpenStock,0) as N_OpenStock,isnull(N_StockID,0) as N_StockID,isnull(N_LPrice,0) as N_LPrice,isnull(N_SPrice,0) as N_SPrice,isnull(N_CurrentStock,0) as N_CurrentStock,isnull(N_LocationID,0) as N_LocationID,X_BatchCode,D_ExpiryDate FROM Inv_StockMaster where N_CompanyID="+nCompanyID+" and  N_ItemID= " + myFunctions.getIntVAL(dRow["N_ItemID"].ToString()) + " and N_LocationID=" + nLocationID + " and X_Type='Opening'";
                         stockTable = dLayer.ExecuteDataTable(sqlStock, Params, connection);
                        if( stockTable.Rows.Count==1)
                         {
                             dRow["N_OpenStock"]=stockTable.Rows[0]["N_OpenStock"];
                             dRow["N_StockID"]=stockTable.Rows[0]["N_StockID"];
-                            dRow["N_CrrentStock"]=stockTable.Rows[0]["N_CrrentStock"];
+                            dRow["N_CurrentStock"]=stockTable.Rows[0]["N_CurrentStock"];
                             dRow["N_LPrice"]=stockTable.Rows[0]["N_LPrice"];
                             dRow["N_SPrice"]=stockTable.Rows[0]["N_SPrice"];
                             dRow["N_LocationID"]=stockTable.Rows[0]["N_LocationID"];
@@ -165,8 +165,9 @@ namespace SmartxAPI.Controllers
                             DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + 1 FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
                         }
+                         DetailTable.Columns.Remove("n_ItemUnitID");
                         N_StockID = dLayer.SaveDataWithIndex("Inv_StockMaster", "N_StockID", "", "", j, DetailTable, connection, transaction);
-                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_Price"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         if (N_StockID < 0)
                         {
 
