@@ -35,12 +35,12 @@ namespace SmartxAPI.Controllers
             FormID = 88;
         }
 
-      [HttpGet("ProductList")]
+        [HttpGet("ProductList")]
         public ActionResult GetAllItems(string query, int PageSize, int Page, int nLocationID, bool b_AllBranchData)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
-         
+
             SortedList Params = new SortedList();
 
             string qry = "";
@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             }
 
             //xCriteria = "where N_CompanyID=" + nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item'  and N_LocationID=" + nLocationID + "";
-          xCriteria = "where vw_InvItem_Search.N_CompanyID=" + nCompanyID + " and (vw_InvItem_Search.B_IsIMEI=0 or vw_InvItem_Search.B_IsIMEI is null)  and  (vw_InvItem_Search.[Item Class]='Stock Item' OR vw_InvItem_Search.[Item Class]='Assembly Item')  and Inv_StockMaster.N_LocationID=" + nLocationID + "";
+            xCriteria = "where vw_InvItem_Search.N_CompanyID=" + nCompanyID + " and (vw_InvItem_Search.B_IsIMEI=0 or vw_InvItem_Search.B_IsIMEI is null)  and  (vw_InvItem_Search.[Item Class]='Stock Item' OR vw_InvItem_Search.[Item Class]='Assembly Item')  and Inv_StockMaster.N_LocationID=" + nLocationID + "";
 
 
 
@@ -67,10 +67,10 @@ namespace SmartxAPI.Controllers
             // string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
-           
+
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
-            string sqlComandText ="vw_InvItem_Search.*,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where  N_CompanyID=" +nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item')" + qry;
+            string sqlComandText = "vw_InvItem_Search.*,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,'') As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where  N_CompanyID=" + nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item')" + qry;
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@PSize", PageSize);
@@ -95,23 +95,23 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow dRow in dt.Rows)
                     {
-                           DataTable stockTable = new DataTable();
-                       string sqlStock= "SELECT isnull(N_OpenStock,0) as N_OpenStock,isnull(N_StockID,0) as N_StockID,isnull(N_LPrice,0) as N_LPrice,isnull(N_SPrice,0) as N_SPrice,isnull(N_CurrentStock,0) as N_CurrentStock,isnull(N_LocationID,0) as N_LocationID,X_BatchCode,D_ExpiryDate FROM Inv_StockMaster where N_CompanyID="+nCompanyID+" and  N_ItemID= " + myFunctions.getIntVAL(dRow["N_ItemID"].ToString()) + " and N_LocationID=" + nLocationID + " and X_Type='Opening'";
+                        DataTable stockTable = new DataTable();
+                        string sqlStock = "SELECT isnull(N_OpenStock,0) as N_OpenStock,isnull(N_StockID,0) as N_StockID,isnull(N_LPrice,0) as N_LPrice,isnull(N_SPrice,0) as N_SPrice,isnull(N_CurrentStock,0) as N_CurrentStock,isnull(N_LocationID,0) as N_LocationID,X_BatchCode,D_ExpiryDate FROM Inv_StockMaster where N_CompanyID=" + nCompanyID + " and  N_ItemID= " + myFunctions.getIntVAL(dRow["N_ItemID"].ToString()) + " and N_LocationID=" + nLocationID + " and X_Type='Opening'";
                         stockTable = dLayer.ExecuteDataTable(sqlStock, Params, connection);
-                       if( stockTable.Rows.Count==1)
+                        if (stockTable.Rows.Count == 1)
                         {
-                            dRow["N_OpenStock"]=stockTable.Rows[0]["N_OpenStock"];
-                            dRow["N_StockID"]=stockTable.Rows[0]["N_StockID"];
-                            dRow["N_CurrentStock"]=stockTable.Rows[0]["N_CurrentStock"];
-                            dRow["N_LPrice"]=stockTable.Rows[0]["N_LPrice"];
-                            dRow["N_SPrice"]=stockTable.Rows[0]["N_SPrice"];
-                            dRow["N_LocationID"]=stockTable.Rows[0]["N_LocationID"];
-                            dRow["X_BatchCode"]=stockTable.Rows[0]["X_BatchCode"];
-                            dRow["D_ExpiryDate"]=stockTable.Rows[0]["D_ExpiryDate"];
+                            dRow["N_OpenStock"] = stockTable.Rows[0]["N_OpenStock"];
+                            dRow["N_StockID"] = stockTable.Rows[0]["N_StockID"];
+                            dRow["N_CurrentStock"] = stockTable.Rows[0]["N_CurrentStock"];
+                            dRow["N_LPrice"] = stockTable.Rows[0]["N_LPrice"];
+                            dRow["N_SPrice"] = stockTable.Rows[0]["N_SPrice"];
+                            dRow["N_LocationID"] = stockTable.Rows[0]["N_LocationID"];
+                            dRow["X_BatchCode"] = stockTable.Rows[0]["X_BatchCode"];
+                            dRow["D_ExpiryDate"] = stockTable.Rows[0]["D_ExpiryDate"];
 
 
                         }
-                
+
                     }
 
                 }
@@ -155,8 +155,8 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     openingStock = ds.Tables["openingStock"];
                     Params.Add("N_CompanyID", nCompanyID);
-                    int nFnYearID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
-                    int nBranchID=myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         int StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
@@ -165,7 +165,7 @@ namespace SmartxAPI.Controllers
                             DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + 1 FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
                         }
-                         DetailTable.Columns.Remove("n_ItemUnitID");
+                        DetailTable.Columns.Remove("n_ItemUnitID");
                         N_StockID = dLayer.SaveDataWithIndex("Inv_StockMaster", "N_StockID", "", "", j, DetailTable, connection, transaction);
                         dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         if (N_StockID < 0)
@@ -187,7 +187,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save!"));
 
                     }
-                    
+
                     SortedList PostingParam = new SortedList();
 
 
@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", PostingParam, connection, transaction);
-                       
+
                     }
                     catch (Exception ex)
                     {
@@ -215,6 +215,49 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+        [HttpGet("stockDetails")]
+        public ActionResult GetStockDetailsDetails(int nCompanyId, int nFnYearId, int nBranchId, int nLocationID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+
+                    connection.Open();
+                    DataSet dt = new DataSet();
+                    SortedList QueryParamsList = new SortedList();
+                    QueryParamsList.Add("@nCompanyID", nCompanyId);
+                    QueryParamsList.Add("@nFnYearID", nFnYearId);
+                    DataTable MasterTable = new DataTable();
+                    DataTable DetailTable = new DataTable();
+                    string stockQry = "";
+                    string DetailSql = "";
+                    stockQry = "select * from  vw_OpeningStockFill where N_CompanyID = " + nCompanyId + " and N_LocationID=" + nLocationID + " and  (N_ClassID <> 1 and N_ClassID <> 4) and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)  and  N_OpenStock>=0  order by X_Itemcode,X_ItemName,X_Category";
+                    DetailTable = dLayer.ExecuteDataTable(stockQry, QueryParamsList, connection);
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_Processed", typeof(int), 0);
+                    foreach (DataRow row in DetailTable.Rows)
+                    {
+                        if (myFunctions.getIntVAL(row["N_OpenStock"].ToString()) != myFunctions.getIntVAL(row["N_CurrentStock"].ToString()))
+                        {
+                            row["N_Processed"] = 1;
+                        }
+                        else
+                        {
+                            row["N_Processed"] = 0;
+                        }
+                    }
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dt.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
             }
         }
     }
