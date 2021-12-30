@@ -292,7 +292,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId,bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -450,7 +450,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     if (nQuotationID > 0)
-                    {
+                    { 
 
                         QueryParamsList.Add("@nQuotationID", nQuotationID);
                         string Mastersql = "select *,0 as B_IsProforma from vw_QuotationToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
@@ -536,7 +536,7 @@ namespace SmartxAPI.Controllers
 
 
 
-
+                
 
                     SortedList mParamsList = new SortedList()
                     {
@@ -544,8 +544,16 @@ namespace SmartxAPI.Controllers
                         {"X_ReceiptNo",xInvoiceNo},
                         {"X_TransType","SALES"},
                         {"N_FnYearID",nFnYearId},
-                        {"N_BranchId",nBranchId}
+                       
                     };
+                 if(!bAllBranchData)
+                 {
+                     mParamsList.Add("N_BranchId",nBranchId);
+                 }
+                 else
+                 {
+                     mParamsList.Add("N_BranchId",0);
+                 }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
