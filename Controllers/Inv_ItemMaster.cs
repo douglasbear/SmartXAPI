@@ -153,7 +153,7 @@ namespace SmartxAPI.Controllers
              if (b_AllBranchData)
                 xCriteria = "";
             else
-                xCriteria = "and  N_BranchID=@p5";
+                xCriteria = "and  N_BranchID=@p5 ";
 
             
             if (xSearchkey != null && xSearchkey.Trim() != "")
