@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("list")]
-        public ActionResult GetSalesQuotationList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen)
+        public ActionResult GetSalesQuotationList(int? nCompanyId, int nFnYearId, bool bAllBranchData, int nBranchID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID)
         {
 
             try
@@ -51,7 +51,11 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "";
                     string Searchkey = "";
                     string criteria = "";
+                     string cndn = "";
+                   
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+                    if (nCustomerID>0)
+                        cndn = "and N_CustomerID=@nCustomerID";
 
                     if (screen=="Quotation")
                         criteria = "and MONTH(Cast(D_QuotationDate as DateTime)) = MONTH(CURRENT_TIMESTAMP) and YEAR(D_QuotationDate) = YEAR(CURRENT_TIMESTAMP)";
@@ -106,19 +110,20 @@ namespace SmartxAPI.Controllers
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo,D_RfqRefDate,N_Amount,N_FreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + cndn+ Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_QuotationId,[Quotation No],[Quotation Date],N_CompanyId,N_CustomerId,[Customer Code],N_FnYearID,D_QuotationDate,N_BranchId,B_YearEndProcess,X_CustomerName,X_BranchName,X_RfqRefNo as XRfqRefNo,D_RfqRefDate as DRfqRefDate,N_Amount as NAmount,N_FreightAmt as NFreightAmt,N_DiscountAmt,N_Processed,N_OthTaxAmt,N_BillAmt,N_ProjectID,X_ProjectName,x_Notes,X_SalesmanName,N_AmountF,N_DiscountAmtF,N_BillAmtF,X_CrmCustomer,X_ClosingRsn,X_ClosingStatus from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria +cndn+  Searchkey + " and N_QuotationId not in (select top(" + Count + ") N_QuotationId from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + xSortBy + " ) " + xSortBy;
 
 
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
+                    Params.Add("@nCustomerID", nCustomerID);
                     SortedList OutPut = new SortedList();
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(n_Amount,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesQuotationNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 " + criteria +cndn+ Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
