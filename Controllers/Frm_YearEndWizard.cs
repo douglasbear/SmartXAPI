@@ -252,7 +252,7 @@ namespace SmartxAPI.Controllers
                     if (b_TransferBalance)
                     {
 
-                        bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + n_FnYearId + " and N_CompanyID =" + nCompanyID + "", Params, connection));
+                        bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + n_FnYearId + " and N_CompanyID =" + nCompanyID + "", Params, connection, transaction));
                         if (YearProcessed == false)
                         {
 
