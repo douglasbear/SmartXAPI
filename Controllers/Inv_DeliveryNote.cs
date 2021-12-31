@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -124,8 +124,16 @@ namespace SmartxAPI.Controllers
                         {"X_ReceiptNo",xInvoiceNo},
                         {"X_TransType","DELIVERY"},
                         {"N_FnYearID",nFnYearId},
-                        {"N_BranchId",nBranchId}
+                      
                     };
+                     if(!bAllBranchData)
+                 {
+                     mParamsList.Add("N_BranchId",nBranchId);
+                 }
+                 else
+                 {
+                     mParamsList.Add("N_BranchId",0);
+                 }
                     if (nSalesOrderID > 0)
                     {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
