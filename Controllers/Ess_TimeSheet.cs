@@ -174,7 +174,10 @@ namespace SmartxAPI.Controllers
                         for (int i = Details.Rows.Count - 1; i >= 0; i--)
                         {
                             if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && Details.Rows[i]["B_HolidayFlag"].ToString() == "0")
+                            {
                                 Details.Rows[i].Delete();
+                                 Details.AcceptChanges();
+                            }
                         }
                     }
                     }
