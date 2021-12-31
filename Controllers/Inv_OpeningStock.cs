@@ -54,7 +54,7 @@ namespace SmartxAPI.Controllers
 
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
+                qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
             }
 
@@ -157,6 +157,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("N_CompanyID", nCompanyID);
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                    DetailTable.Columns.Remove("n_ItemUnitID");
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         int StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
@@ -165,19 +166,31 @@ namespace SmartxAPI.Controllers
                             DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + 1 FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
                         }
-                        DetailTable.Columns.Remove("n_ItemUnitID");
-                        N_StockID = dLayer.SaveDataWithIndex("Inv_StockMaster", "N_StockID", "", "", j, DetailTable, connection, transaction);
+
+                        // N_StockID = dLayer.SaveDataWithIndex("Inv_StockMaster", "N_StockID", "", "", j, DetailTable, connection, transaction);
                         dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
-                        if (N_StockID < 0)
-                        {
+                        // if (N_StockID < 0)
+                        // {
 
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to save!"));
+                        //     transaction.Rollback();
+                        //     return Ok(_api.Error(User, "Unable to save!"));
 
-                        }
+                        // }
                         openingStock.Rows[j]["N_TransID"] = StockID;
 
                     }
+                    DetailTable.AcceptChanges();
+                    N_StockID = dLayer.SaveData("Inv_StockMaster", "N_StockID", "", "", DetailTable, connection, transaction);
+                    if (N_StockID < 0)
+                    {
+
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to save!"));
+
+                    }
+
+                    N_OpeningID = dLayer.SaveData("Inv_OpeningStock", "N_TransID", "", "", openingStock, connection, transaction);
+
                     openingStock.AcceptChanges();
                     N_OpeningID = dLayer.SaveData("Inv_OpeningStock", "N_TransID", "", "", openingStock, connection, transaction);
                     if (N_OpeningID < 0)
