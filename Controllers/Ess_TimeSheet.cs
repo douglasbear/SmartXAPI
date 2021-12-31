@@ -85,7 +85,7 @@ namespace SmartxAPI.Controllers
         public ActionResult GetAttendanceDetails(int nEmployeeID, int nFnYear, string payText, DateTime payDate, DateTime dDateFrom, DateTime dDateTo)
         {
             DataTable Details = new DataTable();
-            DataTable HolyDays = new DataTable();
+
 
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
@@ -152,9 +152,21 @@ namespace SmartxAPI.Controllers
                     Master.Add("days", days);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
-                    HolyDays = Details.AsEnumerable()
-                             .Where(r => r.Field<int>("B_HolidayFlag") == 1)
-                             .CopyToDataTable();
+
+
+                    if (Details.Rows.Count > 0)
+                    {
+
+
+                        var rows = Details.AsEnumerable().Where(r => r.Field<int>("B_HolidayFlag") == 1);
+
+                        DataTable HolyDays = Details.Clone();
+
+                        foreach (var row in rows)
+                        {
+                            HolyDays.ImportRow(row);
+                        }
+                    
 
                     foreach (DataRow row in HolyDays.Rows)
                     {
@@ -164,6 +176,7 @@ namespace SmartxAPI.Controllers
                             if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && Details.Rows[i]["B_HolidayFlag"].ToString() == "0")
                                 Details.Rows[i].Delete();
                         }
+                    }
                     }
                     Details.AcceptChanges();
                     Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0;

@@ -166,6 +166,12 @@ namespace SmartxAPI.Controllers
             using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                 connection.Open();
+                if(nTransID>0){
+                    SortedList Params =new SortedList();
+                    Params.Add("@FormID",nFormID);
+                    Params.Add("@TransID",nTransID);
+                    nFormID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select distinct N_FormID from Log_ApprovalProcess where N_TransID=@TransID and X_TransType=( select X_Type from vw_ScreenTables where N_FormID=@FormID)",Params,connection).ToString());
+                }
                 SortedList Response = myFunctions.GetApprovals(nIsApprovalSystem, nFormID, nTransID, nTransUserID, nTransStatus, nTransApprovalLevel, nNextApprovalLevel, nApprovalID, nGroupID, nFnYearID, nEmpID, nActionID,User,dLayer, connection);
                 return Ok(api.Success(Response));
                 }
