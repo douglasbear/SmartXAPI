@@ -624,6 +624,9 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_FormID", this.N_FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
 
+                        if (MasterTable.Columns.Contains("n_TaxAmtDisp"))
+                        MasterTable.Columns.Remove("n_TaxAmtDisp");
+
                         InvoiceNo = dLayer.GetAutoNumber("Inv_Purchase", "x_InvoiceNo", Params, connection, transaction);
                         if (InvoiceNo == "")
                         {
