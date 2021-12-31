@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            //FormID = 395;
+            FormID = 142;
         }
 
         [HttpGet("loadNextYear")]
@@ -174,20 +174,40 @@ namespace SmartxAPI.Controllers
                     bool b_TransferBalance = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_closeYear"].ToString());
                     var d_DateFrom = (MasterTable.Rows[0]["d_DateFrom"].ToString());
                     var d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
-                    var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());
-                    string X_CustomerVal = (MasterTable.Rows[0]["X_CustomerVal"].ToString());
-                    string X_AccountVal = (MasterTable.Rows[0]["X_AccountVal"].ToString());
-                    string X_VendorVal = (MasterTable.Rows[0]["X_VendorVal"].ToString());
+                    //var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());
+                    string X_CustomerVal = (MasterTable.Rows[0]["x_CustomerVal"].ToString());
+                    string X_AccountVal = (MasterTable.Rows[0]["x_AccountVal"].ToString());
+                    string X_VendorVal = (MasterTable.Rows[0]["x_VendorVal"].ToString());
                     int n_TaxTypeID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TaxTypeID"].ToString());
                     string Condn = "";
                     bool B_Depreciation = false;
-                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
 
                     object nFnYearID = null;
-                    if (b_NewYear)
-                        nFnYearID = dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard " + nCompanyID + "," + n_FnYearId + ",'" + d_DateFrom + "','" + d_DateTo + "','" + X_AccountVal + "','" + X_CustomerVal + "','" + X_VendorVal + "'," + n_TaxTypeID + " ", Params, connection, transaction);
-                    if (b_closeYear)
-                        dLayer.ExecuteScalarPro("SP_Acc_CloseFinYear" + nCompanyID + "," + nFnYearID + ",' ','" + nUserID + "','Close' ", Params, connection, transaction);
+                    if (b_NewYear) {
+                        SortedList Params2 = new SortedList(){
+                            {"N_CompanyID", nCompanyID},
+                            {"N_FnYearID_Current", n_FnYearId},
+                            {"D_Start", d_DateFrom},
+                            {"D_End", d_DateTo},
+                            {"Accounts", X_AccountVal},
+                            {"Customers", X_CustomerVal},
+                            {"Vendors", X_VendorVal},
+                            {"N_TaxType", n_TaxTypeID}
+                        };
+                        nFnYearID = dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard", Params2, connection, transaction);
+                    }
+                    if (b_closeYear) {
+                        SortedList Params3 = new SortedList(){
+                            {"N_CompanyID", nCompanyID},
+                            {"N_FnYearID_Close", nFnYearID},
+                            {"N_FnYearID_New", ""},
+                            {"X_RtainedIncomeLedgerCode", ""},
+                            {"N_UserID", nUserID},
+                            {"X_Operation", "Close"}
+                        };
+                        dLayer.ExecuteNonQueryPro("SP_Acc_CloseFinYear", Params3, connection, transaction);
+                    }
 
                     if (nBranchID == 0)
 
@@ -232,7 +252,7 @@ namespace SmartxAPI.Controllers
                     if (b_TransferBalance)
                     {
 
-                        bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + n_FnYearId + " and N_CompanyID =" + nCompanyID + "", Params, connection));
+                        bool YearProcessed = Convert.ToBoolean(dLayer.ExecuteScalar("select B_YearEndProcess FRom Acc_FnYear Where N_FnYearID =  " + n_FnYearId + " and N_CompanyID =" + nCompanyID + "", Params, connection, transaction));
                         if (YearProcessed == false)
                         {
 
