@@ -377,12 +377,12 @@ namespace SmartxAPI.Controllers
                 "FROM vw_CRMOpportunity LEFT OUTER JOIN Inv_Customer ON vw_CRMOpportunity.N_FnYearId = Inv_Customer.N_FnYearID AND vw_CRMOpportunity.N_CompanyId = Inv_Customer.N_CompanyID AND vw_CRMOpportunity.N_CustomerID = Inv_Customer.N_CrmCompanyID " +
                 "where vw_CRMOpportunity.N_OpportunityID=@nOpportunityID and vw_CRMOpportunity.N_CompanyId=@nCompanyID and vw_CRMOpportunity.N_FnYearID=@YearID";
             }
-           else
+           else{
+               Params.Add("@xProjectCode", xProjectCode);
           sqlCommandText = "select * from Vw_InvCustomerProjects  where N_CompanyID=@nCompanyID and N_FnYearID=@YearID  and X_ProjectCode=@xProjectCode";
-                
+                }
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@YearID", nFnYearId);
-            Params.Add("@xProjectCode", xProjectCode);
             Params.Add("@nOpportunityID", nOpportunityID);
             try
             {
