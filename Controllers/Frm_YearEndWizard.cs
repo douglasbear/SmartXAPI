@@ -169,15 +169,26 @@ namespace SmartxAPI.Controllers
 
                     int n_FnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
-                    bool b_NewYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewYear"].ToString());
+                    bool b_NewYear = false;
+                    string accountCode = "";
+                    if (MasterTable.Columns.Contains("b_NewYear"))
+                        b_NewYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_NewYear"].ToString());
                     bool b_closeYear = false;
                     if (MasterTable.Columns.Contains("b_closeYear"))
                         b_closeYear = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_closeYear"].ToString());
                     bool b_TransferBalance = false;
                     if (MasterTable.Columns.Contains("b_TransferClosingBal"))
                         b_TransferBalance = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_TransferClosingBal"].ToString());
-                    var d_DateFrom = (MasterTable.Rows[0]["d_DateFrom"].ToString());
-                    var d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
+                    var d_DateFrom = "";
+                    if (MasterTable.Columns.Contains("d_DateFrom"))
+                        d_DateFrom = (MasterTable.Rows[0]["d_DateFrom"].ToString());
+                    var d_DateTo = "";
+                    if (MasterTable.Columns.Contains("d_DateTo"))
+                        d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
+
+                    if (MasterTable.Columns.Contains("N_LedgerID"))
+                        accountCode = dLayer.ExecuteScalar("select [Account Code] from vw_AccMastLedger where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + n_FnYearId + " and N_LedgerID=" +myFunctions.getIntVAL( MasterTable.Rows[0]["N_LedgerID"].ToString()) + " ", Params, connection, transaction).ToString();
+
                     //var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());
                     string X_CustomerVal = (MasterTable.Rows[0]["x_CustomerVal"].ToString());
                     string X_AccountVal = (MasterTable.Rows[0]["x_AccountVal"].ToString());
@@ -259,15 +270,16 @@ namespace SmartxAPI.Controllers
 
                     if (b_TransferBalance)
                     {
-                         nFnYearID = myFunctions.getIntVAL((dLayer.ExecuteScalar("Select top 1 ISNULL(N_FnYearID,0) from Acc_FnYear Where N_CompanyID = " +nCompanyID + "   and D_Start > ( Select D_Start FRom Acc_FnYear Where N_FnYearID =" +n_FnYearId + " and N_CompanyID =" +nCompanyID+ ") order by D_Start",Params,connection,transaction)).ToString());
-
+                        nFnYearID = myFunctions.getIntVAL((dLayer.ExecuteScalar("Select top 1 ISNULL(N_FnYearID,0) from Acc_FnYear Where N_CompanyID = " + nCompanyID + "   and D_Start > ( Select D_Start FRom Acc_FnYear Where N_FnYearID =" + n_FnYearId + " and N_CompanyID =" + nCompanyID + ") order by D_Start", Params, connection, transaction)).ToString());
+                        
                         SortedList PostingParam1 = new SortedList();
                         PostingParam1.Add("@N_CompanyID", nCompanyID);
                         PostingParam1.Add("@N_FnYearID_Close", n_FnYearId);
                         PostingParam1.Add("@N_FnYearID_New", nFnYearID);
-                        PostingParam1.Add("@X_RtainedIncomeLedgerCode", "");
+                        PostingParam1.Add("@X_RtainedIncomeLedgerCode", accountCode);
                         PostingParam1.Add("@N_UserID", nUserID);
                         PostingParam1.Add("@X_Operation", "Transfer");
+
 
 
 
