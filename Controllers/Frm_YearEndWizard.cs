@@ -186,8 +186,15 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Columns.Contains("d_DateTo"))
                         d_DateTo = (MasterTable.Rows[0]["d_DateTo"].ToString());
 
+object accCode=null;
                     if (MasterTable.Columns.Contains("N_LedgerID"))
-                        accountCode = dLayer.ExecuteScalar("select [Account Code] from vw_AccMastLedger where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + n_FnYearId + " and N_LedgerID=" +myFunctions.getIntVAL( MasterTable.Rows[0]["N_LedgerID"].ToString()) + " ", Params, connection, transaction).ToString();
+                        accCode = dLayer.ExecuteScalar("select [Account Code] from vw_AccMastLedger where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + n_FnYearId + " and N_LedgerID=" +myFunctions.getIntVAL( MasterTable.Rows[0]["N_LedgerID"].ToString()) + " ", Params, connection, transaction);
+                    if(accCode == null){
+                     transaction.Rollback();
+                      return Ok(_api.Error(User, "Please select retained income account"));
+                      }
+                      
+                      accountCode =accCode.ToString();
 
                     //var dEndDate = (MasterTable.Rows[0]["d_EndDate"].ToString());
                     string X_CustomerVal = (MasterTable.Rows[0]["x_CustomerVal"].ToString());
@@ -212,6 +219,7 @@ namespace SmartxAPI.Controllers
                             {"N_TaxType", n_TaxTypeID}
                         };
                         nFnYearID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_FinancialYear_Create_wizard", Params2, connection, transaction).ToString());
+                        dLayer.ExecuteScalar("update Acc_FnYear set D_Start = '2022-01-01 00:00:00' where D_Start='2022-01-01 23:59:00'", Params, connection, transaction);
                     }
                     if (b_closeYear)
                     {
