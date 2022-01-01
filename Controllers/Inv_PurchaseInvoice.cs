@@ -521,6 +521,7 @@ namespace SmartxAPI.Controllers
             if (MasterTable.Columns.Contains("N_RsID"))
                 n_MRNID = myFunctions.getIntVAL(masterRow["N_RsID"].ToString());
             int Dir_Purchase = 1;
+            int b_FreightAmountDirect = myFunctions.getIntVAL(masterRow["b_FreightAmountDirect"].ToString());
             
 
             try
@@ -703,6 +704,9 @@ namespace SmartxAPI.Controllers
 
                     MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
 
+                    if (MasterTable.Columns.Contains("n_TaxAmtDisp"))
+                        MasterTable.Columns.Remove("n_TaxAmtDisp");
+
                     N_PurchaseID = dLayer.SaveData("Inv_Purchase", "N_PurchaseID", MasterTable, connection, transaction);
 
                     if (N_PurchaseID <= 0)
@@ -828,6 +832,15 @@ namespace SmartxAPI.Controllers
                             var["N_PurchaseID"] = N_PurchaseID;
                         }
                         dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
+                    }
+                    if (b_FreightAmountDirect==0){
+                        SortedList ProcParams = new SortedList(){
+                            {"N_FPurchaseID", N_PurchaseID},
+                            {"N_CompanyID", nCompanyID},
+                            {"N_FnYearID", nFnYearID},
+                            {"N_FormID", this.N_FormID},
+                        };
+                        dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
                     }
                     myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
 
