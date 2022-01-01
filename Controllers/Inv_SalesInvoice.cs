@@ -58,7 +58,7 @@ namespace SmartxAPI.Controllers
                     string cndn = "";
                     int N_decimalPlace=2;
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value",nCompanyId, dLayer, connection));
-                    N_decimalPlace=N_decimalPlace==0?N_decimalPlace:2;
+                    N_decimalPlace=N_decimalPlace==0?2:N_decimalPlace;
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
 

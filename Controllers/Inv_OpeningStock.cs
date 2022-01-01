@@ -171,8 +171,8 @@ namespace SmartxAPI.Controllers
                         openingStock.Rows[j]["N_TransID"] = StockID;
 
                     }
-                    string stockMasterSql = "select * from Inv_StockMaster N_CompanyID=" + nCompanyID + "";
-                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection);
+                    string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + "";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection,transaction);
                     if (StockTable.Rows.Count > 0)
 
                     {

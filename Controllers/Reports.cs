@@ -639,7 +639,8 @@ namespace SmartxAPI.Controllers
                     CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                     YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
-
+Params.Add("@xType", "");
+                        Params.Add("@nCompID", 0);
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -647,9 +648,9 @@ namespace SmartxAPI.Controllers
                         string value = var["value"].ToString();
                         string valueTo = var["valueTo"].ToString();
 
-
-                        Params.Add("@xType", type.ToLower());
-                        Params.Add("@nCompID", compID);
+Params["@xType"]= type.ToLower();
+                        Params["@nCompID"]=compID;
+                        
 
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
