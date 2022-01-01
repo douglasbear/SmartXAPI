@@ -1207,7 +1207,60 @@ namespace SmartxAPI.Controllers
         // }
 
         [HttpGet("productHistory")]
-        public ActionResult GetEmpEvalSettingsList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                    Params.Add("@p3", nCustomerID);
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_ReceiptNo like '%" + xSearchkey + "%' or N_Qty like '%" + xSearchkey + "%' or cast(D_SalesDate as VarChar) like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_SalesDetailsID desc";
+                    else
+                    {
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("productPurchaseHistory")]
+        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             try
             {
@@ -1226,25 +1279,25 @@ namespace SmartxAPI.Controllers
                     Params.Add("@p2", nItemID);
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and (X_EvaluationCode like '%" + xSearchkey + "%' or X_Name like '%" + xSearchkey + "%' or x_EmpDep like '%" + xSearchkey + "%' or cast(D_PeriodFrom as VarChar) like '%" + xSearchkey + "%' or cast(D_PeriodTo as VarChar) like '%" + xSearchkey + "%')";
+                        Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_ReceiptNo like '%" + xSearchkey + "%' or N_Qty like '%" + xSearchkey + "%' or cast(D_SalesDate as VarChar) like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
-                        xSortBy = " order by N_SalesDetailsID desc";
+                        xSortBy = " order by N_PurchaseDetailsID desc";
                     else
                     {
                         xSortBy = " order by " + xSortBy;
                     }
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
                     SortedList OutPut = new SortedList();
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2" + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "";
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
 
                     OutPut.Add("Details", _api.Format(dt));

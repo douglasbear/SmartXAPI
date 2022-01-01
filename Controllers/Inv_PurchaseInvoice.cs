@@ -763,6 +763,28 @@ namespace SmartxAPI.Controllers
 
                     }
 
+                    if (PurchaseFreight.Rows.Count > 0)
+                    {
+                        if (!PurchaseFreight.Columns.Contains("N_PurchaseID"))
+                        {
+                            PurchaseFreight.Columns.Add("N_PurchaseID");
+                        }
+                        foreach (DataRow var in PurchaseFreight.Rows)
+                        {
+                            var["N_PurchaseID"] = N_PurchaseID;
+                        }
+                        dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
+                    }
+                    if (b_FreightAmountDirect==0){
+                        SortedList ProcParams = new SortedList(){
+                            {"N_FPurchaseID", N_PurchaseID},
+                            {"N_CompanyID", nCompanyID},
+                            {"N_FnYearID", nFnYearID},
+                            {"N_FormID", this.N_FormID},
+                        };
+                        dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
+                    }
+
                     if (N_SaveDraft == 0)
                     {
                         try
@@ -821,27 +843,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex));
                         }
                     }
-                    if (PurchaseFreight.Rows.Count > 0)
-                    {
-                        if (!PurchaseFreight.Columns.Contains("N_PurchaseID"))
-                        {
-                            PurchaseFreight.Columns.Add("N_PurchaseID");
-                        }
-                        foreach (DataRow var in PurchaseFreight.Rows)
-                        {
-                            var["N_PurchaseID"] = N_PurchaseID;
-                        }
-                        dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
-                    }
-                    if (b_FreightAmountDirect==0){
-                        SortedList ProcParams = new SortedList(){
-                            {"N_FPurchaseID", N_PurchaseID},
-                            {"N_CompanyID", nCompanyID},
-                            {"N_FnYearID", nFnYearID},
-                            {"N_FormID", this.N_FormID},
-                        };
-                        dLayer.ExecuteNonQueryPro("SP_FillFreightToPurchase", ProcParams, connection, transaction);
-                    }
+
                     myFunctions.SendApprovalMail(N_NextApproverID, this.N_FormID, N_PurchaseID, "PURCHASE", InvoiceNo, dLayer, connection, transaction, User);
 
                     transaction.Commit();
