@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData,int nLocationID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -68,6 +68,8 @@ namespace SmartxAPI.Controllers
             if (nNotGridItemID != 0)
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_ItemID<> " + nNotGridItemID;
 
+            if (nLocationID != 0)
+                Condition = Condition + " and vw_InvItem_Search_cloud.N_LocationID =" + nLocationID;
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
@@ -131,7 +133,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearId, bool b_AllBranchData,int nBranchID,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId, bool b_AllBranchData,int nBranchID,int nLocationID,int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -142,10 +144,12 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             string xCriteria="";
 
-             if (b_AllBranchData)
+            if (b_AllBranchData)
                 xCriteria = "";
             else
                 xCriteria = "and  N_BranchID=@p5";
+
+            if(nLocationID!=0)xCriteria=xCriteria+ " and vw_InvItem_Search_cloud.N_LocatioID=@p6";
 
             
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -183,6 +187,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@p3", "001");
             Params.Add("@p4", 1);
             Params.Add("@p5", nBranchID);
+            Params.Add("@p6", nLocationID);
 
             SortedList OutPut = new SortedList();
 
