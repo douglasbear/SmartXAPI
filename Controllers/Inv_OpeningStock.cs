@@ -147,6 +147,7 @@ namespace SmartxAPI.Controllers
                     DataTable DetailTable;
                     DataTable openingStock;
                     DataTable MasterTable;
+                    DataTable StockTable;
                     int N_StockID = 0;
                     int N_OpeningID = 0;
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -166,19 +167,31 @@ namespace SmartxAPI.Controllers
                             DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + 1 FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
                         }
-
-                        // N_StockID = dLayer.SaveDataWithIndex("Inv_StockMaster", "N_StockID", "", "", j, DetailTable, connection, transaction);
                         dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
-                        // if (N_StockID < 0)
-                        // {
-
-                        //     transaction.Rollback();
-                        //     return Ok(_api.Error(User, "Unable to save!"));
-
-                        // }
                         openingStock.Rows[j]["N_TransID"] = StockID;
 
                     }
+                    string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + "";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection,transaction);
+                    if (StockTable.Rows.Count > 0)
+
+                    {
+                        foreach (DataRow stockItem in StockTable.Rows)
+                        {
+                            foreach (DataRow DetailItem in DetailTable.Rows)
+                            {
+                                if (stockItem["N_StockID"] == DetailItem["N_StockID"])
+                                {
+                                    if (stockItem["N_CurrentStock"] != stockItem["N_OpenStock"])
+                                    {
+                                        transaction.Rollback();
+                                        return Ok(_api.Error(User, "Transaction already Processed for the Product "));
+                                    }
+                                }
+                            }
+                        }
+                    }
+
                     DetailTable.AcceptChanges();
                     N_StockID = dLayer.SaveData("Inv_StockMaster", "N_StockID", "", "", DetailTable, connection, transaction);
                     if (N_StockID < 0)
