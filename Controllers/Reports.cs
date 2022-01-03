@@ -38,6 +38,7 @@ namespace SmartxAPI.Controllers
         string ReportName = "";
         string critiria = "";
         string TableName = "";
+        string QRurl = "";
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
         public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -211,7 +212,8 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var random = RandomString();
                     var dbName = connection.Database;
-                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf"; ;
+                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                    //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0";
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
@@ -233,6 +235,7 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
+            bool b_Custom = false;
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -259,6 +262,8 @@ namespace SmartxAPI.Controllers
                     critiria = "{" + Templatecritiria + "}=" + nPkeyID;
 
                     object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    int N_Custom = myFunctions.getIntVAL(Custom.ToString());
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
@@ -267,6 +272,12 @@ namespace SmartxAPI.Controllers
                     }
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if (N_Custom == 1)
+                    {
+                        RPTLocation = RPTLocation + "custom/";
+                        ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
+                        ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User) + ".rpt";
+                    }
                     ReportName = ObjReportName.ToString();
                     ReportName = ReportName.Remove(ReportName.Length - 4);
                     if (nFormID == 64 || nFormID == 894 || nFormID == 372)
@@ -281,9 +292,10 @@ namespace SmartxAPI.Controllers
                         string Amount = Convert.ToDecimal(Total).ToString("0.00");
                         string VatAmount = Convert.ToDecimal(TaxAmount.ToString()).ToString("0.00");
                         string Company = myFunctions.GetCompanyName(User);
-                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));              
+                        TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
                         var plainTextBytes = tlv.ToBase64();
 
+                        //QRurl = string.Format(plainTextBytes);
                         var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
                         WebResponse response = default(WebResponse);
                         Stream remoteStream = default(Stream);
@@ -298,7 +310,7 @@ namespace SmartxAPI.Controllers
                         {
                             info.Create();
                         }
-                        string pathfile = Path.Combine(path,myFunctions.GetCompanyName(User)+nPkeyID+ ".png");
+                        string pathfile = Path.Combine(path, "QR.png");
                         using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
                         {
                             remoteStream.CopyTo(outputFileStream);
@@ -371,6 +383,7 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        //string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID="+nFormID+"&QRUrl="+QRurl+"&N_PkeyID="+nPkeyID;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
                         {
@@ -549,6 +562,7 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        // string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0";
                         var path = client.GetAsync(URL);
                         path.Wait();
 
@@ -619,8 +633,14 @@ namespace SmartxAPI.Controllers
                     reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
 
                     reportName = reportName.Substring(0, reportName.Length - 4);
+                    SortedList Params = new SortedList();
+                    Params.Add("@xMain", "MainForm");
+                    Params.Add("@nMenuID", MenuID);
+                    CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                    YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
 
-
+Params.Add("@xType", "");
+                        Params.Add("@nCompID", 0);
                     foreach (DataRow var in DetailTable.Rows)
                     {
                         int compID = myFunctions.getIntVAL(var["compId"].ToString());
@@ -628,17 +648,14 @@ namespace SmartxAPI.Controllers
                         string value = var["value"].ToString();
                         string valueTo = var["valueTo"].ToString();
 
-                        SortedList Params = new SortedList();
-                        Params.Add("@nMenuID", MenuID);
-                        Params.Add("@xType", type.ToLower());
-                        Params.Add("@nCompID", compID);
-                        Params.Add("@xMain", "MainForm");
+Params["@xType"]= type.ToLower();
+                        Params["@nCompID"]=compID;
+                        
+
                         string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
                         string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
-                        YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = FieldName + "=";
@@ -755,7 +772,8 @@ namespace SmartxAPI.Controllers
                 }
 
 
-                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
+                // string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention +"&N_FormID=0&QRUrl=&N_PkeyID=0";
                 var path = client.GetAsync(URL);
 
                 path.Wait();

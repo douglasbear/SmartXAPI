@@ -607,9 +607,7 @@ if (xBatch != null)
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
                 }
-
                     return Ok(_api.Success(dt));
-
             }
             catch (Exception e)
             {

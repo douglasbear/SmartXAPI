@@ -38,7 +38,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, bool bAllBranchData, int nBranchID, int n_LocationID, int nSizeperpage, string xSearchkey, string xSortBy, string screen)
+        public ActionResult GetSalesInvoiceList(int nFnYearId, int nPage, bool bAllBranchData, int nBranchID, int n_LocationID, int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID)
         {
             try
             {
@@ -55,8 +55,15 @@ namespace SmartxAPI.Controllers
                     string Searchkey = "";
                     string X_TransType = "SALES";
                     string criteria = "";
+                    string cndn = "";
+                    int N_decimalPlace=2;
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value",nCompanyId, dLayer, connection));
+                    N_decimalPlace=N_decimalPlace==0?2:N_decimalPlace;
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+
+                    if (nCustomerID>0)
+                        cndn = "and N_CustomerID=@nCustomerID";
 
                     if (screen == "Invoice")
                         criteria = "and MONTH(Cast([Invoice Date] as DateTime)) = MONTH(CURRENT_TIMESTAMP) AND YEAR(Cast([Invoice Date] as DateTime)) = YEAR(CURRENT_TIMESTAMP)";
@@ -99,10 +106,10 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "x_BillAmt":
-                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(x_BillAmt,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
                                 break;
                             case "n_BalanceAmt":
-                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(n_BalanceAmt,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -111,12 +118,13 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + xSearchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
+                    Params.Add("@nCustomerID", nCustomerID);
                     SortedList OutPut = new SortedList();
 
 
@@ -151,7 +159,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,2)) ) as TotalAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvSalesInvoiceNo_Search where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -287,7 +295,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId,bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -445,7 +453,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     if (nQuotationID > 0)
-                    {
+                    { 
 
                         QueryParamsList.Add("@nQuotationID", nQuotationID);
                         string Mastersql = "select *,0 as B_IsProforma from vw_QuotationToInvoice where N_CompanyId=@nCompanyID and N_QuotationId=@nQuotationID";
@@ -529,14 +537,26 @@ namespace SmartxAPI.Controllers
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
                     }
 
+
+
+                
+
                     SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",nCompanyId},
                         {"X_ReceiptNo",xInvoiceNo},
                         {"X_TransType","SALES"},
                         {"N_FnYearID",nFnYearId},
-                        {"N_BranchId",nBranchId}
+                       
                     };
+                 if(!bAllBranchData)
+                 {
+                     mParamsList.Add("N_BranchId",nBranchId);
+                 }
+                 else
+                 {
+                     mParamsList.Add("N_BranchId",0);
+                 }
                     DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvSales_Disp", mParamsList, Con);
                     masterTable = _api.Format(masterTable, "Master");
                     if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
@@ -598,7 +618,7 @@ namespace SmartxAPI.Controllers
                     object OrderQty1 = dLayer.ExecuteScalar("Select SUM(N_Qty) from Inv_SalesDetails Where N_CompanyID=" + nCompanyId + "and N_SalesID=@nSalesID", QueryParamsList, Con);
                     if (DNQty != null && OrderQty1 != null)
                     {
-                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) != myFunctions.getIntVAL(DNQty.ToString()))
+                        if (myFunctions.getVAL(OrderQty1.ToString()) > 0 && myFunctions.getVAL(OrderQty1.ToString()) != myFunctions.getVAL(DNQty.ToString()))
                         {
                             objSalesReturn = null;
                         }
@@ -870,8 +890,18 @@ namespace SmartxAPI.Controllers
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff",System.Globalization.CultureInfo.InvariantCulture) , dLayer, connection, transaction))
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,"+DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString()+") between D_Start and D_End", QueryParams, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();    
+                            N_FnYearID=myFunctions.getIntVAL(DiffFnYearID.ToString()); 
+                            QueryParams.Add("@nFnYearID", N_FnYearID);                      
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
                     }
 
                     B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
@@ -1190,6 +1220,9 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["N_SalesId"] = N_SalesID;
                         }
+                        if (DetailTable.Columns.Contains("n_Stock"))
+                            DetailTable.Columns.Remove("n_Stock");
+                            
                         int N_InvoiceDetailId = dLayer.SaveData("Inv_SalesDetails", "n_SalesDetailsID", DetailTable, connection, transaction);
                         if (N_InvoiceDetailId <= 0)
                         {
@@ -1351,6 +1384,7 @@ namespace SmartxAPI.Controllers
                     CustParams.Add("@nCompanyID", nCompanyID);
                     CustParams.Add("@N_CustomerID", N_CustomerId);
                     CustParams.Add("@nFnYearID", nFnYearID);
+
                     SortedList Params = new SortedList(){
                                 {"@nCompanyID",nCompanyID},
                                 {"@nFnYearID",nFnYearID},
@@ -1386,7 +1420,8 @@ namespace SmartxAPI.Controllers
                                     {"@nSalesID",nInvoiceID},
                                     {"@nPartyID",nCustomerID},
                                     {"@nQuotationID",nQuotationID},
-                                    {"@nBranchID",nBranchID}};
+                                    {"@nBranchID",nBranchID}
+                                   };
 
                         if (ButtonTag == "6" || ButtonTag == "0")
                         {
@@ -1461,6 +1496,7 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.ExecuteNonQuery("update inv_invoicecounter set N_lastUsedNo=" + (myFunctions.getVAL(InvoiceNO.ToString()) - 1) + " where n_formid=64 and n_companyid=" + nCompanyID + " and N_FnyearID=" + nFnYearID, Params, connection, transaction);
                     }
+                  
 
                     transaction.Commit();
                     return Ok(_api.Success("Sales invoice deleted"));

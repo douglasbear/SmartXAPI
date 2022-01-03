@@ -43,12 +43,15 @@ namespace SmartxAPI.Controllers
                 Params.Add("N_CompanyID", nCompanyID);
                 Params.Add("N_FnYearID", nFnYearId);
                 int N_UserID= myFunctions.GetUserID(User);
+
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     foreach (DataTable dt in ds.Tables)
                     {
+                    if (dt.Columns.Contains("notes"))
+                    dt.Columns.Remove("notes");
                         Params.Add("X_Type", dt.TableName);
                         Mastertable = ds.Tables[dt.TableName];
                         foreach (DataColumn col in Mastertable.Columns)
@@ -143,7 +146,7 @@ namespace SmartxAPI.Controllers
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            // dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+                            //dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();

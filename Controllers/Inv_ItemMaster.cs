@@ -35,7 +35,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData,int nLocationID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable,int nLocationID)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -52,8 +52,16 @@ namespace SmartxAPI.Controllers
 
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
-                Params.Add("@query", "%" + query + "%");
+                if (partNoEnable)
+                {
+                    qry = " and (Description like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
+                else
+                {
+                    qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
             }
             if (nCategoryID > 0)
                 Category = " and vw_InvItem_Search_cloud.N_CategoryID =" + nCategoryID;
@@ -142,18 +150,19 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
-            string xCriteria="";
+            string xCriteria = "";
 
             if (b_AllBranchData)
                 xCriteria = "";
             else
-                xCriteria = "and  N_BranchID=@p5";
+                xCriteria = "and  N_BranchID=@p5 ";
+
 
             if(nLocationID!=0)xCriteria=xCriteria+ " and vw_InvItem_Search_cloud.N_LocatioID=@p6";
 
             
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%')";
+                Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
@@ -177,7 +186,7 @@ namespace SmartxAPI.Controllers
             }
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " +xCriteria + Searchkey  + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + xSortBy;
             else
                 sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
 
@@ -1202,6 +1211,118 @@ namespace SmartxAPI.Controllers
         //     }
 
         // }
+
+        [HttpGet("productHistory")]
+        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                    // Params.Add("@p3", nCustomerID);
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_ReceiptNo like '%" + xSearchkey + "%' or N_Qty like '%" + xSearchkey + "%' or cast(D_SalesDate as VarChar) like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_SalesDetailsID desc";
+                    else
+                    {
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    // if (Count == 0)
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
+                    // else
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2  " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2  " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    // sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("productPurchaseHistory")]
+        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_ReceiptNo like '%" + xSearchkey + "%' or N_Qty like '%" + xSearchkey + "%' or cast(D_SalesDate as VarChar) like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_PurchaseDetailsID desc";
+                    else
+                    {
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
 
 
