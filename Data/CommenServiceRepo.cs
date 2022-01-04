@@ -112,6 +112,7 @@ namespace SmartxAPI.Data
                 Params.Add("@nUserID", loginRes.N_UserID);
                 Params.Add("@nFnYearID", loginRes.N_FnYearID);
 
+
                 if (loginRes.N_BranchID == null || loginRes.N_BranchID == "")
                 {
                     loginRes.X_BranchName = dLayer.ExecuteScalar("Select X_BranchName From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
@@ -127,10 +128,11 @@ namespace SmartxAPI.Data
                 if (userPattern == null)
                     userPattern = "";
                 //loginRes.X_EmpNameLocale = dLayer.ExecuteScalar("Select X_EmpNameLocale From Pay_Employee Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID and ",Params, connection).ToString();
-
+                Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
                 loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1", Params, connection).ToString());
                 loginRes.N_CurrencyDecimal = myFunctions.getIntVAL(dLayer.ExecuteScalar("select ISNULL(N_Decimal,0)  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1", Params, connection).ToString());
-                Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
+                loginRes.N_DecimalPlace = dLayer.ExecuteScalar("select  ISNULL(N_Decimal,0)  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
+
 
                 string EmpSql = "SELECT        vw_PayEmployee.N_EmpID, vw_PayEmployee.X_EmpCode, vw_PayEmployee.X_EmpName, vw_PayEmployee.X_EmpNameLocale, Sec_User.N_UserID, vw_PayEmployee.X_Position, vw_PayEmployee.N_PositionID, " +
                                 "         vw_PayEmployee.X_Department, vw_PayEmployee.N_DepartmentID " +
@@ -151,17 +153,18 @@ namespace SmartxAPI.Data
                     loginRes.X_Department = EmplData.Rows[0]["X_Department"].ToString();
                     loginRes.N_DepartmentID = myFunctions.getIntVAL(EmplData.Rows[0]["N_DepartmentID"].ToString());
                 }
-                loginRes.B_AllowEdit = true ;
+                loginRes.B_AllowEdit = true;
                 DataTable SalesExecutiveData = dLayer.ExecuteDataTable("select N_SalesmanID,X_SalesmanCode,X_SalesmanName,b_AllowEdit from vw_InvSalesman where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_UserID=@nUserID", Params, connection);
                 if (SalesExecutiveData.Rows.Count > 0)
                 {
                     loginRes.N_SalesmanID = myFunctions.getIntVAL(SalesExecutiveData.Rows[0]["N_SalesmanID"].ToString());
                     loginRes.X_SalesmanCode = SalesExecutiveData.Rows[0]["X_SalesmanCode"].ToString();
                     loginRes.X_SalesmanName = SalesExecutiveData.Rows[0]["X_SalesmanName"].ToString();
-                    loginRes.B_AllowEdit =myFunctions.getBoolVAL(SalesExecutiveData.Rows[0]["b_AllowEdit"].ToString());
+                    loginRes.B_AllowEdit = myFunctions.getBoolVAL(SalesExecutiveData.Rows[0]["b_AllowEdit"].ToString());
                 }
 
                 loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
+
 
                 string xGlobalUserID = "";
                 if (AppID != 10)

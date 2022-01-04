@@ -166,11 +166,14 @@ namespace SmartxAPI.Controllers
                         {
                             DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + 1 FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
+                             DetailTable.AcceptChanges();
                         }
                         dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         openingStock.Rows[j]["N_TransID"] = StockID;
+                        openingStock.AcceptChanges();
 
                     }
+                     DetailTable.AcceptChanges();
                     string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + "";
                     StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection,transaction);
                     if (StockTable.Rows.Count > 0)
