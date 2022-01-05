@@ -64,14 +64,14 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData)
                             Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_LocationID=@p4 and N_CompanyID=@p1";
                     }
                     else
                     {
                         if (bAllBranchData)
                             Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1";
                         else
-                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_BranchID=@p3 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_LocationID=@p4 and N_CompanyID=@p1";
                     }
 
 
@@ -322,7 +322,7 @@ namespace SmartxAPI.Controllers
                     // else
                     //     xCondition="X_ReceiptNo=@xReceiptNo and N_CompanyId=@nCompanyID and N_BranchID=@nBranchID";
 
-                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyID=" + nCompanyID + " and [MemoNo]='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
+                    Mastersql = "Select * from vw_Inv_ReceivableStock where N_CompanyID=" + nCompanyID + " and X_ReferenceNo='" + xRefNo + "' and N_FnYearId=" + nFnYearID + "";
 
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
                     MasterTable = _api.Format(MasterTable, "Master");
