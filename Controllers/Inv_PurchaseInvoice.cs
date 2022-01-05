@@ -565,8 +565,17 @@ namespace SmartxAPI.Controllers
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
                     {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'"+ MasterTable.Rows[0]["D_InvoiceDate"].ToString() +"') between D_Start and D_End", Params, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();    
+                            nFnYearID=myFunctions.getIntVAL(DiffFnYearID.ToString());           
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
                     }
 
                     bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection, transaction);
