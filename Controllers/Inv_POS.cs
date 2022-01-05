@@ -522,6 +522,8 @@ namespace SmartxAPI.Controllers
                 SortedList QueryParams = new SortedList();
                 // Auto Gen 
                 string InvoiceNo = "";
+                string X_ServiceCode ="";
+                int WarrantyID=0;
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -694,7 +696,7 @@ namespace SmartxAPI.Controllers
                                     string WarrantyCode = dLayer.GetAutoNumber("Inv_WarrantyContract", "X_WarrantyCode", Params, connection, transaction);
                                     if (WarrantyCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty Code")); }
                                     WarrantyMaster.Rows[0]["X_WarrantyCode"] = WarrantyCode;
-                                    int WarrantyID = dLayer.SaveData("Inv_WarrantyContract", "N_WarrantyID", WarrantyMaster, connection, transaction);
+                                     WarrantyID = dLayer.SaveData("Inv_WarrantyContract", "N_WarrantyID", WarrantyMaster, connection, transaction);
 
                                     if (WarrantyID <= 0) { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Warranty")); }
 
@@ -714,12 +716,12 @@ namespace SmartxAPI.Controllers
 
 // GENERATE Maintanance Entry
 
-                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode,0 as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status,"+N_UserID+" as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ",warrantyParams,connection,transaction);
+                            DataTable MaintananceMaster = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,'@Auto' as X_ServiceCode,"+WarrantyID+" as N_WarrantyID,N_FnYearID,N_BranchId,N_LocationID,N_CustomerID,D_EntryDate,0 as N_BillAmountF,0 as N_BillAmount,x_Notes as X_Remarks,0 as N_Status,"+N_UserID+" as N_UserID,'' as X_ClosedRemarks,X_Barcode,N_SalesID  from Inv_Sales where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID and N_FnYearId = @nFnYearID and X_Barcode is not null ",warrantyParams,connection,transaction);
 
                             DataTable MaintananceDetails = dLayer.ExecuteDataTable("select N_CompanyID,0 as N_ServiceID,0 as N_ServiceDetailsID,N_BranchId,N_LocationID,N_ItemID,N_Qty,N_ItemUnitID,N_Cost,N_Sprice,N_SpriceF,X_ItemRemarks,D_Entrydate from Inv_SalesDetails  where  N_SalesID =@nSalesID and N_CompanyID=@nCompanyID",warrantyParams,connection,transaction);
 
                             if(MaintananceMaster.Rows.Count>0 && MaintananceDetails.Rows.Count>0){
-                                string X_ServiceCode ="";
+                                
 
                          
                                     Params["N_FormID"] =  1394;
@@ -940,6 +942,8 @@ namespace SmartxAPI.Controllers
                     SortedList Result = new SortedList();
                     Result.Add("n_InvoiceID", N_SalesID);
                     Result.Add("x_InvoiceNo", InvoiceNo);
+                    Result.Add("x_ServiceCode", X_ServiceCode);
+
                     return Ok(_api.Success(Result, "Sales invoice saved" + ":" + InvoiceNo));
                 }
             }
