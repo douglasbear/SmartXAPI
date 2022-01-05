@@ -903,7 +903,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
-
+                    MasterTable.AcceptChanges();
                     B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (objAllBranchData != null)

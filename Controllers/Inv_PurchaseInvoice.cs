@@ -577,7 +577,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
-
+MasterTable.AcceptChanges();
                     bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
                     if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
