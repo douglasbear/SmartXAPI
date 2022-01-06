@@ -294,7 +294,7 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow var in GenSettinngs.Rows)
                     {
-                        string settingsSql = "SP_GeneralDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Description"].ToString() + "' ," + myFunctions.getIntVAL(var["n_Value"].ToString()) + ",'" + var["x_Value"].ToString() + "'";
+                        string settingsSql = "SP_GeneralDefaults_ins_cloud " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Description"].ToString() + "' ," + myFunctions.getIntVAL(var["n_Value"].ToString()) + ",'" + var["x_Value"].ToString() + "',"+ var["n_UserCategoryID"].ToString() ;
                         dLayer.ExecuteNonQuery(settingsSql, connection, transaction);
                     }
 
