@@ -70,7 +70,7 @@ namespace SmartxAPI.Controllers
                             };
 
                                         StringBuilder sb = new StringBuilder();
-            sb.AppendLine(sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
+            sb.AppendLine(settingsSql + " --- "+sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
             if (!Directory.Exists(logPath))
                 Directory.CreateDirectory(logPath);
 
