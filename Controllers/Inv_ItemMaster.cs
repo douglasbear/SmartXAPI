@@ -45,6 +45,9 @@ namespace SmartxAPI.Controllers
             string Category = "";
             string Condition = "";
             string xCriteria = "";
+
+
+
             // if (b_AllBranchData)
             //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
             // else
@@ -78,6 +81,7 @@ namespace SmartxAPI.Controllers
 
             if (nLocationID != 0)
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_LocationID =" + nLocationID;
+
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
@@ -157,8 +161,11 @@ namespace SmartxAPI.Controllers
             else
                 xCriteria = "and  N_BranchID=@p5 ";
 
+            if(b_AllBranchData)
+            nLocationID=0;
 
-            if(nLocationID!=0)xCriteria=xCriteria+ " and vw_InvItem_Search_cloud.N_LocatioID=@p6";
+
+             if(nLocationID!=0)xCriteria=xCriteria+ " and vw_InvItem_Search_cloud.N_LocationID=@p6";
 
             
             if (xSearchkey != null && xSearchkey.Trim() != "")
@@ -185,10 +192,12 @@ namespace SmartxAPI.Controllers
 
             }
 
+            string feildList = " N_CompanyID, N_ItemID, [Item Code], Description, Description_Ar, Category, [Item Class], N_Rate, [Part No], X_ItemUnit, N_Qty, X_SalesUnit, X_PurchaseUnit, X_StockUnit, Rate, N_StockUnitID, [Product Code], Stock ";
+
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") "+feildList+" from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + " group by " + feildList + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") "+feildList+" from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + " group by " + feildList + Searchkey + xSortBy + " ) " + " group by " + feildList+ xSortBy;
 
 
             Params.Add("@p1", nCompanyID);
