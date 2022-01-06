@@ -127,11 +127,11 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     int nCompanyID = myFunctions.GetCompanyID(User);
                     var nUserID = myFunctions.GetUserID(User);
-                    int Results=0;
+                    int Results = 0;
                     SortedList DelParam = new SortedList();
-                        DelParam.Add("N_CompanyID", nCompanyID);
-                        DelParam.Add("N_AdjustmentID", nAdjustmentID);
-                        Results=dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
+                    DelParam.Add("N_CompanyID", nCompanyID);
+                    DelParam.Add("N_AdjustmentID", nAdjustmentID);
+                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_StockAdjustment", DelParam, connection, transaction);
 
                     if (Results <= 0)
                     {
@@ -158,6 +158,7 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
                     DataTable DetailTable;
+                    DataTable StockTable;
                     string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
@@ -167,8 +168,37 @@ namespace SmartxAPI.Controllers
                     int nAdjustmentID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_AdjustmentID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
+                    int  n_LoactionID =  myFunctions.getIntVAL(MasterTable.Rows[0]["n_LoactionID"].ToString());
                     string X_RefNo = MasterTable.Rows[0]["X_RefNo"].ToString();
+                    DataTable newTable = new DataTable();
+                    bool bStockMisMatch = false;
                     string X_TransType = "IA";
+                    string stockMasterSql = "select vw_InvItem_Search.N_ItemID,N_CompanyID,[Description], dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID,"+n_LoactionID+") As N_Stock   From vw_InvItem_Search where   [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 ";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
+                 
+                    if (StockTable.Rows.Count > 0)
+                    {
+                        foreach (DataRow stockItem in StockTable.Rows)
+                        {
+                            foreach (DataRow DetailItem in DetailTable.Rows)
+                            {
+                                if (stockItem["N_ItemID"].ToString() == DetailItem["N_ItemID"].ToString())
+                                {
+                                    if (stockItem["N_Stock"].ToString() != DetailItem["N_QtyOnHand"].ToString())
+                                    {
+                                        bStockMisMatch = true;
+                                     
+                                    }
+                                }
+                            }
+                        }
+                    }
+                    if(bStockMisMatch)
+                    {
+                         return Ok(_api.Success(bStockMisMatch));
+
+                    }
+
                     if (nAdjustmentID > 0)
                     {
                         SortedList DelParam = new SortedList();
@@ -245,7 +275,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, ex));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success("Saved"));
+                    return Ok(_api.Success("Saved Successfully"));
                 }
             }
             catch (Exception ex)
@@ -255,7 +285,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-  [HttpGet("listdetails")]
+        [HttpGet("listdetails")]
         public ActionResult GetSalesDetails(int nCompanyId, int nFnYearId, string xRefNo, string xTransType, bool showAllBranch, int nBranchId, string xPath)
         {
 
@@ -264,24 +294,24 @@ namespace SmartxAPI.Controllers
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             //string sqlCommandText = "";
-              string X_MasterSql = "";
-          if (showAllBranch)
-                    {
-                        X_MasterSql = "Select description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
-                    }
-                    else
-                    {
+            string X_MasterSql = "";
+            if (showAllBranch)
+            {
+                X_MasterSql = "Select description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and X_RefNo='" + xRefNo + "'";
+            }
+            else
+            {
 
-                        X_MasterSql = "Select  description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
-                    }
-           
+                X_MasterSql = "Select  description as X_Description,X_ItemName as description,* from vw_InvStockAdjustment_Disp where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_BranchID=" + nBranchId + " and X_RefNo='" + xRefNo + "'";
+            }
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(X_MasterSql, Params, connection);
-                  
+
                     dt.AcceptChanges();
 
                     if (dt.Rows.Count == 0)
@@ -290,10 +320,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                     
+
                         dt = _api.Format(dt, "master");
                         ds.Tables.Add(dt);
-                        
+
                         return Ok(_api.Success(ds));
                     }
                 }
@@ -306,7 +336,7 @@ namespace SmartxAPI.Controllers
         }
 
 
-        
+
         // [HttpGet("listdetails")]
         // public ActionResult GetSalesDetails(int nCompanyId, int nFnYearId, string xRefNo, string xTransType, bool showAllBranch, int nBranchId, string xPath)
         // {
