@@ -136,7 +136,7 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    dsOpening.Tables.Add(Master);
+                    //dsOpening.Tables.Add(Master);
                     dsOpening.Tables.Add(DetailTable);
 
                     return Ok(_api.Success(dsOpening));
