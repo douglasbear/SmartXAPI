@@ -87,6 +87,9 @@ namespace SmartxAPI.Dtos.SP
         [NotMapped]
         public bool B_AllowEdit { get; set; }
         [NotMapped]
+        
+        public string N_DecimalPlace { get; set; }
+        [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
 
 

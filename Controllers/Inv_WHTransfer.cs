@@ -187,14 +187,14 @@ namespace SmartxAPI.Controllers
                         if (bAllBranchData)
                             Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_Type=1 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 ";
                     }
                     else
                     {
                         if (bAllBranchData)
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
                         else
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_LocationFrom=" + nLocationID + " and N_BranchID=@p3 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_LocationFrom=" + nLocationID + " and N_CompanyID=@p1";
                     }
 
 
