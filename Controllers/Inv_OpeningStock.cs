@@ -311,7 +311,7 @@ namespace SmartxAPI.Controllers
                     stockQry = "select * from  vw_OpeningStockFill where N_CompanyID = " + nCompanyId + " and N_LocationID=" + nLocationID + " and  (N_ClassID <> 1 and N_ClassID <> 4) and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)  and  N_OpenStock>=0  order by X_Itemcode,X_ItemName,X_Category";
                     DetailTable = dLayer.ExecuteDataTable(stockQry, QueryParamsList, connection);
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_Processed", typeof(int), 0);
-                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "b_isDiabled", typeof(int), 1);
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "b_isDisbled", typeof(int), 1);
                     foreach (DataRow row in DetailTable.Rows)
                     {
                         if (myFunctions.getIntVAL(row["N_OpenStock"].ToString()) != myFunctions.getIntVAL(row["N_CurrentStock"].ToString()))
