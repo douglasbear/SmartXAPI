@@ -125,19 +125,21 @@ namespace SmartxAPI.Controllers
                     myFunctions.AddNewColumnToDataTable(DetailTable, "N_Dimension", typeof(int), 0);
 
                     sqlCommandText2="select * from vw_VoucherDetails_Desc where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID";
-                    DataTable DimDetails=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection); 
-                    if (DimDetails.Rows.Count > 0)
+                    DataTable VoucherDetails_DescTable=dLayer.ExecuteDataTable(sqlCommandText2,Params,connection); 
+                    if (VoucherDetails_DescTable.Rows.Count > 0)
                     {
                         for (int i = 1; i < DetailTable.Rows.Count; i++)
                         {
-                            DataRow[] dr = DimDetails.Select("N_VoucherID=" + nVoucherID + " and N_LedgerID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_LedgerID"].ToString()) + "");
+                            DataRow[] dr = VoucherDetails_DescTable.Select("N_VoucherID=" + nVoucherID + " and N_LedgerID=" + myFunctions.getIntVAL(DetailTable.Rows[i]["N_LedgerID"].ToString()) + "");
                             if (dr.Length > 0)
                                 DetailTable.Rows[i]["N_Dimension"]=myFunctions.getIntVAL(dr.Length.ToString());
                         }
                     }
+                    VoucherDetails_DescTable = _api.Format(VoucherDetails_DescTable, "VoucherDetails_Desc");
 
                     dsOpening.Tables.Add(Master);
                     dsOpening.Tables.Add(DetailTable);
+                    dsOpening.Tables.Add(VoucherDetails_DescTable);
 
                     return Ok(_api.Success(dsOpening));
                 }
@@ -147,61 +149,241 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        // [HttpPost("save")]
-        // public ActionResult SaveData([FromBody]DataSet ds)
-        // { 
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             object Result = 0;
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             DataTable DetailTable;
-        //             DetailTable = ds.Tables["details"];
-        //             SortedList Params = new SortedList();
-        //             int nCompanyID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_CompanyID"].ToString());
-        //             int nFnYearID = myFunctions.getIntVAL(DetailTable.Rows[0]["n_FnYearID"].ToString());
+        [HttpGet("settings")]
+        public ActionResult CheckSettings()
+        {
 
-        //             Params.Add("@p1", nCompanyID);
-        //             Params.Add("@p2", nFnYearID);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@nCompanyID", nCompanyID);
 
-        //             for (int i = 1; i <= DetailTable.Rows.Count; i++)
-        //             {
-        //                 int nLedgerID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_LedgerID"].ToString());
-        //                 int nCashBahavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_CashBahavID"].ToString());
-        //                 int nTransBehavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_TransBehavID"].ToString());
-        //                 string xCashTypeBehaviour = DetailTable.Rows[i-1]["x_CashTypeBehaviour"].ToString();
-        //                 string isDeleted = DetailTable.Rows[i-1]["isDeleted"].ToString();
+                    dt.Clear();
+                    dt.Columns.Add("B_FinancialEntryOpen");
 
-        //                 if (isDeleted == "False")
-        //                 {
-        //                     dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '',N_CashBahavID=0,N_TransBehavID=0 Where N_LedgerID= " + nLedgerID + " And N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
-        //                 }
-        //                 else
-        //                 {
-        //                     dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '" + xCashTypeBehaviour + "',N_CashBahavID=" + nCashBahavID + ",N_TransBehavID=" + nTransBehavID + " where N_LedgerID= " + nLedgerID + " and N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
-        //                 }
-        //                 if(DetailTable.Columns.Contains("isDeleted"))
-        //                 DetailTable.Columns.Remove("isDeleted");
-        //             }
-        //             if (DetailTable.Rows.Count < 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(api.Error(User,"Unable to save"));
-        //             }
-        //             else {
-        //                 transaction.Commit();
-        //                 return Ok(_api.Success("Account Behaviour Saved"));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User,ex));
-        //     }
-        // }
+                    int N_FinancialEntryOpen = myFunctions.getIntVAL(myFunctions.ReturnSettings("Financial", "FinancialEntryOpen", "N_Value", nCompanyID, dLayer, connection));
+
+                    DataRow row = dt.NewRow();
+                    row["B_FinancialEntryOpen"] = myFunctions.getVAL(N_FinancialEntryOpen.ToString());
+
+                    dt.Rows.Add(row);
+
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+
+        }
+
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody]DataSet ds)
+        { 
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    object Result = 0;
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    DataTable VoucherDetails_DescTable;
+                    DataTable Details_SegmentsTable;
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    VoucherDetails_DescTable = ds.Tables["VoucherDetails_Desc"];
+                   // Details_SegmentsTable = ds.Tables["Details_Segments"];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    int nVoucherID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString());
+                    string InvoiceNo=MasterTable.Rows[0]["x_VoucherNo"].ToString();
+
+                    if(nVoucherID!=0)
+                    {
+                        
+                        Params.Add("N_CompanyID", nCompanyID);
+                        Params.Add("N_YearID", nFnYearID);
+                        Params.Add("N_FormID", 46);
+
+                        while (true)
+                        {
+                            InvoiceNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + InvoiceNo + "' and N_CompanyID= " + nCompanyID+" and X_TransType ='JV' and N_FnYearID="+nFnYearID, connection, transaction);
+                            if (N_Result == null)
+                                break;
+                        }
+                        MasterTable.Rows[0]["x_VoucherNo"]=InvoiceNo.ToString();
+                    }
+                    nVoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherID", MasterTable, connection, transaction);
+                    if (nVoucherID <= 0)
+                    {
+                        transaction.Rollback();
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                    {"N_LedgerID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString())},
+                                    {"N_VoucherID",myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString())},
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_FnYearID",nFnYearID}};
+
+                        dLayer.ExecuteNonQueryPro("SP_Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
+
+                        DetailTable.Rows[j]["N_VoucherID"] = nVoucherID;
+
+                        double nAmount=0;
+                        if(myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString())>0)
+                            nAmount = myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString());
+                        else
+                            nAmount=(-1)*myFunctions.getVAL(DetailTable.Rows[j]["n_Credit"].ToString());
+
+                        if(nAmount==0)
+                            DetailTable.Rows[j].Delete();
+                    }
+                    if (MasterTable.Columns.Contains("n_Debit"))
+                        MasterTable.Columns.Remove("n_Debit");
+                    if (MasterTable.Columns.Contains("n_Credit"))
+                        MasterTable.Columns.Remove("n_Credit");
+
+                    int N_VoucherDetailsID=0;
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        N_VoucherDetailsID = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","", "", j, DetailTable, connection, transaction);
+                    //N_VoucherDetailsID = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
+                        
+                        if (N_VoucherDetailsID > 0)
+                        {
+                    //         for (int k = 0; k < Details_SegmentsTable.Rows.Count; k++)
+                    //         {
+                    //             if (myFunctions.getIntVAL(Details_SegmentsTable.Rows[k]["rowID"].ToString()) == j)
+                    //             {
+                    //                 Details_SegmentsTable.Rows[k]["N_VoucherID"] = nVoucherID;
+                    //                 Details_SegmentsTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
+                    //             }
+                    //         }
+                            for (int k = 0; k < VoucherDetails_DescTable.Rows.Count; k++)
+                            {
+                                if(DetailTable.Rows[j]["n_LedgerID"].ToString()!=VoucherDetails_DescTable.Rows[k]["n_LedgerID"].ToString()) continue;
+
+                                VoucherDetails_DescTable.Rows[k]["N_VoucherID"] = nVoucherID;
+                                VoucherDetails_DescTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
+                            }
+                        } 
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User,"Unable to save"));
+                        }
+                    }
+                    // if (Details_SegmentsTable.Columns.Contains("rowID"))
+                    //     Details_SegmentsTable.Columns.Remove("rowID");
+
+                    // Details_SegmentsTable.AcceptChanges();
+                    // int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", Details_SegmentsTable, connection, transaction);
+                    if(VoucherDetails_DescTable.Rows.Count>0)
+                    {
+                        int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherDetails_Desc", "N_VoucherDetailsDescID", VoucherDetails_DescTable, connection, transaction);
+                    }
+
+                    try
+                    {
+                        SortedList DeleteVoucherParams = new SortedList(){
+                                        {"N_VoucherID",nVoucherID},
+                                        {"N_CompanyID",nCompanyID},
+                                        {"N_FnYearID",nFnYearID},
+                                        {"N_UserID",myFunctions.GetUserID(User)},
+                                        {"X_SystemName",System.Environment.MachineName}};
+
+                        dLayer.ExecuteNonQueryPro("SP_Delete_VoucherDetails", DeleteVoucherParams, connection, transaction);
+
+                        SortedList PostParams = new SortedList(){
+                                        {"N_CompanyID",nCompanyID},
+                                        {"X_InventoryMode","OB"},
+                                        {"N_InternalID",nVoucherID},
+                                        {"N_UserID",myFunctions.GetUserID(User)},
+                                        {"X_SystemName",System.Environment.MachineName}};
+
+                        dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostParams, connection, transaction);
+
+                        dLayer.ExecuteNonQuery("update Acc_VoucherMaster set B_IsAccPosted=1 where N_VoucherID="+nVoucherID+" and N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID, Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("update Acc_FnYear set B_AlterBalance=1 where N_CompanyID="+nCompanyID+" and N_FnYearID="+nFnYearID, Params, connection, transaction);
+                    }
+                     catch (Exception ex)
+                                {
+                                    transaction.Rollback();
+                                    if (ex.Message == "50")
+                                        return Ok(_api.Error(User, "Day Closed"));
+                                    else if (ex.Message == "51")
+                                        return Ok(_api.Error(User, "Year Closed"));
+                                    else if (ex.Message == "52")
+                                        return Ok(_api.Error(User, "Year Exists"));
+                                    else if (ex.Message == "53")
+                                        return Ok(_api.Error(User, "Period Closed"));
+                                    else if (ex.Message == "54")
+                                        return Ok(_api.Error(User, "Txn Date"));
+                                    else if (ex.Message == "55")
+                                        return Ok(_api.Error(User, "Quantity exceeds!"));
+                                    else
+                                        return Ok(_api.Error(User, ex));
+                                }
+                    transaction.Commit();
+                    return Ok(_api.Success("Account Behaviour Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User,ex));
+            }
+        }
      
+        [HttpGet("canclePost")]
+        public ActionResult CanclePosting(int nVoucherID,int nFnYearID)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList DeleteVoucherParams = new SortedList(){
+                                    {"N_VoucherID",nVoucherID},
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_FnYearID",nFnYearID},
+                                    {"N_UserID",myFunctions.GetUserID(User)},
+                                    {"X_SystemName",System.Environment.MachineName}};
+
+                    dLayer.ExecuteNonQueryPro("SP_Delete_VoucherDetails", DeleteVoucherParams, connection);
+
+                    dLayer.ExecuteNonQuery(" update Acc_VoucherMaster set B_IsAccPosted = 0 where N_VoucherID ="+nVoucherID+" and N_CompanyID ="+nCompanyID+" and X_TransType ='OB' and N_FnYearID="+nFnYearID, Params, connection);
+
+                    return Ok(_api.Success("Posting Cancelled"));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+
+        }
 
         }
     }
