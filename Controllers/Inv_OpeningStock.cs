@@ -148,6 +148,7 @@ namespace SmartxAPI.Controllers
                     DataTable openingStock;
                     DataTable MasterTable;
                     DataTable StockTable;
+                    DataTable dt;
                     DataTable deletedStockTable;
                     int N_StockID = 0;
                     int N_OpeningID = 0;
@@ -161,6 +162,27 @@ namespace SmartxAPI.Controllers
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                     DetailTable.Columns.Remove("n_ItemUnitID");
+                    bool b_OpeningBalancePosted = false;
+
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyID + " and N_FnYearID = " + nFnYearID + " and N_BranchID = " + nBranchID + "";
+                    dt = dLayer.ExecuteDataTable(sqlQry, Params, connection, transaction);
+                    if (dt.Rows.Count > 0)
+                    {
+                        b_OpeningBalancePosted = myFunctions.getBoolVAL(dt.Rows[0]["b_IsAccPosted"].ToString());
+
+                    }
+                    if (b_OpeningBalancePosted)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Opening Balance Posted"));
+                    }
+
+
+
+
+
+
+
 
                     int i = 1;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
@@ -253,8 +275,8 @@ namespace SmartxAPI.Controllers
                     }
                     foreach (DataRow deleteItem in deletedStockTable.Rows)
                     {
-                        dLayer.ExecuteNonQuery("delete from  Inv_StockMaster  where N_CompanyID=" + nCompanyID+ " and N_StockID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + " and X_Type='Opening'", Params, connection, transaction);
-                        dLayer.ExecuteNonQuery("delete from  Inv_OpeningStock  where N_CompanyID=" +nCompanyID + " and N_TransID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + "", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from  Inv_StockMaster  where N_CompanyID=" + nCompanyID + " and N_StockID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + " and X_Type='Opening'", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from  Inv_OpeningStock  where N_CompanyID=" + nCompanyID + " and N_TransID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + "", Params, connection, transaction);
 
                     }
 
@@ -291,6 +313,12 @@ namespace SmartxAPI.Controllers
         }
 
 
+
+
+
+
+
+
         [HttpGet("stockDetails")]
         public ActionResult GetStockDetailsDetails(int nCompanyId, int nFnYearId, int nBranchId, int nLocationID)
         {
@@ -304,7 +332,7 @@ namespace SmartxAPI.Controllers
                     SortedList QueryParamsList = new SortedList();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
-                    DataTable MasterTable = new DataTable();
+                    DataTable OpeningBalance = new DataTable();
                     DataTable DetailTable = new DataTable();
                     string stockQry = "";
                     string DetailSql = "";
@@ -323,8 +351,12 @@ namespace SmartxAPI.Controllers
                             row["N_Processed"] = 0;
                         }
                     }
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and N_BranchID = " + nBranchId + "";
+                    OpeningBalance = dLayer.ExecuteDataTable(sqlQry, QueryParamsList, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+                    OpeningBalance = _api.Format(OpeningBalance, "OpeningBalance");
                     dt.Tables.Add(DetailTable);
+                    dt.Tables.Add(OpeningBalance);
                     return Ok(_api.Success(dt));
                 }
             }
@@ -333,9 +365,40 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("openingBalance")]
+        public ActionResult GetOpeningBalance(int nCompanyId, int nFnYearId, int nBranchId, int nLocationID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList QueryParamsList = new SortedList();
+                    QueryParamsList.Add("@nCompanyID", nCompanyId);
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and N_BranchID = " + nBranchId + "";
+
+                    dt = dLayer.ExecuteDataTable(sqlQry, QueryParamsList, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
     }
 }
-
 
 
 
