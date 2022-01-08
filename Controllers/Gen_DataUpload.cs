@@ -137,16 +137,12 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-
-
-
-
                         if (Mastertable.Rows.Count > 0)
                         {
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+                            //dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
