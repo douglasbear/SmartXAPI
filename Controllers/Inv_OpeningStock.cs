@@ -161,7 +161,8 @@ namespace SmartxAPI.Controllers
                     Params.Add("N_CompanyID", nCompanyID);
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
-                    DetailTable.Columns.Remove("n_ItemUnitID");
+                    if (DetailTable.Columns.Contains("n_ItemUnitID"))
+                        DetailTable.Columns.Remove("n_ItemUnitID");
                     bool b_OpeningBalancePosted = false;
 
                     string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyID + " and N_FnYearID = " + nFnYearID + " and N_BranchID = " + nBranchID + "";
@@ -389,6 +390,41 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Success(dt));
                     }
 
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("fnYearData")]
+        public ActionResult GetFnYearData()
+        {
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string qry = "";
+            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(qry, Params, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
                 }
             }
             catch (Exception e)
