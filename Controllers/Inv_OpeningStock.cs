@@ -148,6 +148,7 @@ namespace SmartxAPI.Controllers
                     DataTable openingStock;
                     DataTable MasterTable;
                     DataTable StockTable;
+                    DataTable deletedStockTable;
                     int N_StockID = 0;
                     int N_OpeningID = 0;
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -155,32 +156,34 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     MasterTable = ds.Tables["master"];
                     openingStock = ds.Tables["openingStock"];
+                    deletedStockTable = ds.Tables["deletedStockTable"];
                     Params.Add("N_CompanyID", nCompanyID);
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                     DetailTable.Columns.Remove("n_ItemUnitID");
-                    int i=1;
+
+                    int i = 1;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    { 
-                        
+                    {
+
                         int StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
                         if (StockID == 0)
                         {
-                            DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + "+i+" FROM Inv_StockMaster", Params, connection, transaction).ToString();
+                            DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + " + i + " FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
-                            i=i+1;
+                            i = i + 1;
 
 
-                             DetailTable.AcceptChanges();
+                            DetailTable.AcceptChanges();
                         }
-                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                        //dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         openingStock.Rows[j]["N_TransID"] = StockID;
                         openingStock.AcceptChanges();
 
                     }
-                     DetailTable.AcceptChanges();
-                    string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + "";
-                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection,transaction);
+                    DetailTable.AcceptChanges();
+                    string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + " and X_Type='Opening'";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
                     if (StockTable.Rows.Count > 0)
 
                     {
@@ -188,9 +191,9 @@ namespace SmartxAPI.Controllers
                         {
                             foreach (DataRow DetailItem in DetailTable.Rows)
                             {
-                                if (stockItem["N_StockID"] == DetailItem["N_StockID"])
+                                if (stockItem["N_StockID"].ToString() == DetailItem["N_StockID"].ToString())
                                 {
-                                    if (stockItem["N_CurrentStock"] != stockItem["N_OpenStock"])
+                                    if (stockItem["N_CurrentStock"].ToString() != stockItem["N_OpenStock"].ToString())
                                     {
                                         transaction.Rollback();
                                         return Ok(_api.Error(User, "Transaction already Processed for the Product "));
@@ -221,6 +224,41 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save!"));
 
                     }
+
+                    if (deletedStockTable.Rows.Count > 0)
+                    {
+                        if (StockTable.Rows.Count > 0)
+
+                        {
+                            foreach (DataRow stockItem in StockTable.Rows)
+                            {
+                                foreach (DataRow DetailItem in deletedStockTable.Rows)
+                                {
+                                    if (stockItem["N_StockID"].ToString() == DetailItem["N_StockID"].ToString())
+                                    {
+                                        if (stockItem["N_CurrentStock"].ToString() != stockItem["N_OpenStock"].ToString())
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Transaction already Processed for the deleted Product "));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+
+
+
+                    }
+                    foreach (DataRow deleteItem in deletedStockTable.Rows)
+                    {
+                        dLayer.ExecuteNonQuery("delete from  Inv_StockMaster  where N_CompanyID=" + nCompanyID+ " and N_StockID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + " and X_Type='Opening'", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from  Inv_OpeningStock  where N_CompanyID=" +nCompanyID + " and N_TransID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + "", Params, connection, transaction);
+
+                    }
+
+
 
                     SortedList PostingParam = new SortedList();
 
@@ -273,6 +311,7 @@ namespace SmartxAPI.Controllers
                     stockQry = "select * from  vw_OpeningStockFill where N_CompanyID = " + nCompanyId + " and N_LocationID=" + nLocationID + " and  (N_ClassID <> 1 and N_ClassID <> 4) and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)  and  N_OpenStock>=0  order by X_Itemcode,X_ItemName,X_Category";
                     DetailTable = dLayer.ExecuteDataTable(stockQry, QueryParamsList, connection);
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_Processed", typeof(int), 0);
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "b_isDisbled", typeof(int), 1);
                     foreach (DataRow row in DetailTable.Rows)
                     {
                         if (myFunctions.getIntVAL(row["N_OpenStock"].ToString()) != myFunctions.getIntVAL(row["N_CurrentStock"].ToString()))
