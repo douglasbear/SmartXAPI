@@ -18,7 +18,7 @@ using System.Linq;
 using System.Net.Mail;
 using System.Text;
 using zatca.einvoicing;
-
+using Microsoft.AspNetCore.Hosting;
 namespace SmartxAPI.Controllers
 {
     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -34,13 +34,14 @@ namespace SmartxAPI.Controllers
         private readonly string reportApi;
         private readonly string TempFilesPath;
         private readonly string reportLocation;
+        private readonly IWebHostEnvironment env;
         string RPTLocation = "";
         string ReportName = "";
         string critiria = "";
         string TableName = "";
         string QRurl = "";
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
-        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun,IWebHostEnvironment envn, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
@@ -49,6 +50,7 @@ namespace SmartxAPI.Controllers
             reportApi = conf.GetConnectionString("ReportAPI");
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
             reportLocation = conf.GetConnectionString("ReportLocation");
+            env = envn;
         }
         [HttpGet("list")]
         public ActionResult GetReportList(int? nMenuId, int? nLangId)
@@ -422,6 +424,9 @@ namespace SmartxAPI.Controllers
 
                         }
                         path.Wait();
+                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName + random + ".pdf")) 
+                        return Ok(_api.Error(User, "Report Generation Failed"));
+                        else
                         return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                     }
                     else
