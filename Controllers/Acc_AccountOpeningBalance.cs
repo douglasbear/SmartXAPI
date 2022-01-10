@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
                     DataTable Details_SegmentsTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    VoucherDetails_DescTable = ds.Tables["voucherDetails"];
+                   // VoucherDetails_DescTable = ds.Tables["VoucherDetails_Desc"];
                    // Details_SegmentsTable = ds.Tables["Details_Segments"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -255,22 +255,26 @@ namespace SmartxAPI.Controllers
                             nAmount=(-1)*myFunctions.getVAL(DetailTable.Rows[j]["n_Credit"].ToString());
                         DetailTable.Rows[j]["N_Amount"] = nAmount;
                         if(nAmount==0)
+                        {
                             DetailTable.Rows[j].Delete();
+                            j--;
+                        }
+                        else
+                            DetailTable.Rows[j]["N_Amount"]=nAmount;
                     }
                     if (DetailTable.Columns.Contains("n_Debit"))
                         DetailTable.Columns.Remove("n_Debit");
                     if (DetailTable.Columns.Contains("n_Credit"))
                         DetailTable.Columns.Remove("n_Credit");
-                   
 
                     int N_VoucherDetailsID=0;
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // {
+                    //     N_VoucherDetailsID = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","", "", j, DetailTable, connection, transaction);
+                    N_VoucherDetailsID = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
+                    
+                    if (N_VoucherDetailsID > 0)
                     {
-                        N_VoucherDetailsID = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","", "", j, DetailTable, connection, transaction);
-                    //N_VoucherDetailsID = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
-                        
-                        if (N_VoucherDetailsID > 0)
-                        {
                     //         for (int k = 0; k < Details_SegmentsTable.Rows.Count; k++)
                     //         {
                     //             if (myFunctions.getIntVAL(Details_SegmentsTable.Rows[k]["rowID"].ToString()) == j)
@@ -279,29 +283,29 @@ namespace SmartxAPI.Controllers
                     //                 Details_SegmentsTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
                     //             }
                     //         }
-                            for (int k = 0; k < VoucherDetails_DescTable.Rows.Count; k++)
-                            {
-                                if(DetailTable.Rows[j]["n_LedgerID"].ToString()!=VoucherDetails_DescTable.Rows[k]["n_LedgerID"].ToString()) continue;
+                            // for (int k = 0; k < VoucherDetails_DescTable.Rows.Count; k++)
+                            // {
+                            //     if(DetailTable.Rows[j]["n_LedgerID"].ToString()!=VoucherDetails_DescTable.Rows[k]["n_LedgerID"].ToString()) continue;
 
-                                VoucherDetails_DescTable.Rows[k]["N_VoucherID"] = nVoucherID;
-                                VoucherDetails_DescTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
-                            }
-                        } 
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to save"));
-                        }
+                            //     VoucherDetails_DescTable.Rows[k]["N_VoucherID"] = nVoucherID;
+                            //     VoucherDetails_DescTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
+                            // }
+                    } 
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User,"Unable to save"));
                     }
+                    //}
                     // if (Details_SegmentsTable.Columns.Contains("rowID"))
                     //     Details_SegmentsTable.Columns.Remove("rowID");
 
                     // Details_SegmentsTable.AcceptChanges();
                     // int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", Details_SegmentsTable, connection, transaction);
-                    if(VoucherDetails_DescTable.Rows.Count>0)
-                    {
-                        int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherDetails_Desc", "N_VoucherDetailsDescID", VoucherDetails_DescTable, connection, transaction);
-                    }
+                    // if(VoucherDetails_DescTable.Rows.Count>0)
+                    // {
+                    //     int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherDetails_Desc", "N_VoucherDetailsDescID", VoucherDetails_DescTable, connection, transaction);
+                    // }
 
                     try
                     {
@@ -345,7 +349,7 @@ namespace SmartxAPI.Controllers
                                         return Ok(_api.Error(User, ex));
                                 }
                     transaction.Commit();
-                    return Ok(_api.Success("Account Behaviour Saved"));
+                    return Ok(_api.Success("Account Opening Balance Saved"));
                 }
             }
             catch (Exception ex)
