@@ -137,10 +137,10 @@ namespace SmartxAPI.Controllers
                     }
                     VoucherDetails_DescTable = _api.Format(VoucherDetails_DescTable, "VoucherDetails_Desc");
 
-                    //dsOpening.Tables.Add(Master);
+                    dsOpening.Tables.Add(Master);
                     dsOpening.Tables.Add(DetailTable);
                     dsOpening.Tables.Add(VoucherDetails_DescTable);
-
+   
                     return Ok(_api.Success(dsOpening));
                 }
                
@@ -207,7 +207,7 @@ namespace SmartxAPI.Controllers
                     DataTable Details_SegmentsTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    VoucherDetails_DescTable = ds.Tables["VoucherDetails_Desc"];
+                    VoucherDetails_DescTable = ds.Tables["voucherDetails"];
                    // Details_SegmentsTable = ds.Tables["Details_Segments"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
@@ -239,7 +239,7 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         SortedList DeleteParams = new SortedList(){
-                                    {"N_LedgerID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString())},
+                                    {"N_LedgerID",myFunctions.getIntVAL(DetailTable.Rows[j]["N_LedgerID"].ToString())},
                                     {"N_VoucherID",myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString())},
                                     {"N_CompanyID",nCompanyID},
                                     {"N_FnYearID",nFnYearID}};
@@ -253,14 +253,15 @@ namespace SmartxAPI.Controllers
                             nAmount = myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString());
                         else
                             nAmount=(-1)*myFunctions.getVAL(DetailTable.Rows[j]["n_Credit"].ToString());
-
+                        DetailTable.Rows[j]["N_Amount"] = nAmount;
                         if(nAmount==0)
                             DetailTable.Rows[j].Delete();
                     }
-                    if (MasterTable.Columns.Contains("n_Debit"))
-                        MasterTable.Columns.Remove("n_Debit");
-                    if (MasterTable.Columns.Contains("n_Credit"))
-                        MasterTable.Columns.Remove("n_Credit");
+                    if (DetailTable.Columns.Contains("n_Debit"))
+                        DetailTable.Columns.Remove("n_Debit");
+                    if (DetailTable.Columns.Contains("n_Credit"))
+                        DetailTable.Columns.Remove("n_Credit");
+                   
 
                     int N_VoucherDetailsID=0;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
