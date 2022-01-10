@@ -160,6 +160,13 @@ namespace SmartxAPI.Controllers
                     deletedStockTable = ds.Tables["deletedStockTable"];
                     Params.Add("N_CompanyID", nCompanyID);
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int companyStartYear=myFunctions.getIntVAL(dLayer.ExecuteScalar("select TOP 1 N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and isnull(B_PreliminaryYear,0)<>1",Params,connection,transaction).ToString());
+                   if(companyStartYear.ToString()!=nFnYearID.ToString())
+                   {
+                       transaction.Rollback();
+                        return Ok(_api.Error(User, "Check Financial Year"));
+
+                   }
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                     if (DetailTable.Columns.Contains("n_ItemUnitID"))
                         DetailTable.Columns.Remove("n_ItemUnitID");
@@ -409,7 +416,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
             string qry = "";
-            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID";
+            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID and isnull(B_PreliminaryYear,0)<>1";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
