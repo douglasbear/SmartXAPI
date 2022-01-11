@@ -168,7 +168,11 @@ namespace SmartxAPI.Controllers
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
 
+                  
+
+
                     MasterTable.Columns.Remove("n_FnYearId");
+                    MasterTable.Columns.Remove("b_isSubLocation");
                     MasterTable.Columns.Remove("b_isSubLocation");
                     int N_LocationID = dLayer.SaveData("Inv_Location", "N_LocationID", MasterTable, connection, transaction);
                     if (N_LocationID <= 0)

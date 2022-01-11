@@ -137,10 +137,6 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-
-
-
-
                         if (Mastertable.Rows.Count > 0)
                         {
 
