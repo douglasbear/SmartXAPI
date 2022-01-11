@@ -165,7 +165,7 @@ namespace SmartxAPI.GeneralFunctions
             if (!Directory.Exists(logPath))
                 Directory.CreateDirectory(logPath);
 
-                File.AppendAllText(logPath + myFunctions.GetCompanyName(User) + " - log.log", sb.ToString());
+            
                 sb.Clear();
 
             return (new { type = "error", Message = Msg, Data = "" });
