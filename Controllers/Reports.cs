@@ -426,7 +426,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         path.Wait();
-                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName + random + ".pdf")) 
+                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName.Trim() + random + ".pdf")) 
                         return Ok(_api.Error(User, "Report Generation Failed"));
                         else
                         return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
