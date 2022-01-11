@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
             else if (xTransType.ToLower() == "jv")
             {
                 nFormID = 3;
-                nFlag=0;
+                nFlag=1;
             }
 
             try
@@ -274,7 +274,9 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", MasterTable, connection, transaction);
+string DupCriteria = "N_CompanyID = " + nCompanyId + " and X_VoucherNo = '" + xVoucherNo + "' and N_FnYearID=" + nFnYearId + " and X_TransType = '" + xTransType + "'";
+
+                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId",DupCriteria,"", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
                         SortedList LogParams = new SortedList();
@@ -306,9 +308,13 @@ namespace SmartxAPI.Controllers
                                     {
                                         CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
                                         CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+                                        CostCenterTable.AcceptChanges();
                                     }
+                                    CostCenterTable.AcceptChanges();
                                 }
+                                CostCenterTable.AcceptChanges();
                             }
+                            DetailTable.AcceptChanges();
 
 
                         }
@@ -318,8 +324,8 @@ namespace SmartxAPI.Controllers
                             CostCenterTable.Columns.Remove("percentage");
 
                         CostCenterTable.AcceptChanges();
-
-                        int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", "", "", CostCenterTable, connection, transaction);
+ DupCriteria = "N_CompanyID = " + nCompanyId + " and N_VoucherID = '" + N_VoucherID + "' and N_FnYearID=" + nFnYearId ;
+                        int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", DupCriteria, "", CostCenterTable, connection, transaction);
 
 
                         if (N_InvoiceDetailId > 0)
