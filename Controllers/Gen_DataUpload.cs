@@ -91,9 +91,10 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_EmployeeSalary";
                         if (dt.TableName == "Leave History")
                             xTableName = "Mig_EmployeeLeaveHistory";
-
-
-
+                        if (dt.TableName == "customer balances")
+                            xTableName = "Mig_CustomerOpening";
+                        if (dt.TableName == "vendor balances")
+                            xTableName = "Mig_VendorOpening";
 
                         if (dt.TableName == "Product List" || dt.TableName == "Products")
                         {
@@ -142,7 +143,7 @@ namespace SmartxAPI.Controllers
 
                             dLayer.ExecuteNonQuery("delete from " + xTableName, Params, connection, transaction);
                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
-                            //dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
