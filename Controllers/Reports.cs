@@ -238,6 +238,7 @@ namespace SmartxAPI.Controllers
             TableName = "";
             ReportName = "";
             bool b_Custom = false;
+            string xUserCategoryList=myFunctions.GetUserCategoryList(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -263,9 +264,9 @@ namespace SmartxAPI.Controllers
 
                     object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in ("+xUserCategoryList+")", QueryParams, connection, transaction);
                     int N_Custom = myFunctions.getIntVAL(Custom.ToString());
-                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in ("+xUserCategoryList+")", QueryParams, connection, transaction);
                     if (N_Custom == 1)
                     {
                         RPTLocation = RPTLocation + "custom/";
