@@ -247,7 +247,7 @@ namespace SmartxAPI.Controllers
                                 {
                                     CostCenterTable.Rows[k]["N_VoucherID"] = nPurchaseID;
                                     CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
-                                    CostCenterTable.Rows[k]["N_LedgerID"] = myFunctions.getIntVAL(DetailTable.Rows[j]["n_LedgerID"].ToString());
+                                    CostCenterTable.Rows[k]["N_LedgerID"] = myFunctions.getVAL(DetailTable.Rows[j]["n_LedgerID"].ToString());
                                 }
                             }
                         }
@@ -269,7 +269,7 @@ namespace SmartxAPI.Controllers
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryDetailsID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_CostCentreID", typeof(int), 0);
-                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_Amount", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_Amount", typeof(double), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_LedgerID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_BranchID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "X_Narration", typeof(string), "");

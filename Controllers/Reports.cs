@@ -278,7 +278,9 @@ namespace SmartxAPI.Controllers
                     if (nPreview == 1)
                     {
                         ReportName = xRptname;
+                        if(ReportName.Contains(".rpt")){
                         ReportName = ReportName.Remove(ReportName.Length - 4);
+                        }
                         object pkeyID = dLayer.ExecuteScalar("SELECT max(" + Templatecritiria + ") FROM " + TableName + " WHERE N_CompanyID =@nCompanyId", QueryParams, connection, transaction);
                         if (pkeyID != null)
                             nPkeyID = myFunctions.getIntVAL(pkeyID.ToString());
@@ -424,7 +426,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         path.Wait();
-                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName + random + ".pdf")) 
+                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName.Trim() + random + ".pdf")) 
                         return Ok(_api.Error(User, "Report Generation Failed"));
                         else
                         return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));

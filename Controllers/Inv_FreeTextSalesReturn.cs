@@ -206,7 +206,7 @@ namespace SmartxAPI.Controllers
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_InventoryDetailsID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_CostCentreID", typeof(int), 0);
-                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_Amount", typeof(int), 0);
+                    costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_Amount", typeof(double), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_LedgerID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "N_BranchID", typeof(int), 0);
                     costcenter = myFunctions.AddNewColumnToDataTable(costcenter, "X_Narration", typeof(string), "");
@@ -225,7 +225,7 @@ namespace SmartxAPI.Controllers
                         row["N_InventoryType"] = 3;
                         row["N_InventoryID"] = dRow["N_VoucherID"];
                         row["N_CostCentreID"] = dRow["N_VoucherDetailsID"];
-                        row["N_Amount"] = dRow["N_Amount"];
+                        row["N_Amount"] =-1*myFunctions.getVAL(dRow["N_Amount"].ToString());
                         row["N_LedgerID"] = dRow["N_LedgerID"];
                         row["N_BranchID"] = dRow["N_BranchID"];
                         row["X_Narration"] = "";
