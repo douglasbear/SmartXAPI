@@ -237,6 +237,7 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
+            //int N_UserCategoryID=myFunctions.GetUserCategory(User);
             bool b_Custom = false;
             try
             {
@@ -268,6 +269,7 @@ namespace SmartxAPI.Controllers
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     if (N_Custom == 1)
                     {
+                        
                         RPTLocation = RPTLocation + "custom/";
                         ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
                         ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User) + ".rpt";
@@ -426,7 +428,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         path.Wait();
-                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName + random + ".pdf")) 
+                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName.Trim() + random + ".pdf")) 
                         return Ok(_api.Error(User, "Report Generation Failed"));
                         else
                         return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));

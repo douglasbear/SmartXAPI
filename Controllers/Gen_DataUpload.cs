@@ -91,7 +91,7 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_EmployeeSalary";
                         if (dt.TableName == "Leave History")
                             xTableName = "Mig_EmployeeLeaveHistory";
-                        if (dt.TableName == "customer balances")
+                        if (dt.TableName == "Customer Balances")
                             xTableName = "Mig_CustomerOpening";
                         if (dt.TableName == "vendor balances")
                             xTableName = "Mig_VendorOpening";
