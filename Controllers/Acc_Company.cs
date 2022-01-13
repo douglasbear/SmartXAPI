@@ -147,6 +147,7 @@ namespace SmartxAPI.Controllers
 
 
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
+                    DataTable TaxInfo = dLayer.ExecuteDataTable("Select N_Value as n_PkeyID,X_Value as x_DisplayName from Gen_Settings where N_CompanyID=@p2 and X_Group='Inventory' and X_Description='DefaultTaxCategory'" , Params, connection);
 
                     DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
@@ -156,6 +157,7 @@ namespace SmartxAPI.Controllers
 
                     Output.Add("CompanyInfo", dt);
                     Output.Add("AdminInfo", AdminInfo);
+                    Output.Add("TaxInfo", TaxInfo);
                     Output.Add("FnYearInfo", FnYearInfo);
 
                 }
@@ -217,8 +219,11 @@ namespace SmartxAPI.Controllers
                 GeneralTable = ds.Tables["general"];
                 string xUserName = GeneralTable.Rows[0]["X_AdminName"].ToString();
                 string xPassword = myFunctions.EncryptString(GeneralTable.Rows[0]["X_AdminPwd"].ToString());
-
-
+              
+                string x_DisplayName = myFunctions.ContainColumn("x_DisplayName", GeneralTable) ? GeneralTable.Rows[0]["x_DisplayName"].ToString() : "";
+                int n_PkeyID = 0;
+                if (GeneralTable.Columns.Contains("n_PkeyID"))
+                    n_PkeyID = Convert.ToInt32(GeneralTable.Rows[0]["n_PkeyID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -336,6 +341,14 @@ namespace SmartxAPI.Controllers
                         // {
                         //     return Ok(api.Warning("Salesman Creation failed"));
                         // } 
+                         
+                        SortedList proParams4 = new SortedList(){
+                                        {"N_CompanyID",N_CompanyId},
+                                        {"X_Group","Inventory"},
+                                        {"X_Description","DefaultTaxCategory"},
+                                        {"N_Value",n_PkeyID},
+                                        {"X_Value",x_DisplayName},};
+                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", proParams4, connection, transaction);
 
                         transaction.Commit();
 
