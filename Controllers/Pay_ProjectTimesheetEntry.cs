@@ -32,7 +32,7 @@ namespace SmartxAPI.Controllers
 
         }
  [HttpGet("list")]
-        public ActionResult GetAllProjectTimesheet(int nFnYearId,int nComapanyId, int nEmpId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetAllProjectTimesheet(int nComapanyId, int nEmpId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -55,12 +55,11 @@ namespace SmartxAPI.Controllers
 
 
             if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 " + Searchkey + " " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_EmpID=@p3 " + Searchkey + " " + xSortBy;
             else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3" + Searchkey + " and N_TimeSheetID not in (select top(" + Count + ") N_TimeSheetID from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_EmpID=@p3" + Searchkey + " and N_TimeSheetID not in (select top(" + Count + ") N_TimeSheetID from vw_Prj_TimeSheet where N_CompanyID=@p1 and N_EmpID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
 
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", nFnYearId);
             Params.Add("@p3", nEmpId);
             SortedList OutPut = new SortedList();
 
@@ -70,7 +69,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount="select count(*) as N_Count from vw_Prj_TimeSheet where N_CompanyId=@p1 and N_FnYearID=@p2 and N_EmpID=@p3 "+ Searchkey +" ";
+                    sqlCommandCount="select count(*) as N_Count from vw_Prj_TimeSheet where N_CompanyId=@p1 and N_EmpID=@p3 "+ Searchkey +" ";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                    
