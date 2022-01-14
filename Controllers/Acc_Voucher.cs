@@ -142,7 +142,7 @@ namespace SmartxAPI.Controllers
             else if (xTransType.ToLower() == "jv")
             {
                 nFormID = 3;
-                nFlag=0;
+                nFlag = 1;
             }
 
             try
@@ -239,11 +239,11 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_CompanyID", nCompanyId);
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", nFormID);
-                       // Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
-                        
+                        // Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
+
                         while (true)
                         {
-                       
+
 
                             xVoucherNo = dLayer.ExecuteScalarPro("SP_AutoNumberGenerate", Params, connection, transaction).ToString();
                             object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_VoucherMaster Where X_VoucherNo ='" + xVoucherNo + "' and N_CompanyID= " + nCompanyId + " and X_TransType ='" + xTransType + "' and N_FnYearID =" + nFnYearId, connection, transaction);
@@ -265,16 +265,18 @@ namespace SmartxAPI.Controllers
                         if (N_VoucherID > 0)
                         {
                             int dltRes = dLayer.DeleteData("Acc_VoucherDetails", "N_InventoryID", N_VoucherID, "x_transtype='" + xTransType + "' and x_voucherno ='" + xVoucherNo + "' and N_CompanyID =" + nCompanyId + " and N_FnYearID =" + nFnYearId, connection, transaction);
-                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
+                            if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details_Segments", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction);
                             // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
                             dltRes = dLayer.DeleteData("Acc_VoucherMaster_Details", "N_VoucherID", N_VoucherID, "N_VoucherID= " + N_VoucherID + " and N_CompanyID = " + nCompanyId, connection, transaction);
-                            // if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
+                            if (dltRes <= 0){transaction.Rollback();return Ok(api.Error(User,"Unable to Update"));}
 
                         }
                     }
 
-                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", MasterTable, connection, transaction);
+                    string DupCriteria = "N_CompanyID = " + nCompanyId + " and X_VoucherNo = '" + xVoucherNo + "' and N_FnYearID=" + nFnYearId + " and X_TransType = '" + xTransType + "'";
+
+                    N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
                         SortedList LogParams = new SortedList();
@@ -306,9 +308,13 @@ namespace SmartxAPI.Controllers
                                     {
                                         CostCenterTable.Rows[k]["N_VoucherID"] = N_VoucherID;
                                         CostCenterTable.Rows[k]["N_VoucherDetailsID"] = N_InvoiceDetailId;
+                                        CostCenterTable.AcceptChanges();
                                     }
+                                    CostCenterTable.AcceptChanges();
                                 }
+                                CostCenterTable.AcceptChanges();
                             }
+                            DetailTable.AcceptChanges();
 
 
                         }
@@ -318,8 +324,9 @@ namespace SmartxAPI.Controllers
                             CostCenterTable.Columns.Remove("percentage");
 
                         CostCenterTable.AcceptChanges();
-
-                        int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", "", "", CostCenterTable, connection, transaction);
+                      // DupCriteria = "N_CompanyID = " + nCompanyId + " and N_VoucherID = '" + N_VoucherID + "' and N_FnYearID=" + nFnYearId;
+                       DupCriteria = "";
+                        int N_SegmentId = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", DupCriteria, "", CostCenterTable, connection, transaction);
 
 
                         if (N_InvoiceDetailId > 0)

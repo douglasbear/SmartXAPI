@@ -227,7 +227,7 @@ object accCode=null;
                             {"N_CompanyID", nCompanyID},
                             {"N_FnYearID_Close", n_FnYearId},
                             {"N_FnYearID_New", nFnYearID},
-                            {"X_RtainedIncomeLedgerCode", ""},
+                            {"X_RtainedIncomeLedgerCode", accCode},
                             {"N_UserID", nUserID},
                             {"X_Operation", "Close"}
                         };
@@ -311,7 +311,7 @@ object accCode=null;
 
             catch (Exception ex)
             {
-                return Ok(_api.Error(User, ex));
+                return Ok(_api.Error(User, ex.Message));
             }
         }
 

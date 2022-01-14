@@ -237,7 +237,9 @@ namespace SmartxAPI.Controllers
             critiria = "";
             TableName = "";
             ReportName = "";
+            //int N_UserCategoryID=myFunctions.GetUserCategory(User);
             bool b_Custom = false;
+            string xUserCategoryList=myFunctions.GetUserCategoryList(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -263,11 +265,12 @@ namespace SmartxAPI.Controllers
 
                     object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in ("+xUserCategoryList+")", QueryParams, connection, transaction);
                     int N_Custom = myFunctions.getIntVAL(Custom.ToString());
-                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in ("+xUserCategoryList+")", QueryParams, connection, transaction);
                     if (N_Custom == 1)
                     {
+                        
                         RPTLocation = RPTLocation + "custom/";
                         ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
                         ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User) + ".rpt";
@@ -399,6 +402,7 @@ namespace SmartxAPI.Controllers
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
+                        ReportName = ReportName.Replace("&", "");
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
