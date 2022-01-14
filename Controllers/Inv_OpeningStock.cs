@@ -350,7 +350,7 @@ namespace SmartxAPI.Controllers
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "b_isDisbled", typeof(int), 1);
                     foreach (DataRow row in DetailTable.Rows)
                     {
-                        if (myFunctions.getIntVAL(row["N_OpenStock"].ToString()) != myFunctions.getIntVAL(row["N_CurrentStock"].ToString()))
+                        if (myFunctions.getVAL(row["N_OpenStock"].ToString()) != myFunctions.getVAL(row["N_CurrentStock"].ToString()))
                         {
                             row["N_Processed"] = 1;
                         }
