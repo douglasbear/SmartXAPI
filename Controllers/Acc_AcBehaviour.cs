@@ -183,20 +183,10 @@ namespace SmartxAPI.Controllers
                     {
                         int nLedgerID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_LedgerID"].ToString());
                         int nCashBahavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_CashBahavID"].ToString());
-                        int nTransBehavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_TransBehavID"].ToString());
+                        int nTransBehavID = myFunctions.getIntVAL(DetailTable.Rows[i-1]["n_TransBehaviourID"].ToString());
                         string xCashTypeBehaviour = DetailTable.Rows[i-1]["x_CashTypeBehaviour"].ToString();
-                        string isDeleted = DetailTable.Rows[i-1]["isDeleted"].ToString();
 
-                        if (isDeleted == "False")
-                        {
-                            dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '',N_CashBahavID=0,N_TransBehavID=0 Where N_LedgerID= " + nLedgerID + " And N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
-                        }
-                        else
-                        {
-                            dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '" + xCashTypeBehaviour + "',N_CashBahavID=" + nCashBahavID + ",N_TransBehavID=" + nTransBehavID + " where N_LedgerID= " + nLedgerID + " and N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
-                        }
-                        if(DetailTable.Columns.Contains("isDeleted"))
-                        DetailTable.Columns.Remove("isDeleted");
+                        dLayer.ExecuteNonQuery("Update Acc_MastLedger Set X_CashTypeBehaviour = '" + xCashTypeBehaviour + "',N_CashBahavID=" + nCashBahavID + ",N_TransBehavID=" + nTransBehavID + " where N_LedgerID= " + nLedgerID + " and N_CompanyID = @p1 and N_FnYearID = @p2", Params, connection, transaction);
                     }
                     if (DetailTable.Rows.Count < 0)
                     {
