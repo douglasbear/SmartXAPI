@@ -12,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Net;
+using System.Web;
 
 namespace SmartxAPI.Controllers
 {
@@ -150,7 +152,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-
+            
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -475,9 +477,9 @@ namespace SmartxAPI.Controllers
 
 
 
-                    if ( ItemCode != "@Auto")
+                    if (ItemCode != "@Auto")
                     {
-                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_ItemMaster Where X_ItemCode ='" + ItemCode + "' and N_CompanyID= " + nCompanyID +" and N_ItemID<>"+N_ItemID, connection, transaction);
+                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_ItemMaster Where X_ItemCode ='" + ItemCode + "' and N_CompanyID= " + nCompanyID + " and N_ItemID<>" + N_ItemID, connection, transaction);
                         if (N_DocNumber == null)
                         {
                             N_DocNumber = 0;
@@ -1349,6 +1351,40 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("translate")]
+        public ActionResult Translate(string xText)
+        {
+            try
+            {
+                string Artext = Translate(xText,"en","ar");
+                DataTable dt = new DataTable();
+                return Ok(_api.Success(dt));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        public String Translate(String text,string fromLanguage,string toLanguage)
+        {
+            var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={HttpUtility.UrlEncode(text)}";
+            var webClient = new WebClient
+            {
+                Encoding = System.Text.Encoding.UTF8
+            };
+            var result = webClient.DownloadString(url);
+            try
+            {
+                result = result.Substring(4, result.IndexOf("\"", 4, StringComparison.Ordinal) - 4);
+                return result;
+            }
+            catch
+            {
+                return "Error";
             }
         }
 

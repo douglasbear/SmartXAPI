@@ -75,13 +75,14 @@ namespace SmartxAPI.Controllers
         public ActionResult GetAccountOpeningDetails(int nFnYearID,int nBranchID,int nLanguageID)
         {
             DataSet dsOpening = new DataSet();
+            DataTable OpeningBalance=new DataTable();
             DataTable Master=new DataTable();
             DataTable DetailTable=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int AccountField=0;
             int nVoucherID=0;
-            string sqlCommandText="",sqlCommandText2="";
+            string sqlCommandText="",sqlCommandText2="",sqlQry="";
             
             if(nLanguageID==2)AccountField=1;
            
@@ -136,11 +137,13 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     VoucherDetails_DescTable = _api.Format(VoucherDetails_DescTable, "VoucherDetails_Desc");
-
-                    //dsOpening.Tables.Add(Master);
+                    sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_BranchID =@nBranchID";
+                    OpeningBalance = dLayer.ExecuteDataTable(sqlQry, Params, connection);
+                    OpeningBalance = _api.Format(OpeningBalance, "OpeningBalance");
+                    dsOpening.Tables.Add(Master);
                     dsOpening.Tables.Add(DetailTable);
                     dsOpening.Tables.Add(VoucherDetails_DescTable);
-
+                    dsOpening.Tables.Add(OpeningBalance);
                     return Ok(_api.Success(dsOpening));
                 }
                
@@ -207,14 +210,30 @@ namespace SmartxAPI.Controllers
                     DataTable Details_SegmentsTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
-                    VoucherDetails_DescTable = ds.Tables["VoucherDetails_Desc"];
+                    DataTable dt = new DataTable();
+
+                   // VoucherDetails_DescTable = ds.Tables["VoucherDetails_Desc"];
                    // Details_SegmentsTable = ds.Tables["Details_Segments"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     int nVoucherID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string InvoiceNo=MasterTable.Rows[0]["x_VoucherNo"].ToString();
+                    bool b_OpeningBalancePosted = false;
 
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyID + " and N_FnYearID = " + nFnYearID + " and N_BranchID = " + nBranchID + "";
+                    dt = dLayer.ExecuteDataTable(sqlQry, Params, connection, transaction);
+                    if (dt.Rows.Count > 0)
+                    {
+                        b_OpeningBalancePosted = myFunctions.getBoolVAL(dt.Rows[0]["b_IsAccPosted"].ToString());
+
+                    }
+                    if (b_OpeningBalancePosted)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Opening Balance Posted"));
+                    }
                     if(nVoucherID!=0)
                     {
                         
@@ -239,7 +258,7 @@ namespace SmartxAPI.Controllers
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         SortedList DeleteParams = new SortedList(){
-                                    {"N_LedgerID",myFunctions.getIntVAL(MasterTable.Rows[0]["N_LedgerID"].ToString())},
+                                    {"N_LedgerID",myFunctions.getIntVAL(DetailTable.Rows[j]["N_LedgerID"].ToString())},
                                     {"N_VoucherID",myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString())},
                                     {"N_CompanyID",nCompanyID},
                                     {"N_FnYearID",nFnYearID}};
@@ -253,23 +272,28 @@ namespace SmartxAPI.Controllers
                             nAmount = myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString());
                         else
                             nAmount=(-1)*myFunctions.getVAL(DetailTable.Rows[j]["n_Credit"].ToString());
-
+                        DetailTable.Rows[j]["N_Amount"] = nAmount;
                         if(nAmount==0)
+                        {
                             DetailTable.Rows[j].Delete();
+                            j--;
+                        }
+                        else
+                            DetailTable.Rows[j]["N_Amount"]=nAmount;
                     }
-                    if (MasterTable.Columns.Contains("n_Debit"))
-                        MasterTable.Columns.Remove("n_Debit");
-                    if (MasterTable.Columns.Contains("n_Credit"))
-                        MasterTable.Columns.Remove("n_Credit");
+                    if (DetailTable.Columns.Contains("n_Debit"))
+                        DetailTable.Columns.Remove("n_Debit");
+                    if (DetailTable.Columns.Contains("n_Credit"))
+                        DetailTable.Columns.Remove("n_Credit");
 
                     int N_VoucherDetailsID=0;
-                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    // {
+                    //     N_VoucherDetailsID = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","", "", j, DetailTable, connection, transaction);
+                    N_VoucherDetailsID = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
+                    
+                    if (N_VoucherDetailsID > 0)
                     {
-                        N_VoucherDetailsID = dLayer.SaveDataWithIndex("Acc_VoucherMaster_Details", "N_VoucherDetailsID","", "", j, DetailTable, connection, transaction);
-                    //N_VoucherDetailsID = dLayer.SaveData("Acc_VoucherMaster_Details", "N_VoucherDetailsID", DetailTable, connection, transaction);
-                        
-                        if (N_VoucherDetailsID > 0)
-                        {
                     //         for (int k = 0; k < Details_SegmentsTable.Rows.Count; k++)
                     //         {
                     //             if (myFunctions.getIntVAL(Details_SegmentsTable.Rows[k]["rowID"].ToString()) == j)
@@ -278,29 +302,29 @@ namespace SmartxAPI.Controllers
                     //                 Details_SegmentsTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
                     //             }
                     //         }
-                            for (int k = 0; k < VoucherDetails_DescTable.Rows.Count; k++)
-                            {
-                                if(DetailTable.Rows[j]["n_LedgerID"].ToString()!=VoucherDetails_DescTable.Rows[k]["n_LedgerID"].ToString()) continue;
+                            // for (int k = 0; k < VoucherDetails_DescTable.Rows.Count; k++)
+                            // {
+                            //     if(DetailTable.Rows[j]["n_LedgerID"].ToString()!=VoucherDetails_DescTable.Rows[k]["n_LedgerID"].ToString()) continue;
 
-                                VoucherDetails_DescTable.Rows[k]["N_VoucherID"] = nVoucherID;
-                                VoucherDetails_DescTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
-                            }
-                        } 
-                        else
-                        {
-                            transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to save"));
-                        }
+                            //     VoucherDetails_DescTable.Rows[k]["N_VoucherID"] = nVoucherID;
+                            //     VoucherDetails_DescTable.Rows[k]["N_VoucherDetailsID"] = N_VoucherDetailsID;
+                            // }
+                    } 
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(api.Error(User,"Unable to save"));
                     }
+                    //}
                     // if (Details_SegmentsTable.Columns.Contains("rowID"))
                     //     Details_SegmentsTable.Columns.Remove("rowID");
 
                     // Details_SegmentsTable.AcceptChanges();
                     // int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherMaster_Details_Segments", "N_VoucherSegmentID", Details_SegmentsTable, connection, transaction);
-                    if(VoucherDetails_DescTable.Rows.Count>0)
-                    {
-                        int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherDetails_Desc", "N_VoucherDetailsDescID", VoucherDetails_DescTable, connection, transaction);
-                    }
+                    // if(VoucherDetails_DescTable.Rows.Count>0)
+                    // {
+                    //     int N_VoucherSegmentID = dLayer.SaveData("Acc_VoucherDetails_Desc", "N_VoucherDetailsDescID", VoucherDetails_DescTable, connection, transaction);
+                    // }
 
                     try
                     {
@@ -344,7 +368,7 @@ namespace SmartxAPI.Controllers
                                         return Ok(_api.Error(User, ex));
                                 }
                     transaction.Commit();
-                    return Ok(_api.Success("Account Behaviour Saved"));
+                    return Ok(_api.Success("Account Opening Balance Saved"));
                 }
             }
             catch (Exception ex)
@@ -384,6 +408,42 @@ namespace SmartxAPI.Controllers
             }
 
         }
+
+         [HttpGet("fnYearData")]
+        public ActionResult GetFnYearData()
+        {
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string qry = "";
+            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(qry, Params, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
 
         }
     }

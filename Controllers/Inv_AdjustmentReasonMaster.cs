@@ -68,6 +68,57 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+         [HttpGet("dashboardList")]
+        public ActionResult GetInvAdjustmentReasonList(int nFnYearID,int nPage,bool adjustment,int nSizeperpage, string xSearchkey, string xSortBy, string screen,int nCustomerID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+               
+           int Count = (nPage - 1) * nSizeperpage;
+            string Searchkey = "";
+            Params.Add("@p1",nCompanyID);
+            Params.Add("@p2", nFnYearID);
+             string criteria = "";
+            string cndn = "";
+            string sqlCommandText="";
+            sqlCommandText="Select * from vw_Inv_StockAdjstmentReason_Disp Where N_CompanyID=@p1 and N_FnYearID=@p2";
+           
+
+           
+            if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_StockAdjstmentReason_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + criteria + cndn + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_StockAdjstmentReason_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + criteria + Searchkey + " and N_ReasonID not in (select top(" + Count + ") N_ReasonID from vw_Inv_StockAdjstmentReason_Disp where N_CompanyID=@p1 and N_FnYearID=@p2  " + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
+
+            if(adjustment)
+              sqlCommandText="Select X_Description as X_Reason,N_ReasonID,X_ReasonCode,b_ISstockIn from vw_Inv_StockAdjstmentReason_Disp Where N_CompanyID=@p1 and N_FnYearID=@p2";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
+
        [HttpGet("Grouplist")]
         public ActionResult GetGroupList(int nFnYearID)
         {
