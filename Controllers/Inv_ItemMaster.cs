@@ -1361,7 +1361,9 @@ namespace SmartxAPI.Controllers
             {
                 SortedList OutPut = new SortedList();
                 string Artext = Translate(xText, "en", "ar");
-                OutPut.Add("arabic",Artext);
+                if (xText == null)
+                    Artext="";
+                OutPut.Add("arabic", Artext);
                 return Ok(_api.Success(OutPut));
 
             }
