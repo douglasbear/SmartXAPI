@@ -95,390 +95,201 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        // [HttpGet("details")]
-        // public ActionResult GetDeliveryNoteDetails(int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID)
-        // {
-        //     int nCompanyId = myFunctions.GetCompanyID(User);
-        //     try
-        //     {
-        //         using (SqlConnection Con = new SqlConnection(connectionString))
-        //         {
-        //             Con.Open();
+
+        [HttpGet("details")]
+        public ActionResult GetMaterialDispatchDetails(int nFnYearId,string xDispatchNo,int nLocationID, int nBranchId,bool B_AllBranchData)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            bool B_ProjectExists=true;
+            try
+            {
+                using (SqlConnection Con = new SqlConnection(connectionString))
+                {
+                    Con.Open();
 
 
-        //             DataSet dsSalesInvoice = new DataSet();
-        //             SortedList QueryParamsList = new SortedList();
-        //             QueryParamsList.Add("@nCompanyID", nCompanyId);
-        //             QueryParamsList.Add("@nFnYearID", nFnYearId);
-        //             QueryParamsList.Add("@nBranchId", nBranchId);
-        //             QueryParamsList.Add("@xTransType", "DELIVERY");
+                    DataSet dsMaterailDispatch = new DataSet();
+                    SortedList QueryParamsList = new SortedList();
+                    QueryParamsList.Add("@nCompanyID", nCompanyId);
+                    QueryParamsList.Add("@nFnYearID", nFnYearId);
+                    QueryParamsList.Add("@nBranchId", nBranchId);
+                    QueryParamsList.Add("@xDispatchNo", xDispatchNo);
+                    QueryParamsList.Add("@nLocationID", nLocationID);
 
-        //             SortedList mParamsList = new SortedList()
-        //             {
-        //                 {"N_CompanyID",nCompanyId},
-        //                 {"X_ReceiptNo",xInvoiceNo},
-        //                 {"X_TransType","DELIVERY"},
-        //                 {"N_FnYearID",nFnYearId},
-        //                 {"N_BranchId",nBranchId}
-        //             };
-        //             if (nSalesOrderID > 0)
-        //             {
-        //                 QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
-        //                 string Mastersql = "select * from vw_SalesOrdertoDeliveryNote where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
-        //                 DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
-        //                 if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-        //                 MasterTable = _api.Format(MasterTable, "Master");
-        //                 string DetailSql = "";
-        //                 DetailSql = "select * from vw_SalesOrdertoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_SalesOrderId=@nSalesorderID";
-        //                 DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+                    string Mastersql = "";
 
+                    if (B_AllBranchData)
+                        Mastersql= "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo";
+                    else
+                        Mastersql= "Select * From vw_MaterialDispatchDisp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_DispatchNo=@xDispatchNo and N_BranchId=@nBranchId";
 
+                    DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    MasterTable = _api.Format(MasterTable, "Master");
+                    int N_DispatchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_DispatchId"].ToString());
+                    QueryParamsList.Add("@N_DispatchID", N_DispatchID);
 
+                    string DetailSql = "";
+                  
+                    if (B_ProjectExists)
+                        DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,vw_MaterialDispatchDetailDisp.N_LocationID,'',vw_MaterialDispatchDetailDisp.N_ProjectID) as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID";
+                    else
+                        DetailSql = "Select *,dbo.SP_BatchStock(vw_MaterialDispatchDetailDisp.N_ItemID,@nLocationID,'') as N_stock  from vw_MaterialDispatchDetailDisp  where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_DispatchId=@N_DispatchID";
 
-        //                 SortedList DelParams = new SortedList();
-        //                 DelParams.Add("N_CompanyID", nCompanyId);
-        //                 DelParams.Add("N_SalesOrderID", nSalesOrderID);
-        //                 DelParams.Add("FnYearID", nFnYearId);
-        //                 DelParams.Add("@N_Type", 0);
-        //                 DataTable OrderToDel = dLayer.ExecuteDataTablePro("SP_InvSalesOrderDtlsInDelNot_Disp", DelParams, Con);
-        //                 foreach (DataRow Avar in OrderToDel.Rows)
-        //                 {
-        //                     foreach (DataRow Kvar in DetailTable.Rows)
-        //                     {
-        //                         if (myFunctions.getIntVAL(Avar["N_SalesOrderDetailsID"].ToString()) == myFunctions.getIntVAL(Kvar["N_SalesOrderDetailsID"].ToString()))
-        //                         {
-        //                             Kvar["N_QtyDisplay"] = Avar["N_QtyDisplay"];
-        //                             Kvar["N_Qty"] = Avar["N_Qty"];
+                    DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
 
-        //                         }
-        //                     }
-        //                 }
-        //                 DetailTable.AcceptChanges();
-
-        //                 DetailTable = _api.Format(DetailTable, "Details");
-        //                 dsSalesInvoice.Tables.Add(MasterTable);
-        //                 dsSalesInvoice.Tables.Add(DetailTable);
-        //                 return Ok(_api.Success(dsSalesInvoice));
-        //             }
-        //             else
-        //             {
-        //                 QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
-        //             }
-        //             DataTable masterTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNote_Disp", mParamsList, Con);
-
-
-        //             masterTable = _api.Format(masterTable, "Master");
-        //             if (masterTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-        //             DataRow MasterRow = masterTable.Rows[0];
-        //             var nFormID = this.FormID;
-        //             int N_DelID = myFunctions.getIntVAL(MasterRow["N_deliverynoteid"].ToString());
-        //             int N_SalesOrderID = myFunctions.getIntVAL(MasterRow["n_SalesOrderID"].ToString());
-        //             QueryParamsList.Add("@nDelID", N_DelID);
-        //             QueryParamsList.Add("@nSaleOrderID", N_SalesOrderID);
-        //             object InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_deliverynoteid=@nDelID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-        //             masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_SalesReceiptNo", typeof(string), InSales);
-
-        //             object InSalesOrder = dLayer.ExecuteScalar("select x_OrderNo from Inv_SalesOrder where N_CompanyID=@nCompanyID and N_SalesOrderID=@nSaleOrderID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-        //             masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "x_OrderNo", typeof(string), InSalesOrder);
-
-
-        //             QueryParamsList.Add("@nSalesID", myFunctions.getIntVAL(MasterRow["N_TruckID"].ToString()));
-
-
-
-
-        //             masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "N_SalesId", typeof(int), 0);
-        //             masterTable = myFunctions.AddNewColumnToDataTable(masterTable, "isSalesDone", typeof(bool), false);
-
-
-        //             if (myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()) > 0)
-        //             {
-        //                 QueryParamsList.Add("@nDeliveryNoteId", myFunctions.getIntVAL(masterTable.Rows[0]["N_DeliveryNoteId"].ToString()));
-
-        //                 DataTable SalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_DeliveryNoteId=@nDeliveryNoteId and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-        //                 if (SalesData.Rows.Count > 0)
-        //                 {
-        //                     masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
-        //                     masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
-        //                     masterTable.Rows[0]["isSalesDone"] = true;
-        //                 }
-        //             }
-
-        //             //Details
-        //             SortedList dParamList = new SortedList()
-        //             {
-        //                 {"N_CompanyID",nCompanyId},
-        //                 {"N_SalesID",masterTable.Rows[0]["n_DeliveryNoteId"].ToString()}
-        //             };
-        //             DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvDeliveryNoteDtls_Disp", dParamList, Con);
-        //             detailTable = _api.Format(detailTable, "Details");
-        //             DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(masterTable.Rows[0]["N_CustomerID"].ToString()), myFunctions.getIntVAL(masterTable.Rows[0]["n_DeliveryNoteId"].ToString()), this.FormID, myFunctions.getIntVAL(masterTable.Rows[0]["N_FnYearID"].ToString()), User, Con);
-        //             Attachments = _api.Format(Attachments, "attachments");
-
-        //             if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
-        //             dsSalesInvoice.Tables.Add(masterTable);
-        //             dsSalesInvoice.Tables.Add(detailTable);
-        //             dsSalesInvoice.Tables.Add(Attachments);
-
-        //             return Ok(_api.Success(dsSalesInvoice));
-
-        //         }
-        //     }
-        //     catch (Exception e)
-        //     {
-        //         return Ok(_api.Error(User, e));
-        //     }
-        // }
+                    DetailTable = _api.Format(DetailTable, "Details");
+                    dsMaterailDispatch.Tables.Add(MasterTable);
+                    dsMaterailDispatch.Tables.Add(DetailTable);
+                    return Ok(_api.Success(dsMaterailDispatch));
+                  
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
 
         //Save....
-        // [HttpPost("Save")]
-        // public ActionResult SaveData([FromBody] DataSet ds)
-        // {
-        //     try
-        //     {
-        //         DataTable MasterTable;
-        //         DataTable DetailTable;
+        [HttpPost("save")]
+        public ActionResult SaveData([FromBody] DataSet ds)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
 
-        //         MasterTable = ds.Tables["master"];
-        //         DetailTable = ds.Tables["details"];
-        //         DataTable Attachment = ds.Tables["attachments"];
-        //         SortedList Params = new SortedList();
-        //         SortedList QueryParams = new SortedList();
-        //         // Auto Gen 
-        //         string InvoiceNo = "";
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction;
-        //             DataRow MasterRow = MasterTable.Rows[0];
-        //             transaction = connection.BeginTransaction();
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    DataTable MasterTable;
+                    DataTable DetailTable;
+                    string values = "";
+                    MasterTable = ds.Tables["master"];
+                    DetailTable = ds.Tables["details"];
+                    DataRow MasterRow = MasterTable.Rows[0];
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    bool bDeptEnabled=false;
+                    int nDispatchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_DispatchID"].ToString());
+                    int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int N_RSID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_RSID"].ToString());
+                    int nSaveDraft = myFunctions.getIntVAL(MasterTable.Rows[0]["B_IsSaveDraft"].ToString());
+                    int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
+                    string X_DispatchNo = MasterTable.Rows[0]["X_DispatchNo"].ToString();
+                    if (nDispatchID > 0)
+                    {
+                        SortedList DeleteParams = new SortedList(){
+                                    {"N_CompanyID",nCompanyID},
+                                    {"N_UserID",N_UserID},
+                                    {"X_TransType","MATERIAL DISPATCH"},
+                                    {"X_SystemName","WebRequest"},
+                                    {"N_VoucherID",nDispatchID}};
 
+                        dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                    }
+                    values = MasterRow["X_DispatchNo"].ToString();
 
-        //             int N_DeliveryNoteID = myFunctions.getIntVAL(MasterRow["n_DeliveryNoteId"].ToString());
-        //             int N_FnYearID = myFunctions.getIntVAL(MasterRow["n_FnYearID"].ToString());
-        //             int N_CompanyID = myFunctions.getIntVAL(MasterRow["n_CompanyID"].ToString());
-        //             int N_BranchID = myFunctions.getIntVAL(MasterRow["n_BranchID"].ToString());
-        //             int N_LocationID = myFunctions.getIntVAL(MasterRow["n_LocationID"].ToString());
-        //             int N_CustomerID = myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString());
-        //             int N_UserID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.NameIdentifier)?.Value);
-        //             int UserCategoryID = myFunctions.getIntVAL(User.FindFirst(ClaimTypes.GroupSid)?.Value);
-        //             //int N_AmtSplit = 0;
-        //             int N_SaveDraft = myFunctions.getIntVAL(MasterRow["b_IsSaveDraft"].ToString());
-        //             bool B_AllBranchData = false, B_AllowCashPay = false;
-        //             bool B_SalesOrder = myFunctions.CheckPermission(N_CompanyID, 81, "Administrator", "X_UserCategory", dLayer, connection, transaction);
-        //             bool B_SRS = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("729", "SRSinDeliveryNote", "N_Value", N_CompanyID, dLayer, connection, transaction)));
-        //             QueryParams.Add("@nCompanyID", N_CompanyID);
-        //             QueryParams.Add("@nFnYearID", N_FnYearID);
-        //             QueryParams.Add("@nSalesID", N_DeliveryNoteID);
-        //             QueryParams.Add("@nBranchID", N_BranchID);
-        //             QueryParams.Add("@nLocationID", N_LocationID);
-        //             QueryParams.Add("@nCustomerID", N_CustomerID);
+                    if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                        Params.Add("N_YearID", MasterTable.Rows[0]["n_FnYearId"].ToString());
+                        Params.Add("N_FormID", this.FormID);
+                        //Params.Add("N_BranchID", MasterTable.Rows[0]["n_BranchId"].ToString());
+                        X_DispatchNo = dLayer.GetAutoNumber("Inv_MaterialDispatch", "X_DispatchNo", Params, connection, transaction);
+                        if (X_DispatchNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Return Number")); }
+                        MasterTable.Rows[0]["X_DispatchNo"] = X_DispatchNo;
+                    }
 
-        //             //B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
-        //             object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-        //             if (objAllBranchData != null)
-        //                 B_AllBranchData = myFunctions.getBoolVAL(objAllBranchData.ToString());
+                    nDispatchID = dLayer.SaveData("Inv_MaterialDispatch", "N_DispatchID", MasterTable, connection, transaction);
+                    if (nDispatchID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Save"));
+                    }
+                    for (int i = 0; i < DetailTable.Rows.Count; i++)
+                    {
+                        DetailTable.Rows[i]["N_DispatchID"] = nDispatchID;
+                    }
+                    int N_DispatchDetailsID = dLayer.SaveData("Inv_MaterialDispatchDetails", "N_DispatchDetailsID", DetailTable, connection, transaction);
+                    if (N_DispatchDetailsID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable To Save"));
+                    }
+                    if(nSaveDraft==0)
+                        dLayer.ExecuteScalar("update Inv_PRS set N_Processed=1 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID+ " and N_FnYearID=" + nFnYearID + " and N_TransTypeID=8", connection, transaction);
 
-        //             if (B_AllBranchData)
-        //                 B_AllowCashPay = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select cast(count(N_CustomerID) as bit) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID  and N_AllowCashPay=1", QueryParams, connection, transaction).ToString());
-        //             else
-        //                 B_AllowCashPay = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select cast(count(N_CustomerID) as bit) from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID  and N_AllowCashPay=1 and (N_BranchId=@nBranchID or N_BranchId=0)", QueryParams, connection, transaction).ToString());
+                   
+                    SortedList UpdateStockParam = new SortedList();
+                    UpdateStockParam.Add("N_CompanyID", nCompanyID);
+                    UpdateStockParam.Add("N_DispatchId", nDispatchID);
+                    UpdateStockParam.Add("N_UserID", N_UserID);
 
+                    if (!bDeptEnabled)
+                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch", UpdateStockParam, connection, transaction);
+                    else
+                        dLayer.ExecuteNonQueryPro("SP_Inv_MaterialDispatch_Department", UpdateStockParam, connection, transaction);
 
-        //             //saving data
-        //             var values = MasterRow["x_ReceiptNo"].ToString();
-        //             if (values == "@Auto")
-        //             {
-        //                 Params.Add("N_CompanyID", MasterRow["n_CompanyId"].ToString());
-        //                 Params.Add("N_YearID", MasterRow["n_FnYearId"].ToString());
-        //                 Params.Add("N_FormID", 729);
-        //                 Params.Add("N_BranchID", MasterRow["n_BranchId"].ToString());
-        //                 InvoiceNo = dLayer.GetAutoNumber("Inv_DeliveryNote", "x_ReceiptNo", Params, connection, transaction);
-        //                 if (InvoiceNo == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Delivery Number")); }
-        //                 MasterTable.Rows[0]["x_ReceiptNo"] = InvoiceNo;
-        //             }
-        //             else
-        //             {
-        //                 if (N_DeliveryNoteID > 0)
-        //                 {
-        //                     SortedList DeleteParams = new SortedList(){
-        //                         {"N_CompanyID",N_CompanyID},
-        //                         {"X_TransType","DELIVERY"},
-        //                         {"N_VoucherID",N_DeliveryNoteID}};
-        //                     try
-        //                     {
-        //                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-        //                     }
-        //                     catch (Exception ex)
-        //                     {
-        //                         transaction.Rollback();
-        //                         return Ok(_api.Error(User, ex));
-        //                     }
-        //                 }
-        //             }
-        //             N_DeliveryNoteID = dLayer.SaveData("Inv_DeliveryNote", "N_DeliveryNoteId", MasterTable, connection, transaction);
-        //             if (N_DeliveryNoteID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User, "Unable to save Delivery Invoice!"));
-        //             }
-        //             // if (B_UserLevel)
-        //             // {
-        //             //     Inv_WorkFlowCatalog saving code here
-        //             // }
-        //             int N_PRSID = 0;
-        //             int N_SalesOrderID = 0;
-        //             int N_SalesQuotationID = 0;
-        //             for (int j = 0; j < DetailTable.Rows.Count; j++)
-        //             {
-        //                 DetailTable.Rows[j]["N_DeliveryNoteID"] = N_DeliveryNoteID;
-        //                 N_PRSID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_RsID"].ToString());
-        //                 N_SalesOrderID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesOrderID"].ToString());
-        //                 N_SalesQuotationID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_SalesQuotationID"].ToString());
-        //                 if (B_SalesOrder)
-        //                 {
-        //                     if (B_SRS)
-        //                     {
-        //                         if (N_PRSID > 0)
-        //                             dLayer.ExecuteNonQuery("update  Inv_PRS set N_DeliveryNoteID=" + N_DeliveryNoteID + ", N_Processed=3 where N_PRSID=" + N_PRSID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
-        //                     }
-        //                     if (N_SalesOrderID > 0)
-        //                         dLayer.ExecuteNonQuery("update  Inv_SalesOrder set N_SalesID=" + N_DeliveryNoteID + ", N_Processed=1 where N_SalesOrderID=" + N_SalesOrderID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                    SortedList PostParam = new SortedList();
+                    PostParam.Add("N_CompanyID", nCompanyID);
+                    PostParam.Add("X_InventoryMode", nDispatchID);
+                    PostParam.Add("N_UserID", N_UserID);
 
-        //                 }
+                    if (!bDeptEnabled)
+                        dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", PostParam, connection, transaction);
 
-        //                 else
-        //                 {
-        //                     if (N_SalesQuotationID > 0)
-        //                         dLayer.ExecuteNonQuery("update  Inv_SalesQuotation set N_SalesID=" + N_DeliveryNoteID + ", N_Processed=1 where N_QuotationID=" + N_SalesQuotationID + " and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
-        //                 }
-        //             }
-        //             int N_DeliveryNoteDetailsID = dLayer.SaveData("Inv_DeliveryNoteDetails", "n_DeliveryNoteDetailsID", DetailTable, connection, transaction);
-        //             if (N_DeliveryNoteDetailsID <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User, "Unable to save Delivery Note!"));
-        //             }
-        //             else
-        //             {
-        //                 if (N_SaveDraft == 0)
-        //                 {
+                    transaction.Commit();
+                    return Ok(_api.Success("Saved"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
 
-        //                     SortedList ParamInsNew = new SortedList();
-        //                     ParamInsNew.Add("N_CompanyID", N_CompanyID);
-        //                     ParamInsNew.Add("N_SalesID", N_DeliveryNoteID);
-        //                     ParamInsNew.Add("N_SaveDraft", 0);
-
-        //                     SortedList ParamSales_Posting = new SortedList();
-        //                     ParamSales_Posting.Add("N_CompanyID", N_CompanyID);
-        //                     ParamSales_Posting.Add("X_InventoryMode", "DELIVERY");
-        //                     ParamSales_Posting.Add("N_InternalID", N_DeliveryNoteID);
-        //                     ParamSales_Posting.Add("N_UserID", N_UserID);
-        //                     ParamSales_Posting.Add("X_SystemName", "ERP Cloud");
-        //                     try
-        //                     {
-        //                         dLayer.ExecuteNonQueryPro("SP_DeliveryNoteDetails_InsNew", ParamInsNew, connection, transaction);
-        //                         dLayer.ExecuteNonQueryPro("SP_Acc_Inventory_Sales_Posting", ParamSales_Posting, connection, transaction);
-        //                     }
-        //                     catch (Exception ex)
-        //                     {
-        //                         transaction.Rollback();
-        //                         if (ex.Message == "50")
-        //                             return Ok(_api.Error(User, "Day Closed"));
-        //                         else if (ex.Message == "51")
-        //                             return Ok(_api.Error(User, "Year Closed"));
-        //                         else if (ex.Message == "52")
-        //                             return Ok(_api.Error(User, "Year Exists"));
-        //                         else if (ex.Message == "53")
-        //                             return Ok(_api.Error(User, "Period Closed"));
-        //                         else if (ex.Message == "54")
-        //                             return Ok(_api.Error(User, "Txn Date"));
-        //                         else if (ex.Message == "55")
-        //                             return Ok(_api.Error(User, "Product is not available for delivery"));
-        //                         else return Ok(_api.Error(User, ex));
-        //                     }
-        //                     SortedList CustomerParams = new SortedList();
-        //                     CustomerParams.Add("@nCustomerID", N_CustomerID);
-        //                     DataTable CustomerInfo = dLayer.ExecuteDataTable("Select X_CustomerCode,X_CustomerName from Inv_Customer where N_CustomerID=@nCustomerID", CustomerParams, connection, transaction);
-        //                     if (CustomerInfo.Rows.Count > 0)
-        //                     {
-        //                         try
-        //                         {
-        //                             myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_DeliveryNoteID, CustomerInfo.Rows[0]["X_CustomerName"].ToString().Trim(), CustomerInfo.Rows[0]["X_CustomerCode"].ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
-        //                         }
-        //                         catch (Exception ex)
-        //                         {
-        //                             transaction.Rollback();
-        //                             return Ok(_api.Error(User, ex));
-        //                         }
-        //                     }
-        //                 }
-        //                 transaction.Commit();
-        //                 return Ok(_api.Success("Delivery Note saved" + ":" + InvoiceNo));
-        //             }
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User, ex));
-        //     }
-        // }
         //Delete....
-        // [HttpDelete("delete")]
-        // public ActionResult DeleteData(int nDeliveryNoteID, int nCustomerID, int nCompanyID, int nFnYearID, int nBranchID)
-        // {
-        //     int Results = 0;
-        //     try
-        //     {
-        //         using (SqlConnection connection = new SqlConnection(connectionString))
-        //         {
-        //             connection.Open();
-        //             SqlTransaction transaction = connection.BeginTransaction();
-        //             var xUserCategory = User.FindFirst(ClaimTypes.GroupSid)?.Value;
-        //             var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
-        //             //Results = dLayer.DeleteData("Inv_SalesInvoice", "n_InvoiceID", N_InvoiceID, "",connection,transaction);
-        //             SortedList DeleteParams = new SortedList(){
-        //                         {"N_CompanyID",nCompanyID},
-        //                         {"N_UserID",nUserID},
-        //                         {"X_TransType","DELIVERY"},
-        //                         {"X_SystemName","WebRequest"},
-        //                         {"N_VoucherID",nDeliveryNoteID}};
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nDispatchID, int N_RSID, int nCompanyID, int nFnYearID, int nBranchID)
+        {
+            int Results = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    var nUserID = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
+                    SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"N_UserID",nUserID},
+                                {"X_TransType","MATERIAL DISPATCH"},
+                                {"X_SystemName","WebRequest"},
+                                {"N_VoucherID",nDispatchID}};
 
-        //             SortedList QueryParams = new SortedList(){
-        //                         {"@nCompanyID",nCompanyID},
-        //                         {"@nFnYearID",nFnYearID},
-        //                         {"@nUserID",nUserID},
-        //                         {"@xTransType","DELIVERY"},
-        //                         {"@xSystemName","WebRequest"},
-        //                         {"@nDeliveryNoteID",nDeliveryNoteID},
-        //                         {"@nPartyID",nCustomerID},
-        //                         {"@nBranchID",nBranchID}};
-
-        //             Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
-        //             if (Results <= 0)
-        //             {
-        //                 transaction.Rollback();
-        //                 return Ok(_api.Error(User, "Unable to delete delivery note"));
-        //             }
-        //             else
-        //             {
-        //                 dLayer.ExecuteNonQuery("delete from Inv_StockMaster where N_SalesID=@nDeliveryNoteID and n_CompanyID=@nCompanyID", QueryParams, connection, transaction);
-
-        //                 myAttachments.DeleteAttachment(dLayer, 1, nDeliveryNoteID, nCustomerID, nFnYearID, this.FormID, User, transaction, connection);
-        //             }
-        //             //Attachment delete code here
-
-        //             transaction.Commit();
-        //             return Ok(_api.Success("Delivery note deleted"));
-        //         }
-        //     }
-        //     catch (Exception ex)
-        //     {
-        //         return Ok(_api.Error(User, ex));
-        //     }
+                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_SaleAccounts", DeleteParams, connection, transaction);
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete Material Dispatch."));
+                    }
+                    else
+                    {
+                        if(N_RSID>0)
+                            dLayer.ExecuteScalar("update Inv_PRS set N_Processed=0 where N_PRSID=" + N_RSID + " and N_CompanyID=" + nCompanyID+ " and N_FnYearID=" + nFnYearID, connection, transaction);
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success("Material Dispatch deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
 
 
-        // }
+        }
 
     }
 }
