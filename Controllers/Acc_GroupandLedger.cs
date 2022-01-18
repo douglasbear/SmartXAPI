@@ -132,7 +132,93 @@ namespace SmartxAPI.Controllers
                 return Ok(api.Error(User,e));
             }
         }
+         [HttpGet("getCode")]
+        public ActionResult MasterGroupCode(int nFnYearID,int nGroupID,int nParentGroup)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nFnYearID);
+                    Params.Add("@p3", nGroupID);
+                    Params.Add("@p5", nParentGroup);
+                    string X_LedgerCode = "";
+                    string X_GroupCode = "";
+                    dt.Clear();
+                    dt.Columns.Add("X_LedgerCode");
+                    dt.Columns.Add("X_GroupCode");
+                  
+                   if(nGroupID>0){
 
+                      object LedgerCodeCount = dLayer.ExecuteScalar("select COUNT(convert(nvarchar(100),X_LedgerCode)) From Acc_MastLedger where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2",Params,connection);
+                        if (LedgerCodeCount == null)
+                            return Ok(api.Error(User,"Error"));
+
+                        object LedgerCodeObj = dLayer.ExecuteScalar("select X_GroupCode From Acc_MastGroup where N_GroupID =@p3 and N_CompanyID =@p1 and N_FnYearID=@p2", Params,connection);
+
+                        int count = myFunctions.getIntVAL(LedgerCodeCount.ToString());
+                         while (true)
+                        {
+                            count += 1;
+                            X_LedgerCode = LedgerCodeObj.ToString() + count.ToString("000");
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastLedger Where X_LedgerCode ='" + X_LedgerCode + "' and N_CompanyID=@p1 and N_FnYearID =@p2",Params,connection);
+                            if (N_Result == null)
+                                break;
+                        }
+
+                    DataRow row = dt.NewRow();
+                    row["X_LedgerCode"] =X_LedgerCode ;
+                    dt.Rows.Add(row);
+                   }
+                   if(nParentGroup>0)
+                   {
+                     
+                       object GroupCodeCount = dLayer.ExecuteScalar("select COUNT(convert(numeric,X_GroupCode)) From Acc_MastGroup where N_CompanyID =@p1 and  N_ParentGroup =@p5 and N_FnYearID=@p2", Params,connection);
+                        if (GroupCodeCount == null)
+                            return Ok(api.Error(User,"Error"));
+
+                        object GroupCodeObj = dLayer.ExecuteScalar("Select X_GroupCode from Acc_MastGroup Where N_GroupID =@p5 and N_CompanyID= @p1 and N_FnYearID =@p2", Params,connection);
+
+                        int count = myFunctions.getIntVAL(GroupCodeCount.ToString());
+                        while (true)
+                        {
+                            count += 1;
+                            X_GroupCode = GroupCodeObj.ToString() + count.ToString("00");
+                            object N_Result = dLayer.ExecuteScalar("Select 1 from Acc_MastGroup Where X_GroupCode ='" + X_GroupCode + "' and N_CompanyID= @p1 and N_FnYearID =@p2", Params,connection);
+                            if (N_Result == null)
+                                break;
+                        }
+                        DataRow row = dt.NewRow();
+                    row["X_GroupCode"] =X_GroupCode ;
+                    dt.Rows.Add(row);
+
+
+                   }
+
+
+                    dt = api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(api.Notice("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
+
+        
         [HttpPost("saveAccount")]
         public ActionResult SaveAccount([FromBody] DataSet ds)
         {
