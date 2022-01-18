@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            
+
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -1359,9 +1359,12 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                string Artext = Translate(xText,"en","ar");
-                DataTable dt = new DataTable();
-                return Ok(_api.Success(dt));
+                SortedList OutPut = new SortedList();
+                string Artext = Translate(xText, "en", "ar");
+                if (xText == null)
+                    Artext="";
+                OutPut.Add("arabic", Artext);
+                return Ok(_api.Success(OutPut));
 
             }
             catch (Exception e)
@@ -1369,7 +1372,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        public String Translate(String text,string fromLanguage,string toLanguage)
+        public String Translate(String text, string fromLanguage, string toLanguage)
         {
             var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={HttpUtility.UrlEncode(text)}";
             var webClient = new WebClient
