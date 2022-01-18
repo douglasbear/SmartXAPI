@@ -233,7 +233,8 @@ namespace SmartxAPI.Controllers
 
                     SortedList PostParam = new SortedList();
                     PostParam.Add("N_CompanyID", nCompanyID);
-                    PostParam.Add("X_InventoryMode", nDispatchID);
+                    PostParam.Add("X_InventoryMode", "MATERIAL DISPATCH");
+                    PostParam.Add("N_InternalID", nDispatchID);
                     PostParam.Add("N_UserID", N_UserID);
 
                     if (!bDeptEnabled)
