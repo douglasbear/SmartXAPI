@@ -111,11 +111,11 @@ namespace SmartxAPI.Controllers
                         {"N_CompanyID",myFunctions.GetCompanyID(User)},
                         {"N_FnYearID",nFnYearID},
                         {"N_LanguageID",nLangID},
-                        {"N_UserCategoryID",myFunctions.GetUserCategory(User)},
+                        {"X_UserCategoryIDList",myFunctions.GetUserCategoryList(User)},
                         {"N_ParentmenuID",NParentMenuId}
                     };
 
-                    DataTable MasterTable = dLayer.ExecuteDataTablePro("SP_InvInvoiceCounter_Disp", mParamsList, connection);
+                    DataTable MasterTable = dLayer.ExecuteDataTablePro("SP_InvInvoiceCounter_Disp_Cloud", mParamsList, connection);
                     SortedList OutPut = new SortedList(){
                             {"Settings",_api.Format(Settings)},
                             {"InvoiceCounter",_api.Format(MasterTable)},
