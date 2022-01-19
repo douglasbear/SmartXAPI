@@ -155,53 +155,53 @@ namespace SmartxAPI.Controllers
                             string IDFieldName = "PKey_Code";
                             int rowCount = 0;
                             int totalCount = 0;
-                            // for (int j = 0; j < Mastertable.Rows.Count; j++)
-                            // {
-                            //     rowCount = rowCount + 1;
-                            //     string FieldValues = "";
-                            //     for (int k = 0; k < Mastertable.Columns.Count; k++)
-                            //     {
-                            //         var values = "";
-                            //         if (Mastertable.Columns[k].ColumnName.ToString().ToLower() == IDFieldName.ToLower())
-                            //         {
-                            //             values = (j + 1).ToString();
-                            //         }
-                            //         else
-                            //         {
-                            //             if (Mastertable.Rows[j][k] == DBNull.Value) { continue; }
-                            //             values = Mastertable.Rows[j][k].ToString();
-                            //             values = values.Replace("|", " ");
-                            //         }
+                            for (int j = 0; j < Mastertable.Rows.Count; j++)
+                            {
+                                rowCount = rowCount + 1;
+                                string FieldValues = "";
+                                for (int k = 0; k < Mastertable.Columns.Count; k++)
+                                {
+                                    var values = "";
+                                    if (Mastertable.Columns[k].ColumnName.ToString().ToLower() == IDFieldName.ToLower())
+                                    {
+                                        values = (j + 1).ToString();
+                                    }
+                                    else
+                                    {
+                                        if (Mastertable.Rows[j][k] == DBNull.Value) { continue; }
+                                        values = Mastertable.Rows[j][k].ToString();
+                                        values = values.Replace("|", " ");
+                                    }
 
-                            //         FieldValues = FieldValues + "|" + values;
-                            //         if (j == 0)
-                            //             FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
+                                    FieldValues = FieldValues + "|" + values;
+                                    if (j == 0)
+                                        FieldList = FieldList + "," + Mastertable.Columns[k].ColumnName.ToString();
 
 
-                            //     }
+                                }
 
-                            //     if (j == 0)
-                            //     {
-                            //         FieldList = FieldList.Substring(1);
-                            //     }
+                                if (j == 0)
+                                {
+                                    FieldList = FieldList.Substring(1);
+                                }
 
-                            //     FieldValues = ValidateString(FieldValues.Substring(1));
-                            //     FieldValuesArray = FieldValuesArray + ",(" + FieldValues + ")";
-                            //     if (rowCount == 1000 || Mastertable.Rows.Count == (totalCount + rowCount))
-                            //     {
-                            //         totalCount = totalCount + rowCount;
-                            //         FieldValuesArray = FieldValuesArray.Substring(1);
-                            //         string inserStript = "insert into " + xTableName + " (" + FieldList + ") values" + FieldValuesArray;
-                            //         dLayer.ExecuteNonQuery(inserStript, connection, transaction); 
-                            //         FieldValuesArray = "";
-                            //         rowCount = 0;
-                            //     }
+                                FieldValues = ValidateString(FieldValues.Substring(1));
+                                FieldValuesArray = FieldValuesArray + ",(" + FieldValues + ")";
+                                if (rowCount == 1000 || Mastertable.Rows.Count == (totalCount + rowCount))
+                                {
+                                    totalCount = totalCount + rowCount;
+                                    FieldValuesArray = FieldValuesArray.Substring(1);
+                                    string inserStript = "insert into " + xTableName + " (" + FieldList + ") values" + FieldValuesArray;
+                                    dLayer.ExecuteNonQuery(inserStript, connection, transaction); 
+                                    FieldValuesArray = "";
+                                    rowCount = 0;
+                                }
 
-                            // }
+                            }
 
 
  
-                             nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
+                            //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
                             nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
                              dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
