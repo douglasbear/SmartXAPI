@@ -201,7 +201,7 @@ namespace SmartxAPI.Controllers
 
 
  
-                            // nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
+                            //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
                             nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
                              dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
