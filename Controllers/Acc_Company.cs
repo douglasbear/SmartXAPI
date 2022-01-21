@@ -147,13 +147,20 @@ namespace SmartxAPI.Controllers
 
 
                     DataTable AdminInfo = dLayer.ExecuteDataTable("Select N_UserID,X_UserID as x_AdminName from Sec_User Inner Join Sec_UserCategory on Sec_User.N_UserCategoryID= Sec_UserCategory.N_UserCategoryID and X_UserCategory ='Administrator' and Sec_User.X_UserID='Admin' and Sec_User.N_CompanyID=Sec_UserCategory.N_CompanyID  and Sec_User.N_CompanyID=@p2", Params, connection);
-                    DataTable TaxInfo = dLayer.ExecuteDataTable("Select N_Value as n_PkeyID,X_Value as x_DisplayName from Gen_Settings where N_CompanyID=@p2 and X_Group='Inventory' and X_Description='DefaultTaxCategory'" , Params, connection);
+                    // DataTable TaxInfo = dLayer.ExecuteDataTable("Select N_Value as n_PkeyID,X_Value as x_DisplayName from Gen_Settings where N_CompanyID=@p2 and X_Group='Inventory' and X_Description='DefaultTaxCategory'" , Params, connection);
+
+
 
                     DataTable FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID, (select top 1 N_FnYearID from vw_CheckTransaction Where N_FnYearID = Acc_FnYear.N_FnYearID and N_CompanyID = Acc_FnYear.N_CompanyID) As 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     if (FnYearInfo.Rows.Count == 0)
                     {
                         FnYearInfo = dLayer.ExecuteDataTable("Select D_Start as 'd_FromDate',D_End as 'd_ToDate',N_FnYearID,0 as 'TransAction',N_TaxType from Acc_FnYear Where N_FnYearID=(select max(N_FnYearID) from Acc_FnYear where N_CompanyID=@p2)  and  N_CompanyID=@p2", Params, connection);
                     }
+
+                    int N_FnYearID = myFunctions.getIntVAL(FnYearInfo.Rows[0]["N_FnYearID"].ToString());
+
+
+                    DataTable TaxInfo = dLayer.ExecuteDataTable("SELECT  Top(1) Gen_Settings.N_Value AS n_PkeyID, Acc_TaxCategory.X_CategoryName AS x_DisplayName FROM Acc_TaxCategory INNER JOIN Acc_FnYear ON Acc_TaxCategory.N_TaxTypeID = Acc_FnYear.N_TaxType AND Acc_TaxCategory.N_CompanyID = Acc_FnYear.N_CompanyID INNER JOIN Gen_Settings ON Acc_TaxCategory.X_PkeyCode = Gen_Settings.N_Value AND Acc_TaxCategory.N_CompanyID = Gen_Settings.N_CompanyID WHERE (Gen_Settings.N_CompanyID = @p2) AND (Gen_Settings.X_Group = 'Inventory') AND (Gen_Settings.X_Description = 'DefaultTaxCategory') and Acc_FnYear.N_FnYearID="+N_FnYearID, Params, connection);
 
                     Output.Add("CompanyInfo", dt);
                     Output.Add("AdminInfo", AdminInfo);

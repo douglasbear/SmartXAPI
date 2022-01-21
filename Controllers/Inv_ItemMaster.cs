@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_ItemID<> " + nNotGridItemID;
 
             if (nLocationID != 0)
-                Condition = Condition + " and vw_InvItem_Search_cloud.N_LocationID =" + nLocationID;
+                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID="+nLocationID+" )  " ;
 
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
@@ -152,7 +152,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-            
+
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
@@ -163,15 +163,16 @@ namespace SmartxAPI.Controllers
             else
                 xCriteria = "and  N_BranchID=@p5 ";
 
-            if (b_AllBranchData)
-                nLocationID = 0;
+            // if (b_AllBranchData)
+            //     nLocationID = 0;
 
 
-            if (nLocationID != 0) xCriteria = xCriteria + " and vw_InvItem_Search_cloud.N_LocationID=@p6";
+            if (nLocationID != 0) xCriteria = xCriteria + " and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=@p6 ) ";
 
 
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
+                Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
+                // Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
@@ -196,10 +197,13 @@ namespace SmartxAPI.Controllers
 
             string feildList = " N_CompanyID, N_ItemID, [Item Code], Description, Description_Ar, Category, [Item Class], N_Rate, [Part No], X_ItemUnit, N_Qty, X_SalesUnit, X_PurchaseUnit, X_StockUnit, Rate, N_StockUnitID, [Product Code], Stock ";
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + " group by " + feildList + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + " group by " + feildList + Searchkey + xSortBy + " ) " + " group by " + feildList + xSortBy;
+            // if (Count == 0)
+            //     sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + " group by " + feildList + xSortBy;
+            // else
+            //     sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + " group by " + feildList + Searchkey + xSortBy + " ) " + " group by " + feildList + xSortBy;
+                int OFFSET = (nPage * nSizeperpage)- nSizeperpage;
+                string PageString = " OFFSET "+ OFFSET +" ROWS FETCH NEXT "+nSizeperpage+" ROWS ONLY";
+                sqlCommandText = "select " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + xSortBy + PageString;
 
 
             Params.Add("@p1", nCompanyID);
@@ -218,7 +222,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey;
+                    string sqlCommandCount = "select Count(1)  from Inv_ItemMaster where N_CompanyID=@p1 and B_Inactive=@p2 and X_ItemCode<> @p3 and N_ItemTypeID<>@p4 " + xCriteria ;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -1359,9 +1363,12 @@ namespace SmartxAPI.Controllers
         {
             try
             {
-                string Artext = Translate(xText,"en","ar");
-                DataTable dt = new DataTable();
-                return Ok(_api.Success(dt));
+                SortedList OutPut = new SortedList();
+                string Artext = Translate(xText, "en", "ar");
+                if (xText == null)
+                    Artext="";
+                OutPut.Add("arabic", Artext);
+                return Ok(_api.Success(OutPut));
 
             }
             catch (Exception e)
@@ -1369,7 +1376,7 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
-        public String Translate(String text,string fromLanguage,string toLanguage)
+        public String Translate(String text, string fromLanguage, string toLanguage)
         {
             var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={HttpUtility.UrlEncode(text)}";
             var webClient = new WebClient

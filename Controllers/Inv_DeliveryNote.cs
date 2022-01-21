@@ -444,8 +444,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
+                                            SortedList Result = new SortedList();
+                    Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
+                    Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
-                        return Ok(_api.Success("Delivery Note saved" + ":" + InvoiceNo));
+                        return Ok(_api.Success(Result,"Delivery Note saved"));
                     }
                 }
             }
