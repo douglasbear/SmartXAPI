@@ -1436,7 +1436,7 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                 int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
                 string Toemail = "";
-                object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
+                object Email = dLayer.ExecuteScalar("select TOP(1) ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
                 Toemail = Email.ToString();
                 object CurrentStatus = dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID=" + FormID + " and X_TransCode='" + TransCode + "' and N_TransID=" + TransID + " and X_Type='" + TransType + "'", Params, connection, transaction);
                 object EmployeeName = dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID=" + nUserID + " and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -1451,7 +1451,7 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                     {
                         object body = null;
                         string MailBody;
-                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink;
+                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "approvalDashboard";
                         if (body != null)
                         {
                             body = body.ToString();
