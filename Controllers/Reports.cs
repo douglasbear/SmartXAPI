@@ -215,8 +215,8 @@ namespace SmartxAPI.Controllers
                     var client = new HttpClient(handler);
                     var random = RandomString();
                     var dbName = connection.Database;
-                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
-                    //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0";
+                    //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                    string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + reportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
                     var path = client.GetAsync(URL);
                     path.Wait();
                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + ".pdf" } }));
@@ -269,8 +269,8 @@ namespace SmartxAPI.Controllers
                     object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
                     int N_Custom = myFunctions.getIntVAL(Custom.ToString());
                     object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-                    object ObjFileName = dLayer.ExecuteScalar("SELECT X_FileName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
-                    FileName=ObjFileName.ToString();
+                    // object ObjFileName = dLayer.ExecuteScalar("SELECT X_FileName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    // FileName=ObjFileName.ToString();
                     if (N_Custom == 1)
                     {
 
@@ -411,12 +411,31 @@ namespace SmartxAPI.Controllers
                         object docNumber = "";
                         string formName = "";
 
-                        if(nFormID==64||nFormID==80||nFormID==894)
+                        if(nFormID==64||nFormID==80||nFormID==1346)
                         {
+                            SortedList Params = new SortedList();
                             if(nFormID==64)
                             {
                                 formName="Invoice";
+                                partyName=dLayer.ExecuteScalar("select X_CustomerName from vw_Sales where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_SalesId=" + nPkeyID, Params, connection, transaction);
+                                docNumber=dLayer.ExecuteScalar("select X_ReceiptNo from vw_Sales where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_SalesId=" + nPkeyID, Params, connection, transaction);
+                                    
                             }
+                            if(nFormID==1346)
+                            {
+                                formName="Proforma Invoice";
+                                partyName=dLayer.ExecuteScalar("select X_CustomerName from vw_Sales where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_SalesId=" + nPkeyID, Params, connection, transaction);
+                                docNumber=dLayer.ExecuteScalar("select X_ReceiptNo from vw_Sales where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_SalesId=" + nPkeyID, Params, connection, transaction);
+                                    
+                            }
+                            if(nFormID==80)
+                            {
+                                formName="Quotation";
+                                partyName=dLayer.ExecuteScalar("select X_CustomerName from vw_Quotaion where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationId=" + nPkeyID, Params, connection, transaction);
+                                docNumber=dLayer.ExecuteScalar("select X_QuotationNo from vw_Quotaion where N_CompanyID =" + myFunctions.GetCompanyID(User) + " and N_QuotationId=" + nPkeyID, Params, connection, transaction);
+                                    
+                            }
+                            partyName= partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID="+nFormID+"&QRUrl="+QRurl+"&N_PkeyID="+nPkeyID+"&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + formName;
@@ -445,11 +464,20 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
+                        
+                        if(nFormID==64 || nFormID==80 ||nFormID==894)
+                        {
+                            ReportName=formName+"_"+docNumber+"_"+partyName + ".pdf";
+                        }
+                        else
+                        {
+                            ReportName=ReportName.Trim() + random + ".pdf";
+                        }
                         path.Wait();
-                        if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName.Trim() + random + ".pdf"))
+                        if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName ))
                             return Ok(_api.Error(User, "Report Generation Failed"));
                         else
-                            return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
+                            return Ok(_api.Success(new SortedList() { { "FileName", ReportName } }));
                     }
                     else
                     {
@@ -601,8 +629,8 @@ namespace SmartxAPI.Controllers
                         {
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
-                        // string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0";
+                        //string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
                         var path = client.GetAsync(URL);
                         path.Wait();
 
@@ -812,8 +840,8 @@ namespace SmartxAPI.Controllers
                 }
 
 
-                string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
-                // string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention +"&N_FormID=0&QRUrl=&N_PkeyID=0";
+                //string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;
+                 string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention +"&N_FormID=0&QRUrl=&N_PkeyID=0&partyName=&docNumber=&formName=";
                 var path = client.GetAsync(URL);
 
                 path.Wait();
