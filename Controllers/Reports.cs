@@ -407,9 +407,17 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
-                        string partyName = "";
-                        string docNumber = "";
+                        object partyName = "";
+                        object docNumber = "";
                         string formName = "";
+
+                        if(nFormID==64||nFormID==80||nFormID==894)
+                        {
+                            if(nFormID==64)
+                            {
+                                formName="Invoice";
+                            }
+                        }
 
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID="+nFormID+"&QRUrl="+QRurl+"&N_PkeyID="+nPkeyID+"&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + formName;
                         var path = client.GetAsync(URL);
