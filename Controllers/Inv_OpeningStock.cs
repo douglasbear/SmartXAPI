@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("ProductList")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nLocationID, bool b_AllBranchData)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nLocationID, bool b_AllBranchData,bool partNoEnable)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -54,8 +54,16 @@ namespace SmartxAPI.Controllers
 
             if (query != "" && query != null)
             {
+                if (partNoEnable)
+                {
+                    qry = " and (Description like @query or vw_InvItem_Search.[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
+                else
+                {
                 qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
+                }
             }
 
             //xCriteria = "where N_CompanyID=" + nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item'  and N_LocationID=" + nLocationID + "";
