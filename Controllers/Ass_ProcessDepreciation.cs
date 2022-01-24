@@ -307,12 +307,12 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     SortedList DeleteParams = new SortedList(){
-                                {"N_CompanyID",nCompanyId.ToString()},
+                                {"N_CompanyID",nCompanyId},
                                 {"X_TransType","Depreciation"},
                                 {"N_VoucherID",myFunctions.getIntVAL(DepreciationNo.ToString())},
-                                {"N_UserID",nFnYearID.ToString()},
+                                {"N_UserID",nFnYearID},
                                 {"X_SystemName",""},
-                                {"N_BranchID",nBranchID.ToString()}};
+                                {"N_BranchID",nBranchID}};
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection, transaction);

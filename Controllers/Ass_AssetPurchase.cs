@@ -484,25 +484,28 @@ namespace SmartxAPI.Controllers
                                     if (AssMasterTableNew.Rows[j]["X_CategoryPrefix"].ToString() == "")
                                         X_ItemCode = "Asset" + "" + N_ItemCodeId.ToString("0000");
                                     else
+                                    {
                                         X_ItemCode = AssMasterTableNew.Rows[j]["X_CategoryPrefix"].ToString() + "" + N_ItemCodeId.ToString("0000");
+                                    }
+
+                                    for (int l = 0; l < AssMasterTableNew.Rows.Count; l++)
+                                    {
+                                        if (X_ItemCode == AssMasterTableNew.Rows[l]["X_ItemCode"].ToString())
+                                        {
+                                            N_ItemCodeId += 1;
+
+                                            if (AssMasterTableNew.Rows[j]["X_CategoryPrefix"].ToString() == "")
+                                                X_ItemCode = "Asset" + "" + N_ItemCodeId.ToString("0000");
+                                            else
+                                                X_ItemCode = AssMasterTableNew.Rows[j]["X_CategoryPrefix"].ToString() + "" + N_ItemCodeId.ToString("0000");
+
+                                            l = 0;
+                                        }
+                                    }
                                 }
                                 else
                                 {
                                     X_ItemCode = AssMasterTableNew.Rows[j]["X_ItemCode"].ToString();
-                                }
-                                for (int l = 0; l < AssMasterTableNew.Rows.Count; l++)
-                                {
-                                    if (X_ItemCode == AssMasterTableNew.Rows[l]["X_ItemCode"].ToString())
-                                    {
-                                        N_ItemCodeId += 1;
-
-                                        if (AssMasterTableNew.Rows[j]["X_CategoryPrefix"].ToString() == "")
-                                            X_ItemCode = "Asset" + "" + N_ItemCodeId.ToString("0000");
-                                        else
-                                            X_ItemCode = AssMasterTableNew.Rows[j]["X_CategoryPrefix"].ToString() + "" + N_ItemCodeId.ToString("0000");
-
-                                        l = 0;
-                                    }
                                 }
 
                                 if (myFunctions.getIntVAL(AssMasterTableNew.Rows[j]["N_ItemID"].ToString()) == 0)
