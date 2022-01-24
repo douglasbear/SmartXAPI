@@ -103,6 +103,7 @@ namespace SmartxAPI.Data
                                     X_UserFullName = dr["X_UserFullName"].ToString(),
                                     X_UserCategoryIDList = dr["X_UserCategoryIDList"].ToString(),
                                     X_BranchCode = dr["X_BranchCode"].ToString(),
+                                    N_Decimal =myFunctions.getIntVAL(dr["N_Decimal"].ToString()),
                                 }).ToList()
                         .FirstOrDefault();
 

@@ -39,6 +39,7 @@ namespace SmartxAPI.Dtos.SP
         public byte[] I_Logo { get; set; }
         public bool B_AllBranchesData { get; set; }
         public int N_TaxType { get; set; }
+        public int N_Decimal { get; set; }
         public string X_UserFullName { get; set; }
         public string X_BranchCode { get; set; }
         public string X_UserCategoryIDList { get; set; }
