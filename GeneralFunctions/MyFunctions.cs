@@ -1459,7 +1459,7 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
                     {
                         object body = null;
                         string MailBody;
-                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "approvalDashboard";
+                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "/approvalDashboard";
                         if (body != null)
                         {
                             body = body.ToString();

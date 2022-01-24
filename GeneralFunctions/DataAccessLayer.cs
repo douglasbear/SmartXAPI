@@ -534,14 +534,14 @@ namespace SmartxAPI.GeneralFunctions
                 StringBuilder sb = new StringBuilder();
                 sb.AppendLine(j+" ");
                 sb.AppendLine(FieldList);
-                                sb.AppendLine(j+" ");
+                sb.AppendLine(j+" ");
                 sb.AppendLine(FieldValues);
                 if (!Directory.Exists(logPath))
                     Directory.CreateDirectory(logPath);
 
                     File.AppendAllText(logPath + "Sqllog.log", sb.ToString());
                     sb.Clear();
- FieldValues = "";
+                FieldValues = "";
                 if (Result <= 0) return 0;
             }
 

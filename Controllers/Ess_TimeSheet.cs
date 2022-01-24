@@ -158,7 +158,7 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        var rows = Details.AsEnumerable().Where(r => r.Field<int>("B_HolidayFlag") == 1);
+                        var rows = Details.AsEnumerable().Where(r => r.Field<int>("B_HolidayFlag") == 1 || r.Field<int>("B_IsVacation") == 1);
 
                         DataTable HolyDays = Details.Clone();
 
@@ -173,11 +173,17 @@ namespace SmartxAPI.Controllers
 
                         for (int i = Details.Rows.Count - 1; i >= 0; i--)
                         {
-                            if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && Details.Rows[i]["B_HolidayFlag"].ToString() == "0")
+                            if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_HolidayFlag"].ToString() == "0" && row["B_HolidayFlag"].ToString() == "1"))
                                 {
                                 Details.Rows[i].Delete();
                                 Details.AcceptChanges();
                                 }
+                                if(row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_IsVacation"].ToString() == "0" && row["B_IsVacation"].ToString() == "1" ))
+                                {
+                                Details.Rows[i].Delete();
+                                Details.AcceptChanges();
+                                }
+                                 Details.AcceptChanges();
                         }
                     }
                     }
