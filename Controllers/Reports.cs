@@ -37,11 +37,12 @@ namespace SmartxAPI.Controllers
         private readonly IWebHostEnvironment env;
         string RPTLocation = "";
         string ReportName = "";
+        string FileName = "";
         string critiria = "";
         string TableName = "";
         string QRurl = "";
         // private string X_CompanyField = "", X_YearField = "", X_BranchField="", X_UserField="",X_DefReportFile = "", X_GridPrevVal = "", X_SelectionFormula = "", X_ProcName = "", X_ProcParameter = "", X_ReprtTitle = "",X_Operator="";
-        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun,IWebHostEnvironment envn, IConfiguration conf)
+        public Reports(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IWebHostEnvironment envn, IConfiguration conf)
         {
             _api = api;
             dLayer = dl;
@@ -239,7 +240,7 @@ namespace SmartxAPI.Controllers
             ReportName = "";
             //int N_UserCategoryID=myFunctions.GetUserCategory(User);
             bool b_Custom = false;
-            string xUserCategoryList=myFunctions.GetUserCategoryList(User);
+            string xUserCategoryList = myFunctions.GetUserCategoryList(User);
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -265,12 +266,14 @@ namespace SmartxAPI.Controllers
 
                     object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
                     TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
-                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in ("+xUserCategoryList+")", QueryParams, connection, transaction);
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
                     int N_Custom = myFunctions.getIntVAL(Custom.ToString());
-                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in ("+xUserCategoryList+")", QueryParams, connection, transaction);
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    object ObjFileName = dLayer.ExecuteScalar("SELECT X_FileName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    FileName=ObjFileName.ToString();
                     if (N_Custom == 1)
                     {
-                        
+
                         RPTLocation = RPTLocation + "custom/";
                         ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
                         ObjReportName = ObjReportName + "_" + myFunctions.GetClientID(User) + "_" + myFunctions.GetCompanyID(User) + "_" + myFunctions.GetCompanyName(User) + ".rpt";
@@ -281,8 +284,9 @@ namespace SmartxAPI.Controllers
                     if (nPreview == 1)
                     {
                         ReportName = xRptname;
-                        if(ReportName.Contains(".rpt")){
-                        ReportName = ReportName.Remove(ReportName.Length - 4);
+                        if (ReportName.Contains(".rpt"))
+                        {
+                            ReportName = ReportName.Remove(ReportName.Length - 4);
                         }
                         object pkeyID = dLayer.ExecuteScalar("SELECT max(" + Templatecritiria + ") FROM " + TableName + " WHERE N_CompanyID =@nCompanyId", QueryParams, connection, transaction);
                         if (pkeyID != null)
@@ -315,26 +319,26 @@ namespace SmartxAPI.Controllers
                         TLVCls tlv = new TLVCls(Company, VatNumber.ToString(), dt, Convert.ToDouble(Amount), Convert.ToDouble(VatAmount));
                         var plainTextBytes = tlv.ToBase64();
 
-                        //QRurl = string.Format(plainTextBytes);
-                        var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
-                        WebResponse response = default(WebResponse);
-                        Stream remoteStream = default(Stream);
-                        StreamReader readStream = default(StreamReader);
-                        WebRequest request = WebRequest.Create(url);
-                        response = request.GetResponse();
-                        remoteStream = response.GetResponseStream();
-                        readStream = new StreamReader(remoteStream);
-                        string path = "C://OLIVOSERVER2020/QR/";
-                        DirectoryInfo info = new DirectoryInfo(path);
-                        if (!info.Exists)
-                        {
-                            info.Create();
-                        }
-                        string pathfile = Path.Combine(path, "QR.png");
-                        using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
-                        {
-                            remoteStream.CopyTo(outputFileStream);
-                        }
+                        QRurl = string.Format(plainTextBytes);
+                        // var url = string.Format("http://chart.apis.google.com/chart?cht=qr&chs={1}x{2}&chl={0}", plainTextBytes.Replace("&", "%26"), "500", "500");
+                        // WebResponse response = default(WebResponse);
+                        // Stream remoteStream = default(Stream);
+                        // StreamReader readStream = default(StreamReader);
+                        // WebRequest request = WebRequest.Create(url);
+                        // response = request.GetResponse();
+                        // remoteStream = response.GetResponseStream();
+                        // readStream = new StreamReader(remoteStream);
+                        // string path = "C://OLIVOSERVER2020/QR/";
+                        // DirectoryInfo info = new DirectoryInfo(path);
+                        // if (!info.Exists)
+                        // {
+                        //     info.Create();
+                        // }
+                        // string pathfile = Path.Combine(path, "QR.png");
+                        // using (FileStream outputFileStream = new FileStream(pathfile, FileMode.Create))
+                        // {
+                        //     remoteStream.CopyTo(outputFileStream);
+                        // }
                         //QR End Here
 
                         // bool SaveDraft = false;
@@ -403,7 +407,11 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
-                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf";
+                        string partyName = "";
+                        string docNumber = "";
+                        string formName = "";
+
+                        string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID="+nFormID+"&QRUrl="+QRurl+"&N_PkeyID="+nPkeyID+"&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + formName;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
                         {
@@ -430,10 +438,10 @@ namespace SmartxAPI.Controllers
 
                         }
                         path.Wait();
-                        if ( env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName.Trim() + random + ".pdf")) 
-                        return Ok(_api.Error(User, "Report Generation Failed"));
+                        if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName.Trim() + random + ".pdf"))
+                            return Ok(_api.Error(User, "Report Generation Failed"));
                         else
-                        return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
+                            return Ok(_api.Success(new SortedList() { { "FileName", ReportName.Trim() + random + ".pdf" } }));
                     }
                     else
                     {
