@@ -300,6 +300,12 @@ namespace SmartxAPI.Controllers
                 if (ex.Message == "Your Subscription Expired")
                     Res.Add("Message", "Subscription Expired");
                 else
+                if (ex.Message == "Unauthorized Access")
+                    Res.Add("Message", "Unauthorized Access");
+                else
+                if (ex.Message == "Login Failed")
+                    Res.Add("Message", "Login Failed");
+                else
                     Res.Add("Message", "Something went wrong..");
 
 
