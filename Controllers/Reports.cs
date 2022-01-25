@@ -465,7 +465,7 @@ namespace SmartxAPI.Controllers
 
                         }
                         
-                        if(nFormID==64 || nFormID==80 ||nFormID==894)
+                        if(nFormID==64 || nFormID==80 ||nFormID==1346)
                         {
                             ReportName=formName+"_"+docNumber+"_"+partyName + ".pdf";
                         }
