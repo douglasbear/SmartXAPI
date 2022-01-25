@@ -1993,6 +1993,11 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
             return this.getIntVAL(User.FindFirst(ClaimTypes.PrimarySid)?.Value);
         }
 
+        public int GetLoginID(ClaimsPrincipal User)
+        {
+            return this.getIntVAL(User.FindFirst(ClaimTypes.Thumbprint)?.Value);
+        }
+
         public string GetConnectionString(ClaimsPrincipal User)
         {
             return config.GetConnectionString(User.FindFirst(ClaimTypes.Uri)?.Value);
@@ -2486,6 +2491,7 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
         public string GetUserName(ClaimsPrincipal User);
         public string GetUserLoginName(ClaimsPrincipal User);
         public string GetEmailID(ClaimsPrincipal User);
+        public int GetLoginID(ClaimsPrincipal User);
 
 
         public string GetConnectionString(ClaimsPrincipal User);

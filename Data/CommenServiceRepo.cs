@@ -48,7 +48,7 @@ namespace SmartxAPI.Data
         }
 
 
-        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID = 0, int globalUserID = 0)
+        public dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID = 0, int globalUserID = 0,string requestIP="",int loginID=0)
         {
 
 
@@ -171,7 +171,7 @@ namespace SmartxAPI.Data
                     using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                     {
                         cnn.Open();
-                        string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN ClientMaster.X_EmailID=Users.X_UserID THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
+                        string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
 
                         DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
                         if (globalInfo.Rows.Count > 0)
@@ -184,6 +184,20 @@ namespace SmartxAPI.Data
                             xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
                         }
                     }
+
+   
+                SortedList logParams = new SortedList()
+                    {
+                        {"N_CompanyID",loginRes.N_CompanyID},
+                        {"N_FnyearID",loginRes.N_FnYearID},
+                        {"N_BranchId",loginRes.N_BranchID},
+                        {"N_ActionID",1},
+                        {"N_Type",1},
+                        {"N_LoggedInID",loginID},
+                        {"X_SystemName",requestIP},
+                        {"N_UserID",loginRes.N_UserID}
+                    };
+                loginRes.N_LoginID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_LoginDetailsInsert", logParams, connection).ToString());
 
 
 
@@ -213,7 +227,8 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.Upn,username),
                         new Claim(ClaimTypes.Uri,uri),
                         new Claim(ClaimTypes.SerialNumber,userPattern.ToString()),
-                        new Claim(ClaimTypes.AuthenticationInstant ,loginRes.X_UserCategoryIDList.ToString())
+                        new Claim(ClaimTypes.AuthenticationInstant ,loginRes.X_UserCategoryIDList.ToString()),
+                        new Claim(ClaimTypes.Thumbprint ,loginRes.N_LoginID.ToString())
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
@@ -242,7 +257,10 @@ namespace SmartxAPI.Data
 
                         using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
                         {
-                            cnn2.Open();
+                           cnn2.Open();
+                            int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID, cnn2).ToString());
+                            if(daysToExpire<=0)
+                            throw new Exception("Your Subscription Expired");
                             if (AppID != 6 && AppID != 8 && AppID != 10)
                             {
                                 string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
@@ -408,7 +426,8 @@ namespace SmartxAPI.Data
                         new Claim(ClaimTypes.Upn,username),
                         new Claim(ClaimTypes.Uri,uri),
                         new Claim(ClaimTypes.SerialNumber,userPattern.ToString()),
-                        new Claim(ClaimTypes.AuthenticationInstant ,loginRes.X_UserCategoryIDList.ToString())
+                        new Claim(ClaimTypes.AuthenticationInstant ,loginRes.X_UserCategoryIDList.ToString()),
+                        new Claim(ClaimTypes.Thumbprint ,loginRes.N_LoginID.ToString())
                     }),
                             Expires = DateTime.UtcNow.AddDays(2),
                             SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(rkey), SecurityAlgorithms.HmacSha256Signature)
@@ -442,6 +461,6 @@ namespace SmartxAPI.Data
 
     public interface ICommenServiceRepo
     {
-        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID, int globalUserID);
+        dynamic Authenticate(int companyid, string companyname, string username, int userid, string reqtype, int AppID, string uri, int clientID, int globalUserID,string requestIP,int loginID);
     }
 }

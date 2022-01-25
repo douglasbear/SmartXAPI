@@ -91,6 +91,8 @@ namespace SmartxAPI.Dtos.SP
         public string N_DecimalPlace { get; set; }
         [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
+                [NotMapped]
+        public int N_LoginID { get; set; }
 
 
 
