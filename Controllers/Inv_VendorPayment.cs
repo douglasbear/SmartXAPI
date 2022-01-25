@@ -482,9 +482,9 @@ namespace SmartxAPI.Controllers
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_CurrencyID", typeof(int), myFunctions.getIntVAL(Master["N_CurrencyID"].ToString()));
 
                         if (DetailTable.Columns.Contains("N_ExchangeRate"))
-                            row["N_ExchangeRate"] = myFunctions.getIntVAL(Master["N_ExchangeRate"].ToString());
+                            row["N_ExchangeRate"] = myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
                         else
-                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ExchangeRate", typeof(int), myFunctions.getIntVAL(Master["N_ExchangeRate"].ToString()));
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ExchangeRate", typeof(double), myFunctions.getVAL(Master["N_ExchangeRate"].ToString()));
                         if (DetailTable.Columns.Contains("n_PayReceiptDetailsId"))
                         {
 
