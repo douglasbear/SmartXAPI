@@ -482,9 +482,9 @@ namespace SmartxAPI.Controllers
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_CurrencyID", typeof(int), myFunctions.getIntVAL(Master["N_CurrencyID"].ToString()));
 
                         if (DetailTable.Columns.Contains("N_ExchangeRate"))
-                            row["N_ExchangeRate"] = myFunctions.getIntVAL(Master["N_ExchangeRate"].ToString());
+                            row["N_ExchangeRate"] = myFunctions.getVAL(Master["N_ExchangeRate"].ToString());
                         else
-                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ExchangeRate", typeof(int), myFunctions.getIntVAL(Master["N_ExchangeRate"].ToString()));
+                            myFunctions.AddNewColumnToDataTable(DetailTable, "N_ExchangeRate", typeof(double), myFunctions.getVAL(Master["N_ExchangeRate"].ToString()));
                         if (DetailTable.Columns.Contains("n_PayReceiptDetailsId"))
                         {
 
@@ -582,7 +582,7 @@ namespace SmartxAPI.Controllers
         [HttpGet("paymentType")]
         public ActionResult GetPaymentType()
         {
-            string sqlCommandText = "select 'Vendor Payment' AS X_PaymentType,'PP' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'PA' AS x_Type";
+            string sqlCommandText = "select 'Invoice Payment' AS X_PaymentType,'PP' AS x_Type UNION select 'Advance Payment' AS X_PaymentType,'PA' AS x_Type";
             SortedList mParamList = new SortedList() { };
             DataTable typeTable = new DataTable();
             try

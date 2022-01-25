@@ -36,7 +36,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("ProductList")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nLocationID, bool b_AllBranchData)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nLocationID, bool b_AllBranchData,bool partNoEnable)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -54,8 +54,16 @@ namespace SmartxAPI.Controllers
 
             if (query != "" && query != null)
             {
+                if (partNoEnable)
+                {
+                    qry = " and (Description like @query or vw_InvItem_Search.[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
+                else
+                {
                 qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
+                }
             }
 
             //xCriteria = "where N_CompanyID=" + nCompanyID + " and (B_IsIMEI=0 or B_IsIMEI is null)  and  ([Item Class]='Stock Item' OR [Item Class]='Assembly Item'  and N_LocationID=" + nLocationID + "";
@@ -148,6 +156,8 @@ namespace SmartxAPI.Controllers
                     DataTable openingStock;
                     DataTable MasterTable;
                     DataTable StockTable;
+                    DataTable dt;
+                    DataTable deletedStockTable;
                     int N_StockID = 0;
                     int N_OpeningID = 0;
                     int nCompanyID = myFunctions.GetCompanyID(User);
@@ -155,32 +165,63 @@ namespace SmartxAPI.Controllers
                     DetailTable = ds.Tables["details"];
                     MasterTable = ds.Tables["master"];
                     openingStock = ds.Tables["openingStock"];
+                    deletedStockTable = ds.Tables["deletedStockTable"];
                     Params.Add("N_CompanyID", nCompanyID);
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString());
+                    int companyStartYear=myFunctions.getIntVAL(dLayer.ExecuteScalar("select TOP 1 N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and isnull(B_PreliminaryYear,0)<>1",Params,connection,transaction).ToString());
+                   if(companyStartYear.ToString()!=nFnYearID.ToString())
+                   {
+                       transaction.Rollback();
+                        return Ok(_api.Error(User, "Check Financial Year"));
+
+                   }
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
-                    DetailTable.Columns.Remove("n_ItemUnitID");
-                    int i=1;
+                    if (DetailTable.Columns.Contains("n_ItemUnitID"))
+                        DetailTable.Columns.Remove("n_ItemUnitID");
+                    bool b_OpeningBalancePosted = false;
+
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyID + " and N_FnYearID = " + nFnYearID + " and N_BranchID = " + nBranchID + "";
+                    dt = dLayer.ExecuteDataTable(sqlQry, Params, connection, transaction);
+                    if (dt.Rows.Count > 0)
+                    {
+                        b_OpeningBalancePosted = myFunctions.getBoolVAL(dt.Rows[0]["b_IsAccPosted"].ToString());
+
+                    }
+                    if (b_OpeningBalancePosted)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Opening Balance Posted"));
+                    }
+
+
+
+
+
+
+
+
+                    int i = 1;
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
-                    { 
-                        
+                    {
+
                         int StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
                         if (StockID == 0)
                         {
-                            DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + "+i+" FROM Inv_StockMaster", Params, connection, transaction).ToString();
+                            DetailTable.Rows[j]["n_StockID"] = dLayer.ExecuteScalar("SELECT isnull(max(N_StockID),'0') + " + i + " FROM Inv_StockMaster", Params, connection, transaction).ToString();
                             StockID = myFunctions.getIntVAL(DetailTable.Rows[j]["n_StockID"].ToString());
-                            i=i+1;
+                            i = i + 1;
 
 
-                             DetailTable.AcceptChanges();
+                            DetailTable.AcceptChanges();
                         }
-                        dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
+                        //dLayer.ExecuteNonQuery("Update Inv_ItemMaster SET N_Rate=" + myFunctions.getVAL(DetailTable.Rows[j]["n_SPrice"].ToString()) + " WHERE N_ItemID=" + myFunctions.getIntVAL(DetailTable.Rows[j]["n_ItemID"].ToString()) + " and N_CompanyID=" + nCompanyID + "", Params, connection, transaction);
                         openingStock.Rows[j]["N_TransID"] = StockID;
                         openingStock.AcceptChanges();
 
                     }
-                     DetailTable.AcceptChanges();
-                    string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + "";
-                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection,transaction);
+                    DetailTable.AcceptChanges();
+                    string stockMasterSql = "select * from Inv_StockMaster where  N_CompanyID=" + nCompanyID + " and X_Type='Opening'";
+                    StockTable = dLayer.ExecuteDataTable(stockMasterSql, Params, connection, transaction);
                     if (StockTable.Rows.Count > 0)
 
                     {
@@ -188,9 +229,9 @@ namespace SmartxAPI.Controllers
                         {
                             foreach (DataRow DetailItem in DetailTable.Rows)
                             {
-                                if (stockItem["N_StockID"] == DetailItem["N_StockID"])
+                                if (stockItem["N_StockID"].ToString() == DetailItem["N_StockID"].ToString())
                                 {
-                                    if (stockItem["N_CurrentStock"] != stockItem["N_OpenStock"])
+                                    if (stockItem["N_CurrentStock"].ToString() != stockItem["N_OpenStock"].ToString())
                                     {
                                         transaction.Rollback();
                                         return Ok(_api.Error(User, "Transaction already Processed for the Product "));
@@ -221,6 +262,41 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to save!"));
 
                     }
+
+                    if (deletedStockTable.Rows.Count > 0)
+                    {
+                        if (StockTable.Rows.Count > 0)
+
+                        {
+                            foreach (DataRow stockItem in StockTable.Rows)
+                            {
+                                foreach (DataRow DetailItem in deletedStockTable.Rows)
+                                {
+                                    if (stockItem["N_StockID"].ToString() == DetailItem["N_StockID"].ToString())
+                                    {
+                                        if (stockItem["N_CurrentStock"].ToString() != stockItem["N_OpenStock"].ToString())
+                                        {
+                                            transaction.Rollback();
+                                            return Ok(_api.Error(User, "Transaction already Processed for the deleted Product "));
+                                        }
+                                    }
+                                }
+                            }
+                        }
+
+
+
+
+
+                    }
+                    foreach (DataRow deleteItem in deletedStockTable.Rows)
+                    {
+                        dLayer.ExecuteNonQuery("delete from  Inv_StockMaster  where N_CompanyID=" + nCompanyID + " and N_StockID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + " and X_Type='Opening'", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("delete from  Inv_OpeningStock  where N_CompanyID=" + nCompanyID + " and N_TransID=" + myFunctions.getIntVAL(deleteItem["N_StockID"].ToString()) + "", Params, connection, transaction);
+
+                    }
+
+
 
                     SortedList PostingParam = new SortedList();
 
@@ -253,6 +329,12 @@ namespace SmartxAPI.Controllers
         }
 
 
+
+
+
+
+
+
         [HttpGet("stockDetails")]
         public ActionResult GetStockDetailsDetails(int nCompanyId, int nFnYearId, int nBranchId, int nLocationID)
         {
@@ -266,16 +348,17 @@ namespace SmartxAPI.Controllers
                     SortedList QueryParamsList = new SortedList();
                     QueryParamsList.Add("@nCompanyID", nCompanyId);
                     QueryParamsList.Add("@nFnYearID", nFnYearId);
-                    DataTable MasterTable = new DataTable();
+                    DataTable OpeningBalance = new DataTable();
                     DataTable DetailTable = new DataTable();
                     string stockQry = "";
                     string DetailSql = "";
                     stockQry = "select * from  vw_OpeningStockFill where N_CompanyID = " + nCompanyId + " and N_LocationID=" + nLocationID + " and  (N_ClassID <> 1 and N_ClassID <> 4) and (B_IsIMEI<>1 OR B_IsIMEI IS NULL)  and  N_OpenStock>=0  order by X_Itemcode,X_ItemName,X_Category";
                     DetailTable = dLayer.ExecuteDataTable(stockQry, QueryParamsList, connection);
                     DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "N_Processed", typeof(int), 0);
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable, "b_isDisbled", typeof(int), 1);
                     foreach (DataRow row in DetailTable.Rows)
                     {
-                        if (myFunctions.getIntVAL(row["N_OpenStock"].ToString()) != myFunctions.getIntVAL(row["N_CurrentStock"].ToString()))
+                        if (myFunctions.getVAL(row["N_OpenStock"].ToString()) != myFunctions.getVAL(row["N_CurrentStock"].ToString()))
                         {
                             row["N_Processed"] = 1;
                         }
@@ -284,8 +367,12 @@ namespace SmartxAPI.Controllers
                             row["N_Processed"] = 0;
                         }
                     }
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and N_BranchID = " + nBranchId + "";
+                    OpeningBalance = dLayer.ExecuteDataTable(sqlQry, QueryParamsList, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
+                    OpeningBalance = _api.Format(OpeningBalance, "OpeningBalance");
                     dt.Tables.Add(DetailTable);
+                    dt.Tables.Add(OpeningBalance);
                     return Ok(_api.Success(dt));
                 }
             }
@@ -294,9 +381,75 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+        [HttpGet("openingBalance")]
+        public ActionResult GetOpeningBalance(int nCompanyId, int nFnYearId, int nBranchId, int nLocationID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    DataTable dt = new DataTable();
+                    SortedList QueryParamsList = new SortedList();
+                    QueryParamsList.Add("@nCompanyID", nCompanyId);
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyId + " and N_FnYearID = " + nFnYearId + " and N_BranchID = " + nBranchId + "";
+
+                    dt = dLayer.ExecuteDataTable(sqlQry, QueryParamsList, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("fnYearData")]
+        public ActionResult GetFnYearData()
+        {
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string qry = "";
+            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID and isnull(B_PreliminaryYear,0)<>1";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(qry, Params, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
     }
 }
-
 
 
 

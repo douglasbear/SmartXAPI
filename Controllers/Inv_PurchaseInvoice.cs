@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
                     string sqlCommandCount = "";
                     string Searchkey = "";
                     string X_TransType = "PURCHASE";
-                       int nCompanyID = myFunctions.GetCompanyID(User);
+                    int nCompanyID = myFunctions.GetCompanyID(User);
                     int N_decimalPlace = 2;
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Purchase", "Decimal_Place", "N_Value", nCompanyID, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
@@ -111,7 +111,7 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast([Invoice Date] as DateTime ) " + xSortBy.Split(" ")[1];
                                 break;
                             case "invoiceNetAmt":
-                                xSortBy = "Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
+                                xSortBy = "Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
                                 break;
                             default: break;
                         }
@@ -119,9 +119,9 @@ namespace SmartxAPI.Controllers
                     }
                     int Count = (nPage - 1) * nSizeperpage;
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") N_PurchaseID,[Invoice No],[Vendor Code],Vendor,[Invoice Date],InvoiceNetAmt,X_BranchName,X_Description,N_PaymentMethod,N_FnYearID,N_BranchID,N_LocationID,N_VendorID,N_InvDueDays,B_IsSaveDraft from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + " and N_PurchaseID not in (select top(" + Count + ") N_PurchaseID from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -161,7 +161,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(InvoiceNetAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvPurchaseInvoiceNo_Search_Cloud where N_CompanyID=@p1 and N_FnYearID=@p2 " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -565,11 +565,11 @@ namespace SmartxAPI.Controllers
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
                     {
-                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'"+ MasterTable.Rows[0]["D_InvoiceDate"].ToString() +"') between D_Start and D_End", Params, connection, transaction);
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["D_InvoiceDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
                         if (DiffFnYearID != null)
                         {
-                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();    
-                            nFnYearID=myFunctions.getIntVAL(DiffFnYearID.ToString());           
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
                         }
                         else
                         {
@@ -577,7 +577,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
-MasterTable.AcceptChanges();
+                    MasterTable.AcceptChanges();
                     bool B_MRNVisible = myFunctions.CheckPermission(nCompanyID, 555, "Administrator", "X_UserCategory", dLayer, connection, transaction);
 
                     if (B_MRNVisible && n_MRNID != 0) Dir_Purchase = 0;
@@ -812,7 +812,8 @@ MasterTable.AcceptChanges();
                         }
                         dLayer.SaveData("Inv_PurchaseFreights", "N_PurchaseFreightID", PurchaseFreight, connection, transaction);
                     }
-                    if (b_FreightAmountDirect==0){
+                    if (b_FreightAmountDirect == 0)
+                    {
                         SortedList ProcParams = new SortedList(){
                             {"N_FPurchaseID", N_PurchaseID},
                             {"N_CompanyID", nCompanyID},

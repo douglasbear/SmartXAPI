@@ -154,8 +154,24 @@ namespace SmartxAPI.Controllers
                     SqlTransaction transaction = connection.BeginTransaction();
 
                     SortedList Params = new SortedList();
+                    SortedList ValidateParams = new SortedList();
                     // Auto Gen
                     string LocationCode = "";
+                    //Limit Validation
+                     ValidateParams.Add("@N_CompanyID",  MasterTable.Rows[0]["n_CompanyId"].ToString());
+                     object LocationCount = dLayer.ExecuteScalar("select count(N_LocationID)  from Inv_Location where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                    object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                    if (LocationCount != null && limit != null)
+                    {
+                        if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Location Limit exceeded!!!"));
+                        }
+                    }
+
+
+
                     var values = MasterTable.Rows[0]["X_LocationCode"].ToString();
                     if (values == "@Auto")
                     {
@@ -167,6 +183,9 @@ namespace SmartxAPI.Controllers
                         if (LocationCode == "") { transaction.Rollback(); return Ok( _api.Error(User, "Unable to generate Location Code")); }
                         MasterTable.Rows[0]["X_LocationCode"] = LocationCode;
                     }
+
+                  
+
 
                     MasterTable.Columns.Remove("n_FnYearId");
                     MasterTable.Columns.Remove("b_isSubLocation");

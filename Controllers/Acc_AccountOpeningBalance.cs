@@ -75,13 +75,14 @@ namespace SmartxAPI.Controllers
         public ActionResult GetAccountOpeningDetails(int nFnYearID,int nBranchID,int nLanguageID)
         {
             DataSet dsOpening = new DataSet();
+            DataTable OpeningBalance=new DataTable();
             DataTable Master=new DataTable();
             DataTable DetailTable=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             int AccountField=0;
             int nVoucherID=0;
-            string sqlCommandText="",sqlCommandText2="";
+            string sqlCommandText="",sqlCommandText2="",sqlQry="";
             
             if(nLanguageID==2)AccountField=1;
            
@@ -136,11 +137,13 @@ namespace SmartxAPI.Controllers
                         }
                     }
                     VoucherDetails_DescTable = _api.Format(VoucherDetails_DescTable, "VoucherDetails_Desc");
-
+                    sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_BranchID =@nBranchID";
+                    OpeningBalance = dLayer.ExecuteDataTable(sqlQry, Params, connection);
+                    OpeningBalance = _api.Format(OpeningBalance, "OpeningBalance");
                     dsOpening.Tables.Add(Master);
                     dsOpening.Tables.Add(DetailTable);
                     dsOpening.Tables.Add(VoucherDetails_DescTable);
-
+                    dsOpening.Tables.Add(OpeningBalance);
                     return Ok(_api.Success(dsOpening));
                 }
                
@@ -207,14 +210,30 @@ namespace SmartxAPI.Controllers
                     DataTable Details_SegmentsTable;
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
+                    DataTable dt = new DataTable();
+
                    // VoucherDetails_DescTable = ds.Tables["VoucherDetails_Desc"];
                    // Details_SegmentsTable = ds.Tables["Details_Segments"];
                     SortedList Params = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
                     int nVoucherID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_VoucherID"].ToString());
+                    int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string InvoiceNo=MasterTable.Rows[0]["x_VoucherNo"].ToString();
+                    bool b_OpeningBalancePosted = false;
 
+                    string sqlQry = "Select X_VoucherNo, B_IsAccPosted from Acc_VoucherMaster Where X_TransType = 'OB' and N_CompanyID = " + nCompanyID + " and N_FnYearID = " + nFnYearID + " and N_BranchID = " + nBranchID + "";
+                    dt = dLayer.ExecuteDataTable(sqlQry, Params, connection, transaction);
+                    if (dt.Rows.Count > 0)
+                    {
+                        b_OpeningBalancePosted = myFunctions.getBoolVAL(dt.Rows[0]["b_IsAccPosted"].ToString());
+
+                    }
+                    if (b_OpeningBalancePosted)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Opening Balance Posted"));
+                    }
                     if(nVoucherID!=0)
                     {
                         
@@ -253,7 +272,7 @@ namespace SmartxAPI.Controllers
                             nAmount = myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString());
                         else
                             nAmount=(-1)*myFunctions.getVAL(DetailTable.Rows[j]["n_Credit"].ToString());
-
+                        DetailTable.Rows[j]["N_Amount"] = nAmount;
                         if(nAmount==0)
                         {
                             DetailTable.Rows[j].Delete();
@@ -262,7 +281,6 @@ namespace SmartxAPI.Controllers
                         else
                             DetailTable.Rows[j]["N_Amount"]=nAmount;
                     }
-
                     if (DetailTable.Columns.Contains("n_Debit"))
                         DetailTable.Columns.Remove("n_Debit");
                     if (DetailTable.Columns.Contains("n_Credit"))
@@ -390,6 +408,42 @@ namespace SmartxAPI.Controllers
             }
 
         }
+
+         [HttpGet("fnYearData")]
+        public ActionResult GetFnYearData()
+        {
+
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            DataTable dt = new DataTable();
+
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+
+            string qry = "";
+            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(qry, Params, connection);
+                    dt = _api.Format(dt);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(dt));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
 
         }
     }
