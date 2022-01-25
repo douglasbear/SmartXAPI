@@ -39,6 +39,7 @@ namespace SmartxAPI.Dtos.SP
         public byte[] I_Logo { get; set; }
         public bool B_AllBranchesData { get; set; }
         public int N_TaxType { get; set; }
+        public int N_Decimal { get; set; }
         public string X_UserFullName { get; set; }
         public string X_BranchCode { get; set; }
         public string X_UserCategoryIDList { get; set; }
@@ -91,6 +92,8 @@ namespace SmartxAPI.Dtos.SP
         public string N_DecimalPlace { get; set; }
         [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
+                [NotMapped]
+        public int N_LoginID { get; set; }
 
 
 

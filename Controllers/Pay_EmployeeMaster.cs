@@ -1487,6 +1487,7 @@ namespace SmartxAPI.Controllers
                                     dtGobal.Columns.Add("B_Inactive");
                                     dtGobal.Columns.Add("X_UserID");
                                     dtGobal.Columns.Add("B_EmailVerified");
+                                    dtGobal.Columns.Add("N_UserType");
 
                                     DataRow rowGb = dtGobal.NewRow();
                                     rowGb["X_EmailID"] = xEmail;
@@ -1497,7 +1498,7 @@ namespace SmartxAPI.Controllers
                                     rowGb["B_Inactive"] = 0;
                                     rowGb["X_UserID"] = xEmail;
                                     rowGb["B_EmailVerified"] = 1;
-
+                                    rowGb["N_UserType"] = 2;
                                     dtGobal.Rows.Add(rowGb);
 
                                     int GlobalUserID = dLayer.SaveData("Users", "N_UserID", dtGobal, olivoCon, olivoTxn);
@@ -1515,6 +1516,9 @@ namespace SmartxAPI.Controllers
                                     {
                                         object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "' and N_EmpID=" + nEmpID + " and N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);
                                         if (objUserCheck == null)
+                                        {
+                                        object objUserCheckng = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID, connection, transaction);
+                                        if (objUserCheckng == null)
                                         {
                                             object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
                                             if (objUser != null)
@@ -1549,7 +1553,7 @@ namespace SmartxAPI.Controllers
                                                 row["N_LocationID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString());
                                                 row["X_UserName"] = dtMasterTable.Rows[0]["X_EmpName"].ToString();
                                                 row["N_EmpID"] = nEmpID;
-                                                row["N_LoginFlag"] = 0;
+                                                row["N_LoginFlag"] = 2;
                                                 row["X_UserCategoryList"] = objUserCat.ToString();
                                                 row["X_Email"] = xEmail;
                                                 dt.Rows.Add(row);
@@ -1557,6 +1561,7 @@ namespace SmartxAPI.Controllers
                                                 int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
                                             }
                                         }
+                                     }
                                     }
                                 }
                             }

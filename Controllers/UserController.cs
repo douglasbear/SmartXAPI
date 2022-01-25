@@ -51,7 +51,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
                 var password = myFunctions.EncryptString(model.Password);
                 //var password = model.Password;
-                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress, model.AppID);
+                var user = _repository.Authenticate(model.CompanyName, model.Username, password, ipAddress, model.AppID,0);
 
                 if (user == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
@@ -60,6 +60,50 @@ namespace SmartxAPI.Controllers
             catch (Exception ex)
             {
                 return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+        [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
+        [HttpGet("logout")]
+        public ActionResult Logout(int nFnYearID, int nBranchID)
+        {
+
+
+            int nLoginID = 0;
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+
+                    SortedList logParams = new SortedList()
+                    {
+                        {"N_CompanyID",myFunctions.GetCompanyID(User)},
+                        {"N_FnyearID",nFnYearID},
+                        {"N_BranchId",nBranchID},
+                        {"N_ActionID",2},
+                        {"N_Type",1},
+                        {"N_LoggedInID",myFunctions.GetLoginID(User)},
+                        {"X_SystemName",ipAddress},
+                        {"N_UserID",myFunctions.GetUserID(User)}
+                    };
+                    nLoginID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_LoginDetailsInsert_Cloud", logParams, connection).ToString());
+
+                }
+
+                return Ok(_api.Success("LogOut"));
+
+
+            }
+            catch (Exception e)
+            {
+                return StatusCode(403, _api.Error(User, e));
             }
         }
 
@@ -184,10 +228,18 @@ namespace SmartxAPI.Controllers
                 MasterTable = ds.Tables["master"];
                 globalUser = ds.Tables["globalUser"];
 
+                int nFnYearID = 0;
+                if (MasterTable.Columns.Contains("n_FnYearID"))
+                {
+                    nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
+                    MasterTable.Columns.Remove("n_FnYearID");
+                }
+                int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
+
                 int nClientID = myFunctions.GetClientID(User);
                 int globalUserID, userID, nUserID, nGlobalUserID = 0;
-                bool bSalesPerson=false;
-               
+                bool bSalesPerson = false;
+
                 string exclude = " and X_UserID<>'Olivo' and X_Email LIKE '_%@__%.__%'";
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -201,16 +253,16 @@ namespace SmartxAPI.Controllers
                         olivoCon.Open();
                         SqlTransaction olivoTxn = olivoCon.BeginTransaction();
                         nUserID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
-                        
-                       
-                       if(MasterTable.Columns.Contains("b_Salesperson"))
-                {
-                        bSalesPerson =myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Salesperson"].ToString());
-                        MasterTable.Columns.Remove("b_Salesperson");
-                }
 
-                   
-                     nGlobalUserID = myFunctions.getIntVAL(globalUser.Rows[0]["n_UserID"].ToString());
+
+                        if (MasterTable.Columns.Contains("b_Salesperson"))
+                        {
+                            bSalesPerson = myFunctions.getBoolVAL(MasterTable.Rows[0]["b_Salesperson"].ToString());
+                            MasterTable.Columns.Remove("b_Salesperson");
+                        }
+
+
+                        nGlobalUserID = myFunctions.getIntVAL(globalUser.Rows[0]["n_UserID"].ToString());
 
 
                         transaction = connection.BeginTransaction();
@@ -222,8 +274,6 @@ namespace SmartxAPI.Controllers
                         userParams.Add("@nGlobalUserID", globalUser.Rows[0]["n_UserID"].ToString());
                         userParams.Add("@xEmailID", globalUser.Rows[0]["x_EmailID"].ToString());
 
-                      
-                         //MasterTable.Columns.Remove("b_Salesperson");
 
 
 
@@ -276,11 +326,13 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Warning("user with this email id already exists"));
                         }
                         object nUserLimit = dLayer.ExecuteScalar("SELECT N_UserLimit FROM ClientMaster where N_ClientID=@nClientID", userParams, olivoCon, olivoTxn);
-                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Sec_User where N_CompanyID=@nCompanyID  " + exclude, userParams, connection, transaction);
-                        if (myFunctions.getIntVAL(nUserLimit.ToString()) < myFunctions.getIntVAL(nUserCount.ToString()))
-                        {
-                            return Ok(_api.Warning("user limit exeeded"));
-                        }
+                        object nUserCount = dLayer.ExecuteScalar("SELECT Count(N_UserID) as Count FROM Users where N_ClientID=@nClientID and N_UserType=1", userParams, olivoCon, olivoTxn);
+
+                        if (nGlobalUserID == 0)
+                            if (myFunctions.getIntVAL(nUserLimit.ToString()) <= myFunctions.getIntVAL(nUserCount.ToString()))
+                            {
+                                return Ok(_api.Warning("User limit exeeded !!"));
+                            }
 
                         if (nGlobalUserID > 0 && nUserID == 0)
                         {
@@ -346,12 +398,15 @@ namespace SmartxAPI.Controllers
                             {
 
                                 object salesManCount = dLayer.ExecuteScalar("select count(*) from Inv_SalesMan where N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_UserID=" + userID, connection, transaction);
-                                //
+
+                                if (salesManCount == null)
+                                    salesManCount = 0;
+
                                 if (myFunctions.getIntVAL(salesManCount.ToString()) == 0)
                                 {
                                     object salesManMax = dLayer.ExecuteScalar("select max(N_SalesmanID)+1 from Inv_SalesMan ", connection, transaction);
                                     object salesManCodeMax = dLayer.ExecuteScalar("select max(cast(X_SalesManCode as numeric))+1 from Inv_SalesMan ", connection, transaction);
-                                    object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values(" + myFunctions.GetCompanyID(User) + "," + (myFunctions.getIntVAL(salesManMax.ToString())) + ",'" + (myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString() + "','" + MasterTable.Rows[0]["X_UserName"].ToString() + "','" + MasterTable.Rows[0]["X_UserID"].ToString() + "',0,0,2," + userID + ",2)", connection, transaction);
+                                    object salesManSaved = dLayer.ExecuteScalar("insert into Inv_SalesMan (N_CompanyID,N_SalesManID,X_SalesmanCode,X_SalesmanName,X_Email,N_InvDueDays,N_CommnPerc,N_FnYearID,N_UserID,N_BranchID)values(" + myFunctions.GetCompanyID(User) + "," + (myFunctions.getIntVAL(salesManMax.ToString())) + ",'" + (myFunctions.getIntVAL(salesManCodeMax.ToString())).ToString() + "','" + MasterTable.Rows[0]["X_UserName"].ToString() + "','" + MasterTable.Rows[0]["X_UserID"].ToString() + "',0,0," + nFnYearID + "," + userID + "," + nBranchID + ")", connection, transaction);
                                 }
                             }
 
