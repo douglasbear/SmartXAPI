@@ -453,7 +453,7 @@ namespace SmartxAPI.Data
             }
             catch (Exception ex)
             {
-                throw new Exception("Login Failed");
+                throw new Exception(ex.Message);
             }
 
         }
