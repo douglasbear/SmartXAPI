@@ -199,15 +199,15 @@ namespace SmartxAPI.Data
                         {"X_SystemName",requestIP},
                         {"N_UserID",loginRes.N_UserID}
                     };
-                    int newLoginID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_LoginDetailsInsert_Cloud", logParams, connection).ToString());
-                    if (newLoginID == 0)
-                    {
-                        throw new Exception("Unauthorized Access");
-                    }
-                    else
-                    {
-                        loginRes.N_LoginID = newLoginID;
-                    }
+                    // int newLoginID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_LoginDetailsInsert_Cloud", logParams, connection).ToString());
+                    // if (newLoginID == 0)
+                    // {
+                    //     throw new Exception("Unauthorized Access");
+                    // }
+                    // else
+                    // {
+                    //     loginRes.N_LoginID = newLoginID;
+                    // }
 
                     switch (reqtype.ToLower())
                     {
