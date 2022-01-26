@@ -211,6 +211,10 @@ namespace SmartxAPI.Controllers
                 int N_VoucherID = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
+
+
+
+
                 if (xTransType.ToLower() == "pv")
                     nFormID = 44;
                 else if (xTransType.ToLower() == "rv")
@@ -234,6 +238,24 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    
+                 if (!myFunctions.CheckActiveYearTransaction(myFunctions.getIntVAL(nCompanyId.ToString()),myFunctions.getIntVAL(nFnYearId.ToString()), DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_SalesDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearId = DiffFnYearID.ToString();
+                           // QueryParams["@nFnYearID"] = N_FnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+                    
                     if (xVoucherNo == "@Auto")
                     {
                         Params.Add("N_CompanyID", nCompanyId);

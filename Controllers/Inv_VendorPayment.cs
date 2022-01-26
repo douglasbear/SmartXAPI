@@ -344,7 +344,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction;
-
+                    transaction = connection.BeginTransaction();
 
                     // Auto Gen
 
@@ -360,6 +360,22 @@ namespace SmartxAPI.Controllers
                     string x_Type = MasterTable.Rows[0]["x_Type"].ToString();
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
+
+                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyId + " and convert(date ,'" + MasterTable.Rows[0]["D_InvoiceDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
                     if (MasterTable.Columns.Contains("x_Desc"))
                     {
                         xDesc = Master["x_Desc"].ToString();
@@ -371,7 +387,7 @@ namespace SmartxAPI.Controllers
                     if (MasterTable.Columns.Contains("x_Desc"))
                         MasterTable.Columns.Remove("x_Desc");
 
-                    transaction = connection.BeginTransaction();
+                    
 
                     if (x_VoucherNo == "@Auto")
                     {
