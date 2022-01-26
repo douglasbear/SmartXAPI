@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                     UserTable.Rows[0]["b_Inactive"] = true;
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 1);
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 0);
 
 
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
