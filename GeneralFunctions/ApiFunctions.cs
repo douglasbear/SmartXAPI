@@ -98,7 +98,10 @@ namespace SmartxAPI.GeneralFunctions
         {
             return (new { type = "warning", Message = message, Data = "" });
         }
-
+        public object Unauthorized(string message)
+        {
+            return (new { type = "unauthorized", Message = message, Data = "" });
+        }
 
         public object Error(ClaimsPrincipal User, Exception ex)
         {
@@ -263,6 +266,7 @@ namespace SmartxAPI.GeneralFunctions
         public object Success(string message);
         public object Success(DataSet dataSet, String message);
         public object Success(DataRow dataRow, String message);
+        public object Unauthorized(string message);
         public object Notice(string message);
         public object Warning(string message);
         public string GetContentType(string path);

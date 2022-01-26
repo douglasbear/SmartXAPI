@@ -383,6 +383,7 @@ namespace SmartxAPI.Controllers
                 int UserID = myFunctions.GetUserID(User);
                 int N_CompanyID = myFunctions.GetCompanyID(User);
                 int N_InvoiceId = 0;
+                int nFnYearID = 0;
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
@@ -398,10 +399,26 @@ namespace SmartxAPI.Controllers
                     double N_TotalPaidF = myFunctions.getVAL(MasterTable.Rows[0]["n_TotalPaidAmountF"].ToString());
                     MasterTable.Rows[0]["n_TotalPaidAmountF"] = N_TotalPaidF;
 
+                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_SalesDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+N_CompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_SalesDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            //QueryParams["@nFnYearID"] = nFnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
                     if (values == "@Auto")
                     {
                         Params.Add("N_CompanyID", masterRow["n_CompanyId"].ToString());
-                        Params.Add("N_YearID", masterRow["n_FnYearId"].ToString());
+                        Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         Params.Add("N_BranchID", masterRow["n_BranchId"].ToString());
                         InvoiceNo = dLayer.GetAutoNumber("Inv_SalesReturnMaster", "X_DebitNoteNo", Params, connection, transaction);

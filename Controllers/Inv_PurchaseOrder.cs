@@ -345,6 +345,7 @@ namespace SmartxAPI.Controllers
                 DataTable Attachment = ds.Tables["attachments"];
                 SortedList Params = new SortedList();
                 int N_POrderID = 0; var X_POrderNo = "";
+                
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
