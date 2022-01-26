@@ -1995,7 +1995,10 @@ public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID,
 
         public int GetLoginID(ClaimsPrincipal User)
         {
-            return this.getIntVAL(User.FindFirst(ClaimTypes.Thumbprint)?.Value);
+            int loginID =0;
+            if(User.FindFirst(ClaimTypes.Thumbprint)?.Value!=null)
+            loginID =this.getIntVAL(User.FindFirst(ClaimTypes.Thumbprint)?.Value);
+            return loginID;
         }
 
         public string GetConnectionString(ClaimsPrincipal User)
