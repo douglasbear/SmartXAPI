@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             dLayer = dl;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            FormID = 575;
+            FormID = 367;
         }
         private readonly string connectionString;
 
@@ -85,13 +85,13 @@ namespace SmartxAPI.Controllers
 
         [HttpGet("productInformation")]
 
-        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom,int nLocationIDTo, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate)
+        public ActionResult GetAllItems(string query, int nCompanyID, int nLocationIDFrom, int nLocationIDTo, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, DateTime dtpInvDate)
         {
 
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
-if(nLocationIDTo==0)
-    nLocationIDTo = nLocationIDFrom ;
+            if (nLocationIDTo == 0)
+                nLocationIDTo = nLocationIDFrom;
 
             string qry = "";
             string Category = "";
@@ -107,7 +107,7 @@ if(nLocationIDTo==0)
             if (dtpInvDate == null || dtpInvDate.ToString() == "")
                 sqlComandText = "Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_CompanyID=" + nCompanyID + " and (N_ClassID<>1 AND N_ClassID<>4" + qry + Category + Condition;
             else
-                sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 and N_ItemID in  (select N_ItemID from vw_InvItem_Search_WHLink where N_CompanyID="+nCompanyID+" and N_WareHouseID="+nLocationIDTo+") " + qry + Category + Condition;
+                sqlComandText = " vw_InvItem_Search.*,dbo.[SP_LocationStock](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ") As N_Stock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationIDFrom + ")  As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where [Item Code]<>'001' and N_CompanyID=" + nCompanyID + " and N_ClassID<>4 and N_ItemID in  (select N_ItemID from vw_InvItem_Search_WHLink where N_CompanyID=" + nCompanyID + " and N_WareHouseID=" + nLocationIDTo + ") " + qry + Category + Condition;
             // Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + N_LocationID + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Value.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where " + ItemCondition + " and N_CompanyID=" + myCompanyID._CompanyID + "and (N_ClassID<>1 AND N_ClassID<>4)
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
@@ -214,7 +214,7 @@ if(nLocationIDTo==0)
 
                     }
                     else
-                   
+
                         sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Searchkey + Criteria + " and N_TransferID not in (select top(" + Count + ") N_TransferID from vw_InvTransfer_Search where N_CompanyID=@nCompanyId " + Criteria + xSortBy + " ) " + xSortBy;
                     Params.Add("@nCompanyId", nCompanyId);
 
@@ -405,15 +405,18 @@ if(nLocationIDTo==0)
 
                     SortedList deleteParams = new SortedList()
                             {
-                                {"N_CompanyID",nCompanyID},
-                                {"X_TransType",xTransType},
-                                {"N_VoucherID",nTransferId}
-
+                                   {"N_CompanyID",nCompanyID},
+                                {"X_TransType","TRANSFER"},
+                                {"N_VoucherID",nTransferId},
+                                {"N_UserID",myFunctions.GetUserID(User)},
+                                 {"X_SystemName","WebRequest"}
                             };
                     Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", deleteParams, connection, transaction);
                     if (Results > 0)
                     {
+                        transaction.Commit();
                         return Ok(_api.Success("Deleted"));
+                         
                     }
                     else
                     {
