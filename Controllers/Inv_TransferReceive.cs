@@ -350,7 +350,7 @@ namespace SmartxAPI.Controllers
 
                     SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",nCompanyID},
-                                {"X_TransType", "Stock Receive"},
+                                {"X_TransType", "STOCK RECEIVE"},
                                 {"N_VoucherID",nReceivableId},
                                 {"N_UserID",nUserID},
                                 {"X_SystemName","WebRequest"}};
@@ -365,7 +365,7 @@ namespace SmartxAPI.Controllers
                         return Ok(_api.Error(User, "Unable to delete Transfer Recieve"));
                     }
                     transaction.Commit();
-                    return Ok(_api.Success(" Purchase deleted"));
+                    return Ok(_api.Success(" deleted"));
                 }
             }
             catch (Exception ex)
