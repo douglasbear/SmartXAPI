@@ -214,7 +214,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (b_TransferProducts)
                         {
-                            dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()+ TransferSql ) + " ", Params, connection,transaction);
+                            dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString())+ TransferSql , Params, connection,transaction);
                         }
                         transaction.Commit();
                         return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
