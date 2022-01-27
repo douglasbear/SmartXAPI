@@ -393,6 +393,11 @@ namespace SmartxAPI.Controllers
             int nCompanyID = myFunctions.GetCompanyID(User);
             int nFnYearID = myFunctions.getIntVAL(masterRow["n_FnYearId"].ToString());
             int n_POrderID = myFunctions.getIntVAL(masterRow["n_POrderID"].ToString());
+
+            
+            
+
+
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -403,6 +408,21 @@ namespace SmartxAPI.Controllers
                     N_GRNID = myFunctions.getIntVAL(masterRow["N_MRNID"].ToString());
                     int N_VendorID = myFunctions.getIntVAL(masterRow["n_VendorID"].ToString());
 
+                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_MRNDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" and convert(date ,'" + MasterTable.Rows[0]["D_MRNDate"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            //QueryParams["@nFnYearID"] = nFnYearID;
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
                     if (N_GRNID > 0)
                     {
                         if (CheckProcessed(N_GRNID))
