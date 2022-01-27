@@ -50,12 +50,12 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string Criteria = "";
                     string Searchkey = "";
-                   
+
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearID);
                     Params.Add("@p3", nBranchID);
                     Params.Add("@p4", nLocationID);
-                 
+
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=@p1 and N_FnYearID=@p2 ", Params, connection));
 
@@ -118,7 +118,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("transferList")]
-        public ActionResult GettransferList( int nFnYearID )
+        public ActionResult GettransferList(int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -149,7 +149,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-         [HttpPost("save")]
+        [HttpPost("save")]
         public ActionResult SaveData([FromBody] DataSet ds)
         {
             try
@@ -173,7 +173,7 @@ namespace SmartxAPI.Controllers
                     int N_LocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationID"].ToString());
                     int N_LocationIDFrom = myFunctions.getIntVAL(MasterTable.Rows[0]["N_LocationIDfrom"].ToString());
                     MasterTable.Columns.Remove("N_LocationIDfrom");
-                
+
                     string X_ReferenceNo = MasterTable.Rows[0]["X_ReferenceNo"].ToString();
                     string X_TransType = "STOCK RECEIVE";
 
@@ -234,13 +234,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        dLayer.ExecuteNonQuery("Update Inv_TransferStock Set N_Processed=1  Where N_TransferId=" + N_TransferId + " and N_CompanyID=" + nCompanyID,Params,connection,transaction);
+                        dLayer.ExecuteNonQuery("Update Inv_TransferStock Set N_Processed=1  Where N_TransferId=" + N_TransferId + " and N_CompanyID=" + nCompanyID, Params, connection, transaction);
 
                         SortedList StockParam = new SortedList();
                         StockParam.Add("N_CompanyID", nCompanyID);
                         StockParam.Add("@N_ReceiveId", nReceivableId);
-                         StockParam.Add("@N_WarehouseIdFrom", N_LocationIDFrom);
-                          StockParam.Add("@N_WarehouseIdTo", N_LocationID);
+                        StockParam.Add("@N_WarehouseIdFrom", N_LocationIDFrom);
+                        StockParam.Add("@N_WarehouseIdTo", N_LocationID);
                         StockParam.Add("N_UserID", nUserID);
                         StockParam.Add("X_SystemName", "");
 
@@ -323,9 +323,9 @@ namespace SmartxAPI.Controllers
                     MasterTable = _api.Format(MasterTable, "Master");
                     if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                     int N_ReceivableId = myFunctions.getIntVAL(MasterTable.Rows[0]["N_ReceivableId"].ToString());
-                ////////
+                    ////////
                     Params.Add("@N_ReceivableId", N_ReceivableId);
-                    DetailGetSql ="Select * from vw_InvReceivableStockDetails  Where N_CompanyID=" +nCompanyID+ " and N_ReceivableId=" + N_ReceivableId+"";
+                    DetailGetSql = "Select * from vw_InvReceivableStockDetails  Where N_CompanyID=" + nCompanyID + " and N_ReceivableId=" + N_ReceivableId + "";
                     Details = dLayer.ExecuteDataTable(DetailGetSql, Params, connection);
 
                     Details = _api.Format(Details, "Details");
@@ -340,6 +340,51 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nReceivableId)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    var nUserID = myFunctions.GetUserID(User);
+
+
+                    SortedList DeleteParams = new SortedList(){
+                                {"N_CompanyID",nCompanyID},
+                                {"X_TransType", "TransferRecive"},
+                                {"N_VoucherID",nReceivableId},
+                                {"N_UserID",nUserID},
+                                {"X_SystemName","WebRequest"}};
+
+
+
+                    int Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_PurchaseAccounts", DeleteParams, connection, transaction);
+
+                    if (Results <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Unable to delete Transfer Recieve"));
+                    }
+                    transaction.Commit();
+                    return Ok(_api.Success(" Purchase deleted"));
+                }
+            }
+            catch (Exception ex)
+            {
+                if (ex.Message == "55")
+                    return Ok(_api.Error(User, "Quantity exceeds!"));
+                else
+                    return Ok(_api.Error(User, ex));
+            }
+        }
+
+
 
 
 
