@@ -65,11 +65,11 @@ namespace SmartxAPI.Controllers
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
-                        if (dt.TableName == "Customer List" || dt.TableName == "Customers" || dt.TableName == "Customer")
+                        if (dt.TableName.ToString().ToLower() == "customer list" || dt.TableName == "customers" || dt.TableName == "customer")
                             xTableName = "Mig_Customers";
-                        if (dt.TableName == "Vendor List" || dt.TableName == "Vendors" || dt.TableName == "Vendor")
+                        if (dt.TableName.ToString().ToLower() == "vendor list" || dt.TableName == "vendors" || dt.TableName == "vendor")
                             xTableName = "Mig_Vendors";
-                        if (dt.TableName == "Lead List")
+                        if (dt.TableName.ToString().ToLower() == "lead list")
                         {
                             xTableName = "Mig_Leads";
                             Mastertable.Columns.Add("N_UserID");
@@ -78,28 +78,28 @@ namespace SmartxAPI.Controllers
                                 dtRow["N_UserID"] = N_UserID;
                             }
                         }
-                        if (dt.TableName == "Chart of Accounts")
+                        if (dt.TableName.ToString().ToLower() == "chart of accounts")
                             xTableName = "Mig_Accounts";
-                        if (dt.TableName == "Products Stock")
+                        if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName == "Employee List" || dt.TableName == "Employees")
+                        if (dt.TableName.ToString().ToLower() == "employee list" || dt.TableName == "employees")
                             xTableName = "Mig_Employee";
-                        if (dt.TableName == "products stock")
+                        if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName == "FixedAssets List")
+                        if (dt.TableName.ToString().ToLower() == "fixedassets list")
                             xTableName = "_Mig_AssetList";
-                        if (dt.TableName == "Salary History")
+                        if (dt.TableName.ToString().ToLower() == "salary history")
                             xTableName = "Mig_EmployeeSalaryHistory";
-                        if (dt.TableName == "Employee Salary")
+                        if (dt.TableName.ToString().ToLower() == "employee salary")
                             xTableName = "Mig_EmployeeSalary";
-                        if (dt.TableName == "Leave History")
+                        if (dt.TableName.ToString().ToLower() == "leave history")
                             xTableName = "Mig_EmployeeLeaveHistory";
-                        if (dt.TableName == "Customer Balances")
+                        if (dt.TableName.ToString().ToLower() == "customer balances")
                             xTableName = "Mig_CustomerOpening";
-                        if (dt.TableName == "vendor balances")
+                        if (dt.TableName.ToString().ToLower() == "vendor balances")
                             xTableName = "Mig_VendorOpening";
 
-                        if (dt.TableName == "Product List" || dt.TableName == "Products")
+                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName == "products")
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (dt.TableName == "Category")
+                        if (dt.TableName.ToString().ToLower() == "category")
                         {
                             xTableName = "Mig_POSCategory";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -120,7 +120,7 @@ namespace SmartxAPI.Controllers
                             }
                         }
 
-                        if (dt.TableName == "Package Items")
+                        if (dt.TableName.ToString().ToLower() == "package items")
                         {
                             xTableName = "Mig_PackageItem";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -131,7 +131,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        if (dt.TableName == "Warranty Items")
+                        if (dt.TableName.ToString().ToLower() == "warranty items")
                         {
                             xTableName = "Mig_WarrantyItem";
                             Mastertable.Columns.Add("N_CompanyID");

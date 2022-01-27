@@ -163,6 +163,7 @@ namespace SmartxAPI.Controllers
                     object limit = dLayer.ExecuteScalar("select N_LocationLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
                     bool b_TransferProducts = false;
                     int n_LocationFromID = 0;
+                    string TransferSql="";
                     if (LocationCount != null && limit != null)
                     {
                         if (myFunctions.getIntVAL(LocationCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
@@ -181,6 +182,8 @@ namespace SmartxAPI.Controllers
                     {
                         n_LocationFromID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_LocationFromID"].ToString());
                         MasterTable.Columns.Remove("n_LocationFromID");
+                        if(n_LocationFromID>0)
+                        TransferSql = " and N_ItemID in ( select  N_ItemID from Inv_ItemMasterWHLink where N_CompanyID="+myFunctions.GetCompanyID(User)+" and N_WarehouseID="+n_LocationFromID+" ) ";
                     }
 
 
@@ -211,7 +214,7 @@ namespace SmartxAPI.Controllers
                     {
                         if (b_TransferProducts)
                         {
-                            dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()) + " ", Params, connection,transaction);
+                            dLayer.ExecuteNonQuery("insert into Inv_ItemMasterWHLink  select ROW_NUMBER()over (Order by N_companyId)+ISNULL((Select MAX(N_RowID) from Inv_ItemMasterWHLink),0) ,N_CompanyID," + N_LocationID + ",N_ItemID,D_Entrydate from Inv_ItemMaster where  N_CompanyID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString()+ TransferSql ) + " ", Params, connection,transaction);
                         }
                         transaction.Commit();
                         return GetLocationDetails(int.Parse(MasterTable.Rows[0]["n_CompanyId"].ToString()), N_LocationID);
