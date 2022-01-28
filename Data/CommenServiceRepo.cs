@@ -91,8 +91,11 @@ namespace SmartxAPI.Data
                                         X_Country = dr["X_Country"].ToString(),
                                         N_CountryID = Convert.ToInt32(dr["N_CountryID"]),
                                         N_CurrencyID = myFunctions.getIntVAL(dr["N_CurrencyID"].ToString()),
+                                        N_CurrencyDecimal = myFunctions.getIntVAL(dr["N_CurrencyDecimal"].ToString()),
+                                        N_DecimalPlace = myFunctions.getIntVAL(dr["N_DecimalPlace"].ToString()),
                                         D_LoginDate = Convert.ToDateTime(dr["D_LoginDate"].ToString()),
                                         X_Language = dr["X_Language"].ToString(),
+                                        X_CurrencyName = dr["X_CurrencyName"].ToString(),
                                         N_LanguageID = myFunctions.getIntVAL(dr["N_LanguageID"].ToString()),
                                         N_BranchID = dr["N_BranchID"].ToString(),
                                         X_BranchName = dr["X_BranchName"].ToString(),
@@ -105,6 +108,18 @@ namespace SmartxAPI.Data
                                         X_UserCategoryIDList = dr["X_UserCategoryIDList"].ToString(),
                                         X_BranchCode = dr["X_BranchCode"].ToString(),
                                         N_Decimal = myFunctions.getIntVAL(dr["N_Decimal"].ToString()),
+                                        N_EmpID = myFunctions.getIntVAL(dr["N_EmpID"].ToString()),
+                                        N_PositionID = myFunctions.getIntVAL(dr["N_PositionID"].ToString()),
+                                        N_DepartmentID = myFunctions.getIntVAL(dr["N_DepartmentID"].ToString()),
+                                        X_EmpCode = dr["X_EmpCode"].ToString(),
+                                        X_EmpName = dr["X_EmpName"].ToString(),
+                                        X_EmpNameLocale = dr["X_EmpNameLocale"].ToString(),
+                                        X_Position = dr["X_Position"].ToString(),
+                                        X_Department = dr["X_Department"].ToString(),
+                                        N_SalesmanID = myFunctions.getIntVAL(dr["N_SalesmanID"].ToString()),
+                                        X_SalesmanCode = dr["X_SalesmanCode"].ToString(),
+                                        X_SalesmanName = dr["X_SalesmanName"].ToString(),
+                                        B_AllowEdit = (bool)dr["B_AllowEdit"],
                                     }).ToList()
                             .FirstOrDefault();
 
@@ -113,79 +128,14 @@ namespace SmartxAPI.Data
                     Params.Add("@nCompanyID", loginRes.N_CompanyID);
                     Params.Add("@nUserID", loginRes.N_UserID);
                     Params.Add("@nFnYearID", loginRes.N_FnYearID);
-
-
-                    if (loginRes.N_BranchID == null || loginRes.N_BranchID == "")
-                    {
-                        loginRes.X_BranchName = dLayer.ExecuteScalar("Select X_BranchName From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
-                        loginRes.N_BranchID = dLayer.ExecuteScalar("Select N_BranchID From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
-                        loginRes.B_AllBranchesData = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster Where N_CompanyID=@nCompanyID and B_DefaultBranch=1", Params, connection).ToString());
-                        loginRes.X_BranchCode = dLayer.ExecuteScalar("Select X_BranchCode From Acc_BranchMaster Where N_CompanyID=@nCompanyID  and B_DefaultBranch=1", Params, connection).ToString();
-                    }
                     Params.Add("@nBranchID", loginRes.N_BranchID);
-                    // loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and N_TypeID=2 and B_IsDefault=1  and N_BranchID=@nBranchID",Params, connection).ToString();
-                    loginRes.X_LocationName = dLayer.ExecuteScalar("Select X_LocationName From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1  and N_BranchID=@nBranchID", Params, connection).ToString();
-                    loginRes.N_LocationID = dLayer.ExecuteScalar("Select N_LocationID From Inv_Location Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID", Params, connection).ToString();
+                    Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
                     object userPattern = dLayer.ExecuteScalar("Select Isnull(X_Pattern,'') From Sec_UserHierarchy Where N_CompanyID=@nCompanyID and N_UserID=@nUserID", Params, connection);
                     if (userPattern == null)
                         userPattern = "";
-                    //loginRes.X_EmpNameLocale = dLayer.ExecuteScalar("Select X_EmpNameLocale From Pay_Employee Where N_CompanyID=@nCompanyID  and B_IsDefault=1 and N_BranchID=@nBranchID and ",Params, connection).ToString();
-                    Params.Add("@nCurrencyID", loginRes.N_CurrencyID);
-                    loginRes.N_CurrencyID = myFunctions.getIntVAL(dLayer.ExecuteScalar("select N_CurrencyID  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1", Params, connection).ToString());
-                    loginRes.N_CurrencyDecimal = myFunctions.getIntVAL(dLayer.ExecuteScalar("select ISNULL(N_Decimal,0)  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and B_Default=1", Params, connection).ToString());
-                    loginRes.N_DecimalPlace = dLayer.ExecuteScalar("select  ISNULL(N_Decimal,0)  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
-
-
-                    string EmpSql = "SELECT        vw_PayEmployee.N_EmpID, vw_PayEmployee.X_EmpCode, vw_PayEmployee.X_EmpName, vw_PayEmployee.X_EmpNameLocale, Sec_User.N_UserID, vw_PayEmployee.X_Position, vw_PayEmployee.N_PositionID, " +
-                                    "         vw_PayEmployee.X_Department, vw_PayEmployee.N_DepartmentID " +
-                                    "FROM            vw_PayEmployee RIGHT OUTER JOIN " +
-                                    "        Sec_User ON vw_PayEmployee.N_CompanyID = Sec_User.N_CompanyID AND vw_PayEmployee.N_EmpID = Sec_User.N_EmpID  where  N_FnYearID=@nFnYearID  and  Sec_User.N_CompanyID=@nCompanyID and Sec_User.N_UserID=@nUserID ";
-
-                    DataTable EmplData = dLayer.ExecuteDataTable(EmpSql, Params, connection);
-
-
-                    if (EmplData.Rows.Count > 0)
-                    {
-                        loginRes.N_EmpID = myFunctions.getIntVAL(EmplData.Rows[0]["N_EmpID"].ToString());
-                        loginRes.X_EmpCode = EmplData.Rows[0]["X_EmpCode"].ToString();
-                        loginRes.X_EmpName = EmplData.Rows[0]["X_EmpName"].ToString();
-                        loginRes.X_EmpNameLocale = EmplData.Rows[0]["X_EmpNameLocale"].ToString();
-                        loginRes.X_Position = EmplData.Rows[0]["X_Position"].ToString();
-                        loginRes.N_PositionID = myFunctions.getIntVAL(EmplData.Rows[0]["N_PositionID"].ToString());
-                        loginRes.X_Department = EmplData.Rows[0]["X_Department"].ToString();
-                        loginRes.N_DepartmentID = myFunctions.getIntVAL(EmplData.Rows[0]["N_DepartmentID"].ToString());
-                    }
                     loginRes.B_AllowEdit = true;
-                    DataTable SalesExecutiveData = dLayer.ExecuteDataTable("select N_SalesmanID,X_SalesmanCode,X_SalesmanName,b_AllowEdit from vw_InvSalesman where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_UserID=@nUserID", Params, connection);
-                    if (SalesExecutiveData.Rows.Count > 0)
-                    {
-                        loginRes.N_SalesmanID = myFunctions.getIntVAL(SalesExecutiveData.Rows[0]["N_SalesmanID"].ToString());
-                        loginRes.X_SalesmanCode = SalesExecutiveData.Rows[0]["X_SalesmanCode"].ToString();
-                        loginRes.X_SalesmanName = SalesExecutiveData.Rows[0]["X_SalesmanName"].ToString();
-                        loginRes.B_AllowEdit = myFunctions.getBoolVAL(SalesExecutiveData.Rows[0]["b_AllowEdit"].ToString());
-                    }
-
-                    loginRes.X_CurrencyName = dLayer.ExecuteScalar("select X_ShortName  from Acc_CurrencyMaster where N_CompanyID=@nCompanyID  and N_CurrencyID=@nCurrencyID", Params, connection).ToString();
-
-
                     string xGlobalUserID = "";
-                    if (AppID != 10)
-                        using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
-                        {
-                            cnn.Open();
-                            string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
 
-                            DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn);
-                            if (globalInfo.Rows.Count > 0)
-                            {
-                                object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
-                                if (AllowMultipleCompany == null)
-                                    AllowMultipleCompany = 0;
-                                globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany);
-                                loginRes.GlobalUserInfo = globalInfo;
-                                xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
-                            }
-                        }
 
 
                     SortedList logParams = new SortedList()
@@ -215,6 +165,51 @@ namespace SmartxAPI.Data
                         case "app":
                         case "switchcompany":
                         case "customer":
+
+
+                            string Modules = "";
+                            string firstModule = "";
+
+                            using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
+                            {
+                                cnn2.Open();
+
+                                string sqlGUserInfo = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser,Users.X_UserID FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID ='" + username + "')";
+                                DataTable globalInfo = dLayer.ExecuteDataTable(sqlGUserInfo, cnn2);
+                                if (globalInfo.Rows.Count > 0)
+                                {
+                                    loginRes.Warning = userNotifications(myFunctions.getIntVAL(globalInfo.Rows[0]["N_ClientID"].ToString()),cnn2);
+                                    object AllowMultipleCompany = dLayer.ExecuteScalar("select isnull(B_AllowMultipleCom,0) as B_AllowMultipleCom  from Acc_Company where N_CompanyID=@nCompanyID  and B_IsDefault=1", Params, connection);
+                                    globalInfo = myFunctions.AddNewColumnToDataTable(globalInfo, "B_AllowMultipleCom", typeof(bool), AllowMultipleCompany == null ? 0 : AllowMultipleCompany);
+                                    loginRes.GlobalUserInfo = globalInfo;
+                                    xGlobalUserID = globalInfo.Rows[0]["X_UserID"].ToString();
+                                }
+
+                                int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID, cnn2).ToString());
+                                if (daysToExpire <= 0)
+                                    throw new Exception("Your Subscription Expired");
+                                if (AppID != 6 && AppID != 8)
+                                {
+                                    string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
+                                    dLayer.ExecuteScalar(appUpdate, cnn2);
+                                }
+
+                                object modulesObj = dLayer.ExecuteScalar("SELECT X_Modules=STUFF  ((SELECT DISTINCT ',' + CAST(N_ModuleID AS VARCHAR(MAX)) FROM AppModules t2 WHERE t2.N_AppID = t1.N_AppID and  t2.N_AppID=" + AppID + " FOR XML PATH('') ),1,1,''  )  FROM AppModules t1  where t1.N_AppID=" + AppID, cnn2);
+                                if (modulesObj == null)
+                                {
+                                    Modules = "-1";
+                                }
+                                else
+                                {
+                                    Modules = modulesObj.ToString();
+                                    string[] ModuleList = Modules.Split(",");
+                                    if (ModuleList.Length > 0)
+                                        firstModule = ModuleList[0];
+                                }
+
+                            }
+
+
                             var tokenHandler = new JwtSecurityTokenHandler();
                             var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
                             var tokenDescriptor = new SecurityTokenDescriptor
@@ -245,7 +240,6 @@ namespace SmartxAPI.Data
                             loginRes.Token = tokenHandler.WriteToken(token);
                             loginRes.Expiry = DateTime.UtcNow.AddDays(2);
                             loginRes.N_AppID = AppID;
-
                             loginRes.RefreshToken = generateRefreshToken();
                             var user = _context.SecUser.SingleOrDefault(u => u.NUserId == loginRes.N_UserID);
                             user.XToken = loginRes.RefreshToken;
@@ -254,47 +248,7 @@ namespace SmartxAPI.Data
                             if (loginRes.I_Logo != null)
                                 loginRes.I_CompanyLogo = "data:image/png;base64," + Convert.ToBase64String(loginRes.I_Logo, 0, loginRes.I_Logo.Length);
 
-                            //     var MenuList = _context.VwUserMenus
-                            //     // .Where(VwUserMenus => VwUserMenus.NUserCategoryId == loginRes.N_UserCategoryID && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
-                            //   .Where(VwUserMenus => loginRes.X_UserCategoryIDList.Contains(VwUserMenus.NUserCategoryId.ToString() ) && VwUserMenus.NCompanyId == loginRes.N_CompanyID && VwUserMenus.BShowOnline == true)
 
-                            //     .OrderBy(VwUserMenus => VwUserMenus.NOrder)
-                            //     .ToList();
-                            string Modules = "";
-                            string firstModule = "";
-
-                            using (SqlConnection cnn2 = new SqlConnection(masterDBConnectionString))
-                            {
-                                cnn2.Open();
-                                int daysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + clientID, cnn2).ToString());
-                                if (daysToExpire <= 0)
-                                    throw new Exception("Your Subscription Expired");
-                                if (AppID != 6 && AppID != 8 && AppID != 10)
-                                {
-                                    string appUpdate = "Update Users set N_ActiveAppID=" + AppID + " WHERE (X_EmailID ='" + username + "' and N_UserID=" + globalUserID + ")";
-                                    dLayer.ExecuteScalar(appUpdate, cnn2);
-                                }
-
-                                object modulesObj = dLayer.ExecuteScalar("SELECT X_Modules=STUFF  ((SELECT DISTINCT ',' + CAST(N_ModuleID AS VARCHAR(MAX)) FROM AppModules t2 WHERE t2.N_AppID = t1.N_AppID and  t2.N_AppID=" + AppID + " FOR XML PATH('') ),1,1,''  )  FROM AppModules t1  where t1.N_AppID=" + AppID, cnn2);
-                                if (modulesObj == null)
-                                {
-                                    Modules = "-1";
-                                }
-                                else
-                                {
-                                    Modules = modulesObj.ToString();
-                                    string[] ModuleList = Modules.Split(",");
-                                    if (ModuleList.Length > 0)
-                                        firstModule = ModuleList[0];
-                                }
-
-                            }
-
-
-                            //                     string MenuSql = "select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete,B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag," +
-                            // "N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow from VwUserMenus where N_UserCategoryId in ( " + loginRes.X_UserCategoryIDList + " ) and  N_CompanyId=" + loginRes.N_CompanyID + " and B_ShowOnline=1 " +
-                            // " and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in( " + Modules + ") ) Group by N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,B_Visible,B_Edit,B_Delete," +
-                            // "B_Save,B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow order by N_Order ";
 
                             string MenuSql = "select N_MenuId,X_MenuName,X_Caption,N_ParentMenuId,N_Order,N_HasChild,max(cast(isnull(B_Visible,0) as int)) as B_Visible,max(cast(isnull(B_Edit,0) as int)) as B_Edit,max(cast(isnull(B_Delete,0) as int)) as B_Delete, max(cast(isnull(B_Save,0) as int)) as B_Save,max(cast(isnull(B_View,0) as int)) as B_View,X_ShortcutKey,X_CaptionAr,X_FormNameWithTag,N_IsStartup,B_Show,X_RouteName,B_ShowOnline,B_WShow,max(N_UserCategoryId) as N_UserCategoryId,N_CompanyId from (select * from vw_UserMenus_Cloud where N_UserCategoryId in (  " + loginRes.X_UserCategoryIDList + "  ) and  N_CompanyId=" + loginRes.N_CompanyID + "  and B_ShowOnline=1 and ( N_ParentMenuId in( " + Modules + ") or N_MenuID in(" + Modules + " ) ) " +
                                             " union " +
@@ -465,6 +419,33 @@ namespace SmartxAPI.Data
                 var randomBytes = new byte[64];
                 rngCryptoServiceProvider.GetBytes(randomBytes);
                 return Convert.ToBase64String(randomBytes);
+            }
+        }
+
+        private string userNotifications(int nClientID,SqlConnection cnn)
+        {
+            try
+            {
+                string Message = "";
+                    int DaysToExpire = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_ExpiryDate)),0) as expiry from ClientApps where N_ClientID=" + nClientID, cnn).ToString());
+
+                    if (DaysToExpire <= 10)
+                    {
+                        object LastExpiryReminder = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(DATEDIFF(day, GETDATE(),min(D_LastExpiryReminder)),5) as expiry from ClientApps where N_ClientID=" + nClientID, cnn).ToString());
+                        if (Math.Abs(myFunctions.getIntVAL(LastExpiryReminder.ToString())) >= 5)
+                        {
+                            string days = DaysToExpire == 1 ? "day" : "days";
+                            string xExpiryInfo = DaysToExpire > 0 ? "expiring within " + DaysToExpire + days : "expired";
+                            string xProductName = dLayer.ExecuteScalar("SELECT X_AppDescription FROM AppMaster INNER JOIN ClientMaster ON ClientMaster.N_DefaultAppID = AppMaster.N_AppID where N_ClientID=" + nClientID, cnn).ToString();
+                            Message = "Your subscription for " + xProductName + " is " + xExpiryInfo;
+                        }
+                    }
+               
+                return Message;
+            }
+            catch (Exception ex)
+            {
+                return "";
             }
         }
 
