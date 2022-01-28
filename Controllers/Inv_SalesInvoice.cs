@@ -324,7 +324,7 @@ namespace SmartxAPI.Controllers
                             nQuotationID = myFunctions.getIntVAL(N_QuotationID.ToString());
                     }
 
-                    if (nDeliveryNoteId > 0 || xDeliveryNoteID != "")
+                    if (nDeliveryNoteId > 0 || (xDeliveryNoteID != "" && xDeliveryNoteID != null))
                     {
                         DataTable MasterTable = new DataTable();
                         int N_salesOrderID = 0;
