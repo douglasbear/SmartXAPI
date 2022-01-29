@@ -10,7 +10,7 @@
       "NETCOREAPP",
       "NETCOREAPP3_1"
     ],
-    "languageVersion": "8.0",
+    "languageVersion": "",
     "platform": "",
     "allowUnsafe": false,
     "warningsAsErrors": false,
@@ -269,21 +269,12 @@
           "System.Runtime.Serialization.Xml": "4.1.5.0",
           "System.Security.AccessControl.Reference": "4.1.1.0",
           "System.Security.Claims": "4.1.2.0",
-<<<<<<< HEAD
-          "System.Security.Cryptography.Algorithms": "4.3.2.0",
-          "System.Security.Cryptography.Cng.Reference": "4.3.3.0",
-          "System.Security.Cryptography.Csp": "4.1.2.0",
-          "System.Security.Cryptography.Encoding": "4.1.2.0",
-          "System.Security.Cryptography.Primitives.Reference": "4.1.2.0",
-          "System.Security.Cryptography.X509Certificates": "4.2.2.0",
-=======
           "System.Security.Cryptography.Algorithms.Reference": "4.3.2.0",
           "System.Security.Cryptography.Cng.Reference": "4.3.3.0",
           "System.Security.Cryptography.Csp.Reference": "4.1.2.0",
           "System.Security.Cryptography.Encoding.Reference": "4.1.2.0",
           "System.Security.Cryptography.Primitives.Reference": "4.1.2.0",
           "System.Security.Cryptography.X509Certificates.Reference": "4.2.2.0",
->>>>>>> 0aa513c6415e9927b016d4d8ce3c60f503d42123
           "System.Security.Cryptography.Xml": "4.0.3.0",
           "System.Security": "4.0.0.0",
           "System.Security.Permissions.Reference": "4.0.3.0",
@@ -1662,9 +1653,6 @@
           "System.Security.Principal.Windows": "4.7.0"
         }
       },
-<<<<<<< HEAD
-      "System.Security.Cryptography.Cng/4.5.0": {},
-=======
       "System.Security.Cryptography.Algorithms/4.3.1": {
         "dependencies": {
           "Microsoft.NETCore.Platforms": "5.0.0",
@@ -1734,7 +1722,6 @@
           "runtime.native.System.Security.Cryptography.OpenSsl": "4.3.2"
         }
       },
->>>>>>> 0aa513c6415e9927b016d4d8ce3c60f503d42123
       "System.Security.Cryptography.Primitives/4.3.0": {
         "dependencies": {
           "System.Diagnostics.Debug": "4.3.0",
@@ -3330,11 +3317,7 @@
         },
         "compileOnly": true
       },
-<<<<<<< HEAD
-      "System.Security.Cryptography.Csp/4.1.2.0": {
-=======
       "System.Security.Cryptography.Csp.Reference/4.1.2.0": {
->>>>>>> 0aa513c6415e9927b016d4d8ce3c60f503d42123
         "compile": {
           "System.Security.Cryptography.Csp.dll": {}
         },
@@ -5796,16 +5779,7 @@
       "serviceable": false,
       "sha512": ""
     },
-<<<<<<< HEAD
-    "System.Security.Cryptography.Cng.Reference/4.3.3.0": {
-      "type": "referenceassembly",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "System.Security.Cryptography.Csp/4.1.2.0": {
-=======
     "System.Security.Cryptography.Csp.Reference/4.1.2.0": {
->>>>>>> 0aa513c6415e9927b016d4d8ce3c60f503d42123
       "type": "referenceassembly",
       "serviceable": false,
       "sha512": ""
@@ -5821,11 +5795,6 @@
       "sha512": ""
     },
     "System.Security.Cryptography.X509Certificates.Reference/4.2.2.0": {
-      "type": "referenceassembly",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "System.Security.Cryptography.Xml/4.0.3.0": {
       "type": "referenceassembly",
       "serviceable": false,
       "sha512": ""
@@ -5851,14 +5820,6 @@
       "sha512": ""
     },
     "System.Security.Principal.Windows.Reference/4.1.1.0": {
-<<<<<<< HEAD
-      "type": "referenceassembly",
-      "serviceable": false,
-      "sha512": ""
-    },
-    "System.Security.SecureString.Reference/4.1.2.0": {
-=======
->>>>>>> 0aa513c6415e9927b016d4d8ce3c60f503d42123
       "type": "referenceassembly",
       "serviceable": false,
       "sha512": ""
