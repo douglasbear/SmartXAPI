@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_ItemID<> " + nNotGridItemID;
 
             if (nLocationID != 0)
-                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID="+nLocationID+" )  " ;
+                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " )  ";
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
 
@@ -169,7 +169,7 @@ namespace SmartxAPI.Controllers
             if (b_AllBranchData)
             {
                 nLocationID = 0;
-                xCriteria ="";
+                xCriteria = "";
             }
 
 
@@ -1384,6 +1384,7 @@ namespace SmartxAPI.Controllers
         }
         public String Translate(String text, string fromLanguage, string toLanguage)
         {
+            //Translate("test","ar");
             var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={HttpUtility.UrlEncode(text)}";
             var webClient = new WebClient
             {
@@ -1400,6 +1401,23 @@ namespace SmartxAPI.Controllers
                 return "Error";
             }
         }
+        private string Translate(string text, string l)
+        {
+            string translated = null;
+            HttpWebRequest hwr = (HttpWebRequest)HttpWebRequest.Create
+            ("http://translate.google.com/#en/ar/test");
+            HttpWebResponse res = (HttpWebResponse)hwr.GetResponse();
+            StreamReader sr = new StreamReader(res.GetResponseStream());
+            string html = sr.ReadToEnd();
+            int rawlength1 = html.IndexOf("<span id=otq><b>");
+            string rawStr1 = html.Substring(rawlength1);
+            int rawlength2 = rawStr1.IndexOf("</b>");
+            string rawstr2 = rawStr1.Substring(0, rawlength2);
+            translated = rawstr2.Replace("<span id=otq><b>", "");
+            //tbStringToTranslate.Text = text;
+            return translated;
+        }
+
 
 
 
