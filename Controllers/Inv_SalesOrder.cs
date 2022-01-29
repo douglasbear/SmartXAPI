@@ -274,12 +274,13 @@ namespace SmartxAPI.Controllers
                     DetailParams.Add("n_LocationID", MasterRow["N_LocationID"]);
                     string Location = Convert.ToString(dLayer.ExecuteScalar("select X_LocationName from Inv_Location where N_CompanyID=@nCompanyID and N_LocationID=@n_LocationID", DetailParams, connection));
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "X_LocationName", typeof(string), Location);
-                    object InSales = null, InDeliveryNote = null, CancelStatus = null;
+                    object InSales = null, InDeliveryNote = null, CancelStatus = null,isProforma=false;
                     if (myFunctions.getIntVAL(N_SalesOrderTypeID.ToString()) != 175)
                     {
                         if (Convert.ToBoolean(MasterRow["N_Processed"]))
                         {
                             InSales = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
+                            isProforma = dLayer.ExecuteScalar("select isnull(B_IsProforma,0) from Inv_Sales where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             InDeliveryNote = dLayer.ExecuteScalar("select x_ReceiptNo from Inv_DeliveryNote where N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
                             CancelStatus = dLayer.ExecuteScalar("select 1 from Inv_SalesOrder where B_CancelOrder=1 and N_CompanyID=@nCompanyID and N_SalesOrderId=@nSOrderID", DetailParams, connection);
 
@@ -298,8 +299,8 @@ namespace SmartxAPI.Controllers
                         if (MasterTable.Columns.Contains("TxnStatus"))
                             MasterTable.Columns.Remove("TxnStatus");
                         MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), InSales != null ? "Invoice Processed" : "");
-                        MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "salesDone", typeof(int), InSales != null ? 1 : 0);
                     }
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "salesDone", typeof(int), InSales != null ? 1 : 0);
                     object DNQty = dLayer.ExecuteScalar("SELECT SUM(Inv_DeliveryNoteDetails.N_Qty * Inv_ItemUnit.N_Qty) FROM Inv_DeliveryNoteDetails INNER JOIN Inv_ItemUnit ON Inv_DeliveryNoteDetails.N_ItemUnitID = Inv_ItemUnit.N_ItemUnitID AND Inv_DeliveryNoteDetails.N_CompanyID = Inv_ItemUnit.N_CompanyID AND Inv_DeliveryNoteDetails.N_ItemID = Inv_ItemUnit.N_ItemID where Inv_DeliveryNoteDetails.N_CompanyID=" + nCompanyID + " and Inv_DeliveryNoteDetails.N_SalesOrderID=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                     object OrderQty1 = dLayer.ExecuteScalar("select SUM(Inv_SalesOrderDetails.N_Qty) from Inv_SalesOrderDetails where N_CompanyID=" + nCompanyID + " and N_SalesOrderId=" + myFunctions.getIntVAL(N_SOrderID.ToString()), DetailParams, connection);
                     if (DNQty != null && OrderQty1 != null)
@@ -316,6 +317,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "SalesOrderCanceled", typeof(string), CancelStatus);
 
                     MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "ChkCancelOrderEnabled", typeof(bool), true);
+                    MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "isProformaDone", typeof(bool), isProforma);
 
 
                     if (InSales != null)

@@ -183,8 +183,26 @@ namespace SmartxAPI.Controllers
                     int nPurchaseID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PurchaseID"].ToString());
                     string X_InvoiceNo = MasterTable.Rows[0]["X_InvoiceNo"].ToString();
                     string xTransType = "FTPURCHASE";
-
                     DocNo = MasterRow["X_InvoiceNo"].ToString();
+
+
+
+                     if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearID, Convert.ToDateTime(MasterTable.Rows[0]["D_InvoiceDate"].ToString()), dLayer, connection, transaction))
+                    {
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyID + " and convert(date ,'" + MasterTable.Rows[0]["D_InvoiceDate"].ToString() + "') between D_Start and D_End", Params, connection, transaction);
+                        if (DiffFnYearID != null)
+                        {
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            nFnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                        }
+                    }
+
+                    
                     if (nPurchaseID > 0)
                     {
 
@@ -203,7 +221,7 @@ namespace SmartxAPI.Controllers
                             return Ok(_api.Error(User, ex.Message));
                         }
                     }
-
+                
 
                     if (DocNo == "@Auto")
                     {
@@ -254,6 +272,7 @@ namespace SmartxAPI.Controllers
 
 
                     }
+                    
                     // if (CostCenterTable.Columns.Contains("rowID"))
                     //     CostCenterTable.Columns.Remove("rowID");
                     // if (CostCenterTable.Columns.Contains("percentage"))

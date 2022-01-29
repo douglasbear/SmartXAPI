@@ -104,7 +104,7 @@ namespace SmartxAPI.Controllers
                     UserTable.Rows[0]["b_Inactive"] = true;
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_ActiveAppID", typeof(int), 0);
                     UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "X_UserID", typeof(string), email);
-                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 1);
+                    UserTable = myFunctions.AddNewColumnToDataTable(UserTable, "N_UserType", typeof(int), 0);
 
 
                     int UserID = dLayer.SaveData("Users", "n_UserID", UserTable, connection, transaction);
@@ -116,20 +116,25 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                 }
-                                                    string ipAddress = "";
+                string ipAddress = "";
                 if (Request.Headers.ContainsKey("X-Forwarded-For"))
                     ipAddress = Request.Headers["X-Forwarded-For"];
                 else
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
-                SortedList Res = Login(email, pwd, "Registration", 0,ipAddress);
-                if (Res["StatusCode"].ToString() == "0")
+                SortedList Res = new SortedList();
+                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
                 {
-                    return Ok(_api.Error(User, Res["Message"].ToString()));
-                }
+                    cnn.Open();
+                    Res = Login(email, pwd, "Registration", 0, ipAddress, cnn);
+                    if (Res["StatusCode"].ToString() == "0")
+                    {
+                        return Ok(_api.Error(User, Res["Message"].ToString()));
+                    }
 
-                Res["Message"] = "Client Registration Success";
-                Res["AppStatus"] = "Registered";
+                    Res["Message"] = "Client Registration Success";
+                    Res["AppStatus"] = "Registered";
+                }
 
 
                 return Ok(_api.Success(Res, Res["Message"].ToString()));
@@ -165,13 +170,13 @@ namespace SmartxAPI.Controllers
 
                     if (emailID == null || password == null) { return Ok(_api.Warning("Username or password is incorrect")); }
 
-                                    string ipAddress = "";
-                if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                    ipAddress = Request.Headers["X-Forwarded-For"];
-                else
-                    ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
-                    SortedList Res = Login(emailID, password, "Login", appType,ipAddress);
+                    SortedList Res = Login(emailID, password, "Login", appType, ipAddress, connection);
                     if (Res["StatusCode"].ToString() == "0")
                     {
                         return Ok(_api.Error(User, Res["Message"].ToString()));
@@ -187,74 +192,74 @@ namespace SmartxAPI.Controllers
         }
 
 
-        private SortedList Login(string emailID, string password, string Type, int appType,string ipAddress)
+        private SortedList Login(string emailID, string password, string Type, int appType, string ipAddress, SqlConnection cnn)
         {
             SortedList Res = new SortedList();
 
             try
             {
-                using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
+                // using (SqlConnection cnn = new SqlConnection(masterDBConnectionString))
+                // {
+                //     cnn.Open();
+                password = myFunctions.EncryptString(password);
+                string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID =@emailID and Users.x_Password=@xPassword)";
+                SortedList Params = new SortedList();
+                Params.Add("@emailID", emailID);
+                Params.Add("@xPassword", password);
+                DataTable output = dLayer.ExecuteDataTable(sql, Params, cnn);
+                if (output.Rows.Count == 0)
                 {
-                    cnn.Open();
-                    password = myFunctions.EncryptString(password);
-                    string sql = "SELECT Users.N_UserID, Users.X_EmailID, Users.X_UserName, Users.N_ClientID, Users.X_UserID, Users.N_ActiveAppID, ClientApps.X_AppUrl,ClientApps.X_DBUri, AppMaster.X_AppName, ClientMaster.X_AdminUserID AS x_AdminUser,CASE WHEN Users.N_UserType=0 THEN 1 ELSE 0 end as isAdminUser FROM Users LEFT OUTER JOIN ClientMaster ON Users.N_ClientID = ClientMaster.N_ClientID LEFT OUTER JOIN ClientApps ON Users.N_ActiveAppID = ClientApps.N_AppID AND Users.N_ClientID = ClientApps.N_ClientID LEFT OUTER JOIN AppMaster ON ClientApps.N_AppID = AppMaster.N_AppID WHERE (Users.X_UserID =@emailID and Users.x_Password=@xPassword)";
-                    SortedList Params = new SortedList();
-                    Params.Add("@emailID", emailID);
-                    Params.Add("@xPassword", password);
-                    DataTable output = dLayer.ExecuteDataTable(sql, Params, cnn);
-                    if (output.Rows.Count == 0)
-                    {
-                        Res.Add("Message", "Invalid Username or Password!");
-                        Res.Add("StatusCode", 0);
-                        return Res;
-                    }
-                    if (appType > 0)
-                    {
-                        output.Rows[0]["N_ActiveAppID"] = appType;
-                    }
+                    Res.Add("Message", "Invalid Username or Password!");
+                    Res.Add("StatusCode", 0);
+                    return Res;
+                }
+                if (appType > 0)
+                {
+                    output.Rows[0]["N_ActiveAppID"] = appType;
+                }
 
-                    if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null && output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
-                    {
-                        int companyid = 0;
-                        string companyname = "";
-                        // string uri = output.Rows[0]["X_DBUri"].ToString();
-                        string uri = "SmartxConnection";
+                if (Type == "Login" && (output.Rows[0]["N_ActiveAppID"].ToString() != null && output.Rows[0]["N_ActiveAppID"].ToString() != "0"))
+                {
+                    int companyid = 0;
+                    string companyname = "";
+                    // string uri = output.Rows[0]["X_DBUri"].ToString();
+                    string uri = "SmartxConnection";
 
-                        using (SqlConnection connection = new SqlConnection(config.GetConnectionString(uri)))
+                    using (SqlConnection connection = new SqlConnection(config.GetConnectionString(uri)))
+                    {
+                        connection.Open();
+                        SortedList paramList = new SortedList();
+                        paramList.Add("@nClientID", myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString()));
+                        paramList.Add("@emailID", emailID);
+                        string sqlCompany = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName FROM Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where Acc_Company.N_ClientID=@nClientID and Sec_User.X_UserID=@emailID  order by B_IsDefault Desc";
+
+                        DataTable companyDt = dLayer.ExecuteDataTable(sqlCompany, paramList, connection);
+                        if (companyDt.Rows.Count == 0)
                         {
-                            connection.Open();
-                            SortedList paramList = new SortedList();
-                            paramList.Add("@nClientID", myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString()));
-                            paramList.Add("@emailID", emailID);
-                            string sqlCompany = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName FROM Acc_Company LEFT OUTER JOIN Sec_User ON Acc_Company.N_CompanyID = Sec_User.N_CompanyID  where Acc_Company.N_ClientID=@nClientID and Sec_User.X_UserID=@emailID  order by B_IsDefault Desc";
-
-                            DataTable companyDt = dLayer.ExecuteDataTable(sqlCompany, paramList, connection);
-                            if (companyDt.Rows.Count == 0)
-                            {
-                                Res.Add("Message", "Something went wrong.");
-                                Res.Add("StatusCode", 0);
-                                return Res;
-                            }
-                            companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
-                            companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
+                            Res.Add("Message", "Something went wrong.");
+                            Res.Add("StatusCode", 0);
+                            return Res;
                         }
-                        int nClientID = myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString());
-                        int nGlobalUserID = myFunctions.getIntVAL(output.Rows[0]["N_UserID"].ToString());
-                        var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()), uri, nClientID, nGlobalUserID,ipAddress,0);
-                        Res.Add("UserInfo", user);
-                        Res.Add("StatusCode", 1);
-                        Res.Add("Type", "User");
-                        Res.Add("Message", "Login Success");
-                        sendLicenseReminder(nClientID);
-                        return Res;
+                        companyid = myFunctions.getIntVAL(companyDt.Rows[0]["N_CompanyID"].ToString());
+                        companyname = companyDt.Rows[0]["X_CompanyName"].ToString();
                     }
+                    int nClientID = myFunctions.getIntVAL(output.Rows[0]["N_ClientID"].ToString());
+                    int nGlobalUserID = myFunctions.getIntVAL(output.Rows[0]["N_UserID"].ToString());
+                    var user = _repository.Authenticate(companyid, companyname, emailID, 0, "all", myFunctions.getIntVAL(output.Rows[0]["N_ActiveAppID"].ToString()), uri, nClientID, nGlobalUserID, ipAddress, 0);
+                    Res.Add("UserInfo", user);
+                    Res.Add("StatusCode", 1);
+                    Res.Add("Type", "User");
+                    Res.Add("Message", "Login Success");
+                    sendLicenseReminder(nClientID);
+                    return Res;
+                }
 
 
-                    var tokenHandler = new JwtSecurityTokenHandler();
-                    var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
-                    var tokenDescriptor = new SecurityTokenDescriptor
-                    {
-                        Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
+                var tokenHandler = new JwtSecurityTokenHandler();
+                var key = Encoding.ASCII.GetBytes(_appSettings.Secret);
+                var tokenDescriptor = new SecurityTokenDescriptor
+                {
+                    Subject = new System.Security.Claims.ClaimsIdentity(new Claim[]{
                         new Claim(ClaimTypes.PrimarySid,output.Rows[0]["N_UserID"].ToString()),
                         new Claim(ClaimTypes.PrimaryGroupSid,output.Rows[0]["N_ClientID"].ToString()),
                         new Claim(ClaimTypes.Email,output.Rows[0]["X_EmailID"].ToString()),
@@ -269,27 +274,27 @@ namespace SmartxAPI.Controllers
                         new Claim(ClaimTypes.Uri,output.Rows[0]["X_DBUri"].ToString())
 
                     }),
-                        Expires = DateTime.UtcNow.AddDays(2),
-                        SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
-                    };
-                    var token = tokenHandler.CreateToken(tokenDescriptor);
-                    var reToken = generateRefreshToken();
-                    SortedList tokenSet = new SortedList();
+                    Expires = DateTime.UtcNow.AddDays(2),
+                    SigningCredentials = new SigningCredentials(new SymmetricSecurityKey(key), SecurityAlgorithms.HmacSha256Signature)
+                };
+                var token = tokenHandler.CreateToken(tokenDescriptor);
+                var reToken = generateRefreshToken();
+                SortedList tokenSet = new SortedList();
 
-                    tokenSet.Add("Token", tokenHandler.WriteToken(token));
-                    tokenSet.Add("Expiry", DateTime.UtcNow.AddDays(2));
-                    tokenSet.Add("RefreshToken", reToken);
-                    tokenSet.Add("n_AppID", "0");
-                    dLayer.ExecuteScalar("Update Users set X_Token='" + reToken + "' where N_UserID=" + output.Rows[0]["N_UserID"].ToString(), cnn);
+                tokenSet.Add("Token", tokenHandler.WriteToken(token));
+                tokenSet.Add("Expiry", DateTime.UtcNow.AddDays(2));
+                tokenSet.Add("RefreshToken", reToken);
+                tokenSet.Add("n_AppID", "0");
+                dLayer.ExecuteScalar("Update Users set X_Token='" + reToken + "' where N_UserID=" + output.Rows[0]["N_UserID"].ToString(), cnn);
 
-                    SortedList User = new SortedList();
-                    User.Add("Token", tokenSet);
-                    User.Add("UserData", output);
-                    Res.Add("UserInfo", User);
-                    Res.Add("Type", "Client");
-                    Res.Add("StatusCode", 1);
-                    Res.Add("Message", "Login Success");
-                }
+                SortedList User = new SortedList();
+                User.Add("Token", tokenSet);
+                User.Add("UserData", output);
+                Res.Add("UserInfo", User);
+                Res.Add("Type", "Client");
+                Res.Add("StatusCode", 1);
+                Res.Add("Message", "Login Success");
+                // }
                 return Res;
             }
             catch (Exception ex)
