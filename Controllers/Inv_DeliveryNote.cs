@@ -101,7 +101,11 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
+<<<<<<< HEAD
         public ActionResult GetDeliveryNoteDetails(int nFnYearId, bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID)
+=======
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID,int nProformaID)
+>>>>>>> 1aca2641b790fc67187c47bddd0cd3499f3489d5
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -173,6 +177,22 @@ namespace SmartxAPI.Controllers
                         dsSalesInvoice.Tables.Add(DetailTable);
                         return Ok(_api.Success(dsSalesInvoice));
                     }
+                    else if(nProformaID>0)
+                    {
+                        QueryParamsList.Add("@nProformaID", nProformaID);
+                        string Mastersql = "select * from vw_ProformaToDeliveryNote where N_CompanyId=@nCompanyID and N_ProformaID=@nProformaID";
+                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                        MasterTable = _api.Format(MasterTable, "Master");
+                        string DetailSql = "";
+                        DetailSql = "select * from vw_ProformatoDeliveryNoteDetails where N_CompanyId=@nCompanyID and N_ProformaID=@nProformaID";
+                        DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
+
+                        DetailTable = _api.Format(DetailTable, "Details");
+                        dsSalesInvoice.Tables.Add(MasterTable);
+                        dsSalesInvoice.Tables.Add(DetailTable);
+                        return Ok(_api.Success(dsSalesInvoice));
+                    }
                     else
                     {
                         QueryParamsList.Add("@xInvoiceNo", xInvoiceNo);
@@ -220,7 +240,11 @@ namespace SmartxAPI.Controllers
                         {
                             QueryParamsList.Add("@nSOID", myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()));
                             DataTable NewSalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_SalesOrderID=@nSOID and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
+<<<<<<< HEAD
                             if (NewSalesData.Rows.Count > 0)
+=======
+                            if(NewSalesData.Rows.Count>0)
+>>>>>>> 1aca2641b790fc67187c47bddd0cd3499f3489d5
                             {
                                 masterTable.Rows[0]["X_SalesReceiptNo"] = NewSalesData.Rows[0]["X_ReceiptNo"].ToString();
                                 masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(NewSalesData.Rows[0]["N_SalesId"].ToString());
@@ -299,8 +323,12 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
 
+<<<<<<< HEAD
 
                     if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+=======
+                 if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+>>>>>>> 1aca2641b790fc67187c47bddd0cd3499f3489d5
                     {
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,'" + MasterTable.Rows[0]["D_DeliveryDate"].ToString() + "') between D_Start and D_End", QueryParams, connection, transaction);
                         if (DiffFnYearID != null)
@@ -316,7 +344,10 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 1aca2641b790fc67187c47bddd0cd3499f3489d5
                     //B_DirectPosting = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select B_DirPosting from Inv_Customer where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_CustomerID=@nCustomerID", QueryParams, connection, transaction).ToString());
                     object objAllBranchData = dLayer.ExecuteScalar("Select B_ShowAllData From Acc_BranchMaster where N_BranchID=@nBranchID and N_CompanyID=@nCompanyID", QueryParams, connection, transaction);
                     if (objAllBranchData != null)
