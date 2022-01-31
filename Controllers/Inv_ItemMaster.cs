@@ -325,7 +325,14 @@ namespace SmartxAPI.Controllers
                         dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), myFunctions.getVAL(res.ToString()).ToString(myCompanyID.DecimalPlaceString));
                     else
                         dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), "0.00");
+                    object CalcCost = 0;
+                    if (N_BranchID == 0) // 05/12/2020 Cost caucation made usinf procedure by Zainab under the instruction of Anees sir
+                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
+                    else
+                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
+                    dt.Rows[0]["n_ItemCost"] = CalcCost;
+                    dt.AcceptChanges();
                     object inStocks = dLayer.ExecuteScalar("Select N_ItemID From vw_InvStock_Status Where N_ItemID=@nItemID and (Type<>'O' and Type<>'PO' and Type<>'SO') and N_CompanyID=@nCompanyID", QueryParams, connection);
                     bool b_InStocks = true;
                     if (inStocks == null)
