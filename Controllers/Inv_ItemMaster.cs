@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem,int nItemUsedFor)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -47,7 +47,7 @@ namespace SmartxAPI.Controllers
             string Category = "";
             string Condition = "";
             string xCriteria = "";
-
+            //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
 
 
             // if (b_AllBranchData)
@@ -85,6 +85,18 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID="+nLocationID+" )  " ;
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
+
+            if(nItemUsedFor!=0)
+            {
+                if(nItemUsedFor==1)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1";
+                else if(nItemUsedFor==2)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeSold =1";
+                else if(nItemUsedFor==3)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1 and vw_InvItem_Search_cloud.B_CanbeSold =1";
+                else if(nItemUsedFor==4)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeRawMaterial =1";
+            }
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
             string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
