@@ -101,7 +101,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetDeliveryNoteDetails(int nFnYearId,bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID)
+        public ActionResult GetDeliveryNoteDetails(int nFnYearId, bool bAllBranchData, int nBranchId, string xInvoiceNo, int nSalesOrderID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -124,16 +124,16 @@ namespace SmartxAPI.Controllers
                         {"X_ReceiptNo",xInvoiceNo},
                         {"X_TransType","DELIVERY"},
                         {"N_FnYearID",nFnYearId},
-                      
+
                     };
-                     if(!bAllBranchData)
-                 {
-                     mParamsList.Add("N_BranchId",nBranchId);
-                 }
-                 else
-                 {
-                     mParamsList.Add("N_BranchId",0);
-                 }
+                    if (!bAllBranchData)
+                    {
+                        mParamsList.Add("N_BranchId", nBranchId);
+                    }
+                    else
+                    {
+                        mParamsList.Add("N_BranchId", 0);
+                    }
                     if (nSalesOrderID > 0)
                     {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
@@ -215,12 +215,17 @@ namespace SmartxAPI.Controllers
                             masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
                             masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
                             masterTable.Rows[0]["isSalesDone"] = true;
-                        }else if(myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()) > 0){
-                        QueryParamsList.Add("@nSOID", myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()));
+                        }
+                        else if (myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()) > 0)
+                        {
+                            QueryParamsList.Add("@nSOID", myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()));
                             DataTable NewSalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_SalesOrderID=@nSOID and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-                            masterTable.Rows[0]["X_SalesReceiptNo"] = NewSalesData.Rows[0]["X_ReceiptNo"].ToString();
-                            masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(NewSalesData.Rows[0]["N_SalesId"].ToString());
-                            masterTable.Rows[0]["isProformaDone"] = true;
+                            if (NewSalesData.Rows.Count > 0)
+                            {
+                                masterTable.Rows[0]["X_SalesReceiptNo"] = NewSalesData.Rows[0]["X_ReceiptNo"].ToString();
+                                masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(NewSalesData.Rows[0]["N_SalesId"].ToString());
+                                masterTable.Rows[0]["isProformaDone"] = true;
+                            }
                         }
                     }
 
@@ -294,7 +299,7 @@ namespace SmartxAPI.Controllers
                     QueryParams.Add("@nLocationID", N_LocationID);
                     QueryParams.Add("@nCustomerID", N_CustomerID);
 
-                 if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
+                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
                         object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,'" + MasterTable.Rows[0]["D_DeliveryDate"].ToString() + "') between D_Start and D_End", QueryParams, connection, transaction);
                         if (DiffFnYearID != null)
@@ -310,14 +315,14 @@ namespace SmartxAPI.Controllers
                         }
                     }
 
-                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff",System.Globalization.CultureInfo.InvariantCulture) , dLayer, connection, transaction))
+                    if (!myFunctions.CheckActiveYearTransaction(N_CompanyID, N_FnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_DeliveryDate"].ToString(), "yyyy-MM-dd HH:mm:ss:fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
-                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,'"+ MasterTable.Rows[0]["D_DeliveryDate"].ToString() +"') between D_Start and D_End", QueryParams, connection, transaction);
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=@nCompanyID and convert(date ,'" + MasterTable.Rows[0]["D_DeliveryDate"].ToString() + "') between D_Start and D_End", QueryParams, connection, transaction);
                         if (DiffFnYearID != null)
                         {
-                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();    
-                            N_FnYearID=myFunctions.getIntVAL(DiffFnYearID.ToString()); 
-                            QueryParams["@nFnYearID"]=N_FnYearID;             
+                            MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
+                            N_FnYearID = myFunctions.getIntVAL(DiffFnYearID.ToString());
+                            QueryParams["@nFnYearID"] = N_FnYearID;
                         }
                         else
                         {
@@ -466,11 +471,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-                                            SortedList Result = new SortedList();
-                    Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
-                    Result.Add("InvoiceNo", InvoiceNo);
+                        SortedList Result = new SortedList();
+                        Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
+                        Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
-                        return Ok(_api.Success(Result,"Delivery Note saved"));
+                        return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
                 }
             }

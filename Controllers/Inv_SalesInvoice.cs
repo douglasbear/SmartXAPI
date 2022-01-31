@@ -367,7 +367,7 @@ namespace SmartxAPI.Controllers
                                 if (Avar["N_DeliveryNoteID"].ToString() != "0")
                                     DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
-                            if (xDeliveryNoteID == "")
+                            if (xDeliveryNoteID == "" || xDeliveryNoteID==null)
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
                             else
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if (xDeliveryNoteID == "")
+                            if (xDeliveryNoteID == "" || xDeliveryNoteID==null)
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
                             else
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  ";

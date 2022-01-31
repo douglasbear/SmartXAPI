@@ -317,8 +317,7 @@ namespace SmartxAPI.Controllers
                     }
 
 
-                    if (flag == 1)
-                    {
+                    
                         DataTable dt = new DataTable();
                         dt.Clear();
                         dt.Columns.Add("N_InternalID");
@@ -348,7 +347,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                    }
+                    
                     if (N_IsAdmin == 1)
                     {
                         dLayer.ExecuteNonQuery("delete from Sec_UserPrevileges where N_UserCategoryID not in (select N_UserCategoryID from Sec_UserCategory where X_UserCategory in ('Olivo','Administrator') and N_CompanyID=" + nCompanyID + ") and N_MenuID not in (select N_MenuID from Sec_UserPrevileges where N_UserCategoryID=" + N_UserCategoryID + ")and N_MenuID in (select N_MenuID from Sec_Menus where N_ParentMenuID=" + N_MenuID + ")", Params, connection, transaction);
