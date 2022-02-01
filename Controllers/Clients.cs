@@ -303,7 +303,7 @@ namespace SmartxAPI.Controllers
                     Res.Add("Message", "User Inactive");
                 else
                 if (ex.Message == "Your Subscription Expired")
-                    Res.Add("Message", "Subscription Expired");
+                    Res.Add("Message", "Oops!!.. Your Subscription Expired");
                 else
                 if (ex.Message == "Unauthorized Access")
                     Res.Add("Message", "Unauthorized Access");
