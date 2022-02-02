@@ -42,7 +42,23 @@ namespace SmartxAPI.Dtos.SP
         public int N_Decimal { get; set; }
         public string X_UserFullName { get; set; }
         public string X_BranchCode { get; set; }
+        public int N_DecimalPlace { get; set; }
         public string X_UserCategoryIDList { get; set; }
+        public int N_CurrencyDecimal { get; set; }
+        public int N_EmpID { get; set; }
+        public string X_EmpCode { get; set; }
+        public string X_EmpName { get; set; }
+        public int N_PositionID { get; set; }
+        public string X_Position { get; set; }
+        public int N_DepartmentID { get; set; }
+        public string X_Department { get; set; }
+        public string X_EmpNameLocale { get; set; }
+        public int N_SalesmanID { get; set; }
+        public string X_SalesmanCode { get; set; }
+        public string X_SalesmanName { get; set; }
+        public bool B_AllowEdit { get; set; }
+        public string X_CurrencyName { get; set; }
+
         [NotMapped]
         public string Token { get; set; }
         [NotMapped]
@@ -56,44 +72,17 @@ namespace SmartxAPI.Dtos.SP
         [NotMapped]
         public string I_CompanyLogo { get; set; }
         [NotMapped]
-        public string X_CurrencyName { get; set; }
-        [NotMapped]
-        public int N_EmpID { get; set; }
-        [NotMapped]
-        public string X_EmpCode { get; set; }
-        [NotMapped]
-        public string X_EmpName { get; set; }
-        [NotMapped]
-        public int N_PositionID { get; set; }
-        [NotMapped]
-        public string X_Position { get; set; }
-        [NotMapped]
-        public int N_DepartmentID { get; set; }
-        [NotMapped]
-        public string X_Department { get; set; }
-        [NotMapped]
-        public string X_EmpNameLocale { get; set; }
-        [NotMapped]
         public int N_CountryID { get; set; }
-        [NotMapped]
-        public int N_SalesmanID { get; set; }
-        [NotMapped]
-        public string X_SalesmanCode { get; set; }
-        [NotMapped]
-        public string X_SalesmanName { get; set; }
-        [NotMapped]
-        public int N_CurrencyDecimal { get; set; }
+
         [NotMapped]
         public int N_AppID { get; set; }
-        [NotMapped]
-        public bool B_AllowEdit { get; set; }
-        [NotMapped]
-        
-        public string N_DecimalPlace { get; set; }
+
         [NotMapped]
         public DataTable GlobalUserInfo { get; set; }
-                [NotMapped]
+        [NotMapped]
         public int N_LoginID { get; set; }
+        [NotMapped]
+        public string Warning { get; set; }
 
 
 

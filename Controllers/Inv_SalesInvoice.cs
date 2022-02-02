@@ -295,7 +295,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("details")]
-        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID)
+        public ActionResult GetSalesInvoiceDetails(int nCompanyId, bool bAllBranchData, int nFnYearId, int nBranchId, string xInvoiceNo, int nSalesOrderID, int nDeliveryNoteId, int isProfoma, int nQuotationID, int n_OpportunityID, int nServiceID, string xDeliveryNoteID)
         {
             if (xInvoiceNo != null)
                 xInvoiceNo = xInvoiceNo.Replace("%2F", "/");
@@ -324,15 +324,34 @@ namespace SmartxAPI.Controllers
                             nQuotationID = myFunctions.getIntVAL(N_QuotationID.ToString());
                     }
 
-                    if (nDeliveryNoteId > 0)
+                    if (nDeliveryNoteId > 0 || (xDeliveryNoteID != "" && xDeliveryNoteID != null))
                     {
+                        DataTable MasterTable = new DataTable();
+                        int N_salesOrderID = 0;
+                        string Mastersql = "";
 
-                        QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
-                        string Mastersql = "select * from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=@nDeliveryNoteID";
-                        DataTable MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
-                        if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
-                        MasterTable = _api.Format(MasterTable, "Master");
-                        int N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
+                        if (nDeliveryNoteId > 0)
+                        {
+                            QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
+                            Mastersql = "select * from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=@nDeliveryNoteID";
+                            MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                            if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            MasterTable = _api.Format(MasterTable, "Master");
+                            N_salesOrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_salesOrderID"].ToString());
+                        }
+                        else
+                        {
+                            QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
+                            string[] X_Delivery = xDeliveryNoteID.Split(",");
+                            int N_DeliveryNote=myFunctions.getIntVAL(X_Delivery[0].ToString() );
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId="+N_DeliveryNote+"";
+                            MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
+                            if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                            MasterTable = _api.Format(MasterTable, "Master");
+                           
+
+                        }
+
                         string DetailSql = "";
                         //  DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID=@nDeliveryNoteID ";
 
@@ -348,46 +367,54 @@ namespace SmartxAPI.Controllers
                                 if (Avar["N_DeliveryNoteID"].ToString() != "0")
                                     DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
-                            // DeliveryNoteAppend = DeliveryNoteAppend.Substring(1);
-                            DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
+                            if (xDeliveryNoteID == "" || xDeliveryNoteID==null)
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
+                            else
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
 
                         }
                         else
                         {
-                            DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
+                            if (xDeliveryNoteID == "" || xDeliveryNoteID==null)
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
+                            else
+                                DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  ";
 
                         }
 
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString()) > 0)
+                        if (xDeliveryNoteID == "")
                         {
+                            if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString()) > 0)
+                            {
 
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_DiscountDisplay", typeof(double), 0);
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_DiscountAmtF", typeof(double), 0);
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxAmtF", typeof(double), 0);
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DisplayName", typeof(string), null);
-                            MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxPercentage", typeof(int), 0);
-
-
-
-                            string sql1 = "Select * from Inv_SalesOrder  where N_SalesOrderID=" + (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString())) + " and N_CompanyId=" + nCompanyId + "";
-                            DataTable AdditionalTable = dLayer.ExecuteDataTable(sql1, QueryParamsList, Con);
-                            MasterTable.Rows[0]["n_DiscountDisplay"] = myFunctions.getVAL(AdditionalTable.Rows[0]["n_DiscountDisplay"].ToString());
-                            MasterTable.Rows[0]["n_DiscountAmtF"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_DiscountAmtF"].ToString());
-                            MasterTable.Rows[0]["n_TaxAmtF"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_TaxAmtF"].ToString());
-                            MasterTable.Rows[0]["n_TaxPercentage"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_TaxPercentage"].ToString());
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_DiscountDisplay", typeof(double), 0);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_DiscountAmtF", typeof(double), 0);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxAmtF", typeof(double), 0);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "x_DisplayName", typeof(string), null);
+                                MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "n_TaxPercentage", typeof(int), 0);
 
 
-                            int N_OthTaxCategoryID = myFunctions.getIntVAL(AdditionalTable.Rows[0]["N_TaxCategoryID"].ToString());
-                            string X_OtherTax1 = "";
-                            object X_OtherTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + N_OthTaxCategoryID, QueryParamsList, Con);
-                            if (X_OtherTax != null)
-                                X_OtherTax1 = X_OtherTax.ToString();
-                            MasterTable.Rows[0]["x_DisplayName"] = X_OtherTax1;
+
+                                string sql1 = "Select * from Inv_SalesOrder  where N_SalesOrderID=" + (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString())) + " and N_CompanyId=" + nCompanyId + "";
+                                DataTable AdditionalTable = dLayer.ExecuteDataTable(sql1, QueryParamsList, Con);
+                                MasterTable.Rows[0]["n_DiscountDisplay"] = myFunctions.getVAL(AdditionalTable.Rows[0]["n_DiscountDisplay"].ToString());
+                                MasterTable.Rows[0]["n_DiscountAmtF"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_DiscountAmtF"].ToString());
+                                MasterTable.Rows[0]["n_TaxAmtF"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_TaxAmtF"].ToString());
+                                MasterTable.Rows[0]["n_TaxPercentage"] = myFunctions.getVAL(AdditionalTable.Rows[0]["N_TaxPercentage"].ToString());
 
 
+                                int N_OthTaxCategoryID = myFunctions.getIntVAL(AdditionalTable.Rows[0]["N_TaxCategoryID"].ToString());
+                                string X_OtherTax1 = "";
+                                object X_OtherTax = dLayer.ExecuteScalar("Select X_DisplayName from Acc_TaxCategory where N_PkeyID=" + N_OthTaxCategoryID, QueryParamsList, Con);
+                                if (X_OtherTax != null)
+                                    X_OtherTax1 = X_OtherTax.ToString();
+                                MasterTable.Rows[0]["x_DisplayName"] = X_OtherTax1;
+
+
+                            }
                         }
 
 
@@ -1143,7 +1170,7 @@ namespace SmartxAPI.Controllers
                         LogParams.Add("X_Action", xButtonAction);
                         LogParams.Add("X_SystemName", "ERP Cloud");
                         LogParams.Add("X_IP", ipAddress);
-                        LogParams.Add("X_TransCode",  InvoiceNo);
+                        LogParams.Add("X_TransCode", InvoiceNo);
                         LogParams.Add("X_Remark", " ");
                         dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
 
@@ -1393,7 +1420,7 @@ namespace SmartxAPI.Controllers
                     ParamList.Add("@nTransID", nInvoiceID);
                     ParamList.Add("@nFnYearID", nFnYearID);
                     ParamList.Add("@nCompanyID", nCompanyID);
-                    string xButtonAction="Delete";
+                    string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,isNull(N_CustomerId,0) as N_CustomerId,X_ReceiptNo,N_SalesOrderID from Inv_Sales where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_SalesID=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
                     if (TransData.Rows.Count == 0)
@@ -1523,23 +1550,23 @@ namespace SmartxAPI.Controllers
                     }
                     //Activity Log
 
-                       string ipAddress = "";
-                        if (Request.Headers.ContainsKey("X-Forwarded-For"))
-                            ipAddress = Request.Headers["X-Forwarded-For"];
-                        else
-                            ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
-                        SortedList LogParams = new SortedList();
-                        LogParams.Add("N_CompanyID", nCompanyID);
-                        LogParams.Add("N_FnYearID", nFnYearID);
-                        LogParams.Add("N_TransID", nInvoiceID);
-                        LogParams.Add("N_FormID", this.N_FormID);
-                        LogParams.Add("N_UserId", nUserID);
-                        LogParams.Add("X_Action", xButtonAction);
-                        LogParams.Add("X_SystemName", "ERP Cloud");
-                        LogParams.Add("X_IP", ipAddress);
-                        LogParams.Add("X_TransCode",  InvoiceNO);
-                        LogParams.Add("X_Remark", " ");
-                        dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
+                    string ipAddress = "";
+                    if (Request.Headers.ContainsKey("X-Forwarded-For"))
+                        ipAddress = Request.Headers["X-Forwarded-For"];
+                    else
+                        ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
+                    SortedList LogParams = new SortedList();
+                    LogParams.Add("N_CompanyID", nCompanyID);
+                    LogParams.Add("N_FnYearID", nFnYearID);
+                    LogParams.Add("N_TransID", nInvoiceID);
+                    LogParams.Add("N_FormID", this.N_FormID);
+                    LogParams.Add("N_UserId", nUserID);
+                    LogParams.Add("X_Action", xButtonAction);
+                    LogParams.Add("X_SystemName", "ERP Cloud");
+                    LogParams.Add("X_IP", ipAddress);
+                    LogParams.Add("X_TransCode", InvoiceNO);
+                    LogParams.Add("X_Remark", " ");
+                    dLayer.ExecuteNonQueryPro("SP_Log_SysActivity", LogParams, connection, transaction);
 
 
 
@@ -1860,5 +1887,58 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpGet("deliveryNoteProduct")]
+        public ActionResult ProductList(int nFnYearID, int nCustomerID, bool bAllbranchData, int nBranchID)
+        {
+            int nCompanyID = myFunctions.GetCompanyID(User);
+
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nCustomerID", nCustomerID);
+
+
+            string sqlCommandText = "";
+            if (bAllbranchData)
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_DeliveryNoteID NOT IN (select N_DeliveryNoteID from Inv_SalesDetails where N_CompanyId=@nCompanyID)  and N_CustomerID=@nCustomerID Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+            else
+                sqlCommandText = "Select N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId from vw_Inv_DeliveryNotePending  Where N_CompanyID=@nCompanyID and N_BranchID=" + nBranchID + "  and N_CustomerID=@nCustomerID and N_DeliveryNoteID NOT IN (select N_DeliveryNoteID from Inv_SalesDetails where N_CompanyId=@nCompanyID)  Group By N_CustomerID,N_CompanyId,X_DeliveryNoteNo,X_CustomerCode,X_CustomerName,X_ProjectName,N_SalesOrderID,N_DeliveryNoteId,N_BranchId";
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }

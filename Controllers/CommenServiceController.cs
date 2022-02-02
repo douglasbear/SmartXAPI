@@ -131,7 +131,7 @@ namespace SmartxAPI.Controllers
                     string username = myFunctions.GetUserLoginName(User);
                     int AppID = appID;
 
-                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User), ipAddress,myFunctions.GetLoginID(User));
+                    var user = _repository.Authenticate(companyid, companyname, username, userid, reqType, AppID, User.FindFirst(ClaimTypes.Uri)?.Value, myFunctions.GetClientID(User), myFunctions.GetGlobalUserID(User), ipAddress,0);
 
                     if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 

@@ -7,7 +7,6 @@ using System.Data;
 using System.Collections;
 using Microsoft.Data.SqlClient;
 using Microsoft.Extensions.Configuration;
-using System;
 
 namespace SmartxAPI.Controllers
 
@@ -59,7 +58,7 @@ namespace SmartxAPI.Controllers
                 if (Count == 0)
                     sqlCommandText = "select top(" + nSizeperpage + ")  * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' and  B_IsProcess=1  " + Searchkey;
                 else
-                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'  and and  B_IsProcess=0 " + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
+                    sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build'  and and  B_IsProcess=1 " + Searchkey + "and N_AssemblyID not in (select top(" + Count + ") N_AssemblyID from vw_InvAssembly where N_CompanyID=@p1 and N_FnYearID=@p2 and  X_Action='Build' ) " + Searchkey;
 
             }
             else
@@ -406,7 +405,6 @@ namespace SmartxAPI.Controllers
                     double TotalQty = myFunctions.getVAL(MasterTable.Rows[0]["N_Qty"].ToString());
                     if (BOMQty != null)
                         TotalQty = myFunctions.getVAL(BOMQty.ToString()) * TotalQty;
-                    int N_Process = 1;
                     MasterTable.Rows[0]["n_Qty"] = TotalQty;
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_ReferenceNo='" + X_ReferenceNo + "'";
                     nAssemblyID = dLayer.SaveData("Inv_Assembly", "N_AssemblyID", DupCriteria, "", MasterTable, connection, transaction);
@@ -484,7 +482,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", InsertParams, connection, transaction);
                         }
-                        catch (Exception ex)
+                        catch (Exception)
                         {
                             transaction.Rollback();
 
@@ -666,7 +664,6 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     DataTable MasterTable;
                     DataTable DetailTable;
-                    string DocNo = "";
                     MasterTable = ds.Tables["master"];
                     DetailTable = ds.Tables["details"];
                     bool B_IsProcess = myFunctions.getBoolVAL(MasterTable.Rows[0]["B_IsProcess"].ToString());
@@ -743,6 +740,110 @@ namespace SmartxAPI.Controllers
             }
 
         }
+        [HttpDelete("delete")]
+        public ActionResult DeleteData(int nAssemblyID, int nLocationID, bool b_isProcessed)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    if (b_isProcessed == true)
+                    {
+                        SortedList DeleteParams = new SortedList()
+                    {
+                    {"X_Task","delete"},
+                    { "N_AssemblyID",nAssemblyID},
+                    { "N_LocationID",nLocationID}
+
+                    };
+                        int Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Purchase"));
+                        }
+                        transaction.Commit();
+                        return Ok(_api.Success(" Production Order deleted"));
+                    }
+                    else
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User, "Production already released"));
+
+
+                    }
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+        [HttpDelete("deleteRelease")]
+        public ActionResult DeleteDataRelease(int nAssemblyID, int nLocationID, bool b_isProcessed)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    SortedList Params = new SortedList();
+                    Params.Add("@nCompanyID", nCompanyID);
+
+                        SortedList DeleteParams = new SortedList()
+                    {
+                    {"X_Task","deleteAdd"},
+                    { "N_AssemblyID",nAssemblyID},
+                    { "N_LocationID",nLocationID},
+                    {"@X_TransType","PRODUCTION RELEASE"}
+                    };
+                        int Results = dLayer.ExecuteNonQueryPro("SP_BuildorUnbuild", DeleteParams, connection, transaction);
+
+                        if (Results <= 0)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Unable to delete Purchase"));
+                        }
+
+                        string qry = "update Inv_Assembly set B_IsProcess=1, D_ReleaseDate=NULL where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
+                        dLayer.ExecuteNonQuery(qry, Params, connection, transaction);
+                        string qry1 = "update Inv_AssemblyDaetails set B_IsProcess=1  where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
+                        dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
+
+
+
+                        transaction.Commit();
+                        return Ok(_api.Success(" Production Order deleted"));
+                   
+                }
+            }
+            catch (Exception ex)
+            {
+                return Ok(_api.Error(User, ex));
+            }
+        }
+
+
+
+
+
+
+
+
+
+
+
+
+
+
     }
 }
 

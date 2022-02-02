@@ -93,7 +93,7 @@ namespace SmartxAPI.Controllers
                         {"X_SystemName",ipAddress},
                         {"N_UserID",myFunctions.GetUserID(User)}
                     };
-                    nLoginID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_LoginDetailsInsert", logParams, connection).ToString());
+                    nLoginID = myFunctions.getIntVAL(dLayer.ExecuteScalarPro("SP_LoginDetailsInsert_Cloud", logParams, connection).ToString());
 
                 }
 
