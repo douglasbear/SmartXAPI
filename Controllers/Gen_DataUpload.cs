@@ -209,20 +209,20 @@ namespace SmartxAPI.Controllers
                             //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
                             nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
 
-                            int ValFlag=0;
-                            SortedList ValidationParam = new SortedList();
-                            ValidationParam.Add("N_CompanyID", nCompanyID);
-                            ValidationParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
-                            ValidationParam.Add("X_Type", dt.TableName);
-                            try
-                            {
-                                ValFlag=dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
-                            }
-                            catch (Exception ex)
-                            {
-                                return Ok(_api.Error(User, ex));
-                            }
-                            if(ValFlag==0)return Ok(_api.Error(User, "Uploaded Error"));
+                            // int ValFlag=0;
+                            // SortedList ValidationParam = new SortedList();
+                            // ValidationParam.Add("N_CompanyID", nCompanyID);
+                            // ValidationParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                            // ValidationParam.Add("X_Type", dt.TableName);
+                            // try
+                            // {
+                            //     ValFlag=dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            // }
+                            // catch (Exception ex)
+                            // {
+                            //     return Ok(_api.Error(User, ex));
+                            // }
+                            // if(ValFlag==0)return Ok(_api.Error(User, "Uploaded Error"));
                             dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
