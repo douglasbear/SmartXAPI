@@ -411,6 +411,7 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
+                        partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
@@ -439,7 +440,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-                        ReportName = FormName + "_" + docNumber + "_" + partyName + ".pdf";
+                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + ".pdf";
                         path.Wait();
                         if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                             return Ok(_api.Error(User, "Report Generation Failed"));
