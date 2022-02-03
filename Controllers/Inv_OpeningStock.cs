@@ -311,7 +311,6 @@ namespace SmartxAPI.Controllers
                     try
                     {
                         dLayer.ExecuteNonQueryPro("SP_Acc_BeginingBalancePosting_Ins", PostingParam, connection, transaction);
-
                     }
                     catch (Exception ex)
                     {
@@ -327,12 +326,6 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, ex));
             }
         }
-
-
-
-
-
-
 
 
         [HttpGet("stockDetails")]

@@ -65,9 +65,9 @@ namespace SmartxAPI.Controllers
                         }
                         Mastertable.Columns.Add("Pkey_Code");
 
-                        if (dt.TableName.ToString().ToLower() == "customer list" || dt.TableName == "customers" || dt.TableName == "customer")
+                        if (dt.TableName.ToString().ToLower() == "customer list" || dt.TableName.ToString().ToLower() == "customers" || dt.TableName.ToString().ToLower() == "customer")
                             xTableName = "Mig_Customers";
-                        if (dt.TableName.ToString().ToLower() == "vendor list" || dt.TableName == "vendors" || dt.TableName == "vendor")
+                        if (dt.TableName.ToString().ToLower() == "vendor list" || dt.TableName.ToString().ToLower() == "vendors" || dt.TableName.ToString().ToLower() == "vendor")
                             xTableName = "Mig_Vendors";
                         if (dt.TableName.ToString().ToLower() == "lead list")
                         {
@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                             xTableName = "Mig_Accounts";
                         if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
-                        if (dt.TableName.ToString().ToLower() == "employee list" || dt.TableName == "employees")
+                        if (dt.TableName.ToString().ToLower() == "employee list" || dt.TableName.ToString().ToLower() == "employees")
                             xTableName = "Mig_Employee";
                         if (dt.TableName.ToString().ToLower() == "products stock")
                             xTableName = "Mig_Stock";
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
                         if (dt.TableName.ToString().ToLower() == "vendor balances")
                             xTableName = "Mig_VendorOpening";
 
-                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName == "products")
+                        if (dt.TableName.ToString().ToLower() == "product list" || dt.TableName.ToString().ToLower() == "products")
                         {
                             xTableName = "Mig_Items";
                             Mastertable.Columns.Add("N_CompanyID");
@@ -168,8 +168,13 @@ namespace SmartxAPI.Controllers
                                     }
                                     else
                                     {
-                                        if (Mastertable.Rows[j][k] == DBNull.Value) { continue; }
+                                         if (Mastertable.Rows[j][k] == DBNull.Value) 
+                                         {
+                                        values = "";
+
+                                         }else{
                                         values = Mastertable.Rows[j][k].ToString();
+                                         }
                                         values = values.Replace("|", " ");
                                     }
 
@@ -203,7 +208,22 @@ namespace SmartxAPI.Controllers
  
                             //  nMasterID = dLayer.SaveData(xTableName, "PKey_Code", Mastertable, connection, transaction);
                             nMasterID= myFunctions.getIntVAL(dLayer.ExecuteScalar("Select Count(1) from "+xTableName, connection, transaction).ToString());
-                             dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+
+                            int ValFlag=0;
+                            SortedList ValidationParam = new SortedList();
+                            ValidationParam.Add("N_CompanyID", nCompanyID);
+                            ValidationParam.Add("N_FnYearID", myFunctions.getIntVAL(Generaltable.Rows[0]["N_FnYearID"].ToString()));
+                            ValidationParam.Add("X_Type", dt.TableName);
+                            try
+                            {
+                                ValFlag=dLayer.ExecuteNonQueryPro("SP_SetupData_Validation", ValidationParam, connection, transaction);
+                            }
+                            catch (Exception ex)
+                            {
+                                return Ok(_api.Error(User, ex));
+                            }
+                            if(ValFlag==0)return Ok(_api.Error(User, "Uploaded Error"));
+                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
