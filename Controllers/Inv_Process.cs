@@ -785,7 +785,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete("deleteRelease")]
-        public ActionResult DeleteDataRelease(int nAssemblyID, int nLocationID, bool b_isProcessed)
+        public ActionResult DeleteDataRelease(int nAssemblyID, int nLocationID)
         {
 
             try
@@ -815,13 +815,13 @@ namespace SmartxAPI.Controllers
 
                         string qry = "update Inv_Assembly set B_IsProcess=1, D_ReleaseDate=NULL where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
                         dLayer.ExecuteNonQuery(qry, Params, connection, transaction);
-                        string qry1 = "update Inv_AssemblyDaetails set B_IsProcess=1  where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
+                        string qry1 = "update Inv_AssemblyDetails set B_IsProcess=1  where N_AssemblyID=" + nAssemblyID + " and N_CompanyID=" + nCompanyID;
                         dLayer.ExecuteNonQuery(qry1, Params, connection, transaction);
 
 
 
                         transaction.Commit();
-                        return Ok(_api.Success(" Production Order deleted"));
+                        return Ok(_api.Success(" Production release deleted"));
                    
                 }
             }
