@@ -1,5 +1,3 @@
-using System.Collections.Generic;
-using SmartxAPI.Models;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Authentication.JwtBearer;
@@ -7,11 +5,12 @@ using System;
 using SmartxAPI.GeneralFunctions;
 using System.Data;
 using System.Collections;
-using System.Threading.Tasks;
+using System.Text;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using Newtonsoft.Json;
-
+using System.IO;
+using Microsoft.AspNetCore.Hosting;
 namespace SmartxAPI.Controllers
 {
     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
@@ -23,17 +22,21 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string logPath;
+        private readonly IWebHostEnvironment env;
 
-        public Gen_Settings(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Gen_Settings(IApiFunctions api, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IWebHostEnvironment envn)
         {
             _api = api;
             dLayer = dl;
             myFunctions = myFun;
+            env = envn;
             connectionString = conf.GetConnectionString("SmartxConnection");
+            logPath = conf.GetConnectionString("LogPath");
         }
 
         [HttpGet("settingsDetails")]
-        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID,int nCompanyID)
+        public ActionResult GetDetails(int nFnYearID, int nLangID, int nFormID, int nCompanyID)
         {
             try
             {
@@ -46,9 +49,22 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nFnYearID", nFnYearID);
                     Params.Add("@nCompanyID", myFunctions.GetCompanyID(User));
 
-                    // string settingsSql = "SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, Gen_Settings.N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.B_WShow = 1) AND (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) order by X_SettingsTabCode,N_Order,N_UserCategoryID";
-                    string settingsSql = "SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, Gen_Settings.N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) order by X_SettingsTabCode,N_Order,N_UserCategoryID";
-                    string defaultAccountsSql = "SELECT Acc_AccountDefaults.X_FieldDescr as X_Group, vw_AccMastLedger.Account  as name, vw_AccMastLedger.N_LedgerID  as N_Value, vw_AccMastLedger.[Account Code] as X_Value, Acc_AccountDefaults.N_CompanyID, Acc_AccountDefaults.N_FieldValue, Acc_AccountDefaults.N_Type, Acc_AccountDefaults.N_FnYearID, Acc_AccountDefaults.D_Entrydate, Acc_AccountDefaults.N_BranchID, Acc_AccountDefaults.N_FormID, Acc_AccountDefaults.X_WLanControlNo, Acc_AccountDefaults.N_Order, Acc_AccountDefaults.X_AccountCriteria, Lan_MultiLingual.X_WText FROM Acc_AccountDefaults LEFT OUTER JOIN Lan_MultiLingual ON Acc_AccountDefaults.X_WLanControlNo = Lan_MultiLingual.X_WControlName AND Acc_AccountDefaults.N_FormID = Lan_MultiLingual.N_FormID RIGHT OUTER JOIN vw_AccMastLedger ON Acc_AccountDefaults.N_FnYearID = vw_AccMastLedger.N_FnYearID AND Acc_AccountDefaults.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_AccountDefaults.N_FieldValue = vw_AccMastLedger.N_LedgerID WHERE (Acc_AccountDefaults.N_FormID = @nFormID) AND (Acc_AccountDefaults.N_CompanyID = @nCompanyID) AND (Acc_AccountDefaults.N_FnYearID = @nFnYearID) AND (Lan_MultiLingual.N_LanguageID = @nLangID) order by N_Order";
+                    string settingsSql = "";
+                    string defaultAccountsSql="";
+                    if (env.EnvironmentName == "Development")
+                    {
+                        settingsSql = "SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, max(Gen_Settings.N_Value) as N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText + ' [ '+Gen_Settings.X_Description+' - ' + Gen_Settings.X_Group + ' ]' as X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.B_WShow = 1) AND (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) group by Gen_Settings.X_Group,Gen_Settings.X_Description, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource,Gen_Settings.N_Order order by X_SettingsTabCode,N_Order,N_UserCategoryID";
+                        defaultAccountsSql = "SELECT Acc_AccountDefaults.X_FieldDescr as X_Group, vw_AccMastLedger.Account  as name, vw_AccMastLedger.N_LedgerID  as N_Value, vw_AccMastLedger.[Account Code] as X_Value, Acc_AccountDefaults.N_CompanyID, Acc_AccountDefaults.N_FieldValue, Acc_AccountDefaults.N_Type, Acc_AccountDefaults.N_FnYearID, Acc_AccountDefaults.D_Entrydate, Acc_AccountDefaults.N_BranchID, Acc_AccountDefaults.N_FormID, Acc_AccountDefaults.X_WLanControlNo, Acc_AccountDefaults.N_Order, Acc_AccountDefaults.X_AccountCriteria, Lan_MultiLingual.X_WText + ' [ '+ Acc_AccountDefaults.X_FieldDescr + ' ]' as X_WText FROM Acc_AccountDefaults LEFT OUTER JOIN Lan_MultiLingual ON Acc_AccountDefaults.X_WLanControlNo = Lan_MultiLingual.X_WControlName AND Acc_AccountDefaults.N_FormID = Lan_MultiLingual.N_FormID LEFT OUTER JOIN vw_AccMastLedger ON Acc_AccountDefaults.N_FnYearID = vw_AccMastLedger.N_FnYearID AND Acc_AccountDefaults.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_AccountDefaults.N_FieldValue = vw_AccMastLedger.N_LedgerID WHERE (Acc_AccountDefaults.N_FormID = @nFormID) AND (Acc_AccountDefaults.N_CompanyID = @nCompanyID) AND (Acc_AccountDefaults.N_FnYearID = @nFnYearID) AND (Lan_MultiLingual.N_LanguageID = @nLangID) order by N_Order";
+                    
+                    }
+                    else
+                    {
+                        settingsSql = "SELECT ROW_NUMBER() OVER(ORDER BY Gen_Settings.X_Group,Gen_Settings.X_Description,Gen_Settings.N_UserCategoryID ASC) AS N_RowID,Gen_Settings.X_Group, Gen_Settings.X_Description, max(Gen_Settings.N_Value) as N_Value, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource FROM Gen_Settings LEFT OUTER JOIN Lan_MultiLingual ON Gen_Settings.N_SettingsFormID = Lan_MultiLingual.N_FormID AND Gen_Settings.X_WLanControlNo = Lan_MultiLingual.X_WControlName WHERE (Gen_Settings.B_WShow = 1) AND (Gen_Settings.N_SettingsFormID = @nFormID) AND (Gen_Settings.N_CompanyID = @nCompanyID) and (Lan_MultiLingual.N_LanguageId=@nLangID) group by Gen_Settings.X_Group,Gen_Settings.X_Description, Gen_Settings.X_Value, Gen_Settings.N_UserCategoryID, Gen_Settings.X_FieldType, Gen_Settings.X_SettingsTabCode,Lan_MultiLingual.X_WText,Gen_Settings.X_DataSource,Gen_Settings.N_Order order by X_SettingsTabCode,N_Order,N_UserCategoryID";
+                        defaultAccountsSql = "SELECT Acc_AccountDefaults.X_FieldDescr as X_Group, vw_AccMastLedger.Account  as name, vw_AccMastLedger.N_LedgerID  as N_Value, vw_AccMastLedger.[Account Code] as X_Value, Acc_AccountDefaults.N_CompanyID, Acc_AccountDefaults.N_FieldValue, Acc_AccountDefaults.N_Type, Acc_AccountDefaults.N_FnYearID, Acc_AccountDefaults.D_Entrydate, Acc_AccountDefaults.N_BranchID, Acc_AccountDefaults.N_FormID, Acc_AccountDefaults.X_WLanControlNo, Acc_AccountDefaults.N_Order, Acc_AccountDefaults.X_AccountCriteria, Lan_MultiLingual.X_WText FROM Acc_AccountDefaults LEFT OUTER JOIN Lan_MultiLingual ON Acc_AccountDefaults.X_WLanControlNo = Lan_MultiLingual.X_WControlName AND Acc_AccountDefaults.N_FormID = Lan_MultiLingual.N_FormID LEFT OUTER JOIN vw_AccMastLedger ON Acc_AccountDefaults.N_FnYearID = vw_AccMastLedger.N_FnYearID AND Acc_AccountDefaults.N_CompanyID = vw_AccMastLedger.N_CompanyID AND Acc_AccountDefaults.N_FieldValue = vw_AccMastLedger.N_LedgerID WHERE (Acc_AccountDefaults.N_FormID = @nFormID) AND (Acc_AccountDefaults.N_CompanyID = @nCompanyID) AND (Acc_AccountDefaults.N_FnYearID = @nFnYearID) AND (Lan_MultiLingual.N_LanguageID = @nLangID) order by N_Order";
+                    
+                    
+                    }
+
                     DataTable Settings = dLayer.ExecuteDataTable(settingsSql, Params, connection);
                     DataTable AccountMap = dLayer.ExecuteDataTable(defaultAccountsSql, Params, connection);
                     int NParentMenuId = 0;
@@ -68,6 +84,14 @@ namespace SmartxAPI.Controllers
                                 // {"@Lval",nLangID},
                                 // {"@UCval",myFunctions.GetUserCategory(User)}
                             };
+
+                            StringBuilder sb = new StringBuilder();
+                            sb.AppendLine(settingsSql + " --- " + sql + "  -  " + row["X_Group"] + "---" + row["X_Description"]);
+                            if (!Directory.Exists(logPath))
+                                Directory.CreateDirectory(logPath);
+
+                            System.IO.File.AppendAllText(logPath + "Settings Log.log", sb.ToString());
+                            sb.Clear();
                             row["listItems"] = dLayer.ExecuteDataTable(sql, lParamsList, connection);
 
                         }
@@ -82,17 +106,21 @@ namespace SmartxAPI.Controllers
                         NParentMenuId = 315;
                     if (nFormID == 1380)
                         NParentMenuId = 48;
+                    if (nFormID == 1402)
+                        NParentMenuId = 347;
+                    if (nFormID == 1403)
+                        NParentMenuId = 346;
 
                     SortedList mParamsList = new SortedList()
                     {
                         {"N_CompanyID",myFunctions.GetCompanyID(User)},
                         {"N_FnYearID",nFnYearID},
                         {"N_LanguageID",nLangID},
-                        {"N_UserCategoryID",myFunctions.GetUserCategory(User)},
+                        {"X_UserCategoryIDList",myFunctions.GetUserCategoryList(User)},
                         {"N_ParentmenuID",NParentMenuId}
                     };
 
-                    DataTable MasterTable = dLayer.ExecuteDataTablePro("SP_InvInvoiceCounter_Disp", mParamsList, connection);
+                    DataTable MasterTable = dLayer.ExecuteDataTablePro("SP_InvInvoiceCounter_Disp_Cloud", mParamsList, connection);
                     SortedList OutPut = new SortedList(){
                             {"Settings",_api.Format(Settings)},
                             {"InvoiceCounter",_api.Format(MasterTable)},
@@ -104,7 +132,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -135,7 +163,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 
@@ -162,7 +190,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -204,7 +232,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -212,6 +240,8 @@ namespace SmartxAPI.Controllers
         [HttpGet("saveSettings")]
         public ActionResult SaveSettingsData(int nFormID, string xDescription, int nValue, string xValue)
         {
+            if (xValue == null)
+                xValue = "";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -231,18 +261,18 @@ namespace SmartxAPI.Controllers
                     {
                         dLayer.ExecuteNonQueryPro("SP_GeneralDefaults_ins", ParamSettings_Ins, connection, transaction);
                         transaction.Commit();
-                        return Ok(_api.Success("Terms & Conditions Saved"));
+                        return Ok(_api.Success("saved successfully"));
                     }
                     catch (Exception ex)
                     {
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save!"));
+                        return Ok(_api.Error(User, "Unable to save!"));
                     }
                 }
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -284,7 +314,7 @@ namespace SmartxAPI.Controllers
 
                     foreach (DataRow var in GenSettinngs.Rows)
                     {
-                        string settingsSql = "SP_GeneralDefaults_ins " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Description"].ToString() + "' ," + myFunctions.getIntVAL(var["n_Value"].ToString()) + ",'" + var["x_Value"].ToString() + "'";
+                        string settingsSql = "SP_GeneralDefaults_ins_cloud " + nCompanyID + ",'" + var["x_Group"].ToString() + "','" + var["x_Description"].ToString() + "' ," + myFunctions.getIntVAL(var["n_Value"].ToString()) + ",'" + var["x_Value"].ToString() + "'," + var["n_UserCategoryID"].ToString();
                         dLayer.ExecuteNonQuery(settingsSql, connection, transaction);
                     }
 
@@ -302,7 +332,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
         }
 

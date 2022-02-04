@@ -21,6 +21,8 @@ using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
+using iTextSharp.text.pdf;
+using iTextSharp.text;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -349,6 +351,501 @@ namespace SmartxAPI.GeneralFunctions
                 return true;
         }
 
+        // public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection)
+        // {
+        //     DataTable SecUserLevel = new DataTable();
+        //     DataTable GenStatus = new DataTable();
+        //     int nMinLevel = 1, nMaxLevel = 0, nActionLevelID = 0, nSubmitter = 0;
+        //     int nNextApprovalID = nTransApprovalLevel + 1;
+        //     string xLastUserName = "", xEntryTime = "";
+        //     int nTempStatusID = 0;
+
+        //     int loggedInUserID = this.GetUserID(User);
+
+
+        //     /* Approval Response Set */
+        //     SortedList Response = new SortedList();
+        //     Response.Add("btnSaveText", "Save");
+        //     Response.Add("btnDeleteText", "Delete");
+        //     Response.Add("saveEnabled", true);
+        //     Response.Add("deleteEnabled", true);
+        //     Response.Add("saveVisible", true);
+        //     Response.Add("deleteVisible", true);
+        //     Response.Add("saveTag", 0);
+        //     Response.Add("deleteTag", 0);
+        //     Response.Add("isApprovalSystem", nIsApprovalSystem);
+        //     Response.Add("isEditable", true);
+        //     Response.Add("nextApprovalLevel", nNextApprovalLevel);
+        //     Response.Add("lblVisible", false);
+        //     Response.Add("lblText", "");
+        //     Response.Add("approvalID", nApprovalID);
+        //     Response.Add("formID", nFormID);
+
+        //     /* Approval Param Set */
+        //     SortedList ApprovalParams = new SortedList();
+        //     int nCompanyID = this.GetCompanyID(User);
+        //     ApprovalParams.Add("@nCompanyID", nCompanyID);
+        //     ApprovalParams.Add("@nFormID", nFormID);
+        //     ApprovalParams.Add("@nTransID", nTransID);
+        //     ApprovalParams.Add("@nApprovalID", nApprovalID);
+        //     ApprovalParams.Add("@nNextApprovalID", nNextApprovalID);
+        //     ApprovalParams.Add("@nTransUserID", nTransUserID);
+        //     ApprovalParams.Add("@nTransApprovalLevel", nTransApprovalLevel);
+        //     ApprovalParams.Add("@nTransStatus", nTransStatus);
+        //     ApprovalParams.Add("@nGroupID", nGroupID);
+        //     ApprovalParams.Add("@loggedInUserID", loggedInUserID);
+
+        //     object objUserCategory = dLayer.ExecuteScalar("Select X_UserCategoryList from Sec_User where N_CompanyID=" + nCompanyID + " and N_UserID=" + loggedInUserID, ApprovalParams, connection);
+
+        //     objUserCategory = objUserCategory != null ? objUserCategory : 0;
+
+
+        //     if (nApprovalID == 0)
+        //     {
+        //         if (nEmpID.ToString() != null && nActionID.ToString() != null && nEmpID.ToString() != "" && nActionID.ToString() != "" && nEmpID != 0)
+        //         {
+        //             SortedList EmpParams = new SortedList();
+        //             EmpParams.Add("@nCompanyID", nCompanyID);
+        //             EmpParams.Add("@nFnYearID", nFnYearID);
+        //             EmpParams.Add("@nEmpID", nEmpID);
+        //             EmpParams.Add("@nActionID", nActionID);
+        //             object objApproval = dLayer.ExecuteScalar("Select isnull(N_ApprovalID,0) as N_ApprovalID from vw_EmpApprovalSettings where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_EmpID=@nEmpID and N_ActionID=@nActionID", EmpParams, connection);
+        //             if (objApproval != null)
+        //             {
+        //                 nApprovalID = this.getIntVAL(objApproval.ToString());
+        //                 ApprovalParams["@nApprovalID"] = nApprovalID;
+        //             }
+        //             else
+        //             {
+        //                 object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+        //                 if (ApprovalCode != null)
+        //                 {
+        //                     nApprovalID = this.getIntVAL(ApprovalCode.ToString());
+        //                     ApprovalParams["@nApprovalID"] = nApprovalID;
+        //                 }
+        //             }
+
+        //         }
+        //         else
+        //         {
+        //             object ApprovalCode = dLayer.ExecuteScalar("Select N_ApprovalID from Sec_ApprovalSettings_General where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+        //             if (ApprovalCode != null)
+        //             {
+        //                 nApprovalID = this.getIntVAL(ApprovalCode.ToString());
+        //                 ApprovalParams["@nApprovalID"] = nApprovalID;
+        //             }
+        //         }
+        //     }
+
+        //     if (nApprovalID > 0)
+        //     {
+        //         nIsApprovalSystem = 1;
+        //         Response["isApprovalSystem"] = nIsApprovalSystem;
+        //     }
+
+        //     if (nIsApprovalSystem == -1)
+        //     {
+
+        //         object res = dLayer.ExecuteScalar("Select COUNT(N_FormID) from Sec_ApprovalSettings_General Where N_FormID=@nFormID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+
+        //         if (this.getIntVAL(res.ToString()) > 0)
+        //         {
+        //             nIsApprovalSystem = 1;
+        //             Response["isApprovalSystem"] = nIsApprovalSystem;
+        //         }
+        //         else
+        //         {
+        //             Response["btnSaveText"] = "Save";
+        //             Response["btnDeleteText"] = "Delete";
+        //             Response["saveEnabled"] = true;
+        //             if (nTransID == 0)
+        //             { Response["deleteEnabled"] = false; }
+        //             else
+        //             { Response["deleteEnabled"] = true; }
+
+        //             Response["saveTag"] = 0;
+        //             Response["deleteTag"] = 0;
+        //             Response["isApprovalSystem"] = 0;
+        //             Response["ApprovalID"] = nApprovalID;
+        //             Response["isEditable"] = true;
+        //             return Response;
+        //         }
+        //     }
+
+
+        //     if (nIsApprovalSystem == 1)
+        //     {
+        //         nTempStatusID = nTransStatus;
+
+
+        //         object MaxLevel = null;
+        //         object ActionLevel = null;
+        //         object OB_Submitter = null;
+        //         if (nTransID == 0)
+        //         {
+        //             MaxLevel = dLayer.ExecuteScalar("Select Isnull (MAX(N_level),0) from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+
+        //             if ((nTransApprovalLevel > nNextApprovalLevel) && nTransStatus != 4 && nTransStatus != 3)
+        //             {
+        //                 ActionLevel = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeId,0) from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_UserID=@loggedInUserID  and N_Level=( @nNextApprovalID + 1 )", ApprovalParams, connection);
+        //             }
+        //             else
+        //                 ActionLevel = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeId,0) from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_UserID=@loggedInUserID  and N_Level=@nNextApprovalID", ApprovalParams, connection);
+
+        //             OB_Submitter = dLayer.ExecuteScalar("Select isnull(N_level,0) as N_level from Gen_ApprovalCodesDetails where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_ActionTypeId=111", ApprovalParams, connection);
+        //         }
+        //         else
+        //         {
+        //             MaxLevel = dLayer.ExecuteScalar("Select Isnull (MAX(N_LevelID),0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
+
+        //             if ((nTransApprovalLevel > nNextApprovalLevel) && nTransStatus != 4 && nTransStatus != 3)
+        //             {
+        //                 ActionLevel = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_UserID=@loggedInUserID  and N_LevelID=( @nNextApprovalID + 1 ) and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
+        //             }
+        //             else
+        //                 ActionLevel = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_UserID=@loggedInUserID  and N_LevelID=@nNextApprovalID and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
+
+        //             OB_Submitter = dLayer.ExecuteScalar("Select isnull(N_LevelID,0) as N_level from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_ActionTypeId=111 and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
+        //         }
+
+
+
+        //         if (MaxLevel != null)
+        //             nMaxLevel = this.getIntVAL(MaxLevel.ToString());
+
+        //         if (ActionLevel != null)
+        //             nActionLevelID = this.getIntVAL(ActionLevel.ToString());
+
+
+        //         if (OB_Submitter != null)
+        //             nSubmitter = this.getIntVAL(OB_Submitter.ToString());
+        //         else
+        //             nSubmitter = nMaxLevel;
+
+        //         object RewCheck = null;
+        //         RewCheck = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID  and N_UserID=@loggedInUserID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=110", ApprovalParams, connection);
+        //         if (RewCheck != null)
+        //             nActionLevelID = this.getIntVAL(RewCheck.ToString());
+
+        //         int nNextActionLevelID = 0;
+        //         object NextRewChec = null;
+        //         NextRewChec = dLayer.ExecuteScalar("Select Isnull (N_ActionTypeID,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_LevelID=@nNextApprovalID", ApprovalParams, connection);//+ " and N_ActionTypeID=110"
+        //         if (NextRewChec != null)
+        //             nNextActionLevelID = this.getIntVAL(NextRewChec.ToString());
+
+        //         object bIsEditable = false;
+        //         bIsEditable = dLayer.ExecuteScalar("Select Isnull (B_IsEditable,0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID  and N_TransID=@nTransID and N_UserID=@loggedInUserID", ApprovalParams, connection);//+ " and N_ActionTypeID=110"
+        //         if (bIsEditable == null)
+        //             bIsEditable = false;
+
+
+        //         if (nTransID > 0)
+        //         {
+        //             if (nTransUserID == loggedInUserID)
+        //             {
+        //                 if (nTransStatus != 3 && nTransStatus != 4)
+        //                 {
+        //                     if (nMinLevel == nTransApprovalLevel)
+        //                     {
+        //                         if (nNextActionLevelID == 327)
+        //                         {
+        //                             nTransStatus = 926;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         else
+        //                         {
+        //                             nTransStatus = 911;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                     }
+        //                     else
+        //                     {
+
+        //                         if (nNextActionLevelID == 327)
+        //                         {
+        //                             nTransStatus = 927;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         else
+        //                         {
+        //                             nTransStatus = 912;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                     }
+
+        //                     if (nActionLevelID == 327)
+        //                     {
+        //                         if (nNextActionLevelID == 327)
+        //                         {
+        //                             nTransStatus = 928;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         else
+        //                         {
+        //                             nTransStatus = 925;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                     }
+        //                 }
+        //                 else if (nTransStatus == 3)
+        //                 {
+        //                     nTransStatus = 918;
+        //                     ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                 }
+        //                 else if (nTransStatus == 4)
+        //                 {
+        //                     nTransStatus = 919;
+        //                     ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                 }
+        //                 nNextApprovalLevel = nTransApprovalLevel;
+        //                 Response["nextApprovalLevel"] = nNextApprovalLevel;
+        //             }
+        //             else
+        //             {
+
+        //                 SecUserLevel = dLayer.ExecuteDataTable("SELECT TOP (1) N_FormID, N_TransID, Approved_User, N_ApprovalLevelId,D_ApprovedDate, N_CompanyID, N_FnYearID, N_ProcStatus, N_UserID, N_IssaveDraft, N_NextApprovalLevelId, X_Status, N_CurrentApprover, N_NextApproverID FROM vw_ApprovalDashBoard WHERE (N_FormID = @nFormID ) AND (N_CompanyID = @nCompanyID) AND (N_TransID = @nTransID ) AND (N_NextApproverID = @loggedInUserID )", ApprovalParams, connection);
+        //                 if (SecUserLevel.Rows.Count > 0)
+        //                 {
+        //                     DataRow Drow = SecUserLevel.Rows[0];
+        //                     xLastUserName = Drow["Approved_User"].ToString();
+        //                     xEntryTime = Drow["D_ApprovedDate"].ToString();
+        //                     nTransStatus = this.getIntVAL(Drow["N_ProcStatus"].ToString());
+        //                     ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                     //nTransStatus = 912;`
+        //                     nNextApprovalLevel = this.getIntVAL(Drow["N_NextApprovalLevelId"].ToString());
+        //                     Response["nextApprovalLevel"] = nNextApprovalLevel;
+        //                     if (nTransStatus == 8)
+        //                     {
+        //                         nTransStatus = 924;
+        //                         ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                     }
+        //                     if (nActionLevelID == 110)
+        //                     {
+        //                         if (((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel)) && nTransStatus != 3)
+        //                         {
+        //                             nTransStatus = 921;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         //else
+        //                         //    nTransStatus = 7;
+        //                     }
+        //                     else if (nActionLevelID == 327)
+        //                     {
+        //                         if (nTransStatus == 924)
+        //                         {
+        //                             nTransStatus = 930;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         else
+        //                         {
+        //                             nTransStatus = 8;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                     }
+        //                     if (nTransStatus == 3)
+        //                     {
+        //                         if (nMinLevel == nNextApprovalLevel)
+        //                         {
+        //                             nTransStatus = 923;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         else
+        //                         {
+        //                             nTransStatus = 917;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                     }
+        //                     if (nTransStatus == 4)
+        //                     {
+        //                         nTransStatus = 920;
+        //                         ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         nNextApprovalLevel = nNextApprovalLevel - 1;
+        //                         Response["nextApprovalLevel"] = nNextApprovalLevel;
+        //                     }
+        //                 }
+        //                 else
+        //                 {
+        //                     if (nTransStatus != 3 && nTransStatus != 4)
+        //                     {
+        //                         if (nNextActionLevelID == 327)
+        //                         {
+        //                             nTransStatus = 929;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                         else
+        //                         {
+        //                             nTransStatus = 913;
+        //                             ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                         }
+        //                     }
+        //                     else if (nTransStatus == 3)
+        //                     {
+        //                         nTransStatus = 918;
+        //                         ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                     }
+        //                     else if (nTransStatus == 4)
+        //                     {
+        //                         nTransStatus = 920;
+        //                         ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                     }
+        //                 }
+        //             }
+        //         }
+        //         else if (nTransID == 0)
+        //         {
+        //             nActionLevelID = 0;
+
+        //             int nUsrCatID = 0;
+        //             object UsrCatID = null;
+        //             UsrCatID = dLayer.ExecuteScalar("Select N_UserCategoryID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID  and N_ApprovalID=@nApprovalID and N_level=1 ", ApprovalParams, connection);
+        //             if (UsrCatID != null)
+        //                 nUsrCatID = this.getIntVAL(UsrCatID.ToString());
+
+        //             if (nUsrCatID == 0)
+        //                 SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))", ApprovalParams, connection);
+        //             else
+        //                 SecUserLevel = dLayer.ExecuteDataTable("Select N_UserID from Gen_ApprovalCodesDetails Where N_CompanyID=@nCompanyID and N_ApprovalID=@nApprovalID and N_level=1 and (N_UserID in (-11,@loggedInUserID ))  and N_UserCategoryID in (" + objUserCategory + ")", ApprovalParams, connection);
+
+
+        //             if (SecUserLevel.Rows.Count > 0)
+        //             {
+        //                 nNextApprovalLevel = 1;
+        //                 Response["nextApprovalLevel"] = nNextApprovalLevel;
+        //                 nTransStatus = 901;
+        //                 ApprovalParams["@nTransStatus"] = nTransStatus;
+        //             }
+        //             else
+        //             {
+        //                 nTransStatus = 900;
+        //                 ApprovalParams["@nTransStatus"] = nTransStatus;
+        //             }
+        //         }
+
+
+
+        //         object NextApprovalUser = null;
+
+        //         if (xLastUserName.Trim() == "" && nTransID > 0)
+        //         {
+        //             if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID == loggedInUserID)
+        //             {
+        //                 if (nMaxLevel == nMinLevel || nSubmitter == nMinLevel)
+        //                 {
+        //                     nTransStatus = 922;
+        //                     ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                 }
+        //                 else if (nTransStatus != 3 && nTransStatus != 918 && nTransStatus != 4 && nTransStatus != 919)
+        //                 {
+        //                     nTransStatus = 914;
+        //                     ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                 }
+        //                 NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+        //                 if (NextApprovalUser != null)
+        //                     xLastUserName = NextApprovalUser.ToString();
+        //             }
+        //             else if ((nMaxLevel == nTransApprovalLevel || nSubmitter == nTransApprovalLevel) && nTransUserID != loggedInUserID)
+        //             {
+        //                 if (nTransStatus != 918 && nTransStatus != 919 && nTransStatus != 920 && nTransStatus != 929)
+        //                 {
+        //                     if (nTransStatus == 913 || nTransStatus == 7)
+        //                     {
+        //                         nTransStatus = 916;
+        //                         ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                     }
+        //                     else
+        //                     {
+        //                         nTransStatus = 915;
+        //                         ApprovalParams["@nTransStatus"] = nTransStatus;
+        //                     }
+        //                 }
+        //                 NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+        //                 if (NextApprovalUser != null)
+        //                     xLastUserName = NextApprovalUser.ToString();
+        //             }
+        //             else
+        //             {
+        //                 if (nTransStatus == 3 || nTransStatus == 918 || nTransStatus == 917 || nTransStatus == 4 || nTransStatus == 919)
+        //                 {
+        //                     NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+        //                     if (NextApprovalUser != null)
+        //                         xLastUserName = NextApprovalUser.ToString();
+        //                 }
+        //                 else
+        //                 {
+        //                     NextApprovalUser = dLayer.ExecuteScalar("SELECT Sec_User.X_UserName FROM vw_ApprovalDashBoard INNER JOIN Sec_User ON vw_ApprovalDashBoard.N_NextApproverId = Sec_User.N_UserID AND vw_ApprovalDashBoard.N_CompanyID = Sec_User.N_CompanyID WHERE vw_ApprovalDashBoard.N_CompanyID =@nCompanyID AND vw_ApprovalDashBoard.N_TransID = @nTransID AND vw_ApprovalDashBoard.N_ApprovalLevelId =@nTransApprovalLevel AND vw_ApprovalDashBoard.N_FormID=@nFormID", ApprovalParams, connection);
+        //                     if (NextApprovalUser != null)
+        //                         xLastUserName = NextApprovalUser.ToString();
+        //                 }
+
+        //             }
+        //         }
+        //         //}
+        //         GenStatus = dLayer.ExecuteDataTable("SELECT * FROM vw_GenApproval_Status WHERE N_CompanyId=@nCompanyID and N_StatusId=@nTransStatus and N_GroupID=@nGroupID", ApprovalParams, connection);
+        //         if (GenStatus.Rows.Count == 1)
+        //         {
+        //             DataRow Status = GenStatus.Rows[0];
+        //             if (Status["X_NoStatusCaption"].ToString().Trim() == "")
+        //             {
+        //                 Response["btnDeleteText"] = "Delete";
+        //                 Response["deleteVisible"] = true;
+        //                 Response["deleteEnabled"] = false;
+
+        //             }
+        //             else
+        //             {
+        //                 Response["btnDeleteText"] = Status["X_NoStatusCaption"].ToString();
+        //                 Response["deleteVisible"] = true;
+        //                 Response["deleteEnabled"] = true;
+        //                 Response["deleteTag"] = Status["N_NoAction"].ToString();
+
+        //             }
+        //             if (Status["X_YesStatusCaption"].ToString().Trim() == "")
+        //             {
+        //                 Response["btnSaveText"] = "Save";
+        //                 Response["saveVisible"] = true;
+        //                 Response["saveEnabled"] = false;
+        //             }
+        //             else
+        //             {
+        //                 Response["btnSaveText"] = Status["X_YesStatusCaption"].ToString();
+        //                 Response["saveEnabled"] = true;
+        //                 Response["saveTag"] = Status["N_YesAction"].ToString();
+
+        //             }
+        //             if (nActionLevelID == 110)
+        //             {
+        //                 Response["saveEnabled"] = false;
+        //                 Response["deleteEnabled"] = true;
+        //                 Response["btnDeleteText"] = "Review";
+        //                 Response["deleteTag"] = 7;
+        //             }
+
+        //             if (Status != null)
+        //             {
+        //                 Response["lblVisible"] = true;
+        //                 Response["lblText"] = Status["X_MsgStatus"].ToString();
+        //                 Response["lblText"] = Response["lblText"].ToString().Replace("#NAME", xLastUserName);
+        //                 if (xEntryTime.Trim() != "")
+        //                     xEntryTime = Convert.ToDateTime(xEntryTime).ToString("dd/MM/yyyy HH:mm");
+        //                 Response["lblText"] = Response["lblText"].ToString().Replace("#DATE", xEntryTime);
+        //             }
+
+        //         }
+
+        //         //Blocking edit control of Approvers
+        //         if (this.getBoolVAL(bIsEditable.ToString()) || nNextApprovalLevel == 1)
+        //         {
+        //             Response["isEditable"] = true;
+        //         }
+        //         else
+        //         {
+        //             Response["isEditable"] = false;
+        //         }
+        //     }
+        //     Response["ApprovalID"] = nApprovalID;
+        //     return Response;
+        // }
+
         public SortedList GetApprovals(int nIsApprovalSystem, int nFormID, int nTransID, int nTransUserID, int nTransStatus, int nTransApprovalLevel, int nNextApprovalLevel, int nApprovalID, int nGroupID, int nFnYearID, int nEmpID, int nActionID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable SecUserLevel = new DataTable();
@@ -494,6 +991,13 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
+                    object ApprlID = dLayer.ExecuteScalar("select N_ApprovalID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_Formid=@nFormID and N_TransID=@nTransID group by N_ApprovalID", ApprovalParams, connection);
+                    if (ApprlID != null)
+                    {
+                        int N_ApprvalID = this.getIntVAL(ApprlID.ToString());
+                        ApprovalParams["@nApprovalID"] = N_ApprvalID;
+                    }
+
                     MaxLevel = dLayer.ExecuteScalar("Select Isnull (MAX(N_LevelID),0) from Gen_ApprovalCodesTrans where N_ApprovalID=@nApprovalID and N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID", ApprovalParams, connection);
 
                     if ((nTransApprovalLevel > nNextApprovalLevel) && nTransStatus != 4 && nTransStatus != 3)
@@ -738,6 +1242,10 @@ namespace SmartxAPI.GeneralFunctions
                             ApprovalParams["@nTransStatus"] = nTransStatus;
                         }
                         NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        if (nSubmitter != nTransApprovalLevel)
+                        {
+                            NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=(select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=111 and N_Status=1) and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        }
                         if (NextApprovalUser != null)
                             xLastUserName = NextApprovalUser.ToString();
                     }
@@ -757,6 +1265,10 @@ namespace SmartxAPI.GeneralFunctions
                             }
                         }
                         NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=@nTransUserID  and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        if (nSubmitter != nTransApprovalLevel)
+                        {
+                            NextApprovalUser = dLayer.ExecuteScalar("SELECT X_UserName FROM Sec_User Where N_UserID=(select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=111 and N_Status=1) and N_CompanyID=@nCompanyID", ApprovalParams, connection);
+                        }
                         if (NextApprovalUser != null)
                             xLastUserName = NextApprovalUser.ToString();
                     }
@@ -844,8 +1356,6 @@ namespace SmartxAPI.GeneralFunctions
             return Response;
         }
 
-
-
         public DataTable SaveApprovals(DataTable MasterTable, DataTable Approvals, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow MasterRow = MasterTable.Rows[0];
@@ -924,7 +1434,7 @@ namespace SmartxAPI.GeneralFunctions
             //     {
             //         MasterTable = this.AddNewColumnToDataTable(MasterTable, "B_IssaveDraft", typeof(int), 0);
             //     }
-                
+
             // }
             return MasterTable;
         }
@@ -936,7 +1446,7 @@ namespace SmartxAPI.GeneralFunctions
                 int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
                 string Toemail = "";
-                object Email = dLayer.ExecuteScalar("select ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
+                object Email = dLayer.ExecuteScalar("select TOP(1) ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
                 Toemail = Email.ToString();
                 object CurrentStatus = dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID=" + FormID + " and X_TransCode='" + TransCode + "' and N_TransID=" + TransID + " and X_Type='" + TransType + "'", Params, connection, transaction);
                 object EmployeeName = dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID=" + nUserID + " and N_CompanyID=" + companyid, Params, connection, transaction);
@@ -951,7 +1461,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         object body = null;
                         string MailBody;
-                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink;
+                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "/approvalDashboard";
                         if (body != null)
                         {
                             body = body.ToString();
@@ -1474,7 +1984,7 @@ namespace SmartxAPI.GeneralFunctions
         {
             return User.FindFirst(ClaimTypes.AuthenticationInstant)?.Value;
         }
-        
+
         public int GetClientID(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.PrimaryGroupSid)?.Value);
@@ -1483,6 +1993,14 @@ namespace SmartxAPI.GeneralFunctions
         public int GetGlobalUserID(ClaimsPrincipal User)
         {
             return this.getIntVAL(User.FindFirst(ClaimTypes.PrimarySid)?.Value);
+        }
+
+        public int GetLoginID(ClaimsPrincipal User)
+        {
+            int loginID =0;
+            if(User.FindFirst(ClaimTypes.Thumbprint)?.Value!=null)
+            loginID =this.getIntVAL(User.FindFirst(ClaimTypes.Thumbprint)?.Value);
+            return loginID;
         }
 
         public string GetConnectionString(ClaimsPrincipal User)
@@ -1649,25 +2167,25 @@ namespace SmartxAPI.GeneralFunctions
             return res;
         }
 
-        public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection)
+        public bool CheckVersion(string xSrcVersion, IDataAccessLayer dLayer, SqlConnection connection)
         {
             SortedList Params = new SortedList();
-            string xAppVersion="";
-            String xAPIVersion=myCompanyID._APIVersion;
+            string xAppVersion = "";
+            String xAPIVersion = myCompanyID._APIVersion;
 
             object AppVersion = dLayer.ExecuteScalar("select TOP 1 X_AppVersion from Gen_SystemSettings order by D_EntryDate DESC", Params, connection);
-            if(AppVersion!=null)xAppVersion=AppVersion.ToString();
+            if (AppVersion != null) xAppVersion = AppVersion.ToString();
 
-            if(xAppVersion!="")
+            if (xAppVersion != "")
             {
-                if((xAppVersion!=xSrcVersion)||(xAppVersion!=xAPIVersion)||(xSrcVersion!=xAPIVersion))
-                {                   
+                if ((xAppVersion != xSrcVersion) || (xAppVersion != xAPIVersion) || (xSrcVersion != xAPIVersion))
+                {
                     return false;
                 }
             }
             return true;
         }
-        public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction)
+        public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction)
         {
 
             DataSet dsFunction = new DataSet();
@@ -1684,11 +2202,11 @@ namespace SmartxAPI.GeneralFunctions
             DataTable DepTable;
             DataTable AssSuspensionTable;
             DataTable AssTransactionTable;
-            string SqlCmd1="",SqlCmd2="",SqlCmd3="";
+            string SqlCmd1 = "", SqlCmd2 = "", SqlCmd3 = "";
             SortedList Params = new SortedList();
 
-            SqlCmd1="SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where Ass_AssetMaster.N_ItemID=" + N_ItemID + " group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt";
-            DepTable = dLayer.ExecuteDataTable(SqlCmd1, Params, connection,transaction);
+            SqlCmd1 = "SELECT max(dbo.Ass_Depreciation.D_EndDate) AS  D_EndDate,dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt FROM   dbo.Ass_AssetMaster INNER JOIN dbo.Ass_PurchaseDetails ON dbo.Ass_AssetMaster.N_AssetInventoryDetailsID = dbo.Ass_PurchaseDetails.N_AssetInventoryDetailsID left outer join Ass_Depreciation on Ass_Depreciation.N_ItemID =Ass_AssetMaster.N_ItemID and Ass_Depreciation.N_CompanyID=Ass_AssetMaster.N_CompanyID Where Ass_AssetMaster.N_ItemID=" + N_ItemID + " group by dbo.Ass_AssetMaster.N_ItemID,dbo.Ass_AssetMaster.X_ItemCode, dbo.Ass_AssetMaster.N_BookValue, dbo.Ass_AssetMaster.N_LifePeriod, dbo.Ass_PurchaseDetails.D_PurchaseDate, dbo.Ass_AssetMaster.N_BranchID, dbo.Ass_PurchaseDetails.N_Price,dbo.Ass_AssetMaster.D_PlacedDate,dbo.Ass_AssetMaster.N_CategoryID,dbo.Ass_AssetMaster.N_SalvageAmt";
+            DepTable = dLayer.ExecuteDataTable(SqlCmd1, Params, connection, transaction);
 
             if (DepTable.Rows.Count > 0)
             {
@@ -1750,8 +2268,8 @@ namespace SmartxAPI.GeneralFunctions
 
                 //-------- SUSPENSION 
 
-                SqlCmd2="select N_SuspendID,D_FromDate,D_ToDate from Ass_Suspension Where N_ItemID ='" + N_ItemID + "'  and D_FromDate <='" + StartDate.ToString("s") + "'";
-                AssSuspensionTable= dLayer.ExecuteDataTable(SqlCmd2, Params, connection,transaction);
+                SqlCmd2 = "select N_SuspendID,D_FromDate,D_ToDate from Ass_Suspension Where N_ItemID ='" + N_ItemID + "'  and D_FromDate <='" + StartDate.ToString("s") + "'";
+                AssSuspensionTable = dLayer.ExecuteDataTable(SqlCmd2, Params, connection, transaction);
 
                 if (D_PlacedDate <= EndDate)
                 {
@@ -1806,14 +2324,14 @@ namespace SmartxAPI.GeneralFunctions
                         }
 
                         //--Taking Current book value amount
-                        SqlCmd3="select MAX(N_LifePeriod) AS N_LifePeriod, SUM(N_Amount) AS N_BookValue from Ass_Transactions where X_Type <> 'Depreciation' and D_EndDate <='" + EndDate.ToString("yyyy-MM-dd") + "' and  N_ItemID=" + N_ItemID;
-                        AssTransactionTable = dLayer.ExecuteDataTable(SqlCmd3, Params, connection,transaction);
+                        SqlCmd3 = "select MAX(N_LifePeriod) AS N_LifePeriod, SUM(N_Amount) AS N_BookValue from Ass_Transactions where X_Type <> 'Depreciation' and D_EndDate <='" + EndDate.ToString("yyyy-MM-dd") + "' and  N_ItemID=" + N_ItemID;
+                        AssTransactionTable = dLayer.ExecuteDataTable(SqlCmd3, Params, connection, transaction);
 
                         BookValue = this.getVAL(AssTransactionTable.Rows[0]["N_BookValue"].ToString());
                         LifePeriod = this.getVAL(AssTransactionTable.Rows[0]["N_LifePeriod"].ToString());
 
                         //--Taking Total Depreciation processed amount
-                        TotalDepAmt = this.getVAL(dLayer.ExecuteScalar("select SUM(N_Amount) from Ass_Depreciation where N_ItemID = " + N_ItemID,Params,connection,transaction).ToString());
+                        TotalDepAmt = this.getVAL(dLayer.ExecuteScalar("select SUM(N_Amount) from Ass_Depreciation where N_ItemID = " + N_ItemID, Params, connection, transaction).ToString());
 
                         //--Check Total Dep Amount with Book value
                         if (BookValue >= TotalDepAmt)
@@ -1826,15 +2344,15 @@ namespace SmartxAPI.GeneralFunctions
                                 TotalDays = 30;
                             else
                                 TotalDays = this.getIntVAL(ts.Days.ToString()) + 1;
-                            
+
                             DepreciationAmt = Math.Round(((this.getVAL((TotalDays).ToString()) / (LifePeriod * 12.0 * 30.0))) * BookValue, 2);
-                            
+
                             double SalvageAmt = this.getVAL(DepTable.Rows[0]["N_SalvageAmt"].ToString());
 
                             if (DepreciationAmt > BookValue - SalvageAmt - TotalDepAmt)
-                                DepreciationAmt = BookValue - SalvageAmt - TotalDepAmt; 
+                                DepreciationAmt = BookValue - SalvageAmt - TotalDepAmt;
 
-   
+
                             if (BookValue - TotalDepAmt + DepreciationAmt > SalvageAmt)
                             {
                                 DataTable DepreciationTable = new DataTable();
@@ -1896,14 +2414,14 @@ namespace SmartxAPI.GeneralFunctions
                                 row1["X_Type"] = "Depreciation";
                                 row1["N_Amount"] = DepreciationAmt;
                                 row1["N_ItemID"] = N_ItemID;
-                                row1["N_AssetInventoryDetailsID"] = N_DprID;       
+                                row1["N_AssetInventoryDetailsID"] = N_DprID;
                                 TransTable.Rows.Add(row1);
 
                                 int N_TransID = dLayer.SaveData("Ass_Transactions", "N_ActionID", TransTable, connection, transaction);
                                 if (N_TransID <= 0)
                                 {
                                     transaction.Rollback();
-                                }  
+                                }
                             }
                         }
 
@@ -1928,7 +2446,6 @@ namespace SmartxAPI.GeneralFunctions
             }
             return B_completed;
         }
-
     }
 
 
@@ -1978,6 +2495,7 @@ namespace SmartxAPI.GeneralFunctions
         public string GetUserName(ClaimsPrincipal User);
         public string GetUserLoginName(ClaimsPrincipal User);
         public string GetEmailID(ClaimsPrincipal User);
+        public int GetLoginID(ClaimsPrincipal User);
 
 
         public string GetConnectionString(ClaimsPrincipal User);
@@ -1994,7 +2512,7 @@ namespace SmartxAPI.GeneralFunctions
         public string GetTempFilePath();
         public string RandomString(int length = 6);
         public bool writeImageFile(string FileString, string Path, string Name);
-        public bool CheckVersion(string xSrcVersion,IDataAccessLayer dLayer,SqlConnection connection);
-        public bool Depreciation(IDataAccessLayer dLayer,int N_CompanyID,int N_FnYearID,int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo,SqlConnection connection, SqlTransaction transaction);
+        public bool CheckVersion(string xSrcVersion, IDataAccessLayer dLayer, SqlConnection connection);
+        public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
     }
 }

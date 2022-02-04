@@ -87,7 +87,7 @@ namespace SmartxAPI.Controllers
             string sqlCommandText = "";
             if (xBatchCode == "")
             {
-                sqlCommandText = "select * from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID ";
+                sqlCommandText = "select N_CompanyID,N_EmpID,X_EmpCode,N_BranchID,X_EmpName  from vw_PayEmployeeSalaryPaymentsByEmployeeGroup where  N_CompanyID=@nCompanyID Group By N_CompanyID,N_EmpID,X_EmpCode,N_BranchID,X_EmpName ";
             }
             else
             {

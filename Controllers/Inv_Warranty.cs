@@ -228,15 +228,15 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(DRows["N_ClassID"].ToString()) == 1)
                         {
 
-                            string balanceSql = " SELECT       SUM(ISNULL(Inv_ServiceDetails.N_Qty, 0)) AS N_UsedQty " +
-" FROM            Inv_ServiceDetails LEFT OUTER JOIN " +
-"                        Inv_ItemMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID AND Inv_ServiceDetails.N_ItemID = Inv_ItemMaster.N_ItemID LEFT OUTER JOIN " +
-"                       Inv_ItemDetails ON Inv_ServiceDetails.N_CompanyID = Inv_ItemDetails.N_CompanyID AND Inv_ServiceDetails.N_ItemID = Inv_ItemDetails.N_MainItemID RIGHT OUTER JOIN " +
-"                      Inv_ServiceMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ServiceMaster.N_CompanyID AND Inv_ServiceDetails.N_ServiceID = Inv_ServiceMaster.N_ServiceID " +
-"					 where Inv_ItemMaster.N_ClassID=1 and  Inv_ServiceDetails.N_ItemID=" + DRows["N_ItemID"].ToString() + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and Inv_ServiceMaster.N_WarrantyID=" + N_WarrantyID +
-" GROUP BY Inv_ServiceMaster.N_CompanyID, Inv_ServiceMaster.N_WarrantyID, Inv_ItemDetails.N_ItemID ";
+                            string balanceSql = " SELECT        SUM(ISNULL(Inv_ServiceDetails.N_Qty, 0)) AS N_UsedQty FROM            Inv_ItemDetails RIGHT OUTER JOIN "+
+                         " Inv_ItemMaster ON Inv_ItemDetails.N_MainItemID = Inv_ItemMaster.N_ItemID AND Inv_ItemDetails.N_CompanyID = Inv_ItemMaster.N_CompanyID RIGHT OUTER JOIN "+
+                         " Inv_ServiceDetails ON Inv_ItemDetails.N_ItemID = Inv_ServiceDetails.N_ItemID AND Inv_ItemMaster.N_CompanyID = Inv_ServiceDetails.N_CompanyID AND  "+
+                         " Inv_ItemDetails.N_CompanyID = Inv_ServiceDetails.N_CompanyID RIGHT OUTER JOIN "+
+                         " Inv_ServiceMaster ON Inv_ServiceDetails.N_CompanyID = Inv_ServiceMaster.N_CompanyID AND Inv_ServiceDetails.N_ServiceID = Inv_ServiceMaster.N_ServiceID " +
+"where Inv_ItemMaster.N_ClassID=1 and  Inv_ServiceDetails.N_ItemID=" + DRows["N_ItemID"].ToString() + " and Inv_ServiceMaster.N_CompanyID=" + myFunctions.GetCompanyID(User) + " and Inv_ServiceMaster.N_WarrantyID=" + N_WarrantyID +
+" GROUP BY Inv_ServiceMaster.N_CompanyID, Inv_ServiceMaster.N_WarrantyID ";
 
-                            object balance = dLayer.ExecuteScalar(DetailSql, Params, connection);
+                            object balance = dLayer.ExecuteScalar(balanceSql, Params, connection);
                             if (balance == null)
                                 balance = 0;
 

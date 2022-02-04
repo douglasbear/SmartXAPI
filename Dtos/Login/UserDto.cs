@@ -27,7 +27,10 @@ namespace SmartxAPI.Dtos.Login
         public int N_SalesmanID { get; set; }
         public string X_SalesmanCode { get; set; }
         public string X_SalesmanName { get; set; }
+        public string X_UserCategoryIDList { get; set; }
         public bool B_AllowEdit { get; set; }
+        public string Warning { get; set; }
+
 
     }
 }

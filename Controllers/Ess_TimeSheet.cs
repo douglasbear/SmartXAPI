@@ -85,6 +85,8 @@ namespace SmartxAPI.Controllers
         public ActionResult GetAttendanceDetails(int nEmployeeID, int nFnYear, string payText, DateTime payDate, DateTime dDateFrom, DateTime dDateTo)
         {
             DataTable Details = new DataTable();
+
+
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
 
@@ -150,6 +152,42 @@ namespace SmartxAPI.Controllers
                     Master.Add("days", days);
                     Details = dLayer.ExecuteDataTablePro("SP_Pay_TimeSheet", QueryParams, connection);
 
+
+
+                    if (Details.Rows.Count > 0)
+                    {
+
+
+                        var rows = Details.AsEnumerable().Where(r => r.Field<int>("B_HolidayFlag") == 1 || r.Field<int>("B_IsVacation") == 1);
+
+                        DataTable HolyDays = Details.Clone();
+
+                        foreach (var row in rows)
+                        {
+                            HolyDays.ImportRow(row);
+                        }
+                    
+
+                    foreach (DataRow row in HolyDays.Rows)
+                    {
+
+                        for (int i = Details.Rows.Count - 1; i >= 0; i--)
+                        {
+                            if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_HolidayFlag"].ToString() == "0" && row["B_HolidayFlag"].ToString() == "1"))
+                                {
+                                Details.Rows[i].Delete();
+                                Details.AcceptChanges();
+                                }
+                                if(row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_IsVacation"].ToString() == "0" && row["B_IsVacation"].ToString() == "1" ))
+                                {
+                                Details.Rows[i].Delete();
+                                Details.AcceptChanges();
+                                }
+                                 Details.AcceptChanges();
+                        }
+                    }
+                    }
+                    Details.AcceptChanges();
                     Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0;
                     if (Details.Rows.Count == 0)
                     {
@@ -210,7 +248,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -279,7 +317,7 @@ namespace SmartxAPI.Controllers
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -296,7 +334,7 @@ namespace SmartxAPI.Controllers
                         if (Details.Rows.Count == 0)
                         {
                             transaction.Rollback();
-                            return Ok(api.Error(User,"Unable to save"));
+                            return Ok(api.Error(User, "Unable to save"));
                         }
                         else
                         {
@@ -310,7 +348,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -376,7 +414,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -419,14 +457,14 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_workLocation", "n_LocationID", n_LocationID, "", connection, transaction);
                     }
 
-                     MasterTable.Columns.Remove("N_FnYearID");
-                     MasterTable.Columns.Remove("N_EmpID");
+                    MasterTable.Columns.Remove("N_FnYearID");
+                    MasterTable.Columns.Remove("N_EmpID");
 
                     n_LocationID = dLayer.SaveData("Pay_workLocation", "n_LocationID", MasterTable, connection, transaction);
                     if (n_LocationID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -437,20 +475,20 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
-    [HttpGet("locationList")]
+        [HttpGet("locationList")]
         public ActionResult GetSalaryPayBatch()
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nCompanyID", nCompanyID);
-          
 
 
-            string sqlCommandText = "Select * from Pay_WorkLocation Where  N_CompanyID=@nCompanyID " ;
+
+            string sqlCommandText = "Select * from Pay_WorkLocation Where  N_CompanyID=@nCompanyID ";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -470,7 +508,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -549,27 +587,27 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
         [HttpGet("timesheetLog")]
-        public ActionResult GetTimesheetLog(string xEmpCode,DateTime dEventDate)
+        public ActionResult GetTimesheetLog(string xEmpCode, DateTime dEventDate)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             Params.Add("@nEmpCode", xEmpCode);
             Params.Add("@dEventDate", dEventDate);
             // string sqlCommandText="select * from Pay_TimesheetReport where N_CompanyID=@nCompanyID and N_EmpID=@nEmpID and D_EventDate=@dEventDate order by D_In,D_Out";
-            string sqlCommandText="select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode order by TransactionTime asc";
+            string sqlCommandText = "select UserID as X_EmpCode ,cast(TransactionTime as date) as date,CAST(TransactionTime AS TIME) as time from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode order by TransactionTime asc";
             SortedList OutPut = new SortedList();
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
-                    string sqlCommandCount="select count(1) as N_Count from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode";
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    string sqlCommandCount = "select count(1) as N_Count from Pay_TimesheetLog where cast(TransactionTime as date)=@dEventDate and UserID=@nEmpCode";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
 
@@ -577,7 +615,7 @@ namespace SmartxAPI.Controllers
                     {
                         DataRow drow = Summary.Rows[0];
                         TotalCount = drow["N_Count"].ToString();
-                      
+
                     }
                     OutPut.Add("Details", api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -594,7 +632,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 

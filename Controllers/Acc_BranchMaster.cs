@@ -41,7 +41,7 @@ namespace SmartxAPI.Controllers
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
-            string sqlCommandText = "select N_BranchID,N_CompanyId,X_BranchName,X_BranchCode,Active from Acc_BranchMaster where N_CompanyId=@p1 order by N_BranchID DESC";
+            string sqlCommandText = "SELECT Acc_BranchMaster.N_BranchID, Acc_BranchMaster.N_CompanyId, Acc_BranchMaster.X_BranchName, Acc_BranchMaster.X_BranchCode, Acc_BranchMaster.Active, Inv_Location.N_LocationID, Inv_Location.X_LocationCode,Inv_Location.X_LocationName FROM Acc_BranchMaster LEFT OUTER JOIN Inv_Location ON Acc_BranchMaster.N_CompanyID = Inv_Location.N_CompanyID AND Acc_BranchMaster.N_BranchID = Inv_Location.N_BranchID where Acc_BranchMaster.N_CompanyId=@p1 and Inv_Location.B_IsDefault=1 order by Acc_BranchMaster.N_BranchID DESC";
             Params.Add("@p1", nCompanyId);
             try
             {
@@ -61,7 +61,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -94,7 +94,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
 
         }
@@ -110,7 +110,7 @@ namespace SmartxAPI.Controllers
                     DataTable MasterTable;
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
-                    
+
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     Params.Add("@nCompanyID", nCompanyID);
@@ -124,7 +124,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -142,6 +142,7 @@ namespace SmartxAPI.Controllers
                     MasterTable = ds.Tables["master"];
                     SortedList Params = new SortedList();
                     SortedList Params1 = new SortedList();
+                    SortedList ValidateParams = new SortedList();
                     int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
                     int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     int nFnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearID"].ToString());
@@ -149,8 +150,26 @@ namespace SmartxAPI.Controllers
                     int nLocationID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_BranchID"].ToString());
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
-                    if(MasterTable.Columns.Contains("n_FnYearID"))
-                    MasterTable.Columns.Remove("n_FnYearID");
+                    string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
+                    ValidateParams.Add("@N_CompanyID", nCompanyID);
+                    object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                    object limit = dLayer.ExecuteScalar("select N_BranchLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                    if (BranchCount != null && limit != null)
+                    {
+                        if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
+                        }
+                    }
+                    Byte[] logoBitmap = new Byte[logo.Length];
+                    logoBitmap = Convert.FromBase64String(logo);
+                    if (myFunctions.ContainColumn("i_Logo", MasterTable))
+                        MasterTable.Columns.Remove("i_Logo");
+                    MasterTable.AcceptChanges();
+
+                    if (MasterTable.Columns.Contains("n_FnYearID"))
+                        MasterTable.Columns.Remove("n_FnYearID");
                     MasterTable.AcceptChanges();
                     if (xBranchCode == "@Auto")
                     {
@@ -158,7 +177,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
                         xBranchCode = dLayer.GetAutoNumber("Acc_BranchMaster", "x_BranchCode", Params, connection, transaction);
-                        if (xBranchCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate Branch Code")); }
+                        if (xBranchCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate Branch Code")); }
                         MasterTable.Rows[0]["x_BranchCode"] = xBranchCode;
                     }
                     else
@@ -171,7 +190,7 @@ namespace SmartxAPI.Controllers
                     {
 
                         transaction.Rollback();
-                        return Ok(_api.Error(User,"Unable to save Branch"));
+                        return Ok(_api.Error(User, "Unable to save Branch"));
                     }
                     else
                     {
@@ -184,24 +203,25 @@ namespace SmartxAPI.Controllers
                             DataTable LocationTable = dLayer.ExecuteDataTable(sql, BranchParams, connection, transaction);
                             if (LocationTable.Rows.Count == 0)
                             {
-                                transaction.Rollback(); return Ok(_api.Error(User,"Unable to Create location"));
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create location"));
                             }
                             Params1.Add("N_CompanyID", nCompanyID);
                             Params1.Add("N_YearID", nFnYearID);
                             Params1.Add("N_FormID", 450);
                             xLocationCode = dLayer.GetAutoNumber("Inv_Location", "x_LocationCode", Params1, connection, transaction);
-                            if (xLocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User,"Unable to generate location Code")); }
+                            if (xLocationCode == "") { transaction.Rollback(); return Ok(_api.Error(User, "Unable to generate location Code")); }
                             LocationTable.Rows[0]["x_LocationCode"] = xLocationCode;
                             LocationTable.AcceptChanges();
                             String DupCriteria = "N_BranchID=" + nBranchID + " and X_LocationName= '" + xLocationName + "' and N_CompanyID=" + nCompanyID;
                             nLocationID = dLayer.SaveData("Inv_Location", "N_LocationID", DupCriteria, "", LocationTable, connection, transaction);
                             if (nLocationID <= 0)
                             {
-                                transaction.Rollback(); return Ok(_api.Error(User,"Unable to Create location"));
+                                transaction.Rollback(); return Ok(_api.Error(User, "Unable to Create location"));
                             }
 
                         }
-
+                        if (logo.Length > 0)
+                            dLayer.SaveImage("Acc_BranchMaster", "I_Logo", logoBitmap, "N_BranchID", nBranchID, connection, transaction);
                         transaction.Commit();
                         return Ok(_api.Success("Branch Saved"));
                     }
@@ -211,7 +231,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 
@@ -249,7 +269,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        return Ok(_api.Error(User,"Unable to delete Branch"));
+                        return Ok(_api.Error(User, "Unable to delete Branch"));
                     }
 
 
@@ -257,7 +277,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(_api.Error(User,ex));
+                return Ok(_api.Error(User, ex));
             }
         }
 

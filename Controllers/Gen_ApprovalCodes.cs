@@ -78,7 +78,7 @@ namespace SmartxAPI.Controllers
                 if(nCategoryID!=0)
                     sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID in (@p2,-11,-22) and B_Active=1 and N_UserCategoryID<>1";
                 else
-                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -22 and B_Active=1 and N_UserCategoryID<>1";
+                    sqlCommandText ="select * from vw_UserList_levelSettings where N_CompanyID=@p1 and N_UserCategoryID >= -23 and B_Active=1 and N_UserCategoryID<>1";
             }
             else
             {

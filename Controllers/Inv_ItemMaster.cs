@@ -12,6 +12,8 @@ using Microsoft.Extensions.Configuration;
 using Microsoft.Data.SqlClient;
 using System.Text.RegularExpressions;
 using System.IO;
+using System.Net;
+using System.Web;
 
 namespace SmartxAPI.Controllers
 {
@@ -35,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/Projects/list
         [HttpGet("list")]
-        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID)
+        public ActionResult GetAllItems(string query, int PageSize, int Page, int nCategoryID, string xClass, int nNotItemID, int nNotGridItemID, bool b_AllBranchData, bool partNoEnable, int nLocationID, bool isStockItem,int nItemUsedFor)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -44,10 +46,27 @@ namespace SmartxAPI.Controllers
             string qry = "";
             string Category = "";
             string Condition = "";
+            string xCriteria = "";
+            //nItemUsedFor -> 1-Purchase, 2-Sales, 3-Both, 4-Raw Material
+
+
+            // if (b_AllBranchData)
+            //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
+            // else
+            //     xCriteria = " N_FnYearID=@p2 and N_PurchaseType=0 and X_TransType=@p4 and B_YearEndProcess=0 and N_BranchID=@p3 and N_CompanyID=@p1 ";
+
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query) ";
-                Params.Add("@query", "%" + query + "%");
+                if (partNoEnable)
+                {
+                    qry = " and (Description like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
+                else
+                {
+                    qry = " and (Description like @query or [Item Code] like @query or vw_InvItem_Search_cloud.X_Barcode like @query or vw_InvItem_Search_cloud.[Part No] like @query) ";
+                    Params.Add("@query", "%" + query + "%");
+                }
             }
             if (nCategoryID > 0)
                 Category = " and vw_InvItem_Search_cloud.N_CategoryID =" + nCategoryID;
@@ -62,9 +81,25 @@ namespace SmartxAPI.Controllers
             if (nNotGridItemID != 0)
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_ItemID<> " + nNotGridItemID;
 
+            if (nLocationID != 0)
+                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " )  ";
+            if (isStockItem)
+                Condition = Condition + " and N_ClassID =2";
+
+            if(nItemUsedFor!=0)
+            {
+                if(nItemUsedFor==1)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1";
+                else if(nItemUsedFor==2)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeSold =1";
+                else if(nItemUsedFor==3)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanBePurchased =1 and vw_InvItem_Search_cloud.B_CanbeSold =1";
+                else if(nItemUsedFor==4)
+                    Condition = Condition + " and vw_InvItem_Search_cloud.B_CanbeRawMaterial =1";
+            }
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
-            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
+            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by Description asc";
 
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
@@ -99,7 +134,7 @@ namespace SmartxAPI.Controllers
                         if (myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 1 || myFunctions.getIntVAL(item["N_ClassID"].ToString()) == 3)
                         {
 
-                            string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID, Inv_ItemDetails.N_Qty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID WHERE(vw_InvItem_Search_cloud.N_CompanyID = "+nCompanyID+") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
+                            string subItemSql = "SELECT     vw_InvItem_Search_cloud.*, dbo.SP_SellingPrice(vw_InvItem_Search_cloud.N_ItemID, vw_InvItem_Search_cloud.N_CompanyID) AS N_SellingPrice, Inv_ItemUnit.N_SellingPrice AS N_SellingPrice2, Inv_ItemUnit.X_ItemUnit AS Expr1, Inv_ItemDetails.N_MainItemID, Inv_ItemDetails.N_Qty FROM  Inv_ItemUnit RIGHT OUTER JOIN Inv_ItemDetails RIGHT OUTER JOIN vw_InvItem_Search_cloud ON Inv_ItemDetails.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemDetails.N_ItemID = vw_InvItem_Search_cloud.N_ItemID ON Inv_ItemUnit.N_CompanyID = vw_InvItem_Search_cloud.N_CompanyID AND Inv_ItemUnit.N_ItemID = vw_InvItem_Search_cloud.N_ItemID WHERE(vw_InvItem_Search_cloud.N_CompanyID = " + nCompanyID + ") AND(vw_InvItem_Search_cloud.B_InActive = 0) and Inv_ItemDetails.N_MainItemID =" + myFunctions.getIntVAL(item["N_ItemID"].ToString()) + "";
                             DataTable subTbl = dLayer.ExecuteDataTable(subItemSql, connection);
                             item["SubItems"] = subTbl;
                         }
@@ -125,7 +160,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nFnYearId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        public ActionResult GetDashboardList(int nFnYearId, bool b_AllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -134,8 +169,28 @@ namespace SmartxAPI.Controllers
             int Count = (nPage - 1) * nSizeperpage;
             string sqlCommandText = "";
             string Searchkey = "";
+            string xCriteria = "";
+
+            if (b_AllBranchData)
+                xCriteria = "";
+            else
+                xCriteria = " and  N_BranchID=@p5 ";
+
+            string view = " vw_InvItem_Search_cloud ";
+
+            if (b_AllBranchData)
+            {
+                nLocationID = 0;
+                xCriteria = "";
+            }
+
+
+            if (nLocationID != 0) xCriteria = xCriteria + " and N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=@p6 ) ";
+
+
             if (xSearchkey != null && xSearchkey.Trim() != "")
-                Searchkey = "and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%')";
+                Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
+            // Searchkey = " and (Description like '%" + xSearchkey + "%' or [Item Code] like '%" + xSearchkey + "%' or Category like '%" + xSearchkey + "%' or [Item Class] like '%" + xSearchkey + "%' or N_Rate like '%" + xSearchkey + "%' or X_StockUnit like '%" + xSearchkey + "%' or X_Barcode like '%" + xSearchkey + "%' or [Part No] like '%" + xSearchkey + "%')";
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
@@ -158,16 +213,23 @@ namespace SmartxAPI.Controllers
 
             }
 
-            if (Count == 0)
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " " + xSortBy;
-            else
-                sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + xSortBy + " ) " + xSortBy;
+            string feildList = " N_CompanyID, N_ItemID, [Item Code], Description, Description_Ar, Category, [Item Class], N_Rate, [Part No], X_ItemUnit, N_Qty, X_SalesUnit, X_PurchaseUnit, X_StockUnit, Rate, N_StockUnitID, [Product Code], Stock ";
+
+            // if (Count == 0)
+            //     sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + " group by " + feildList + xSortBy;
+            // else
+            //     sqlCommandText = "select top(" + nSizeperpage + ") " + feildList + " from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey + " and [Item Code] not in (select top(" + Count + ") [Item Code] from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + " group by " + feildList + Searchkey + xSortBy + " ) " + " group by " + feildList + xSortBy;
+            int OFFSET = (nPage * nSizeperpage) - nSizeperpage;
+            string PageString = " OFFSET " + OFFSET + " ROWS FETCH NEXT " + nSizeperpage + " ROWS ONLY";
+            sqlCommandText = "select " + feildList + " from " + view + " where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + xCriteria + Searchkey + xSortBy + PageString;
 
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", 0);
             Params.Add("@p3", "001");
             Params.Add("@p4", 1);
+            Params.Add("@p5", nBranchID);
+            Params.Add("@p6", nLocationID);
 
             SortedList OutPut = new SortedList();
 
@@ -178,7 +240,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
 
-                    string sqlCommandCount = "select count(*) as N_Count  from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + Searchkey;
+                    string sqlCommandCount = "select Count(1)  from Inv_ItemMaster where N_CompanyID=@p1 and B_Inactive=@p2 and X_ItemCode<> @p3 and N_ItemTypeID<>@p4 " + xCriteria;
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
@@ -204,7 +266,7 @@ namespace SmartxAPI.Controllers
 
 
 
- 
+
 
         [HttpGet("details")]
         public ActionResult GetItemDetails(int nItemID, int nLocationID, int nBranchID)
@@ -275,7 +337,14 @@ namespace SmartxAPI.Controllers
                         dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), myFunctions.getVAL(res.ToString()).ToString(myCompanyID.DecimalPlaceString));
                     else
                         dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), "0.00");
+                    object CalcCost = 0;
+                    if (N_BranchID == 0) // 05/12/2020 Cost caucation made usinf procedure by Zainab under the instruction of Anees sir
+                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
+                    else
+                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
+                    dt.Rows[0]["n_ItemCost"] = CalcCost;
+                    dt.AcceptChanges();
                     object inStocks = dLayer.ExecuteScalar("Select N_ItemID From vw_InvStock_Status Where N_ItemID=@nItemID and (Type<>'O' and Type<>'PO' and Type<>'SO') and N_CompanyID=@nCompanyID", QueryParams, connection);
                     bool b_InStocks = true;
                     if (inStocks == null)
@@ -419,7 +488,7 @@ namespace SmartxAPI.Controllers
                 BOMAssetTable = ds.Tables["bomAsset"];
                 itemWarranty = ds.Tables["itemWarranty"];
                 int nCompanyID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CompanyId"].ToString());
-                int N_ItemID = 0;
+                int N_ItemID = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_ItemID"].ToString());
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -432,12 +501,31 @@ namespace SmartxAPI.Controllers
                     ItemCode = MasterTableNew.Rows[0]["X_ItemCode"].ToString();
                     ItemType = myFunctions.getIntVAL(MasterTableNew.Rows[0]["N_CLassID"].ToString());
 
+
+
+
+
+
+                    if (ItemCode != "@Auto")
+                    {
+                        object N_DocNumber = dLayer.ExecuteScalar("Select 1 from Inv_ItemMaster Where X_ItemCode ='" + ItemCode + "' and N_CompanyID= " + nCompanyID + " and N_ItemID<>" + N_ItemID, connection, transaction);
+                        if (N_DocNumber == null)
+                        {
+                            N_DocNumber = 0;
+                        }
+                        if (myFunctions.getVAL(N_DocNumber.ToString()) >= 1)
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Product code already in use"));
+                        }
+                    }
+
                     if (ItemCode == "@Auto")
                     {
                         Params.Add("N_CompanyID", MasterTableNew.Rows[0]["N_CompanyId"].ToString());
                         Params.Add("N_YearID", GeneralTable.Rows[0]["N_FnYearId"].ToString());
                         Params.Add("N_FormID", 53);
-                        
+
                         ItemCode = dLayer.GetAutoNumber("Inv_ItemMaster", "X_ItemCode", Params, connection, transaction);
                         if (ItemCode == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate product Code")); }
                         MasterTableNew.Rows[0]["X_ItemCode"] = ItemCode;
@@ -496,14 +584,14 @@ namespace SmartxAPI.Controllers
                         if (count > 0)
                         {
                             transaction.Rollback();
-                            return Ok(_api.Error(User, "Unable to save, Product name alrady exist"));
+                            return Ok(_api.Error(User, "Unable to save, Product name already exist"));
                         }
 
-                        string xBarcode="";
-                        if(MasterTable.Rows[k]["X_Barcode"].ToString()=="")
+                        string xBarcode = "";
+                        if (MasterTable.Rows[k]["X_Barcode"].ToString() == "")
                         {
-                            xBarcode=AutoGenerateBarCode( MasterTable.Rows[k]["X_ItemCode"].ToString(),myFunctions.getIntVAL(MasterTable.Rows[k]["N_CategoryID"].ToString()),nCompanyID, dLayer, connection,transaction);
-                            MasterTable.Rows[k]["X_Barcode"]=xBarcode;
+                            xBarcode = AutoGenerateBarCode(MasterTable.Rows[k]["X_ItemCode"].ToString(), myFunctions.getIntVAL(MasterTable.Rows[k]["N_CategoryID"].ToString()), nCompanyID, dLayer, connection, transaction);
+                            MasterTable.Rows[k]["X_Barcode"] = xBarcode;
                         }
 
                         string image = MasterTable.Rows[0]["i_Image"].ToString();
@@ -564,7 +652,7 @@ namespace SmartxAPI.Controllers
                         }
 
 
-                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + ",N_ItemTypeID=0 where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
+                        dLayer.ExecuteNonQuery("update  Inv_ItemMaster set N_ItemUnitID=" + BaseUnitID + " ,N_StockUnitID =" + BaseUnitID + " where N_ItemID=" + N_ItemID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + "", Params, connection, transaction);
 
 
                         foreach (DataRow var in ItemUnits.Rows) var["n_BaseUnitID"] = BaseUnitID;
@@ -683,9 +771,9 @@ namespace SmartxAPI.Controllers
                             int i = 1;
                             foreach (DataRow dRow in POS.Rows)
                             {
-                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User,"PosProductImages"),ItemCode + "-POS-" + i);
+                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "PosProductImages"), ItemCode + "-POS-" + i);
                                 dRow["X_ImageName"] = ItemCode + "-POS-" + i + ".jpg";
-                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User,"PosProductImages");
+                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "PosProductImages");
                                 dRow["N_ItemID"] = N_ItemID;
                                 i++;
 
@@ -702,9 +790,9 @@ namespace SmartxAPI.Controllers
                             int j = 1;
                             foreach (DataRow dRow in ECOM.Rows)
                             {
-                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User,"EcomProductImages"),ItemCode + "-ECOM-" + j);
+                                myFunctions.writeImageFile(dRow["I_Image"].ToString(), myFunctions.GetUploadsPath(User, "EcomProductImages"), ItemCode + "-ECOM-" + j);
                                 dRow["X_ImageName"] = ItemCode + "-ECOM-" + j + ".jpg";
-                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User,"EcomProductImages");
+                                dRow["X_ImageLocation"] = myFunctions.GetUploadsPath(User, "EcomProductImages");
                                 dRow["N_ItemID"] = N_ItemID;
                                 j++;
 
@@ -776,16 +864,16 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private string AutoGenerateBarCode(string xItemCode,int nCatID,int nCompanyID,IDataAccessLayer dLayer,SqlConnection connection,SqlTransaction transaction)
+        private string AutoGenerateBarCode(string xItemCode, int nCatID, int nCompanyID, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             try
             {
                 int i = 0;
                 string X_CatCode = "00";
-                string X_ItemCategory = "",X_Barcode="";
-                if (nCatID!=0)
+                string X_ItemCategory = "", X_Barcode = "";
+                if (nCatID != 0)
                 {
-                    X_ItemCategory=dLayer.ExecuteScalar("select X_CategoryCode from Inv_ItemCategory WHERE N_CategoryID="+nCatID+" and N_CompanyID="+nCompanyID, connection, transaction).ToString();
+                    X_ItemCategory = dLayer.ExecuteScalar("select X_CategoryCode from Inv_ItemCategory WHERE N_CategoryID=" + nCatID + " and N_CompanyID=" + nCompanyID, connection, transaction).ToString();
                     X_CatCode = X_ItemCategory;
                 }
                 do
@@ -1008,7 +1096,7 @@ namespace SmartxAPI.Controllers
                         {
                             transaction.Rollback();
 
-                            return Ok(_api.Error(User, "Unable to delete product category"));
+                            return Ok(_api.Error(User, "Unable to delete product"));
                         }
                     }
                     transaction.Commit();
@@ -1022,7 +1110,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("batchList")]
-        public ActionResult GetBatchList( int nLocationID, int itemId)
+        public ActionResult GetBatchList(int nLocationID, int itemId)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -1047,10 +1135,102 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(_api.Error(User,e));
+                return Ok(_api.Error(User, e));
             }
-        }    
+        }
 
+        //  [HttpGet("costAndStock_Test")]
+        // public ActionResult GetCostAndStock(int nItemID,int nCompanyID)
+        // {
+        //     DataTable dt = new DataTable();
+        //     SortedList OutPut = new SortedList();
+        //     string sqlCostCommand="",sqlStockCommad="";
+        //     double UnitQty=1, nLastCost = 0;
+        //     int nUnitID = 0;
+
+        //     sqlCostCommand ="Select top 1 Inv_PurchaseDetails.N_PPrice,Inv_PurchaseDetails.N_ItemUnitID from Inv_Purchase INNER JOIN Inv_PurchaseDetails ON Inv_Purchase.N_CompanyID = Inv_PurchaseDetails.N_CompanyID and Inv_Purchase.N_PurchaseID = Inv_PurchaseDetails.N_PurchaseID where Inv_PurchaseDetails.N_ItemID = " + nItemID + " and Inv_Purchase.N_CompanyID = " + nCompanyID + " order by Inv_Purchase.N_PurchaseID desc";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             dt = dLayer.ExecuteDataTable(sqlCostCommand, connection);
+
+        //             if (dt.Rows.Count > 0)
+        //             {
+        //                 DataRow drow = dt.Rows[0];
+        //                 nLastCost =myFunctions.getVAL(drow["N_PPrice"].ToString());
+        //                 nUnitID =myFunctions.getIntVAL(drow["N_ItemUnitID"].ToString());
+        //             }
+
+        //             object res = dLayer.ExecuteScalar("Select N_Qty from Inv_ItemUnit Where N_CompanyID=" + nCompanyID + " and N_ItemID = " + nItemID + " and N_ItemUnitID=" + nUnitID,  connection);
+        //             if (res != null)
+        //                 UnitQty = myFunctions.getVAL(res.ToString());
+
+        //             nLastCost = nLastCost / UnitQty;
+        //         }
+        //         OutPut.Add("LastCost", nLastCost);
+        //         if (dt.Rows.Count == 0)
+        //         {
+        //             return Ok(_api.Warning("no result found"));
+        //         }
+        //         else
+        //         {
+        //             return Ok(_api.Success(OutPut));
+        //         }
+
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+
+        // }
+
+        [HttpGet("costAndStock")]
+        public ActionResult GetCostAndStock(int nItemID, int nLocationID, string xBatch, DateTime dDate)
+        {
+            DataTable dt = new DataTable();
+            string sqlCommandText = "";
+            if (xBatch == null) xBatch = "";
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    if (xBatch != "")
+                        sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_BatchStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "',0)As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
+                    else
+                    {
+                        bool bStockByDate = Convert.ToBoolean(myFunctions.getIntVAL(myFunctions.ReturnSettings("Inventory", "ShowAvlStockByDate", "N_Value", myFunctions.getIntVAL(nCompanyID.ToString()), dLayer, connection)));
+                        if (!bStockByDate)
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStock(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location')As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID;
+                        else
+                            sqlCommandText = "Select vw_InvItem_Search.N_ItemID,dbo.SP_GenGetStockByDate(vw_InvItem_Search.N_ItemID," + nLocationID + ",'" + xBatch + "', 'location','" + myFunctions.getDateVAL(dDate) + "')As N_AvlStock ,dbo.SP_Cost_Loc(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_ItemUnit," + nLocationID + ") As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_ItemID=" + nItemID + " and N_CompanyID=" + nCompanyID + " and ISNULL(N_ItemTypeID,0)=0";
+                    }
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, connection);
+
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Warning("no result found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+
+        }
         // public void CopyFiles(IDataAccessLayer dLayer, string filename, string subject, int folderId, bool overwriteexisting, string category, string fileData, string destpath, string filecode, int attachID, int FormID, string strExpireDate, int remCategoryId, int transId, int partyID, int settingsId, ClaimsPrincipal User, SqlTransaction transaction, SqlConnection connection)
         // {
         //     try
@@ -1090,6 +1270,173 @@ namespace SmartxAPI.Controllers
         //     }
 
         // }
+
+        [HttpGet("productHistory")]
+        public ActionResult GetProductHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nCustomerID)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+                    // Params.Add("@p3", nCustomerID);
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_ReceiptNo like '%" + xSearchkey + "%' or N_Qty like '%" + xSearchkey + "%' or cast(D_SalesDate as VarChar) like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_SalesDetailsID desc";
+                    else
+                    {
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    // if (Count == 0)
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " " + xSortBy;
+                    // else
+                    //     sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and N_ItemID=@p2  " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2  " + Searchkey + " and N_SalesDetailsID not in (select top(" + Count + ") N_SalesDetailsID from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    // sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 and N_CustomerID=@p3 " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count from vw_Inv_CustomerTransactionByItem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("productPurchaseHistory")]
+        public ActionResult GetProductPurchaseHistoryList(int nItemID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    int nCompanyID = myFunctions.GetCompanyID(User);
+                    DataTable dt = new DataTable();
+                    SortedList Params = new SortedList();
+                    int Count = (nPage - 1) * nSizeperpage;
+                    string sqlCommandText = "";
+                    string sqlCommandCount = "";
+                    string Searchkey = "";
+
+                    Params.Add("@p1", nCompanyID);
+                    Params.Add("@p2", nItemID);
+
+                    if (xSearchkey != null && xSearchkey.Trim() != "")
+                        Searchkey = "and (X_CustomerName like '%" + xSearchkey + "%' or X_ReceiptNo like '%" + xSearchkey + "%' or N_Qty like '%" + xSearchkey + "%' or cast(D_SalesDate as VarChar) like '%" + xSearchkey + "%')";
+
+                    if (xSortBy == null || xSortBy.Trim() == "")
+                        xSortBy = " order by N_PurchaseDetailsID desc";
+                    else
+                    {
+                        xSortBy = " order by " + xSortBy;
+                    }
+
+                    if (Count == 0)
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and N_ItemID=@p2 " + Searchkey + " " + xSortBy;
+                    else
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + " and N_PurchaseDetailsID not in (select top(" + Count + ") N_PurchaseDetailsID from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + xSearchkey + xSortBy + " ) " + xSortBy;
+
+                    SortedList OutPut = new SortedList();
+
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+
+                    sqlCommandCount = "select count(*) as N_Count from vw_inv_vendorTransactionByitem where N_CompanyID=@p1 and n_ItemID=@p2 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    return Ok(_api.Success(OutPut));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
+        [HttpGet("translate")]
+        public ActionResult Translate(string xText)
+        {
+            try
+            {
+                SortedList OutPut = new SortedList();
+                string Artext = Translate(xText, "en", "ar");
+                if (xText == null)
+                    Artext = "";
+                OutPut.Add("arabic", Artext);
+                return Ok(_api.Success(OutPut));
+
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+        public String Translate(String text, string fromLanguage, string toLanguage)
+        {
+            //Translate("test","ar");
+            var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={HttpUtility.UrlEncode(text)}";
+            var webClient = new WebClient
+            {
+                Encoding = System.Text.Encoding.UTF8
+            };
+            var result = webClient.DownloadString(url);
+            try
+            {
+                result = result.Substring(4, result.IndexOf("\"", 4, StringComparison.Ordinal) - 4);
+                return result;
+            }
+            catch
+            {
+                return "Error";
+            }
+        }
+        private string Translate(string text, string l)
+        {
+            string translated = null;
+            HttpWebRequest hwr = (HttpWebRequest)HttpWebRequest.Create
+            ("http://translate.google.com/#en/ar/test");
+            HttpWebResponse res = (HttpWebResponse)hwr.GetResponse();
+            StreamReader sr = new StreamReader(res.GetResponseStream());
+            string html = sr.ReadToEnd();
+            int rawlength1 = html.IndexOf("<span id=otq><b>");
+            string rawStr1 = html.Substring(rawlength1);
+            int rawlength2 = rawStr1.IndexOf("</b>");
+            string rawstr2 = rawStr1.Substring(0, rawlength2);
+            translated = rawstr2.Replace("<span id=otq><b>", "");
+            //tbStringToTranslate.Text = text;
+            return translated;
+        }
+
 
 
 
