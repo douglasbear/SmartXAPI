@@ -343,12 +343,12 @@ namespace SmartxAPI.Controllers
                         {
                             QueryParamsList.Add("@nDeliveryNoteID", nDeliveryNoteId);
                             string[] X_Delivery = xDeliveryNoteID.Split(",");
-                            int N_DeliveryNote=myFunctions.getIntVAL(X_Delivery[0].ToString() );
-                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId="+N_DeliveryNote+"";
+                            int N_DeliveryNote = myFunctions.getIntVAL(X_Delivery[0].ToString());
+                            Mastersql = "select N_CompanyId,N_FnYearId,n_SalesId,x_ReceiptNo,N_CustomerID from vw_DeliveryNoteDisp where N_CompanyId=@nCompanyID and N_DeliveryNoteId=" + N_DeliveryNote + "";
                             MasterTable = dLayer.ExecuteDataTable(Mastersql, QueryParamsList, Con);
                             if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                             MasterTable = _api.Format(MasterTable, "Master");
-                           
+
 
                         }
 
@@ -367,7 +367,7 @@ namespace SmartxAPI.Controllers
                                 if (Avar["N_DeliveryNoteID"].ToString() != "0")
                                     DeliveryNoteAppend = DeliveryNoteAppend + "," + Avar["N_DeliveryNoteID"].ToString();
                             }
-                            if (xDeliveryNoteID == "" || xDeliveryNoteID==null)
+                            if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
                             else
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  and N_DeliveryNoteID not in( " + DeliveryNoteAppend + ") ";
@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            if (xDeliveryNoteID == "" || xDeliveryNoteID==null)
+                            if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_SalesOrderID =" + N_salesOrderID + " ";
                             else
                                 DetailSql = "select * from vw_DeliveryNoteDispDetails where N_CompanyId=@nCompanyID and N_DeliveryNoteID IN (" + xDeliveryNoteID + ")  ";
@@ -385,7 +385,7 @@ namespace SmartxAPI.Controllers
 
                         DataTable DetailTable = dLayer.ExecuteDataTable(DetailSql, QueryParamsList, Con);
                         DetailTable = _api.Format(DetailTable, "Details");
-                        if (xDeliveryNoteID == "")
+                        if (xDeliveryNoteID == "" || xDeliveryNoteID == null)
                         {
                             if (myFunctions.getIntVAL(MasterTable.Rows[0]["N_SalesOrderID"].ToString()) > 0)
                             {
@@ -868,8 +868,10 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 DataTable DetailTable;
                 DataTable dtsaleamountdetails; ;
+                DataTable AdvanceTable; ;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                AdvanceTable = ds.Tables["advanceTable"];
 
                 DataTable Approvals;
                 Approvals = ds.Tables["approval"];
@@ -909,6 +911,9 @@ namespace SmartxAPI.Controllers
                     N_IsProforma = MasterTable.Columns.Contains("b_IsProforma") ? myFunctions.getIntVAL(MasterRow["b_IsProforma"].ToString()) : 0;
                     bool B_AllBranchData = false, B_AllowCashPay = false, B_DirectPosting = false;
                     int N_NextApproverID = 0;
+                    int AdvanceSettlementID = 0;
+
+
                     QueryParams.Add("@nCompanyID", N_CompanyID);
                     QueryParams.Add("@nFnYearID", N_FnYearID);
                     QueryParams.Add("@nSalesID", N_SalesID);
@@ -1282,6 +1287,26 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
+                            //Advance Settlement Save
+                            string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
+                            object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, Params, connection, transaction);
+                            if (myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
+                            {
+                                dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + N_FnYearID + " and X_TransType = 'SA'", connection, transaction);
+                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + N_FnYearID + " ", connection, transaction);
+                            }
+                            if (AdvanceTable.Rows.Count > 0)
+                            {
+                                dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
+                                for (int j = 0; j < AdvanceTable.Rows.Count; j++)
+                                {
+                                    AdvanceTable.Rows[j]["N_SalesId"] = N_SalesID;
+                                }
+                                AdvanceTable.AcceptChanges();
+                                AdvanceSettlementID = dLayer.SaveData("Inv_SalesAdvanceSettlement", "N_PkeyID", AdvanceTable, connection, transaction);
+
+                            }
                             SortedList StockPostingParams = new SortedList();
                             StockPostingParams.Add("N_CompanyID", N_CompanyID);
                             StockPostingParams.Add("N_SalesID", N_SalesID);
