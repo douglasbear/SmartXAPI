@@ -708,6 +708,60 @@ namespace SmartxAPI.Controllers
                     DataTable detailTable = dLayer.ExecuteDataTablePro("SP_InvSalesDtls_Disp", dParamList, Con);
                     detailTable = _api.Format(detailTable, "Details");
                     if (detailTable.Rows.Count == 0) { return Ok(_api.Warning("No Data Found")); }
+
+                    // AdvanceTable  ///////////////////////////////////////////////////////////////////////////////////// 
+
+                    DataTable AdvanceTable = new DataTable();
+                    DataTable recievableTable = new DataTable();
+                    int branchFlag = 0;
+                    if (bAllBranchData) { branchFlag = 1; }
+                    SortedList detailParams = new SortedList()
+                    {
+                        {"N_CompanyID",nCompanyId},
+                        {"N_CustomerId", myFunctions.getIntVAL(MasterRow["n_CustomerID"].ToString())},
+                        {"D_SalesDate",Convert.ToDateTime(masterTable.Rows[0]["d_SalesDate"].ToString())},
+                        {"N_BranchFlag",branchFlag},
+                        {"N_BranchID",nBranchId}
+                    };
+                    recievableTable = dLayer.ExecuteDataTablePro("SP_InvReceivables", detailParams, Con);
+                    recievableTable = myFunctions.AddNewColumnToDataTable(recievableTable, "flag", typeof(int), 0);
+                    recievableTable = myFunctions.AddNewColumnToDataTable(recievableTable, "n_AmountF", typeof(double), 0);
+                  
+                    string settlementSql = "select * from Inv_SalesAdvanceSettlement where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_SalesID=" + nSalesID + "";
+                    AdvanceTable = dLayer.ExecuteDataTable(settlementSql, QueryParamsList, Con);
+                    if (AdvanceTable.Rows.Count > 0)
+                    {
+                        foreach (DataRow var in AdvanceTable.Rows)
+                        {
+                            foreach (DataRow var1 in recievableTable.Rows)
+                            {
+                                if (var1["N_SalesID"].ToString() == var["N_AdvID"].ToString())
+                                {
+                                    var1["flag"] = 1;
+                                    var1["n_AmountF"]=var["n_AdvAmtF"];
+                                    var1["x_Notes"]=var["x_Notes"];
+                                    recievableTable.AcceptChanges();
+                                }
+                            }
+                        }
+                    }
+                    recievableTable.AcceptChanges();
+                    if (AdvanceTable.Rows.Count > 0)
+                    {
+                        foreach (DataRow var3 in recievableTable.Rows)
+                        {
+                            if (myFunctions.getIntVAL(var3["flag"].ToString()) == 0)
+                            {
+                                var3.Delete();
+                               
+                            }
+                        }
+                    }
+                    recievableTable.AcceptChanges();
+                    recievableTable = _api.Format(recievableTable, "AdvanceTable");
+                      dsSalesInvoice.Tables.Add(recievableTable);
+
+                    ////////////////////////////////////////////////////////////////
                     DataTable saleamountdetails = new DataTable();
                     if (myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesId"].ToString()) > 0)
                     {
@@ -1290,7 +1344,7 @@ namespace SmartxAPI.Controllers
                             //Advance Settlement Save
                             string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
                             object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, Params, connection, transaction);
-                            if (myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
+                            if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
                             {
                                 dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + N_FnYearID + " and X_TransType = 'SA'", connection, transaction);
                                 dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
@@ -1305,6 +1359,24 @@ namespace SmartxAPI.Controllers
                                 }
                                 AdvanceTable.AcceptChanges();
                                 AdvanceSettlementID = dLayer.SaveData("Inv_SalesAdvanceSettlement", "N_PkeyID", AdvanceTable, connection, transaction);
+
+                                SortedList advanceParams = new SortedList();
+                                advanceParams.Add("@N_CompanyID", N_CompanyID);
+                                advanceParams.Add("@N_SalesID", N_SalesID);
+                                try
+                                {
+                                    dLayer.ExecuteNonQueryPro("SP_InvSalesAdvSettlement", advanceParams, connection, transaction);
+                                }
+                                catch (Exception ex)
+                                {
+                                    transaction.Rollback();
+                                    return Ok(_api.Error(User, ex));
+
+                                }
+
+
+
+
 
                             }
                             SortedList StockPostingParams = new SortedList();
