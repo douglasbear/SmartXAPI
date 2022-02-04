@@ -319,6 +319,7 @@ namespace SmartxAPI.Controllers
                         ReturnNo = dLayer.GetAutoNumber("Ass_PurchaseMaster", "X_InvoiceNo", Params, connection, transaction);
                         if (ReturnNo == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate Invoice Number")); }
                         MasterTable.Rows[0]["X_InvoiceNo"] = ReturnNo;
+                        X_InvoiceNo = ReturnNo;
                     }
 
                     if (N_AssetInventoryID > 0)
@@ -390,7 +391,7 @@ namespace SmartxAPI.Controllers
                                     return Ok(_api.Error(User, "Error"));
                                 }
                                 TransactionTable.Rows[j]["N_AssetInventoryID"] = N_AssetInventoryID;
-                                TransactionTable.Rows[j]["X_Reference"] = ReturnNo;
+                                TransactionTable.Rows[j]["X_Reference"] = X_InvoiceNo;
                                 TransactionTable.Rows[j]["N_AssetInventoryDetailsID"] = N_AssetInventoryDetailsID;
                                 TransactionTable.Rows[j]["X_Type"] = "Revaluation";
 
@@ -530,7 +531,7 @@ namespace SmartxAPI.Controllers
                                 // for (int k = 0 ;k < TransactionTableNew.Rows.Count;k++)
                                 // {
                                 TransactionTableNew.Rows[j]["N_AssetInventoryID"] = N_AssetInventoryID;
-                                TransactionTableNew.Rows[j]["X_Reference"] = ReturnNo;
+                                TransactionTableNew.Rows[j]["X_Reference"] = X_InvoiceNo;
                                 TransactionTableNew.Rows[j]["N_AssetInventoryDetailsID"] = N_AssetInventoryDetailsID;
                                 //TransactionTableNew.Rows[j]["N_AssetInventoryDetailsID"]=DetailTableNew.Rows[k]["N_AssetInventoryDetailsID"];
                                 //TransactionTableNew.Rows[j]["N_ItemId"]=AssMasterTableNew.Rows[k]["N_ItemID"];
@@ -566,7 +567,7 @@ namespace SmartxAPI.Controllers
 
                     SortedList Result = new SortedList();
                     Result.Add("N_AssetInventoryID", N_AssetInventoryID);
-                    Result.Add("X_InvoiceNo", ReturnNo);
+                    Result.Add("X_InvoiceNo", X_InvoiceNo);
                     transaction.Commit();
                     return Ok(_api.Success(Result, "Asset Purchase Saved"));
                 }

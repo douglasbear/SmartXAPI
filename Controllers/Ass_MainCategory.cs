@@ -146,7 +146,7 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         transaction.Commit();
-                        return Ok(api.Success("Asset Created"));
+                        return Ok(api.Success("Asset Main Category Created"));
                     }
                 }
             }
