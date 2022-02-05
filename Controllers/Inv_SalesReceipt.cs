@@ -234,13 +234,13 @@ namespace SmartxAPI.Controllers
                             string DetailSql = "";
                             if (bShowAllbranch == true)
                             {
-                                DetailSql = "Select Inv_PayReceiptDetails.N_CompanyID,N_InventoryId,N_Amount+N_DiscountAmt+Isnull(N_AmtPaidFromAdvance,0) AS N_Amount,X_Description,N_BranchID  from Inv_PayReceiptDetails " +
-                                        " Where N_CompanyID =@CompanyID and N_PayReceiptId =@PayReceiptID";
+                                DetailSql = "SELECT        Inv_PayReceiptDetails.N_CompanyID, Inv_PayReceiptDetails.N_InventoryId, Inv_PayReceiptDetails.N_Amount + Inv_PayReceiptDetails.N_DiscountAmt + ISNULL(Inv_PayReceiptDetails.N_AmtPaidFromAdvance, 0) AS N_Amount,Inv_PayReceiptDetails.N_AmountF + Inv_PayReceiptDetails.N_DiscountAmtF + ISNULL(Inv_PayReceiptDetails.N_AmtPaidFromAdvanceF, 0) AS N_AmountF, Inv_PayReceiptDetails.X_Description, Inv_PayReceiptDetails.N_BranchID, Inv_CustomerProjects.X_ProjectName FROM Inv_PayReceiptDetails LEFT OUTER JOIN Inv_CustomerProjects ON Inv_PayReceiptDetails.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_PayReceiptDetails.N_CompanyID = Inv_CustomerProjects.N_CompanyID " +
+                                        " Where Inv_PayReceiptDetails.N_CompanyID =@CompanyID and Inv_PayReceiptDetails.N_PayReceiptId =@PayReceiptID";
                             }
                             else
                             {
-                                DetailSql = "Select Inv_PayReceiptDetails.N_CompanyID,N_InventoryId,N_Amount+N_DiscountAmt+Isnull(N_AmtPaidFromAdvance,0) AS N_Amount,X_Description,N_BranchID  from Inv_PayReceiptDetails " +
-                                        " Where N_CompanyID =@CompanyID and N_PayReceiptId =@PayReceiptID and N_BranchID=@BranchID";
+                                DetailSql = "SELECT        Inv_PayReceiptDetails.N_CompanyID, Inv_PayReceiptDetails.N_InventoryId, Inv_PayReceiptDetails.N_Amount + Inv_PayReceiptDetails.N_DiscountAmt + ISNULL(Inv_PayReceiptDetails.N_AmtPaidFromAdvance, 0) AS N_Amount,Inv_PayReceiptDetails.N_AmountF + Inv_PayReceiptDetails.N_DiscountAmtF + ISNULL(Inv_PayReceiptDetails.N_AmtPaidFromAdvanceF, 0) AS N_AmountF, Inv_PayReceiptDetails.X_Description, Inv_PayReceiptDetails.N_BranchID, Inv_CustomerProjects.X_ProjectName FROM Inv_PayReceiptDetails LEFT OUTER JOIN Inv_CustomerProjects ON Inv_PayReceiptDetails.N_ProjectID = Inv_CustomerProjects.N_ProjectID AND Inv_PayReceiptDetails.N_CompanyID = Inv_CustomerProjects.N_CompanyID " +
+                                        " Where Inv_PayReceiptDetails.N_CompanyID =@CompanyID and Inv_PayReceiptDetails.N_PayReceiptId =@PayReceiptID and Inv_PayReceiptDetails.N_BranchID=@BranchID";
                             }
                             SortedList detailParams = new SortedList();
                             detailParams.Add("@CompanyID", nCompanyId);
