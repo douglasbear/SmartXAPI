@@ -726,6 +726,7 @@ namespace SmartxAPI.Controllers
                     recievableTable = dLayer.ExecuteDataTablePro("SP_InvReceivables", detailParams, Con);
                     recievableTable = myFunctions.AddNewColumnToDataTable(recievableTable, "flag", typeof(int), 0);
                     recievableTable = myFunctions.AddNewColumnToDataTable(recievableTable, "n_AmountF", typeof(double), 0);
+                    recievableTable = myFunctions.AddNewColumnToDataTable(recievableTable, "pay", typeof(Boolean), false);
                   
                     string settlementSql = "select * from Inv_SalesAdvanceSettlement where N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and N_SalesID=" + nSalesID + "";
                     AdvanceTable = dLayer.ExecuteDataTable(settlementSql, QueryParamsList, Con);
@@ -740,6 +741,7 @@ namespace SmartxAPI.Controllers
                                     var1["flag"] = 1;
                                     var1["n_AmountF"]=var["n_AdvAmtF"];
                                     var1["x_Notes"]=var["x_Notes"];
+                                    var1["pay"]=true;
                                     recievableTable.AcceptChanges();
                                 }
                             }
