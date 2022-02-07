@@ -1154,6 +1154,15 @@ namespace SmartxAPI.Controllers
                     }
                     if (N_SalesID > 0)
                     {
+                            string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
+                            object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, Params, connection, transaction);
+                            if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
+                            {
+                                dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + N_FnYearID + " and X_TransType = 'SA'", connection, transaction);
+                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + N_FnYearID + " ", connection, transaction);
+                            }
+
                         SortedList DeleteParams = new SortedList(){
                                 {"N_CompanyID",N_CompanyID},
                                 {"X_TransType","SALES"},
@@ -1342,14 +1351,7 @@ namespace SmartxAPI.Controllers
                         else
                         {
                             //Advance Settlement Save
-                            string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + N_CompanyID + " and N_FnYearID=" + N_FnYearID + " and N_RefID=" + N_SalesID + " and N_FormID=" + this.N_FormID + "";
-                            object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, Params, connection, transaction);
-                            if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
-                            {
-                                dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + N_FnYearID + " and X_TransType = 'SA'", connection, transaction);
-                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
-                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + N_FnYearID + " ", connection, transaction);
-                            }
+
                             if (AdvanceTable.Rows.Count > 0)
                             {
                                 dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
@@ -1529,6 +1531,10 @@ namespace SmartxAPI.Controllers
                     int N_CustomerId = myFunctions.getIntVAL(TransRow["N_CustomerId"].ToString());
                     int nSalesOrderID = myFunctions.getIntVAL(TransRow["N_SalesOrderID"].ToString());
 
+
+
+
+
                     SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", nCompanyID);
                     CustParams.Add("@N_CustomerID", N_CustomerId);
@@ -1545,6 +1551,17 @@ namespace SmartxAPI.Controllers
                     DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, this.N_FormID, nInvoiceID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
                     Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
+
+                    string payRecieptqry = "select N_PayReceiptID from  Inv_PayReceipt where N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_RefID=" + nInvoiceID + " and N_FormID=" + this.N_FormID + "";
+                            object nRecieptID = dLayer.ExecuteScalar(payRecieptqry, connection, transaction);
+                            if (nRecieptID != null && myFunctions.getIntVAL(nRecieptID.ToString()) > 0)
+                            {
+                                dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + nCompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + nFnYearID + " and X_TransType = 'SA'", connection, transaction);
+                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
+                                dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + nCompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + nFnYearID + " ", connection, transaction);
+                            }
+                            dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", nInvoiceID, "N_CompanyID = " + nCompanyID + " and N_FnYearID=" + nFnYearID + "", connection, transaction);
+                                
                     var xUserCategory = myFunctions.GetUserCategory(User);// User.FindFirst(ClaimTypes.GroupSid)?.Value;
                     var nUserID = myFunctions.GetUserID(User);// User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                     object objSalesReturnProcessed = dLayer.ExecuteScalar("Select Isnull(N_DebitNoteId,0) from Inv_SalesReturnMaster where N_CompanyID=" + nCompanyID + " and N_SalesID=" + nInvoiceID + " and B_IsSaveDraft = 0", connection, transaction);
