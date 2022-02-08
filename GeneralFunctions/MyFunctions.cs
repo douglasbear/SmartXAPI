@@ -21,8 +21,6 @@ using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -1438,7 +1436,8 @@ namespace SmartxAPI.GeneralFunctions
             // }
             return MasterTable;
         }
-        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
+  
+   public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
         {
             try
             {
@@ -1646,7 +1645,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+   public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -1728,6 +1727,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             return N_NxtUserID;
         }
+
 
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
