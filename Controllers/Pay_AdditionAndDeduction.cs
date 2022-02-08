@@ -161,6 +161,7 @@ if (xBatch != null)
                                 param.Add("@nEmpID", nodeVar["N_EmpID"].ToString());
                                 param.Add("@nFnYearId", nFnYearID);
                                 param.Add("@nPayID", nodeVar["N_PayID"].ToString());
+                                param.Add("@dDate", dtStartDate);
                                 objRate = dLayer.ExecuteScalar("Select isnull(N_Value,0) as N_Amount from vw_EmpPayInformation Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate=(select MAX(D_EffectiveDate) from vw_EmpPayInformation where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearId and N_EmpID=@nEmpID and N_PayID=@nPayID and D_EffectiveDate<=@dDate)", param, connection);
                                 if (objRate != null)
                                 {
