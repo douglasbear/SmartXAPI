@@ -1,8 +1,53 @@
 {
   "runtimeOptions": {
     "additionalProbingPaths": [
+<<<<<<< HEAD
       "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
       "C:\\Users\\rathe\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+<<<<<<< HEAD
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+=======
+=======
+<<<<<<< HEAD
+>>>>>>> ecc11ea6175359e3cff0e7843dc0284c1c0339ae
+<<<<<<< HEAD
+<<<<<<< HEAD
+<<<<<<< HEAD
+      "C:\\Users\\rathe\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\rathe\\.nuget\\packages"
+=======
+<<<<<<< HEAD
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+=======
+      "C:\\Users\\linju scaria\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\linju scaria\\.nuget\\packages"
+>>>>>>> f3fcee3c37ae0b5f9b3f1f7d11c81fb513011832
+>>>>>>> 9454a364df7ece350f96d9b35e196bc34ead4874
+=======
+      "C:\\Users\\sreej\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\sreej\\.nuget\\packages"
+>>>>>>> bbbf79f435ba5c7d706a5214e0a40678e43ac39f
+=======
+      "C:\\Users\\aswin\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\aswin\\.nuget\\packages"
+>>>>>>> bcbf3f2a27ab5a7e26a67880457a42d3cf0ff20a
+<<<<<<< HEAD
+>>>>>>> e5502fc3748659a36ea3aa74d98e75c8a077fda2
+=======
+=======
+      "C:\\Users\\Sibin Babu\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\Sibin Babu\\.nuget\\packages"
+>>>>>>> ff11f49c6d88189addd2ecd44099185ae359b357
+=======
+      "C:\\Users\\SANJAY\\.dotnet\\store\\|arch|\\|tfm|",
+      "C:\\Users\\SANJAY\\.nuget\\packages"
+>>>>>>> 3b3868a76fcadacbeec5008ed76e5efa3f8f4ed3
+>>>>>>> ecc11ea6175359e3cff0e7843dc0284c1c0339ae
+>>>>>>> 5fa22619e57c0c75854582493595387cb6dd75a4
     ]
   }
 }
