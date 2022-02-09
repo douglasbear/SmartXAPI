@@ -48,9 +48,9 @@ namespace SmartxAPI.Controllers
                     string sqlCommandText = "";
                     string sqlCommandCount = "";
                     string Searchkey = "";
-                      int N_decimalPlace=2;
-                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value",nCompanyId, dLayer, connection));
-                    N_decimalPlace=N_decimalPlace==0?2:N_decimalPlace;
+                    int N_decimalPlace = 2;
+                    N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyId, dLayer, connection));
+                    N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
                     if (xSearchkey != null && xSearchkey.Trim() != "")
                         Searchkey = "and (Memo like '%" + xSearchkey + "%' or [Customer Name] like '%" + xSearchkey + "%' or cast(DATE as VarChar) like '%" + xSearchkey + "%')";
@@ -71,8 +71,8 @@ namespace SmartxAPI.Controllers
                                 xSortBy = "Cast(DATE as DateTime )" + xSortBy.Split(" ")[1];
                                 break;
                             case "amount":
-                                xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(10,"+N_decimalPlace+")) " + xSortBy.Split(" ")[1];
-                                break;        
+                                xSortBy = "Cast(REPLACE(Amount,',','') as Numeric(10," + N_decimalPlace + ")) " + xSortBy.Split(" ")[1];
+                                break;
                             default: break;
                         }
                         xSortBy = " order by " + xSortBy;
@@ -113,7 +113,7 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(10,"+N_decimalPlace+")) ) as TotalAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and B_YearEndProcess =0 and (X_type='SR' OR X_type='SA') " + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(Amount,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvReceipt_Search where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and B_YearEndProcess =0 and (X_type='SR' OR X_type='SA') " + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
@@ -140,7 +140,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -152,11 +152,15 @@ namespace SmartxAPI.Controllers
             SortedList general = new SortedList();
             SortedList OutPut = new SortedList();
 
+            SortedList salesParams = new SortedList();
+
             OutPut.Add("totalAmtDue", 0);
             OutPut.Add("totalBalance", 0);
+
             OutPut.Add("txnStarted", false);
             DataSet ds = new DataSet();
             int nCompanyId = myFunctions.GetCompanyID(User);
+            salesParams.Add("N_CompanyID", nCompanyId);
             try
             {
 
@@ -165,7 +169,7 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     int n_PayReceiptId = 0;// myFunctions.getIntVAL(MasterTable.Rows[0]["n_PayReceiptId"].ToString());
 
-                    if (xInvoiceNo != null && xInvoiceNo !="@Auto")
+                    if (xInvoiceNo != null && xInvoiceNo != "@Auto")
                     {
                         SortedList proParams1 = new SortedList(){
                                 {"@nCompanyID",nCompanyId},
@@ -284,6 +288,10 @@ namespace SmartxAPI.Controllers
                     };
                         DetailTable = dLayer.ExecuteDataTablePro("SP_InvReceivables", detailParams, connection);
                     }
+                    myFunctions.AddNewColumnToDataTable(DetailTable, "x_SalesmanName", typeof(string), "");
+                    myFunctions.AddNewColumnToDataTable(DetailTable, "n_SalesManID", typeof(int), 0);
+
+
                     DetailTable = api.Format(DetailTable, "Details");
 
 
@@ -293,6 +301,31 @@ namespace SmartxAPI.Controllers
                         double N_InvoiceDueAmt = 0, N_TotalDueAmt = 0;
                         foreach (DataRow dr in DetailTable.Rows)
                         {
+                            if (dr["X_Type"].ToString() == "SALES")
+                            {
+
+
+
+                                string salesPersonSales = dLayer.ExecuteScalar("SELECT Inv_Salesman.X_SalesmanName FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection).ToString();
+                                int salesPersonIDSales = myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT Inv_Salesman.N_SalesmanID FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection).ToString());
+                                string salesPersonCustomer = dLayer.ExecuteScalar("select X_SalesManName from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection).ToString();
+                                int salesPersonIDCustomer = myFunctions.getIntVAL(dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection).ToString());
+
+                                if (salesPersonSales != "")
+                                {
+                                    dr["x_SalesmanName"] = salesPersonSales.ToString();
+                                    dr["n_SalesManID"] = salesPersonIDSales.ToString();
+                                }
+                                else if (salesPersonCustomer != "")
+                                {
+                                    dr["x_SalesmanName"] = salesPersonCustomer.ToString();
+                                    dr["n_SalesManID"] = salesPersonIDCustomer.ToString();
+                                }
+
+
+
+
+                            }
                             if (myFunctions.getIntVAL(dr["N_SalesID"].ToString()) == 0)
                             {
                                 // if (n_PayReceiptId > 0)
@@ -324,7 +357,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -418,7 +451,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
         [HttpPost("Save")]
@@ -451,7 +484,7 @@ namespace SmartxAPI.Controllers
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(),
                      "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
                     {
-                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyId+" and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", connection, transaction);
+                        object DiffFnYearID = dLayer.ExecuteScalar("select N_FnYearID from Acc_FnYear where N_CompanyID=" + nCompanyId + " and convert(date ,'" + MasterTable.Rows[0]["D_Date"].ToString() + "') between D_Start and D_End", connection, transaction);
                         if (DiffFnYearID != null)
                         {
                             MasterTable.Rows[0]["n_FnYearID"] = DiffFnYearID.ToString();
@@ -464,7 +497,7 @@ namespace SmartxAPI.Controllers
                             return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
                         }
                     }
-                    
+
                     if (MasterTable.Columns.Contains("x_Desc"))
                     {
                         xDesc = Master["x_Desc"].ToString();
@@ -521,7 +554,7 @@ namespace SmartxAPI.Controllers
                     if (PayReceiptId <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable To Save Customer Payment"));
+                        return Ok(api.Error(User, "Unable To Save Customer Payment"));
                     }
                     if (xType == "SA")
                     {
@@ -584,9 +617,9 @@ namespace SmartxAPI.Controllers
                         else
                             myFunctions.AddNewColumnToDataTable(DetailTable, "N_ExchangeRate", typeof(double), myFunctions.getVAL(Master["N_ExchangeRate"].ToString()));
                         if (DetailTable.Columns.Contains("n_PayReceiptDetailsId"))
-                            {
-                                
-                            }
+                        {
+
+                        }
                         else
                             myFunctions.AddNewColumnToDataTable(DetailTable, "n_PayReceiptDetailsId", typeof(int), 0);
 
@@ -620,13 +653,13 @@ namespace SmartxAPI.Controllers
                         Result.Add("x_SalesReceiptNo", xVoucherNo);
                         return Ok(api.Success(Result, "Customer Payment Saved"));
                     }
-                    else { return Ok(api.Error(User,"Unable To Save Customer Payment")); }
+                    else { return Ok(api.Error(User, "Unable To Save Customer Payment")); }
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
         }
 
@@ -640,18 +673,18 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    if(xType=="SA")
+                    if (xType == "SA")
                     {
-                       
-                        object advanceCount=dLayer.ExecuteScalar("select Count(N_InventoryID ) from  Inv_PayReceiptDetails where N_CompanyID="+nCompanyId+" and  X_TransType='SA' and N_InventoryId="+nPayReceiptId+" ",connection,transaction);
-                        if(advanceCount!=null)
-                        {
-                           if( myFunctions.getIntVAL(advanceCount.ToString())>=2)
-                           {
-                                transaction.Rollback();
-                                return Ok(api.Error(User,"Advance Amount Already Processed"));
 
-                           }
+                        object advanceCount = dLayer.ExecuteScalar("select Count(N_InventoryID ) from  Inv_PayReceiptDetails where N_CompanyID=" + nCompanyId + " and  X_TransType='SA' and N_InventoryId=" + nPayReceiptId + " ", connection, transaction);
+                        if (advanceCount != null)
+                        {
+                            if (myFunctions.getIntVAL(advanceCount.ToString()) >= 2)
+                            {
+                                transaction.Rollback();
+                                return Ok(api.Error(User, "Advance Amount Already Processed"));
+
+                            }
 
                         }
 
@@ -672,7 +705,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                       
+
                     }
 
                 }
@@ -682,7 +715,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
@@ -714,7 +747,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return StatusCode(403, api.Error(User,e));
+                return StatusCode(403, api.Error(User, e));
             }
         }
 
