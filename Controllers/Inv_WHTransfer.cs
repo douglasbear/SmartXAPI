@@ -200,12 +200,28 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and [Site from] like '%" + xSearchkey + "%'";
+                        Searchkey = "and [Site from] like '%" + xSearchkey + "%' or [Reference No] like '%" + xSearchkey + "%' or [Site To] like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%'";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_TransferID asc";
                     else
+                    {
+                     switch (xSortBy.Split(" ")[0])
+                        {
+                            case "referenceNo":
+                                xSortBy = "[Reference No]" + xSortBy.Split(" ")[1];
+                                break;
+                            case "siteFrom":
+                                 xSortBy = "[Site From]" + xSortBy.Split(" ")[1];
+                                break;
+                            case "siteTo":
+                                  xSortBy = "[Site To]" + xSortBy.Split(" ")[1];
+                                break;
+                           
+                            default: break;
+                        }
                         xSortBy = " order by " + xSortBy;
+                    } 
 
                     if (Count == 0)
                     {

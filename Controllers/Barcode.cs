@@ -23,11 +23,10 @@
 
 // namespace SmartxAPI.Controllers
 // {
-//     //[Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 //     [Authorize(AuthenticationSchemes = JwtBearerDefaults.AuthenticationScheme)]
 //     [Route("barcode")]
 //     [ApiController]
-//     public class Barcode : ControllerBase
+//     public class Barcode1 : ControllerBase
 //     {
 //         private readonly IApiFunctions _api;
 //         private readonly IDataAccessLayer dLayer;
@@ -42,7 +41,7 @@
 //         string TableName = "";
 //         string QRurl = "";
 
-//         public Barcode(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
+//         public Barcode1(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
 //         {
 //             _api = api;
 //             dLayer = dl;
@@ -63,27 +62,13 @@
 
 //             try
 //             {
-//                 String reportName = "";
-//                 var handler = new HttpClientHandler
-//                 {
-//                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
-//                 };
-
-//                 string Extention = "pdf";
 //                 using (SqlConnection connection = new SqlConnection(connectionString))
 //                 {
 //                     connection.Open();
 //                     SqlTransaction transaction;
 //                     transaction = connection.BeginTransaction();
-//                     var client = new HttpClient(handler);
 
-//                     string Barcode = MasterTable.Rows[0]["x_barcode"].ToString();
-//                     string ItemCode = MasterTable.Rows[0]["X_Itemcode"].ToString();
-//                     string ItemName = MasterTable.Rows[0]["X_ItemName"].ToString();
-
-
-//                     return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + "." + Extention } }));
-
+//                     return Ok(_api.Success(""));
 //                 }
 //             }
 //             catch (Exception e)
@@ -155,14 +140,13 @@
 //                 return Ok(_api.Error(User, ex));
 //             }
 //         }
+//         public static string WithMaxLength(this string value, int maxLength)
+//         {
+//             if (string.IsNullOrEmpty(value)) return value;
+//             return value.Length <= maxLength ? value : value.Substring(0, maxLength);
+//         }
 //         public void ExportToPDFforThermalPrinter(ref DataSet ds, string formId)
 //         {
-//             // DBAccess dba = new DBAccess();
-//             // GeneralFunctions MYG = new GeneralFunctions(myCompanyID._dsPayroll, myCompanyID._RightToLeft);
-//             // bool B_ShowPrice = Convert.ToBoolean(myFunctions.getIntVAL(MYG.ReturnSettings(myCompanyID._CompanyID.ToString(), "Barcode", "ShowPrice", "N_Value", "N_UserCategoryID", "2")));
-//             // bool B_ShowProductCode = Convert.ToBoolean(myFunctions.getIntVAL(MYG.ReturnSettings(myCompanyID._CompanyID.ToString(), "Barcode", "ShowProductCode", "N_Value", "N_UserCategoryID", "2")));
-//             // bool B_ShowArabicName = Convert.ToBoolean(myFunctions.getIntVAL(MYG.ReturnSettings(myCompanyID._CompanyID.ToString(), "Barcode", "ShowArabicName", "N_Value", "N_UserCategoryID", "2")));
-//             // bool B_ShowCompanyName = Convert.ToBoolean(myFunctions.getIntVAL(MYG.ReturnSettings(myCompanyID._CompanyID.ToString(), "Barcode", "ShowCompanyName", "N_Value", "N_UserCategoryID", "2")));
 //             iTextSharp.text.Document pdfdoc = new iTextSharp.text.Document();
 
 //             double DocTotalWidtht = 0;
@@ -191,6 +175,7 @@
 //             int DocFieldLength = 0;
 //             using (SqlConnection connection = new SqlConnection(connectionString))
 //             {
+//                 SortedList Params = new SortedList();
 
 //                 object obj_TemplateID = null;
 //                 int N_TemplateID = 0;
@@ -200,38 +185,40 @@
 //                     N_TemplateID = myFunctions.getIntVAL(obj_TemplateID.ToString());
 //                 else
 //                     N_TemplateID = 1;
-//                 GetBarcodeTemplate(formId, N_TemplateID.ToString());
+
+//                 DataTable dsMaster = new DataTable();
+//                 dsMaster = dLayer.ExecuteDataTable("SELECT * FROM vw_BarcodeTemplate where B_Show=1 and N_TemplateID=" + N_TemplateID + " and N_CompanyID=" + myCompanyID._CompanyID + " and N_FormID=" + formId + " order by N_order ASC", Params, connection);
+//                 //GetBarcodeTemplate(formId, N_TemplateID.ToString());
 
 
-//                 if (dsMaster.Tables.Contains("BarcodeTemplate"))
+//                 if (dsMaster.Rows.Count > 0)
 //                 {
-//                     if (dsMaster.Tables["BarcodeTemplate"].Rows.Count > 0)
-//                     {
-//                         DataRow row = dsMaster.Tables["BarcodeTemplate"].Rows[0];
 
-//                         DocTotalWidtht = myFunctions.getVAL(row["N_DocTotalWidth"].ToString());
+//                     DataRow row = dsMaster.Rows[0];
 
-//                         DocLabelHeight = myFunctions.getVAL(row["N_LabelHeight"].ToString());
-//                         DocLabelWidth = myFunctions.getVAL(row["N_LabelWidth"].ToString());
+//                     DocTotalWidtht = myFunctions.getVAL(row["N_DocTotalWidth"].ToString());
 
-//                         DocMarginLeft = myFunctions.getVAL(row["N_LabelMarginLeft"].ToString());
-//                         DocMarginRight = myFunctions.getVAL(row["N_LabelMarginRight"].ToString());
-//                         DocMarginTop = myFunctions.getVAL(row["N_LabelMarginTop"].ToString());
-//                         DocMarginBottom = myFunctions.getVAL(row["N_LabelMarginBottom"].ToString());
+//                     DocLabelHeight = myFunctions.getVAL(row["N_LabelHeight"].ToString());
+//                     DocLabelWidth = myFunctions.getVAL(row["N_LabelWidth"].ToString());
 
-//                         DocNumOfColumns = myFunctions.getIntVAL(row["N_ColumnsPerRow"].ToString());
+//                     DocMarginLeft = myFunctions.getVAL(row["N_LabelMarginLeft"].ToString());
+//                     DocMarginRight = myFunctions.getVAL(row["N_LabelMarginRight"].ToString());
+//                     DocMarginTop = myFunctions.getVAL(row["N_LabelMarginTop"].ToString());
+//                     DocMarginBottom = myFunctions.getVAL(row["N_LabelMarginBottom"].ToString());
 
-//                         DocBarcodeHeight = myFunctions.getVAL(row["N_BarcodeHeight"].ToString());
-//                         DocBarcodeSize = myFunctions.getVAL(row["N_BarcodeSize"].ToString());
-//                         DocBarcodeBaseLine = myFunctions.getVAL(row["N_BarcodeBaseLine"].ToString());
+//                     DocNumOfColumns = myFunctions.getIntVAL(row["N_ColumnsPerRow"].ToString());
 
-//                         DocSpaceBetweenLabels = myFunctions.getVAL(row["N_SpaceBetweenLabels"].ToString());
+//                     DocBarcodeHeight = myFunctions.getVAL(row["N_BarcodeHeight"].ToString());
+//                     DocBarcodeSize = myFunctions.getVAL(row["N_BarcodeSize"].ToString());
+//                     DocBarcodeBaseLine = myFunctions.getVAL(row["N_BarcodeBaseLine"].ToString());
 
-//                         DocFieldSpace = myFunctions.getFloatVAL(row["N_FieldSpace"].ToString());
-//                         DocSpaceAtStart = myFunctions.getFloatVAL(row["N_StartSpace"].ToString());
-//                         DocSpaceAtEnd = myFunctions.getFloatVAL(row["N_EndSpace"].ToString());
+//                     DocSpaceBetweenLabels = myFunctions.getVAL(row["N_SpaceBetweenLabels"].ToString());
 
-//                     }
+//                     DocFieldSpace = myFunctions.getFloatVAL(row["N_FieldSpace"].ToString());
+//                     DocSpaceAtStart = myFunctions.getFloatVAL(row["N_StartSpace"].ToString());
+//                     DocSpaceAtEnd = myFunctions.getFloatVAL(row["N_EndSpace"].ToString());
+
+
 //                 }
 //                 else
 //                 {
@@ -259,22 +246,14 @@
 //                 }
 //                 try
 //                 {
-//                     //DirectoryInfo dir1 = new DirectoryInfo(Application.StartupPath + "\\Barcode");
-//                     //if (!Directory.Exists(Application.StartupPath + "\\Barcode"))
-//                     //{
-//                     //    dir1.Create();
-//                     //}
 
-//                     if (File.Exists(Application.StartupPath + "\\bcprint.pdf"))
-//                         File.Delete(Application.StartupPath + "\\bcprint.pdf");
+//                     if (System.IO.File.Exists("C:\\OlivoServer2020\\Barcode\\bcprint.pdf"))
+//                         System.IO.File.Delete("C:\\OlivoServer2020\\Barcode\\bcprint.pdf");
 
 
 //                     int N_NoOfLabels = DocNumOfColumns;
 //                     if (N_NoOfLabels == 0)
 //                         N_NoOfLabels = 1;
-//                     //object obj_NoOfLabels = dba.ExecuteSclar("Select Isnull(N_Value,1) from Gen_Settings where N_CompanyID=" + myCompanyID._CompanyID + " and X_Group='Barcode' and X_Description='NoOfLabels'", "TEXT", new DataTable());                
-//                     //if (obj_NoOfLabels != null)
-//                     //    N_NoOfLabels = myFunctions.getIntVAL(obj_NoOfLabels.ToString());                
 //                     iTextSharp.text.Rectangle pgSize = new iTextSharp.text.Rectangle(142, 70);
 //                     float[] fltParentWidth = new float[] { 108f };
 //                     if (N_NoOfLabels == 1)
@@ -287,14 +266,10 @@
 //                         fltParentWidth = new float[] { 108f, 108f };
 //                         pgSize = new iTextSharp.text.Rectangle(235, 74);
 //                     }
-//                     //PdfWriter writer = PdfWriter.GetInstance(pdfdoc, new FileStream(Application.StartupPath + "\\Barcode\\Barcode.pdf", FileMode.Create));
 //                     PdfWriter writer = null;
 //                     pdfdoc = new Document(pgSize, myFunctions.getFloatVAL(DocMarginLeft.ToString()), myFunctions.getFloatVAL(DocMarginRight.ToString()), myFunctions.getFloatVAL(DocMarginTop.ToString()), myFunctions.getFloatVAL(DocMarginBottom.ToString()));
 
-//                     //if (formId == "")
-//                     //    writer = PdfWriter.GetInstance(pdfdoc, new FileStream(Application.StartupPath + "\\Barcode\\BarcodeSample.pdf", FileMode.Create));
-//                     //else
-//                     writer = PdfWriter.GetInstance(pdfdoc, new FileStream(Application.StartupPath + "\\bcprint.pdf", FileMode.Create));
+//                     writer = PdfWriter.GetInstance(pdfdoc, new FileStream("C:\\OlivoServer2020\\Barcode\\bcprint.pdf", FileMode.Create));
 
 //                     PdfPTable tbl = new PdfPTable(N_NoOfLabels);
 //                     tbl.TotalWidth = myFunctions.getFloatVAL(DocTotalWidtht.ToString());
@@ -316,77 +291,66 @@
 //                             Phrase phrase = new Phrase();
 //                             PdfPCell cell = new PdfPCell(phrase);
 
-//                             if (dsMaster.Tables["BarcodeTemplate"] != null)
+
+//                             if (dsMaster.Rows.Count > 0)
 //                             {
-//                                 if (dsMaster.Tables["BarcodeTemplate"].Rows.Count > 0)
+//                                 foreach (DataRow row in dsMaster.Rows)
 //                                 {
-//                                     foreach (DataRow row in dsMaster.Tables["BarcodeTemplate"].Rows)
+//                                     DocFieldSpace = myFunctions.getFloatVAL(row["N_FieldSpace"].ToString());
+//                                     DocFieldLength = myFunctions.getIntVAL(row["N_FieldLength"].ToString());
+//                                     String Field = ds.Tables["DataSource"].Rows[i][row["X_FieldName"].ToString()].ToString();
+//                                     iTextSharp.text.Font FieldFont = new iTextSharp.text.Font(FontFactory.GetFont(row["X_Font"].ToString(), myFunctions.getFloatVAL(row["N_FontSize"].ToString()), myFunctions.getIntVAL(row["N_FontStyle"].ToString())));
+
+//                                     if (DocFieldLength > 0)
+//                                         Field = WithMaxLength(Field, DocFieldLength);
+//                                     if (row["X_FieldName"].ToString() == "N_SPrice" || row["X_FieldName"].ToString() == "N_Rate" || row["X_FieldName"].ToString() == "N_Price")
+//                                         Field = myCompanyID._CurrencyName + " : " + myFunctions.getVAL(Field.ToString()).ToString(myCompanyID.DecimalPlaceString);
+
+//                                     if (row["X_FieldName"].ToString() == "X_Barcode")
 //                                     {
-//                                         DocFieldSpace = myFunctions.getFloatVAL(row["N_FieldSpace"].ToString());
-//                                         DocFieldLength = myFunctions.getIntVAL(row["N_FieldLength"].ToString());
-//                                         String Field = ds.Tables["DataSource"].Rows[i][row["X_FieldName"].ToString()].ToString();
-//                                         //iTextSharp.text.Font FieldFont = new iTextSharp.text.Font(FontFactory.GetFont(row["X_Font"].ToString(), myFunctions.getFloatVAL(row["N_FontSize"].ToString())));
-//                                         iTextSharp.text.Font FieldFont = new iTextSharp.text.Font(FontFactory.GetFont(row["X_Font"].ToString(), myFunctions.getFloatVAL(row["N_FontSize"].ToString()), myFunctions.getIntVAL(row["N_FontStyle"].ToString())));
+//                                         PdfContentByte pdfcb = writer.DirectContent;
+//                                         Barcode128 code128 = new Barcode128();
+//                                         code128.Code = Field;
+//                                         code128.Extended = false;
+//                                         code128.CodeType = iTextSharp.text.pdf.Barcode.CODE128;
+//                                         code128.AltText = Field;
+//                                         code128.BarHeight = myFunctions.getFloatVAL(DocBarcodeHeight.ToString());
+//                                         code128.Size = myFunctions.getFloatVAL(DocBarcodeSize.ToString());
+//                                         code128.Baseline = myFunctions.getFloatVAL(DocBarcodeBaseLine.ToString());
+//                                         code128.TextAlignment = Element.ALIGN_CENTER;
+//                                         iTextSharp.text.Image image128 = code128.CreateImageWithBarcode(pdfcb, null, null);
+//                                         Field = image128.ToString();
 
-//                                         if (DocFieldLength > 0)
-//                                             Field = WithMaxLength(Field, DocFieldLength);
-//                                         if (row["X_FieldName"].ToString() == "N_SPrice" || row["X_FieldName"].ToString() == "N_Rate" || row["X_FieldName"].ToString() == "N_Price")
-//                                             Field = myCompanyID._CurrencyName + " : " + myFunctions.getVAL(Field.ToString()).ToString(myCompanyID.DecimalPlaceString);
+//                                         cell.HorizontalAlignment = Element.ALIGN_CENTER;
+//                                         cell.VerticalAlignment = Element.ALIGN_MIDDLE;
+//                                         cell.Border = iTextSharp.text.Rectangle.NO_BORDER;
 
-//                                         if (row["X_FieldName"].ToString() == "X_Barcode")
+//                                         cell.PaddingLeft = DocCellPadding;
+//                                         cell.PaddingRight = DocCellPadding;
+//                                         cell.PaddingTop = DocCellPadding;
+//                                         cell.PaddingBottom = DocCellPadding;
+
+//                                         if (tbl.NumberOfColumns > 1)
 //                                         {
-//                                             PdfContentByte pdfcb = writer.DirectContent;
-//                                             Barcode128 code128 = new Barcode128();
-//                                             code128.Code = Field;
-//                                             code128.Extended = false;
-//                                             code128.CodeType = iTextSharp.text.pdf.Barcode.CODE128;
-//                                             code128.AltText = Field;
-//                                             code128.BarHeight = myFunctions.getFloatVAL(DocBarcodeHeight.ToString());
-//                                             code128.Size = myFunctions.getFloatVAL(DocBarcodeSize.ToString());
-//                                             code128.Baseline = myFunctions.getFloatVAL(DocBarcodeBaseLine.ToString());
-//                                             code128.TextAlignment = Element.ALIGN_CENTER;
-//                                             //code128.TextAlignment = Element.ALIGN_LEFT;
-//                                             iTextSharp.text.Image image128 = code128.CreateImageWithBarcode(pdfcb, null, null);
-//                                             Field = image128.ToString();
-
-//                                             cell.HorizontalAlignment = Element.ALIGN_CENTER;
-//                                             cell.VerticalAlignment = Element.ALIGN_MIDDLE;
-//                                             //cell.HorizontalAlignment = Element.ALIGN_LEFT;
-//                                             //cell.VerticalAlignment = Element.ALIGN_MIDDLE;
-//                                             cell.Border = iTextSharp.text.Rectangle.NO_BORDER;
-
-//                                             cell.PaddingLeft = DocCellPadding;
-//                                             cell.PaddingRight = DocCellPadding;
-//                                             cell.PaddingTop = DocCellPadding;
-//                                             cell.PaddingBottom = DocCellPadding;
-
-//                                             if (tbl.NumberOfColumns > 1)
-//                                             {
-
-//                                                 //if (j % tbl.NumberOfColumns == 0)
-//                                                 //    phrase.Add(new Chunk(image128, 0, 0));
-//                                                 //else
-
-//                                                 //    phrase.Add(new Chunk(image128, 8.0f, 0));
-//                                                 if (j % tbl.NumberOfColumns == 0)
-//                                                     phrase.Add(new Chunk(image128, 0, 0));
-//                                                 else
-//                                                     phrase.Add(new Chunk(image128, myFunctions.getFloatVAL(DocSpaceBetweenLabels.ToString()), 0));
-//                                             }
-//                                             else
+//                                             if (j % tbl.NumberOfColumns == 0)
 //                                                 phrase.Add(new Chunk(image128, 0, 0));
-//                                             if (DocFieldSpace > 0)
-//                                                 phrase.Add(new Chunk(Environment.NewLine + Environment.NewLine, new iTextSharp.text.Font(-1, DocFieldSpace)));
+//                                             else
+//                                                 phrase.Add(new Chunk(image128, myFunctions.getFloatVAL(DocSpaceBetweenLabels.ToString()), 0));
 //                                         }
 //                                         else
-//                                         {
-//                                             phrase.Add(new Chunk(Field, FieldFont));
-//                                             if (DocFieldSpace > 0)
-//                                                 phrase.Add(new Chunk(Environment.NewLine + Environment.NewLine, new iTextSharp.text.Font(-1, DocFieldSpace)));
-//                                         }
+//                                             phrase.Add(new Chunk(image128, 0, 0));
+//                                         if (DocFieldSpace > 0)
+//                                             phrase.Add(new Chunk(Environment.NewLine + Environment.NewLine, new iTextSharp.text.Font(-1, DocFieldSpace)));
+//                                     }
+//                                     else
+//                                     {
+//                                         phrase.Add(new Chunk(Field, FieldFont));
+//                                         if (DocFieldSpace > 0)
+//                                             phrase.Add(new Chunk(Environment.NewLine + Environment.NewLine, new iTextSharp.text.Font(-1, DocFieldSpace)));
 //                                     }
 //                                 }
 //                             }
+
 
 //                             tbl.AddCell(cell);
 //                             intotalCount++;
@@ -414,27 +378,11 @@
 //                 }
 //                 catch (Exception ex)
 //                 {
-//                     if (ex.Message.Contains("The process cannot access the file") && ex.Message.Contains("bcprint.pdf' because it is being used by another process."))
-//                     {
-
-//                     }
-//                     else
-//                     {
-
-//                     }
-//                 }
-//                 finally
-//                 {
-//                     try
-//                     {
-//                         pdfdoc.Close();
-//                     }
-//                     catch
-//                     {
-//                     }
 //                 }
 //             }
 
 
+
 //         }
 //     }
+// }

@@ -640,6 +640,23 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
+                    if(xType=="SA")
+                    {
+                       
+                        object advanceCount=dLayer.ExecuteScalar("select Count(N_InventoryID ) from  Inv_PayReceiptDetails where N_CompanyID="+nCompanyId+" and  X_TransType='SA' and N_InventoryId="+nPayReceiptId+" ",connection,transaction);
+                        if(advanceCount!=null)
+                        {
+                           if( myFunctions.getIntVAL(advanceCount.ToString())>=2)
+                           {
+                                transaction.Rollback();
+                                return Ok(api.Error(User,"Advance Amount Already Processed"));
+
+                           }
+
+                        }
+
+                    }
+
                     SortedList deleteParams = new SortedList()
                             {
                                 {"N_CompanyID",nCompanyId},
@@ -655,7 +672,7 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        transaction.Rollback();
+                       
                     }
 
                 }
