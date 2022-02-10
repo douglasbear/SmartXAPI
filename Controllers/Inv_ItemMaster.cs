@@ -82,7 +82,7 @@ namespace SmartxAPI.Controllers
                 Condition = Condition + " and vw_InvItem_Search_cloud.N_ItemID<> " + nNotGridItemID;
 
             if (nLocationID != 0)
-                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID="+nLocationID+" )  " ;
+                Condition = Condition + "  and vw_InvItem_Search_cloud.N_ItemID in (Select N_ItemID from Inv_ItemMasterWHLink where N_CompanyID=@p1 and N_WarehouseID=" + nLocationID + " )  ";
             if (isStockItem)
                 Condition = Condition + " and N_ClassID =2";
 
@@ -99,7 +99,7 @@ namespace SmartxAPI.Controllers
             }
 
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search_cloud.N_ItemID) RowNo,";
-            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by N_ItemID DESC";
+            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by Description asc";
 
             // string sqlComandText = " * from vw_InvItem_Search_cloud where N_CompanyID=@p1 and B_Inactive=@p2 and [Item Code]<> @p3 and N_ItemTypeID<>@p4 " + qry;
 
@@ -171,17 +171,17 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             string xCriteria = "";
 
-            if (b_AllBranchData)
-                xCriteria = "";
-            else
-                xCriteria = " and  N_BranchID=@p5 ";
+            // if (b_AllBranchData)
+            //     xCriteria = "";
+            // else
+            //     xCriteria = " and  N_BranchID=@p5 ";
 
             string view = " vw_InvItem_Search_cloud ";
 
             if (b_AllBranchData)
             {
                 nLocationID = 0;
-                xCriteria ="";
+                xCriteria = "";
             }
 
 
@@ -337,7 +337,14 @@ namespace SmartxAPI.Controllers
                         dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), myFunctions.getVAL(res.ToString()).ToString(myCompanyID.DecimalPlaceString));
                     else
                         dt = myFunctions.AddNewColumnToDataTable(dt, "N_CurrentStock", typeof(string), "0.00");
+                    object CalcCost = 0;
+                    if (N_BranchID == 0) // 05/12/2020 Cost caucation made usinf procedure by Zainab under the instruction of Anees sir
+                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "') As N_LPrice", connection).ToString());
+                    else
+                        CalcCost = myFunctions.getVAL(dLayer.ExecuteScalar("Select dbo.SP_Cost_Loc(" + N_ItemID + "," + myFunctions.GetCompanyID(User) + ",'" + dt.Rows[0]["X_StockUnit"].ToString() + "'," + nLocationID + ") As N_LPrice", connection).ToString());
 
+                    dt.Rows[0]["n_ItemCost"] = CalcCost;
+                    dt.AcceptChanges();
                     object inStocks = dLayer.ExecuteScalar("Select N_ItemID From vw_InvStock_Status Where N_ItemID=@nItemID and (Type<>'O' and Type<>'PO' and Type<>'SO') and N_CompanyID=@nCompanyID", QueryParams, connection);
                     bool b_InStocks = true;
                     if (inStocks == null)
@@ -1396,6 +1403,7 @@ namespace SmartxAPI.Controllers
         }
         public String Translate(String text, string fromLanguage, string toLanguage)
         {
+            //Translate("test","ar");
             var url = $"https://translate.googleapis.com/translate_a/single?client=gtx&sl={fromLanguage}&tl={toLanguage}&dt=t&q={HttpUtility.UrlEncode(text)}";
             var webClient = new WebClient
             {
@@ -1412,6 +1420,23 @@ namespace SmartxAPI.Controllers
                 return "Error";
             }
         }
+        private string Translate(string text, string l)
+        {
+            string translated = null;
+            HttpWebRequest hwr = (HttpWebRequest)HttpWebRequest.Create
+            ("http://translate.google.com/#en/ar/test");
+            HttpWebResponse res = (HttpWebResponse)hwr.GetResponse();
+            StreamReader sr = new StreamReader(res.GetResponseStream());
+            string html = sr.ReadToEnd();
+            int rawlength1 = html.IndexOf("<span id=otq><b>");
+            string rawStr1 = html.Substring(rawlength1);
+            int rawlength2 = rawStr1.IndexOf("</b>");
+            string rawstr2 = rawStr1.Substring(0, rawlength2);
+            translated = rawstr2.Replace("<span id=otq><b>", "");
+            //tbStringToTranslate.Text = text;
+            return translated;
+        }
+
 
 
 

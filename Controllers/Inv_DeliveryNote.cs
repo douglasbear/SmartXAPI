@@ -124,16 +124,16 @@ namespace SmartxAPI.Controllers
                         {"X_ReceiptNo",xInvoiceNo},
                         {"X_TransType","DELIVERY"},
                         {"N_FnYearID",nFnYearId},
-                      
+
                     };
-                     if(!bAllBranchData)
-                 {
-                     mParamsList.Add("N_BranchId",nBranchId);
-                 }
-                 else
-                 {
-                     mParamsList.Add("N_BranchId",0);
-                 }
+                    if (!bAllBranchData)
+                    {
+                        mParamsList.Add("N_BranchId", nBranchId);
+                    }
+                    else
+                    {
+                        mParamsList.Add("N_BranchId", 0);
+                    }
                     if (nSalesOrderID > 0)
                     {
                         QueryParamsList.Add("@nSalesorderID", nSalesOrderID);
@@ -231,10 +231,12 @@ namespace SmartxAPI.Controllers
                             masterTable.Rows[0]["X_SalesReceiptNo"] = SalesData.Rows[0]["X_ReceiptNo"].ToString();
                             masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(SalesData.Rows[0]["N_SalesId"].ToString());
                             masterTable.Rows[0]["isSalesDone"] = true;
-                        }else if(myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()) > 0){
-                        QueryParamsList.Add("@nSOID", myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()));
+                        }
+                        else if (myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()) > 0)
+                        {
+                            QueryParamsList.Add("@nSOID", myFunctions.getIntVAL(masterTable.Rows[0]["n_SalesOrderID"].ToString()));
                             DataTable NewSalesData = dLayer.ExecuteDataTable("select X_ReceiptNo,N_SalesId from Inv_Sales where N_SalesOrderID=@nSOID and N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID", QueryParamsList, Con);
-                            if(NewSalesData.Rows.Count>0)
+                            if (NewSalesData.Rows.Count > 0)
                             {
                                 masterTable.Rows[0]["X_SalesReceiptNo"] = NewSalesData.Rows[0]["X_ReceiptNo"].ToString();
                                 masterTable.Rows[0]["N_SalesId"] = myFunctions.getIntVAL(NewSalesData.Rows[0]["N_SalesId"].ToString());
@@ -468,11 +470,11 @@ namespace SmartxAPI.Controllers
                                 }
                             }
                         }
-                                            SortedList Result = new SortedList();
-                    Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
-                    Result.Add("InvoiceNo", InvoiceNo);
+                        SortedList Result = new SortedList();
+                        Result.Add("n_DeliveryNoteID", N_DeliveryNoteID);
+                        Result.Add("InvoiceNo", InvoiceNo);
                         transaction.Commit();
-                        return Ok(_api.Success(Result,"Delivery Note saved"));
+                        return Ok(_api.Success(Result, "Delivery Note saved"));
                     }
                 }
             }

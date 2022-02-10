@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
                         ReturnNo = dLayer.GetAutoNumber("Ass_PurchaseMaster", "X_InvoiceNo", Params, connection, transaction);
                         if (ReturnNo == "") { transaction.Rollback(); return Ok(_api.Warning("Unable to generate Invoice Number")); }
                         MasterTable.Rows[0]["X_InvoiceNo"] = ReturnNo;
-                        X_InvoiceNo=ReturnNo;
+                        X_InvoiceNo = ReturnNo;
                     }
 
                     if (N_AssetInventoryID > 0)

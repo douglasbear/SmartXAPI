@@ -226,7 +226,7 @@ namespace SmartxAPI.Controllers
                             }
                             // if(ValFlag==null)return Ok(_api.Error(User, "Uploaded Error"));
                             // if(myFunctions.getIntVAL(ValFlag.ToString())==0)return Ok(_api.Error(User, "Uploaded Error"));
-                            dLayer.ExecuteNonQueryPro("SP_SetupData", Params, connection, transaction);
+                            dLayer.ExecuteNonQueryPro("SP_SetupData_cloud", Params, connection, transaction);
                             if (nMasterID <= 0)
                             {
                                 transaction.Rollback();
