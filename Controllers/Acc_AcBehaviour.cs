@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                 sqlCommandText="SELECT Acc_MastLedger.*, ISNULL(Acc_LedgerBehaviour.X_Description,'') AS X_CashBehaviour, ISNULL(Acc_LedgerBehaviour_1.X_Description,'') AS X_TransBehaviour, ISNULL(Acc_LedgerBehaviour_2.X_Description,'') AS X_LedgerBehaviour "+
                                 " FROM Acc_MastLedger LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_2 ON Acc_MastLedger.N_LedgerBehavID = Acc_LedgerBehaviour_2.N_LedgerBehaviourID LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_1 ON Acc_MastLedger.N_TransBehavID = Acc_LedgerBehaviour_1.N_LedgerBehaviourID "+
                                 " LEFT OUTER JOIN Acc_LedgerBehaviour ON Acc_MastLedger.N_CashBahavID = Acc_LedgerBehaviour.N_LedgerBehaviourID "+
-                                " WHERE (ISNULL(Acc_MastLedger.X_CashTypeBehaviour, '') <> '') OR (ISNULL(Acc_MastLedger.N_TransBehavID, 0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2"+
+                                " WHERE ((ISNULL(Acc_MastLedger.X_CashTypeBehaviour, '') <> '') OR (ISNULL(Acc_MastLedger.N_TransBehavID, 0) <> 0)) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2"+
                                 " ORDER BY Acc_MastLedger.X_LedgerName";
 
             try

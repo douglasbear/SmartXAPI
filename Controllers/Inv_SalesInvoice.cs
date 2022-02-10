@@ -137,7 +137,7 @@ namespace SmartxAPI.Controllers
                         object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myFunctions.GetCompanyID(User), Params, connection);
                         if (objBal != null)
                         {
-                            BalanceAmt = myFunctions.getVAL(objBal.ToString());
+                            BalanceAmt = myFunctions.getVAL(objBal.ToString()); 
                             if (BalanceAmt > 0)
                             {
                                 var["N_BalanceAmt"] = BalanceAmt;
