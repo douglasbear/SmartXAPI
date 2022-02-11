@@ -101,9 +101,9 @@ namespace SmartxAPI.Controllers
                         }
 
                         if (Count == 0)
-                            sqlCommandText = "select top(" + nSizeperpage + ") X_QuotationNo as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") X_InwardsCode as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") X_QuotationNo as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 "   + xSearchkey + " and N_VendorListMasterID not in (select top(" + Count + ") N_VendorListMasterID from vw_RFQVendorListMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") X_InwardsCode as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 "   + xSearchkey + " and N_VendorListMasterID not in (select top(" + Count + ") N_VendorListMasterID from vw_RFQVendorListMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
 
                         Params.Add("@p1", nCompanyId);
                     
@@ -254,7 +254,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.DeleteData("Inv_RFQVendorListMaster", "N_VendorListMasterID", N_VendorListMasterID, "N_CompanyID = " + nCompanyID, connection, transaction);
                         }
-                        DocNo = VendorMasterTableRow["X_QuotationNo"].ToString();
+                        DocNo = VendorMasterTableRow["X_InwardsCode"].ToString();
                         if (X_InwardsCode == "@Auto")
                         {
                             Params.Add("N_CompanyID", nCompanyID);
@@ -380,14 +380,14 @@ namespace SmartxAPI.Controllers
 
                         VendorListMaster = _api.Format(VendorListMaster, "vendorMaster");
 
-                        if (Master.Rows.Count == 0)
+                        if (VendorListMaster.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
 
                         ds.Tables.Add(VendorListMaster);
 
-                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
+                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(VendorListMaster.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
                         VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                         ds.Tables.Add(VendorListDetails);
 
