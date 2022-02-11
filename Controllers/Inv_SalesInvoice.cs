@@ -129,33 +129,29 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
+                   // dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_DueDays", typeof(string), "");
                     double BalanceAmt = 0;
                     foreach (DataRow var in dt.Rows)
                     {
-                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myFunctions.GetCompanyID(User), Params, connection);
-                        if (objBal != null)
+                        BalanceAmt = myFunctions.getVAL(var["N_BalanceAmt"].ToString()); 
+                        if (BalanceAmt > 0)
                         {
-                            BalanceAmt = myFunctions.getVAL(objBal.ToString());
-                            if (BalanceAmt > 0)
+                            if (var["N_InvDueDays"].ToString() != "")
                             {
-                                var["N_BalanceAmt"] = BalanceAmt;
-                                if (var["N_InvDueDays"].ToString() != "")
+                                DateTime dtInvoice = new DateTime();
+                                DateTime dtDuedate = new DateTime();
+                                dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
+                                dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
+                                if (DateTime.Now > dtDuedate)
                                 {
-                                    DateTime dtInvoice = new DateTime();
-                                    DateTime dtDuedate = new DateTime();
-                                    dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
-                                    dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
-                                    if (DateTime.Now > dtDuedate)
-                                    {
-                                        var DueDays = (DateTime.Now - dtDuedate).TotalDays;
-                                        string Due_Days = Math.Truncate(DueDays).ToString();
-                                        var["N_DueDays"] = Due_Days.ToString() + " days";
-                                    }
+                                    var DueDays = (DateTime.Now - dtDuedate).TotalDays;
+                                    string Due_Days = Math.Truncate(DueDays).ToString();
+                                    var["N_DueDays"] = Due_Days.ToString() + " days";
                                 }
                             }
                         }
+
 
                     }
 
