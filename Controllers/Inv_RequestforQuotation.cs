@@ -362,7 +362,7 @@ namespace SmartxAPI.Controllers
                             }
                             ds.Tables.Add(Detail);
 
-                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
                                 VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                                 ds.Tables.Add(VendorListDetails);
 
@@ -384,7 +384,7 @@ namespace SmartxAPI.Controllers
 
                         ds.Tables.Add(VendorListMaster);
 
-                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
                         VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                         ds.Tables.Add(VendorListDetails);
 
@@ -614,7 +614,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
+        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int nFnYearID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable VendorListDetails = new DataTable();
             string sqlCommand="";
@@ -623,11 +623,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@nQuotationID", nQuotationID);
             Params.Add("@nCompanyID", N_CompanyID);
             Params.Add("@nVendorID", nVendorID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             if(nVendorID!=0)
-                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID";
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID and N_FnYearID=@nFnYearID";
             else
-                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID";
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_FnYearID=@nFnYearID";
 
             VendorListDetails = dLayer.ExecuteDataTable(sqlCommand, Params, connection);
 
@@ -635,6 +636,44 @@ namespace SmartxAPI.Controllers
 
 
             return VendorListDetails; 
+        }
+
+
+        [HttpGet("rfqVendorList")]
+        public ActionResult GetRFQVendorList(int N_QuotationID,int N_FnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@N_QuotationID", N_QuotationID);
+            Params.Add("@N_FnYearID", N_FnYearID);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=GetVendorListTable(N_QuotationID,0,N_FnYearID,nCompanyID,dLayer,connection);
+                    dt = _api.Format(dt, "vendorList");
+
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
         }
 
     }
