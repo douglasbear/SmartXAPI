@@ -319,7 +319,7 @@ namespace SmartxAPI.Controllers
 
             int companyid = myFunctions.GetCompanyID(User);
 
-            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@nCompanyID", companyid); 
             QueryParams.Add("@X_QuotationNo", X_QuotationNo);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
