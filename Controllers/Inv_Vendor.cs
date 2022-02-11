@@ -59,7 +59,7 @@ namespace SmartxAPI.Controllers
             if (nQuotationID > 0) // Added for RFQ Vendor filltering in PO
             {
                 Params.Add("@N_QuotationID", nQuotationID);
-                criteria = criteria + " and N_VendorID in ( Select N_VendorID  from vw_InvVendorRFQ_Disp where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and B_Inactive = 0 and N_RequestId=@N_QuotationID ) ";
+                criteria = criteria + " and N_VendorID in ( Select N_VendorID  from vw_RFQVendorListDetails where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_QuotationID=@N_QuotationID ) ";
             }
 
             string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by N_VendorID DESC";
@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                        return Ok(_api.Success(dt));
                     }
                     else
                     {
