@@ -87,13 +87,13 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (xSortBy == null || xSortBy.Trim() == "")
-                            xSortBy = " order by [Quotation No]  desc";
+                            xSortBy = " order by X_QuotationNo desc";
                         else
                         {
                             switch (xSortBy.Split(" ")[0])
                             {
                                 case "invoiceNo":
-                                    xSortBy = "[Quotation No] " + xSortBy.Split(" ")[1];
+                                    xSortBy = "X_QuotationNo" + xSortBy.Split(" ")[1];
                                     break;
                                 default: break;
                             }
@@ -238,7 +238,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        VendorMasterTable = ds.Tables["vendorMaster"];
+                        // VendorMasterTable = ds.Tables["vendorMaster"];
+                        // MultiVendorTable = ds.Tables["vendorDetails"];
+                        
+                        VendorMasterTable = ds.Tables["master"];
                         MultiVendorTable = ds.Tables["vendorDetails"];
                         DataRow VendorMasterTableRow = VendorMasterTable.Rows[0];
                         SortedList Params = new SortedList();
@@ -251,7 +254,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.DeleteData("Inv_RFQVendorListMaster", "N_VendorListMasterID", N_VendorListMasterID, "N_CompanyID = " + nCompanyID, connection, transaction);
                         }
-                        DocNo = VendorMasterTableRow["x_QuotationNo"].ToString();
+                        DocNo = VendorMasterTableRow["X_InwardsCode"].ToString();
                         if (X_InwardsCode == "@Auto")
                         {
                             Params.Add("N_CompanyID", nCompanyID);
