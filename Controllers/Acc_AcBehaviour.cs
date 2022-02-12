@@ -91,7 +91,7 @@ namespace SmartxAPI.Controllers
                         else
                             sqlCondition = "N_CompanyID=@p1 and N_FnYearID=@p2 and B_Inactive=0";
 
-                    string sqlCommandText = "select * from vw_AccMastLedger where "+ sqlCondition +" order by N_LedgerID";
+                    string sqlCommandText = "select *, Account as X_LedgerName, [Account Code] as X_LedgerCode from vw_AccMastLedger where "+ sqlCondition +" order by N_LedgerID";
                     Params.Add("@p1",nCompanyID);
                     Params.Add("@p2",nFnYearID);
                     Params.Add("@p3",nGroupID);
@@ -131,7 +131,7 @@ namespace SmartxAPI.Controllers
                 sqlCommandText="SELECT Acc_MastLedger.*, ISNULL(Acc_LedgerBehaviour.X_Description,'') AS X_CashBehaviour, ISNULL(Acc_LedgerBehaviour_1.X_Description,'') AS X_TransBehaviour, ISNULL(Acc_LedgerBehaviour_2.X_Description,'') AS X_LedgerBehaviour "+
                                 " FROM Acc_MastLedger LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_2 ON Acc_MastLedger.N_LedgerBehavID = Acc_LedgerBehaviour_2.N_LedgerBehaviourID LEFT OUTER JOIN Acc_LedgerBehaviour AS Acc_LedgerBehaviour_1 ON Acc_MastLedger.N_TransBehavID = Acc_LedgerBehaviour_1.N_LedgerBehaviourID "+
                                 " LEFT OUTER JOIN Acc_LedgerBehaviour ON Acc_MastLedger.N_CashBahavID = Acc_LedgerBehaviour.N_LedgerBehaviourID "+
-                                " WHERE (ISNULL(Acc_MastLedger.X_CashTypeBehaviour, '') <> '') OR (ISNULL(Acc_MastLedger.N_TransBehavID, 0) <> 0) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2 and Acc_MastLedger.N_GroupID=@p3"+
+                                " WHERE ((ISNULL(Acc_MastLedger.X_CashTypeBehaviour, '') <> '') OR (ISNULL(Acc_MastLedger.N_TransBehavID, 0) <> 0)) and  Acc_MastLedger.N_CompanyID =@p1 and Acc_MastLedger.N_FnYearID=@p2 and Acc_MastLedger.N_GroupID=@p3"+
                                 " ORDER BY Acc_MastLedger.X_LedgerName";
             else
                 sqlCommandText="SELECT Acc_MastLedger.*, ISNULL(Acc_LedgerBehaviour.X_Description,'') AS X_CashBehaviour, ISNULL(Acc_LedgerBehaviour_1.X_Description,'') AS X_TransBehaviour, ISNULL(Acc_LedgerBehaviour_2.X_Description,'') AS X_LedgerBehaviour "+
