@@ -586,6 +586,7 @@ namespace SmartxAPI.Controllers
                 }
             }
             catch (Exception e)
+
             {
                 return Ok(_api.Error(User,e));
             }
@@ -693,6 +694,48 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
+
+        // [HttpGet("rfqDetails")]
+        // public ActionResult GetRFQDetails(int nQuotationID,int nVendorID)
+        // {
+        //     DataTable Detail = new DataTable();
+        //     DataTable RecepientTable = new DataTable();
+        //     DataSet ds = new DataSet();
+        //     SortedList Params = new SortedList();
+        //     SortedList QueryParams = new SortedList();
+
+        //     int companyid = myFunctions.GetCompanyID(User);
+
+        //     QueryParams.Add("@nCompanyID", companyid);
+        //     QueryParams.Add("@nQuotationID", nQuotationID);
+        //     QueryParams.Add("@nVendorID", nVendorID);
+        //     string _sqlQuery = "";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+
+        //             if(nVendorID!=0)
+        //                 _sqlQuery = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID";
+        //             else
+        //                 _sqlQuery = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID";
+
+        //             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+        //             Detail = _api.Format(Detail, "rfqDetails");
+
+        //             ds.Tables.Add(Detail);
+
+        //             return Ok(_api.Success(ds));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
 
     }
 }
