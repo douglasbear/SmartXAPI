@@ -251,7 +251,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.DeleteData("Inv_RFQVendorListMaster", "N_VendorListMasterID", N_VendorListMasterID, "N_CompanyID = " + nCompanyID, connection, transaction);
                         }
-                        DocNo = VendorMasterTableRow["x_QuotationNo"].ToString();
+                        DocNo = VendorMasterTableRow["X_InwardsCode"].ToString();
                         if (X_InwardsCode == "@Auto")
                         {
                             Params.Add("N_CompanyID", nCompanyID);
@@ -377,14 +377,14 @@ namespace SmartxAPI.Controllers
 
                         VendorListMaster = _api.Format(VendorListMaster, "vendorMaster");
 
-                        if (Master.Rows.Count == 0)
+                        if (VendorListMaster.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
 
                         ds.Tables.Add(VendorListMaster);
 
-                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
+                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(VendorListMaster.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
                         VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                         ds.Tables.Add(VendorListDetails);
 
@@ -568,6 +568,7 @@ namespace SmartxAPI.Controllers
                 }
             }
             catch (Exception e)
+
             {
                 return Ok(_api.Error(User,e));
             }
@@ -675,6 +676,48 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User,e));
             }
         }
+
+        // [HttpGet("rfqDetails")]
+        // public ActionResult GetRFQDetails(int nQuotationID,int nVendorID)
+        // {
+        //     DataTable Detail = new DataTable();
+        //     DataTable RecepientTable = new DataTable();
+        //     DataSet ds = new DataSet();
+        //     SortedList Params = new SortedList();
+        //     SortedList QueryParams = new SortedList();
+
+        //     int companyid = myFunctions.GetCompanyID(User);
+
+        //     QueryParams.Add("@nCompanyID", companyid);
+        //     QueryParams.Add("@nQuotationID", nQuotationID);
+        //     QueryParams.Add("@nVendorID", nVendorID);
+        //     string _sqlQuery = "";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+
+        //             if(nVendorID!=0)
+        //                 _sqlQuery = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID";
+        //             else
+        //                 _sqlQuery = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID";
+
+        //             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+        //             Detail = _api.Format(Detail, "rfqDetails");
+
+        //             ds.Tables.Add(Detail);
+
+        //             return Ok(_api.Success(ds));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
 
     }
 }
