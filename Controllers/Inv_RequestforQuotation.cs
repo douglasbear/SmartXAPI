@@ -287,11 +287,11 @@ namespace SmartxAPI.Controllers
                         {
                             SortedList QueryParams = new SortedList();
                             QueryParams.Add("@N_CompanyID", nCompanyID);
-                            QueryParams.Add("@N_VendorID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["N_VendorID"].ToString()));
-                            QueryParams.Add("@n_QuotationDetailsID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["n_QuotationDetailsID"].ToString()));
-                            QueryParams.Add("@n_QuotationID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["n_QuotationID"].ToString()));
-                            QueryParams.Add("@N_Price", myFunctions.getVAL(MultiVendorTable.Rows[0]["N_Price"].ToString()));
-                            QueryParams.Add("@X_Remarks", MultiVendorTable.Rows[0]["X_Remarks"].ToString());
+                            QueryParams.Add("@N_VendorID", myFunctions.getIntVAL(MultiVendorTable.Rows[k]["N_VendorID"].ToString()));
+                            QueryParams.Add("@n_QuotationDetailsID", myFunctions.getIntVAL(MultiVendorTable.Rows[k]["n_QuotationDetailsID"].ToString()));
+                            QueryParams.Add("@n_QuotationID", myFunctions.getIntVAL(MultiVendorTable.Rows[k]["n_QuotationID"].ToString()));
+                            QueryParams.Add("@N_Price", myFunctions.getVAL(MultiVendorTable.Rows[k]["N_Price"].ToString()));
+                            QueryParams.Add("@X_Remarks", MultiVendorTable.Rows[k]["X_Remarks"].ToString());
 
                             dLayer.ExecuteNonQuery("update Inv_RFQVendorList set N_Price=@N_Price,X_Remarks=@X_Remarks where N_CompanyID=@N_CompanyID and N_VendorID=@N_VendorID and n_QuotationDetailsID=@n_QuotationDetailsID and n_QuotationId=@n_QuotationID ", QueryParams, connection, transaction);
                         }
