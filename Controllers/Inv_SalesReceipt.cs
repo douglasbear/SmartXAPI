@@ -306,23 +306,24 @@ namespace SmartxAPI.Controllers
 
 
 
-                                string salesPersonSales = dLayer.ExecuteScalar("SELECT Inv_Salesman.X_SalesmanName FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection).ToString();
-                                int salesPersonIDSales = myFunctions.getIntVAL(dLayer.ExecuteScalar("SELECT Inv_Salesman.N_SalesmanID FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection).ToString());
-                                string salesPersonCustomer = dLayer.ExecuteScalar("select X_SalesManName from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection).ToString();
-                                int salesPersonIDCustomer = myFunctions.getIntVAL(dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection).ToString());
+                              
+                                object salesPersonSales = dLayer.ExecuteScalar("SELECT isnull(Inv_Salesman.X_SalesmanName,'') as X_SalesmanName  FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection);
+                                salesPersonSales = salesPersonSales == null ? "" : salesPersonSales;
+                                object salesPersonIDSales = dLayer.ExecuteScalar("SELECT isnull(Inv_Salesman.N_SalesmanID,0) as N_SalesmanID  FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection);
+                                object salesPersonCustomer = dLayer.ExecuteScalar("select isnull(X_SalesmanName,'') as X_SalesmanName from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
+                                salesPersonCustomer = salesPersonCustomer == null ? "" : salesPersonCustomer;
+                                object salesPersonIDCustomer = dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
 
-                                if (salesPersonSales != "")
+                                if (salesPersonCustomer.ToString() != "")
                                 {
                                     dr["x_SalesmanName"] = salesPersonSales.ToString();
                                     dr["n_SalesManID"] = salesPersonIDSales.ToString();
                                 }
-                                else if (salesPersonCustomer != "")
+                                else if (salesPersonCustomer.ToString() != "")
                                 {
                                     dr["x_SalesmanName"] = salesPersonCustomer.ToString();
                                     dr["n_SalesManID"] = salesPersonIDCustomer.ToString();
                                 }
-
-
 
 
                             }

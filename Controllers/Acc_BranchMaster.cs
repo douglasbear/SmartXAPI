@@ -151,17 +151,7 @@ namespace SmartxAPI.Controllers
                     string xLocationCode = MasterTable.Rows[0]["x_BranchCode"].ToString();
                     string xLocationName = MasterTable.Rows[0]["x_BranchName"].ToString();
                     string logo = myFunctions.ContainColumn("i_Logo", MasterTable) ? MasterTable.Rows[0]["i_Logo"].ToString() : "";
-                    ValidateParams.Add("@N_CompanyID", nCompanyID);
-                    object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
-                    object limit = dLayer.ExecuteScalar("select N_BranchLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
-                    if (BranchCount != null && limit != null)
-                    {
-                        if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
-                        {
-                            transaction.Rollback();
-                            return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
-                        }
-                    }
+
                     Byte[] logoBitmap = new Byte[logo.Length];
                     logoBitmap = Convert.FromBase64String(logo);
                     if (myFunctions.ContainColumn("i_Logo", MasterTable))
@@ -173,6 +163,19 @@ namespace SmartxAPI.Controllers
                     MasterTable.AcceptChanges();
                     if (xBranchCode == "@Auto")
                     {
+
+                                            ValidateParams.Add("@N_CompanyID", nCompanyID);
+                    object BranchCount = dLayer.ExecuteScalar("select count(N_BranchID)  from Acc_BranchMaster where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                    object limit = dLayer.ExecuteScalar("select N_BranchLimit from Acc_Company where N_CompanyID=@N_CompanyID", ValidateParams, connection, transaction);
+                    if (BranchCount != null && limit != null)
+                    {
+                        if (myFunctions.getIntVAL(BranchCount.ToString()) >= myFunctions.getIntVAL(limit.ToString()))
+                        {
+                            transaction.Rollback();
+                            return Ok(_api.Error(User, "Branch Limit exceeded!!!"));
+                        }
+                    }
+                    
                         Params.Add("N_CompanyID", nCompanyID);
                         Params.Add("N_YearID", nFnYearID);
                         Params.Add("N_FormID", this.FormID);
