@@ -194,6 +194,8 @@ namespace SmartxAPI.Controllers
 
             if (xSortBy == null || xSortBy.Trim() == "")
                 xSortBy = " order by N_ItemID desc,[Item Code] desc";
+               
+                
             else
             {
                 switch (xSortBy.Split(" ")[0])
@@ -206,6 +208,9 @@ namespace SmartxAPI.Controllers
                         break;
                     case "n_Rate":
                         xSortBy = "Cast(REPLACE(n_Rate,',','') as Numeric(10,2)) " + xSortBy.Split(" ")[1];
+                        break;
+                        case "partNo":
+                        xSortBy = "order by [Part No] desc ";
                         break;
                     default: break;
                 }
