@@ -287,11 +287,13 @@ namespace SmartxAPI.Controllers
                         {
                             SortedList QueryParams = new SortedList();
                             QueryParams.Add("@N_CompanyID", nCompanyID);
-                            QueryParams.Add("@N_VendorListID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["N_VendorListID"].ToString()));
+                            QueryParams.Add("@N_VendorID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["N_VendorID"].ToString()));
+                            QueryParams.Add("@n_QuotationDetailsID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["n_QuotationDetailsID"].ToString()));
+                            QueryParams.Add("@n_QuotationID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["n_QuotationID"].ToString()));
                             QueryParams.Add("@N_Price", myFunctions.getVAL(MultiVendorTable.Rows[0]["N_Price"].ToString()));
                             QueryParams.Add("@X_Remarks", MultiVendorTable.Rows[0]["X_Remarks"].ToString());
 
-                            dLayer.ExecuteNonQuery("update Inv_RFQVendorList set N_Price=@N_Price,X_Remarks=@X_Remarks where N_CompanyID=@N_CompanyID and N_VendorListID=@N_VendorListID", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Inv_RFQVendorList set N_Price=@N_Price,X_Remarks=@X_Remarks where N_CompanyID=@N_CompanyID and N_VendorID=@N_VendorID and n_QuotationDetailsID=@n_QuotationDetailsID and n_QuotationId=@n_QuotationID ", QueryParams, connection, transaction);
                         }
                         transaction.Commit();
                         return Ok(_api.Success("Vendor Inwards Saved"));
@@ -307,7 +309,7 @@ namespace SmartxAPI.Controllers
 
            
         [HttpGet("details")]
-        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID,int nPRSID)
+        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID,int nPRSID,int nVendorID)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -355,7 +357,14 @@ namespace SmartxAPI.Controllers
 
                             ds.Tables.Add(Master);
 
-                            _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID";
+                            string vendorCriteria="";
+
+                            if(nVendorID>0){
+                            QueryParams.Add("@nVendorID", nVendorID);
+
+                            vendorCriteria =  " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
+}
+                            _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID "+vendorCriteria;
                             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                             Detail = _api.Format(Detail, "details");
@@ -378,13 +387,19 @@ namespace SmartxAPI.Controllers
 
                         VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                        VendorListMaster = _api.Format(VendorListMaster, "vendorMaster");
+                        VendorListMaster = _api.Format(VendorListMaster, "master");
 
                         if (VendorListMaster.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
 
+                        _sqlQuery = "Select * from vw_RFQInwardDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_InwardsCode=@X_QuotationNo ";
+                            Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                            Detail = _api.Format(Detail, "details");
+
+                        ds.Tables.Add(Detail);
                         ds.Tables.Add(VendorListMaster);
 
                         VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(VendorListMaster.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
