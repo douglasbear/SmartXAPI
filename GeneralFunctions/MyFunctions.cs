@@ -21,8 +21,6 @@ using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
-using iTextSharp.text.pdf;
-using iTextSharp.text;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -1438,16 +1436,33 @@ namespace SmartxAPI.GeneralFunctions
             // }
             return MasterTable;
         }
-        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
+  
+   public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
         {
             try
             {
                 int companyid = GetCompanyID(User);
                 int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
+                DataTable dtEmail=new DataTable();
                 string Toemail = "";
-                object Email = dLayer.ExecuteScalar("select TOP(1) ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
-                Toemail = Email.ToString();
+                object Email ="";
+                string sqlCmd="";
+                if(N_NextApproverID!=0)
+                {
+                    // Email=dLayer.ExecuteScalar("select TOP(1) ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
+                    // Toemail = Email.ToString();
+                    sqlCmd="select TOP(1) ISNULL(X_Email,'') as X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc";
+                }
+                else
+                {
+                    sqlCmd="select  ISNULL(X_Email,'') AS X_Email from vw_UserEmp where N_CompanyID="+companyid+" and N_UserID in ( "+
+                            " select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID="+companyid+" and N_FormID="+FormID+" and N_TransID="+TransID+" and N_ActionTypeID=110 and N_HierarchyID> "+
+                            " (select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID="+companyid+" and N_FormID="+FormID+" and N_TransID="+TransID+" and N_Status=1)) "+
+                            " group by vw_UserEmp.X_Email";
+                }
+                dtEmail=dLayer.ExecuteDataTable(sqlCmd,Params,connection,transaction);
+                if(dtEmail.Rows.Count==0)return false;
                 object CurrentStatus = dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID=" + FormID + " and X_TransCode='" + TransCode + "' and N_TransID=" + TransID + " and X_Type='" + TransType + "'", Params, connection, transaction);
                 object EmployeeName = dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID=" + nUserID + " and N_CompanyID=" + companyid, Params, connection, transaction);
                 object companyemail = "";
@@ -1455,53 +1470,58 @@ namespace SmartxAPI.GeneralFunctions
 
                 companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                 companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
-                if (Toemail.ToString() != "")
+
+                for(int i=0;i<dtEmail.Rows.Count;i++)
                 {
-                    if (companyemail.ToString() != "")
+                    Toemail=dtEmail.Rows[i]["X_Email"].ToString();
+                    if (Toemail.ToString() != "")
                     {
-                        object body = null;
-                        string MailBody;
-                        body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "/approvalDashboard";
-                        if (body != null)
+                        if (companyemail.ToString() != "")
                         {
-                            body = body.ToString();
+                            object body = null;
+                            string MailBody;
+                            body = "Greetings," + "<br/><br/>" + EmployeeName + " has requested for your approval on " + TransType + ". To approve or reject this request, please click on the following link<br/>" + ApprovalLink + "/approvalDashboard";
+                            if (body != null)
+                            {
+                                body = body.ToString();
+                            }
+                            else
+                                body = "";
+
+
+                            string Sender = companyemail.ToString();
+                            MailBody = body.ToString();
+                            string Subject = "Request for Approval";
+
+
+
+                            SmtpClient client = new SmtpClient
+                            {
+                                Host = "smtp.gmail.com",
+                                Port = 587,
+                                EnableSsl = true,
+                                DeliveryMethod = SmtpDeliveryMethod.Network,
+                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                Timeout = 10000,
+                            };
+
+                            MailMessage message = new MailMessage();
+                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            message.From = new MailAddress(Sender);
+                            message.Subject = Subject;
+                            message.Body = MailBody;
+
+                            message.IsBodyHtml = true; //HTML email  
+                            string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
+                            if (CC != "")
+                                message.CC.Add(CC);
+
+                            string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
+                            if (Bcc != "")
+                                message.Bcc.Add(Bcc);
+                            client.Send(message);
+
                         }
-                        else
-                            body = "";
-
-
-                        string Sender = companyemail.ToString();
-                        MailBody = body.ToString();
-                        string Subject = "Request for Approval";
-
-
-
-                        SmtpClient client = new SmtpClient
-                        {
-                            Host = "smtp.gmail.com",
-                            Port = 587,
-                            EnableSsl = true,
-                            DeliveryMethod = SmtpDeliveryMethod.Network,
-                            Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
-                            Timeout = 10000,
-                        };
-
-                        MailMessage message = new MailMessage();
-                        message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
-                        message.From = new MailAddress(Sender);
-                        message.Subject = Subject;
-                        message.Body = MailBody;
-
-                        message.IsBodyHtml = true; //HTML email  
-                        string CC = GetCCMail(256, companyid, connection, transaction, dLayer);
-                        if (CC != "")
-                            message.CC.Add(CC);
-
-                        string Bcc = GetBCCMail(256, companyid, connection, transaction, dLayer);
-                        if (Bcc != "")
-                            message.Bcc.Add(Bcc);
-                        client.Send(message);
-
                     }
                 }
                 return true;
@@ -1625,7 +1645,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+   public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -1699,11 +1719,15 @@ namespace SmartxAPI.GeneralFunctions
                         string TableID = dLayer.ExecuteScalar("select X_IDName from vw_ScreenTables where N_FormID=@nFormID", NewParam, connection, transaction).ToString();
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
+
+                        int EntrUsrID =this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
+                        SendApprovalMail(EntrUsrID, N_FormID,  N_TransID,  X_TransType,  X_TransCode,  dLayer,  connection,  transaction,  User);
                     }
                 }
             }
             return N_NxtUserID;
         }
+
 
         public void UpdateApproverEntry(DataTable Approvals, string ScreenTable, string Criterea, int N_TransID, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {

@@ -66,7 +66,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(User,e));
+                return BadRequest(api.Error(User, e));
             }
         }
 
@@ -103,7 +103,7 @@ namespace SmartxAPI.Controllers
                         Params.Add("N_YearID", nFnYearId);
                         Params.Add("N_FormID", this.N_FormID);
                         PayCode = dLayer.GetAutoNumber("Pay_PayMaster", "X_PayCode", Params, connection, transaction);
-                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User,"Unable to generate Pay Code")); }
+                        if (PayCode == "") { transaction.Rollback(); return Ok(api.Error(User, "Unable to generate Pay Code")); }
                         MasterTable.Rows[0]["X_PayCode"] = PayCode;
                     }
 
@@ -116,7 +116,7 @@ namespace SmartxAPI.Controllers
                     if (nPayID <= 0)
                     {
                         transaction.Rollback();
-                        return Ok(api.Error(User,"Unable to save"));
+                        return Ok(api.Error(User, "Unable to save"));
                     }
                     else
                     {
@@ -135,7 +135,7 @@ namespace SmartxAPI.Controllers
                             if (SummaryID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error(User,"Unable to save"));
+                                return Ok(api.Error(User, "Unable to save"));
                             }
 
                         }
@@ -162,7 +162,7 @@ namespace SmartxAPI.Controllers
                             if (SummaryID <= 0)
                             {
                                 transaction.Rollback();
-                                return Ok(api.Error(User,"Unable to save"));
+                                return Ok(api.Error(User, "Unable to save"));
                             }
 
 
@@ -175,7 +175,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception ex)
             {
-                return BadRequest(api.Error(User,ex));
+                return BadRequest(api.Error(User, ex));
             }
         }
 
@@ -198,6 +198,8 @@ namespace SmartxAPI.Controllers
             string X_Criteria = "";
             if (id > 0)
                 X_Criteria = "where N_PayTypeID=@p1 and N_CompanyID=@nCompanyID";
+            else
+                X_Criteria = "where N_FnYearID=@nFnYearID and N_CompanyID=@nCompanyID";
 
             SortedList param = new SortedList() { { "@p1", id }, { "@nCompanyID", myFunctions.GetCompanyID(User) }, { "@nFnYearID", nFnyearID } };
 
@@ -235,7 +237,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -306,7 +308,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return BadRequest(api.Error(User,e));
+                return BadRequest(api.Error(User, e));
             }
         }
 
@@ -340,7 +342,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -368,7 +370,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.getIntVAL(obj3.ToString()) > 0)
                             {
-                                return Ok(api.Error(User," PayCode Already used"));
+                                return Ok(api.Error(User, " PayCode Already used"));
                             }
 
                         }
@@ -427,7 +429,7 @@ namespace SmartxAPI.Controllers
                     {
 
 
-                        return Ok(api.Error(User," PayCode Already used"));
+                        return Ok(api.Error(User, " PayCode Already used"));
                     }
 
                 }
@@ -439,13 +441,13 @@ namespace SmartxAPI.Controllers
                 }
                 else
                 {
-                    return Ok(api.Error(User,"Unable to delete PayCode"));
+                    return Ok(api.Error(User, "Unable to delete PayCode"));
                 }
 
             }
             catch (Exception ex)
             {
-                return Ok(api.Error(User,ex));
+                return Ok(api.Error(User, ex));
             }
 
 
@@ -480,7 +482,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
 
@@ -522,7 +524,7 @@ namespace SmartxAPI.Controllers
             }
             catch (Exception e)
             {
-                return Ok(api.Error(User,e));
+                return Ok(api.Error(User, e));
             }
         }
     }

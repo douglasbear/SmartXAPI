@@ -76,12 +76,24 @@ namespace SmartxAPI.Controllers
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and [Site from] like '%" + xSearchkey + "%'";
+                        Searchkey = "and [Location Name] like '%" + xSearchkey + "%' or x_ReferenceNo  like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%'";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_ReceivableId asc";
                     else
+                    {
+                     switch (xSortBy.Split(" ")[0])
+                        {
+                           
+                            case "locationName":
+                                 xSortBy = "[Location Name]" + xSortBy.Split(" ")[1];
+                                break;
+                            
+                           
+                            default: break;
+                        }
                         xSortBy = " order by " + xSortBy;
+                    } 
 
                     if (Count == 0)
                     {
