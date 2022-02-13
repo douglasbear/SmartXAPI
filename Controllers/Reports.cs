@@ -411,8 +411,20 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
+                        if (nFormID == 894)
+                        {
+                            partyName = "Inv";
+                            docNumber = "1";
+                        }
+                        if (partyName == "" || partyName==null)
+                            partyName = "customer";
+                        partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
-                        Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                        docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                        partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                        if (docNumber.Contains("/"))
+                            docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
+
                         string URL = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + QRurl + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                         var path = client.GetAsync(URL);
                         if (nFormID == 80)
@@ -439,7 +451,7 @@ namespace SmartxAPI.Controllers
                             }
 
                         }
-                        ReportName = FormName + "_" + docNumber + "_" + partyName + ".pdf";
+                        ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + ".pdf";
                         path.Wait();
                         if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
                             return Ok(_api.Error(User, "Report Generation Failed"));
@@ -623,9 +635,7 @@ namespace SmartxAPI.Controllers
 
 
 
-
-
-        [HttpPost("getModuleReport")]
+[HttpPost("getModuleReport")]
         public IActionResult GetModuleReports([FromBody] DataSet ds)
         {
             DataTable MasterTable;
@@ -828,6 +838,207 @@ namespace SmartxAPI.Controllers
                 return Ok(_api.Error(User, e));
             }
         }
+
+
+        // [HttpPost("getModuleReport")]
+        // public IActionResult GetModuleReports([FromBody] DataSet ds)
+        // {
+        //     DataTable MasterTable;
+        //     DataTable DetailTable;
+
+        //     MasterTable = ds.Tables["master"];
+        //     DetailTable = ds.Tables["details"];
+        //     int nCompanyID = myFunctions.GetCompanyID(User);
+        //     string x_comments = "";
+        //     string x_Reporttitle = "";
+        //     string X_TextforAll = "=all";
+        //     int nUserID = myFunctions.GetUserID(User);
+
+        //     try
+        //     {
+        //         String Criteria = "";
+        //         String reportName = "";
+        //         String CompanyData = "";
+        //         String YearData = "";
+        //         String FieldName = "";
+        //         String UserData = "";
+
+        //         var dbName = "";
+        //         string Extention = "";
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+        //             //int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["moduleID"].ToString());
+        //             int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
+        //             int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
+        //             int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
+        //             Extention = MasterTable.Rows[0]["extention"].ToString();
+
+        //             SortedList Params1 = new SortedList();
+        //             Params1.Add("@nMenuID", MenuID);
+        //             Params1.Add("@xType", "RadioButton");
+        //             Params1.Add("@nCompID", ReportID);
+
+
+        //             reportName = dLayer.ExecuteScalar("select X_rptFile from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and B_Active=1", Params1, connection).ToString();
+
+        //             reportName = reportName.Substring(0, reportName.Length - 4);
+
+
+        //             foreach (DataRow var in DetailTable.Rows)
+        //             {
+        //                 int compID = myFunctions.getIntVAL(var["compId"].ToString());
+        //                 string type = var["type"].ToString();
+        //                 string value = var["value"].ToString();
+        //                 string valueTo = var["valueTo"].ToString();
+
+        //                 SortedList Params = new SortedList();
+        //                 Params.Add("@nMenuID", MenuID);
+        //                 Params.Add("@xType", type.ToLower());
+        //                 Params.Add("@nCompID", compID);
+        //                 Params.Add("@xMain", "MainForm");
+        //                 string xFeild = dLayer.ExecuteScalar("select X_DataField from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+        //                 bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
+        //                 string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
+        //                 string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 CompanyData = dLayer.ExecuteScalar("select X_DataFieldCompanyID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 YearData = dLayer.ExecuteScalar("select X_DataFieldYearID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
+        //                 UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+        //                 FieldName = FieldName + "=";
+
+        //                 if (xOperator == null || xOperator == "")
+        //                     xOperator = "=";
+
+        //                 if (x_Reporttitle != "")
+        //                     x_Reporttitle += ", ";
+
+        //                 if (type.ToLower() == "datepicker")
+        //                 {
+        //                     DateTime dateFrom = Convert.ToDateTime(value);
+        //                     DateTime dateTo = Convert.ToDateTime(valueTo);
+        //                     string procParam = "";
+        //                     if (dateFrom != null && (bRange && dateTo != null))
+        //                     {
+        //                         x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy") + " - " + dateTo.ToString("dd-MMM-yyyy");
+        //                         x_comments = dateFrom.ToString("dd-MMM-yyyy") + " to " + dateTo.ToString("dd-MMM-yyyy");
+        //                         procParam = dateFrom.ToString("dd-MMM-yyyy") + "|" + dateTo.ToString("dd-MMM-yyyy") + "|";
+        //                     }
+        //                     else if (dateFrom != null && !bRange)
+        //                     {
+        //                         x_Reporttitle = x_Reporttitle + FieldName + dateFrom.ToString("dd-MMM-yyyy");
+        //                         x_comments = dateFrom.ToString("dd-MMM-yyyy");
+        //                         procParam = dateFrom.ToString("dd-MMM-yyyy");
+        //                     }
+        //                     else if (bRange && dateTo != null)
+        //                     {
+        //                         x_Reporttitle = x_Reporttitle + FieldName + dateTo.ToString("dd-MMM-yyyy");
+        //                         x_comments = dateTo.ToString("dd-MMM-yyyy");
+        //                         procParam = dateTo.ToString("dd-MMM-yyyy") + "|";
+        //                     }
+
+        //                     if (xProCode != "")
+        //                     {
+
+        //                         SortedList mParamsList = new SortedList()
+        //                     {
+        //                     {"N_CompanyID",nCompanyID},
+        //                     {"N_FnYearID",FnYearID},
+        //                     {"N_PeriodID",0},
+        //                     {"X_Code",xProCode},
+        //                     {"X_Parameter", procParam },
+        //                     {"N_UserID",myFunctions.GetUserID(User)},
+        //                     {"N_BranchID",0}
+        //                     };
+        //                         dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+
+        //                     }
+        //                     string DateCrt = "";
+        //                     if (xFeild != "")
+        //                     {
+        //                         if (bRange)
+        //                         {
+        //                             DateCrt = xFeild + " >= Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') And " + xFeild + " <= Date('" + dateTo.Year + "," + dateTo.Month + "," + dateTo.Day + "') ";
+        //                         }
+        //                         else
+        //                         {
+        //                             DateCrt = xFeild + " " + xOperator + " Date('" + dateFrom.Year + "," + dateFrom.Month + "," + dateFrom.Day + "') ";
+        //                         }
+        //                         Criteria = Criteria == "" ? DateCrt : Criteria + " and " + DateCrt;
+        //                     }
+        //                 }
+        //                 else
+        //                 {
+        //                     if (xFeild != "")
+        //                     {
+        //                         if (xFeild.Contains("#"))
+        //                             Criteria = Criteria == "" ? xFeild.Replace("#", value) : Criteria + " and " + xFeild.Replace("#", value);
+        //                         else
+        //                             Criteria = Criteria == "" ? xFeild + " " + xOperator + " '" + value + "' " : Criteria + " and " + xFeild + " " + xOperator + " '" + value + "' ";
+        //                     }
+        //                     x_Reporttitle = x_Reporttitle + FieldName + value;
+        //                 }
+
+
+        //                 //{table.fieldname} in {?Start date} to {?End date}
+        //             }
+        //             if (Criteria == "" && CompanyData != "")
+        //             {
+        //                 Criteria = Criteria + CompanyData + "=" + nCompanyID;
+        //                 if (YearData != "")
+        //                     Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+        //             }
+        //             else if (CompanyData != "")
+        //             {
+        //                 Criteria = Criteria + " and " + CompanyData + "=" + nCompanyID;
+        //                 if (YearData != "")
+        //                     Criteria = Criteria + " and " + YearData + "=" + FnYearID;
+        //             }
+        //             if (UserData != "")
+        //             {
+        //                 Criteria = Criteria + " and " + UserData + "=" + nUserID;
+        //             }
+        //             dbName = connection.Database;
+        //         }
+
+
+        //         var handler = new HttpClientHandler
+        //         {
+        //             ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+        //         };
+        //         var client = new HttpClient(handler);
+        //         var random = RandomString();
+        //         //HttpClient client = new HttpClient(clientHandler);
+
+        //         var rptArray = reportName.Split(@"\");
+        //         string actReportLocation = reportLocation;
+        //         if (rptArray.Length > 1)
+        //         {
+        //             reportName = rptArray[1].ToString();
+        //             actReportLocation = actReportLocation + rptArray[0].ToString() + "/";
+        //         }
+
+
+        //         string URL = reportApi + "api/report?reportName=" + reportName + "&critiria=" + Criteria + "&path=" + this.TempFilesPath + "&reportLocation=" + actReportLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=" + x_comments + "&x_Reporttitle=" + x_Reporttitle + "&extention=" + Extention;//+ connectionString;
+        //         var path = client.GetAsync(URL);
+
+        //         path.Wait();
+        //         return Ok(_api.Success(new SortedList() { { "FileName", reportName.Trim() + random + "." + Extention } }));
+        //         //string RptPath = reportPath + reportName.Trim() + ".pdf";
+        //         // var memory = new MemoryStream();
+
+        //         // using (var stream = new FileStream(RptPath, FileMode.Open))
+        //         // {
+        //         //     await stream.CopyToAsync(memory);
+        //         // }
+        //         // memory.Position = 0;
+        //         // return File(memory, _api.GetContentType(RptPath), Path.GetFileName(RptPath));
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User, e));
+        //     }
+        // }
 
 
         // private void LoadSelectionFormulae(int nFnYearID,int nBranchID,bool bAllBranchData)

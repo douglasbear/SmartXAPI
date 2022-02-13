@@ -66,14 +66,14 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("listdetails")]
-        public ActionResult GetItemUnitListDetails(int? nCompanyId, int? code)
+        public ActionResult GetItemUnitListDetails(int? nCompanyId,int? nItemUnitID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
-            string sqlCommandText = "select * from vw_InvItemUnit_Disp where N_CompanyID=@p1 and N_ItemUnitID=@p2 order by ItemCode";
+            string sqlCommandText = "select * from Inv_ItemUnit where N_CompanyID=@p1 and N_ItemUnitID=@p2 ";
             Params.Add("@p1", nCompanyId);
-            Params.Add("@p2", code);
+            Params.Add("@p2", nItemUnitID);
 
             try
             {
