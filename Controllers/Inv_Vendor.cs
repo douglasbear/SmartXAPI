@@ -37,7 +37,7 @@ namespace SmartxAPI.Controllers
 
         //GET api/customer/list?....
         [HttpGet("list")]
-        public ActionResult GetVendorList(int? nCompanyId, int nFnYearId, bool bAllBranchesData, string vendorId, string qry, string msg)
+        public ActionResult GetVendorList(int? nCompanyId, int nFnYearId, bool bAllBranchesData, string vendorId, string qry, string msg, int nQuotationID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -56,6 +56,12 @@ namespace SmartxAPI.Controllers
                 qryCriteria = " and (X_VendorCode like @qry or X_VendorName like @qry ) ";
                 Params.Add("@qry", "%" + qry + "%");
             }
+            if (nQuotationID > 0) // Added for RFQ Vendor filltering in PO
+            {
+                Params.Add("@N_QuotationID", nQuotationID);
+                criteria = criteria + " and N_VendorID in ( Select N_VendorID  from vw_RFQVendorListDetails where N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_QuotationID=@N_QuotationID ) ";
+            }
+
             string sqlCommandText = "select TOP 20 * from vw_InvVendor where B_Inactive=@bInactive and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + criteria + " " + qryCriteria + " order by N_VendorID DESC";
             Params.Add("@bInactive", 0);
             Params.Add("@nCompanyID", nCompanyId);
@@ -70,7 +76,7 @@ namespace SmartxAPI.Controllers
                     dt = _api.Format(dt);
                     if (dt.Rows.Count == 0)
                     {
-                        return Ok(_api.Warning("No Results Found"));
+                        return Ok(_api.Success(dt));
                     }
                     else
                     {
@@ -150,7 +156,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("dashboardList")]
-        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy,int nFnYearId)
+        public ActionResult GetDashboardList(int nPage, int nSizeperpage, string xSearchkey, string xSortBy, int nFnYearId)
         {
             int nCompanyID = myFunctions.GetCompanyID(User);
             DataTable dt = new DataTable();
@@ -302,7 +308,7 @@ namespace SmartxAPI.Controllers
                             X_LedgerName = x_VendorName;
                             if (N_GroupID != null)
                             {
-                                object N_LedgerID = dLayer.ExecuteScalar("select N_LedgerID FRom Acc_MastLedger Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" +nFnYearID + " and N_GroupID =" + N_GroupID + " and X_LedgerName ='" + X_LedgerName + "' ", Params, connection, transaction);
+                                object N_LedgerID = dLayer.ExecuteScalar("select N_LedgerID FRom Acc_MastLedger Where N_CompanyID= " + nCompanyID + " and N_FnYearID=" + nFnYearID + " and N_GroupID =" + N_GroupID + " and X_LedgerName ='" + X_LedgerName + "' ", Params, connection, transaction);
                                 if (N_LedgerID != null)
                                 {
                                     if (flag == 2)//for confirmation of same ledger creattion 
@@ -313,22 +319,22 @@ namespace SmartxAPI.Controllers
 
                                     if (flag == 1)//for same account for olready exist 
                                     {
-                                        dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " +nCompanyID + "," + nVendorID + ",'" +nVendorID+ "','" + X_LedgerName + "'," +myFunctions.GetUserID(User) + "," + nFnYearID + "," + "Vendor",  Params, connection, transaction);
+                                        dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " + nCompanyID + "," + nVendorID + ",'" + nVendorID + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearID + "," + "Vendor", Params, connection, transaction);
                                     }
                                     else// update ledger id
                                     {
-                                         dLayer.ExecuteNonQuery("Update Inv_Vendor Set N_LedgerID =" +  myFunctions.getIntVAL(N_LedgerID.ToString())  + " Where N_VendorID=" + nVendorID + "and N_CompanyID= " +nCompanyID + " and  N_FnYearID = " + nFnYearID,Params, connection, transaction);
-                                        
+                                        dLayer.ExecuteNonQuery("Update Inv_Vendor Set N_LedgerID =" + myFunctions.getIntVAL(N_LedgerID.ToString()) + " Where N_VendorID=" + nVendorID + "and N_CompanyID= " + nCompanyID + " and  N_FnYearID = " + nFnYearID, Params, connection, transaction);
+
                                     }
                                 }
                                 else
                                 {
-                                    dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " + nCompanyID+ "," + nVendorID + ",'" + nVendorID+ "','" + X_LedgerName + "'," +myFunctions.GetUserID(User)+ "," +nFnYearID + "," + "Vendor", Params, connection, transaction);
+                                    dLayer.ExecuteNonQuery("SP_Inv_CreateVendorAccount " + nCompanyID + "," + nVendorID + ",'" + nVendorID + "','" + X_LedgerName + "'," + myFunctions.GetUserID(User) + "," + nFnYearID + "," + "Vendor", Params, connection, transaction);
                                 }
                             }
-                           // else
-                           // msg.msgError("No DefaultGroup");
-                       }
+                            // else
+                            // msg.msgError("No DefaultGroup");
+                        }
 
 
 

@@ -202,7 +202,7 @@ namespace SmartxAPI.Controllers
                         if (CategoryCode == "") { transaction.Rollback();return Ok(api.Error(User,"Unable to generate Category Code")); }
                         MasterTable.Rows[0]["X_CategoryCode"] = CategoryCode;
                     }
-
+                    MasterTable.Columns.Remove("x_DeprCalculation");
 
                     nCategoryID = dLayer.SaveData("Ass_AssetCategory", "N_CategoryID", MasterTable, connection, transaction);
                     if (nCategoryID <= 0)
@@ -236,7 +236,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
-                    Results = dLayer.DeleteData("X_Category", "N_CategoryID", nCategoryID, "", connection, transaction);
+                    Results = dLayer.DeleteData("Ass_AssetCategory", "N_CategoryID", nCategoryID, "", connection, transaction);
                     transaction.Commit();
                 }
                 if (Results > 0)

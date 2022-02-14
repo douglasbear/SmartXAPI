@@ -171,10 +171,10 @@ namespace SmartxAPI.Controllers
             string Searchkey = "";
             string xCriteria = "";
 
-            if (b_AllBranchData)
-                xCriteria = "";
-            else
-                xCriteria = " and  N_BranchID=@p5 ";
+            // if (b_AllBranchData)
+            //     xCriteria = "";
+            // else
+            //     xCriteria = " and  N_BranchID=@p5 ";
 
             string view = " vw_InvItem_Search_cloud ";
 

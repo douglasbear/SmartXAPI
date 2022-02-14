@@ -81,6 +81,7 @@ namespace SmartxAPI.Controllers
                     else
                         sqlCondition = "N_CompanyID=@nCompanyId and N_FnYearID=@nFnYearId and N_BranchID=@nBranchID";
 
+
                     if (Count == 0)
                         sqlCommandText = "select  top(" + nSizeperpage + ") * from vw_RFQDecisionMaster where " + sqlCondition + " " + Searchkey + " " + xSortBy;
                     else

@@ -169,6 +169,8 @@ namespace SmartxAPI.Controllers
 
                                 b_AppNotExist = true;
 
+                                if(AppURL==null)
+                                return Ok(_api.Warning("App url not configured"));
                                 paramList.Add("@xAppUrl", AppURL);
                                 paramList.Add("@xDBUri", activeDbUri);
                                 paramList.Add("@nUserLimit", 1);
