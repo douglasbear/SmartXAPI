@@ -344,17 +344,21 @@ namespace SmartxAPI.Controllers
                         _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
 
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
+
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "N_IsDecisionDone", typeof(int), 0);
+
+                        int N_IsDecisionDone =myFunctions.getIntVAL(dLayer.ExecuteScalar("select count(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", Params, connection).ToString());
+                        Master.Rows[0]["N_QuotationID"]=N_IsDecisionDone;
 
                         Master = _api.Format(Master, "master");
 
                         if (Master.Rows.Count == 0)
                         {
-                            return Ok(_api.Notice("No Results Found"));
+                            return Ok(_api.Notice("No Results Found")); 
                         }
                         else
-                        {
-                            QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
-
+                        {            
                             ds.Tables.Add(Master);
 
                             string vendorCriteria="";
