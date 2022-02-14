@@ -381,6 +381,14 @@ namespace SmartxAPI.Controllers
      "                        Inv_RFQVendorList ON Inv_Vendor.N_VendorID = Inv_RFQVendorList.N_VendorID AND Inv_Vendor.N_CompanyID = Inv_RFQVendorList.N_CompanyID" +
      " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_RFQVendorList.N_CompanyID=@nCompanyID and Inv_RFQVendorList.N_QuotationID=@nPkeyID ";
             }
+            else if(type == "PurchaseOrder")
+            {
+   sqlCommandText = "SELECT        Inv_PurchaseOrder.N_POrderID AS N_PKeyID, Inv_PurchaseOrder.N_VendorID AS N_PartyID, Inv_Vendor.X_VendorCode AS X_PartyCode, Sec_User.N_UserID, Inv_Vendor.X_Email, Sec_User.X_UserID,Inv_Vendor.X_VendorName AS X_PartyName, 'Vendor' AS X_PartyName, 'Purchae Order' AS X_TxnType " +
+" FROM            Inv_PurchaseOrder LEFT OUTER JOIN " +
+"                        Sec_User ON Inv_PurchaseOrder.N_CompanyID = Sec_User.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Sec_User.N_CustomerID LEFT OUTER JOIN " +
+"                        Inv_Vendor ON Inv_PurchaseOrder.N_CompanyID = Inv_Vendor.N_CompanyID AND Inv_PurchaseOrder.N_VendorID = Inv_Vendor.N_VendorID AND Inv_PurchaseOrder.N_FnYearID = Inv_Vendor.N_FnYearID" + 
+" where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_PurchaseOrder.N_CompanyID=@nCompanyID and Inv_PurchaseOrder.N_POrderID=@nPkeyID group by  Inv_PurchaseOrder.N_POrderID, Inv_PurchaseOrder.N_VendorID, Inv_Vendor.X_VendorCode,Sec_User.N_UserID, Inv_Vendor.X_Email,  Sec_User.X_UserID, Inv_Vendor.X_VendorName";
+            }
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
 
