@@ -433,13 +433,32 @@ namespace SmartxAPI.Controllers
                             if(myFunctions.CreatePortalUser(companyid,myFunctions.getIntVAL(row["N_BranchID"].ToString()),row["X_PartyName"].ToString(),row["X_Email"].ToString(),row["X_PartyType"].ToString(),row["X_PartyCode"].ToString(),myFunctions.getIntVAL(row["N_PartyID"].ToString()),true,dLayer,connection,transaction)){
                                 xSubject = "RFQ Inward";
                                 xBodyText = "RFQ Inward";
+                                object xInwardCode = dLayer.ExecuteScalar("select X_InwardsCode from Inv_RFQVendorListMaster where N_QuotationID="+myFunctions.getIntVAL(row["N_PKeyID"].ToString())+" and N_CompanyID="+companyid+" and N_VendorID="+myFunctions.getIntVAL(row["N_PartyID"].ToString()),connection,transaction);
+                                if(xInwardCode==null){
+                                string inwardInsert ="insert into Inv_RFQVendorListMaster "+
+	                            "select N_CompanyID,(select isnull(max(N_VendorListMasterID),0)+1 from Inv_RFQVendorListMaster) ,(select isnull(max(X_InwardsCode),0)+1 from Inv_RFQVendorListMaster),N_QuotationID,Getdate(),Getdate(),"+myFunctions.getIntVAL(row["N_PartyID"].ToString())+"    from Inv_VendorRequest where N_QuotationID="+myFunctions.getIntVAL(row["N_PKeyID"].ToString())+" and N_CompanyID="+companyid;
+                                object inwardID = dLayer.ExecuteNonQuery(inwardInsert,connection,transaction);
+                                if(inwardID==null)
+                                inwardID=0;
+
+                                if(myFunctions.getIntVAL(inwardID.ToString())>0){
+                                    xInwardCode = dLayer.ExecuteScalar("select isNull(X_InwardsCode,'') from Inv_RFQVendorListMaster where N_QuotationID="+myFunctions.getIntVAL(row["N_PKeyID"].ToString())+" and N_CompanyID="+companyid+" and N_VendorID="+myFunctions.getIntVAL(row["N_PartyID"].ToString()),connection,transaction).ToString();
+                                
+                                }else{
+                                    transaction.Rollback();
+                                    return Ok(api.Error(User,"Email Error"));
+
+                                }
+                                }
                                 string seperator = "$$";
                                 xURL = myFunctions.EncryptStringForUrl(companyid  + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator +row["N_PKeyID"].ToString(),System.Text.Encoding.Unicode );
-                                xURL = AppURL +"/client/vendor/14/"+xURL+"/rfqInwards";
+                                xURL = AppURL +"/client/vendor/14/"+xURL+"/rfqVendorInward/"+xInwardCode;
 
                             }
                         }
                     }
+
+                    transaction.Commit();
 
 
                     return Ok(api.Success("Email Send"));

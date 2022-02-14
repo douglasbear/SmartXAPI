@@ -2578,7 +2578,7 @@ namespace SmartxAPI.GeneralFunctions
                     row["N_BranchID"] = nBranchID;
                     row["X_UserName"] = xPartyName;
                     row["N_CustomerID"] = partyID;
-                    row["N_LoginFlag"] = 5;
+                    row["N_LoginFlag"] = nAppID;
                     row["X_UserCategoryList"] = UserCatID.ToString();
                     dt.Rows.Add(row);
 
