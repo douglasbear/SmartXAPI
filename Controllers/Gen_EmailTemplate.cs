@@ -95,7 +95,7 @@ namespace SmartxAPI.Controllers
                                 Body = Body.ToString().Replace("@LeadName", Oppportunity.ToString());
 
                                 Subjectval = Subjectval.ToString().Replace("@CompanyName", Company.ToString());
-                                Subjectval =Subjectval.ToString().Replace("@ContactName", Contact.ToString());
+                                Subjectval = Subjectval.ToString().Replace("@ContactName", Contact.ToString());
                                 Subjectval = Subjectval.ToString().Replace("@LeadName", Oppportunity.ToString());
 
 
@@ -269,8 +269,8 @@ namespace SmartxAPI.Controllers
                     OutPut.Add("TotalCount", TotalCount);
                     if (dt.Rows.Count == 0)
                     {
-                       // return Ok(api.Warning("No Results Found"));
-                       return Ok(api.Success(OutPut));
+                        // return Ok(api.Warning("No Results Found"));
+                        return Ok(api.Success(OutPut));
                     }
                     else
                     {
@@ -364,6 +364,46 @@ namespace SmartxAPI.Controllers
         }
 
 
+        [HttpGet("mailList")]
+        public ActionResult GenMailList(string type, int pKeyID, int nFnYearID)
+        {
+            int nCompanyId = myFunctions.GetCompanyID(User);
+            int nUserID = myFunctions.GetUserID(User);
 
+            string sqlCommandText = "";
+
+            if (type == "RFQInward")
+            {
+
+                sqlCommandText = "SELECT        Inv_RFQVendorList.N_VendorID as N_PartyID, Sec_User.N_UserID, Sec_User.X_UserID, Inv_Vendor.X_Email, Inv_Vendor.X_VendorName as X_PartyName,'Vendor' as X_PartyType " +
+    " FROM            Sec_User RIGHT OUTER JOIN " +
+     "                        Inv_Vendor ON Sec_User.N_CustomerID = Inv_Vendor.N_VendorID AND Sec_User.N_CompanyID = Inv_Vendor.N_CompanyID RIGHT OUTER JOIN " +
+     "                        Inv_RFQVendorList ON Inv_Vendor.N_VendorID = Inv_RFQVendorList.N_VendorID AND Inv_Vendor.N_CompanyID = Inv_RFQVendorList.N_CompanyID" +
+     " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_RFQVendorList.N_CompanyID=@nCompanyID and Inv_RFQVendorList.N_QuotationID=@nPkeyID ";
+            }
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+
+
+            Params.Add("@nFnYearID", nFnYearID);
+            Params.Add("@nCompanyID", nCompanyId);
+            Params.Add("@nPkeyID", nCompanyId);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    return Ok(api.Success(api.Format(dt, "details")));
+                }
+
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User, e));
+            }
+        }
     }
 }

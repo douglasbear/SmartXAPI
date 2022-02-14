@@ -121,6 +121,30 @@ namespace SmartxAPI.GeneralFunctions
 
         }
 
+
+        public string EncryptStringForUrl(String input, System.Text.Encoding encoding)
+        {
+            Byte[] stringBytes = encoding.GetBytes(EncryptString(input));
+            StringBuilder sbBytes = new StringBuilder(stringBytes.Length * 2);
+            foreach (byte b in stringBytes)
+            {
+                sbBytes.AppendFormat("{0:X2}", b);
+            }
+            return sbBytes.ToString();
+        }
+
+
+        public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding)
+        {
+            int numberChars = hexInput.Length;
+            byte[] bytes = new byte[numberChars / 2];
+            for (int i = 0; i < numberChars; i += 2)
+            {
+                bytes[i / 2] = Convert.ToByte(hexInput.Substring(i, 2), 16);
+            }
+            return DecryptString(encoding.GetString(bytes));
+        }
+
         public double getVAL(string val)
         {
             try
@@ -1436,33 +1460,33 @@ namespace SmartxAPI.GeneralFunctions
             // }
             return MasterTable;
         }
-  
-   public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
+
+        public bool SendApprovalMail(int N_NextApproverID, int FormID, int TransID, string TransType, string TransCode, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction, ClaimsPrincipal User)
         {
             try
             {
                 int companyid = GetCompanyID(User);
                 int nUserID = GetUserID(User);
                 SortedList Params = new SortedList();
-                DataTable dtEmail=new DataTable();
+                DataTable dtEmail = new DataTable();
                 string Toemail = "";
-                object Email ="";
-                string sqlCmd="";
-                if(N_NextApproverID!=0)
+                object Email = "";
+                string sqlCmd = "";
+                if (N_NextApproverID != 0)
                 {
                     // Email=dLayer.ExecuteScalar("select TOP(1) ISNULL(X_Email,'') from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc", Params, connection, transaction);
                     // Toemail = Email.ToString();
-                    sqlCmd="select TOP(1) ISNULL(X_Email,'') as X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc";
+                    sqlCmd = "select TOP(1) ISNULL(X_Email,'') as X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID=" + N_NextApproverID + " order by n_fnyearid desc";
                 }
                 else
                 {
-                    sqlCmd="select  ISNULL(X_Email,'') AS X_Email from vw_UserEmp where N_CompanyID="+companyid+" and N_UserID in ( "+
-                            " select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID="+companyid+" and N_FormID="+FormID+" and N_TransID="+TransID+" and N_ActionTypeID=110 and N_HierarchyID> "+
-                            " (select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID="+companyid+" and N_FormID="+FormID+" and N_TransID="+TransID+" and N_Status=1)) "+
+                    sqlCmd = "select  ISNULL(X_Email,'') AS X_Email from vw_UserEmp where N_CompanyID=" + companyid + " and N_UserID in ( " +
+                            " select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=" + companyid + " and N_FormID=" + FormID + " and N_TransID=" + TransID + " and N_ActionTypeID=110 and N_HierarchyID> " +
+                            " (select MAX(N_HierarchyID) from Gen_ApprovalCodesTrans where N_CompanyID=" + companyid + " and N_FormID=" + FormID + " and N_TransID=" + TransID + " and N_Status=1)) " +
                             " group by vw_UserEmp.X_Email";
                 }
-                dtEmail=dLayer.ExecuteDataTable(sqlCmd,Params,connection,transaction);
-                if(dtEmail.Rows.Count==0)return false;
+                dtEmail = dLayer.ExecuteDataTable(sqlCmd, Params, connection, transaction);
+                if (dtEmail.Rows.Count == 0) return false;
                 object CurrentStatus = dLayer.ExecuteScalar("select ISNULL(X_CurrentStatus,'') from vw_ApprovalPending where N_FormID=" + FormID + " and X_TransCode='" + TransCode + "' and N_TransID=" + TransID + " and X_Type='" + TransType + "'", Params, connection, transaction);
                 object EmployeeName = dLayer.ExecuteScalar("select x_empname from vw_UserDetails where N_UserID=" + nUserID + " and N_CompanyID=" + companyid, Params, connection, transaction);
                 object companyemail = "";
@@ -1471,9 +1495,9 @@ namespace SmartxAPI.GeneralFunctions
                 companyemail = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailAddress' and N_CompanyID=" + companyid, Params, connection, transaction);
                 companypassword = dLayer.ExecuteScalar("select X_Value from Gen_Settings where X_Group='210' and X_Description='EmailPassword' and N_CompanyID=" + companyid, Params, connection, transaction);
 
-                for(int i=0;i<dtEmail.Rows.Count;i++)
+                for (int i = 0; i < dtEmail.Rows.Count; i++)
                 {
-                    Toemail=dtEmail.Rows[i]["X_Email"].ToString();
+                    Toemail = dtEmail.Rows[i]["X_Email"].ToString();
                     if (Toemail.ToString() != "")
                     {
                         if (companyemail.ToString() != "")
@@ -1645,7 +1669,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-   public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
+        public int LogApprovals(DataTable Approvals, int N_FnYearID, string X_TransType, int N_TransID, string X_TransCode, int GroupID, string PartyName, int EmpID, string DepLevel, ClaimsPrincipal User, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             DataRow ApprovalRow = Approvals.Rows[0];
             string X_Action = ApprovalRow["btnSaveText"].ToString();
@@ -1720,8 +1744,8 @@ namespace SmartxAPI.GeneralFunctions
 
                         dLayer.ExecuteScalar("update " + TableName + " set B_IssaveDraft=0 where " + TableID + "=@nTransID and N_CompanyID=@nCompanyID", NewParam, connection, transaction);
 
-                        int EntrUsrID =this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
-                        SendApprovalMail(EntrUsrID, N_FormID,  N_TransID,  X_TransType,  X_TransCode,  dLayer,  connection,  transaction,  User);
+                        int EntrUsrID = this.getIntVAL(dLayer.ExecuteScalar("select N_UserID from Gen_ApprovalCodesTrans where N_CompanyID=@nCompanyID and N_FormID=@nFormID and N_TransID=@nTransID and N_ActionTypeID=108", NewParam, connection, transaction).ToString());
+                        SendApprovalMail(EntrUsrID, N_FormID, N_TransID, X_TransType, X_TransCode, dLayer, connection, transaction, User);
                     }
                 }
             }
@@ -2021,9 +2045,9 @@ namespace SmartxAPI.GeneralFunctions
 
         public int GetLoginID(ClaimsPrincipal User)
         {
-            int loginID =0;
-            if(User.FindFirst(ClaimTypes.Thumbprint)?.Value!=null)
-            loginID =this.getIntVAL(User.FindFirst(ClaimTypes.Thumbprint)?.Value);
+            int loginID = 0;
+            if (User.FindFirst(ClaimTypes.Thumbprint)?.Value != null)
+                loginID = this.getIntVAL(User.FindFirst(ClaimTypes.Thumbprint)?.Value);
             return loginID;
         }
 
@@ -2470,6 +2494,112 @@ namespace SmartxAPI.GeneralFunctions
             }
             return B_completed;
         }
+
+        public bool CreatePortalUser(int nCompanyID,int nBranchID,int xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction)
+        {
+            int UserID = 0, UserCatID = 0;
+            string Pwd = this.EncryptString(emailID);
+
+            int nAppID = 0;
+
+            if (type == "CUSTOMER")
+            {
+                nAppID = 13;
+            }
+            else if (type == "VENDOR")
+            {
+                nAppID = 14;
+            }
+
+            if (active)
+            {
+                object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + partyID, connection, transaction);
+                if (objUser != null)
+                {
+                    UserID = this.getIntVAL(objUser.ToString());
+                }
+                else
+                {
+                    object objCustUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and X_UserID='" + emailID + "'", connection, transaction);
+                    if (objUser != null)
+                    {
+                        UserID = this.getIntVAL(objCustUser.ToString());
+                    }
+                }
+
+                object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=" +nAppID, connection, transaction);
+                if (objUserCat != null)
+                {
+                    UserCatID = this.getIntVAL(objUserCat.ToString());
+                }
+                else
+                {
+                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID="+nAppID+"), MAX(N_UserCategoryID)+1, 365, "+nAppID+" FROM Sec_UserCategory ", connection, transaction);
+                    if (nUserCat <= 0)
+                    {
+                        return false;
+                    }
+                    object CatID = dLayer.ExecuteScalar("select MAX(N_UserCategoryID) from Sec_UserCategory", connection, transaction);
+                    if (CatID != null)
+                    {
+                        UserCatID = this.getIntVAL(CatID.ToString());
+                    }
+                    if (UserCatID > 0)
+                    {
+                        int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)" +
+                                                                    "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges)," + UserCatID + ",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View " +
+                                                                    "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*"+nAppID+") and N_CompanyID = -1", connection, transaction);
+
+                    }
+                }
+
+                if (UserID == 0)
+                {
+                    DataTable dt = new DataTable();
+                    dt.Clear();
+                    dt.Columns.Add("N_CompanyID");
+                    dt.Columns.Add("N_UserID");
+                    dt.Columns.Add("X_UserID");
+                    dt.Columns.Add("X_Password");
+                    dt.Columns.Add("N_UserCategoryID");
+                    dt.Columns.Add("B_Active");
+                    dt.Columns.Add("N_BranchID");
+                    dt.Columns.Add("X_UserName");
+                    dt.Columns.Add("N_CustomerID");
+                    dt.Columns.Add("N_LoginFlag");
+                    dt.Columns.Add("X_UserCategoryList");
+
+                    DataRow row = dt.NewRow();
+                    row["N_CompanyID"] = nCompanyID;
+                    row["X_UserID"] =emailID;
+                    row["X_Password"] = Pwd;
+                    row["N_UserCategoryID"] = UserCatID;
+                    row["B_Active"] = 1;
+                    row["N_BranchID"] = nBranchID;
+                    row["X_UserName"] = xPartyName;
+                    row["N_CustomerID"] = partyID;
+                    row["N_LoginFlag"] = 5;
+                    row["X_UserCategoryList"] = UserCatID.ToString();
+                    dt.Rows.Add(row);
+
+                    int nUserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+                }
+                else
+                {
+                    dLayer.ExecuteNonQuery("update Sec_User set N_CustomerID=" + partyID + ",B_Active=1,N_LoginFlag="+nAppID+" where N_CompanyID=" + nCompanyID + "  and N_UserID=" + UserID, connection, transaction);
+                }
+            }
+            else
+            {
+                object objUser = dLayer.ExecuteScalar("Select N_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + partyID, connection, transaction);
+                if (objUser != null)
+                {
+                    UserID = this.getIntVAL(objUser.ToString());
+                    dLayer.ExecuteNonQuery("update Sec_User set B_Active=0,N_LoginFlag=5  where N_CompanyID=" + nCompanyID + "  and N_CustomerID=" + partyID, connection, transaction);
+                }
+            }
+            return true;
+        }
     }
 
 
@@ -2538,5 +2668,8 @@ namespace SmartxAPI.GeneralFunctions
         public bool writeImageFile(string FileString, string Path, string Name);
         public bool CheckVersion(string xSrcVersion, IDataAccessLayer dLayer, SqlConnection connection);
         public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
+        public string EncryptStringForUrl(String input, System.Text.Encoding encoding);
+        public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding);
+        public bool CreatePortalUser(int nCompanyID,int nBranchID,int xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
     }
 }
