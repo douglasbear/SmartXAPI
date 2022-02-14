@@ -387,7 +387,7 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@nFnYearID", nFnYearID);
             Params.Add("@nCompanyID", nCompanyId);
-            Params.Add("@nPkeyID", nCompanyId);
+            Params.Add("@nPkeyID", pKeyID);
 
 
             try
