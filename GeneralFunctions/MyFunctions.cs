@@ -2502,11 +2502,11 @@ namespace SmartxAPI.GeneralFunctions
 
             int nAppID = 0;
 
-            if (type == "CUSTOMER")
+            if (type.ToLower() == "customer")
             {
                 nAppID = 13;
             }
-            else if (type == "VENDOR")
+            else if (type.ToLower() == "vendor")
             {
                 nAppID = 14;
             }

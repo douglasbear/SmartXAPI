@@ -375,7 +375,7 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
 
-            if (type == "RFQ")
+            if (type.ToLower() == "rfq")
             {
 
                 sqlCommandText = "SELECT        Inv_RFQVendorList.N_QuotationID as N_PKeyID,Inv_RFQVendorList.N_VendorID as N_PartyID,Inv_Vendor.X_VendorCode as X_PartyCode, Sec_User.N_UserID, Sec_User.X_UserID, Inv_Vendor.X_Email, Inv_Vendor.X_VendorName as X_PartyName,'Vendor' as X_PartyType,'RFQ' as X_TxnType " +
@@ -429,13 +429,14 @@ namespace SmartxAPI.Controllers
                         string xBodyText="";
                         string xSubject="";
                         string xURL = "";
-                        if(row["x_TxnType"].ToString()=="RFQ"){
+                        if(row["x_TxnType"].ToString().ToLower()=="rfq"){
                             if(myFunctions.CreatePortalUser(companyid,myFunctions.getIntVAL(row["N_BranchID"].ToString()),row["X_PartyName"].ToString(),row["X_Email"].ToString(),row["X_PartyType"].ToString(),row["X_PartyCode"].ToString(),myFunctions.getIntVAL(row["N_PartyID"].ToString()),true,dLayer,connection,transaction)){
                                 xSubject = "RFQ Inward";
                                 xBodyText = "RFQ Inward";
-                                string seperator = "$e$-!";
-                                xURL = myFunctions.EncryptStringForUrl(companyid + seperator + row["X_PartyType"].ToString() + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator +row["N_PKeyID"].ToString(),System.Text.Encoding.Unicode );
+                                string seperator = "$$";
+                                xURL = myFunctions.EncryptStringForUrl(companyid  + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator +row["N_PKeyID"].ToString(),System.Text.Encoding.Unicode );
                                 xURL = AppURL +"/client/vendor/14/"+xURL+"/rfqInwards";
+
                             }
                         }
                     }
