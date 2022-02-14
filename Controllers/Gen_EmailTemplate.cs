@@ -384,7 +384,7 @@ namespace SmartxAPI.Controllers
      "                        Inv_RFQVendorList ON Inv_Vendor.N_VendorID = Inv_RFQVendorList.N_VendorID AND Inv_Vendor.N_CompanyID = Inv_RFQVendorList.N_CompanyID" +
      " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_RFQVendorList.N_CompanyID=@nCompanyID and Inv_RFQVendorList.N_QuotationID=@nPkeyID group by Inv_RFQVendorList.N_QuotationID,Inv_RFQVendorList.N_VendorID ,Inv_Vendor.X_VendorCode, Sec_User.N_UserID, Sec_User.X_UserID, Inv_Vendor.X_Email, Inv_Vendor.X_VendorName ";
             }
-            else if(type.ToLower() == "purchaseorder")
+            else if(type == "purchaseorder")
             {
    sqlCommandText = "SELECT        Inv_PurchaseOrder.N_POrderID AS N_PKeyID, Inv_PurchaseOrder.N_VendorID AS N_PartyID, Inv_Vendor.X_VendorCode AS X_PartyCode, Sec_User.N_UserID, Inv_Vendor.X_Email, Sec_User.X_UserID,Inv_Vendor.X_VendorName AS X_PartyName, 'Vendor' AS X_PartyName, 'Purchae Order' AS X_TxnType " +
 " FROM            Inv_PurchaseOrder LEFT OUTER JOIN " +
@@ -440,7 +440,7 @@ namespace SmartxAPI.Controllers
                         if(row["x_TxnType"].ToString().ToLower()=="rfq"){
                             if(myFunctions.CreatePortalUser(companyid,myFunctions.getIntVAL(row["N_BranchID"].ToString()),row["X_PartyName"].ToString(),row["X_Email"].ToString(),row["X_PartyType"].ToString(),row["X_PartyCode"].ToString(),myFunctions.getIntVAL(row["N_PartyID"].ToString()),true,dLayer,connection,transaction)){
                                 xSubject = "RFQ Inward";
-                                xBodyText = "RFQ Inward";
+                                
                                 object xInwardCode = dLayer.ExecuteScalar("select X_InwardsCode from Inv_RFQVendorListMaster where N_QuotationID="+myFunctions.getIntVAL(row["N_PKeyID"].ToString())+" and N_CompanyID="+companyid+" and N_VendorID="+myFunctions.getIntVAL(row["N_PartyID"].ToString()),connection,transaction);
                                 if(xInwardCode==null){
                                 string inwardInsert ="insert into Inv_RFQVendorListMaster "+
@@ -461,6 +461,13 @@ namespace SmartxAPI.Controllers
                                 string seperator = "$$";
                                 xURL = myFunctions.EncryptStringForUrl(companyid  + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator +row["N_PKeyID"].ToString(),System.Text.Encoding.Unicode );
                                 xURL = AppURL +"/client/vendor/14/"+xURL+"/rfqVendorInward/"+xInwardCode;
+
+                                xBodyText = " Honored,"+
+                                            " Through this email, I wish to formally request a price quotation for a selection of goods from your esteemed company."+
+                                            " Please fill out price quotation throug below link "+
+                                            xURL + 
+                                            " In case you require any further information, or due to company policy we need to fill out a quotation form, do not hesitate to contact me."+
+                                            " I look forward to hearing from you and possibly doing business in the future.";
 
                             }
                         }
