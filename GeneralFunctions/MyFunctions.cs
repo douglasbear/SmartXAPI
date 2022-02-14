@@ -2495,7 +2495,7 @@ namespace SmartxAPI.GeneralFunctions
             return B_completed;
         }
 
-        public bool CreatePortalUser(int nCompanyID,int nBranchID,int xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction)
+        public bool CreatePortalUser(int nCompanyID,int nBranchID,string xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction)
         {
             int UserID = 0, UserCatID = 0;
             string Pwd = this.EncryptString(emailID);
@@ -2670,6 +2670,6 @@ namespace SmartxAPI.GeneralFunctions
         public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
         public string EncryptStringForUrl(String input, System.Text.Encoding encoding);
         public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding);
-        public bool CreatePortalUser(int nCompanyID,int nBranchID,int xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
+        public bool CreatePortalUser(int nCompanyID,int nBranchID,string xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
     }
 }

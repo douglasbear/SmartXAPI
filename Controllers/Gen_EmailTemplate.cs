@@ -372,14 +372,14 @@ namespace SmartxAPI.Controllers
 
             string sqlCommandText = "";
 
-            if (type == "RFQInward")
+            if (type == "RFQ")
             {
 
-                sqlCommandText = "SELECT        Inv_RFQVendorList.N_VendorID as N_PartyID, Sec_User.N_UserID, Sec_User.X_UserID, Inv_Vendor.X_Email, Inv_Vendor.X_VendorName as X_PartyName,'Vendor' as X_PartyType " +
+                sqlCommandText = "SELECT        Inv_RFQVendorList.N_QuotationID as N_PKeyID,Inv_RFQVendorList.N_VendorID as N_PartyID,Inv_Vendor.X_VendorCode as X_PartyCode, Sec_User.N_UserID, Sec_User.X_UserID, Inv_Vendor.X_Email, Inv_Vendor.X_VendorName as X_PartyName,'Vendor' as X_PartyType,'RFQ' as X_TxnType " +
     " FROM            Sec_User RIGHT OUTER JOIN " +
      "                        Inv_Vendor ON Sec_User.N_CustomerID = Inv_Vendor.N_VendorID AND Sec_User.N_CompanyID = Inv_Vendor.N_CompanyID RIGHT OUTER JOIN " +
      "                        Inv_RFQVendorList ON Inv_Vendor.N_VendorID = Inv_RFQVendorList.N_VendorID AND Inv_Vendor.N_CompanyID = Inv_RFQVendorList.N_CompanyID" +
-     " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_RFQVendorList.N_CompanyID=@nCompanyID and Inv_RFQVendorList.N_QuotationID=@nPkeyID ";
+     " where Inv_Vendor.N_FnYearID=@nFnYearID and Inv_RFQVendorList.N_CompanyID=@nCompanyID and Inv_RFQVendorList.N_QuotationID=@nPkeyID group by Inv_RFQVendorList.N_QuotationID,Inv_RFQVendorList.N_VendorID ,Inv_Vendor.X_VendorCode, Sec_User.N_UserID, Sec_User.X_UserID, Inv_Vendor.X_Email, Inv_Vendor.X_VendorName ";
             }
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -403,6 +403,49 @@ namespace SmartxAPI.Controllers
             catch (Exception e)
             {
                 return Ok(api.Error(User, e));
+            }
+        }
+
+
+        [HttpPost("processMailList")]
+        public ActionResult ProcessMailList([FromBody] DataSet ds)
+        {
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int companyid = myFunctions.GetCompanyID(User);
+                    DataTable Master = ds.Tables["master"];
+                    
+                    
+                    foreach (DataRow row in Master.Rows)
+                    {
+                        string xBodyText="";
+                        string xSubject="";
+                        string xURL = "";
+                        if(row["X_TxnType"].ToString()=="RFQ"){
+                            if(myFunctions.CreatePortalUser(companyid,myFunctions.getIntVAL(row["N_BranchID"].ToString()),row["X_PartyName"].ToString(),row["X_Email"].ToString(),row["X_PartyType"].ToString(),row["X_PartyCode"].ToString(),myFunctions.getIntVAL(row["N_PartyID"].ToString()),true,dLayer,connection,transaction)){
+                                xSubject = "RFQ Inward";
+                                xBodyText = "RFQ Inward";
+                                
+
+                            }
+                        }
+                    }
+
+
+                    return Ok(api.Success("Email Send"));
+
+
+                }
+            }
+
+            catch (Exception ie)
+            {
+                return Ok(api.Error(User, ie));
             }
         }
     }
