@@ -24,6 +24,7 @@ namespace SmartxAPI.Controllers
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
+        private readonly string AppURL;
         private readonly int N_FormID = 1348;
         private readonly IMyAttachments myAttachments;
 
@@ -34,6 +35,8 @@ namespace SmartxAPI.Controllers
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
             myAttachments = myAtt;
+
+            AppURL = conf.GetConnectionString("AppURL");
         }
         [AllowAnonymous]
 
@@ -426,12 +429,13 @@ namespace SmartxAPI.Controllers
                         string xBodyText="";
                         string xSubject="";
                         string xURL = "";
-                        if(row["X_TxnType"].ToString()=="RFQ"){
+                        if(row["x_TxnType"].ToString()=="RFQ"){
                             if(myFunctions.CreatePortalUser(companyid,myFunctions.getIntVAL(row["N_BranchID"].ToString()),row["X_PartyName"].ToString(),row["X_Email"].ToString(),row["X_PartyType"].ToString(),row["X_PartyCode"].ToString(),myFunctions.getIntVAL(row["N_PartyID"].ToString()),true,dLayer,connection,transaction)){
                                 xSubject = "RFQ Inward";
                                 xBodyText = "RFQ Inward";
-                                
-
+                                string seperator = "$e$-!";
+                                xURL = myFunctions.EncryptStringForUrl(companyid + seperator + row["X_PartyType"].ToString() + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator +row["N_PKeyID"].ToString(),System.Text.Encoding.Unicode );
+                                xURL = AppURL +"/client/vendor/14/"+xURL+"/rfqInwards";
                             }
                         }
                     }
