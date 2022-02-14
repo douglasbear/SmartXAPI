@@ -21,6 +21,9 @@ using Microsoft.Data.SqlClient;
 using System.Net.Mail;
 using Microsoft.Extensions.Configuration;
 using System.Linq;
+using System.Text.RegularExpressions;
+using System.Net.Http;
+using Microsoft.AspNetCore.Hosting;
 
 namespace SmartxAPI.GeneralFunctions
 {
@@ -32,7 +35,17 @@ namespace SmartxAPI.GeneralFunctions
         private readonly IConfiguration config;
         private readonly string TempFilesPath;
         private readonly string uploadedImagesPath;
-        public MyFunctions(IConfiguration conf)
+        private readonly string reportLocation;
+        private readonly string reportApi;
+        private readonly IWebHostEnvironment env;
+        string RPTLocation = "";
+        string ReportName = "";
+        string FileName = "";
+        string critiria = "";
+        string TableName = "";
+        string FormName = "";
+
+        public MyFunctions(IConfiguration conf, IWebHostEnvironment envn)
         {
             ApprovalLink = conf.GetConnectionString("AppURL");
             masterDBConnectionString = conf.GetConnectionString("OlivoClientConnection");
@@ -40,6 +53,9 @@ namespace SmartxAPI.GeneralFunctions
             config = conf;
             uploadedImagesPath = conf.GetConnectionString("UploadedImagesPath");
             TempFilesPath = conf.GetConnectionString("TempFilesPath");
+            reportLocation = conf.GetConnectionString("ReportLocation");
+            reportApi = conf.GetConnectionString("ReportAPI");
+            env = envn;
 
         }
 
@@ -2495,7 +2511,7 @@ namespace SmartxAPI.GeneralFunctions
             return B_completed;
         }
 
-        public bool CreatePortalUser(int nCompanyID,int nBranchID,string xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction)
+        public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
         {
             int UserID = 0, UserCatID = 0;
             string Pwd = this.EncryptString(emailID);
@@ -2527,14 +2543,14 @@ namespace SmartxAPI.GeneralFunctions
                     }
                 }
 
-                object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=" +nAppID, connection, transaction);
+                object objUserCat = dLayer.ExecuteScalar("select N_UserCategoryID from Sec_UserCategory where N_CompanyID=" + nCompanyID + " and N_AppID=" + nAppID, connection, transaction);
                 if (objUserCat != null)
                 {
                     UserCatID = this.getIntVAL(objUserCat.ToString());
                 }
                 else
                 {
-                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID="+nAppID+"), MAX(N_UserCategoryID)+1, 365, "+nAppID+" FROM Sec_UserCategory ", connection, transaction);
+                    int nUserCat = dLayer.ExecuteNonQuery("insert into Sec_UserCategory SELECT " + nCompanyID + ", MAX(N_UserCategoryID)+1, (select X_UserCategory from Sec_UserCategory where N_CompanyID=-1 and N_AppID=" + nAppID + "), MAX(N_UserCategoryID)+1, 365, " + nAppID + " FROM Sec_UserCategory ", connection, transaction);
                     if (nUserCat <= 0)
                     {
                         return false;
@@ -2548,7 +2564,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         int Prevrows = dLayer.ExecuteNonQuery("Insert into Sec_UserPrevileges (N_InternalID,N_UserCategoryID,N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View)" +
                                                                     "Select ROW_NUMBER() over(order by N_InternalID)+(select MAX(N_InternalID) from Sec_UserPrevileges)," + UserCatID + ",N_menuID,B_Visible,B_Edit,B_Delete,B_Save,B_View " +
-                                                                    "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*"+nAppID+") and N_CompanyID = -1", connection, transaction);
+                                                                    "from Sec_UserPrevileges inner join Sec_UserCategory on Sec_UserPrevileges.N_UserCategoryID = Sec_UserCategory.N_UserCategoryID where Sec_UserPrevileges.N_UserCategoryID = (-1*" + nAppID + ") and N_CompanyID = -1", connection, transaction);
 
                     }
                 }
@@ -2571,7 +2587,7 @@ namespace SmartxAPI.GeneralFunctions
 
                     DataRow row = dt.NewRow();
                     row["N_CompanyID"] = nCompanyID;
-                    row["X_UserID"] =emailID;
+                    row["X_UserID"] = emailID;
                     row["X_Password"] = Pwd;
                     row["N_UserCategoryID"] = UserCatID;
                     row["B_Active"] = 1;
@@ -2586,7 +2602,7 @@ namespace SmartxAPI.GeneralFunctions
                 }
                 else
                 {
-                    dLayer.ExecuteNonQuery("update Sec_User set N_CustomerID=" + partyID + ",B_Active=1,N_LoginFlag="+nAppID+" where N_CompanyID=" + nCompanyID + "  and N_UserID=" + UserID, connection, transaction);
+                    dLayer.ExecuteNonQuery("update Sec_User set N_CustomerID=" + partyID + ",B_Active=1,N_LoginFlag=" + nAppID + " where N_CompanyID=" + nCompanyID + "  and N_UserID=" + UserID, connection, transaction);
                 }
             }
             else
@@ -2599,6 +2615,198 @@ namespace SmartxAPI.GeneralFunctions
                 }
             }
             return true;
+        }
+        public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User)
+        {
+
+            try
+            {
+                var handler = new HttpClientHandler
+                {
+                    ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
+                };
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SortedList Params = new SortedList();
+                    SqlTransaction transaction = connection.BeginTransaction();
+                    int companyid = this.GetCompanyID(User);
+                    string url = "";
+
+
+                    if (nFormID > 0)
+                        if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, dLayer, User))
+                        {
+                            var client = new HttpClient(handler);
+                            var dbName = connection.Database;
+                            var random = RandomString();
+                            if (TableName != "" && critiria != "")
+                            {
+                                critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + this.GetCompanyID(User);
+                            }
+                            ReportName = ReportName.Replace("&", "");
+                            if (nFormID == 894)
+                            {
+                                partyName = "Inv";
+                                docNumber = "1";
+                            }
+
+                            partyName = partyName.Replace("&", "");
+                            partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
+                            docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                            partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                            if (docNumber.Contains("/"))
+                                docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
+
+                            url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
+                            var path = client.GetAsync(url);
+
+                            ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + ".pdf";
+                            path.Wait();
+                            if (env.EnvironmentName != "Development" && !System.IO.File.Exists(this.TempFilesPath + ReportName))
+                                return false;
+
+                        }
+                    string Toemail = "";
+
+                    Toemail = mail;
+                    object companyemail = "";
+                    object companypassword = "";
+
+                    using (SqlConnection olivCnn = new SqlConnection(masterDBConnectionString))
+                    {
+                        olivCnn.Open();
+                        companyemail = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailAddress'", olivCnn);
+                        companypassword = dLayer.ExecuteScalar("select X_Value from GenSettings where N_ClientID=-1 and X_Description='OlivoEmailPassword'", olivCnn);
+
+                    }
+
+                    if (Toemail.ToString() != "")
+                    {
+                        if (companyemail.ToString() != "")
+                        {
+                            object body = null;
+                            string MailBody;
+
+                            if (xBody != null)
+                                body = xBody.ToString();
+                            else
+                                body = "Hi,<br> please find the attachment for your review";
+
+                            string Sender = companyemail.ToString();
+
+                            MailBody = body.ToString();
+
+
+                            SmtpClient client = new SmtpClient
+                            {
+                                Host = "smtp.gmail.com",
+                                Port = 587,
+                                EnableSsl = true,
+                                DeliveryMethod = SmtpDeliveryMethod.Network,
+                                Credentials = new System.Net.NetworkCredential(companyemail.ToString(), companypassword.ToString()),
+                                Timeout = 10000,
+                            };
+
+                            MailMessage message = new MailMessage();
+                            message.To.Add(Toemail.ToString()); // Add Receiver mail Address  
+                            message.From = new MailAddress(Sender);
+                            message.Subject = Subject;
+                            message.Body = MailBody;
+                            message.From = new MailAddress(Sender);
+                            message.IsBodyHtml = true; //HTML email 
+                            if (nFormID > 0)
+                                message.Attachments.Add(new Attachment(this.TempFilesPath + ReportName));
+                            client.Send(message);
+
+                        }
+                    }
+
+
+
+                }
+                return true;
+            }
+
+            catch (Exception ie)
+            {
+                return false;
+            }
+        }
+
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, IDataAccessLayer dLayer, ClaimsPrincipal User)
+        {
+            SortedList QueryParams = new SortedList();
+            int nCompanyId = this.GetCompanyID(User);
+            QueryParams.Add("@nCompanyId", nCompanyId);
+            QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@nFormID", nFormID);
+            RPTLocation = "";
+            critiria = "";
+            TableName = "";
+            ReportName = "";
+            //int N_UserCategoryID=myFunctions.GetUserCategory(User);
+            bool b_Custom = false;
+            string xUserCategoryList = this.GetUserCategoryList(User);
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    SqlTransaction transaction;
+                    transaction = connection.BeginTransaction();
+                    object ObjTaxType = dLayer.ExecuteScalar("SELECT Acc_TaxType.X_RepPathCaption FROM Acc_TaxType LEFT OUTER JOIN Acc_FnYear ON Acc_TaxType.N_TypeID = Acc_FnYear.N_TaxType where Acc_FnYear.N_CompanyID=@nCompanyId and Acc_FnYear.N_FnYearID=@nFnYearID", QueryParams, connection, transaction);
+                    if (ObjTaxType == null)
+                        ObjTaxType = "";
+                    if (ObjTaxType.ToString() == "")
+                        ObjTaxType = "none";
+                    string TaxType = ObjTaxType.ToString();
+
+                    object ObjPath = dLayer.ExecuteScalar("SELECT X_RptFolder FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    if (ObjPath != null)
+                    {
+                        if (ObjPath.ToString() != "")
+                            RPTLocation = reportLocation + "printing/" + ObjPath + "/" + TaxType + "/";
+                        else
+                            RPTLocation = reportLocation + "printing/";
+                    }
+
+                    object Templatecritiria = dLayer.ExecuteScalar("SELECT X_PkeyField FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+                    TableName = Templatecritiria.ToString().Substring(0, Templatecritiria.ToString().IndexOf(".")).Trim();
+                    object Custom = dLayer.ExecuteScalar("SELECT isnull(b_Custom,0) FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    int N_Custom = this.getIntVAL(Custom.ToString());
+                    object ObjReportName = dLayer.ExecuteScalar("SELECT X_RptName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    object objFormName = dLayer.ExecuteScalar("SELECT X_FormName FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID and N_UsercategoryID in (" + xUserCategoryList + ")", QueryParams, connection, transaction);
+                    FormName = objFormName.ToString();
+
+                    if (N_Custom == 1)
+                    {
+
+                        RPTLocation = RPTLocation + "custom/";
+                        ObjReportName = (ObjReportName.ToString().Remove(ObjReportName.ToString().Length - 4)).Trim();
+                        ObjReportName = ObjReportName + "_" + this.GetClientID(User) + "_" + this.GetCompanyID(User) + "_" + this.GetCompanyName(User) + ".rpt";
+                    }
+                    ReportName = ObjReportName.ToString();
+                    ReportName = ReportName.Remove(ReportName.Length - 4);
+
+                    critiria = "{" + Templatecritiria + "}=" + nPkeyID;
+                    object Othercritiria = dLayer.ExecuteScalar("SELECT X_Criteria FROM Gen_PrintTemplates WHERE N_CompanyID =@nCompanyId and N_FormID=@nFormID", QueryParams, connection, transaction);
+
+                    if (Othercritiria != null)
+                    {
+                        if (Othercritiria.ToString() != "")
+                            critiria = critiria + "and " + Othercritiria.ToString();
+
+                    }
+                    return true;
+                }
+            }
+            catch (Exception e)
+            {
+                return false;
+
+            }
+
         }
     }
 
@@ -2670,6 +2878,7 @@ namespace SmartxAPI.GeneralFunctions
         public bool Depreciation(IDataAccessLayer dLayer, int N_CompanyID, int N_FnYearID, int N_UserID, int N_ItemID, DateTime D_EndDate, String X_DeprNo, SqlConnection connection, SqlTransaction transaction);
         public string EncryptStringForUrl(String input, System.Text.Encoding encoding);
         public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding);
-        public bool CreatePortalUser(int nCompanyID,int nBranchID,string xPartyName,string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer,SqlConnection connection, SqlTransaction transaction);
+        public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
+        public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
     }
 }

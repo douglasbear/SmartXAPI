@@ -416,7 +416,7 @@ namespace SmartxAPI.Controllers
                             partyName = "Inv";
                             docNumber = "1";
                         }
-                        if (partyName == "" || partyName==null)
+                        if (partyName == "" || partyName==null) 
                             partyName = "customer";
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
