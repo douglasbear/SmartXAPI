@@ -301,32 +301,7 @@ namespace SmartxAPI.Controllers
                         double N_InvoiceDueAmt = 0, N_TotalDueAmt = 0;
                         foreach (DataRow dr in DetailTable.Rows)
                         {
-                            if (dr["X_Type"].ToString() == "SALES")
-                            {
 
-
-
-                              
-                                object salesPersonSales = dLayer.ExecuteScalar("SELECT isnull(Inv_Salesman.X_SalesmanName,'') as X_SalesmanName  FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection);
-                                salesPersonSales = salesPersonSales == null ? "" : salesPersonSales;
-                                object salesPersonIDSales = dLayer.ExecuteScalar("SELECT isnull(Inv_Salesman.N_SalesmanID,0) as N_SalesmanID  FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(dr["N_SalesID"].ToString()) + "", salesParams, connection);
-                                object salesPersonCustomer = dLayer.ExecuteScalar("select isnull(X_SalesmanName,'') as X_SalesmanName from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
-                                salesPersonCustomer = salesPersonCustomer == null ? "" : salesPersonCustomer;
-                                object salesPersonIDCustomer = dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
-
-                                if (salesPersonCustomer.ToString() != "")
-                                {
-                                    dr["x_SalesmanName"] = salesPersonSales.ToString();
-                                    dr["n_SalesManID"] = salesPersonIDSales.ToString();
-                                }
-                                else if (salesPersonCustomer.ToString() != "")
-                                {
-                                    dr["x_SalesmanName"] = salesPersonCustomer.ToString();
-                                    dr["n_SalesManID"] = salesPersonIDCustomer.ToString();
-                                }
-
-
-                            }
                             if (myFunctions.getIntVAL(dr["N_SalesID"].ToString()) == 0)
                             {
                                 // if (n_PayReceiptId > 0)
@@ -349,6 +324,36 @@ namespace SmartxAPI.Controllers
                     }
 
                     DetailTable.AcceptChanges();
+                    if (DetailTable.Rows.Count > 0)
+                    {
+                        foreach (DataRow drrow in DetailTable.Rows)
+                        {
+                            if (drrow["X_Type"].ToString() == "SALES")
+                            {
+
+
+
+                                object salesPersonSales = dLayer.ExecuteScalar("SELECT isnull(Inv_Salesman.X_SalesmanName,'') as X_SalesmanName  FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(drrow["N_SalesID"].ToString()) + "", salesParams, connection);
+                                salesPersonSales = salesPersonSales == null ? "" : salesPersonSales;
+                                object salesPersonIDSales = dLayer.ExecuteScalar("SELECT isnull(Inv_Salesman.N_SalesmanID,0) as N_SalesmanID  FROM Inv_Sales LEFT OUTER JOIN Inv_Salesman ON Inv_Sales.N_SalesmanID = Inv_Salesman.N_SalesmanID AND Inv_Sales.N_FnYearId = Inv_Salesman.N_FnYearID AND Inv_Sales.N_CompanyId = Inv_Salesman.N_CompanyID where Inv_Sales.N_CompanyID=" + nCompanyId + " and Inv_Sales.N_FnYearID =" + nFnYearId + " and Inv_Sales.N_SalesID=" + myFunctions.getIntVAL(drrow["N_SalesID"].ToString()) + "", salesParams, connection);
+                                object salesPersonCustomer = dLayer.ExecuteScalar("select isnull(X_SalesmanName,'') as X_SalesmanName from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
+                                salesPersonCustomer = salesPersonCustomer == null ? "" : salesPersonCustomer;
+                                object salesPersonIDCustomer = dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
+
+                                if (salesPersonCustomer.ToString() != "")
+                                {
+                                    drrow["x_SalesmanName"] = salesPersonSales.ToString();
+                                    drrow["n_SalesManID"] = salesPersonIDSales.ToString();
+                                }
+                                else if (salesPersonCustomer.ToString() != "")
+                                {
+                                    drrow["x_SalesmanName"] = salesPersonCustomer.ToString();
+                                    drrow["n_SalesManID"] = salesPersonIDCustomer.ToString();
+                                }
+                            }
+                        }
+                    }
+                      DetailTable.AcceptChanges();
 
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
