@@ -276,6 +276,7 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
+                string Punchtype = MasterTable.Rows[0]["punchType"].ToString();
                 DataRow masterRow = MasterTable.Rows[0];
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -293,12 +294,12 @@ namespace SmartxAPI.Controllers
                     string d_out = Convert.ToDateTime(masterRow["d_Out"].ToString()).ToString("HH:mm:ss");
                     string d_Shift2_In = Convert.ToDateTime(masterRow["d_Shift2_In"].ToString()).ToString("HH:mm:ss");
                     string d_Shift2_Out = Convert.ToDateTime(masterRow["d_Shift2_Out"].ToString()).ToString("HH:mm:ss");
-
-                    if (d_in == defultTime)
+ 
+                    if (Punchtype=="IN")
                     {
                         masterRow["d_In"] = currentTime;
                     }
-                    else if (d_out == defultTime)
+                    if (Punchtype=="OUT")
                     {
                         masterRow["d_out"] = currentTime;
                     }
@@ -311,6 +312,7 @@ namespace SmartxAPI.Controllers
                         masterRow["d_Shift2_Out"] = currentTime;
                     }
                     masterRow["d_Date"] = date.ToString();
+                    MasterTable.Columns.Remove("Punchtype");
                     MasterTable.AcceptChanges();
 
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
