@@ -340,10 +340,16 @@ namespace SmartxAPI.Controllers
                         else
                             Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo and N_BranchID=@nBranchID";
 
-
                         _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
 
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
+
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_DecisionDone", typeof(int), "");
+
+                        object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
+                        if(objDecisionDone!=null)
+                            Master.Rows[0]["n_DecisionDone"]=1;
 
                         Master = _api.Format(Master, "master");
 
@@ -353,17 +359,16 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
-
+                           
                             ds.Tables.Add(Master);
 
                             string vendorCriteria="";
 
-                            if(nVendorID>0){
-                            QueryParams.Add("@nVendorID", nVendorID);
-
-                            vendorCriteria =  " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
-}
+                            if(nVendorID>0)
+                            {
+                                QueryParams.Add("@nVendorID", nVendorID);
+                                vendorCriteria =  " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
+                            }                           
                             _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID "+vendorCriteria;
                             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
