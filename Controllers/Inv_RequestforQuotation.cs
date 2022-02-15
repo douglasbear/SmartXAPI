@@ -345,7 +345,7 @@ namespace SmartxAPI.Controllers
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                         QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
 
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_DecisionDone", typeof(int), "");
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_DecisionDone", typeof(int), 0);
 
                         object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
                         if(objDecisionDone!=null)
@@ -391,6 +391,12 @@ namespace SmartxAPI.Controllers
                         _sqlQuery = "Select * from vw_RFQVendorListMaster Where N_CompanyID=@nCompanyID and X_InwardsCode=@X_QuotationNo";
 
                         VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        VendorListMaster = myFunctions.AddNewColumnToDataTable(VendorListMaster, "n_DecisionDone", typeof(int), 0);
+
+                        object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
+                        if(objDecisionDone!=null)
+                            VendorListMaster.Rows[0]["n_DecisionDone"]=1;
 
                         VendorListMaster = _api.Format(VendorListMaster, "master");
 
