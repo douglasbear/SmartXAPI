@@ -107,7 +107,7 @@ namespace SmartxAPI.Controllers
                 break;
                 case "inventory": criteria= " and X_Type ='A'";
                 break;
-                case "income": criteria= " and X_Type ='I'";
+                case "income": criteria= " and (X_Type ='I' or X_Type='L' or X_Type='A') ";
                 break;
                 case "cost": criteria= " and X_Type ='E'";
                 break;
