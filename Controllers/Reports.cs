@@ -421,7 +421,10 @@ namespace SmartxAPI.Controllers
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
                         docNumber = Regex.Replace(docNumber, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+
+                        if(!Regex.IsMatch(partyName, @"\p{IsArabic}"))
                         partyName = Regex.Replace(partyName, "[^a-zA-Z0-9_.]+", "", RegexOptions.Compiled);
+                        
                         if (docNumber.Contains("/"))
                             docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
 
