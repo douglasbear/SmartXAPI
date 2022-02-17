@@ -31,14 +31,15 @@ namespace SmartxAPI.Controllers
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
         [HttpGet("listDetails")]
-        public ActionResult GetTasksDetails(int xProjectCode)
+        public ActionResult GetTasksDetails(int xProjectCode,int nFnYearID)
         {
             DataSet dt = new DataSet();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
+       
             int nUserID = myFunctions.GetUserID(User);
 
-            string sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and isnull(N_ParentID,0)=0 order by N_Order";
+            string sqlCommandTasksList = "select * from vw_Tsk_TaskMaster where N_CompanyID=@p1 and X_ProjectCode=@p2 and N_FnYearID=@nFnYearID and isnull(N_ParentID,0)=0 order by N_Order";
             string sqlCommandContactList = "Select * from Vw_InvCustomerProjects where N_CompanyID=@p1 and X_ProjectCode=@p2";
             string sqlCommandMailLogList = "Select CONVERT(VARCHAR(10), d_Date, 103) + ' '  + convert(VARCHAR(8), d_Date, 14) as d_Entry,* from Gen_MailLog where N_CompanyID=@p1 and N_ProjectID=@p3 order by N_maillogid desc";
             string sqlCommandOrderList = "Select * from inv_salesOrder where N_CompanyID=@p1 and n_ProjectID=@p3";
@@ -49,6 +50,7 @@ namespace SmartxAPI.Controllers
 
             Params.Add("@p1", nCompanyID);
             Params.Add("@p2", xProjectCode);
+            Params.Add("@nFnYearID", nFnYearID);
 
             DataTable TasksList = new DataTable();
             DataTable ContactList = new DataTable();
