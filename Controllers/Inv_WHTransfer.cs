@@ -98,7 +98,7 @@ namespace SmartxAPI.Controllers
             string Condition = "";
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query ) order by [Description] ";
+                qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
             }
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
@@ -154,6 +154,7 @@ namespace SmartxAPI.Controllers
             }
 
         }
+
 
 
 
