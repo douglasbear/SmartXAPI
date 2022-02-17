@@ -212,14 +212,14 @@ namespace SmartxAPI.Controllers
       
              
         [HttpGet("details")]
-        public ActionResult GetDetails(int nReasonID)
+        public ActionResult GetDetails(int xReasonCode)
         {
             DataTable dt=new DataTable();
             SortedList Params=new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
-            string sqlCommandText="select * from vw_Inv_StockAdjstmentReason_Disp where N_CompanyID=@nCompanyID and N_ReasonID=@nReasonID";
+            string sqlCommandText="select * from vw_Inv_StockAdjstmentReason_Disp where N_CompanyID=@nCompanyID and X_ReasonCode=@xReasonCode";
             Params.Add("@nCompanyID",nCompanyID);
-            Params.Add("@nReasonID",nReasonID);
+            Params.Add("@xReasonCode",xReasonCode);
 
 
               
@@ -249,7 +249,7 @@ namespace SmartxAPI.Controllers
         }
 
           [HttpDelete("delete")]
-        public ActionResult DeleteData(int nReasonID)
+        public ActionResult DeleteData(int n_ReasonID)
         {
             int Results = 0;
             try
@@ -257,7 +257,7 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("Inv_StockAdjstmentReason", "n_ReasonID", nReasonID, "", connection);
+                    Results = dLayer.DeleteData("Inv_StockAdjstmentReason", "N_ReasonID", n_ReasonID, "", connection);
                     if (Results > 0)
                     {
                         return Ok( _api.Success("deleted"));

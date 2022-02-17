@@ -98,11 +98,11 @@ namespace SmartxAPI.Controllers
             string Condition = "";
             if (query != "" && query != null)
             {
-                qry = " and (Description like @query or [Item Code] like @query ) order by [Description] ";
+                qry = " and (Description like @query or [Item Code] like @query ) ";
                 Params.Add("@query", "%" + query + "%");
             }
             string pageQry = "DECLARE @PageSize INT, @Page INT Select @PageSize=@PSize,@Page=@Offset;WITH PageNumbers AS(Select ROW_NUMBER() OVER(ORDER BY vw_InvItem_Search.N_ItemID) RowNo,";
-            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) order by Description asc";
+            string pageQryEnd = ") SELECT * FROM    PageNumbers WHERE   RowNo BETWEEN((@Page -1) *@PageSize + 1)  AND(@Page * @PageSize) ";
             string sqlComandText = "";
             if (dtpInvDate == null || dtpInvDate.ToString() == "")
                 sqlComandText = "Select *,dbo.[SP_GenGetStockByDate](vw_InvItem_Search.N_ItemID," + nLocationIDFrom + ",'','location','" + myFunctions.getDateVAL(dtpInvDate.Date) + "') As N_Stock ,dbo.SP_Cost(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID,vw_InvItem_Search.X_StockUnit) As N_LPrice ,dbo.SP_SellingPrice(vw_InvItem_Search.N_ItemID,vw_InvItem_Search.N_CompanyID) As N_SPrice  From vw_InvItem_Search Where N_CompanyID=" + nCompanyID + " and (N_ClassID<>1 AND N_ClassID<>4" + qry ;

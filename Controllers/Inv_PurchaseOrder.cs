@@ -203,7 +203,7 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpGet("listDetails")]
-        public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID)
+        public ActionResult GetPurchaseOrderDetails(int nCompanyId, string xPOrderId, int nFnYearId, string nLocationID, string xPRSNo, bool bAllBranchData, int nBranchID,int nQuotationID,int nVendorID)
         {
             bool B_PRSVisible = false;
             DataSet dt = new DataSet();
@@ -212,6 +212,7 @@ namespace SmartxAPI.Controllers
             DataTable DetailTable = new DataTable();
             DataTable DataTable = new DataTable();
             if (xPRSNo == null) xPRSNo = "";
+            if (xPOrderId == null) xPOrderId = "";
             string Mastersql = "";
 
            if (bAllBranchData == true)
@@ -255,11 +256,13 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    int N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
+                    int N_POrderID = 0 ;
+                    if(MasterTable.Rows.Count>0)
+                    { N_POrderID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString());
                     object InPurchase = dLayer.ExecuteScalar("select 1 from Inv_Purchase where N_CompanyID=" + nCompanyId + " and N_POrderID=" + N_POrderID, Params, connection);
                     if (InPurchase != null)
                          MasterTable = myFunctions.AddNewColumnToDataTable(MasterTable, "TxnStatus", typeof(string), "Invoice Processed");
-
+}
 
                     MasterTable = api.Format(MasterTable, "Master");
                     dt.Tables.Add(MasterTable);
@@ -284,7 +287,14 @@ namespace SmartxAPI.Controllers
                             Params.Add("@p4", nLocationID);
                             Params.Add("@p5", N_POrderID);
                         }
-                        else
+                        else if(nVendorID>0 && nQuotationID>0){
+                                DetailSql = "Select *,dbo.SP_GenGetStock(vw_RFQToPODetails.N_ItemID,@p4,'','Location') As N_Stock,dbo.SP_Cost(vw_RFQToPODetails.N_ItemID,vw_RFQToPODetails.N_CompanyID,'') As N_UnitLPrice ,dbo.SP_SellingPrice(vw_RFQToPODetails.N_ItemID,vw_RFQToPODetails.N_CompanyID) As N_UnitSPrice from vw_RFQToPODetails Where N_CompanyID=@p1 and N_VendorID=@p5 and N_QuotationID=@p6";
+                                Params.Add("@p6", nQuotationID);
+                                Params.Add("@p5", nVendorID);
+                                Params.Add("@p4", nLocationID);
+                            
+
+                        }else
                         {
                             if (bAllBranchData == true)
                             {
@@ -323,7 +333,9 @@ namespace SmartxAPI.Controllers
 
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = api.Format(DetailTable, "Details");
-                    DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
+                     DataTable Attachments =new DataTable();
+                    if(MasterTable.Rows.Count>0)
+                    Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_VendorID"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_POrderID"].ToString()), this.FormID, myFunctions.getIntVAL(MasterTable.Rows[0]["N_FnYearID"].ToString()), User, connection);
                     Attachments = api.Format(Attachments, "attachments");
 
                     dt.Tables.Add(Attachments);

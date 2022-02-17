@@ -87,13 +87,13 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (xSortBy == null || xSortBy.Trim() == "")
-                            xSortBy = " order by [Quotation No]  desc";
+                            xSortBy = " order by X_QuotationNo desc";
                         else
                         {
                             switch (xSortBy.Split(" ")[0])
                             {
-                                case "invoiceNo":
-                                    xSortBy = "[Quotation No] " + xSortBy.Split(" ")[1];
+                                case "quotationNo":
+                                    xSortBy = "X_QuotationNo" + xSortBy.Split(" ")[1];
                                     break;
                                 default: break;
                             }
@@ -101,9 +101,9 @@ namespace SmartxAPI.Controllers
                         }
 
                         if (Count == 0)
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_RFQVendorListMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") X_InwardsCode as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
                         else
-                            sqlCommandText = "select top(" + nSizeperpage + ") * from vw_RFQVendorListMaster where N_CompanyID=@p1 "   + xSearchkey + " and N_VendorListMasterID not in (select top(" + Count + ") N_VendorListMasterID from vw_RFQVendorListMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+                            sqlCommandText = "select top(" + nSizeperpage + ") X_InwardsCode as quotationNo ,D_RFQInwardsDate as quotationDate, * from vw_RFQVendorListMaster where N_CompanyID=@p1 "   + xSearchkey + " and N_VendorListMasterID not in (select top(" + Count + ") N_VendorListMasterID from vw_RFQVendorListMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
 
                         Params.Add("@p1", nCompanyId);
                     
@@ -238,7 +238,10 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
-                        VendorMasterTable = ds.Tables["vendorMaster"];
+                        // VendorMasterTable = ds.Tables["vendorMaster"];
+                        // MultiVendorTable = ds.Tables["vendorDetails"];
+                        
+                        VendorMasterTable = ds.Tables["master"];
                         MultiVendorTable = ds.Tables["vendorDetails"];
                         DataRow VendorMasterTableRow = VendorMasterTable.Rows[0];
                         SortedList Params = new SortedList();
@@ -251,7 +254,7 @@ namespace SmartxAPI.Controllers
                         {
                             dLayer.DeleteData("Inv_RFQVendorListMaster", "N_VendorListMasterID", N_VendorListMasterID, "N_CompanyID = " + nCompanyID, connection, transaction);
                         }
-                        DocNo = VendorMasterTableRow["x_QuotationNo"].ToString();
+                        DocNo = VendorMasterTableRow["X_InwardsCode"].ToString();
                         if (X_InwardsCode == "@Auto")
                         {
                             Params.Add("N_CompanyID", nCompanyID);
@@ -284,11 +287,13 @@ namespace SmartxAPI.Controllers
                         {
                             SortedList QueryParams = new SortedList();
                             QueryParams.Add("@N_CompanyID", nCompanyID);
-                            QueryParams.Add("@N_VendorListID", myFunctions.getIntVAL(MultiVendorTable.Rows[0]["N_VendorListID"].ToString()));
-                            QueryParams.Add("@N_Price", myFunctions.getVAL(MultiVendorTable.Rows[0]["N_Price"].ToString()));
-                            QueryParams.Add("@X_Remarks", MultiVendorTable.Rows[0]["X_Remarks"].ToString());
+                            QueryParams.Add("@N_VendorID", myFunctions.getIntVAL(MultiVendorTable.Rows[k]["N_VendorID"].ToString()));
+                            QueryParams.Add("@n_QuotationDetailsID", myFunctions.getIntVAL(MultiVendorTable.Rows[k]["n_QuotationDetailsID"].ToString()));
+                            QueryParams.Add("@n_QuotationID", myFunctions.getIntVAL(MultiVendorTable.Rows[k]["n_QuotationID"].ToString()));
+                            QueryParams.Add("@N_Price", myFunctions.getVAL(MultiVendorTable.Rows[k]["N_Price"].ToString()));
+                            QueryParams.Add("@X_Remarks", MultiVendorTable.Rows[k]["X_Remarks"].ToString());
 
-                            dLayer.ExecuteNonQuery("update Inv_RFQVendorList set N_Price=@N_Price,X_Remarks=@X_Remarks where N_CompanyID=@N_CompanyID and N_VendorListID=@N_VendorListID", QueryParams, connection, transaction);
+                            dLayer.ExecuteNonQuery("update Inv_RFQVendorList set N_Price=@N_Price,X_Remarks=@X_Remarks where N_CompanyID=@N_CompanyID and N_VendorID=@N_VendorID and n_QuotationDetailsID=@n_QuotationDetailsID and n_QuotationId=@n_QuotationID ", QueryParams, connection, transaction);
                         }
                         transaction.Commit();
                         return Ok(_api.Success("Vendor Inwards Saved"));
@@ -304,7 +309,7 @@ namespace SmartxAPI.Controllers
 
            
         [HttpGet("details")]
-        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID,int nPRSID)
+        public ActionResult GetDetails(string  X_QuotationNo,int nFnYearID,int nBranchID, bool bShowAllBranchData,int nFormID,int nPRSID,int nVendorID)
         {
             DataTable Master = new DataTable();
             DataTable Detail = new DataTable();
@@ -316,7 +321,7 @@ namespace SmartxAPI.Controllers
 
             int companyid = myFunctions.GetCompanyID(User);
 
-            QueryParams.Add("@nCompanyID", companyid);
+            QueryParams.Add("@nCompanyID", companyid); 
             QueryParams.Add("@X_QuotationNo", X_QuotationNo);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
@@ -352,7 +357,14 @@ namespace SmartxAPI.Controllers
 
                             ds.Tables.Add(Master);
 
-                            _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID";
+                            string vendorCriteria="";
+
+                            if(nVendorID>0){
+                            QueryParams.Add("@nVendorID", nVendorID);
+
+                            vendorCriteria =  " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
+}
+                            _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID "+vendorCriteria;
                             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                             Detail = _api.Format(Detail, "details");
@@ -362,7 +374,7 @@ namespace SmartxAPI.Controllers
                             }
                             ds.Tables.Add(Detail);
 
-                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
                                 VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                                 ds.Tables.Add(VendorListDetails);
 
@@ -375,16 +387,22 @@ namespace SmartxAPI.Controllers
 
                         VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                        VendorListMaster = _api.Format(VendorListMaster, "vendorMaster");
+                        VendorListMaster = _api.Format(VendorListMaster, "master");
 
-                        if (Master.Rows.Count == 0)
+                        if (VendorListMaster.Rows.Count == 0)
                         {
                             return Ok(_api.Notice("No Results Found"));
                         }
 
+                        _sqlQuery = "Select * from vw_RFQInwardDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and X_InwardsCode=@X_QuotationNo ";
+                            Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                            Detail = _api.Format(Detail, "details");
+
+                        ds.Tables.Add(Detail);
                         ds.Tables.Add(VendorListMaster);
 
-                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,companyid,dLayer,connection);
+                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(VendorListMaster.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
                         VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                         ds.Tables.Add(VendorListDetails);
 
@@ -568,6 +586,7 @@ namespace SmartxAPI.Controllers
                 }
             }
             catch (Exception e)
+
             {
                 return Ok(_api.Error(User,e));
             }
@@ -614,7 +633,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
+        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int nFnYearID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable VendorListDetails = new DataTable();
             string sqlCommand="";
@@ -623,11 +642,12 @@ namespace SmartxAPI.Controllers
             Params.Add("@nQuotationID", nQuotationID);
             Params.Add("@nCompanyID", N_CompanyID);
             Params.Add("@nVendorID", nVendorID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             if(nVendorID!=0)
-                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID";
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID and N_FnYearID=@nFnYearID";
             else
-                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID";
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_FnYearID=@nFnYearID";
 
             VendorListDetails = dLayer.ExecuteDataTable(sqlCommand, Params, connection);
 
@@ -636,6 +656,86 @@ namespace SmartxAPI.Controllers
 
             return VendorListDetails; 
         }
+
+
+        [HttpGet("rfqVendorList")]
+        public ActionResult GetRFQVendorList(int N_QuotationID,int N_FnYearID)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID = myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID", nCompanyID);
+            Params.Add("@N_QuotationID", N_QuotationID);
+            Params.Add("@N_FnYearID", N_FnYearID);
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+
+                    dt=GetVendorListTable(N_QuotationID,0,N_FnYearID,nCompanyID,dLayer,connection);
+                    dt = _api.Format(dt, "vendorList");
+
+                }
+                dt = _api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(_api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(_api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User,e));
+            }
+        }
+
+        // [HttpGet("rfqDetails")]
+        // public ActionResult GetRFQDetails(int nQuotationID,int nVendorID)
+        // {
+        //     DataTable Detail = new DataTable();
+        //     DataTable RecepientTable = new DataTable();
+        //     DataSet ds = new DataSet();
+        //     SortedList Params = new SortedList();
+        //     SortedList QueryParams = new SortedList();
+
+        //     int companyid = myFunctions.GetCompanyID(User);
+
+        //     QueryParams.Add("@nCompanyID", companyid);
+        //     QueryParams.Add("@nQuotationID", nQuotationID);
+        //     QueryParams.Add("@nVendorID", nVendorID);
+        //     string _sqlQuery = "";
+        //     try
+        //     {
+        //         using (SqlConnection connection = new SqlConnection(connectionString))
+        //         {
+        //             connection.Open();
+
+        //             if(nVendorID!=0)
+        //                 _sqlQuery = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID";
+        //             else
+        //                 _sqlQuery = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID";
+
+        //             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+        //             Detail = _api.Format(Detail, "rfqDetails");
+
+        //             ds.Tables.Add(Detail);
+
+        //             return Ok(_api.Success(ds));
+        //         }
+        //     }
+        //     catch (Exception e)
+        //     {
+        //         return Ok(_api.Error(User,e));
+        //     }
+        // }
+
 
     }
 }

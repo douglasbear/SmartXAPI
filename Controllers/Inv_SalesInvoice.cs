@@ -129,33 +129,29 @@ namespace SmartxAPI.Controllers
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
-                    dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
+                   // dt = myFunctions.AddNewColumnToDataTable(dt, "N_BalanceAmt", typeof(double), 0);
                     dt = myFunctions.AddNewColumnToDataTable(dt, "N_DueDays", typeof(string), "");
                     double BalanceAmt = 0;
                     foreach (DataRow var in dt.Rows)
                     {
-                        object objBal = dLayer.ExecuteScalar("SELECT SUM(N_BalanceAmount) from  vw_InvReceivables where N_SalesId=" + var["N_SalesId"] + " and X_Type= '" + X_TransType + "' and N_CompanyID=" + myFunctions.GetCompanyID(User), Params, connection);
-                        if (objBal != null)
+                        BalanceAmt = myFunctions.getVAL(var["N_BalanceAmt"].ToString()); 
+                        if (BalanceAmt > 0)
                         {
-                            BalanceAmt = myFunctions.getVAL(objBal.ToString());
-                            if (BalanceAmt > 0)
+                            if (var["N_InvDueDays"].ToString() != "")
                             {
-                                var["N_BalanceAmt"] = BalanceAmt;
-                                if (var["N_InvDueDays"].ToString() != "")
+                                DateTime dtInvoice = new DateTime();
+                                DateTime dtDuedate = new DateTime();
+                                dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
+                                dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
+                                if (DateTime.Now > dtDuedate)
                                 {
-                                    DateTime dtInvoice = new DateTime();
-                                    DateTime dtDuedate = new DateTime();
-                                    dtInvoice = Convert.ToDateTime(var["Invoice Date"].ToString());
-                                    dtDuedate = dtInvoice.AddDays(myFunctions.getIntVAL(var["N_InvDueDays"].ToString()));
-                                    if (DateTime.Now > dtDuedate)
-                                    {
-                                        var DueDays = (DateTime.Now - dtDuedate).TotalDays;
-                                        string Due_Days = Math.Truncate(DueDays).ToString();
-                                        var["N_DueDays"] = Due_Days.ToString() + " days";
-                                    }
+                                    var DueDays = (DateTime.Now - dtDuedate).TotalDays;
+                                    string Due_Days = Math.Truncate(DueDays).ToString();
+                                    var["N_DueDays"] = Due_Days.ToString() + " days";
                                 }
                             }
                         }
+
 
                     }
 
@@ -1163,6 +1159,7 @@ namespace SmartxAPI.Controllers
                                 dLayer.ExecuteNonQuery(" delete from Acc_VoucherDetails Where N_CompanyID=" + N_CompanyID + " and N_InventoryID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and N_FnYearID=" + N_FnYearID + " and X_TransType = 'SA'", connection, transaction);
                                 dLayer.ExecuteNonQuery(" delete from Inv_PayReceiptDetails Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " ", connection, transaction);
                                 dLayer.ExecuteNonQuery(" delete from Inv_PayReceipt Where N_CompanyID=" + N_CompanyID + " and N_PayReceiptID=" + myFunctions.getIntVAL(nRecieptID.ToString()) + " and  N_FnYearID=" + N_FnYearID + " ", connection, transaction);
+                               dLayer.DeleteData("Inv_SalesAdvanceSettlement", "N_SalesID", N_SalesID, "N_CompanyID = " + N_CompanyID + " and N_FnYearID=" + N_FnYearID + "", connection, transaction);
                             }
 
                         SortedList DeleteParams = new SortedList(){
