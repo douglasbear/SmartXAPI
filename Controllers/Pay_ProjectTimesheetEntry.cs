@@ -111,38 +111,67 @@ namespace SmartxAPI.Controllers
                     connection.Open();
                     SqlTransaction transaction = connection.BeginTransaction();
                     DataTable MasterTable;
+                     DataTable DetailTable;
                     MasterTable = ds.Tables["master"];
+                    DetailTable=ds.Tables["details"];
                     SortedList Params = new SortedList();
-                  int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyID"].ToString());
-                  int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_TimeSheetID"].ToString());
-                  int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
-                  string hours = MasterTable.Rows[0]["n_Hours"].ToString();
-
-                  string[] splitTime = hours.Split(".");
-
-                  string TimeSpanFormat="00:00:00";
-                  if(splitTime.Length==2)
-                   TimeSpanFormat = splitTime[0]+":"+splitTime[1]+":00";
-                   else
-                   if(splitTime.Length==1)
-                   TimeSpanFormat = splitTime[0]+":00:00";
-
-                   MasterTable=myFunctions.AddNewColumnToDataTable(MasterTable,"D_Hours",typeof(string),TimeSpanFormat);
-                   MasterTable.AcceptChanges();
-
-
-                
-                    nTimeSheetID = dLayer.SaveData("prj_timesheetEntry", "n_TimeSheetID", MasterTable, connection, transaction);
                     
-                    transaction.Commit();
-                    return Ok(_api.Success("Project Timesheet Saved")) ;
+                  int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
+                  int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PrjTimeSheetID"].ToString());
+                  int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                   string X_PrjTimesheetCode = "";
+                   var values = MasterTable.Rows[0]["X_PrjTimesheetCode"].ToString();
+
+                     if (values == "@Auto")
+                    {
+                        Params.Add("N_CompanyID",nCompanyID);
+                        Params.Add("N_PrjTimeSheetID",nTimeSheetID);
+                    
+                        X_PrjTimesheetCode = dLayer.GetAutoNumber("Prj_TimeSheetEntryMaster", "X_PrjTimesheetCode", Params, connection, transaction);
+                        if (X_PrjTimesheetCode == "") {
+                             transaction.Rollback(); 
+                             return Ok(_api.Warning("Unable to generate"));
+                         }
+                        MasterTable.Rows[0]["X_PrjTimesheetCode"] = X_PrjTimesheetCode;
+                    }
+                    //  if (nTimeSheetID > 0)
+                    // {
+                    //     dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                    //     dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                    // }
+                
+                    nTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntryMaster", "N_PrjTimeSheetID", MasterTable, connection, transaction);
+
+                      if (nTimeSheetID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+                    }
+                    for (int j = 0; j < DetailTable.Rows.Count; j++)
+                    {
+                        DetailTable.Rows[j]["N_PrjTimeSheetID"] = nTimeSheetID;
+                    }
+                    int nPrjTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntry", "N_PrjTimeSheetID", DetailTable, connection, transaction);
+                    if (nPrjTimeSheetID <= 0)
+                    {
+                        transaction.Rollback();
+                        return Ok(_api.Error(User,"Unable to save"));
+
+                    }
+
+                     transaction.Commit();
+
+                    SortedList Result = new SortedList();
+                    Result.Add("N_PrjTimeSheetID", nTimeSheetID);
+                    Result.Add("X_PrjTimesheetCode", X_PrjTimesheetCode);
+                    return Ok(_api.Success(Result, "Project Time sheet saved"));
                 }
             }
             catch (Exception ex)
             {
                 if(ex.Message.Contains("Conversion failed when converting date and/or time from character string"))
                 return Ok(_api.Error(User,"Invalid Time Value"));
-else
+                  else
                 return Ok(_api.Error(User,ex));
             }
         }
