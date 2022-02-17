@@ -471,17 +471,16 @@ namespace SmartxAPI.Controllers
                                 xURL = myFunctions.EncryptStringForUrl(companyid + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator + row["N_PKeyID"].ToString(), System.Text.Encoding.Unicode);
                                 xURL = AppURL + "/client/vendor/14/" + xURL + "/rfqVendorInward/" + xInwardCode;
 
-                                xBodyText = " Honored," +
-                                            " Through this email, I wish to formally request a price quotation for a selection of goods from your esteemed company." +
-                                            " Please fill out price quotation throug below link " +
+                                xBodyText = " Hi," +
+                                            " I wish to formally request a price quotation for a selection of goods/services from your esteemed company. Please fill out price quotation throug below link;" +
                                             xURL +
-                                            " In case you require any further information, or due to company policy we need to fill out a quotation form, do not hesitate to contact me." +
-                                            " I look forward to hearing from you and possibly doing business in the future.";
+                                            " In case you require any further information, or due to company policy we need to fill out a quotation form, do not hesitate to contact me. I look forward to hearing from you and possibly doing business in the future." +
+                                            " It is auomated email from OlivoERP based on the approval of the authorized person from "+ myFunctions.GetCompanyName(User)+".";
                                 myFunctions.SendMailWithAttachments(0, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
                             }
                         }else if(row["x_TxnType"].ToString().ToLower() == "purchase order"){
                             xSubject = "Purchase Order";
-                            xBodyText = "";
+                            xBodyText = "Please find the attached document";
                             myFunctions.SendMailWithAttachments(82, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
                         }
                     }
