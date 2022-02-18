@@ -345,11 +345,16 @@ namespace SmartxAPI.Controllers
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                         QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
 
-                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_DecisionDone", typeof(int), 0);
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsDecisionDone", typeof(int), 0);
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsInwardsDone", typeof(int), 0);
 
                         object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
-                        if(objDecisionDone!=null)
-                            Master.Rows[0]["n_DecisionDone"]=1;
+                        if(myFunctions.getIntVAL(objDecisionDone.ToString())!=0)
+                            Master.Rows[0]["n_IsDecisionDone"]=1;
+
+                        object objInwardsDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQVendorListMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
+                        if(myFunctions.getIntVAL(objInwardsDone.ToString())!=0)
+                            Master.Rows[0]["n_IsInwardsDone"]=1;
 
                         Master = _api.Format(Master, "master");
 
@@ -392,11 +397,11 @@ namespace SmartxAPI.Controllers
 
                         VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
-                        VendorListMaster = myFunctions.AddNewColumnToDataTable(VendorListMaster, "n_DecisionDone", typeof(int), 0);
+                        VendorListMaster = myFunctions.AddNewColumnToDataTable(VendorListMaster, "n_IsDecisionDone", typeof(int), 0);
 
                         object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
-                        if(objDecisionDone!=null)
-                            VendorListMaster.Rows[0]["n_DecisionDone"]=1;
+                        if(myFunctions.getIntVAL(objDecisionDone.ToString())!=0)
+                            VendorListMaster.Rows[0]["n_IsDecisionDone"]=1;
 
                         VendorListMaster = _api.Format(VendorListMaster, "master");
 
