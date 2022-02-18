@@ -444,7 +444,7 @@ namespace SmartxAPI.Controllers
                         {
                             if (myFunctions.CreatePortalUser(companyid, myFunctions.getIntVAL(row["N_BranchID"].ToString()), row["X_PartyName"].ToString(), row["X_Email"].ToString(), row["X_PartyType"].ToString(), row["X_PartyCode"].ToString(), myFunctions.getIntVAL(row["N_PartyID"].ToString()), true, dLayer, connection, transaction))
                             {
-                                xSubject = "RFQ Inward";
+                                //xSubject = "RFQ Inward";
 
                                 object xInwardCode = dLayer.ExecuteScalar("select X_InwardsCode from Inv_RFQVendorListMaster where N_QuotationID=" + myFunctions.getIntVAL(row["N_PKeyID"].ToString()) + " and N_CompanyID=" + companyid + " and N_VendorID=" + myFunctions.getIntVAL(row["N_PartyID"].ToString()), connection, transaction);
                                 if (xInwardCode == null)
@@ -471,17 +471,31 @@ namespace SmartxAPI.Controllers
                                 xURL = myFunctions.EncryptStringForUrl(companyid + seperator + row["N_PartyID"].ToString() + seperator + row["X_TxnType"].ToString() + seperator + row["N_PKeyID"].ToString(), System.Text.Encoding.Unicode);
                                 xURL = AppURL + "/client/vendor/14/" + xURL + "/rfqVendorInward/" + xInwardCode;
 
-                                xBodyText = " Honored," +
-                                            " Through this email, I wish to formally request a price quotation for a selection of goods from your esteemed company." +
-                                            " Please fill out price quotation throug below link " +
-                                            xURL +
-                                            " In case you require any further information, or due to company policy we need to fill out a quotation form, do not hesitate to contact me." +
-                                            " I look forward to hearing from you and possibly doing business in the future.";
+                                xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='rfq'", connection, transaction).ToString();
+                                xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='rfq'", connection, transaction).ToString();
+
+                                SortedList Params = new SortedList();
+                                DataTable dtRFQ = dLayer.ExecuteDataTable("select D_DueDate,datename(dw,D_DueDate) AS X_DueDay from Inv_VendorRequest where N_CompanyID="+companyid+" and N_QuotationID="+myFunctions.getIntVAL(row["N_PKeyID"].ToString()),Params, connection,transaction);
+                                
+                                xBodyText=xBodyText.Replace("@PartyName",row["X_PartyName"].ToString());
+                                xBodyText=xBodyText.Replace("@URL",xURL);
+                                xBodyText=xBodyText.Replace("@CompanyName",myFunctions.GetCompanyName(User));
+                                xBodyText=xBodyText.Replace("@DueDate",dtRFQ.Rows[0]["D_DueDate"].ToString());
+                                xBodyText=xBodyText.Replace("@DueDay",dtRFQ.Rows[0]["X_DueDay"].ToString());
+                                // xBodyText = " Honored," +
+                                //             " Through this email, I wish to formally request a price quotation for a selection of goods from your esteemed company." +
+                                //             " Please fill out price quotation throug below link " +
+                                //             xURL +
+                                //             " In case you require any further information, or due to company policy we need to fill out a quotation form, do not hesitate to contact me." +
+                                //             " I look forward to hearing from you and possibly doing business in the future.";
                                 myFunctions.SendMailWithAttachments(0, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
                             }
                         }else if(row["x_TxnType"].ToString().ToLower() == "purchase order"){
-                            xSubject = "Purchase Order";
-                            xBodyText = "";
+
+                            xSubject = dLayer.ExecuteScalar("select X_Subject from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='Purchase Order'", connection, transaction).ToString();
+                            xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='Purchase Order'", connection, transaction).ToString();
+                            xBodyText=xBodyText.Replace("@PartyName",row["X_PartyName"].ToString());
+
                             myFunctions.SendMailWithAttachments(82, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
                         }
                     }

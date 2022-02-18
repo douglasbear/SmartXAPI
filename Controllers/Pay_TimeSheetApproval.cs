@@ -802,9 +802,7 @@ namespace SmartxAPI.Controllers
                     {
                         MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
                         MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString())+j).ToString();
-
-                       
-                    
+                   
                         nTimesheetmasterID = dLayer.SaveDataWithIndex("Pay_TimeSheetMaster", "N_TimeSheetID","","",j, MasterDetailTable, connection, transaction);
                         if (nTimesheetmasterID <= 0)
                         {
