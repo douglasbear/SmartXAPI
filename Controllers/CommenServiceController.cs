@@ -379,7 +379,7 @@ namespace SmartxAPI.Controllers
                     ipAddress = HttpContext.Connection.RemoteIpAddress.MapToIPv4().ToString();
 
 
-                if (reqType == "customer")
+                if (reqType.ToLower() == "customer")
                 {
                     SortedList Res = new SortedList();
                     string seperator = "$e$-!";
@@ -401,6 +401,36 @@ namespace SmartxAPI.Controllers
                         DataRow dRow = output.Rows[0];
 
                         var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), "customer", 10, "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress,myFunctions.GetLoginID(User));
+
+                        if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
+
+                        return Ok(_api.Success(user));
+
+                    }
+
+
+                }
+                if (reqType.ToLower() == "vendor")
+                {
+                    SortedList Res = new SortedList();
+                    string seperator = "$$";
+                    string[] cred = myFunctions.DecryptStringFromUrl(customerKey,System.Text.Encoding.Unicode ).Split(seperator);
+                    int companyID = myFunctions.getIntVAL(cred[0]);
+                    int nVendorID = myFunctions.getIntVAL(cred[1]);
+                    using (SqlConnection conn = new SqlConnection(connectionString))
+                    {
+                        conn.Open();
+                        string sql = "SELECT Acc_Company.N_CompanyID, Acc_Company.X_CompanyName, Sec_User.X_UserID, Sec_User.N_UserID, Acc_Company.N_ClientID FROM Inv_Customer LEFT OUTER JOIN Acc_Company ON Inv_Customer.N_CompanyID = Acc_Company.N_CompanyID RIGHT OUTER JOIN Sec_User ON Sec_User.N_CompanyID = Inv_Customer.N_CompanyID AND Sec_User.N_CustomerID = Inv_Customer.N_CustomerID WHERE Sec_User.N_LoginFlag="+appID+" and Inv_Customer.N_CustomerID=" + nVendorID;
+                        SortedList Params = new SortedList();
+                        DataTable output = dLayer.ExecuteDataTable(sql, conn);
+                        if (output.Rows.Count == 0)
+                        {
+                            return Ok(_api.Error(User, "Unauthorized Access"));
+                        }
+
+                        DataRow dRow = output.Rows[0];
+
+                        var user = _repository.Authenticate(myFunctions.getIntVAL(dRow["N_CompanyID"].ToString()), dRow["X_CompanyName"].ToString(), dRow["X_UserID"].ToString(), myFunctions.getIntVAL(dRow["N_UserID"].ToString()), reqType, appID , "", myFunctions.getIntVAL(dRow["N_ClientID"].ToString()), 0, ipAddress,myFunctions.GetLoginID(User));
 
                         if (user == null) { return Ok(_api.Error(User, "Unauthorized Access")); }
 

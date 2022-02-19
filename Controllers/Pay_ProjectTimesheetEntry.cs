@@ -132,7 +132,7 @@ namespace SmartxAPI.Controllers
 
 
                 
-                    nTimeSheetID = dLayer.SaveData("prj_timesheet", "n_TimeSheetID", MasterTable, connection, transaction);
+                    nTimeSheetID = dLayer.SaveData("prj_timesheetEntry", "n_TimeSheetID", MasterTable, connection, transaction);
                     
                     transaction.Commit();
                     return Ok(_api.Success("Project Timesheet Saved")) ;
@@ -157,7 +157,7 @@ else
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
-                    Results = dLayer.DeleteData("prj_timesheet", "n_TimeSheetID", nTimeSheetID, "", connection);
+                    Results = dLayer.DeleteData("prj_timesheetEntry", "n_TimeSheetID", nTimeSheetID, "", connection);
                     if (Results > 0)
                     {
                         return Ok( _api.Success("deleted"));

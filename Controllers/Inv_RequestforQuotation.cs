@@ -340,10 +340,21 @@ namespace SmartxAPI.Controllers
                         else
                             Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo and N_BranchID=@nBranchID";
 
-
                         _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
 
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+                        QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
+
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsDecisionDone", typeof(int), 0);
+                        Master = myFunctions.AddNewColumnToDataTable(Master, "n_IsInwardsDone", typeof(int), 0);
+
+                        object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
+                        if(myFunctions.getIntVAL(objDecisionDone.ToString())!=0)
+                            Master.Rows[0]["n_IsDecisionDone"]=1;
+
+                        object objInwardsDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQVendorListMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID and ISNULL(B_IsUpdated,0)=1", QueryParams, connection);
+                        if(myFunctions.getIntVAL(objInwardsDone.ToString())!=0)
+                            Master.Rows[0]["n_IsInwardsDone"]=1;
 
                         Master = _api.Format(Master, "master");
 
@@ -353,17 +364,16 @@ namespace SmartxAPI.Controllers
                         }
                         else
                         {
-                            QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
-
+                           
                             ds.Tables.Add(Master);
 
                             string vendorCriteria="";
 
-                            if(nVendorID>0){
-                            QueryParams.Add("@nVendorID", nVendorID);
-
-                            vendorCriteria =  " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
-}
+                            if(nVendorID>0)
+                            {
+                                QueryParams.Add("@nVendorID", nVendorID);
+                                vendorCriteria =  " and N_QuotationDetailsID in (select N_QuotationDetailsID from Inv_RFQVendorList where N_VendorID=@nVendorID and N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID) ";
+                            }                           
                             _sqlQuery = "Select *,dbo.SP_Cost(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID,'') As N_LPrice,dbo.SP_SellingPrice(vw_InvVendorRequestDetails.N_ItemID,vw_InvVendorRequestDetails.N_CompanyID) As N_UnitSPrice  from vw_InvVendorRequestDetails Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and N_QuotationID=@N_QuotationID "+vendorCriteria;
                             Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
@@ -386,6 +396,12 @@ namespace SmartxAPI.Controllers
                         _sqlQuery = "Select * from vw_RFQVendorListMaster Where N_CompanyID=@nCompanyID and X_InwardsCode=@X_QuotationNo";
 
                         VendorListMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        VendorListMaster = myFunctions.AddNewColumnToDataTable(VendorListMaster, "n_IsDecisionDone", typeof(int), 0);
+
+                        object objDecisionDone = dLayer.ExecuteScalar("select COUNT(N_QuotationID) from Inv_RFQDecisionMaster where N_CompanyID=@nCompanyID and N_QuotationID=@N_QuotationID", QueryParams, connection);
+                        if(myFunctions.getIntVAL(objDecisionDone.ToString())!=0)
+                            VendorListMaster.Rows[0]["n_IsDecisionDone"]=1;
 
                         VendorListMaster = _api.Format(VendorListMaster, "master");
 

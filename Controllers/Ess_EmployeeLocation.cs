@@ -44,13 +44,12 @@ namespace SmartxAPI.Controllers
             DataTable location = new DataTable();
             DataTable devices = new DataTable();
             DataTable Approvals= new DataTable();
-            // Approvals = ds.Tables["approval"];
-            // DataRow ApprovalRow = Approvals.Rows[0];
             SortedList Params = new SortedList();
             int nCompanyId = myFunctions.GetCompanyID(User);
 
 
-            string sqlLocation = "SELECT Pay_WorkLocation.* FROM  Pay_WorkLocation LEFT OUTER JOIN  Pay_Employee ON Pay_WorkLocation.N_LocationId = Pay_Employee.N_WorkLocationID AND Pay_WorkLocation.N_CompanyId = Pay_Employee.N_CompanyID where Pay_Employee.N_CompanyID=@p1 and Pay_Employee.N_EmpID=@p2 and Pay_Employee.N_FnYearID=@nFnYearID ";
+            //string sqlLocation = "SELECT Pay_WorkLocation.* FROM  Pay_WorkLocation LEFT OUTER JOIN  Pay_Employee ON Pay_WorkLocation.N_LocationId = Pay_Employee.N_WorkLocationID AND Pay_WorkLocation.N_CompanyId = Pay_Employee.N_CompanyID where Pay_Employee.N_CompanyID=@p1 and Pay_Employee.N_EmpID=@p2 and Pay_Employee.N_FnYearID=@nFnYearID ";
+            string sqlLocation = "SELECT * from vw_LocationProjects where N_CompanyID=@p1 and X_EmpsID like '%"+nEmpID+"%'";
             string sqlDevices = "SELECT * FROM  Pay_EmpDeviceIDRegistration where N_CompanyID=@p1 and N_EmpID=@p2 and X_DeviceID=@deviceID and B_Active=1";
            
             Params.Add("@p1", nCompanyId);

@@ -165,6 +165,7 @@ namespace SmartxAPI.Data
                         case "app":
                         case "switchcompany":
                         case "customer":
+                        case "vendor":
 
 
                             string Modules = "";
