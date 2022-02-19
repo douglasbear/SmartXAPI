@@ -20,7 +20,7 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions _api;
         private readonly IMyFunctions myFunctions;
         private readonly string connectionString;
-        // private readonly int FormID;
+         private readonly int FormID;
 
         public Pay_ProjectTimesheetEntry(IDataAccessLayer dl, IApiFunctions api, IMyFunctions myFun, IConfiguration conf)
         {
@@ -28,7 +28,7 @@ namespace SmartxAPI.Controllers
             _api = api;
             myFunctions = myFun;
             connectionString = conf.GetConnectionString("SmartxConnection");
-            // FormID = 370;
+             FormID = 370;
 
         }
  [HttpGet("list")]
@@ -116,16 +116,18 @@ namespace SmartxAPI.Controllers
                     DetailTable=ds.Tables["details"];
                     SortedList Params = new SortedList();
                     
-                  int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
-                  int nTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PrjTimeSheetID"].ToString());
-                  int nEmpId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_UserID"].ToString());
+                  int N_CompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_CompanyID"].ToString());
+                  int N_PrjTimeSheetID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_PrjTimeSheetID"].ToString());
+                  int N_UserID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_UserID"].ToString());
                    string X_PrjTimesheetCode = "";
                    var values = MasterTable.Rows[0]["X_PrjTimesheetCode"].ToString();
 
                      if (values == "@Auto")
                     {
-                        Params.Add("N_CompanyID",nCompanyID);
-                        Params.Add("N_PrjTimeSheetID",nTimeSheetID);
+                        Params.Add("N_CompanyID",N_CompanyID);
+                         Params.Add("N_PrjTimeSheetID",N_PrjTimeSheetID);
+                          Params.Add("N_UserID",N_UserID);
+                        Params.Add("N_FormID", FormID);
                     
                         X_PrjTimesheetCode = dLayer.GetAutoNumber("Prj_TimeSheetEntryMaster", "X_PrjTimesheetCode", Params, connection, transaction);
                         if (X_PrjTimesheetCode == "") {
@@ -140,16 +142,16 @@ namespace SmartxAPI.Controllers
                     //     dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
                     // }
                 
-                    nTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntryMaster", "N_PrjTimeSheetID", MasterTable, connection, transaction);
+                    N_PrjTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntryMaster", "N_PrjTimeSheetID", MasterTable, connection, transaction);
 
-                      if (nTimeSheetID <= 0)
+                      if (N_PrjTimeSheetID <= 0)
                     {
                         transaction.Rollback();
                         return Ok(_api.Error(User,"Unable to save"));
                     }
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
-                        DetailTable.Rows[j]["N_PrjTimeSheetID"] = nTimeSheetID;
+                        DetailTable.Rows[j]["N_PrjTimeSheetID"] = N_PrjTimeSheetID;
                     }
                     int nPrjTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntry", "N_PrjTimeSheetID", DetailTable, connection, transaction);
                     if (nPrjTimeSheetID <= 0)
@@ -162,7 +164,7 @@ namespace SmartxAPI.Controllers
                      transaction.Commit();
 
                     SortedList Result = new SortedList();
-                    Result.Add("N_PrjTimeSheetID", nTimeSheetID);
+                    Result.Add("N_PrjTimeSheetID", N_PrjTimeSheetID);
                     Result.Add("X_PrjTimesheetCode", X_PrjTimesheetCode);
                     return Ok(_api.Success(Result, "Project Time sheet saved"));
                 }
