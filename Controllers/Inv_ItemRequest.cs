@@ -625,7 +625,40 @@ namespace SmartxAPI.Controllers
             }
 
         }
-  
+        
+  [HttpGet("TimeLinelist")]
+        public ActionResult GetList(int nPRSID)
+
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int nCompanyID=myFunctions.GetCompanyID(User);
+            Params.Add("@nCompanyID",nCompanyID);
+            Params.Add("@nPRSID",nPRSID);
+            string sqlCommandText="Select * from vw_PRSTimeLine where P_KeyID=@nPRSID";
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params , connection);
+                }
+                dt = api.Format(dt);
+                if (dt.Rows.Count == 0)
+                {
+                    return Ok(api.Notice("No Results Found"));
+                }
+                else
+                {
+                    return Ok(api.Success(dt));
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(api.Error(User,e));
+            }
+        }
 
     }
-}
+} 
+ 
