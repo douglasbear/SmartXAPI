@@ -74,14 +74,9 @@ namespace SmartxAPI.Controllers
                     object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
                     OutPut.Add("Details", _api.Format(dt));
                     OutPut.Add("TotalCount", TotalCount);
-                    if (dt.Rows.Count == 0)
-                    {
-                        return Ok(_api.Warning("No Results Found"));
-                    }
-                    else
-                    {
+
                         return Ok(_api.Success(OutPut));
-                    }
+
 
                 }
 
@@ -167,7 +162,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("details")]
-        public ActionResult PayEmployeApprovalCode(int xTimesheetCode, int nFnYearID)
+        public ActionResult PayEmployeApprovalCode(int xTimesheetCode, int nFnYearID,int nProjectID)
         {
 
 
@@ -191,10 +186,13 @@ namespace SmartxAPI.Controllers
                     Mastersql = "select * from vw_Prj_TimeSheetMaster_Disp where N_CompanyId=@nCompanyID and X_TimesheetCode=@xTimesheetCode and N_FnYearID=@nFnYearID";
                    
                     MasterTable = dLayer.ExecuteDataTable(Mastersql, Params, connection);
-                    if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
+                    // if (MasterTable.Rows.Count == 0) { return Ok(_api.Warning("No data found")); }
                    
                     MasterTable = _api.Format(MasterTable, "Master");
                     DetailSql = "select * from  vw_Prj_TimeSheet_Disp where N_CompanyId=@nCompanyID and X_TimesheetCode=@xTimesheetCode and N_FnYearID=@nFnYearID";
+                    if(nProjectID>0){
+                        DetailSql = "select N_CompanyID, N_TimesheetID, X_ProjectName, N_ProjectID, 0 as N_TimesheetDetailID, N_EmpID, 0 as N_TimesheetHours, 0 as N_Amount, Sum(N_Hours) as N_Hours,X_EmpName, N_FnYearID,X_EmpCode from vw_Prj_TimeSheet where N_ProjectID="+nProjectID+" group by N_CompanyID, N_TimesheetID, X_ProjectName, N_ProjectID, N_EmpID, X_EmpName, N_FnYearID, X_EmpCode ";
+                    }
                     DetailTable = dLayer.ExecuteDataTable(DetailSql, Params, connection);
                     DetailTable = _api.Format(DetailTable, "Details");
                     dt.Tables.Add(MasterTable);

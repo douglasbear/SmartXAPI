@@ -635,7 +635,7 @@ namespace SmartxAPI.Controllers
             int nCompanyID=myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID",nCompanyID);
             Params.Add("@nPRSID",nPRSID);
-            string sqlCommandText="Select * from vw_PRSTimeLine where P_KeyID=@nPRSID";
+            string sqlCommandText="Select FORMAT (d_Date, 'dd-MMM-yyyy') as date,type as name,x_DocNo as s,'' as t from vw_PRSTimeLine where P_KeyID=@nPRSID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

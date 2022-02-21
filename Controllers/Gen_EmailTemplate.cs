@@ -450,7 +450,7 @@ namespace SmartxAPI.Controllers
                                 if (xInwardCode == null)
                                 {
                                     string inwardInsert = "insert into Inv_RFQVendorListMaster " +
-                                    "select N_CompanyID,(select isnull(max(N_VendorListMasterID),0)+1 from Inv_RFQVendorListMaster) ,(select isnull(max(X_InwardsCode),0)+1 from Inv_RFQVendorListMaster),N_QuotationID,Getdate(),Getdate()," + myFunctions.getIntVAL(row["N_PartyID"].ToString()) + "    from Inv_VendorRequest where N_QuotationID=" + myFunctions.getIntVAL(row["N_PKeyID"].ToString()) + " and N_CompanyID=" + companyid;
+                                    "select N_CompanyID,(select isnull(max(N_VendorListMasterID),0)+1 from Inv_RFQVendorListMaster) ,(select isnull(max(X_InwardsCode),0)+1 from Inv_RFQVendorListMaster),N_QuotationID,Getdate(),Getdate()," + myFunctions.getIntVAL(row["N_PartyID"].ToString()) + ",0    from Inv_VendorRequest where N_QuotationID=" + myFunctions.getIntVAL(row["N_PKeyID"].ToString()) + " and N_CompanyID=" + companyid;
                                     object inwardID = dLayer.ExecuteNonQuery(inwardInsert, connection, transaction);
                                     if (inwardID == null)
                                         inwardID = 0;
@@ -488,7 +488,7 @@ namespace SmartxAPI.Controllers
                                 //             xURL +
                                 //             " In case you require any further information, or due to company policy we need to fill out a quotation form, do not hesitate to contact me." +
                                 //             " I look forward to hearing from you and possibly doing business in the future.";
-                                myFunctions.SendMailWithAttachments(0, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
+                                myFunctions.SendMailWithAttachments(618, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
                             }
                         }else if(row["x_TxnType"].ToString().ToLower() == "purchase order"){
 
@@ -496,7 +496,7 @@ namespace SmartxAPI.Controllers
                             xBodyText = dLayer.ExecuteScalar("select X_Body from Gen_MailTemplates where N_CompanyId="+companyid+" and X_Type='Purchase Order'", connection, transaction).ToString();
                             xBodyText=xBodyText.Replace("@PartyName",row["X_PartyName"].ToString());
 
-                            myFunctions.SendMailWithAttachments(82, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
+                            myFunctions.SendMailWithAttachments(82, myFunctions.getIntVAL(row["N_FnYearID"].ToString()), myFunctions.getIntVAL(row["N_PKeyID"].ToString()),myFunctions.getIntVAL(row["N_PartyID"].ToString()), row["X_PartyName"].ToString(), xSubject, row["X_DocNo"].ToString(), row["X_Email"].ToString(), xBodyText, dLayer, User);
                         }
                     }
 
