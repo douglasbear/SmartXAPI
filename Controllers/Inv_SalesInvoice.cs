@@ -56,6 +56,21 @@ namespace SmartxAPI.Controllers
                     string X_TransType = "SALES";
                     string criteria = "";
                     string cndn = "";
+                     string UserPattern = myFunctions.GetUserPattern(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                Params.Add("@UserPattern", UserPattern);
+            }
+            else
+            {
+                object B_userpattern = dLayer.ExecuteScalar("select top(1) N_HierarchyID from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+                if(B_userpattern!="")
+                    Pattern = " and N_UserID=" + nUserID;
+               
+            }
                     int N_decimalPlace = 2;
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyId, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
@@ -119,9 +134,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -156,7 +171,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
