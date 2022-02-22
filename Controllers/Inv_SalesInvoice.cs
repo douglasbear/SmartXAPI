@@ -354,7 +354,7 @@ namespace SmartxAPI.Controllers
 
 
                         string DeliveryNoteAppend = "0";
-                        if (N_salesOrderID > 0)
+                        if (N_salesOrderID > 0 || (xDeliveryNoteID != "" && xDeliveryNoteID != null))
                         {
                             DataTable DeliveryNoteID = dLayer.ExecuteDataTable("select N_DeliveryNoteID from Inv_SalesDetails Where N_SalesOrderID=" + N_salesOrderID + "", QueryParamsList, Con);
                             if (DeliveryNoteID.Rows.Count > 0)
