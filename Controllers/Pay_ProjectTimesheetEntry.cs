@@ -140,8 +140,8 @@ namespace SmartxAPI.Controllers
                     }
                     //  if (nTimeSheetID > 0)
                     // {
-                    //     dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
-                    //     dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                        // dLayer.DeleteData("Prj_TimeSheetEntry", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
+                        // dLayer.DeleteData("Prj_TimeSheetEntryMaster", "n_PrjTimeSheetID", nTimeSheetID, "n_CompanyID=" + nCompanyID + " and n_PrjTimeSheetID=" + nTimeSheetID, connection, transaction);
                     // }
 
                     nTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntryMaster", "N_PrjTimeSheetID", MasterTable, connection, transaction);
@@ -151,9 +151,19 @@ namespace SmartxAPI.Controllers
                         transaction.Rollback();
                         return Ok(_api.Error(User, "Unable to save"));
                     }
+                    SortedList deleteParams = new SortedList();
+                    deleteParams.Add("@nCompanyID",nCompanyID);
+                    deleteParams.Add("@nProjectID",0);
+                    deleteParams.Add("@dDate",null);
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         DetailTable.Rows[j]["N_PrjTimeSheetID"] = nTimeSheetID;
+                        deleteParams["@nProjectID"] = DetailTable.Rows[j]["N_ProjectID"].ToString();
+                        deleteParams["@nEmpID"] = DetailTable.Rows[j]["N_EmpID"].ToString();
+                        deleteParams["@dDate"] = DetailTable.Rows[j]["D_Date"].ToString();
+                        deleteParams["@nCompanyID"] = nCompanyID;
+                        dLayer.ExecuteNonQuery("DELETE FROM Prj_TimeSheetEntry WHERE N_CompanyID =@nCompanyID AND N_EmpID=@nEmpID and N_ProjectID=@nProjectID and D_Date=@dDate", deleteParams, connection, transaction);
+                            
                     }
                     int N_PrjTimeSheetID = dLayer.SaveData("Prj_TimeSheetEntry", "N_TimeSheetID", DetailTable, connection, transaction);
                     if (N_PrjTimeSheetID <= 0)
@@ -206,49 +216,69 @@ namespace SmartxAPI.Controllers
             }
         }
 
+
+
         [HttpGet("details")]
-        public ActionResult GetDetails(string xPrjTimesheetCode, int nFnYearID, int nBranchID, bool bShowAllBranchData)
+        public ActionResult GetDetails(string xPrjTimesheetCode, int nFnYearID,  bool bShowAllBranchData, int nProjectID, DateTime date)
         {
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
             SortedList QueryParams = new SortedList();
-             DataTable Master = new DataTable();
-              DataTable Detail = new DataTable();
+            DataTable Master = new DataTable();
+            DataTable Detail = new DataTable();
             int nCompanyID = myFunctions.GetCompanyID(User);
-             QueryParams.Add("@nCompanyID", nCompanyID);
-            QueryParams.Add("@xPrjTimesheetCode", xPrjTimesheetCode);
-            QueryParams.Add("@nBranchID", nBranchID);
+            QueryParams.Add("@nCompanyID", nCompanyID);
+            if (nProjectID == 0)
+            {
+                QueryParams.Add("@xPrjTimesheetCode", xPrjTimesheetCode);
+                // QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
-             string Condition = "";
+            }
+            string Condition = "";
             string _sqlQuery = "";
 
-            // string sqlCommandText = "select * from vw_Prj_TimeSheetMaster where N_CompanyID=@nCompanyID and N_PrjTimeSheetID=@nTimeSheetID";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
-                 connection.Open();
+                    connection.Open();
+
 
                     if (bShowAllBranchData == true)
                         Condition = "N_CompanyID=@nCompanyID and X_PrjTimesheetCode =@xPrjTimesheetCode and N_FnYearID=@nFnYearID";
                     else
-                        Condition = "N_CompanyID=@nCompanyID and X_PrjTimesheetCode =@xPrjTimesheetCode and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
+                        Condition = "N_CompanyID=@nCompanyID and X_PrjTimesheetCode =@xPrjTimesheetCode and N_FnYearID=@nFnYearID";
 
 
                     _sqlQuery = "Select * from vw_Prj_TimeSheetMaster Where " + Condition + "";
 
-                      Master = _api.Format(Master, "master");
-                  if (Master.Rows.Count == 0)
+                    if (nProjectID > 0)
+                    {
+                        QueryParams.Add("@nProjectID", nProjectID);
+                        QueryParams.Add("@dDate", date);
+
+                        _sqlQuery = "select Top(1) N_CompanyID,0 as N_PrjTimesheetID,'@Auto' as X_PrjTimesheetCode,N_ProjectID,X_ProjectName,D_Date,X_Description,N_FnYearID,N_BranchID from vw_Prj_TimeSheet where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID and D_Date=@dDate";
+                    }
+                    Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                    Master = _api.Format(Master, "master");
+                    if (Master.Rows.Count == 0)
                     {
                         return Ok(_api.Notice("No Results Found"));
                     }
                     else
                     {
-                        Params.Add("@N_PrjTimeSheetID", Master.Rows[0]["N_PrjTimeSheetID"].ToString());
-
                         ds.Tables.Add(Master);
 
-                        _sqlQuery = "Select * from vw_Prj_TimeSheetMaster Where N_CompanyID=@nCompanyID and N_PrjTimeSheetID=@N_PrjTimeSheetID";
+                        if (nProjectID > 0)
+                        {
+                            _sqlQuery = "Select * from vw_Prj_TimeSheet Where N_CompanyID=@nCompanyID and N_ProjectID=@nProjectID and D_Date=@dDate ";
+                        }
+                        else
+                        {
+                            QueryParams.Add("@N_PrjTimeSheetID", Master.Rows[0]["N_PrjTimeSheetID"].ToString());
+                            _sqlQuery = "Select * from vw_Prj_TimeSheet Where N_CompanyID=@nCompanyID  and N_PrjTimeSheetID=@N_PrjTimeSheetID";
+                        }
                         Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                         Detail = _api.Format(Detail, "details");

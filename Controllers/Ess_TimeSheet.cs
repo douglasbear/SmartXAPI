@@ -166,26 +166,26 @@ namespace SmartxAPI.Controllers
                         {
                             HolyDays.ImportRow(row);
                         }
-                    
 
-                    foreach (DataRow row in HolyDays.Rows)
-                    {
 
-                        for (int i = Details.Rows.Count - 1; i >= 0; i--)
+                        foreach (DataRow row in HolyDays.Rows)
                         {
-                            if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_HolidayFlag"].ToString() == "0" && row["B_HolidayFlag"].ToString() == "1"))
+
+                            for (int i = Details.Rows.Count - 1; i >= 0; i--)
+                            {
+                                if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_HolidayFlag"].ToString() == "0" && row["B_HolidayFlag"].ToString() == "1"))
                                 {
-                                Details.Rows[i].Delete();
-                                Details.AcceptChanges();
+                                    Details.Rows[i].Delete();
+                                    Details.AcceptChanges();
                                 }
-                                if(row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_IsVacation"].ToString() == "0" && row["B_IsVacation"].ToString() == "1" ))
+                                if (row["d_date"].ToString() == Details.Rows[i]["d_date"].ToString() && (Details.Rows[i]["B_IsVacation"].ToString() == "0" && row["B_IsVacation"].ToString() == "1"))
                                 {
-                                Details.Rows[i].Delete();
-                                Details.AcceptChanges();
+                                    Details.Rows[i].Delete();
+                                    Details.AcceptChanges();
                                 }
-                                 Details.AcceptChanges();
+                                Details.AcceptChanges();
+                            }
                         }
-                    }
                     }
                     Details.AcceptChanges();
                     Double N_WorkHours = 0, N_WorkdHrs = 0, N_Deduction = 0, N_compensated = 0, NetDeduction = 0, Addition = 0, ExtraHour = 0;
@@ -276,7 +276,19 @@ namespace SmartxAPI.Controllers
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nEmpID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_EmpID"].ToString());
+                string userIDIndex = MasterTable.Rows[0]["userIDIndex"].ToString();
                 string Punchtype = MasterTable.Rows[0]["punchType"].ToString();
+
+                if (MasterTable.Columns.Contains("Punchtype"))
+                    MasterTable.Columns.Remove("Punchtype");
+                if (MasterTable.Columns.Contains("n_CompanyId"))
+                    MasterTable.Columns.Remove("n_CompanyId");
+                if (MasterTable.Columns.Contains("n_FnYearId"))
+                    MasterTable.Columns.Remove("n_FnYearId");
+                if (MasterTable.Columns.Contains("n_EmpID"))
+                    MasterTable.Columns.Remove("n_EmpID");
+
+
                 DataRow masterRow = MasterTable.Rows[0];
 
                 using (SqlConnection connection = new SqlConnection(connectionString))
@@ -287,35 +299,40 @@ namespace SmartxAPI.Controllers
                     int nTimesheetID = 0;
                     string defultTime = "00:00:00";
                     string currentTime = DateTime.Now.ToString("HH:mm:ss");
-                    DateTime date = DateTime.Today;
+                    DateTime date = DateTime.Now;
 
 
-                    string d_in = Convert.ToDateTime(masterRow["d_In"].ToString()).ToString("HH:mm:ss");
-                    string d_out = Convert.ToDateTime(masterRow["d_Out"].ToString()).ToString("HH:mm:ss");
-                    string d_Shift2_In = Convert.ToDateTime(masterRow["d_Shift2_In"].ToString()).ToString("HH:mm:ss");
-                    string d_Shift2_Out = Convert.ToDateTime(masterRow["d_Shift2_Out"].ToString()).ToString("HH:mm:ss");
- 
-                    if (Punchtype=="IN")
-                    {
-                        masterRow["d_In"] = currentTime;
-                    }
-                    if (Punchtype=="OUT")
-                    {
-                        masterRow["d_out"] = currentTime;
-                    }
-                    else if (d_Shift2_In == defultTime)
-                    {
-                        masterRow["d_Shift2_In"] = currentTime;
-                    }
-                    else if (d_Shift2_Out == defultTime)
-                    {
-                        masterRow["d_Shift2_Out"] = currentTime;
-                    }
-                    masterRow["d_Date"] = date.ToString();
-                    MasterTable.Columns.Remove("Punchtype");
+                    // string d_in = Convert.ToDateTime(masterRow["d_In"].ToString()).ToString("HH:mm:ss");
+                    // string d_out = Convert.ToDateTime(masterRow["d_Out"].ToString()).ToString("HH:mm:ss");
+                    // string d_Shift2_In = Convert.ToDateTime(masterRow["d_Shift2_In"].ToString()).ToString("HH:mm:ss");
+                    // string d_Shift2_Out = Convert.ToDateTime(masterRow["d_Shift2_Out"].ToString()).ToString("HH:mm:ss");
+
+                    // if (Punchtype == "IN")
+                    // {
+                    //     masterRow["d_In"] = currentTime;
+                    // }
+                    // if (Punchtype == "OUT")
+                    // {
+                    //     masterRow["d_out"] = currentTime;
+                    // }
+                    // else if (d_Shift2_In == defultTime)
+                    // {
+                    //     masterRow["d_Shift2_In"] = currentTime;
+                    // }
+                    // else if (d_Shift2_Out == defultTime)
+                    // {
+                    //     masterRow["d_Shift2_Out"] = currentTime;
+                    // }
+                    // masterRow["d_Date"] = date.ToString();
+
+                    masterRow["transactionTime"] = date.ToString();
+                    masterRow["serverRecordTime"] = date.ToString();
+
                     MasterTable.AcceptChanges();
 
-                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
+                    // nTimesheetID = dLayer.SaveData("Pay_TimeSheetImport", "N_SheetID", MasterTable, connection, transaction);
+                    nTimesheetID = dLayer.SaveData("Pay_TimeSheetLog", "indexKey", MasterTable, connection, transaction);
+
                     if (nTimesheetID <= 0)
                     {
                         transaction.Rollback();
@@ -323,6 +340,13 @@ namespace SmartxAPI.Controllers
                     }
                     else
                     {
+
+                         SortedList postingParams = new SortedList();
+                            postingParams.Add("D_Date", date);
+                            postingParams.Add("N_UserID", userIDIndex);
+                            postingParams.Add("N_CompanyID", nCompanyID);
+                            dLayer.ExecuteScalarPro("SP_Pay_TimesheetLog", postingParams, connection, transaction);
+
                         SortedList QueryParams = new SortedList();
 
                         QueryParams.Add("@nCompanyID", nCompanyID);
@@ -380,8 +404,8 @@ namespace SmartxAPI.Controllers
                     string sqlDOUT = "SELECT top(1) D_Out as D_Out from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID order by N_SheetID desc";
                     object DIN = dLayer.ExecuteScalar(sqlDIN, QueryParams, connection);
                     object DOUT = dLayer.ExecuteScalar(sqlDOUT, QueryParams, connection);
-                    
-                    string sqlCommandDailyLogin = "SELECT top(1) '"+DIN+"' as D_In,'"+DOUT+"' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,'"+DIN+"',case when '"+DOUT+"'='00:00:00.0000000' then  Convert(Time, GetDate()) else '"+DOUT+"' end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
+
+                    string sqlCommandDailyLogin = "SELECT top(1) '" + DIN + "' as D_In,'" + DOUT + "' as D_Out,Convert(Time, GetDate()) as D_Cur,cast(dateadd(millisecond, datediff(millisecond,'" + DIN + "',case when '" + DOUT + "'='00:00:00.0000000' then  Convert(Time, GetDate()) else '" + DOUT + "' end), '19000101')  AS TIME) AS workedHours from Pay_TimeSheetImport  where D_Date=@nDate and N_CompanyID=@nCompanyID and N_FnYearID=@nFnYear and N_EmpID=@nEmpID";
 
                     Details = dLayer.ExecuteDataTable(sqlCommandDailyLogin, QueryParams, connection);
                     Details = myFunctions.AddNewColumnToDataTable(Details, "workHours", typeof(string), "00:00:00");

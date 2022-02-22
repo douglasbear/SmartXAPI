@@ -2616,7 +2616,7 @@ namespace SmartxAPI.GeneralFunctions
             }
             return true;
         }
-        public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User)
+        public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID,int nPartyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User)
         {
 
             try
@@ -2635,7 +2635,11 @@ namespace SmartxAPI.GeneralFunctions
 
 
                     if (nFormID > 0)
-                        if (LoadReportDetails(nFnYearID, nFormID, nPkeyID, dLayer, User))
+                    {
+                        string xCriteria="";
+                        if(nFormID==618)
+                            xCriteria=" vw_inv_RequestQuotation_Rpt.N_VendorID="+nPartyID;
+                        if (LoadReportDetails(nFnYearID, nFormID, nPkeyID,xCriteria, dLayer, User))
                         {
                             var client = new HttpClient(handler);
                             var dbName = connection.Database;
@@ -2667,6 +2671,7 @@ namespace SmartxAPI.GeneralFunctions
                                 return false;
 
                         }
+                    }
                     string Toemail = "";
 
                     Toemail = mail;
@@ -2734,7 +2739,7 @@ namespace SmartxAPI.GeneralFunctions
             }
         }
 
-        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID, IDataAccessLayer dLayer, ClaimsPrincipal User)
+        private bool LoadReportDetails(int nFnYearID, int nFormID, int nPkeyID,string xCriteria, IDataAccessLayer dLayer, ClaimsPrincipal User)
         {
             SortedList QueryParams = new SortedList();
             int nCompanyId = this.GetCompanyID(User);
@@ -2797,6 +2802,11 @@ namespace SmartxAPI.GeneralFunctions
                         if (Othercritiria.ToString() != "")
                             critiria = critiria + "and " + Othercritiria.ToString();
 
+                    }
+                    if(xCriteria!=null)
+                    {
+                        if (xCriteria.ToString() != "")
+                            critiria = critiria + "and " + xCriteria.ToString();
                     }
                     return true;
                 }
@@ -2879,6 +2889,6 @@ namespace SmartxAPI.GeneralFunctions
         public string EncryptStringForUrl(String input, System.Text.Encoding encoding);
         public string DecryptStringFromUrl(String hexInput, System.Text.Encoding encoding);
         public bool CreatePortalUser(int nCompanyID, int nBranchID, string xPartyName, string emailID, string type, string partyCode, int partyID, bool active, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction);
-        public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID, string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
+        public bool SendMailWithAttachments(int nFormID, int nFnYearID, int nPkeyID,int nPartyID ,string partyName, string Subject, string docNumber, string mail, string xBody, IDataAccessLayer dLayer, ClaimsPrincipal User);
     }
 }

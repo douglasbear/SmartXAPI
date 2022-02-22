@@ -34,6 +34,79 @@ namespace SmartxAPI.Controllers
             FormID = 216;
 
         }
+
+          [HttpGet("list")]
+        public ActionResult GetTimsheetList(int? nCompanyId, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
+        {
+            DataTable dt = new DataTable();
+            SortedList Params = new SortedList();
+            int Count = (nPage - 1) * nSizeperpage;
+            string sqlCommandText = "";
+            string sqlCommandCount = "";
+            string Searchkey = "";
+
+            if (xSearchkey != null && xSearchkey.Trim() != "")
+                Searchkey = "and (X_PayrunText like '%" + xSearchkey + "%' or X_BatchCode like '%" + xSearchkey + "%')";
+
+            if (xSortBy == null || xSortBy.Trim() == "")
+                xSortBy = " order by X_PayrunText desc";
+            else
+            {
+                switch (xSortBy.Split(" ")[0])
+                {
+                    case "X_PayrunText":
+                        xSortBy = "X_PayrunText " + xSortBy.Split(" ")[1];
+                        break;
+                    case "X_BatchCode":
+                        xSortBy = "X_BatchCode" + xSortBy.Split(" ")[1];
+                        break;
+                    case "D_DateFrom":
+                        xSortBy = "Cast(D_DateFrom as DateTime )" + xSortBy.Split(" ")[1];
+                        break;
+                    case "D_DateTo":
+                        xSortBy = "Cast(D_DateTo as DateTime )" + xSortBy.Split(" ")[1];
+                        break;
+                    case "D_SalaryDate":
+                        xSortBy = "Cast(D_SalaryDate as DateTime )" + xSortBy.Split(" ")[1];
+                        break;
+                    default: break;
+                }
+                xSortBy = " order by " + xSortBy;
+            }
+            if (Count == 0)
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + Searchkey + " " + xSortBy;
+            else
+                sqlCommandText = "select top(" + nSizeperpage + ") * from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + Searchkey + " and N_TimeSheetApproveID not in (select top(" + Count + ") N_TimeSheetApproveID from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + xSortBy + " ) " + xSortBy;
+            Params.Add("@p1", nCompanyId);
+            SortedList OutPut = new SortedList();
+
+
+            try
+            {
+                using (SqlConnection connection = new SqlConnection(connectionString))
+                {
+                    connection.Open();
+                    dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
+                    sqlCommandCount = "select count(*) as N_Count  from Pay_TimeSheetApproveMaster where N_CompanyID=@p1 " + Searchkey + "";
+                    object TotalCount = dLayer.ExecuteScalar(sqlCommandCount, Params, connection);
+                    OutPut.Add("Details", _api.Format(dt));
+                    OutPut.Add("TotalCount", TotalCount);
+                    if (dt.Rows.Count == 0)
+                    {
+                        return Ok(_api.Warning("No Results Found"));
+                    }
+                    else
+                    {
+                        return Ok(_api.Success(OutPut));
+                    }
+                }
+            }
+            catch (Exception e)
+            {
+                return Ok(_api.Error(User, e));
+            }
+        }
+
         [HttpGet("employeeList")]
         public ActionResult GetEmpList(int nFnYearID, bool b_AllBranchData, int nBranchID, int nAdditionPayID, int nDeductionPayID, int nDefaultAbsentID, int payRunID)
         {
@@ -241,7 +314,7 @@ namespace SmartxAPI.Controllers
 
                                 if (myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_UserID"].ToString()) > 0)
                                 {
-                                    object obj8 = dLayer.ExecuteScalar("select D_EntryDate from Pay_MonthlyAddOrDedDetails where N_TransID=" + TimeSheetMaster.Rows[0]["N_AddorDedID"].ToString() + " and N_EmpID=" + nEmpID.ToString() + " and N_refID=" + N_TimeSheetID + " and N_FormID=" + 216, Params, connection);
+                                    object obj8 = dLayer.ExecuteScalar("select D_EntryDate from Pay_MonthlyAddOrDedDetails where N_TransID=" + myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_AddorDedID"].ToString()) + " and N_EmpID=" + nEmpID.ToString() + " and N_refID=" + N_TimeSheetID + " and N_FormID=" + 216, Params, connection);
                                     object res = dLayer.ExecuteScalar("Select X_UserName from Sec_User where N_UserID=" + myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_UserID"].ToString()) + " and N_CompanyID=" + nCompanyID, Params, connection);
 
                                     if (res != null)
@@ -269,7 +342,7 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Workhours", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Attandance", typeof(string), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "X_Type", typeof(string), null);
-                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
+                               // TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
 
                                 string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
@@ -743,8 +816,8 @@ namespace SmartxAPI.Controllers
                 int nFnYearId = myFunctions.getIntVAL(MasterTable.Rows[0]["n_FnYearId"].ToString());
                 int nBranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_BranchID"].ToString());
                 int N_TimeSheetApproveID = myFunctions.getIntVAL(MasterTable.Rows[0]["N_TimeSheetApproveID"].ToString());
-                int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
-                MasterTable.Columns.Remove("N_SProcessType");
+                // int N_SProcessType = myFunctions.getIntVAL(MasterTable.Rows[0]["N_SProcessType"].ToString());
+                // MasterTable.Columns.Remove("N_SProcessType");
 
                 DateTime dSalDate = Convert.ToDateTime(MasterTable.Rows[0]["D_SalaryDate"].ToString());
                 DateTime dFromDate = Convert.ToDateTime(MasterTable.Rows[0]["D_DateFrom"].ToString());
@@ -757,11 +830,11 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
 
-                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, dFromDate, dLayer, connection, transaction))
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
-                    }
+                    // if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, dFromDate, dLayer, connection, transaction))
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // } //jan
 
                     // Auto Gen
                     string X_BatchCode = "";
@@ -802,9 +875,7 @@ namespace SmartxAPI.Controllers
                     {
                         MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
                         MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString())+j).ToString();
-
-                       
-                    
+                   
                         nTimesheetmasterID = dLayer.SaveDataWithIndex("Pay_TimeSheetMaster", "N_TimeSheetID","","",j, MasterDetailTable, connection, transaction);
                         if (nTimesheetmasterID <= 0)
                         {
