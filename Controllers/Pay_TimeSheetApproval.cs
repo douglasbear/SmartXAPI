@@ -807,9 +807,13 @@ namespace SmartxAPI.Controllers
                 DataTable MasterTable;
                 DataTable MasterDetailTable;
                 DataTable DetailTable; 
+                DataTable AddOrDedTable; 
+                DataTable AddOrDedDetailTable; 
                 MasterTable = ds.Tables["master"];
                 MasterDetailTable = ds.Tables["masterDetails"];
                 DetailTable = ds.Tables["details"];
+                AddOrDedTable = ds.Tables["AddOrDed"];
+                AddOrDedDetailTable = ds.Tables["AddOrDedDetails"];
 
                 bool bSavePaycode=false;
                 int nCompanyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_CompanyId"].ToString());
@@ -860,7 +864,21 @@ namespace SmartxAPI.Controllers
                         dLayer.DeleteData("Pay_TimeSheet", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
                         dLayer.DeleteData("Pay_TimeSheetApproveMaster", "N_TimesheetID", N_TimeSheetApproveID, "N_CompanyID=" + nCompanyID + " and N_FnyearID=" + nFnYearId, connection, transaction);
-                    }                 
+                    }    
+
+                    int N_AddOrDedID=0; 
+
+                    if(N_SProcessType==1)
+                    {
+                        object obj = dLayer.ExecuteScalar(" select N_TransID from Pay_MonthlyAddOrDed where N_CompanyID=" + nCompanyID + " and N_PayrunID=" + myFunctions.getIntVAL(MasterTable.Rows[0]["N_BatchID"].ToString())+ "", connection, transaction);
+                        if (obj == null)
+                            N_AddOrDedID = 0;
+                        else if (myFunctions.getIntVAL(obj.ToString()) > 0)
+                            N_AddOrDedID = myFunctions.getIntVAL(obj.ToString());
+
+                        if(N_AddOrDedID==0)
+                             N_AddOrDedID = dLayer.SaveData("Pay_MonthlyAddOrDed", "N_TransID", AddOrDedTable, connection, transaction);
+                    }            
 
                     string DupCriteria = "N_CompanyID=" + nCompanyID + " and X_BatchCode='" + X_BatchCode + "' and N_FnyearID=" + nFnYearId;
                     N_TimeSheetApproveID = dLayer.SaveData("Pay_TimeSheetApproveMaster", "N_TimeSheetApproveID", DupCriteria, "", MasterTable, connection, transaction);
@@ -875,6 +893,8 @@ namespace SmartxAPI.Controllers
                     {
                         MasterDetailTable.Rows[j]["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
                         MasterDetailTable.Rows[j]["X_BatchCode"] = (myFunctions.getIntVAL(MasterTable.Rows[0]["X_BatchCode"].ToString())+j).ToString();
+
+                       // DataTable dtRFQ = dLayer.ExecuteDataTable("select * from Pay_MonthlyAddOrDed where N_CompanyID is null",Params, connection,transaction);
                    
                         nTimesheetmasterID = dLayer.SaveDataWithIndex("Pay_TimeSheetMaster", "N_TimeSheetID","","",j, MasterDetailTable, connection, transaction);
                         if (nTimesheetmasterID <= 0)
@@ -891,9 +911,22 @@ namespace SmartxAPI.Controllers
                             var["N_TimeSheetID"] = nTimesheetmasterID;
                             var["N_TimeSheetApproveID"] = N_TimeSheetApproveID;
                         }
+                        foreach (DataRow var1 in AddOrDedDetailTable.Rows)
+                        {
+                            if (MasterDetailTable.Rows[j]["N_EmpID"].ToString() != var1["N_EmpID"].ToString()) continue;
+
+                            var1["N_TransID"] = N_AddOrDedID;
+                            var1["N_RefID"] = nTimesheetmasterID;
+                        }
                     }
 
-                    int nTimesheetID=0;
+                    int nTimesheetID=0,nAddOrDedDetailID=0;
+
+                    if(N_SProcessType==1)
+                    {
+                        nAddOrDedDetailID = dLayer.SaveData("Pay_MonthlyAddOrDedDetails", "N_TransDetailsID", AddOrDedDetailTable, connection, transaction);
+                    }   
+
                     nTimesheetID = dLayer.SaveData("Pay_TimeSheet", "N_SheetID", DetailTable, connection, transaction);
                     if (nTimesheetID <= 0)
                     {

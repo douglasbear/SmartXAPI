@@ -61,6 +61,7 @@ namespace SmartxAPI.Controllers
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+                    bool bLocationChange = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), 564, myFunctions.GetUserCategory(User).ToString(), "", dLayer, connection);
 
                     if (nCustomerID > 0)
                         cndn = "and N_CustomerID=@nCustomerID";
@@ -72,18 +73,18 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%')";
                     if (CheckClosedYear == false)
                     {
-                        if (bAllBranchData == true)
+                        if (bAllBranchData == true && bLocationChange==true)
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";//and B_YearEndProcess=0";
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 and N_LocationID=" + n_LocationID;//+" and B_YearEndProcess=0";
                         }
                     }
                     else
                     {
-                        if (bAllBranchData == true)
+                        if (bAllBranchData == true && bLocationChange==true)
                         {
                             Searchkey = Searchkey + "and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1";
                         }
