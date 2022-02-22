@@ -50,10 +50,11 @@ namespace SmartxAPI.Controllers
                 xSortBy = " order by " + xSortBy;
 
              if(Count==0)
-                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1  "+ xSortBy;
+                sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_FnYearID=@p2 "+ xSortBy;
             else
                 sqlCommandText = "select top("+ nSizeperpage +") * from vw_InvAssetCategory_Disp where N_CompanyID=@p1 and N_CategoryID not in (select top("+ Count +") N_CategoryID fromvw_InvAssetCategory_Disp  where N_CompanyID=@p1 )" + xSortBy;
             Params.Add("@p1", nCompanyId);
+            Params.Add("@p2", nFnYearId);
 
             SortedList OutPut = new SortedList();
 
