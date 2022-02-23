@@ -340,7 +340,7 @@ namespace SmartxAPI.Controllers
                                 salesPersonCustomer = salesPersonCustomer == null ? "" : salesPersonCustomer;
                                 object salesPersonIDCustomer = dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
 
-                                if (salesPersonCustomer.ToString() != "")
+                                if (salesPersonSales.ToString() != "")
                                 {
                                     drrow["x_SalesmanName"] = salesPersonSales.ToString();
                                     drrow["n_SalesManID"] = salesPersonIDSales.ToString();
