@@ -66,8 +66,9 @@ namespace SmartxAPI.Controllers
             }
             else
             {
-                object B_userpattern = dLayer.ExecuteScalar("select top(1) N_HierarchyID from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
-                if(B_userpattern!="")
+                object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+
+                if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     Pattern = " and N_UserID=" + nUserID;
                
             }
