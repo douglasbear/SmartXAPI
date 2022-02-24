@@ -646,6 +646,7 @@ namespace SmartxAPI.Controllers
             string x_Reporttitle = "";
             string X_TextforAll = "=all";
             int nUserID = myFunctions.GetUserID(User);
+            var random = RandomString();
 
             try
             {
@@ -665,6 +666,7 @@ namespace SmartxAPI.Controllers
                     int MenuID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportCategoryID"].ToString());
                     int ReportID = myFunctions.getIntVAL(MasterTable.Rows[0]["reportID"].ToString());
                     int FnYearID = myFunctions.getIntVAL(MasterTable.Rows[0]["nFnYearID"].ToString());
+                    int BranchID = myFunctions.getIntVAL(MasterTable.Rows[0]["nBranchID"].ToString());
                     Extention = MasterTable.Rows[0]["extention"].ToString();
 
                     SortedList Params1 = new SortedList();
@@ -744,9 +746,12 @@ namespace SmartxAPI.Controllers
                             {"X_Code",xProCode},
                             {"X_Parameter", procParam },
                             {"N_UserID",myFunctions.GetUserID(User)},
-                            {"N_BranchID",0}
+                            {"N_BranchID",BranchID},
+                            {"X_InstanceCode",random},
                             };
                                 dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
+
+                                Criteria = Criteria == "" ? " X_InstanceCode='"+random+"' " : Criteria + " and X_InstanceCode='"+random+"' ";
 
                             }
                             string DateCrt = "";
@@ -794,6 +799,14 @@ namespace SmartxAPI.Controllers
                     {
                         Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
+
+                    if (UserData != "")
+                    {
+                        Criteria = Criteria + " and " + UserData + "=" + nUserID;
+                    }
+
+                    
+
                     dbName = connection.Database;
                 }
 
@@ -803,7 +816,7 @@ namespace SmartxAPI.Controllers
                     ServerCertificateCustomValidationCallback = (message, cert, chain, errors) => { return true; }
                 };
                 var client = new HttpClient(handler);
-                var random = RandomString();
+                
                 //HttpClient client = new HttpClient(clientHandler);
 
                 var rptArray = reportName.Split(@"\");
