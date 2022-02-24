@@ -20,14 +20,16 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
 
 
-        public Inv_SalesReceipt(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_SalesReceipt(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             api = apiFun;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -353,8 +355,10 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                      DetailTable.AcceptChanges();
-
+                   DetailTable.AcceptChanges();
+                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayReceiptId"].ToString()), 66, 0, User, connection);
+                   Attachments = api.Format(Attachments, "attachments");
+                    ds.Tables.Add(Attachments);
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
@@ -469,6 +473,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Attachment = ds.Tables["attachments"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -485,7 +490,7 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
-
+                    int n_PartyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PartyID"].ToString());
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(),
                      "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
@@ -652,8 +657,28 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                     if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0)
+                    {  
+                        SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", nCompanyId);
+                    CustParams.Add("@n_PartyID", n_PartyID);
+                    CustParams.Add("@nFnYearID", nFnYearID);
+                    object objCustName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Customer where N_CustomerID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                   
+                     if (Attachment.Rows.Count > 0)
                     {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment,xVoucherNo, PayReceiptId,objCustName.ToString().Trim(),xVoucherNo, PayReceiptId, "CustomerPayment Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
+                
 
+                        
                         SortedList Result = new SortedList();
                         Result.Add("n_SalesReceiptID", PayReceiptId);
                         Result.Add("x_SalesReceiptNo", xVoucherNo);
