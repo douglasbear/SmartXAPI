@@ -596,13 +596,14 @@ namespace SmartxAPI.Controllers
             }
         }
         [HttpDelete]
-        public ActionResult DeleteData(int nPayReceiptId, string xTransType)
+        public ActionResult DeleteData(int nPayReceiptId, string xTransType, int nFnyearID)
         {
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    SqlTransaction transaction = connection.BeginTransaction();
 
                     if (nPayReceiptId > 0)
                     {
@@ -610,9 +611,12 @@ namespace SmartxAPI.Controllers
                                 {"N_CompanyID",myFunctions.GetCompanyID(User)},
                                 {"X_TransType",xTransType},
                                 {"N_VoucherID",nPayReceiptId}};
-                        int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection);
+
+                        int result = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", DeleteParams, connection,transaction);
                         if (result > 0)
                         {
+                            myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,67, User, transaction, connection);
+                            transaction.Commit();
                             return Ok(api.Success("Vendor Payment Deleted"));
                         }
                     }
