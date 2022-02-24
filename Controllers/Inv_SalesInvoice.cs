@@ -734,7 +734,12 @@ namespace SmartxAPI.Controllers
 
                     DataTable AdvanceTable = new DataTable();
                     DataTable recievableTable = new DataTable();
-                    int branchFlag = 0;
+
+                      int AdvEnabled = myFunctions.getIntVAL(dLayer.ExecuteScalar("Select isnull(max(N_Value),0) from Gen_Settings Where X_Description ='Enable Advance' and N_CompanyID= " + nCompanyId + " and X_Group='64' and N_UserCategoryID in ("+myFunctions.GetUserCategoryList(User)+")", Con).ToString());
+                    
+                    if(AdvEnabled>0)          
+                   {
+                        int branchFlag = 0;
                     if (bAllBranchData) { branchFlag = 1; }
                     SortedList detailParams = new SortedList()
                     {
@@ -779,6 +784,7 @@ namespace SmartxAPI.Controllers
 
                             }
                         }
+                    }
                     }
                     recievableTable.AcceptChanges();
                     recievableTable = _api.Format(recievableTable, "AdvanceTable");
