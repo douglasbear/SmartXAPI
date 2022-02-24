@@ -490,7 +490,7 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
-                    int n_PartyID = myFunctions.getIntVAL(MasterTable.Rows[0]["n_PartyID"].ToString());
+                    int n_PartyID = myFunctions.getIntVAL(Master["n_PartyID"].ToString());
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(),
                      "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
@@ -662,7 +662,7 @@ namespace SmartxAPI.Controllers
                     CustParams.Add("@nCompanyID", nCompanyId);
                     CustParams.Add("@n_PartyID", n_PartyID);
                     CustParams.Add("@nFnYearID", nFnYearID);
-                    object objCustName = dLayer.ExecuteScalar("Select X_VendorName From Inv_Customer where N_CustomerID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
                    
                      if (Attachment.Rows.Count > 0)
                     {
