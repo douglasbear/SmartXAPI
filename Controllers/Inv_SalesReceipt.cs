@@ -151,6 +151,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
+            DataTable Attachments = new DataTable();
             SortedList general = new SortedList();
             SortedList OutPut = new SortedList();
 
@@ -204,6 +205,8 @@ namespace SmartxAPI.Controllers
                     };
                         MasterTable = dLayer.ExecuteDataTablePro("SP_InvSalesReceipt_Disp", mParamsList, connection);
                         MasterTable = api.Format(MasterTable, "Master");
+                        Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 66, 0, User, connection);
+                        Attachments = api.Format(Attachments, "attachments");
 
                     }
 
@@ -356,13 +359,15 @@ namespace SmartxAPI.Controllers
                         }
                     }
                    DetailTable.AcceptChanges();
-                   DataTable Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(MasterTable.Rows[0]["N_PayReceiptId"].ToString()), 66, 0, User, connection);
-                   Attachments = api.Format(Attachments, "attachments");
+                    
                     ds.Tables.Add(Attachments);
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
-                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut } }));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, 
+                { "master", MasterTable },
+                 { "attachments", Attachments},
+                 { "masterData", OutPut } }));
                 //return Ok(api.Success(ds));
             }
             catch (Exception e)
@@ -490,7 +495,7 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
-                    int n_PartyID = myFunctions.getIntVAL(Master["n_PartyID"].ToString());
+                    int nCustomerId = myFunctions.getIntVAL(Master["n_PartyID"].ToString());
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(),
                      "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
@@ -660,9 +665,9 @@ namespace SmartxAPI.Controllers
                     {  
                         SortedList CustParams = new SortedList();
                     CustParams.Add("@nCompanyID", nCompanyId);
-                    CustParams.Add("@n_PartyID", n_PartyID);
+                    CustParams.Add("@nCustomerId", nCustomerId);
                     CustParams.Add("@nFnYearID", nFnYearID);
-                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@n_PartyID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
                    
                      if (Attachment.Rows.Count > 0)
                     {
@@ -695,7 +700,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nPayReceiptId, string xType)
+        public ActionResult DeleteData(int nPayReceiptId, string xType, int nFnyearID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -731,6 +736,8 @@ namespace SmartxAPI.Controllers
 
                     if (result > 0)
                     {
+                        myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,66, User, transaction, connection);
+                      
                         transaction.Commit();
                         return Ok(api.Success("Sales Receipt Deleted"));
                     }
