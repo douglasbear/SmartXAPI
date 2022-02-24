@@ -56,11 +56,28 @@ namespace SmartxAPI.Controllers
                     string X_TransType = "SALES";
                     string criteria = "";
                     string cndn = "";
+                     string UserPattern = myFunctions.GetUserPattern(User);
+                    int nUserID = myFunctions.GetUserID(User);
+                    string Pattern = "";
+            if (UserPattern != "")
+            {
+                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                Params.Add("@UserPattern", UserPattern);
+            }
+            else
+            {
+                object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+
+                if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    Pattern = " and N_UserID=" + nUserID;
+               
+            }
                     int N_decimalPlace = 2;
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyId, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
 
                     bool CheckClosedYear = Convert.ToBoolean(dLayer.ExecuteScalar("Select B_YearEndProcess From Acc_FnYear Where N_CompanyID=" + nCompanyId + " and N_FnYearID = " + nFnYearId, Params, connection));
+                    bool bLocationChange = myFunctions.CheckPermission(myFunctions.GetCompanyID(User), 564, myFunctions.GetUserCategory(User).ToString(), "", dLayer, connection);
 
                     if (nCustomerID > 0)
                         cndn = "and N_CustomerID=@nCustomerID";
@@ -72,18 +89,18 @@ namespace SmartxAPI.Controllers
                         Searchkey = "and ([Invoice No] like '%" + xSearchkey + "%' or Customer like '%" + xSearchkey + "%' or x_Notes like '%" + xSearchkey + "%' or x_OrderNo like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or X_SalesmanName like '%" + xSearchkey + "%' or cast([Invoice Date] as VarChar) like '%" + xSearchkey + "%' or X_BillAmt like '%" + xSearchkey + "%')";
                     if (CheckClosedYear == false)
                     {
-                        if (bAllBranchData == true)
+                        if (bAllBranchData == true && bLocationChange==true)
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";//and B_YearEndProcess=0";
                         }
                         else
                         {
-                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 ";
+                            Searchkey = Searchkey + " and  X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_BranchID=" + nBranchID + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1 and N_LocationID=" + n_LocationID;//+" and B_YearEndProcess=0";
                         }
                     }
                     else
                     {
-                        if (bAllBranchData == true)
+                        if (bAllBranchData == true && bLocationChange==true)
                         {
                             Searchkey = Searchkey + "and X_TransType = '" + X_TransType + "' and N_SalesType = 0 and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId + " and isnull(N_Hold,0)<>1";
                         }
@@ -118,9 +135,9 @@ namespace SmartxAPI.Controllers
 
 
                     if (Count == 0)
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + Searchkey + " " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + Searchkey + " " + xSortBy;
                     else
-                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
+                        sqlCommandText = "select top(" + nSizeperpage + ") * from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + Searchkey + " and N_SalesID not in (select top(" + Count + ") N_SalesID from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + xSearchkey + xSortBy + " ) " + xSortBy;
 
                     Params.Add("@p1", nCompanyId);
                     Params.Add("@p2", nFnYearId);
@@ -155,7 +172,7 @@ namespace SmartxAPI.Controllers
 
                     }
 
-                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + criteria + cndn + Searchkey + "";
+                    sqlCommandCount = "select count(*) as N_Count,sum(Cast(REPLACE(x_BillAmt,',','') as Numeric(10," + N_decimalPlace + ")) ) as TotalAmount from vw_InvSalesInvoiceNo_Search_cloud where N_CompanyID=@p1 and N_FnYearID=@p2 and N_Hold=0 " + Pattern + criteria + cndn + Searchkey + "";
                     DataTable Summary = dLayer.ExecuteDataTable(sqlCommandCount, Params, connection);
                     string TotalCount = "0";
                     string TotalSum = "0";
