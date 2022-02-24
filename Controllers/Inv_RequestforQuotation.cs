@@ -564,7 +564,7 @@ namespace SmartxAPI.Controllers
             if (bAllBranchData == true)
                 sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID";
             else
-                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and and N_FnYearId=@nFnYearID";
+                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_FnYearId=@nFnYearID";
  
             try
             {

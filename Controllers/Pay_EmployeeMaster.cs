@@ -76,7 +76,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("list")]
-        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID)
+        public ActionResult GetEmployeeList(int? nCompanyID, int nFnYearID, bool bAllBranchData, int nBranchID, int nEmpID, int nProjectID, int nUserEmpID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -99,6 +99,34 @@ namespace SmartxAPI.Controllers
                         sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
                     else
                         sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                    if (nProjectID > 0)
+                    {
+                        bool flag = false;
+                        object nIsManager = dLayer.ExecuteScalar("select N_ProjectManager from Vw_InvCustomerProjects where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID + "", Params, connection);
+                        object nIsCoordinator = dLayer.ExecuteScalar("select N_ProjectCoordinator from Vw_InvCustomerProjects where N_ProjectID=" + nProjectID + " and N_CompanyID=" + nCompanyID + "", Params, connection);
+                        if (nIsManager != null)
+                        {
+                            if (nUserEmpID == myFunctions.getIntVAL(nIsManager.ToString()))
+                                flag = true;
+                        }
+                         if (nIsCoordinator != null)
+                        {
+                            if (nUserEmpID == myFunctions.getIntVAL(nIsCoordinator.ToString()))
+                                flag = true;
+                        }
+                        if (flag == true)
+                        {
+                            if (bAllBranchData == true)
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                            else
+                                sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode ,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID and (N_BranchID=0 or N_BranchID=@nBranchID)  " + projectFilter + "  and (N_Status = 0 OR N_Status = 1) group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                        }
+                        else
+                        {
+                             sqlCommandText = "Select N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code] as X_EmpCode,Name as X_EmpName,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo from vw_PayEmployee_Disp Where N_CompanyID=@nCompanyID and N_FnYearID=@nFnYearID " + projectFilter + " and (N_Status = 0 OR N_Status = 1) and N_EmpID="+nUserEmpID+" group by N_CompanyID,N_EmpID,N_BranchID,N_FnYearID,[Employee Code],Name,X_Position,X_Department,X_BranchName,X_EmergencyContctPersonH,X_EmergencyNumH,X_HCMobileNo,X_HCTelNo";
+                        }
+                   
+                    }
 
 
                     dt = dLayer.ExecuteDataTable(sqlCommandText, Params, connection);
@@ -440,14 +468,14 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
-                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0)
+                    if ( myFunctions.getIntVAL(ApprovalRow["isApprovalSystem"].ToString())==0 ||((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0))
                     {
                         int N_PkeyID = nEmpUpdateID;
                         string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
                         myFunctions.UpdateApproverEntry(Approvals, "Pay_EmployeeUpdate", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
                         N_NextApproverID = myFunctions.LogApprovals(Approvals, nFnYearID, "EMPLOYEE", N_PkeyID, X_EmpUpdateCode, 1, objEmpName.ToString(), 0, "", User, dLayer, connection, transaction);
                         EmpParams.Add("@nEmpUpdateID", nEmpUpdateID);
-                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IsSaveDraft as INT) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
+                        int N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select isnull(CAST(B_IsSaveDraft as INT),0) from Pay_EmployeeUpdate where N_CompanyID=@nCompanyID and N_EmpUpdateID=@nEmpUpdateID", EmpParams, connection, transaction).ToString());
 
                         if (N_SaveDraft == 0)
                         {
@@ -1517,51 +1545,51 @@ namespace SmartxAPI.Controllers
                                         object objUserCheck = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "' and N_EmpID=" + nEmpID + " and N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()), connection, transaction);
                                         if (objUserCheck == null)
                                         {
-                                        object objUserCheckng = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID, connection, transaction);
-                                        if (objUserCheckng == null)
-                                        {
-                                            object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
-                                            if (objUser != null)
+                                            object objUserCheckng = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + " and N_EmpID=" + nEmpID, connection, transaction);
+                                            if (objUserCheckng == null)
                                             {
-                                                dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",B_Active= 1,N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()) + ",X_UserCategoryList=" + objUserCat.ToString() + " where X_UserID='" + xEmail.ToString() + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
-                                            }
-                                            else
-                                            {
-                                                DataTable dt = new DataTable();
-                                                dt.Clear();
-                                                dt.Columns.Add("N_CompanyID");
-                                                dt.Columns.Add("N_UserID");
-                                                dt.Columns.Add("X_UserID");
-                                                dt.Columns.Add("X_Password");
-                                                dt.Columns.Add("N_UserCategoryID");
-                                                dt.Columns.Add("B_Active");
-                                                dt.Columns.Add("N_BranchID");
-                                                dt.Columns.Add("N_LocationID");
-                                                dt.Columns.Add("X_UserName");
-                                                dt.Columns.Add("N_EmpID");
-                                                dt.Columns.Add("N_LoginFlag");
-                                                dt.Columns.Add("X_UserCategoryList");
-                                                dt.Columns.Add("X_Email");
+                                                object objUser = dLayer.ExecuteScalar("Select X_UserID from Sec_User where N_CompanyID=" + nCompanyID + "  and X_UserID='" + xEmail.ToString() + "'", connection, transaction);
+                                                if (objUser != null)
+                                                {
+                                                    dLayer.ExecuteNonQuery("update  Sec_User set N_EmpID=" + nEmpID + ",B_Active= 1,N_UserCategoryID=" + myFunctions.getIntVAL(objUserCat.ToString()) + ",X_UserCategoryList=" + objUserCat.ToString() + " where X_UserID='" + xEmail.ToString() + "' and N_CompanyID= " + nCompanyID, Params, connection, transaction);
+                                                }
+                                                else
+                                                {
+                                                    DataTable dt = new DataTable();
+                                                    dt.Clear();
+                                                    dt.Columns.Add("N_CompanyID");
+                                                    dt.Columns.Add("N_UserID");
+                                                    dt.Columns.Add("X_UserID");
+                                                    dt.Columns.Add("X_Password");
+                                                    dt.Columns.Add("N_UserCategoryID");
+                                                    dt.Columns.Add("B_Active");
+                                                    dt.Columns.Add("N_BranchID");
+                                                    dt.Columns.Add("N_LocationID");
+                                                    dt.Columns.Add("X_UserName");
+                                                    dt.Columns.Add("N_EmpID");
+                                                    dt.Columns.Add("N_LoginFlag");
+                                                    dt.Columns.Add("X_UserCategoryList");
+                                                    dt.Columns.Add("X_Email");
 
-                                                DataRow row = dt.NewRow();
-                                                row["N_CompanyID"] = nCompanyID;
-                                                row["X_UserID"] = xEmail;
-                                                row["X_Password"] = Pwd;
-                                                row["N_UserCategoryID"] = myFunctions.getIntVAL(objUserCat.ToString());
-                                                row["B_Active"] = 1;
-                                                row["N_BranchID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_BranchID"].ToString());
-                                                row["N_LocationID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString());
-                                                row["X_UserName"] = dtMasterTable.Rows[0]["X_EmpName"].ToString();
-                                                row["N_EmpID"] = nEmpID;
-                                                row["N_LoginFlag"] = 2;
-                                                row["X_UserCategoryList"] = objUserCat.ToString();
-                                                row["X_Email"] = xEmail;
-                                                dt.Rows.Add(row);
+                                                    DataRow row = dt.NewRow();
+                                                    row["N_CompanyID"] = nCompanyID;
+                                                    row["X_UserID"] = xEmail;
+                                                    row["X_Password"] = Pwd;
+                                                    row["N_UserCategoryID"] = myFunctions.getIntVAL(objUserCat.ToString());
+                                                    row["B_Active"] = 1;
+                                                    row["N_BranchID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_BranchID"].ToString());
+                                                    row["N_LocationID"] = myFunctions.getIntVAL(dtMasterTable.Rows[0]["N_LocationID"].ToString());
+                                                    row["X_UserName"] = dtMasterTable.Rows[0]["X_EmpName"].ToString();
+                                                    row["N_EmpID"] = nEmpID;
+                                                    row["N_LoginFlag"] = 2;
+                                                    row["X_UserCategoryList"] = objUserCat.ToString();
+                                                    row["X_Email"] = xEmail;
+                                                    dt.Rows.Add(row);
 
-                                                int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+                                                    int UserID = dLayer.SaveData("Sec_User", "N_UserID", dt, connection, transaction);
+                                                }
                                             }
                                         }
-                                     }
                                     }
                                 }
                             }

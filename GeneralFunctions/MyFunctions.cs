@@ -65,8 +65,16 @@ namespace SmartxAPI.GeneralFunctions
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and " + FieldName + "=@p3", Params, connection));
-            return Result;
+            if(FieldName!="")
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and " + FieldName + "=@p3", Params, connection));
+                return Result;
+            }
+            else
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 ", Params, connection));
+                return Result;
+            }
         }
 
         public bool CheckPermission(int N_CompanyID, int N_MenuID, string admin, string FieldName, IDataAccessLayer dLayer, SqlConnection connection, SqlTransaction transaction)
@@ -75,8 +83,16 @@ namespace SmartxAPI.GeneralFunctions
             Params.Add("@p1", N_CompanyID);
             Params.Add("@p2", N_MenuID);
             Params.Add("@p3", admin);
-            bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  " + FieldName + "=@p3", Params, connection, transaction));
-            return Result;
+            if(FieldName!="")
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 and  " + FieldName + "=@p3", Params, connection, transaction));
+                return Result;
+            }
+            else
+            {
+                bool Result = Convert.ToBoolean(dLayer.ExecuteScalar("Select ISNULL(B_Visible,0) From vw_userPrevileges Where N_CompanyID=@p1 and N_MenuID = @p2 ", Params, connection, transaction));
+                return Result;
+            }
         }
         public int getIntVAL(string val)
         {

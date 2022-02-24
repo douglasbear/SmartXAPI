@@ -866,6 +866,18 @@ namespace SmartxAPI.Controllers
                         catch (Exception ex)
                         {
                             transaction.Rollback();
+                                if (ex.Message.Contains("50"))
+                                return Ok(_api.Error(User, "Day Closed"));
+                            else if (ex.Message.Contains("51"))
+                                return Ok(_api.Error(User, "Year Closed"));
+                            else if (ex.Message.Contains("52"))
+                                return Ok(_api.Error(User, "Year Exists"));
+                            else if (ex.Message.Contains("53"))
+                                return Ok(_api.Error(User, "Period Closed"));
+                            else if (ex.Message.Contains("54"))
+                                return Ok(_api.Error(User, "Wrong Txn Date"));
+                            else if (ex.Message.Contains("55"))
+                                return Ok(_api.Error(User, "Transaction Started"));
                             return Ok(_api.Error(User, ex.Message));
                         }
                     }

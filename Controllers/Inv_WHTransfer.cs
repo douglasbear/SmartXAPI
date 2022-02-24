@@ -157,6 +157,7 @@ namespace SmartxAPI.Controllers
 
 
 
+
         [HttpGet("details")]
         public ActionResult EmpMaintenanceList(int nCompanyId, int nFnYearID, bool bAllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
