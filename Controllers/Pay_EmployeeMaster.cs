@@ -468,7 +468,7 @@ namespace SmartxAPI.Controllers
                     EmpParams.Add("@nFnYearID", nFnYearID);
                     object objEmpName = dLayer.ExecuteScalar("Select X_EmpName From Pay_Employee where N_EmpID=@nEmpID and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", EmpParams, connection, transaction);
 
-                    if ((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0)
+                    if ( myFunctions.getIntVAL(ApprovalRow["isApprovalSystem"].ToString())==0 ||((!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString())) && nEmpUpdateID > 0))
                     {
                         int N_PkeyID = nEmpUpdateID;
                         string X_Criteria = "N_EmpUpdateID=" + nEmpUpdateID + " and N_CompanyID=" + nCompanyID + " and N_FnYearID=" + nFnYearID;
