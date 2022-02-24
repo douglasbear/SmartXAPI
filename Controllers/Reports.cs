@@ -701,6 +701,7 @@ namespace SmartxAPI.Controllers
                         bool bRange = myFunctions.getBoolVAL(dLayer.ExecuteScalar("select isNull(B_Range,0) from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString());
                         string xOperator = dLayer.ExecuteScalar("select isNull(X_Operator,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID", Params, connection).ToString();
                         string xProCode = dLayer.ExecuteScalar("select X_ProcCode from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
+                        string xInstanceCode = dLayer.ExecuteScalar("select isNull(X_DataField,'') from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = dLayer.ExecuteScalar("select X_Text from vw_WebReportMenus where N_MenuID=@nMenuID and X_CompType=@xType and N_CompID=@nCompID and N_LanguageId=1", Params, connection).ToString();
                         UserData = dLayer.ExecuteScalar("select X_DataFieldUserID from Sec_ReportsComponents where N_MenuID=@nMenuID and X_CompType=@xMain", Params, connection).ToString();
                         FieldName = FieldName + "=";
@@ -747,11 +748,12 @@ namespace SmartxAPI.Controllers
                             {"X_Parameter", procParam },
                             {"N_UserID",myFunctions.GetUserID(User)},
                             {"N_BranchID",BranchID},
-                            {"X_InstanceCode",random},
+                            // {"X_InstanceCode",random},
                             };
                                 dLayer.ExecuteDataTablePro("SP_OpeningBalanceGenerate", mParamsList, connection);
 
-                                Criteria = Criteria == "" ? " X_InstanceCode='"+random+"' " : Criteria + " and X_InstanceCode='"+random+"' ";
+                                // if(xInstanceCode!="")
+                                // Criteria = Criteria == "" ? xInstanceCode + "='"+random+"' " : Criteria + " and "+xInstanceCode+"='"+random+"' ";
 
                             }
                             string DateCrt = "";
@@ -800,10 +802,7 @@ namespace SmartxAPI.Controllers
                         Criteria = Criteria + " and " + UserData + "=" + nUserID;
                     }
 
-                    if (UserData != "")
-                    {
-                        Criteria = Criteria + " and " + UserData + "=" + nUserID;
-                    }
+
 
                     
 
