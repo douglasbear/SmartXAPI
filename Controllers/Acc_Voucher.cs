@@ -202,6 +202,10 @@ namespace SmartxAPI.Controllers
                 InfoTable = ds.Tables["info"];
                 SortedList Params = new SortedList();
 
+                DataTable Approvals;
+                Approvals = ds.Tables["approval"];
+                DataRow ApprovalRow = Approvals.Rows[0];
+
                 DataRow masterRow = MasterTable.Rows[0];
                 var xVoucherNo = masterRow["x_VoucherNo"].ToString();
                 var xTransType = masterRow["x_TransType"].ToString();
@@ -211,7 +215,8 @@ namespace SmartxAPI.Controllers
                 int N_VoucherID = myFunctions.getIntVAL(masterRow["n_VoucherID"].ToString());
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
-
+                int N_NextApproverID=0;
+                int N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
 
 
 
@@ -255,6 +260,31 @@ namespace SmartxAPI.Controllers
                 //             return Ok(api.Error(User, "Transaction date must be in the active Financial Year."));
                 //         }
                 //     }
+                    if (!myFunctions.getBoolVAL(ApprovalRow["isEditable"].ToString()) && N_VoucherID > 0)
+                    {
+                        int N_PkeyID = N_VoucherID;
+                        string X_Criteria = "N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId;
+                        myFunctions.UpdateApproverEntry(Approvals, "Acc_VoucherMaster", X_Criteria, N_PkeyID, User, dLayer, connection, transaction);
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_PkeyID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                        //myAttachments.SaveAttachment(dLayer, Attachment, InvoiceNo, N_SalesID, objCustName.ToString().Trim(), objCustCode.ToString(), N_CustomerID, "Customer Document", User, connection, transaction);
+
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherID=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+                        if (N_SaveDraft == 0)
+                        {
+                            SortedList PostingParams = new SortedList();
+                            PostingParams.Add("N_CompanyID", nCompanyId);
+                            PostingParams.Add("X_InventoryMode", xTransType);
+                            PostingParams.Add("N_InternalID", N_VoucherID);
+                            PostingParams.Add("N_UserID", nUserId);
+                            PostingParams.Add("X_SystemName", "ERP Cloud");
+                            object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
+                            transaction.Commit();
+                        }
+
+                        myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
+                        transaction.Commit();
+                        return Ok(api.Success("Voucher Approved " + "-" + xVoucherNo));
+                    }
                     
                     if (xVoucherNo == "@Auto")
                     {
@@ -298,9 +328,18 @@ namespace SmartxAPI.Controllers
 
                     string DupCriteria = "N_CompanyID = " + nCompanyId + " and X_VoucherNo = '" + xVoucherNo + "' and N_FnYearID=" + nFnYearId + " and X_TransType = '" + xTransType + "'";
 
+                    MasterTable.Rows[0]["n_UserID"] = myFunctions.GetUserID(User);
+                    MasterTable.AcceptChanges();
+
+                    MasterTable = myFunctions.SaveApprovals(MasterTable, Approvals, dLayer, connection, transaction);
+
                     N_VoucherID = dLayer.SaveData("Acc_VoucherMaster", "N_VoucherId", DupCriteria, "", MasterTable, connection, transaction);
                     if (N_VoucherID > 0)
                     {
+
+                        N_NextApproverID = myFunctions.LogApprovals(Approvals,myFunctions.getIntVAL(nFnYearId.ToString()), xTransType, N_VoucherID, xVoucherNo, 1, "", 0, "", User, dLayer, connection, transaction);
+                        N_SaveDraft = myFunctions.getIntVAL(dLayer.ExecuteScalar("select CAST(B_IssaveDraft as INT) from Acc_VoucherMaster where N_VoucherId=" + N_VoucherID + " and N_CompanyID=" + nCompanyId + " and N_FnYearID=" + nFnYearId, connection, transaction).ToString());
+
                         SortedList LogParams = new SortedList();
                         LogParams.Add("N_CompanyID", nCompanyId);
                         LogParams.Add("N_FnYearID", nFnYearId);
