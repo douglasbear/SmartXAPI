@@ -310,20 +310,20 @@ namespace SmartxAPI.Controllers
                             dLayer.ExecuteNonQuery("update Ass_AssetMaster set N_Status=2 where N_ItemID=" + DetailTable.Rows[j]["N_ItemID"], connection, transaction);                                  
                     }
 
-                    // SortedList PostingParam = new SortedList();
-                    // PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
-                    // PostingParam.Add("X_InventoryMode", "ASSET SALES");
-                    // PostingParam.Add("N_InternalID", N_AssetInventoryID);
-                    // PostingParam.Add("N_UserID", N_UserID);
-                    // try
-                    // {
-                    //     dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
-                    // }
-                    // catch (Exception ex)
-                    // {
-                    //     transaction.Rollback();
+                    SortedList PostingParam = new SortedList();
+                    PostingParam.Add("N_CompanyID", MasterTable.Rows[0]["n_CompanyId"].ToString());
+                    PostingParam.Add("X_InventoryMode", "ASSET SALES");
+                    PostingParam.Add("N_InternalID", N_AssetInventoryID);
+                    PostingParam.Add("N_UserID", N_UserID);
+                    try
+                    {
+                        dLayer.ExecuteNonQueryPro("SP_Acc_InventoryPosting", PostingParam, connection, transaction);
+                    }
+                    catch (Exception ex)
+                    {
+                        transaction.Rollback();
                          
-                    // }
+                    }
 
                     SortedList Result = new SortedList();
                     Result.Add("N_AssetInventoryID",N_AssetInventoryID);
