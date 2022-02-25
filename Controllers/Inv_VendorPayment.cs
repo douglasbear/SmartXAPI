@@ -291,6 +291,7 @@ namespace SmartxAPI.Controllers
                     {
                         PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams2, connection);
                     }
+                    if(PayInfo.Rows.Count>0)
                       Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
                 }
