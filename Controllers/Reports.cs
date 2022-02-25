@@ -303,7 +303,7 @@ namespace SmartxAPI.Controllers
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
-                            critiria = critiria + "and " + Othercritiria.ToString();
+                            critiria = critiria + " and " + Othercritiria.ToString();
 
                     }
 

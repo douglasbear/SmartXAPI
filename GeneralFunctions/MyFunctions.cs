@@ -2678,7 +2678,7 @@ namespace SmartxAPI.GeneralFunctions
                             if (docNumber.Contains("/"))
                                 docNumber = docNumber.ToString().Substring(0, Math.Min(3, docNumber.ToString().Length));
 
-                            url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
+                            url = reportApi + "api/report?reportName=" + ReportName + "&critiria=" + critiria + "&path=" + this.TempFilesPath + "&reportLocation=" + RPTLocation + "&dbval=" + dbName + "&random=" + random + "&x_comments=&x_Reporttitle=&extention=pdf&N_FormID=" + nFormID + "&QRUrl=" + "" + "&N_PkeyID=" + nPkeyID + "&partyName=" + partyName + "&docNumber=" + docNumber + "&formName=" + FormName;
                             var path = client.GetAsync(url);
 
                             ReportName = FormName + "_" + docNumber + "_" + partyName.Trim() + ".pdf";
@@ -2816,13 +2816,13 @@ namespace SmartxAPI.GeneralFunctions
                     if (Othercritiria != null)
                     {
                         if (Othercritiria.ToString() != "")
-                            critiria = critiria + "and " + Othercritiria.ToString();
+                            critiria = critiria + " and " + Othercritiria.ToString();
 
                     }
                     if(xCriteria!=null)
                     {
                         if (xCriteria.ToString() != "")
-                            critiria = critiria + "and " + xCriteria.ToString();
+                            critiria = critiria + " and " + xCriteria.ToString();
                     }
                     return true;
                 }
