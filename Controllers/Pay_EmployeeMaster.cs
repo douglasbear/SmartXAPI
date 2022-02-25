@@ -1668,7 +1668,7 @@ namespace SmartxAPI.Controllers
                     Params.Add("@nFnYearID", nFnYearID);
                     if (nFnYearID == 0)
                     {
-                        object nFnYearIDto = dLayer.ExecuteScalar("select max(N_FnYearID) from Acc_Fnyear where N_CompanyID=" + nCompanyID, Params, connection, transaction);
+                        object nFnYearIDto = dLayer.ExecuteScalar("select Top(1) N_FnYearID from Acc_FnYear where N_CompanyID="+nCompanyID+" order by D_Start Desc", Params, connection, transaction);
                         nFnYearID = myFunctions.getIntVAL(nFnYearIDto.ToString());
                     }
                     string sqlCommandText = "Select N_CompanyID, N_BranchID, N_FnYearID, N_EmpID, X_EmpCode, X_EmpName, N_Status from vw_ReportingTo Where N_CompanyID=@nCompanyID and N_FnYearID=" + nFnYearID + " and N_Status not in(2,3) order by X_EmpCode";
