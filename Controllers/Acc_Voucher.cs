@@ -423,7 +423,7 @@ namespace SmartxAPI.Controllers
         }
         //Delete....
         [HttpDelete()]
-        public ActionResult DeleteData(int nVoucherID, string xTransType)
+        public ActionResult DeleteData(int nVoucherID, string xTransType,int nCompanyID, int nFnYearID,string comments)
         {
             int Results = 0;
             try
@@ -431,23 +431,68 @@ namespace SmartxAPI.Controllers
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
+                    DataTable TransData = new DataTable();
+                    SortedList ParamList = new SortedList(); 
+                    ParamList.Add("@nTransID", nVoucherID);
+                    ParamList.Add("@nFnYearID", nFnYearID);
+                    ParamList.Add("@nCompanyID", nCompanyID);
+                    string xButtonAction = "Delete";
+                    string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_VoucherID from Acc_VoucherMaster where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_VoucherID=@nTransID";
+                    TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
+                    if (TransData.Rows.Count == 0)
+                    {
+                        return Ok(api.Error(User, "Transaction not Found"));
+                    }
+                    DataRow TransRow = TransData.Rows[0];
+
+                    int nFormID=0;
+                    if (xTransType.ToLower() == "pv")
+                        nFormID = 44;
+                    else if (xTransType.ToLower() == "rv")
+                        nFormID = 45;
+                    else if (xTransType.ToLower() == "jv")
+                        nFormID = 46;
+
+                    DataTable Approvals = myFunctions.ListToTable(myFunctions.GetApprovals(-1, nFormID, nVoucherID, myFunctions.getIntVAL(TransRow["N_UserID"].ToString()), myFunctions.getIntVAL(TransRow["N_ProcStatus"].ToString()), myFunctions.getIntVAL(TransRow["N_ApprovalLevelId"].ToString()), 0, 0, 1, nFnYearID, 0, 0, User, dLayer, connection));
+                    Approvals = myFunctions.AddNewColumnToDataTable(Approvals, "comments", typeof(string), comments);
                     SqlTransaction transaction = connection.BeginTransaction();
 
-                    SortedList Params = new SortedList();
-                    Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
-                    Params.Add("X_TransType", xTransType);
-                    Params.Add("N_VoucherID", nVoucherID);
-                    Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", Params, connection, transaction);
+                    string X_Criteria = "N_VoucherID=" + nVoucherID + " and N_CompanyID=" + myFunctions.GetCompanyID(User) + " and N_FnYearID=" + nFnYearID;
+                    string ButtonTag = Approvals.Rows[0]["deleteTag"].ToString();
+                    int ProcStatus = myFunctions.getIntVAL(ButtonTag.ToString());
 
-                    if (Results > 0)
+                     if (ButtonTag == "6" || ButtonTag == "0")
                     {
-                        transaction.Commit();
-                        return Ok(api.Success("Voucher deleted"));
+                        SortedList Params = new SortedList();
+                        Params.Add("N_CompanyID", myFunctions.GetCompanyID(User));
+                        Params.Add("X_TransType", xTransType);
+                        Params.Add("N_VoucherID", nVoucherID);
+                        Results = dLayer.ExecuteNonQueryPro("SP_Delete_Trans_With_Accounts", Params, connection, transaction);
+
+                        if (Results > 0)
+                        {
+                            transaction.Commit();
+                            return Ok(api.Success("Voucher deleted"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable to delete Voucher"));
+                        }
                     }
                     else
                     {
-                        transaction.Rollback();
-                        return Ok(api.Error(User, "Unable to delete Voucher"));
+                        string status = myFunctions.UpdateApprovals(Approvals, nFnYearID, xTransType, nVoucherID, TransRow["X_VoucherNo"].ToString(), ProcStatus, "Acc_VoucherMaster", X_Criteria, "", User, dLayer, connection, transaction);
+                        if (status != "Error")
+                        {
+                            transaction.Commit();
+                            return Ok(api.Success("Voucher " + status + " Successfully"));
+                        }
+                        else
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, "Unable to delete Voucher"));
+                        }
                     }
                 }
 
