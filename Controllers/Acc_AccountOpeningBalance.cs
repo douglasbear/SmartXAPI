@@ -255,6 +255,13 @@ namespace SmartxAPI.Controllers
                     {
                         transaction.Rollback();
                     }
+                    if(!DetailTable.Columns.Contains("N_BranchID"))
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable,"N_BranchID",typeof(int),null);
+
+                    if(!DetailTable.Columns.Contains("N_AmountF"))
+                    DetailTable = myFunctions.AddNewColumnToDataTable(DetailTable,"N_AmountF",typeof(double),null);
+
+                    DetailTable.AcceptChanges();
                     for (int j = 0; j < DetailTable.Rows.Count; j++)
                     {
                         SortedList DeleteParams = new SortedList(){
@@ -266,6 +273,8 @@ namespace SmartxAPI.Controllers
                         dLayer.ExecuteNonQueryPro("SP_Delete_VoucherMaster_Details", DeleteParams, connection, transaction);
 
                         DetailTable.Rows[j]["N_VoucherID"] = nVoucherID;
+                        DetailTable.Rows[j]["N_BranchID"] = nBranchID;
+                        DetailTable.Rows[j]["N_AmountF"] = DetailTable.Rows[j]["N_Amount"];
 
                         double nAmount=0;
                         if(myFunctions.getVAL(DetailTable.Rows[j]["n_Debit"].ToString())>0)
@@ -276,7 +285,9 @@ namespace SmartxAPI.Controllers
                         if(nAmount==0)
                         {
                             DetailTable.Rows[j].Delete();
-                            j--;
+                          
+                             j--;
+                              DetailTable.AcceptChanges();
                         }
                         else
                             DetailTable.Rows[j]["N_Amount"]=nAmount;
@@ -420,7 +431,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
             string qry = "";
-            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID";
+            qry = "select Top(1) * from Acc_FnYear where N_CompanyID=@nCompanyID and ISNULL(B_PreliminaryYear,0)=0 order by D_Start";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))

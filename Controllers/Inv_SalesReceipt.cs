@@ -20,14 +20,16 @@ namespace SmartxAPI.Controllers
         private readonly IApiFunctions api;
         private readonly IDataAccessLayer dLayer;
         private readonly IMyFunctions myFunctions;
+        private readonly IMyAttachments myAttachments;
         private readonly string connectionString;
 
 
-        public Inv_SalesReceipt(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf)
+        public Inv_SalesReceipt(IApiFunctions apiFun, IDataAccessLayer dl, IMyFunctions myFun, IConfiguration conf,IMyAttachments myAtt)
         {
             api = apiFun;
             dLayer = dl;
             myFunctions = myFun;
+            myAttachments = myAtt;
             connectionString = conf.GetConnectionString("SmartxConnection");
         }
 
@@ -149,6 +151,7 @@ namespace SmartxAPI.Controllers
         {
             DataTable MasterTable = new DataTable();
             DataTable DetailTable = new DataTable();
+            DataTable Attachments = new DataTable();
             SortedList general = new SortedList();
             SortedList OutPut = new SortedList();
 
@@ -202,6 +205,8 @@ namespace SmartxAPI.Controllers
                     };
                         MasterTable = dLayer.ExecuteDataTablePro("SP_InvSalesReceipt_Disp", mParamsList, connection);
                         MasterTable = api.Format(MasterTable, "Master");
+                        Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 66, 0, User, connection);
+                        Attachments = api.Format(Attachments, "attachments");
 
                     }
 
@@ -340,7 +345,7 @@ namespace SmartxAPI.Controllers
                                 salesPersonCustomer = salesPersonCustomer == null ? "" : salesPersonCustomer;
                                 object salesPersonIDCustomer = dLayer.ExecuteScalar("select   N_DefaultSalesManID from Vw_InvCustomer where N_CompanyID=" + nCompanyId + " and N_CustomerID=" + nCustomerId + "", salesParams, connection);
 
-                                if (salesPersonCustomer.ToString() != "")
+                                if (salesPersonSales.ToString() != "")
                                 {
                                     drrow["x_SalesmanName"] = salesPersonSales.ToString();
                                     drrow["n_SalesManID"] = salesPersonIDSales.ToString();
@@ -353,12 +358,16 @@ namespace SmartxAPI.Controllers
                             }
                         }
                     }
-                      DetailTable.AcceptChanges();
-
+                   DetailTable.AcceptChanges();
+                    
+                    ds.Tables.Add(Attachments);
                     ds.Tables.Add(MasterTable);
                     ds.Tables.Add(DetailTable);
                 }
-                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, { "master", MasterTable }, { "masterData", OutPut } }));
+                return Ok(api.Success(new SortedList() { { "details", api.Format(DetailTable) }, 
+                { "master", MasterTable },
+                 { "attachments", Attachments},
+                 { "masterData", OutPut } }));
                 //return Ok(api.Success(ds));
             }
             catch (Exception e)
@@ -469,6 +478,7 @@ namespace SmartxAPI.Controllers
                 DataTable DetailTable;
                 MasterTable = ds.Tables["master"];
                 DetailTable = ds.Tables["details"];
+                DataTable Attachment = ds.Tables["attachments"];
                 using (SqlConnection connection = new SqlConnection(connectionString))
                 {
                     connection.Open();
@@ -485,7 +495,7 @@ namespace SmartxAPI.Controllers
                     int nBranchID = myFunctions.getIntVAL(Master["n_BranchID"].ToString());
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
-
+                    int nCustomerId = myFunctions.getIntVAL(Master["n_PartyID"].ToString());
 
                     if (!myFunctions.CheckActiveYearTransaction(nCompanyId, nFnYearID, DateTime.ParseExact(MasterTable.Rows[0]["D_Date"].ToString(),
                      "yyyy-MM-dd HH:mm:ss.fff", System.Globalization.CultureInfo.InvariantCulture), dLayer, connection, transaction))
@@ -652,8 +662,28 @@ namespace SmartxAPI.Controllers
 
                     transaction.Commit();
                     if (n_PayReceiptDetailsId > 0 && PayReceiptId > 0)
+                    {  
+                        SortedList CustParams = new SortedList();
+                    CustParams.Add("@nCompanyID", nCompanyId);
+                    CustParams.Add("@nCustomerId", nCustomerId);
+                    CustParams.Add("@nFnYearID", nFnYearID);
+                    object objCustName = dLayer.ExecuteScalar("Select X_CustomerName From Inv_Customer where N_CustomerID=@nCustomerId and N_CompanyID=@nCompanyID  and N_FnYearID=@nFnYearID", CustParams, connection, transaction);
+                   
+                     if (Attachment.Rows.Count > 0)
                     {
+                        try
+                        {
+                            myAttachments.SaveAttachment(dLayer, Attachment,xVoucherNo, PayReceiptId,objCustName.ToString().Trim(),xVoucherNo, PayReceiptId, "CustomerPayment Document", User, connection, transaction);
+                        }
+                        catch (Exception ex)
+                        {
+                            transaction.Rollback();
+                            return Ok(api.Error(User, ex));
+                        }
+                    }
+                
 
+                        
                         SortedList Result = new SortedList();
                         Result.Add("n_SalesReceiptID", PayReceiptId);
                         Result.Add("x_SalesReceiptNo", xVoucherNo);
@@ -670,7 +700,7 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpDelete()]
-        public ActionResult DeleteData(int nPayReceiptId, string xType)
+        public ActionResult DeleteData(int nPayReceiptId, string xType, int nFnyearID)
         {
             int nCompanyId = myFunctions.GetCompanyID(User);
             try
@@ -706,6 +736,8 @@ namespace SmartxAPI.Controllers
 
                     if (result > 0)
                     {
+                        myAttachments.DeleteAttachment(dLayer, 1, nPayReceiptId, nPayReceiptId, nFnyearID,66, User, transaction, connection);
+                      
                         transaction.Commit();
                         return Ok(api.Success("Sales Receipt Deleted"));
                     }

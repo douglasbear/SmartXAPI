@@ -87,13 +87,13 @@ namespace SmartxAPI.Controllers
                     else
                     {
                         if (xSortBy == null || xSortBy.Trim() == "")
-                            xSortBy = " order by X_QuotationNo desc";
+                            xSortBy = " order by X_InwardsCode   desc";
                         else
                         {
                             switch (xSortBy.Split(" ")[0])
                             {
                                 case "quotationNo":
-                                    xSortBy = "X_QuotationNo" + xSortBy.Split(" ")[1];
+                                    xSortBy = "X_InwardsCode" + xSortBy.Split(" ")[1];
                                     break;
                                 default: break;
                             }
@@ -320,11 +320,13 @@ namespace SmartxAPI.Controllers
             SortedList QueryParams = new SortedList();
 
             int companyid = myFunctions.GetCompanyID(User);
+            bool byMaster = false;
 
             QueryParams.Add("@nCompanyID", companyid); 
             QueryParams.Add("@X_QuotationNo", X_QuotationNo);
             QueryParams.Add("@nBranchID", nBranchID);
             QueryParams.Add("@nFnYearID", nFnYearID);
+            QueryParams.Add("@byMaster", byMaster);
             string Condition = "";
             string _sqlQuery = "";
             try
@@ -336,12 +338,19 @@ namespace SmartxAPI.Controllers
                     if(nFormID==618)
                     {
                         if (bShowAllBranchData == true)
-                            Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo";
+                            Condition = "Inv_VendorRequest.n_CompanyId=@nCompanyID and Inv_VendorRequest.X_QuotationNo =@X_QuotationNo and Inv_VendorRequest.N_FnYearId=@nFnYearID";
                         else
-                            Condition = "n_Companyid=@nCompanyID and X_QuotationNo =@X_QuotationNo and N_BranchID=@nBranchID";
+                            Condition = "Inv_VendorRequest.n_CompanyId=@nCompanyID and Inv_VendorRequest.X_QuotationNo =@X_QuotationNo and Inv_VendorRequest.N_BranchID=@nBranchID and Inv_VendorRequest.N_FnYearId=@nFnYearID";
 
-                        _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
 
+                       // _sqlQuery = "Select * from Inv_VendorRequest Where " + Condition + "";
+                        _sqlQuery = "SELECT  Inv_VendorRequest.N_CompanyId, Inv_VendorRequest.N_FnYearId, Inv_VendorRequest.N_QuotationId, Inv_VendorRequest.X_QuotationNo, Inv_VendorRequest.D_QuotationDate, Inv_VendorRequest.D_EntryDate," +
+                        " Inv_VendorRequest.N_VendorId, Inv_VendorRequest.N_BillAmt, Inv_VendorRequest.N_DiscountAmt, Inv_VendorRequest.N_FreightAmt, Inv_VendorRequest.N_CashReceived, Inv_VendorRequest.x_Notes, " +
+                         "Inv_VendorRequest.N_UserID, Inv_VendorRequest.N_Processed, Inv_VendorRequest.N_LocationID, Inv_VendorRequest.N_BranchId, Inv_VendorRequest.N_ProjectID, Inv_VendorRequest.X_RfqRefNo," + 
+                         "Inv_VendorRequest.X_TandC, Inv_VendorRequest.D_DueDate, Inv_VendorRequest.N_ValidUpTo, Inv_VendorRequest.N_EmpID, Pay_Employee.X_EmpName " +
+ " FROM            Inv_VendorRequest LEFT OUTER JOIN " +
+                         " Pay_Employee ON Inv_VendorRequest.N_CompanyId = Pay_Employee.N_CompanyID AND Inv_VendorRequest.N_EmpID = Pay_Employee.N_EmpID AND Inv_VendorRequest.N_FnYearId = Pay_Employee.N_FnYearID  Where " + Condition + "";
+                        
                         Master = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
                         QueryParams.Add("@N_QuotationID", Master.Rows[0]["N_QuotationID"].ToString());
 
@@ -384,7 +393,7 @@ namespace SmartxAPI.Controllers
                             }
                             ds.Tables.Add(Detail);
 
-                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
+                                VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(Master.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,byMaster,dLayer,connection);
                                 VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                                 ds.Tables.Add(VendorListDetails);
 
@@ -418,7 +427,7 @@ namespace SmartxAPI.Controllers
                         ds.Tables.Add(Detail);
                         ds.Tables.Add(VendorListMaster);
 
-                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(VendorListMaster.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,dLayer,connection);
+                        VendorListDetails=GetVendorListTable(myFunctions.getIntVAL(VendorListMaster.Rows[0]["N_QuotationID"].ToString()),0,nFnYearID,companyid,byMaster,dLayer,connection);
                         VendorListDetails = _api.Format(VendorListDetails, "vendorList");
                         ds.Tables.Add(VendorListDetails);
 
@@ -434,19 +443,20 @@ namespace SmartxAPI.Controllers
         }
           
         [HttpGet("prsList")]
-        public ActionResult GetPRSList(bool bAllBranchData, int nBranchID)
+        public ActionResult GetPRSList(bool bAllBranchData, int nBranchID, int nFnYearID )
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nBranchID", nBranchID);
+            Params.Add("@nFnYearID", nFnYearID);
 
             string sqlCommandText = "";
             if (bAllBranchData == true)
-                sqlCommandText = "Select *  from vw_PrsPoMrn_GroupBy where N_CompanyID=@nCompanyID and N_Type=2";
+                sqlCommandText = "Select *  from vw_PrsPoMrn_GroupBy where N_CompanyID=@nCompanyID and N_FnYearID = @nFnYearID and N_Type=2";
             else
-                sqlCommandText = "Select *  from vw_PrsPoMrn_GroupBy where N_CompanyID=@nCompanyID and N_Type=2 and N_BranchID=@nBranchID";
+                sqlCommandText = "Select *  from vw_PrsPoMrn_GroupBy where N_CompanyID=@nCompanyID and N_FnYearID = @nFnYearID and  N_Type=2 and N_BranchID=@nBranchID";
  
 
             try
@@ -473,8 +483,10 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("prsDetails")]
-        public ActionResult GetPRSDetails(string xPRSNo)
+        public ActionResult GetPRSDetails(string xPRSNo ,int N_FnYearID)
         {
+           
+            DataTable PRSToRFQMaster = new DataTable();
             DataTable Detail = new DataTable();
             DataSet ds = new DataSet();
             SortedList Params = new SortedList();
@@ -485,7 +497,7 @@ namespace SmartxAPI.Controllers
             int companyid = myFunctions.GetCompanyID(User);
 
             QueryParams.Add("@nCompanyID", companyid);
-
+            QueryParams.Add("@N_FnYearID", N_FnYearID);
             string _sqlQuery = "";
             try
             {
@@ -509,7 +521,17 @@ namespace SmartxAPI.Controllers
                     }
                     QueryParams.Add("@X_PRSID", X_PRSID);
 
-                    _sqlQuery = "Select * from vw_PrsPoMrn_Detail Where N_CompanyID=@nCompanyID and N_PRSID in (@X_PRSID)";
+             _sqlQuery = "Select * from vw_Inv_PRSToRFQMaster Where N_CompanyID=@nCompanyID and N_FnYearID=@N_FnYearID and N_PRSID in (@X_PRSID)";
+
+                        PRSToRFQMaster = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
+
+                        PRSToRFQMaster = _api.Format(PRSToRFQMaster, "master");
+
+                        if (PRSToRFQMaster.Rows.Count == 0)
+                        {
+                            return Ok(_api.Notice("No Results Found"));
+                        }
+                    _sqlQuery = "Select * from vw_PrsPoMrn_Detail Where N_CompanyID=@nCompanyID and N_FnYearID=@N_FnYearID and N_PRSID in (@X_PRSID)";
                     Detail = dLayer.ExecuteDataTable(_sqlQuery, QueryParams, connection);
 
                     Detail = _api.Format(Detail, "prsDetails");
@@ -517,6 +539,7 @@ namespace SmartxAPI.Controllers
                     {
                         return Ok(_api.Notice("No Results Found"));
                     }
+                    ds.Tables.Add(PRSToRFQMaster);
                     ds.Tables.Add(Detail);
 
                     return Ok(_api.Success(ds));
@@ -529,19 +552,19 @@ namespace SmartxAPI.Controllers
         }
 
         [HttpGet("rfqList")]
-        public ActionResult GetRFQList(bool bAllBranchData, int nBranchID)
+        public ActionResult GetRFQList(bool bAllBranchData, int nBranchID, int nFnYearID)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
             int nCompanyID = myFunctions.GetCompanyID(User);
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@nBranchID", nBranchID);
-
+            Params.Add("@nFnYearID", nFnYearID);
             string sqlCommandText = "";
             if (bAllBranchData == true)
-                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID";
+                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_FnYearId=@nFnYearID";
             else
-                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID";
+                sqlCommandText = "Select *  from vw_Vendor_Request where N_CompanyID=@nCompanyID and N_BranchID=@nBranchID and N_FnYearId=@nFnYearID";
  
             try
             {
@@ -649,7 +672,7 @@ namespace SmartxAPI.Controllers
             }
         }
 
-        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int nFnYearID,int N_CompanyID, IDataAccessLayer dLayer, SqlConnection connection)
+        private DataTable GetVendorListTable(int nQuotationID,int nVendorID,int nFnYearID,int N_CompanyID,bool byMaster, IDataAccessLayer dLayer, SqlConnection connection)
         {
             DataTable VendorListDetails = new DataTable();
             string sqlCommand="";
@@ -659,11 +682,22 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", N_CompanyID);
             Params.Add("@nVendorID", nVendorID);
             Params.Add("@nFnYearID", nFnYearID);
-
-            if(nVendorID!=0)
-                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID and N_FnYearID=@nFnYearID";
+            Params.Add("@byMaster", byMaster);
+          
+            if(byMaster)
+            {
+                if(nVendorID!=0)
+                sqlCommand = "Select N_VendorID,X_VendorCode,X_VendorName,N_QuotationID from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID and N_FnYearID=@nFnYearID Group by N_VendorID,X_VendorCode,X_VendorName,N_CompanyID,N_QuotationID";
+              else
+                sqlCommand = "Select N_VendorID,X_VendorCode,X_VendorName,N_QuotationID from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_FnYearID=@nFnYearID Group by N_VendorID,X_VendorCode,X_VendorName,N_CompanyID,N_QuotationID";
+            }
             else
-                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_FnYearID=@nFnYearID";
+            {
+           if(nVendorID!=0)
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_VendorID=@nVendorID and N_FnYearID=@nFnYearID ";
+           else
+                sqlCommand = "Select * from vw_RFQVendorListDetails Where N_CompanyID=@nCompanyID and N_QuotationID=@nQuotationID and N_FnYearID=@nFnYearID ";
+            }
 
             VendorListDetails = dLayer.ExecuteDataTable(sqlCommand, Params, connection);
 
@@ -675,7 +709,7 @@ namespace SmartxAPI.Controllers
 
 
         [HttpGet("rfqVendorList")]
-        public ActionResult GetRFQVendorList(int N_QuotationID,int N_FnYearID)
+        public ActionResult GetRFQVendorList(int N_QuotationID,int N_FnYearID, bool byMaster)
         {
             DataTable dt = new DataTable();
             SortedList Params = new SortedList();
@@ -683,7 +717,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
             Params.Add("@N_QuotationID", N_QuotationID);
             Params.Add("@N_FnYearID", N_FnYearID);
-
+            Params.Add("@byMaster", byMaster);
 
             try
             {
@@ -691,7 +725,7 @@ namespace SmartxAPI.Controllers
                 {
                     connection.Open();
 
-                    dt=GetVendorListTable(N_QuotationID,0,N_FnYearID,nCompanyID,dLayer,connection);
+                    dt=GetVendorListTable(N_QuotationID,0,N_FnYearID,nCompanyID,byMaster,dLayer,connection);
                     dt = _api.Format(dt, "vendorList");
 
                 }

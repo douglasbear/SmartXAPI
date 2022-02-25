@@ -314,7 +314,7 @@ namespace SmartxAPI.Controllers
 
                                 if (myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_UserID"].ToString()) > 0)
                                 {
-                                    object obj8 = dLayer.ExecuteScalar("select D_EntryDate from Pay_MonthlyAddOrDedDetails where N_TransID=" + TimeSheetMaster.Rows[0]["N_AddorDedID"].ToString() + " and N_EmpID=" + nEmpID.ToString() + " and N_refID=" + N_TimeSheetID + " and N_FormID=" + 216, Params, connection);
+                                    object obj8 = dLayer.ExecuteScalar("select D_EntryDate from Pay_MonthlyAddOrDedDetails where N_TransID=" + myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_AddorDedID"].ToString()) + " and N_EmpID=" + nEmpID.ToString() + " and N_refID=" + N_TimeSheetID + " and N_FormID=" + 216, Params, connection);
                                     object res = dLayer.ExecuteScalar("Select X_UserName from Sec_User where N_UserID=" + myFunctions.getIntVAL(TimeSheetMaster.Rows[0]["N_UserID"].ToString()) + " and N_CompanyID=" + nCompanyID, Params, connection);
 
                                     if (res != null)
@@ -342,7 +342,7 @@ namespace SmartxAPI.Controllers
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Workhours", typeof(double), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "Attandance", typeof(string), null);
                                 TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "X_Type", typeof(string), null);
-                                TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
+                               // TimeSheetDetails = myFunctions.AddNewColumnToDataTable(TimeSheetDetails, "N_Vacation", typeof(int), 0);
 
                                 string Sql8 = "Select * from vw_pay_OffDays Where N_CompanyID =" + nCompanyID + " and (N_FNyearID= " + nFnYearID + " or N_FNyearID=0)  ";
                                 PayOffDays = dLayer.ExecuteDataTable(Sql8, secParams, connection);
@@ -834,11 +834,11 @@ namespace SmartxAPI.Controllers
                     SortedList Params = new SortedList();
                     SortedList QueryParams = new SortedList();
 
-                    if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, dFromDate, dLayer, connection, transaction))
-                    {
-                        transaction.Rollback();
-                        return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
-                    }
+                    // if (!myFunctions.CheckActiveYearTransaction(nCompanyID, nFnYearId, dFromDate, dLayer, connection, transaction))
+                    // {
+                    //     transaction.Rollback();
+                    //     return Ok(_api.Error(User, "Transaction date must be in the active Financial Year."));
+                    // } //jan
 
                     // Auto Gen
                     string X_BatchCode = "";
