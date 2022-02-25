@@ -62,14 +62,14 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_CompanyID=@p1 and N_LocationID=@p4 ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_LocationID=@p4 and N_CompanyID=@p1";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_LocationID=@p4 and N_CompanyID=@p1 and N_LocationID=@p4";
                     }
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_CompanyID=@p1 and  N_LocationID=@p4";
                         else
                             Criteria = "and N_PurchaseType=0 and N_FnYearID=@p2 and N_LocationID=@p4 and N_CompanyID=@p1";
                     }
