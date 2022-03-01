@@ -216,7 +216,9 @@ namespace SmartxAPI.Controllers
                 var nUserId = User.FindFirst(ClaimTypes.NameIdentifier)?.Value;
                 var nFormID = 0;
                 int N_NextApproverID=0;
-                int N_SaveDraft = myFunctions.getIntVAL(masterRow["b_IsSaveDraft"].ToString());
+                bool saveDraft = myFunctions.getBoolVAL(masterRow["b_IsSaveDraft"].ToString());
+                int N_SaveDraft = 0;
+                if(saveDraft) N_SaveDraft=1;
 
 
 
@@ -278,7 +280,6 @@ namespace SmartxAPI.Controllers
                             PostingParams.Add("N_UserID", nUserId);
                             PostingParams.Add("X_SystemName", "ERP Cloud");
                             object posting = dLayer.ExecuteScalarPro("SP_Acc_InventoryPosting", PostingParams, connection, transaction);
-                            transaction.Commit();
                         }
 
                         myFunctions.SendApprovalMail(N_NextApproverID, nFormID, N_PkeyID, xTransType, xVoucherNo, dLayer, connection, transaction, User);
