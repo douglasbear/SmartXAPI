@@ -411,12 +411,7 @@ namespace SmartxAPI.Controllers
                             critiria = critiria + " and {" + TableName + ".N_CompanyID}=" + myFunctions.GetCompanyID(User);
                         }
                         ReportName = ReportName.Replace("&", "");
-<<<<<<< HEAD
-                        
-                        if (partyName == "" || partyName==null)
-=======
                         if (partyName == "" || partyName==null) 
->>>>>>> 30f8f951661e21856ff6b284105e5efdc2d34a44
                             partyName = "customer";
                         partyName = partyName.Replace("&", "");
                         partyName = partyName.ToString().Substring(0, Math.Min(12, partyName.ToString().Length));
