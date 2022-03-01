@@ -417,7 +417,7 @@ namespace SmartxAPI.Controllers
             Params.Add("@nCompanyID", nCompanyID);
 
             string qry = "";
-            qry = "select TOP 1 * from Acc_FnYear where N_CompanyID=@nCompanyID and isnull(B_PreliminaryYear,0)<>1";
+            qry = "select Top(1) * from Acc_FnYear where N_CompanyID=@nCompanyID and ISNULL(B_PreliminaryYear,0)=0 order by D_Start";
             try
             {
                 using (SqlConnection connection = new SqlConnection(connectionString))
