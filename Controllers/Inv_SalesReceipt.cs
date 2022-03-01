@@ -183,8 +183,7 @@ namespace SmartxAPI.Controllers
                         string sql = "";
                         if (bShowAllbranch == true)
                             sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID and N_BranchID=@nBranchID";
-                        else
-                            sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
+                             sql = "select N_PayReceiptId,X_Type,N_PartyID,D_Date,N_UserId,N_ProcStatus,N_ApprovalLevelId,B_IssaveDraft from Inv_PayReceipt where N_CompanyID=@nCompanyID and X_VoucherNo=@xInvoiceNo and N_FnYearID=@nFnYearID";
 
                         DataTable PayInfo = dLayer.ExecuteDataTable(sql, proParams1, connection);
                         if (PayInfo.Rows.Count > 0)
@@ -502,7 +501,7 @@ namespace SmartxAPI.Controllers
                     nAmount = myFunctions.getVAL(Master["n_Amount"].ToString());
                     nAmountF = myFunctions.getVAL(Master["n_AmountF"].ToString());
                     int nCustomerId = myFunctions.getIntVAL(Master["n_PartyID"].ToString());
-                    int N_SaveDraft = myFunctions.getIntVAL(Master["b_IsSaveDraft"].ToString());
+                    int N_SaveDraft = myFunctions.getIntVAL(Master["b_IssaveDraft"].ToString());
                     int nUserID = myFunctions.GetUserID(User);
                     int N_NextApproverID=0;
 
@@ -765,7 +764,7 @@ namespace SmartxAPI.Controllers
                     SortedList ParamList = new SortedList(); 
                     ParamList.Add("@nTransID", nPayReceiptId);
                     ParamList.Add("@nFnYearID", nFnYearID);
-                    ParamList.Add("@nCompanyID", nCompanyID);
+                    ParamList.Add("@nCompanyID", nCompanyId);
                     string xButtonAction = "Delete";
                     string Sql = "select isNull(N_UserID,0) as N_UserID,isNull(N_ProcStatus,0) as N_ProcStatus,isNull(N_ApprovalLevelId,0) as N_ApprovalLevelId,X_VoucherNo,N_PayReceiptId from Inv_PayReceipt where N_CompanyId=@nCompanyID and N_FnYearID=@nFnYearID and N_PayReceiptId=@nTransID";
                     TransData = dLayer.ExecuteDataTable(Sql, ParamList, connection);
