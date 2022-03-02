@@ -2654,7 +2654,7 @@ namespace SmartxAPI.GeneralFunctions
                     {
                         string xCriteria="";
                         if(nFormID==618)
-                            xCriteria=" vw_inv_RequestQuotation_Rpt.N_VendorID="+nPartyID;
+                            xCriteria=" {vw_inv_RequestQuotation_Rpt.N_VendorID}="+nPartyID;
                         if (LoadReportDetails(nFnYearID, nFormID, nPkeyID,xCriteria, dLayer, User))
                         {
                             var client = new HttpClient(handler);
