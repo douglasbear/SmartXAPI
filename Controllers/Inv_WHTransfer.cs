@@ -157,7 +157,6 @@ namespace SmartxAPI.Controllers
 
 
 
-
         [HttpGet("details")]
         public ActionResult EmpMaintenanceList(int nCompanyId, int nFnYearID, bool bAllBranchData, int nBranchID, int nLocationID, int nPage, int nSizeperpage, string xSearchkey, string xSortBy)
         {
@@ -187,21 +186,21 @@ namespace SmartxAPI.Controllers
                     if (!CheckClosedYear)
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 and  N_LocationFrom=" + nLocationID + " ";
                         else
-                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 ";
+                            Criteria = "and N_FnYearID=@p2 and  B_YearEndProcess=0 and N_Type=1 and N_CompanyID=@p1 and   N_LocationFrom=" + nLocationID + " ";
                     }
                     else
                     {
                         if (bAllBranchData)
-                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_CompanyID=@p1";
+                            Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and   and N_LocationFrom=" + nLocationID + " and N_CompanyID=@p1";
                         else
                             Criteria = "and N_PurchaseType=0 and X_TransType=@p4 and N_FnYearID=@p2 and N_LocationFrom=" + nLocationID + " and N_CompanyID=@p1";
                     }
 
 
                     if (xSearchkey != null && xSearchkey.Trim() != "")
-                        Searchkey = "and ([Site from] like '%" + xSearchkey + "%' or [Reference No] like '%" + xSearchkey + "%' or [Site To] like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%' )";
+                        Searchkey = "and ([Site from] like '%" + xSearchkey + "%' or [Reference No] like '%" + xSearchkey + "%' or [Site To] like '%" + xSearchkey + "%' or Date like '%" + xSearchkey + "%')";
 
                     if (xSortBy == null || xSortBy.Trim() == "")
                         xSortBy = " order by N_TransferID asc";
