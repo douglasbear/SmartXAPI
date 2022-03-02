@@ -59,19 +59,20 @@ namespace SmartxAPI.Controllers
                      string UserPattern = myFunctions.GetUserPattern(User);
                     int nUserID = myFunctions.GetUserID(User);
                     string Pattern = "";
-            if (UserPattern != "")
-            {
-                Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
-                Params.Add("@UserPattern", UserPattern);
-            }
-            else
-            {
-                object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
 
-                if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
+                    if (UserPattern != "")
+                     {
+                    Pattern = " and Left(X_Pattern,Len(@UserPattern))=@UserPattern";
+                    Params.Add("@UserPattern", UserPattern);
+                     }  
+                     else
+                           {
+                    object HierarchyCount = dLayer.ExecuteScalar("select count(N_HierarchyID) from Sec_UserHierarchy where N_CompanyID="+nCompanyId, Params, connection);
+
+                    if( myFunctions.getIntVAL(HierarchyCount.ToString())>0)
                     Pattern = " and N_UserID=" + nUserID;
-               
-            }
+                    }
+
                     int N_decimalPlace = 2;
                     N_decimalPlace = myFunctions.getIntVAL(myFunctions.ReturnSettings("Sales", "Decimal_Place", "N_Value", nCompanyId, dLayer, connection));
                     N_decimalPlace = N_decimalPlace == 0 ? 2 : N_decimalPlace;
