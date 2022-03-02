@@ -215,7 +215,7 @@ namespace SmartxAPI.Controllers
                     else
                         sql = "SELECT  -1 * ISNULL( Sum(n_Amount),0)  as N_BalanceAmount from  vw_InvVendorStatement Where N_AccType=1 and isnull(N_PaymentMethod,0)<>1 and N_AccID=@nVendorID and N_CompanyID=@nCompanyID and N_BranchId=@nBranchID and  D_TransDate<=@dTransDate";
 
-                    if (xInvoiceNo != null && myFunctions.getIntVAL(xInvoiceNo) > 0)
+                    if (xInvoiceNo != null && xInvoiceNo.ToString() != "")
                     {
                         SortedList proParams1 = new SortedList(){
                                 {"N_CompanyID",nCompanyId},
@@ -291,6 +291,7 @@ namespace SmartxAPI.Controllers
                     {
                         PayReceipt = dLayer.ExecuteDataTablePro("SP_Inv_InvPayReceipt_View", proParams2, connection);
                     }
+                    if(PayInfo.Rows.Count>0)
                       Attachments = myAttachments.ViewAttachment(dLayer, myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), myFunctions.getIntVAL(PayInfo.Rows[0]["N_PayReceiptId"].ToString()), 67, 0, User, connection);
                     //Attachments = api.Format(Attachments, "attachments");
                 }
